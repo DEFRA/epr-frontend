@@ -30,7 +30,7 @@
         <strong class="govuk-!-font-size-36">{{ tonnageIssued }}</strong>
       </div>
 
-      {% if not isReadOnly %}
+      {% if hasWriteScope %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 

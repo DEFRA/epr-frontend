@@ -20,7 +20,7 @@
       <p class="govuk-body">{{ paragraph2 }}</p>
       <p class="govuk-body">{{ paragraph3 }}</p>
 
-      {% if not isReadOnly %}
+      {% if hasWriteScope %}
       {{ govukButton({
         text: continueButton.text,
         href: continueButton.href

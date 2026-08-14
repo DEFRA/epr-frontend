@@ -13,7 +13,7 @@ export const REGULATOR_ROLE = 'regulator_standard'
  * The single answer to "whose shell is this?". Where a user lands, which
  * navigation renders and what the header calls the service are questions about
  * identity, so they read the role. A control inside the shell reads a scope
- * instead — see `isReadOnlySession`.
+ * instead — see `hasWriteScope`.
  *
  * A session holding any other role keeps the operator shell, so a role this
  * app renders nothing special for still gets a page.

@@ -19,14 +19,16 @@ export const SCOPES = Object.freeze({
 const WRITE_SCOPES = Object.freeze([SCOPES.organisationLinkedWrite])
 
 /**
- * The single answer to "may this session change anything?". A session is
- * read-only unless it holds a write scope, so both the write guard and the
- * templates decide from this one place, and a session the backend grants
- * nothing is offered no write control. Takes the scopes alone rather than a
- * session, so it serves a request whose credentials hapi has not narrowed to a
- * `UserSession`.
+ * The single answer to "may this session change anything?". Only a write scope
+ * says yes, so both the write guard and the templates decide from this one
+ * place, and a session the backend grants nothing is offered no write control.
+ * The templates share the name, so a context key that is absent or misspelled
+ * reads as `undefined` and hides the control rather than showing it.
+ *
+ * Takes the scopes alone rather than a session, so it serves a request whose
+ * credentials hapi has not narrowed to a `UserSession`.
  * @param {{ scope?: string[] } | null} [credentials]
  * @returns {boolean}
  */
-export const isReadOnlySession = (credentials) =>
-  !WRITE_SCOPES.some((writeScope) => credentials?.scope?.includes(writeScope))
+export const hasWriteScope = (credentials) =>
+  WRITE_SCOPES.some((writeScope) => credentials?.scope?.includes(writeScope))

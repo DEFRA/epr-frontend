@@ -1,9 +1,49 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
 
 const templateRoot = path.resolve(import.meta.dirname, '../../server')
-const readOnlyCondition = /\bnot isReadOnly\b/
+
+const WRITE_SCOPE = 'hasWriteScope'
+const CONJUNCTION = /\band\b/
+const PLAIN_TERM = /^[\w.]+$/
+
+/**
+ * Whether a condition guards a write control. A condition guards only if it
+ * requires the flag, and it requires the flag only when it is a conjunction of
+ * plain names, one of which is the flag. `{% if issueButton and hasWriteScope %}`
+ * guards. Anything the flag cannot single-handedly veto does not.
+ *
+ * The rule states the shape a guard must have rather than listing the shapes it
+ * must not, because a list is wrong the moment someone writes a spelling that
+ * is not on it. Every one of these mentions the flag and renders the control to
+ * a session that holds no write scope:
+ *
+ * `{% if not hasWriteScope %}`, `{% if not (hasWriteScope) %}`,
+ * `{% if hasWriteScope == false %}`, `{% if hasWriteScope or true %}`,
+ * `{% if ready or draft and hasWriteScope %}`.
+ *
+ * The last one is why a term has to be a plain name rather than any expression.
+ * Nunjucks binds `and` tighter than `or`, so that condition reads
+ * `ready or (draft and hasWriteScope)` and renders the control whenever `ready`
+ * is true, whatever the scope says.
+ *
+ * A guard that legitimately needs another shape will turn up one day — copy
+ * that only a session without the scope sees, or a bracketed expression. Name
+ * it as an exemption with a stated reason, the way `READ_METHOD` and
+ * `OVERRIDDEN_METHOD` are named below. Do not loosen this to a test for the
+ * name alone.
+ * @param {string} condition
+ * @returns {boolean}
+ */
+const guardsWrites = (condition) => {
+  const terms = condition.split(CONJUNCTION).map((term) => term.trim())
+
+  return (
+    terms.every((term) => PLAIN_TERM.test(term)) && terms.includes(WRITE_SCOPE)
+  )
+}
 
 const templates = readdirSync(templateRoot, { recursive: true })
   .map(String)
@@ -40,17 +80,17 @@ const READ_METHOD = /\smethod\s*=\s*"get"/i
 const OVERRIDDEN_METHOD = /formmethod/i
 
 /**
- * Lines holding a `<form>` that no enclosing `{% if not isReadOnly %}` covers.
+ * Lines holding a `<form>` that no enclosing `{% if hasWriteScope %}` covers.
  * Reads each tag in the order it appears, so a condition opened after a form on
  * the same line does not count, and an `{% else %}` or `{% elif %}` drops the
  * condition its branch does not carry. Tracks `{% if %}` nesting only — a form
- * inside a `{% for %}` still has to sit inside the read-only condition.
+ * inside a `{% for %}` still has to sit inside the write-scope condition.
  *
  * A form that declares `method="get"` is a read and needs no condition, so a
- * search a read-only session is meant to use does not have to hide itself from
- * that session. `blockUnauthorisedWrites` draws the same line one notch wider:
- * it lets a read through, and refuses a write from a session holding no write
- * scope.
+ * search a session holding no write scope is meant to use does not have to hide
+ * itself from that session. `blockUnauthorisedWrites` draws the same line one
+ * notch wider: it lets a read through, and refuses a write from a session
+ * holding no write scope.
  *
  * The exemption reads a form's stated intent and proves nothing about where it
  * submits. Nothing here checks that the `action` reaches a route that only
@@ -69,6 +109,9 @@ const OVERRIDDEN_METHOD = /formmethod/i
  * not see it while its `{% endif %}` still closes the enclosing condition, so
  * the template fails this check rather than passing it quietly. Write the
  * condition on one line.
+ *
+ * A condition that does not require the flag does not count — see
+ * `guardsWrites`.
  * @param {string} source
  * @returns {number[]}
  */
@@ -91,7 +134,7 @@ const unguardedFormLines = (source) => {
         openConditions[openConditions.length - 1] = condition ?? ''
       } else if (
         !(exemptsReads && READ_METHOD.test(formAttributes ?? '')) &&
-        !openConditions.some((open) => readOnlyCondition.test(open))
+        !openConditions.some(guardsWrites)
       ) {
         unguarded.push(index + 1)
       }
@@ -124,7 +167,7 @@ const macroImportsMissingContext = (source, readImported) => {
     }
 
     const macroSource = readImported(imported[1] ?? '')
-    const readsContext = /<form|isReadOnly/.test(macroSource ?? '')
+    const readsContext = /<form|hasWriteScope/.test(macroSource ?? '')
 
     if (readsContext && !/\bwith context\b/.test(imported[2] ?? '')) {
       missing.push(index + 1)
@@ -135,7 +178,7 @@ const macroImportsMissingContext = (source, readImported) => {
 }
 
 describe('the import scan itself', () => {
-  const readsContext = () => '{% if not isReadOnly %}<form>{% endif %}'
+  const readsContext = () => '{% if hasWriteScope %}<form>{% endif %}'
   const readsNothing = () => '<p>{{ params.text }}</p>'
 
   it('accepts an import of a macro that reads no context', () => {
@@ -164,8 +207,8 @@ describe('the import scan itself', () => {
 })
 
 describe('the scan itself', () => {
-  it('accepts a form inside the read-only condition', () => {
-    const source = ['{% if not isReadOnly %}', '<form>', '{% endif %}'].join(
+  it('accepts a form inside the write-scope condition', () => {
+    const source = ['{% if hasWriteScope %}', '<form>', '{% endif %}'].join(
       '\n'
     )
 
@@ -173,16 +216,16 @@ describe('the scan itself', () => {
   })
 
   it('rejects a form the condition does not cover', () => {
-    const source = ['{% if not isReadOnly %}', '{% endif %}', '<form>'].join(
+    const source = ['{% if hasWriteScope %}', '{% endif %}', '<form>'].join(
       '\n'
     )
 
     expect(unguardedFormLines(source)).toStrictEqual([3])
   })
 
-  it('rejects a form in the else branch of the read-only condition', () => {
+  it('rejects a form in the else branch of the write-scope condition', () => {
     const source = [
-      '{% if not isReadOnly %}',
+      '{% if hasWriteScope %}',
       '{% else %}',
       '<form>',
       '{% endif %}'
@@ -191,9 +234,9 @@ describe('the scan itself', () => {
     expect(unguardedFormLines(source)).toStrictEqual([3])
   })
 
-  it('rejects a form in an elif branch of the read-only condition', () => {
+  it('rejects a form in an elif branch of the write-scope condition', () => {
     const source = [
-      '{% if not isReadOnly %}',
+      '{% if hasWriteScope %}',
       '{% elif somethingElse %}',
       '<form>',
       '{% endif %}'
@@ -228,8 +271,31 @@ describe('the scan itself', () => {
     expect(unguardedFormLines(source)).toStrictEqual([1])
   })
 
+  it('accepts a form the flag guards alongside another term', () => {
+    const source = [
+      '{% if issueButton and hasWriteScope %}',
+      '<form>',
+      '{% endif %}'
+    ].join('\n')
+
+    expect(unguardedFormLines(source)).toStrictEqual([])
+  })
+
+  it.for([
+    '{% if not hasWriteScope %}',
+    '{% if not  hasWriteScope %}',
+    '{% if not (hasWriteScope) %}',
+    '{% if hasWriteScope == false %}',
+    '{% if hasWriteScope or true %}',
+    '{% if ready or draft and hasWriteScope %}'
+  ])('rejects a form that %s covers', (opening) => {
+    const source = [opening, '<form>', '{% endif %}'].join('\n')
+
+    expect(unguardedFormLines(source)).toStrictEqual([2])
+  })
+
   it('rejects a form the condition guards only on a later line', () => {
-    const source = ['<form>{% if not isReadOnly %}', '{% endif %}'].join('\n')
+    const source = ['<form>{% if hasWriteScope %}', '{% endif %}'].join('\n')
 
     expect(unguardedFormLines(source)).toStrictEqual([1])
   })
@@ -241,7 +307,7 @@ describe('write controls in templates', () => {
   })
 
   it.for(templates)(
-    'hides every form in %s from a read-only session',
+    'hides every form in %s from a session holding no write scope',
     (template) => {
       const source = readFileSync(path.join(templateRoot, template), 'utf-8')
 
@@ -259,4 +325,48 @@ describe('write controls in templates', () => {
       )
     }
   )
+})
+
+/**
+ * Renders the summary log upload macro in the environment the app itself
+ * builds, so the filters, globals and template roots are the running ones
+ * rather than a second set that has to be kept in step.
+ *
+ * The scans above read source and prove only that a guard was written. This
+ * renders one to prove which way it falls.
+ * @param {{ context?: Record<string, unknown>, withContext?: boolean }} options
+ * @returns {string}
+ */
+const renderUploadMacro = ({ context = {}, withContext = true }) =>
+  nunjucksConfig.options.compileOptions.environment.renderString(
+    [
+      `{% from "summary-log-upload/macro.njk" import summaryLogUpload ${withContext ? 'with context' : ''} %}`,
+      '{{ summaryLogUpload({ uploadUrl: "/upload", fileUploadLabel: "Choose XLSX file", buttonText: "Continue" }) }}'
+    ].join('\n'),
+    context
+  )
+
+describe('the guard a template renders', () => {
+  it('offers the write control to a context holding the write scope', () => {
+    expect(renderUploadMacro({ context: { hasWriteScope: true } })).toContain(
+      '<form'
+    )
+  })
+
+  it('hides the write control from a context that names no write scope', () => {
+    expect(renderUploadMacro({ context: {} })).not.toContain('<form')
+  })
+
+  // The defect the positive polarity exists to survive. A macro reads its
+  // caller's context only when the import says `with context`, so dropping that
+  // leaves the flag undefined inside the macro. Under the old negative guard
+  // the control rendered to everyone; under this one it disappears.
+  it('hides the write control from a macro imported without context', () => {
+    expect(
+      renderUploadMacro({
+        context: { hasWriteScope: true },
+        withContext: false
+      })
+    ).not.toContain('<form')
+  })
 })

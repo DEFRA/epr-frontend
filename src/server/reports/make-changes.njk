@@ -26,7 +26,7 @@
       <h2 class="govuk-heading-m">{{ localise("reports:makeChangesUpdateSummaryLogHeading") }}</h2>
       <p class="govuk-body">{{ summaryLogText }}</p>
 
-      {% if not isReadOnly %}
+      {% if hasWriteScope %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         {{ govukButton({

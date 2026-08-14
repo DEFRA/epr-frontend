@@ -65,7 +65,7 @@
     }) }}
 
     {% if createButton %}
-      {% if not isReadOnly %}
+      {% if hasWriteScope %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
@@ -76,7 +76,7 @@
       </form>
       {% endif %}
 
-      {% if discardLink and not isReadOnly %}
+      {% if discardLink and hasWriteScope %}
         <p class="govuk-body">
           <a href="{{ discardLink.href }}" class="govuk-link">{{ discardLink.text }}</a>
         </p>

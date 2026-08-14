@@ -25,7 +25,7 @@
       {{ wasteBalanceMessage }}
     </p>
 
-    {% if not isReadOnly %}
+    {% if hasWriteScope %}
     <p class="govuk-body">
       {{ issueText.prefix }} <a href="{{ issueText.link.href }}" class="govuk-link">{{ issueText.link.text }}</a>{{ issueText.suffix }}
     </p>

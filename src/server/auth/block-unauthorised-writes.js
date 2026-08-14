@@ -1,10 +1,10 @@
-import { isReadOnlySession } from '#server/auth/scopes.js'
+import { hasWriteScope } from '#server/auth/scopes.js'
 import Boom from '@hapi/boom'
 
 const READ_METHODS = Object.freeze(['get', 'head'])
 
 /**
- * Defence in depth for every read-only session. The backend is the
+ * Defence in depth for every session holding no write scope. The backend is the
  * authoritative authorisation point and already refuses a write from a session
  * that holds no write scope; this stops one reaching it at all. Every mutating
  * route in this app uses a method outside `READ_METHODS`, and every route a
@@ -16,7 +16,7 @@ const READ_METHODS = Object.freeze(['get', 'head'])
 export function blockUnauthorisedWrites(request, h) {
   const isWrite = !READ_METHODS.includes(request.method)
 
-  if (isWrite && isReadOnlySession(request.auth.credentials)) {
+  if (isWrite && !hasWriteScope(request.auth.credentials)) {
     throw Boom.forbidden('Access denied: this session cannot change data')
   }
 
