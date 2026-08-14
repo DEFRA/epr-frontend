@@ -1,5 +1,7 @@
 import { config } from '#config/config.js'
 import { dropUserSession } from '#server/auth/helpers/drop-user-session.js'
+import { SIGNED_OUT_PROVIDER_COOKIE } from '#server/auth/helpers/signed-out-provider.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { logoutController } from '#server/logout/controller.js'
 import {
   mockHapiRequest,
@@ -40,6 +42,7 @@ describe('#logoutController', () => {
 
   describe('when user is authenticated', () => {
     const mockSession = {
+      provider: OIDC_ENTRA_ID,
       idToken: 'id-token-123',
       backendToken: 'access-token-123',
       profile: {
@@ -72,7 +75,8 @@ describe('#logoutController', () => {
       }
 
       const mockH = {
-        redirect: vi.fn().mockReturnValue('redirect-response')
+        redirect: vi.fn().mockReturnValue('redirect-response'),
+        state: vi.fn()
       }
 
       const result = await logoutController.handler(
@@ -80,6 +84,10 @@ describe('#logoutController', () => {
         asResponseToolkit(mockH)
       )
 
+      expect(mockH.state).toHaveBeenCalledExactlyOnceWith(
+        SIGNED_OUT_PROVIDER_COOKIE,
+        OIDC_ENTRA_ID
+      )
       expect(dropUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
       expect(mockRequest.cookieAuth.clear).toHaveBeenCalledExactlyOnceWith()
 
