@@ -18,7 +18,7 @@
       <p class="govuk-body">{{ bodyWarning }}</p>
       <p class="govuk-body">{{ bodyGuidance }}</p>
 
-      {% if not isReadOnly %}
+      {% if hasWriteScope %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 

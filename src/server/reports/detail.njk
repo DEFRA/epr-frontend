@@ -117,7 +117,7 @@
         }) }}
       {% endif %}
 
-      {% if not isReadOnly %}
+      {% if hasWriteScope %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         {{ govukButton({

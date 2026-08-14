@@ -23,7 +23,7 @@
       </a>
     </p>
 
-    {% if not isReadOnly %}
+    {% if hasWriteScope %}
     <p class="govuk-body">
       <a href="{{ issueAnotherLink.href }}" class="govuk-link">{{ issueAnotherLink.text }}</a>
     </p>

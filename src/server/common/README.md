@@ -5,7 +5,7 @@ For common work that is Server specific
 ## Putting a conditional control inside a component macro
 
 A Nunjucks macro cannot see the calling template's context. A macro that reads a
-context variable, such as the `isReadOnly` flag that hides write controls, gets
+context variable, such as the `hasWriteScope` flag that shows write controls, gets
 `undefined` for it unless every call site imports the macro
 `{% from "…/macro.njk" import name with context %}`. There is no error and no
 warning: the condition simply evaluates as though the variable were false, and
