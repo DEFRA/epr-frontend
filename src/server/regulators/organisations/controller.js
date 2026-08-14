@@ -1,7 +1,11 @@
 import { paths } from '#server/paths.js'
 
 import { fetchOrganisations } from './helpers/fetch-organisations.js'
-import { buildPaginationLinks } from './helpers/pagination.js'
+import {
+  buildPaginationLinks,
+  lastPageOf,
+  organisationsPageHref
+} from './helpers/pagination.js'
 import { searchQuerySchema } from './helpers/search-query-schema.js'
 import { toOrganisationRow } from './helpers/to-organisation-row.js'
 
@@ -27,6 +31,18 @@ export const controller = {
     const { backendToken, profile } = request.auth.credentials
 
     const results = await fetchOrganisations({ page, search, backendToken })
+    const basePath = request.localiseUrl(paths.regulators.home)
+    const lastPage = lastPageOf(results.totalPages)
+
+    // A page number beyond the results renders as an empty table, which reads
+    // as 'your search found nothing' rather than 'there is no page 5'. Sending
+    // the regulator to the last page that exists corrects the address as well
+    // as the page, so a reload or a shared link no longer overshoots.
+    if (page > lastPage) {
+      return h.redirect(
+        organisationsPageHref({ basePath, page: lastPage, search })
+      )
+    }
 
     return h.view('regulators/home', {
       pageTitle: request.t('regulators:organisations:pageTitle'),
@@ -36,7 +52,7 @@ export const controller = {
         toOrganisationRow(organisation, request.localiseUrl)
       ),
       pagination: buildPaginationLinks({
-        basePath: request.localiseUrl(paths.regulators.home),
+        basePath,
         page: results.page,
         totalPages: results.totalPages,
         search

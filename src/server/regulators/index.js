@@ -1,6 +1,7 @@
 import { SCOPES } from '#server/auth/scopes.js'
 import { paths } from '#server/paths.js'
 
+import { controller as loggedOutController } from './logged-out/controller.js'
 import { controller } from './organisations/controller.js'
 
 /**
@@ -21,6 +22,14 @@ export const regulators = {
           options: {
             ...controller.options,
             auth: { scope: [SCOPES.organisationSearch] }
+          }
+        },
+        {
+          ...loggedOutController,
+          method: 'GET',
+          path: paths.regulators.loggedOut,
+          options: {
+            auth: { mode: 'try' }
           }
         }
       ])

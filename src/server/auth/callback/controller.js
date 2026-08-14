@@ -125,6 +125,7 @@ function referrerIfPresentElseDefault(request, defaultPath) {
   const skipReferrers = [
     ...withWelsh(paths.start),
     ...withWelsh(paths.loggedOut),
+    ...withWelsh(paths.regulators.loggedOut),
     paths.auth.defraId.callback,
     paths.auth.entraId.callback
   ]
