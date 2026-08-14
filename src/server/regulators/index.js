@@ -1,14 +1,17 @@
 import { SCOPES } from '#server/auth/scopes.js'
 import { paths } from '#server/paths.js'
 
+import { regulatorOrganisations } from './organisations/index.js'
+
 /**
  * Regulators plugin
- * Registers the post-login landing page for Entra ID authenticated regulators.
+ * Registers the post-login landing page for Entra ID authenticated regulators,
+ * and the pages that page leads to.
  */
 export const regulators = {
   plugin: {
     name: 'regulators',
-    register(server) {
+    async register(server) {
       server.route([
         {
           /**
@@ -20,6 +23,9 @@ export const regulators = {
             const username = profile.email?.split('@')[0]
 
             return h.view('regulators/home', {
+              organisationsUrl: request.localiseUrl(
+                paths.regulators.organisations
+              ),
               pageTitle: request.t('regulators:home:pageTitle'),
               username
             })
@@ -31,6 +37,8 @@ export const regulators = {
           }
         }
       ])
+
+      await server.register([regulatorOrganisations])
     }
   }
 }

@@ -1,0 +1,74 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl">{{ localise('regulators:organisations:heading') }}</h1>
+
+      {# A search replaces the previous one rather than narrowing it, so the
+         form carries no page and every search opens at the first page. #}
+      <form method="get" action="">
+        {{ govukInput({
+          label: {
+            text: localise('regulators:organisations:searchLabel'),
+            classes: "govuk-label--s"
+          },
+          id: "search",
+          name: "search",
+          type: "search",
+          value: search,
+          autocomplete: "off",
+          classes: "govuk-input--width-20"
+        }) }}
+
+        {{ govukButton({ text: localise('regulators:organisations:searchButton') }) }}
+      </form>
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+        {% if organisations.length %}
+          {% set tableRows = [] %}
+          {% for organisation in organisations %}
+            {# The name is the link, so it says on its own what it opens. The
+               organisation's own page carries the registration and
+               accreditation numbers this table leaves out. #}
+            {% set row = [
+              { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (organisation.href | escape) ~ '">' ~ (organisation.name | escape) ~ '</a>' },
+              { text: organisation.organisationId },
+              { text: organisation.regulator },
+              { html: govukTag({ text: organisation.status }) }
+            ] %}
+            {% set tableRows = tableRows.concat([row]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            firstCellIsHeader: true,
+            head: [
+              { text: localise('regulators:organisations:table:name') },
+              { text: localise('regulators:organisations:table:organisationId') },
+              { text: localise('regulators:organisations:table:regulator') },
+              { text: localise('regulators:organisations:table:status') }
+            ],
+            rows: tableRows
+          }) }}
+
+          {% if pagination.previous or pagination.next %}
+            {{ govukPagination(pagination) }}
+          {% endif %}
+        {% else %}
+          {{ govukInsetText({ text: localise('regulators:organisations:noResults') }) }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

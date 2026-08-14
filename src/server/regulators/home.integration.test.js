@@ -5,7 +5,9 @@ import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { it } from '#vite/fixtures/server.js'
+import { getByRole } from '@testing-library/dom'
 import { load } from 'cheerio'
+import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 const mockAuth = buildMockAuth({
@@ -40,6 +42,25 @@ describe('/regulators/home - GET integration', () => {
     const $ = load(asHtml(response.result))
     expect($('[data-testid="regulator-username"]').text().trim()).toBe(
       'jane.doe'
+    )
+  })
+
+  it('offers the organisation search, which is how a regulator reaches an operator', async ({
+    server
+  }) => {
+    const response = await server.inject({
+      method: 'GET',
+      url: '/regulators/home',
+      auth: mockAuth
+    })
+
+    const body = new JSDOM(asHtml(response.result)).window.document.body
+
+    expect(
+      getByRole(getByRole(body, 'main'), 'link', { name: 'Organisations' })
+    ).toHaveProperty(
+      'href',
+      expect.stringContaining('/regulators/organisations')
     )
   })
 

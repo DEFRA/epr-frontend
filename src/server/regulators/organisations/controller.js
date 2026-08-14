@@ -1,0 +1,44 @@
+import { paths } from '#server/paths.js'
+
+import { fetchOrganisations } from './helpers/fetch-organisations.js'
+import { buildPaginationLinks } from './helpers/pagination.js'
+import { searchQuerySchema } from './helpers/search-query-schema.js'
+import { toOrganisationRow } from './helpers/to-organisation-row.js'
+
+/**
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { SearchQuery } from './helpers/search-query-schema.js'
+ */
+
+/**
+ * The organisation search a regulator reaches from their landing page. A
+ * regulator holds no organisation of their own, so searching is how they reach
+ * an operator at all, and the page shows every organisation until they narrow
+ * it.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest & { query: SearchQuery }>>}
+ */
+export const controller = {
+  options: {
+    validate: {
+      query: searchQuerySchema
+    }
+  },
+  async handler(request, h) {
+    const { page, search } = request.query
+    const { backendToken } = request.auth.credentials
+
+    const results = await fetchOrganisations({ page, search, backendToken })
+
+    return h.view('regulators/organisations/index', {
+      pageTitle: request.t('regulators:organisations:pageTitle'),
+      search,
+      organisations: results.items.map(toOrganisationRow),
+      pagination: buildPaginationLinks({
+        basePath: request.localiseUrl(paths.regulators.organisations),
+        page: results.page,
+        totalPages: results.totalPages,
+        search
+      })
+    })
+  }
+}

@@ -3,14 +3,15 @@
  * identity to a set of scopes and hands them to a session over `/v1/me`, so
  * every spelling here is that contract and nothing decides one locally.
  *
- * `regulator` is checked via `options.auth.scope` on the regulator's own
- * routes. `organisationLinkedWrite` is the operator's durable write
+ * `regulator` and `organisationSearch` are checked via `options.auth.scope` on
+ * the regulator's own routes. `organisationLinkedWrite` is the operator's durable write
  * permission — the backend grants it to an operator for its own organisation
  * and to nobody else. The per-request `organisation.write` is decided on each
  * backend call and never reaches a session.
  */
 export const SCOPES = Object.freeze({
   organisationLinkedWrite: 'organisation.linked.write',
+  organisationSearch: 'organisation.search',
   regulator: 'regulator'
 })
 

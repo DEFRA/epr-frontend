@@ -34,7 +34,9 @@ const readComponent = (templatePath) => {
 }
 
 const CONDITION_OR_FORM =
-  /{%-?\s*(if|elif|elseif|else|endif)\s*([^%]*?)\s*-?%}|<form/g
+  /{%-?\s*(if|elif|elseif|else|endif)\s*([^%]*?)\s*-?%}|<form([^>]*)/g
+
+const READ_METHOD = /\smethod\s*=\s*"get"/i
 
 /**
  * Lines holding a `<form>` that no enclosing `{% if not isReadOnly %}` covers.
@@ -42,6 +44,21 @@ const CONDITION_OR_FORM =
  * the same line does not count, and an `{% else %}` or `{% elif %}` drops the
  * condition its branch does not carry. Tracks `{% if %}` nesting only — a form
  * inside a `{% for %}` still has to sit inside the read-only condition.
+ *
+ * A form that declares `method="get"` is a read and needs no condition, so a
+ * search a read-only session is meant to use does not have to hide itself from
+ * that session. `blockUnauthorisedWrites` draws the same line one notch wider:
+ * it lets a read through, and refuses a write from a session holding no write
+ * scope.
+ *
+ * The exemption reads a form's stated intent and proves nothing about where it
+ * submits. Nothing here checks that the `action` reaches a route that only
+ * answers a GET, so for a GET form this scan is advisory and the runtime guard
+ * is what holds the line.
+ *
+ * The attribute has to be the form's own `method`, written out on the form's
+ * own line: a form that says nothing about its method counts as a write, and so
+ * does one whose only `get` sits in an attribute that merely ends in `method`.
  *
  * A tag must sit on one line. Split an `{% if %}` across two and the scan does
  * not see it while its `{% endif %}` still closes the enclosing condition, so
@@ -57,14 +74,19 @@ const unguardedFormLines = (source) => {
   const unguarded = []
 
   source.split('\n').forEach((line, index) => {
-    for (const [, tag, condition] of line.matchAll(CONDITION_OR_FORM)) {
+    for (const [, tag, condition, formAttributes] of line.matchAll(
+      CONDITION_OR_FORM
+    )) {
       if (tag === 'if') {
         openConditions.push(condition ?? '')
       } else if (tag === 'endif') {
         openConditions.pop()
       } else if (tag) {
         openConditions[openConditions.length - 1] = condition ?? ''
-      } else if (!openConditions.some((open) => readOnlyCondition.test(open))) {
+      } else if (
+        !READ_METHOD.test(formAttributes ?? '') &&
+        !openConditions.some((open) => readOnlyCondition.test(open))
+      ) {
         unguarded.push(index + 1)
       }
     }
@@ -172,6 +194,22 @@ describe('the scan itself', () => {
     ].join('\n')
 
     expect(unguardedFormLines(source)).toStrictEqual([3])
+  })
+
+  it('accepts a form that reads, which is what a GET form does', () => {
+    expect(unguardedFormLines('<form method="get" action="">')).toStrictEqual(
+      []
+    )
+  })
+
+  it('rejects a form that says nothing about its method', () => {
+    expect(unguardedFormLines('<form action="">')).toStrictEqual([1])
+  })
+
+  it('rejects a form whose only get sits in another attribute', () => {
+    expect(
+      unguardedFormLines('<form data-method="get" method="post">')
+    ).toStrictEqual([1])
   })
 
   it('rejects a form the condition guards only on a later line', () => {

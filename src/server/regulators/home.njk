@@ -5,6 +5,9 @@
     <div class="govuk-grid-column-full">
       <h1 class="govuk-heading-xl">{{ localise('regulators:home:heading') }}</h1>
       <p class="govuk-body" data-testid="regulator-username">{{ username }}</p>
+      <p class="govuk-body">
+        <a class="govuk-link" href="{{ organisationsUrl }}">{{ localise('regulators:home:organisations') }}</a>
+      </p>
     </div>
   </div>
 {% endblock %}
