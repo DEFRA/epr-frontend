@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
+import { isRegulator } from '#server/auth/roles.js'
 import { paths } from '#server/paths.js'
 
 /**
@@ -46,6 +47,21 @@ const manageAccount = ({ t: localise }, session) => {
 }
 
 /**
+ * A regulator has no linked organisation, so the operator's home link has
+ * nothing to point at. Their home is the page sign-in already lands them on.
+ * @param {HapiRequest} request
+ * @returns {NavigationItem[]}
+ */
+const regulatorHome = ({ localiseUrl, t: localise }) => {
+  return [
+    {
+      href: localiseUrl(paths.regulators.home),
+      text: localise('common:navigation:home')
+    }
+  ]
+}
+
+/**
  * @param {HapiRequest} request
  * @returns {NavigationItem[]}
  */
@@ -72,6 +88,13 @@ export function buildNavigation(request) {
   // strategy authenticated gets none of them.
   if (!session || request.auth.strategy !== SESSION_STRATEGY) {
     return []
+  }
+
+  // Which shell a user gets is a question about who they are, so it reads the
+  // role. What renders inside the shell is a question about what they may do,
+  // and reads a scope.
+  if (isRegulator(session)) {
+    return [...regulatorHome(request), ...signOut(request)]
   }
 
   return [

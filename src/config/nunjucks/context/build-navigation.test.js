@@ -3,6 +3,7 @@ import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
 import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { REGULATOR_ROLE } from '#server/auth/roles.js'
 import { languages } from '#server/common/constants/languages.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
@@ -35,15 +36,18 @@ describe('#buildNavigation', () => {
     authedWithLinkedOrg: {
       displayName: 'Test User',
       linkedOrganisationId: 'org-123',
-      provider: OIDC_DEFRA_ID
+      provider: OIDC_DEFRA_ID,
+      role: 'operator'
     },
     authedWithoutLinkedOrg: {
       displayName: 'Test User',
-      provider: OIDC_DEFRA_ID
+      provider: OIDC_DEFRA_ID,
+      role: 'operator'
     },
     regulator: {
       displayName: 'Test Regulator',
-      provider: OIDC_ENTRA_ID
+      provider: OIDC_ENTRA_ID,
+      role: REGULATOR_ROLE
     }
   }
 
@@ -71,14 +75,64 @@ describe('#buildNavigation', () => {
     expect(buildNavigation(request)).toStrictEqual([])
   })
 
-  it('offers a regulator the sign out link and nothing else', () => {
-    const request = mockRequest({
-      auth: { credentials: credentials.regulator, strategy: SESSION_STRATEGY }
+  describe('a regulator', () => {
+    it('is offered their own home and the sign out link, and nothing else', () => {
+      const request = mockRequest({
+        auth: { credentials: credentials.regulator, strategy: SESSION_STRATEGY }
+      })
+
+      expect(buildNavigation(request)).toStrictEqual([
+        { href: '/regulators/home', text: 'Home' },
+        { href: '/logout', text: 'Sign out' }
+      ])
     })
 
-    expect(buildNavigation(request)).toStrictEqual([
-      { href: '/logout', text: 'Sign out' }
-    ])
+    it('is offered their own home even while reading an organisation that has one', () => {
+      const request = mockRequest({
+        auth: {
+          credentials: {
+            ...credentials.regulator,
+            linkedOrganisationId: 'org-123'
+          },
+          strategy: SESSION_STRATEGY
+        }
+      })
+      const [home] = buildNavigation(request)
+
+      expect(home).toStrictEqual({ href: '/regulators/home', text: 'Home' })
+    })
+
+    it('localises their home link', () => {
+      const request = mockRequest({
+        auth: {
+          credentials: credentials.regulator,
+          strategy: SESSION_STRATEGY
+        },
+        localiseUrl: localiseUrl(languages.WELSH)
+      })
+      const [home] = buildNavigation(request)
+
+      expect(home.href).toBe('/cy/regulators/home')
+    })
+
+    it('is chosen by the role, so a session holding the regulator scope alone keeps the operator shell', () => {
+      const request = mockRequest({
+        auth: {
+          credentials: {
+            ...credentials.authedWithLinkedOrg,
+            role: 'operator',
+            scope: ['regulator']
+          },
+          strategy: SESSION_STRATEGY
+        }
+      })
+      const [home] = buildNavigation(request)
+
+      expect(home).toStrictEqual({
+        href: '/organisations/org-123',
+        text: 'Home'
+      })
+    })
   })
 
   describe('home', () => {

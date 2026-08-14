@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { REGULATOR_ROLE } from '#server/auth/roles.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import {
   afterEach,
@@ -104,6 +105,66 @@ describe('#context', () => {
       expect(contextResult).not.toHaveProperty('language')
       expect(contextResult.localise('some:key')).toBe('some:key')
       expect(contextResult.localiseUrl('/some-path')).toBe('/some-path')
+    })
+  })
+
+  describe('the shell the header renders', () => {
+    let contextImport
+
+    beforeAll(async () => {
+      contextImport = await import('#config/nunjucks/context/context.js')
+    })
+
+    /**
+     * @param {Record<string, unknown>} credentials
+     */
+    const contextFor = (credentials) =>
+      contextImport.context(
+        mockRequest(
+          /** @type {Partial<Request>} */ ({
+            auth: { isAuthenticated: true, credentials }
+          })
+        )
+      )
+
+    it('calls the service by its regulator name for a regulator', async () => {
+      contextResult = await contextFor({ role: REGULATOR_ROLE })
+
+      expect(contextResult.serviceName).toBe('regulators:serviceName')
+    })
+
+    it('sends a regulator to their own home from the service link', async () => {
+      contextResult = await contextFor({ role: REGULATOR_ROLE })
+
+      expect(contextResult.serviceUrl).toBe('/regulators/home')
+    })
+
+    it('calls the service by its operator name for an operator', async () => {
+      contextResult = await contextFor({ role: 'operator' })
+
+      expect(contextResult.serviceName).toBe('common:serviceName')
+    })
+
+    it('sends an operator to the start page from the service link', async () => {
+      contextResult = await contextFor({ role: 'operator' })
+
+      expect(contextResult.serviceUrl).toBe('/start')
+    })
+
+    it('leaves a signed out request the operator shell', async () => {
+      contextResult = await contextImport.context(mockRequest())
+
+      expect(contextResult.serviceName).toBe('common:serviceName')
+      expect(contextResult.serviceUrl).toBe('/start')
+    })
+
+    it('chooses on the role, so the regulator scope alone does not rename the service', async () => {
+      contextResult = await contextFor({
+        role: 'operator',
+        scope: [SCOPES.regulator]
+      })
+
+      expect(contextResult.serviceName).toBe('common:serviceName')
     })
   })
 
@@ -214,6 +275,7 @@ describe('#context', () => {
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
+        serviceName: 'common:serviceName',
         serviceUrl: '/start'
       })
     })
@@ -298,6 +360,7 @@ describe('#context cache', () => {
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
+        serviceName: 'common:serviceName',
         serviceUrl: '/start'
       })
     })
