@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { isReadOnlySession } from '#server/auth/scopes.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
@@ -201,6 +202,18 @@ function buildViewModel({
 }
 
 /**
+ * Chooses between a string and its read-only variant. A card that offers a
+ * session nothing but a list should not describe itself as a way to create and
+ * manage, so the copy follows the same signal the controls do.
+ * @param {HapiRequest} request
+ * @param {string} key
+ * @returns {string}
+ */
+function keyForSession(request, key) {
+  return isReadOnlySession(request.auth.credentials) ? `${key}ReadOnly` : key
+}
+
+/**
  * Get reports view data for the dashboard tile
  * @param {HapiRequest} request
  * @param {string} organisationId
@@ -213,7 +226,7 @@ function getReportsViewData(request, organisationId, registrationId) {
   return {
     link: {
       href: request.localiseUrl(reportsUrl),
-      text: localise('registrations:manageReports')
+      text: localise(keyForSession(request, 'registrations:manageReports'))
     }
   }
 }
@@ -239,16 +252,19 @@ function getPrnViewData(
   const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   return {
-    description: localise('registrations:notes.description', {
-      noteTypePlural
-    }),
+    description: localise(
+      keyForSession(request, 'registrations:notes.description'),
+      { noteTypePlural }
+    ),
     link: {
       href: request.localiseUrl(createUrl),
       text: localise('registrations:notes.createNew', { noteType })
     },
     manageLink: {
       href: request.localiseUrl(manageUrl),
-      text: localise('registrations:notes.manage', { noteTypePlural })
+      text: localise(keyForSession(request, 'registrations:notes.manage'), {
+        noteTypePlural
+      })
     },
     title: localise('registrations:notes.title', { noteTypePlural })
   }

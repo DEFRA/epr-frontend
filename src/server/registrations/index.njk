@@ -114,9 +114,13 @@
                 </div>
               </div>
               <div class="govuk-summary-card__content">
+                  {# Issuing a note changes the operator's data, so a read-only
+                     session is offered only the list. #}
                   <p class="govuk-body">
+                    {% if not isReadOnly %}
                     <a href="{{ prns.link.href }}" class="govuk-link">{{ prns.link.text }}</a>
                     <br>
+                    {% endif %}
                     <a href="{{ prns.manageLink.href }}" class="govuk-link">{{ prns.manageLink.text }}</a>
                   </p>
               </div>
@@ -131,7 +135,7 @@
                     {{ localise("registrations:reports") }}
                   </h3>
                   <p class="govuk-body-s govuk-!-margin-bottom-0">
-                    {{ localise("registrations:reportsDescription") }}
+                    {{ localise("registrations:reportsDescriptionReadOnly" if isReadOnly else "registrations:reportsDescription") }}
                   </p>
                 </div>
               </div>
@@ -150,12 +154,15 @@
                     {{ localise("registrations:registrationAndAccreditation") }}
                   </h3>
                   <p class="govuk-body-s govuk-!-margin-bottom-0">
-                    {{ localise("registrations:registrationAndAccreditationDescription") }}
+                    {{ localise("registrations:registrationAndAccreditationDescriptionReadOnly" if isReadOnly else "registrations:registrationAndAccreditationDescription") }}
                   </p>
                 </div>
               </div>
               <div class="govuk-summary-card__content">
-                {% if reapplyAccreditation %}
+                {# Applying is the operator's to do, and the invitation reads as
+                   one sentence, so a read-only session gets the other branch
+                   rather than a lead-in with nothing to follow it. #}
+                {% if reapplyAccreditation and not isReadOnly %}
                 <p class="govuk-body">
                   {{ localise("registrations:reapplyAccreditationLead") }} <a href="{{ reapplyAccreditation.href }}" class="govuk-link">{{ localise("registrations:reapplyAccreditationLink", { year: reapplyAccreditation.year }) }}</a>.
                 </p>
