@@ -228,7 +228,7 @@
       }) }}
     {% endif %}
 
-    {% if not isReadOnly %}
+    {% if hasWriteScope %}
     <form class="govuk-!-margin-top-6" method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
       <input type="hidden" name="crumb" value="{{ crumb }}" />
       <div class="govuk-button-group">

@@ -18,7 +18,7 @@
 
       <div class="epr-heading-with-action">
         <h1 class="govuk-heading-xl govuk-!-margin-bottom-0">{{ heading }}</h1>
-        {% if not isReadOnly %}
+        {% if hasWriteScope %}
         {{ govukButton({
           text: createLink.text,
           href: createLink.href,

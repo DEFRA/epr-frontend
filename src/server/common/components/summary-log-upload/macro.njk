@@ -14,7 +14,7 @@
     - cancelButtonText: (optional) Text for cancel button
 #}
 {% macro summaryLogUpload(params) %}
-  {% if not isReadOnly %}
+  {% if hasWriteScope %}
   <form
     class="form"
     action="{{ params.uploadUrl }}"

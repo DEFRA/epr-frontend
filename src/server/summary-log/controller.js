@@ -1,4 +1,4 @@
-import { isReadOnlySession } from '#server/auth/scopes.js'
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -432,17 +432,17 @@ export const summaryLogUploadProgressController = {
     const cancelUrl = baseUrl
 
     // Asking for an upload URL creates a summary log, so this GET writes. A
-    // read-only session reads the page without one; the re-upload form is
-    // hidden.
-    const { uploadUrl } = isReadOnlySession(session)
-      ? {}
-      : await getUploadUrl(
+    // session holding no write scope reads the page without one; the re-upload
+    // form is hidden.
+    const { uploadUrl } = hasWriteScope(session)
+      ? await getUploadUrl(
           status,
           organisationId,
           registrationId,
           redirectUrl,
           session.backendToken
         )
+      : {}
 
     const { wasteBalance } = await getWasteBalanceData(
       status,

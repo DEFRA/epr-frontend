@@ -126,7 +126,7 @@
           rows: [{
             key: { text: localise("reports:tonnageReceivedNotExportedRegOnlyLabel") },
             value: { text: wasteExported.tonnageReceivedNotExported },
-            actions: { items: [{ href: tonnageNotExportedChangeUrl, text: changeText, visuallyHiddenText: localise("reports:tonnageReceivedNotExportedRegOnlyLabel") }] } if not isReadOnly
+            actions: { items: [{ href: tonnageNotExportedChangeUrl, text: changeText, visuallyHiddenText: localise("reports:tonnageReceivedNotExportedRegOnlyLabel") }] } if hasWriteScope
           }]
         }) }}
       {% endif %}
@@ -147,7 +147,7 @@
                   text: changeText,
                   visuallyHiddenText: localise("reports:checkTonnageRecycledLabel")
                 }]
-              } if not isReadOnly
+              } if hasWriteScope
             },
             {
               key: { text: localise("reports:checkTonnageNotRecycledLabel") },
@@ -158,7 +158,7 @@
                   text: changeText,
                   visuallyHiddenText: localise("reports:checkTonnageNotRecycledLabel")
                 }]
-              } if not isReadOnly
+              } if hasWriteScope
             }
           ]
         }) }}
@@ -174,7 +174,7 @@
           freeNote: freeNote,
           avg: localise("reports:avgPriceLabel")
         }, {
-          editable: not isReadOnly,
+          editable: hasWriteScope,
           revenueChangeUrl: prnRevenueChangeUrl,
           freeChangeUrl: freePrnsChangeUrl if isReprocessor else freePernChangeUrl,
           changeText: changeText
@@ -186,14 +186,14 @@
       {{ supportingInfoSummary({
         label: supportingInformationLabel,
         value: supportingInformation,
-        changeUrl: changeUrl if not isReadOnly,
+        changeUrl: changeUrl if hasWriteScope,
         changeText: changeText
       }) }}
 
       <h2 class="govuk-heading-l">{{ localise("reports:checkPleaseBeAwareHeading") }}</h2>
       <p class="govuk-body govuk-!-margin-bottom-8">{{ localise("reports:checkPleaseBeAwareText") }}</p>
 
-      {% if not isReadOnly %}
+      {% if hasWriteScope %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         <input type="hidden" name="version" value="{{ version }}" />

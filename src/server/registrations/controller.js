@@ -1,5 +1,5 @@
 import { config } from '#config/config.js'
-import { isReadOnlySession } from '#server/auth/scopes.js'
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
@@ -210,7 +210,7 @@ function buildViewModel({
  * @returns {string}
  */
 function keyForSession(request, key) {
-  return isReadOnlySession(request.auth.credentials) ? `${key}ReadOnly` : key
+  return hasWriteScope(request.auth.credentials) ? key : `${key}ReadOnly`
 }
 
 /**
