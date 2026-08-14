@@ -102,17 +102,20 @@ describe('which sign out page a provider sends a user to', () => {
   })
 
   describe('when an operator signs out', () => {
-    it('sends them to the operator sign out page', async ({ server }) => {
+    it('gives them no provider cookie at all', async ({ server }) => {
       const signOut = await server.inject({
         method: 'GET',
         url: '/logout',
         auth: buildMockAuth()
       })
 
+      expect(providerCookieHeader(signOut)).toBe('')
+    })
+
+    it('sends them to the operator sign out page', async ({ server }) => {
       const returned = await server.inject({
         method: 'GET',
-        url: '/auth/logout',
-        headers: { cookie: providerCookieHeader(signOut) }
+        url: '/auth/logout'
       })
 
       expect(returned.statusCode).toBe(statusCodes.found)
@@ -141,5 +144,24 @@ describe('which sign out page a provider sends a user to', () => {
       expect(returned.statusCode).toBe(statusCodes.found)
       expect(returned.headers.location).toBe('/logged-out')
     })
+  })
+})
+
+describe('when regulator access is switched off', () => {
+  // The regulator sign out page is not registered, so a cookie claiming a
+  // regulator signed out must not send anyone to it. Nothing can set that
+  // cookie honestly here, which leaves forgery as the only way to arrive
+  // with one.
+  it('ignores a forged regulator cookie rather than serving a 404', async ({
+    server
+  }) => {
+    const returned = await server.inject({
+      method: 'GET',
+      url: '/auth/logout',
+      headers: { cookie: `${SIGNED_OUT_PROVIDER_COOKIE}=${OIDC_ENTRA_ID}` }
+    })
+
+    expect(returned.statusCode).toBe(statusCodes.found)
+    expect(returned.headers.location).toBe('/logged-out')
   })
 })

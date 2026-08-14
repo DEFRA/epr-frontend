@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 
 /**
+ * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServer } from '#server/common/hapi-types.js'
  */
 
@@ -35,14 +36,32 @@ export const registerSignedOutProviderCookie = (server) => {
 }
 
 /**
+ * Records who signed the user out, for the page that greets them when they
+ * come back. Only a regulator sign-out is worth remembering, so an operator
+ * signing out is given no cookie at all.
+ * @param {ResponseToolkit} h
+ * @param {string} provider
+ */
+export const rememberSignedOutProvider = (h, provider) => {
+  if (provider === OIDC_ENTRA_ID) {
+    h.state(SIGNED_OUT_PROVIDER_COOKIE, provider)
+  }
+}
+
+/**
  * Whether the user who is coming back signed out of the regulator service.
  *
  * Reads the cookie for one thing only: which of two static pages to show. It
  * grants nothing, so a forged value buys a reader the other page and no more.
  * Any value but the one provider gives the operator page, which is what a
  * reader with no cookie gets.
+ *
+ * The flag is read as well as the cookie, because the page this sends a
+ * regulator to is registered only when the flag is on. Without it a forged
+ * cookie would send a signing-out operator to an address that does not exist.
  * @param {HapiRequest} request
  * @returns {boolean}
  */
 export const signedOutOfRegulatorService = (request) =>
+  config.get('featureFlags.regulatorAccess') &&
   request.state[SIGNED_OUT_PROVIDER_COOKIE] === OIDC_ENTRA_ID
