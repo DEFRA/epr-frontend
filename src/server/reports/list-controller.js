@@ -1,3 +1,4 @@
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
@@ -13,6 +14,7 @@ import {
 } from './helpers/format-submission-status.js'
 import { isResubmission } from './helpers/resubmission.js'
 import {
+  actionReads,
   getActionLabel,
   getActionPath,
   getRowAction,
@@ -66,9 +68,14 @@ const formatSubmittedDateTime = (isoString) => {
 }
 
 /**
+ * The row's action link, or an empty cell where the session may not take the
+ * action. The link is assembled here rather than in the template, so the
+ * template scan that hides write controls cannot see it and the decision has to
+ * be made at this call site.
  * @param {{
  *   accreditation: Accreditation | undefined,
  *   cadence: CadenceValue,
+ *   canWrite: boolean,
  *   label: string,
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
@@ -81,6 +88,7 @@ const formatSubmittedDateTime = (isoString) => {
 const buildActionCell = ({
   accreditation,
   cadence,
+  canWrite,
   label,
   localise,
   localiseUrl,
@@ -89,6 +97,11 @@ const buildActionCell = ({
   registration
 }) => {
   const action = getRowAction(period)
+
+  if (!canWrite && !actionReads(action)) {
+    return { text: '', classes: cssClasses.textAlign.right }
+  }
+
   const actionPath = getActionPath(action, registration, accreditation, cadence)
   const actionLabel = getActionLabel(action, localise)
 
@@ -105,6 +118,7 @@ const buildActionCell = ({
  * @param {{
  *   accreditation: Accreditation | undefined,
  *   cadence: CadenceValue,
+ *   canWrite: boolean,
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
  *   organisationId: string,
@@ -116,6 +130,7 @@ const buildActionCell = ({
 function buildRows({
   accreditation,
   cadence,
+  canWrite,
   localise,
   localiseUrl,
   organisationId,
@@ -135,6 +150,7 @@ function buildRows({
     const status = period.periodStatus
 
     const actionCell = buildActionCell({
+      canWrite,
       period,
       registration,
       accreditation,
@@ -262,6 +278,7 @@ export const listController = {
     const { activeRows, submittedRows } = buildRows({
       accreditation,
       cadence,
+      canWrite: hasWriteScope(session),
       localise,
       localiseUrl: (url) => request.localiseUrl(url),
       organisationId,

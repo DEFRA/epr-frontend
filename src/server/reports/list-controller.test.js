@@ -1,3 +1,4 @@
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
@@ -24,13 +25,21 @@ const mockCredentials = {
     id: 'user-123',
     email: 'test@example.com'
   },
-  backendToken: 'mock-backend-token'
+  backendToken: 'mock-backend-token',
+  scope: [SCOPES.organisationLinkedWrite]
 }
 
 const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
   /** @type {unknown} */ ({
     strategy: 'session',
     credentials: mockCredentials
+  })
+)
+
+const readOnlyAuth = /** @type {ServerInjectOptions['auth']} */ (
+  /** @type {unknown} */ ({
+    strategy: 'session',
+    credentials: { ...mockCredentials, scope: [SCOPES.regulator] }
   })
 )
 
@@ -1586,6 +1595,86 @@ describe('#listReportsController', () => {
       expect(viewLink?.getAttribute('href')).toBe(
         '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/view'
       )
+    })
+  })
+
+  describe('for a session holding no write scope', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+        monthlyMixedStatusResponse
+      )
+    })
+
+    it('offers no action on a period whose action would change the data', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: readOnlyAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(readTable(findSection(body, 'Action required'))).toStrictEqual({
+        headers: ['Period', 'Status', 'Due date', ''],
+        rows: [
+          ['February, 2026', 'In progress', '20 Mar 2026', ''],
+          ['March, 2026', 'Due', '20 Apr 2026', '']
+        ]
+      })
+    })
+
+    it('still offers View on a submitted period, which only reads', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: readOnlyAuth
+      })
+      const { body } = new JSDOM(result).window.document
+      const submittedTable = findSection(body, 'Submitted')
+
+      expect(readTable(submittedTable).rows).toStrictEqual([
+        [
+          'January, 2026',
+          'Submitted',
+          '5 Feb 2026, 6:22pm',
+          'Matt Davis',
+          'View report January, 2026'
+        ]
+      ])
+      expect(
+        submittedTable?.querySelector('a.govuk-link')?.getAttribute('href')
+      ).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/view'
+      )
+    })
+
+    it('offers a session holding the write scope the same period as a link', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(
+        readTable(findSection(body, 'Action required')).rows
+      ).toStrictEqual([
+        [
+          'February, 2026',
+          'In progress',
+          '20 Mar 2026',
+          'Continue February, 2026'
+        ],
+        ['March, 2026', 'Due', '20 Apr 2026', 'Create draft March, 2026']
+      ])
     })
   })
 })
