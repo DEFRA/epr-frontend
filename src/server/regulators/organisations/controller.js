@@ -32,7 +32,9 @@ export const controller = {
     return h.view('regulators/organisations/index', {
       pageTitle: request.t('regulators:organisations:pageTitle'),
       search,
-      organisations: results.items.map(toOrganisationRow),
+      organisations: results.items.map((organisation) =>
+        toOrganisationRow(organisation, request.localiseUrl)
+      ),
       pagination: buildPaginationLinks({
         basePath: request.localiseUrl(paths.regulators.organisations),
         page: results.page,

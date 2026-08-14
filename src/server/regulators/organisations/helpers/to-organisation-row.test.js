@@ -10,9 +10,11 @@ const acme = {
   submittedToRegulator: 'ea'
 }
 
+const inEnglish = (path) => path
+
 describe(toOrganisationRow, () => {
   it('projects an organisation onto the columns the results table shows', () => {
-    expect(toOrganisationRow(acme)).toStrictEqual({
+    expect(toOrganisationRow(acme, inEnglish)).toStrictEqual({
       name: 'ACME ltd',
       organisationId: '50002',
       regulator: 'EA',
@@ -21,15 +23,23 @@ describe(toOrganisationRow, () => {
     })
   })
 
+  it('keeps the language the regulator is reading in', () => {
+    expect(toOrganisationRow(acme, (path) => `/cy${path}`).href).toBe(
+      '/cy/organisations/6507f1f77bcf86cd79943901'
+    )
+  })
+
   it('names the regulator the way a regulator writes it', () => {
     expect(
-      toOrganisationRow({ ...acme, submittedToRegulator: 'nrw' }).regulator
+      toOrganisationRow({ ...acme, submittedToRegulator: 'nrw' }, inEnglish)
+        .regulator
     ).toBe('NRW')
   })
 
   it('leaves the regulator blank when the organisation names none', () => {
     expect(
-      toOrganisationRow({ ...acme, submittedToRegulator: undefined }).regulator
+      toOrganisationRow({ ...acme, submittedToRegulator: undefined }, inEnglish)
+        .regulator
     ).toBe('')
   })
 })

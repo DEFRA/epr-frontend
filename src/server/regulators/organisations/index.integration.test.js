@@ -8,6 +8,7 @@ import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import {
   getAllByRole,
+  getByLabelText,
   getByRole,
   queryByRole,
   queryByText
@@ -128,6 +129,36 @@ describe('/regulators/organisations - GET integration', () => {
     expect(requested().searchParams.has('search')).toBe(false)
     expect(requested().searchParams.get('page')).toBe('1')
     expect(resultRows(body)).toHaveLength(2)
+  })
+
+  it('searches by asking, so a read-only session may use the form', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, { items: [acme] })
+
+    const { body } = await visit(server, '/regulators/organisations')
+    const searchBox = getByLabelText(body, 'Search by organisation name')
+
+    expect(searchBox.closest('form')?.getAttribute('method')).toBe('get')
+    expect(searchBox).toHaveProperty('name', 'search')
+  })
+
+  it('leaves the search term in the box to be narrowed again', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, { items: [acme] })
+
+    const { body } = await visit(
+      server,
+      '/regulators/organisations?search=ACME'
+    )
+
+    expect(getByLabelText(body, 'Search by organisation name')).toHaveProperty(
+      'value',
+      'ACME'
+    )
   })
 
   it('heads the results with the columns the regulator reads', async ({

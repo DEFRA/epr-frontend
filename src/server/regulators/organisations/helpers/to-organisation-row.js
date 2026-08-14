@@ -23,19 +23,20 @@
  * opens the organisation, which the operator's own page already serves and a
  * regulator already reads, and which carries the registration and accreditation
  * numbers this table leaves out.
+ *
+ * The caller supplies the localiser, so following a name keeps the language the
+ * regulator is reading in rather than handing them the English route.
  * @param {SearchedOrganisation} organisation
+ * @param {(path: string) => string} localiseUrl
  * @returns {OrganisationRow}
  */
-export const toOrganisationRow = ({
-  id,
-  orgId,
-  companyDetails,
-  status,
-  submittedToRegulator
-}) => ({
+export const toOrganisationRow = (
+  { id, orgId, companyDetails, status, submittedToRegulator },
+  localiseUrl
+) => ({
   name: companyDetails.name,
   organisationId: String(orgId),
   regulator: submittedToRegulator?.toUpperCase() ?? '',
   status,
-  href: `/organisations/${id}`
+  href: localiseUrl(`/organisations/${id}`)
 })

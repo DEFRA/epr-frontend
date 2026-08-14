@@ -37,6 +37,7 @@ const CONDITION_OR_FORM =
   /{%-?\s*(if|elif|elseif|else|endif)\s*([^%]*?)\s*-?%}|<form([^>]*)/g
 
 const READ_METHOD = /\smethod\s*=\s*"get"/i
+const OVERRIDDEN_METHOD = /formmethod/i
 
 /**
  * Lines holding a `<form>` that no enclosing `{% if not isReadOnly %}` covers.
@@ -60,6 +61,10 @@ const READ_METHOD = /\smethod\s*=\s*"get"/i
  * own line: a form that says nothing about its method counts as a write, and so
  * does one whose only `get` sits in an attribute that merely ends in `method`.
  *
+ * A submit button carrying `formmethod` overrides the form's own method, so a
+ * template that mentions `formmethod` anywhere loses the exemption for every
+ * form in it. That is blunt, and it is the fail-closed direction.
+ *
  * A tag must sit on one line. Split an `{% if %}` across two and the scan does
  * not see it while its `{% endif %}` still closes the enclosing condition, so
  * the template fails this check rather than passing it quietly. Write the
@@ -72,6 +77,7 @@ const unguardedFormLines = (source) => {
   const openConditions = []
   /** @type {number[]} */
   const unguarded = []
+  const exemptsReads = !OVERRIDDEN_METHOD.test(source)
 
   source.split('\n').forEach((line, index) => {
     for (const [, tag, condition, formAttributes] of line.matchAll(
@@ -84,7 +90,7 @@ const unguardedFormLines = (source) => {
       } else if (tag) {
         openConditions[openConditions.length - 1] = condition ?? ''
       } else if (
-        !READ_METHOD.test(formAttributes ?? '') &&
+        !(exemptsReads && READ_METHOD.test(formAttributes ?? '')) &&
         !openConditions.some((open) => readOnlyCondition.test(open))
       ) {
         unguarded.push(index + 1)
@@ -210,6 +216,16 @@ describe('the scan itself', () => {
     expect(
       unguardedFormLines('<form data-method="get" method="post">')
     ).toStrictEqual([1])
+  })
+
+  it('rejects a GET form whose button overrides the method', () => {
+    const source = [
+      '<form method="get">',
+      '<button formmethod="post">Go</button>',
+      '</form>'
+    ].join('\n')
+
+    expect(unguardedFormLines(source)).toStrictEqual([1])
   })
 
   it('rejects a form the condition guards only on a later line', () => {
