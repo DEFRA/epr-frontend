@@ -19,7 +19,7 @@ const regulatorAuth = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-1', email: 'jane.doe@example.com' },
   role: 'regulator_standard',
-  scope: ['organisation.read', SCOPES.regulator]
+  scope: ['organisation.read', SCOPES.organisationSearch, SCOPES.regulator]
 })
 
 const grantedNothingAuth = buildMockAuth({
@@ -38,6 +38,15 @@ describe('write guard', () => {
 
   beforeEach(({ msw }) => {
     msw.use(
+      http.get(`${backendUrl}/v1/organisations`, () =>
+        HttpResponse.json({
+          items: [],
+          page: 1,
+          pageSize: 50,
+          totalItems: 0,
+          totalPages: 0
+        })
+      ),
       http.get(`${backendUrl}/v1/me/organisations`, () =>
         HttpResponse.json({
           organisations: {

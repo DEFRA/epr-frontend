@@ -1105,3 +1105,147 @@ describe('#accreditationDashboardController', () => {
     })
   })
 })
+
+/**
+ * @import { ServerFixtures } from '#vite/fixtures/server.js'
+ */
+
+describe('a session that may not change the operator data', () => {
+  const readOnlyAuth = buildMockAuth({
+    backendToken: 'test-id-token',
+    scope: []
+  })
+  const configuredWindow = config.get('reapplyAccreditation')
+  const thisYear = new Date().getFullYear()
+  const validFrom = `${thisYear}-01-01`
+
+  // The reapply link is offered only inside a window, and only for an
+  // accreditation of the current year, so both are arranged here. Without them
+  // the link never renders and asserting its absence would prove nothing.
+  const renewable = asRegistrationWithAccreditation({
+    ...glassApproved,
+    accreditation: { ...glassApproved.accreditation, validFrom },
+    rawAccreditation: { ...glassApproved.rawAccreditation, validFrom }
+  })
+
+  /**
+   * @param {ServerFixtures['server']} server
+   * @param {ReturnType<typeof buildMockAuth>} auth
+   */
+  const openRegistration = async (server, auth) => {
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(renewable)
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+      auth
+    })
+
+    return new JSDOM(asHtml(result)).window.document.body
+  }
+
+  const reapplyLink = { name: /apply for \d{4} accreditation/ }
+
+  beforeEach(() => {
+    config.set('reapplyAccreditation.windowStartMonth', 1)
+    config.set('reapplyAccreditation.windowEndMonth', 12)
+    config.set('reapplyAccreditation.baseUrl', 'https://reapply.example')
+  })
+
+  afterEach(() => {
+    config.set(
+      'reapplyAccreditation.windowStartMonth',
+      configuredWindow.windowStartMonth
+    )
+    config.set(
+      'reapplyAccreditation.windowEndMonth',
+      configuredWindow.windowEndMonth
+    )
+    config.set('reapplyAccreditation.baseUrl', configuredWindow.baseUrl)
+  })
+
+  it('offers an operator all three, so the absences below say something', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, mockAuth)
+
+    expect(
+      queryByRole(body, 'link', { name: 'Upload your summary log' })
+    ).not.toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Create new PRN' })).not.toBeNull()
+    expect(queryByRole(body, 'link', reapplyLink)).not.toBeNull()
+  })
+
+  it('offers none of them to a session holding no write scope', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, readOnlyAuth)
+
+    expect(
+      queryByRole(body, 'link', { name: 'Upload your summary log' })
+    ).toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Create new PRN' })).toBeNull()
+    expect(queryByRole(body, 'link', reapplyLink)).toBeNull()
+  })
+
+  it('heads the summary log card for an operator, who can upload one', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, mockAuth)
+
+    expect(queryByRole(body, 'heading', { name: 'Summary log' })).not.toBeNull()
+  })
+
+  it('drops the summary log card, which offers only the upload', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, readOnlyAuth)
+
+    expect(queryByRole(body, 'heading', { name: 'Summary log' })).toBeNull()
+    expect(
+      queryByText(
+        body,
+        'Upload your summary log to record new packaging waste or adjust previously submitted data.'
+      )
+    ).toBeNull()
+  })
+
+  it('still lets it read the notes the operator has issued', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, readOnlyAuth)
+
+    expect(queryByRole(body, 'link', { name: 'View PRNs' })).not.toBeNull()
+    expect(queryByRole(body, 'link', { name: 'View reports' })).not.toBeNull()
+  })
+
+  it('tells an operator it can create and manage, as it always did', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, mockAuth)
+
+    expect(queryByText(body, 'Create and manage PRNs.')).not.toBeNull()
+    expect(queryByText(body, 'Create and manage your reports.')).not.toBeNull()
+    expect(
+      queryByText(body, 'View and manage your applications.')
+    ).not.toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Manage PRNs' })).not.toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Manage reports' })).not.toBeNull()
+  })
+
+  it('offers a read-only session no card that says it can manage', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, readOnlyAuth)
+
+    expect(
+      queryByText(body, 'View the PRNs issued for this registration.')
+    ).not.toBeNull()
+    expect(
+      queryByText(body, 'View the reports submitted for this registration.')
+    ).not.toBeNull()
+    expect(queryByText(body, 'View applications.')).not.toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Manage PRNs' })).toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Manage reports' })).toBeNull()
+  })
+})
