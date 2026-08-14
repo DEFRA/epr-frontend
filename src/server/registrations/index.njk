@@ -77,9 +77,9 @@
         <h2 class="govuk-heading-l">{{ localise("registrations:chooseTask") }}</h2>
 
         <div class="govuk-grid-row epr-task-cards">
-          {# The card holds nothing but the upload, so a read-only session is
-             offered no card rather than an empty one. #}
-          {% if not isReadOnly %}
+          {# The card holds nothing but the upload, so a session holding no
+             write scope is offered no card rather than an empty one. #}
+          {% if hasWriteScope %}
           <div class="govuk-grid-column-one-half">
             <div class="govuk-summary-card govuk-!-margin-bottom-4">
               <div class="govuk-summary-card__title-wrapper">
@@ -116,10 +116,10 @@
                 </div>
               </div>
               <div class="govuk-summary-card__content">
-                  {# Issuing a note changes the operator's data, so a read-only
-                     session is offered only the list. #}
+                  {# Issuing a note changes the operator's data, so a session
+                     holding no write scope is offered only the list. #}
                   <p class="govuk-body">
-                    {% if not isReadOnly %}
+                    {% if hasWriteScope %}
                     <a href="{{ prns.link.href }}" class="govuk-link">{{ prns.link.text }}</a>
                     <br>
                     {% endif %}
@@ -137,7 +137,7 @@
                     {{ localise("registrations:reports") }}
                   </h3>
                   <p class="govuk-body-s govuk-!-margin-bottom-0">
-                    {{ localise("registrations:reportsDescriptionReadOnly" if isReadOnly else "registrations:reportsDescription") }}
+                    {{ localise("registrations:reportsDescription" if hasWriteScope else "registrations:reportsDescriptionReadOnly") }}
                   </p>
                 </div>
               </div>
@@ -156,15 +156,15 @@
                     {{ localise("registrations:registrationAndAccreditation") }}
                   </h3>
                   <p class="govuk-body-s govuk-!-margin-bottom-0">
-                    {{ localise("registrations:registrationAndAccreditationDescriptionReadOnly" if isReadOnly else "registrations:registrationAndAccreditationDescription") }}
+                    {{ localise("registrations:registrationAndAccreditationDescription" if hasWriteScope else "registrations:registrationAndAccreditationDescriptionReadOnly") }}
                   </p>
                 </div>
               </div>
               <div class="govuk-summary-card__content">
                 {# Applying is the operator's to do, and the invitation reads as
-                   one sentence, so a read-only session gets the other branch
-                   rather than a lead-in with nothing to follow it. #}
-                {% if reapplyAccreditation and not isReadOnly %}
+                   one sentence, so a session holding no write scope gets the
+                   other branch rather than a lead-in with nothing to follow it. #}
+                {% if reapplyAccreditation and hasWriteScope %}
                 <p class="govuk-body">
                   {{ localise("registrations:reapplyAccreditationLead") }} <a href="{{ reapplyAccreditation.href }}" class="govuk-link">{{ localise("registrations:reapplyAccreditationLink", { year: reapplyAccreditation.year }) }}</a>.
                 </p>

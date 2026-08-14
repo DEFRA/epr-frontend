@@ -168,14 +168,14 @@ describe('#context', () => {
     })
   })
 
-  describe('read-only sessions', () => {
+  describe('the write scope flag', () => {
     let contextImport
 
     beforeAll(async () => {
       contextImport = await import('#config/nunjucks/context/context.js')
     })
 
-    it('marks a regulator session read-only', async () => {
+    it('gives a regulator no write scope', async () => {
       contextResult = await contextImport.context(
         mockRequest(
           /** @type {Partial<Request>} */ ({
@@ -187,10 +187,10 @@ describe('#context', () => {
         )
       )
 
-      expect(contextResult.isReadOnly).toBe(true)
+      expect(contextResult.hasWriteScope).toBe(false)
     })
 
-    it('does not mark an operator holding the write scope read-only', async () => {
+    it('gives an operator holding the write scope the flag', async () => {
       contextResult = await contextImport.context(
         mockRequest(
           /** @type {Partial<Request>} */ ({
@@ -207,10 +207,10 @@ describe('#context', () => {
         )
       )
 
-      expect(contextResult.isReadOnly).toBe(false)
+      expect(contextResult.hasWriteScope).toBe(true)
     })
 
-    it('marks a session holding other scopes read-only', async () => {
+    it('gives a session holding other scopes no write scope', async () => {
       contextResult = await contextImport.context(
         mockRequest(
           /** @type {Partial<Request>} */ ({
@@ -222,10 +222,10 @@ describe('#context', () => {
         )
       )
 
-      expect(contextResult.isReadOnly).toBe(true)
+      expect(contextResult.hasWriteScope).toBe(false)
     })
 
-    it('marks a session without scopes read-only', async () => {
+    it('gives a session without scopes no write scope', async () => {
       contextResult = await contextImport.context(
         mockRequest(
           /** @type {Partial<Request>} */ ({
@@ -234,13 +234,13 @@ describe('#context', () => {
         )
       )
 
-      expect(contextResult.isReadOnly).toBe(true)
+      expect(contextResult.hasWriteScope).toBe(false)
     })
 
-    it('marks a signed out request read-only', async () => {
+    it('gives a signed out request no write scope', async () => {
       contextResult = await contextImport.context(mockRequest())
 
-      expect(contextResult.isReadOnly).toBe(true)
+      expect(contextResult.hasWriteScope).toBe(false)
     })
   })
 
@@ -271,7 +271,7 @@ describe('#context', () => {
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
-        isReadOnly: true,
+        hasWriteScope: false,
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
@@ -356,7 +356,7 @@ describe('#context cache', () => {
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
-        isReadOnly: true,
+        hasWriteScope: false,
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],

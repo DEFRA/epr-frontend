@@ -11,7 +11,7 @@
       <p class="govuk-body">{{ bodyLine2 }}</p>
 
       <div class="govuk-button-group">
-        {% if not isReadOnly %}
+        {% if hasWriteScope %}
         {{ govukButton({
           text: localise('reports:reportStaleDeleteAndStartAgain'),
           classes: "govuk-button--warning",
@@ -27,7 +27,7 @@
         }) }}
       </div>
 
-      {% if not isReadOnly %}
+      {% if hasWriteScope %}
       <form id="delete-report-form" method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
       </form>
