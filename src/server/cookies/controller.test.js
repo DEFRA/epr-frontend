@@ -91,7 +91,7 @@ describe('#cookiesController', () => {
       const $ = load(asHtml(result))
       const rows = $('.govuk-table__body .govuk-table__row')
 
-      expect(rows).toHaveLength(3)
+      expect(rows).toHaveLength(4)
     })
 
     it('should render cookie names in the table', async ({ server }) => {
@@ -108,6 +108,7 @@ describe('#cookiesController', () => {
       expect(cellTexts).toContain('Crumb')
       expect(cellTexts).toContain('Session')
       expect(cellTexts).toContain('userSession')
+      expect(cellTexts).toContain('signedOutProvider')
     })
   })
 

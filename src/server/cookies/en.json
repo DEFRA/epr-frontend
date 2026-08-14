@@ -25,6 +25,11 @@
       "name": "userSession",
       "purpose": "Used to keep you signed in to the service.",
       "expires": "4 hours"
+    },
+    "signedOutProvider": {
+      "name": "signedOutProvider",
+      "purpose": "Remembers how you signed in, so that after you sign out we can offer you the right way to sign in again.",
+      "expires": "10 minutes"
     }
   }
 }
