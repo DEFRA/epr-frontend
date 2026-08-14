@@ -77,6 +77,9 @@
         <h2 class="govuk-heading-l">{{ localise("registrations:chooseTask") }}</h2>
 
         <div class="govuk-grid-row epr-task-cards">
+          {# The card holds nothing but the upload, so a read-only session is
+             offered no card rather than an empty one. #}
+          {% if not isReadOnly %}
           <div class="govuk-grid-column-one-half">
             <div class="govuk-summary-card govuk-!-margin-bottom-4">
               <div class="govuk-summary-card__title-wrapper">
@@ -90,16 +93,15 @@
                 </div>
               </div>
               <div class="govuk-summary-card__content">
-                {% if not isReadOnly %}
                 <p class="govuk-body">
                   <a href="{{ uploadSummaryLogUrl }}" class="govuk-link">
                     {{ localise("registrations:uploadSummaryLog") }}
                   </a>
                 </p>
-                {% endif %}
               </div>
             </div>
           </div>
+          {% endif %}
           {% if accreditation.exists %}
           <div class="govuk-grid-column-one-half">
             <div class="govuk-summary-card govuk-!-margin-bottom-4">

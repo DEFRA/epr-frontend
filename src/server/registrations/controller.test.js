@@ -1188,6 +1188,28 @@ describe('a session that may not change the operator data', () => {
     expect(queryByRole(body, 'link', reapplyLink)).toBeNull()
   })
 
+  it('heads the summary log card for an operator, who can upload one', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, mockAuth)
+
+    expect(queryByRole(body, 'heading', { name: 'Summary log' })).not.toBeNull()
+  })
+
+  it('drops the summary log card, which offers only the upload', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, readOnlyAuth)
+
+    expect(queryByRole(body, 'heading', { name: 'Summary log' })).toBeNull()
+    expect(
+      queryByText(
+        body,
+        'Upload your summary log to record new packaging waste or adjust previously submitted data.'
+      )
+    ).toBeNull()
+  })
+
   it('still lets it read the notes the operator has issued', async ({
     server
   }) => {
