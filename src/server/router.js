@@ -9,7 +9,6 @@ import { home } from '#server/home/index.js'
 import { loggedOut } from '#server/logged-out/index.js'
 import { login } from '#server/login/index.js'
 import { logout } from '#server/logout/index.js'
-import { notFound } from '#server/not-found/index.js'
 import { organisations } from '#server/organisations/index.js'
 import { prns } from '#server/prns/index.js'
 import { registrations } from '#server/registrations/index.js'
@@ -49,12 +48,6 @@ export const router = {
 
       // Static assets
       await server.register([serveStaticFiles])
-
-      // Reads last because it is the fallback. Its position here decides
-      // nothing: hapi files each route into the match trie by segment kind,
-      // and consults the wildcard slot after the literal and parameter ones,
-      // so a real route wins against `/{any*}` whenever it registers.
-      await server.register([notFound])
     }
   }
 }
