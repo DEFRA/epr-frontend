@@ -29,11 +29,11 @@ const regulatorAuth = buildMockAuth({
  */
 const providerCookieHeader = (response) => {
   const setCookie = /** @type {string[]} */ (response.headers['set-cookie'])
-  const cookie = setCookie.find((header) =>
-    header.startsWith(`${SIGNED_OUT_PROVIDER_COOKIE}=`)
-  )
 
-  return /** @type {string} */ (cookie).split(';')[0]
+  return setCookie
+    .filter((header) => header.startsWith(`${SIGNED_OUT_PROVIDER_COOKIE}=`))
+    .map((header) => header.replace(/;.*$/, ''))
+    .join('')
 }
 
 describe('which sign out page a provider sends a user to', () => {

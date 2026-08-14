@@ -1,6 +1,10 @@
 import Boom from '@hapi/boom'
 
 /**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
+
+/**
  * The route a request reaches when it matches no other.
  *
  * Without it hapi answers an unmatched path before it authenticates the
@@ -19,6 +23,9 @@ import Boom from '@hapi/boom'
 export const notFound = {
   plugin: {
     name: 'not-found',
+    /**
+     * @param {HapiServer} server
+     */
     register(server) {
       server.route({
         method: 'GET',
@@ -29,7 +36,3 @@ export const notFound = {
     }
   }
 }
-
-/**
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
- */
