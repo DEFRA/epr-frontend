@@ -50,8 +50,10 @@ export const router = {
       // Static assets
       await server.register([serveStaticFiles])
 
-      // Last, so every real route is already registered to be preferred over
-      // its catch-all path.
+      // Reads last because it is the fallback. Its position here decides
+      // nothing: hapi files each route into the match trie by segment kind,
+      // and consults the wildcard slot after the literal and parameter ones,
+      // so a real route wins against `/{any*}` whenever it registers.
       await server.register([notFound])
     }
   }
