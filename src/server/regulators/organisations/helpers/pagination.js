@@ -30,10 +30,14 @@ export const organisationsPageHref = ({ basePath, page, search }) => {
 /**
  * The last page the results actually reach. A search matching nothing still
  * has a page to show the regulator, so the count never falls below one.
- * @param {number} totalPages
+ *
+ * A backend response carrying no count at all reads as one page rather than
+ * as `NaN`, which every comparison answers `false` to and which would take
+ * the regulator nowhere.
+ * @param {number} [totalPages]
  * @returns {number}
  */
-export const lastPageOf = (totalPages) => Math.max(totalPages, 1)
+export const lastPageOf = (totalPages) => Math.max(totalPages ?? 1, 1)
 
 /**
  * Builds the previous and next links for the results table.

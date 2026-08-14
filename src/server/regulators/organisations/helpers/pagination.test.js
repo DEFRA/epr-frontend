@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildPaginationLinks } from './pagination.js'
+import { buildPaginationLinks, lastPageOf } from './pagination.js'
 
 const basePath = '/regulators/home'
 
@@ -67,5 +67,19 @@ describe(buildPaginationLinks, () => {
     ).toStrictEqual({
       next: { href: '/cy/regulators/home?page=2' }
     })
+  })
+})
+
+describe(lastPageOf, () => {
+  it('counts the pages the results actually reach', () => {
+    expect(lastPageOf(3)).toBe(3)
+  })
+
+  it('gives a search matching nothing a page to land on', () => {
+    expect(lastPageOf(0)).toBe(1)
+  })
+
+  it('reads a response carrying no count at all as one page', () => {
+    expect(lastPageOf(undefined)).toBe(1)
   })
 })
