@@ -3,7 +3,7 @@ import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
- * @import { Material, GlassRecyclingProcess } from '#domain/organisations/model.js'
+ * @import { Material, GlassRecyclingProcess } from '#domain/materials.js'
  */
 
 /**

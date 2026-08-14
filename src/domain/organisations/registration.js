@@ -1,5 +1,6 @@
 /** @import {Accreditation} from '#domain/organisations/accreditation.js' */
-/** @import {GlassRecyclingProcess, Material, User} from '#domain/organisations/model.js' */
+/** @import {GlassRecyclingProcess, Material} from '#domain/materials.js' */
+/** @import {User} from '#domain/organisations/model.js' */
 
 /**
  * @typedef {{

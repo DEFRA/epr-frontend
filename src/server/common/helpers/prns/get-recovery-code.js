@@ -1,18 +1,11 @@
-const recoveryCodes = {
-  aluminium: 'R4',
-  fibre: 'R3',
-  paper: 'R3',
-  plastic: 'R3',
-  steel: 'R4',
-  wood: 'R3',
-  glass: 'R5'
-}
+import { materialToProcessCode } from '#domain/materials.js'
+
+/** @import { Material, ProcessCode } from '#domain/materials.js' */
 
 /**
  * Get the recovery process code for a given material
- * @param {string} material
- * @returns {string}
+ * @param {Material} material
+ * @returns {ProcessCode | ''}
  */
-export function getRecoveryCode(material) {
-  return recoveryCodes[material] ?? ''
-}
+export const getRecoveryCode = (material) =>
+  materialToProcessCode[material] ?? ''
