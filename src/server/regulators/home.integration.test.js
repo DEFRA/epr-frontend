@@ -241,6 +241,65 @@ describe('/regulators/home - GET integration', () => {
     ])
   })
 
+  // Whether a page number beyond the results comes back clamped or spent is
+  // the backend's choice, and it can change it without touching this repo.
+  // Both are covered because the regulator must land the same way either way.
+  const overshoots = [
+    {
+      backend: 'spends the page and returns nothing',
+      results: { items: [], page: 2, totalPages: 1 }
+    },
+    {
+      backend: 'clamps the page and returns the first',
+      results: { items: [acme], page: 1, totalPages: 1 }
+    }
+  ]
+
+  it.for(overshoots)(
+    'sends a regulator past the last page back to it, when the backend $backend',
+    async ({ results }, { server, msw }) => {
+      backendReturns(msw, results)
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: '/regulators/home?search=ACME&page=2',
+        auth: regulatorAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/regulators/home?search=ACME&page=1')
+    }
+  )
+
+  it('lands that regulator on the results rather than the empty state', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, { items: [acme], page: 1, totalPages: 1 })
+
+    const { body } = await visit(server, '/regulators/home?search=ACME&page=1')
+
+    expect(resultRows(body)).toStrictEqual([
+      ['ACME ltd', '50002', 'EA', 'approved']
+    ])
+    expect(queryByText(body, 'No organisation was found.')).toBeNull()
+  })
+
+  it('still says nothing was found when the search itself matches none', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, { items: [], page: 1, totalPages: 0 })
+
+    const { statusCode, body } = await visit(
+      server,
+      '/regulators/home?search=nothing'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(queryByText(body, 'No organisation was found.')).not.toBeNull()
+  })
+
   it('offers no paging when every result fits on one page', async ({
     server,
     msw
