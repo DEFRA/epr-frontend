@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { buildPaginationLinks } from './pagination.js'
 
-const basePath = '/regulators/organisations'
+const basePath = '/regulators/home'
 
 describe(buildPaginationLinks, () => {
   it('offers no links when the results fit on one page', () => {
@@ -15,7 +15,7 @@ describe(buildPaginationLinks, () => {
     expect(
       buildPaginationLinks({ basePath, page: 1, totalPages: 3 })
     ).toStrictEqual({
-      next: { href: '/regulators/organisations?page=2' }
+      next: { href: '/regulators/home?page=2' }
     })
   })
 
@@ -23,8 +23,8 @@ describe(buildPaginationLinks, () => {
     expect(
       buildPaginationLinks({ basePath, page: 2, totalPages: 3 })
     ).toStrictEqual({
-      previous: { href: '/regulators/organisations?page=1' },
-      next: { href: '/regulators/organisations?page=3' }
+      previous: { href: '/regulators/home?page=1' },
+      next: { href: '/regulators/home?page=3' }
     })
   })
 
@@ -32,7 +32,7 @@ describe(buildPaginationLinks, () => {
     expect(
       buildPaginationLinks({ basePath, page: 3, totalPages: 3 })
     ).toStrictEqual({
-      previous: { href: '/regulators/organisations?page=2' }
+      previous: { href: '/regulators/home?page=2' }
     })
   })
 
@@ -45,7 +45,7 @@ describe(buildPaginationLinks, () => {
         search: 'Acme Waste'
       })
     ).toStrictEqual({
-      next: { href: '/regulators/organisations?search=Acme+Waste&page=2' }
+      next: { href: '/regulators/home?search=Acme+Waste&page=2' }
     })
   })
 
@@ -53,19 +53,19 @@ describe(buildPaginationLinks, () => {
     expect(
       buildPaginationLinks({ basePath, page: 1, totalPages: 2, search: '' })
     ).toStrictEqual({
-      next: { href: '/regulators/organisations?page=2' }
+      next: { href: '/regulators/home?page=2' }
     })
   })
 
   it('keeps the language the regulator is reading in', () => {
     expect(
       buildPaginationLinks({
-        basePath: '/cy/regulators/organisations',
+        basePath: '/cy/regulators/home',
         page: 1,
         totalPages: 2
       })
     ).toStrictEqual({
-      next: { href: '/cy/regulators/organisations?page=2' }
+      next: { href: '/cy/regulators/home?page=2' }
     })
   })
 })

@@ -1,50 +1,29 @@
 import { SCOPES } from '#server/auth/scopes.js'
 import { paths } from '#server/paths.js'
 
-import { regulatorOrganisations } from './organisations/index.js'
+import { controller } from './organisations/controller.js'
 
 /**
  * Regulators plugin
- * Registers the post-login landing page for Entra ID authenticated regulators,
- * and the pages that page leads to.
+ * Registers the page an Entra ID authenticated regulator lands on. A regulator
+ * holds no organisation of their own, so the organisation search is what that
+ * page shows them.
  */
 export const regulators = {
   plugin: {
     name: 'regulators',
-    async register(server) {
+    register(server) {
       server.route([
         {
-          /**
-           * @param {HapiRequest} request
-           * @param {ResponseToolkit} h
-           */
-          handler(request, h) {
-            const { profile } = request.auth.credentials
-            const username = profile.email?.split('@')[0]
-
-            return h.view('regulators/home', {
-              organisationsUrl: request.localiseUrl(
-                paths.regulators.organisations
-              ),
-              pageTitle: request.t('regulators:home:pageTitle'),
-              username
-            })
-          },
+          ...controller,
           method: 'GET',
           path: paths.regulators.home,
           options: {
-            auth: { scope: [SCOPES.regulator] }
+            ...controller.options,
+            auth: { scope: [SCOPES.organisationSearch] }
           }
         }
       ])
-
-      await server.register([regulatorOrganisations])
     }
   }
 }
-
-/**
- * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
- */

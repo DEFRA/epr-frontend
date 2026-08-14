@@ -11,10 +11,9 @@ import { toOrganisationRow } from './helpers/to-organisation-row.js'
  */
 
 /**
- * The organisation search a regulator reaches from their landing page. A
- * regulator holds no organisation of their own, so searching is how they reach
- * an operator at all, and the page shows every organisation until they narrow
- * it.
+ * The organisation search a regulator lands on. A regulator holds no
+ * organisation of their own, so searching is how they reach an operator at
+ * all, and the page shows every organisation until they narrow it.
  * @satisfies {Partial<HapiServerRoute<HapiRequest & { query: SearchQuery }>>}
  */
 export const controller = {
@@ -25,18 +24,19 @@ export const controller = {
   },
   async handler(request, h) {
     const { page, search } = request.query
-    const { backendToken } = request.auth.credentials
+    const { backendToken, profile } = request.auth.credentials
 
     const results = await fetchOrganisations({ page, search, backendToken })
 
-    return h.view('regulators/organisations/index', {
+    return h.view('regulators/home', {
       pageTitle: request.t('regulators:organisations:pageTitle'),
       search,
+      username: profile.email?.split('@')[0],
       organisations: results.items.map((organisation) =>
         toOrganisationRow(organisation, request.localiseUrl)
       ),
       pagination: buildPaginationLinks({
-        basePath: request.localiseUrl(paths.regulators.organisations),
+        basePath: request.localiseUrl(paths.regulators.home),
         page: results.page,
         totalPages: results.totalPages,
         search
