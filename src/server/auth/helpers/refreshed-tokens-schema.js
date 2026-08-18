@@ -9,7 +9,7 @@ import Joi from 'joi'
  * claim, not from `expires_in`.
  *
  * `access_token` is optional because Azure B2C does not issue one for a Defra
- * ID session. An Entra ID session needs it — see `selectBackendToken`.
+ * ID session. An Entra ID session needs it — see `createEntraIdAuthProvider`.
  *
  * Add a field to the typedef and schema together — they are kept in this file
  * precisely to make that coupling structural.

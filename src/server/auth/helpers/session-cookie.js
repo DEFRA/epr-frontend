@@ -9,12 +9,13 @@ import { isPast, parseISO, subMinutes, subSeconds } from 'date-fns'
 import { getUserSession } from './get-user-session.js'
 import { refreshIdToken } from './refresh-token.js'
 import { validateRefreshedTokens } from './refreshed-tokens-schema.js'
+import { selectAuthProvider } from './select-auth-provider.js'
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { AuthProviders } from '../types/auth-provider.js'
  * @import { UserSession } from '../types/session.js'
- * @import { VerifyToken } from '../types/verify-token.js'
  */
 
 /**
@@ -49,11 +50,12 @@ function inNext5Minutes(date) {
 }
 
 /**
- * Refreshes id token and updates session with refreshed tokens. If the refresh fails, the session is removed.
- * @param {VerifyToken} verifyToken
+ * Refreshes the session's tokens and updates the session with them. If the
+ * refresh fails, the session is removed.
+ * @param {AuthProviders} authProviders
  * @returns {(request: HapiRequest, userSession: UserSession) => Promise<UserSession | null>}
  */
-const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
+const createRefreshIdTokenAndUpdateSession = (authProviders) => {
   /** @type {ReturnType<typeof createRefreshIdTokenAndUpdateSession>} */
   const refreshIdTokenAndUpdateSession = async (request, userSession) => {
     if (userSession.idTokenRefreshInProgress) {
@@ -63,7 +65,12 @@ const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
     try {
       await markSessionAsIdTokenRefreshInProgress(request, userSession)
 
-      const response = await refreshIdToken(request)
+      const authProvider = selectAuthProvider(
+        authProviders,
+        userSession.provider
+      )
+
+      const response = await refreshIdToken(request, authProvider)
 
       if (!response.ok) {
         const errorBody = await response.text()
@@ -79,7 +86,7 @@ const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
       }
 
       return await updateUserSession(
-        verifyToken,
+        authProvider,
         request,
         latestSession,
         refreshedTokens
@@ -95,12 +102,12 @@ const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
 }
 
 /**
- * @param {VerifyToken} verifyToken
+ * @param {AuthProviders} authProviders
  * @returns {(request: HapiRequest, userSession: UserSession) => Promise<{isValid: boolean, credentials?: UserSession}>}
  */
-const createBlockingRefresh = (verifyToken) => {
+const createBlockingRefresh = (authProviders) => {
   const refreshIdTokenAndUpdateSession =
-    createRefreshIdTokenAndUpdateSession(verifyToken)
+    createRefreshIdTokenAndUpdateSession(authProviders)
 
   /** @type {ReturnType<typeof createBlockingRefresh>} */
   const blockingRefresh = async (request, userSession) => {
@@ -126,12 +133,12 @@ const createBlockingRefresh = (verifyToken) => {
 }
 
 /**
- * @param {VerifyToken} verifyToken
+ * @param {AuthProviders} authProviders
  * @returns {(request: HapiRequest, userSession: UserSession) => void}
  */
-const createBackgroundRefresh = (verifyToken) => {
+const createBackgroundRefresh = (authProviders) => {
   const refreshIdTokenAndUpdateSession =
-    createRefreshIdTokenAndUpdateSession(verifyToken)
+    createRefreshIdTokenAndUpdateSession(authProviders)
 
   /** @type {ReturnType<typeof createBackgroundRefresh>} */
   const backgroundRefresh = (request, userSession) => {
@@ -159,13 +166,14 @@ const createBackgroundRefresh = (verifyToken) => {
 
 /**
  * Create session cookie authentication plugin
- * Factory function that creates a plugin with verifyToken closure
- * @param {VerifyToken} verifyToken - Token verification function
+ * Factory function that creates a plugin with the auth providers a session can
+ * come from
+ * @param {AuthProviders} authProviders - The auth providers this server holds
  * @returns {ServerRegisterPluginObject<void>}
  */
-const createSessionCookie = (verifyToken) => {
-  const blockingRefresh = createBlockingRefresh(verifyToken)
-  const backgroundRefresh = createBackgroundRefresh(verifyToken)
+const createSessionCookie = (authProviders) => {
+  const blockingRefresh = createBlockingRefresh(authProviders)
+  const backgroundRefresh = createBackgroundRefresh(authProviders)
 
   return {
     plugin: {

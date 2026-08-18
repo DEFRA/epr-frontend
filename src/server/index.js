@@ -4,8 +4,16 @@ import { blockUnauthorisedWrites } from '#server/auth/block-unauthorised-writes.
 import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuration.js'
 import { createSessionCookie } from '#server/auth/helpers/session-cookie.js'
 import { getVerifyToken } from '#server/auth/helpers/verify-token.js'
-import { createDefraId } from '#server/auth/plugins/defra-id.js'
-import { createEntraId } from '#server/auth/plugins/entra-id.js'
+import {
+  createDefraId,
+  createDefraIdAuthProvider,
+  OIDC_DEFRA_ID
+} from '#server/auth/plugins/defra-id.js'
+import {
+  createEntraId,
+  createEntraIdAuthProvider,
+  OIDC_ENTRA_ID
+} from '#server/auth/plugins/entra-id.js'
 import { contentSecurityPolicy } from '#server/common/helpers/content-security-policy.js'
 import { catchAll } from '#server/common/helpers/errors.js'
 import { requestLogger } from '#server/common/helpers/logging/request-logger.js'
@@ -113,15 +121,28 @@ export async function createServer(options = {}) {
     }
   ]
 
-  const verifyToken = getVerifyToken(
-    await getOidcConfiguration(config.get('defraId.oidcConfigurationUrl'))
+  const defraIdAuthProvider = createDefraIdAuthProvider(
+    getVerifyToken(
+      await getOidcConfiguration(config.get('defraId.oidcConfigurationUrl'))
+    )
   )
 
-  plugins.push(createDefraId(verifyToken), createSessionCookie(verifyToken))
+  /** @type {AuthProviders} */
+  const authProviders = { [OIDC_DEFRA_ID]: defraIdAuthProvider }
+
+  plugins.push(createDefraId(defraIdAuthProvider))
 
   if (config.get('featureFlags.regulatorAccess')) {
-    plugins.push(createEntraId())
+    const entraIdOidcConf = await getOidcConfiguration(
+      config.get('entraId.oidcWellKnownConfigurationUrl')
+    )
+    const entraIdAuthProvider = createEntraIdAuthProvider(entraIdOidcConf)
+
+    authProviders[OIDC_ENTRA_ID] = entraIdAuthProvider
+    plugins.push(createEntraId(entraIdOidcConf, entraIdAuthProvider))
   }
+
+  plugins.push(createSessionCookie(authProviders))
 
   plugins.push(nunjucksConfig)
 
@@ -160,6 +181,7 @@ export async function createServer(options = {}) {
  * @import {RouteOptions} from '@hapi/hapi'
  * @import {Engine} from '#server/common/helpers/session-cache/cache-engine.js'
  * @import {HapiServer} from '#server/common/hapi-types.js'
+ * @import {AuthProviders} from '#server/auth/types/auth-provider.js'
  * @import {WasteOrganisation} from '#server/common/helpers/waste-organisations/types.js'
  */
 
