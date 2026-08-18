@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   assertUserSession,
@@ -78,6 +79,7 @@ describe('#sessionCookie - integration', () => {
     const createExpiredRefreshSessionData = (userId, expiresAt) => ({
       sessionId: `test-session-${userId}`,
       sessionData: {
+        provider: OIDC_DEFRA_ID,
         profile: {
           id: userId,
           email: `${userId}@example.com`
@@ -275,6 +277,7 @@ describe('#sessionCookie - integration', () => {
       const futureExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
       const sessionData = {
+        provider: OIDC_DEFRA_ID,
         profile: {
           id: 'user-789',
           email: 'test3@example.com'
@@ -423,6 +426,7 @@ describe('#sessionCookie - integration', () => {
       const expiredAt = new Date(Date.now() + 2 * 60 * 1000).toISOString()
 
       const sessionData = {
+        provider: OIDC_DEFRA_ID,
         profile: {
           id: 'user-exception',
           email: 'exception@example.com'
@@ -624,6 +628,7 @@ describe('#sessionCookie - integration', () => {
       const sessionId = 'test-session-in-progress'
 
       const sessionData = {
+        provider: OIDC_DEFRA_ID,
         profile: { id: 'user-in-progress', email: 'inprogress@example.com' },
         expiresAt,
         idToken: 'old-id-token-in-progress',
@@ -765,6 +770,64 @@ describe('#sessionCookie - integration', () => {
 
       expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers.location).toBe(loggedOutUrl)
+    })
+  })
+
+  describe('an Entra ID session while regulator access is off', () => {
+    beforeEach(({ server }) => {
+      server.route({
+        method: 'GET',
+        path: '/test-auth',
+        options: {
+          auth: 'session'
+        },
+        handler: () => ({ reached: true })
+      })
+    })
+
+    it('is signed out rather than refreshed against a provider this server does not hold', async ({
+      server
+    }) => {
+      const sessionId = 'test-session-entra-flag-off'
+      await server.app.cache.set(
+        sessionId,
+        asUserSession({
+          provider: 'entra-id',
+          profile: { id: 'entra-user-id', email: 'jane.doe@example.com' },
+          expiresAt: addSeconds(new Date(), 5).toISOString(),
+          idToken: 'old-id-token',
+          backendToken: 'old-access-token',
+          refreshToken: 'old-refresh-token',
+          scope: [],
+          urls: {
+            token: 'http://entra-id.auth/token',
+            logout: 'http://entra-id.auth/logout'
+          }
+        })
+      )
+
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        config.get('session.cookie.password'),
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(loggedOutUrl)
+      expect(server.loggerMocks.error).toHaveBeenCalledWith({
+        message: 'Failed to refresh session',
+        err: expect.objectContaining({
+          message: "Cannot refresh token: no auth provider for 'entra-id'"
+        })
+      })
     })
   })
 })

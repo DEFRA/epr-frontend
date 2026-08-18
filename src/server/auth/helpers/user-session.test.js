@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import { updateUserSession } from '#server/auth/helpers/user-session.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
-import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { assertUserSession } from '#server/common/test-helpers/auth-helper.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import {
   IDENTITIES,
@@ -14,6 +14,8 @@ import { describe, expect, vi } from 'vitest'
 
 /**
  * @import { Mock } from 'vitest'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { AuthProvider } from '#server/auth/types/auth-provider.js'
  * @import { UserSession } from '#server/auth/types/session.js'
  */
 
@@ -23,24 +25,21 @@ const makeRequest = () =>
     server: { app: { cache: { set: vi.fn() } } }
   })
 
-const sessionFor = (provider) =>
-  /** @type {UserSession} */ ({
-    provider,
-    profile: { id: 'user-123', email: 'test@example.com' },
-    expiresAt: new Date().toISOString(),
-    idToken: 'old-id-token',
-    backendToken: 'old-backend-token',
-    refreshToken: 'old-refresh-token',
-    idTokenRefreshInProgress: true,
-    role: IDENTITIES.operator.role,
-    scope: IDENTITIES.operator.scopes,
-    urls: {
-      token: 'http://oidc-provider/token',
-      logout: 'http://oidc-provider/logout'
-    }
-  })
-
-const existingSession = sessionFor(OIDC_DEFRA_ID)
+const existingSession = /** @type {UserSession} */ ({
+  provider: OIDC_DEFRA_ID,
+  profile: { id: 'user-123', email: 'test@example.com' },
+  expiresAt: new Date().toISOString(),
+  idToken: 'old-id-token',
+  backendToken: 'old-backend-token',
+  refreshToken: 'old-refresh-token',
+  idTokenRefreshInProgress: true,
+  role: IDENTITIES.operator.role,
+  scope: IDENTITIES.operator.scopes,
+  urls: {
+    token: 'http://oidc-provider/token',
+    logout: 'http://oidc-provider/logout'
+  }
+})
 
 const refreshedTokens = {
   id_token: 'new-id-token',
@@ -48,14 +47,32 @@ const refreshedTokens = {
   expires_in: 3600
 }
 
+/**
+ * @param {HapiRequest} request
+ * @returns {UserSession}
+ */
 const savedSessionFrom = (request) =>
-  /** @type {Mock} */ (request.server.app.cache.set).mock.calls[0][1]
+  assertUserSession(
+    /** @type {Mock} */ (request.server.app.cache.set).mock.calls[0]?.[1]
+  )
 
-const verifiesTheRefreshedToken = () =>
-  vi.fn().mockResolvedValue({
-    sub: 'user-123',
-    email: 'test@example.com',
-    exp: Math.floor(Date.now() / 1000) + 3600
+const refreshedProfile = { id: 'user-123', email: 'test@example.com' }
+const refreshedExpiry = new Date(Date.now() + 3600 * 1000).toISOString()
+
+/**
+ * An auth provider that presents the given token to the backend and reads one
+ * fixed identity from it.
+ * @param {string} [backendToken]
+ * @returns {AuthProvider}
+ */
+const authProviderPresenting = (backendToken = 'new-id-token') =>
+  /** @type {AuthProvider} */ ({
+    tokenRequestParams: {},
+    selectBackendToken: () => backendToken,
+    verifyBackendToken: vi.fn().mockResolvedValue({
+      profile: refreshedProfile,
+      expiresAt: refreshedExpiry
+    })
   })
 
 describe(updateUserSession, () => {
@@ -67,7 +84,7 @@ describe(updateUserSession, () => {
     const request = makeRequest()
 
     await updateUserSession(
-      verifiesTheRefreshedToken(),
+      authProviderPresenting(),
       request,
       existingSession,
       refreshedTokens
@@ -78,56 +95,79 @@ describe(updateUserSession, () => {
   })
 
   describe('the token presented to the backend', () => {
-    it('should be the refreshed id token for a Defra ID session', async () => {
+    it('should be the one the session provider picks from the refreshed tokens', async () => {
       const request = makeRequest()
 
       await updateUserSession(
-        verifiesTheRefreshedToken(),
+        authProviderPresenting('new-access-token'),
         request,
-        sessionFor(OIDC_DEFRA_ID),
-        refreshedTokens
-      )
-
-      expect(savedSessionFrom(request).backendToken).toBe('new-id-token')
-    })
-
-    it('should be the refreshed access token for an Entra ID session', async () => {
-      const request = makeRequest()
-
-      await updateUserSession(
-        verifiesTheRefreshedToken(),
-        request,
-        sessionFor(OIDC_ENTRA_ID),
+        existingSession,
         { ...refreshedTokens, access_token: 'new-access-token' }
       )
 
       expect(savedSessionFrom(request).backendToken).toBe('new-access-token')
     })
 
-    it('should still be the refreshed id token for an Entra ID session, so logout keeps working', async () => {
+    it('should still keep the refreshed id token, so logout keeps working', async () => {
       const request = makeRequest()
 
       await updateUserSession(
-        verifiesTheRefreshedToken(),
+        authProviderPresenting('new-access-token'),
         request,
-        sessionFor(OIDC_ENTRA_ID),
+        existingSession,
         { ...refreshedTokens, access_token: 'new-access-token' }
       )
 
       expect(savedSessionFrom(request).idToken).toBe('new-id-token')
     })
 
-    it('should fail the refresh when Entra ID returns no access token', async () => {
+    it('should fail the refresh when the provider cannot pick one', async () => {
       const request = makeRequest()
+      const authProvider = {
+        ...authProviderPresenting(),
+        selectBackendToken: () => {
+          throw new Error('Entra ID returned no access token')
+        }
+      }
 
       await expect(
         updateUserSession(
-          verifiesTheRefreshedToken(),
+          authProvider,
           request,
-          sessionFor(OIDC_ENTRA_ID),
+          existingSession,
           refreshedTokens
         )
-      ).rejects.toThrow('Entra ID refresh returned no access token')
+      ).rejects.toThrow('Entra ID returned no access token')
+    })
+  })
+
+  describe('the profile on the refreshed session', () => {
+    it('should be read from the token the session presents to the backend', async () => {
+      const request = makeRequest()
+      const authProvider = authProviderPresenting('new-access-token')
+
+      await updateUserSession(authProvider, request, existingSession, {
+        ...refreshedTokens,
+        access_token: 'new-access-token'
+      })
+
+      expect(authProvider.verifyBackendToken).toHaveBeenCalledExactlyOnceWith(
+        'new-access-token'
+      )
+      expect(savedSessionFrom(request).profile).toStrictEqual(refreshedProfile)
+    })
+
+    it('should carry the expiry of that same token', async () => {
+      const request = makeRequest()
+
+      await updateUserSession(
+        authProviderPresenting(),
+        request,
+        existingSession,
+        refreshedTokens
+      )
+
+      expect(savedSessionFrom(request).expiresAt).toBe(refreshedExpiry)
     })
   })
 
@@ -139,10 +179,10 @@ describe(updateUserSession, () => {
       const request = makeRequest()
 
       await updateUserSession(
-        verifiesTheRefreshedToken(),
+        authProviderPresenting(),
         request,
-        sessionFor(OIDC_ENTRA_ID),
-        { ...refreshedTokens, access_token: 'new-access-token' }
+        existingSession,
+        refreshedTokens
       )
 
       expect(savedSessionFrom(request)).toMatchObject({
@@ -158,7 +198,7 @@ describe(updateUserSession, () => {
       const request = makeRequest()
 
       await updateUserSession(
-        verifiesTheRefreshedToken(),
+        authProviderPresenting(),
         request,
         existingSession,
         refreshedTokens
@@ -181,9 +221,9 @@ describe(updateUserSession, () => {
       const request = makeRequest()
 
       await updateUserSession(
-        verifiesTheRefreshedToken(),
+        authProviderPresenting('new-access-token'),
         request,
-        sessionFor(OIDC_ENTRA_ID),
+        existingSession,
         { ...refreshedTokens, access_token: 'new-access-token' }
       )
 
@@ -202,7 +242,7 @@ describe(updateUserSession, () => {
 
       await expect(
         updateUserSession(
-          verifiesTheRefreshedToken(),
+          authProviderPresenting(),
           request,
           existingSession,
           refreshedTokens
