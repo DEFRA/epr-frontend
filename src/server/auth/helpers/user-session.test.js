@@ -126,7 +126,7 @@ describe(updateUserSession, () => {
       const authProvider = {
         ...authProviderPresenting(),
         selectBackendToken: () => {
-          throw new Error('Entra ID refresh returned no access token')
+          throw new Error('Entra ID returned no access token')
         }
       }
 
@@ -137,7 +137,7 @@ describe(updateUserSession, () => {
           existingSession,
           refreshedTokens
         )
-      ).rejects.toThrow('Entra ID refresh returned no access token')
+      ).rejects.toThrow('Entra ID returned no access token')
     })
   })
 

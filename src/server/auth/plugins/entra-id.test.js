@@ -6,7 +6,7 @@ import { createPrivateKey, generateKeyPairSync } from 'node:crypto'
 import { describe, expect } from 'vitest'
 
 /**
- * @import { RefreshedTokens } from '#server/auth/helpers/refreshed-tokens-schema.js'
+ * @import { ProviderTokens } from '#server/auth/types/auth-provider.js'
  */
 
 const oidcConf = {
@@ -43,11 +43,10 @@ const entraClaims = {
 }
 
 /**
- * @param {Partial<RefreshedTokens>} tokens
- * @returns {RefreshedTokens}
+ * @param {ProviderTokens} tokens
+ * @returns {ProviderTokens}
  */
-const asRefreshedTokens = (tokens) =>
-  /** @type {RefreshedTokens} */ (/** @type {unknown} */ (tokens))
+const tokenResponse = (tokens) => tokens
 
 describe(createEntraIdAuthProvider, () => {
   beforeEach(({ msw }) => {
@@ -89,26 +88,22 @@ describe(createEntraIdAuthProvider, () => {
 
       expect(
         authProvider.selectBackendToken(
-          asRefreshedTokens({
+          tokenResponse({
             id_token: 'an-id-token',
-            access_token: 'an-access-token',
-            refresh_token: 'a-refresh-token'
+            access_token: 'an-access-token'
           })
         )
       ).toBe('an-access-token')
     })
 
-    it('fails the refresh when Entra ID returns no access token', () => {
+    it('is refused when Entra ID returns no access token', () => {
       const authProvider = createEntraIdAuthProvider(oidcConf)
 
       expect(() =>
         authProvider.selectBackendToken(
-          asRefreshedTokens({
-            id_token: 'an-id-token',
-            refresh_token: 'a-refresh-token'
-          })
+          tokenResponse({ id_token: 'an-id-token' })
         )
-      ).toThrow('Entra ID refresh returned no access token')
+      ).toThrow('Entra ID returned no access token')
     })
   })
 

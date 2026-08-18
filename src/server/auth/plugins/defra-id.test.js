@@ -442,13 +442,10 @@ describe('#defraId', () => {
       const authProvider = createDefraIdAuthProvider(mockVerifyToken)
 
       expect(
-        authProvider.selectBackendToken(
-          /** @type {never} */ ({
-            id_token: 'an-id-token',
-            access_token: 'an-access-token',
-            refresh_token: 'a-refresh-token'
-          })
-        )
+        authProvider.selectBackendToken({
+          id_token: 'an-id-token',
+          access_token: 'an-access-token'
+        })
       ).toBe('an-id-token')
     })
 

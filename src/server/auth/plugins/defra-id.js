@@ -36,7 +36,7 @@ const createDefraIdAuthProvider = (verifyToken) => ({
     scope: DEFRA_ID_SCOPES.join(' '),
     serviceId: config.get('defraId.serviceId')
   },
-  selectBackendToken: (refreshedTokens) => refreshedTokens.id_token,
+  selectBackendToken: (tokens) => tokens.id_token,
   verifyBackendToken: async (token) => {
     const payload = await verifyToken(token)
 
@@ -109,13 +109,14 @@ const createDefraId = (authProvider) => ({
            * @returns {Promise<void>}
            */
           profile: async function (credentials, params) {
+            const backendToken = authProvider.selectBackendToken(params)
             const { profile, expiresAt } =
-              await authProvider.verifyBackendToken(params.id_token)
+              await authProvider.verifyBackendToken(backendToken)
 
             credentials.profile = profile
             credentials.expiresAt = expiresAt
             credentials.idToken = params.id_token
-            credentials.backendToken = params.id_token
+            credentials.backendToken = backendToken
             credentials.urls = {
               token: oidcConf.token_endpoint,
               logout: oidcConf.end_session_endpoint

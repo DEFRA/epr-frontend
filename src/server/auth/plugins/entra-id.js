@@ -84,12 +84,12 @@ const createEntraIdAuthProvider = (oidcConf) => {
       client_secret: config.get('entraId.clientSecret'),
       scope: entraIdScopes(clientId).join(' ')
     },
-    selectBackendToken: (refreshedTokens) => {
-      if (!refreshedTokens.access_token) {
-        throw new Error('Entra ID refresh returned no access token')
+    selectBackendToken: (tokens) => {
+      if (!tokens.access_token) {
+        throw new Error('Entra ID returned no access token')
       }
 
-      return refreshedTokens.access_token
+      return tokens.access_token
     },
     verifyBackendToken: async (token) => {
       const payload = await verifyToken(token)
@@ -155,14 +155,14 @@ const createEntraId = (oidcConf, authProvider) => ({
            * @returns {Promise<void>}
            */
           profile: async function (credentials, params) {
-            const accessToken = credentials.token ?? ''
+            const backendToken = authProvider.selectBackendToken(params)
             const { profile, expiresAt } =
-              await authProvider.verifyBackendToken(accessToken)
+              await authProvider.verifyBackendToken(backendToken)
 
             credentials.profile = profile
             credentials.expiresAt = expiresAt
             credentials.idToken = params.id_token
-            credentials.backendToken = accessToken
+            credentials.backendToken = backendToken
             credentials.urls = {
               token: oidcConf.token_endpoint,
               logout: oidcConf.end_session_endpoint
