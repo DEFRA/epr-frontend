@@ -220,4 +220,27 @@ describe('an Entra ID session whose token is about to expire', () => {
 
     expect(session.idToken).toBe('new-id-token')
   })
+
+  describe('whose role the backend has withdrawn', () => {
+    beforeEach(({ msw }) => {
+      msw.use(identityHandler(IDENTITIES.unrecognised))
+    })
+
+    it('ends the request at the signed-out page rather than the page asked for', async ({
+      server
+    }) => {
+      const response = await requestWithSession(server)
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe('/logged-out')
+    })
+
+    it('leaves no session for the next request to carry', async ({
+      server
+    }) => {
+      await requestWithSession(server)
+
+      await expect(server.app.cache.get('entra-session-id')).resolves.toBeNull()
+    })
+  })
 })

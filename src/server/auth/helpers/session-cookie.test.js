@@ -5,7 +5,10 @@ import {
   assertUserSession,
   asUserSession
 } from '#server/common/test-helpers/auth-helper.js'
-import { identityHandler } from '#server/common/test-helpers/identity-helper.js'
+import {
+  IDENTITIES,
+  identityHandler
+} from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { Metrics } from '@defra/cdp-metrics'
 import Iron from '@hapi/iron'
@@ -617,6 +620,50 @@ describe('#sessionCookie - integration', () => {
           outcome: 'failure'
         }
       })
+    })
+
+    it('should end the session when the backend has withdrawn the role', async ({
+      server,
+      msw
+    }) => {
+      msw.use(
+        identityHandler(IDENTITIES.unrecognised),
+        http.post('http://defra-id.auth/token', () =>
+          HttpResponse.json({
+            expires_in: 3600,
+            id_token: createFakeJwt(defaultJwtPayload),
+            refresh_token: 'new-refresh-token',
+            token_type: 'Bearer'
+          })
+        )
+      )
+
+      // Expires in 5 seconds: within the 10-second awaited-refresh window
+      const expiresAt = addSeconds(new Date(), 5).toISOString()
+      const { sessionId, sessionData } = createExpiredRefreshSessionData(
+        'user-role-withdrawn',
+        expiresAt
+      )
+
+      await server.app.cache.set(sessionId, asUserSession(sessionData))
+
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        config.get('session.cookie.password'),
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(loggedOutUrl)
+      await expect(server.app.cache.get(sessionId)).resolves.toBeNull()
     })
 
     it('should skip refresh when idTokenRefreshInProgress is already set', async ({

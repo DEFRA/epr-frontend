@@ -1,4 +1,6 @@
+import { holdsNoRole } from '#server/auth/roles.js'
 import { dropUserSession } from './drop-user-session.js'
+import { hashUserId } from './hash-user-id.js'
 import { fetchIdentity } from './fetch-identity.js'
 
 /**
@@ -44,11 +46,16 @@ async function markSessionAsIdTokenRefreshInProgress(request, userSession) {
  *
  * The session's profile and expiry come from the token it presents to the
  * backend, which is the token its provider verifies at sign-in.
+ *
+ * An identity the backend now grants no role ends the session instead of
+ * updating it, the way sign-in refuses one. The user signs in again rather
+ * than carrying a session that every scope guard refuses page by page. Every
+ * provider refreshes through here, so the rule holds for all of them.
  * @param {AuthProvider} authProvider - The auth provider that issued the session
  * @param {HapiRequest} request - Hapi request object
  * @param {UserSession} existingSession - Current user session
  * @param {RefreshedTokens} refreshedTokens - Refreshed tokens from OIDC provider
- * @returns {Promise<UserSession>}
+ * @returns {Promise<UserSession | null>} The refreshed session, or null when the session ended
  */
 async function updateUserSession(
   authProvider,
@@ -59,7 +66,22 @@ async function updateUserSession(
   const backendToken = authProvider.selectBackendToken(refreshedTokens)
   const { profile, expiresAt } =
     await authProvider.verifyBackendToken(backendToken)
-  const { role, scopes } = await fetchIdentity(backendToken)
+  const identity = await fetchIdentity(backendToken)
+
+  if (holdsNoRole(identity)) {
+    request.logger.info({
+      message: 'Backend grants the user no role, so their session was ended',
+      event: {
+        action: 'sessionEnded',
+        kind: 'event',
+        reference: hashUserId(profile.id)
+      }
+    })
+
+    await removeUserSession(request)
+
+    return null
+  }
 
   /** @type {UserSession} */
   const session = {
@@ -68,8 +90,8 @@ async function updateUserSession(
     expiresAt,
     idToken: refreshedTokens.id_token,
     backendToken,
-    role,
-    scope: scopes,
+    role: identity.role,
+    scope: identity.scopes,
     refreshToken: refreshedTokens.refresh_token,
     idTokenRefreshInProgress: false
   }

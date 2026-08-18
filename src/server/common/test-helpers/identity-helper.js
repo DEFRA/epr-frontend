@@ -7,11 +7,18 @@ import { http, HttpResponse } from 'msw'
  * holds its own linked organisation's read and write scopes, a regulator reads
  * every organisation and writes nothing, and an identity on no list at all is
  * granted nothing.
+ *
+ * `operatorWithoutWrite` is the same operator after the backend stops granting
+ * the write scope: a narrower answer that still names a role.
  */
 export const IDENTITIES = Object.freeze({
   operator: {
     role: 'operator',
     scopes: ['organisation.linked.read', SCOPES.organisationLinkedWrite]
+  },
+  operatorWithoutWrite: {
+    role: 'operator',
+    scopes: ['organisation.linked.read']
   },
   regulator: {
     role: 'regulator_standard',
