@@ -24,3 +24,17 @@ export const REGULATOR_ROLE = 'regulator_standard'
  * @returns {boolean}
  */
 export const isRegulator = (credentials) => credentials?.role === REGULATOR_ROLE
+
+/**
+ * A session carries a positive identity or none at all. The backend answers
+ * `role: null` for an identity it does not recognise, and such a session gets
+ * no session cookie rather than one that falls through to whatever a guard
+ * written against a specific scope happens to allow. Sign-in refuses it and a
+ * refresh ends it, so the answer is the same wherever the backend gives it.
+ *
+ * Takes the role alone rather than a session, so it serves the refresh, which
+ * holds the backend's answer before any session is built from it.
+ * @param {{ role: string | null }} identity
+ * @returns {boolean}
+ */
+export const holdsNoRole = (identity) => identity.role === null

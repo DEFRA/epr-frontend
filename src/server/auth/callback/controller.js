@@ -4,6 +4,7 @@ import { fetchIdentity } from '#server/auth/helpers/fetch-identity.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { holdsNoRole } from '#server/auth/roles.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -139,15 +140,6 @@ function referrerIfPresentElseDefault(request, defaultPath) {
 
   return getSafeRedirect(defaultPath)
 }
-
-/**
- * A session carries a positive identity or none at all. The backend answers
- * `role: null` for an identity it does not recognise, and such a session gets
- * no session cookie rather than one that falls through to whatever a guard
- * written against a specific scope happens to allow.
- * @param {UserSession} session
- */
-const holdsNoRole = (session) => session.role === null
 
 /**
  * @param {HapiRequest} request

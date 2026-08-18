@@ -7,6 +7,7 @@ import {
   IDENTITIES,
   identityHandler
 } from '#server/common/test-helpers/identity-helper.js'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -22,7 +23,10 @@ import { describe, expect, vi } from 'vitest'
 const makeRequest = () =>
   mockHapiRequest({
     state: { userSession: { sessionId: 'sess-123' } },
-    server: { app: { cache: { set: vi.fn() } } }
+    server: { app: { cache: { set: vi.fn(), drop: vi.fn() } } },
+    cookieAuth: { clear: vi.fn() },
+    yar: { reset: vi.fn() },
+    logger: createMockLogger()
   })
 
 const existingSession = /** @type {UserSession} */ ({
@@ -194,7 +198,7 @@ describe(updateUserSession, () => {
     it('should drop a scope the backend has stopped granting', async ({
       msw
     }) => {
-      msw.use(identityHandler(IDENTITIES.unrecognised))
+      msw.use(identityHandler(IDENTITIES.operatorWithoutWrite))
       const request = makeRequest()
 
       await updateUserSession(
@@ -204,7 +208,9 @@ describe(updateUserSession, () => {
         refreshedTokens
       )
 
-      expect(savedSessionFrom(request).scope).toStrictEqual([])
+      expect(savedSessionFrom(request).scope).toStrictEqual(
+        IDENTITIES.operatorWithoutWrite.scopes
+      )
     })
 
     it('should be asked for with the refreshed token, not the one it replaces', async ({
@@ -248,6 +254,55 @@ describe(updateUserSession, () => {
           refreshedTokens
         )
       ).rejects.toMatchObject({ isBoom: true })
+    })
+  })
+
+  describe('an identity the backend has stopped granting a role', () => {
+    beforeEach(({ msw }) => {
+      msw.use(identityHandler(IDENTITIES.unrecognised))
+    })
+
+    /**
+     * @param {HapiRequest} request
+     * @returns {Promise<UserSession | null>}
+     */
+    const refreshWithdrawnRole = (request) =>
+      updateUserSession(
+        authProviderPresenting(),
+        request,
+        existingSession,
+        refreshedTokens
+      )
+
+    it('should leave the session unwritten, so no scopeless session survives', async () => {
+      const request = makeRequest()
+
+      const session = await refreshWithdrawnRole(request)
+
+      expect(session).toBeNull()
+      expect(request.server.app.cache.set).not.toHaveBeenCalled()
+    })
+
+    it('should end the session, so the user is sent to sign in again', async () => {
+      const request = makeRequest()
+
+      await refreshWithdrawnRole(request)
+
+      expect(request.server.app.cache.drop).toHaveBeenCalledExactlyOnceWith(
+        'sess-123'
+      )
+      expect(request.cookieAuth.clear).toHaveBeenCalledExactlyOnceWith()
+    })
+
+    it('should say why the session ended', async () => {
+      const request = makeRequest()
+
+      await refreshWithdrawnRole(request)
+
+      expect(request.logger.info).toHaveBeenCalledExactlyOnceWith({
+        message: 'Backend grants the user no role, so their session was ended',
+        event: { action: 'sessionEnded', kind: 'event' }
+      })
     })
   })
 })
