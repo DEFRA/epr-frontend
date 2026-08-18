@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
+import { SCOPES } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { buildListViewData } from './list-view-data.js'
 
-const createMockRequest = () => ({
+/** @param {Array<(typeof SCOPES)[keyof typeof SCOPES]>} scope */
+const createMockRequest = (scope = [SCOPES.organisationLinkedWrite]) => ({
+  auth: { credentials: { scope } },
   t: vi.fn((key, params = {}) => {
     const translations = {
       'prns:list:pageTitle': params.noteTypePlural,
@@ -24,6 +27,7 @@ const createMockRequest = () => ({
       'prns:list:table:statusHeading': 'Status',
       'prns:list:table:actionHeading': '',
       'prns:list:table:selectText': 'Select',
+      'prns:list:table:viewText': 'View',
       'prns:list:table:totalLabel': 'Total',
       'prns:list:noPrnsCreated': `You have not created any ${params.noteTypePlural}.`,
       'prns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
@@ -344,6 +348,36 @@ describe('#buildListViewData', () => {
         '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-001'
       )
       expect(result.table.rows[0][4].html).not.toContain('prn-001/view')
+    })
+
+    it("sends a session holding no write scope to the note's read page, because Select issues or cancels it", () => {
+      const result = buildListViewData(createMockRequest([SCOPES.regulator]), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.table.rows[0][4].html).toContain(
+        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-001/view'
+      )
+      expect(result.table.rows[0][4].html).toContain('>View<')
+    })
+
+    it('keeps the view link on an issued note for a session holding no write scope, because it only reads', () => {
+      const result = buildListViewData(createMockRequest([SCOPES.regulator]), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        issuedPrns: stubIssuedPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.issuedTable.rows[0][5].html).toContain('prn-003/view')
     })
 
     it('should return table headings', () => {

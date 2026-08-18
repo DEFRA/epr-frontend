@@ -124,7 +124,8 @@
       "statusHeading": "Status",
       "actionHeading": "",
       "selectText": "Select",
-      "totalLabel": "Total"
+      "totalLabel": "Total",
+      "viewText": "View"
     },
     "status": {
       "awaitingAuthorisation": "Awaiting authorisation",

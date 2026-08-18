@@ -1,3 +1,4 @@
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
@@ -6,7 +7,8 @@ import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
 /**
  * @param {{
  *   t: (key: string, params?: object) => string,
- *   localiseUrl: (url: string) => string
+ *   localiseUrl: (url: string) => string,
+ *   auth: { credentials?: { scope?: string[] } | null }
  * }} request
  * @param {{
  *   organisationId: string,
@@ -38,6 +40,7 @@ export function buildListViewData(
 ) {
   const { t: localise } = request
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
+  const canWrite = hasWriteScope(request.auth.credentials)
   const routeBase = `/organisations/${organisationId}/registrations/${registrationId}`
 
   const buildAwaiting = (prnList) =>
@@ -46,7 +49,8 @@ export function buildListViewData(
       registrationId,
       accreditationId,
       prns: prnList,
-      localise
+      localise,
+      canWrite
     })
 
   const buildDetail = (prnList, i18nPrefix) =>
@@ -112,9 +116,33 @@ function buildListLabels(localise, { noteType, noteTypePlural }) {
   }
 }
 
+/**
+ * The awaiting-action table. Its action link opens the page that issues or
+ * cancels a note, so a session holding no write scope is sent to the note's
+ * read page instead. An awaiting note appears in no other table, so an empty
+ * cell would leave that session able to see the note listed and unable to open
+ * it. The link is assembled here rather than in the template, so the template
+ * scan that hides write controls cannot see it and the decision has to be made
+ * at this call site.
+ * @param {{ localiseUrl: (url: string) => string }} request
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   accreditationId: string,
+ *   prns: Array<{
+ *     id: string,
+ *     recipient: string,
+ *     createdAt: string,
+ *     tonnage?: number | null,
+ *     status: string
+ *   }>,
+ *   localise: (key: string, params?: object) => string,
+ *   canWrite: boolean
+ * }} options
+ */
 function buildAwaitingTable(
   request,
-  { organisationId, registrationId, accreditationId, prns, localise }
+  { organisationId, registrationId, accreditationId, prns, localise, canWrite }
 ) {
   const headings = {
     recipient: localise('prns:list:table:recipientHeading'),
@@ -125,17 +153,22 @@ function buildAwaitingTable(
   }
 
   const selectText = localise('prns:list:table:selectText')
+  const viewText = localise('prns:list:table:viewText')
 
   const dataRows = prns.map((prn) => {
-    const actionUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}`
-    )
+    const notePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}`
+    const actionUrl = request.localiseUrl(notePath)
+    const viewUrl = request.localiseUrl(`${notePath}/view`)
     return [
       { text: prn.recipient },
       { text: formatDate(prn.createdAt) },
       { text: prn.tonnage },
       { html: buildStatusTagHtml(prn.status, localise) },
-      { html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>` }
+      canWrite
+        ? {
+            html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>`
+          }
+        : { html: `<a href="${viewUrl}" class="govuk-link">${viewText}</a>` }
     ]
   })
 
