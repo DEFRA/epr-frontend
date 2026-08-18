@@ -114,7 +114,7 @@ describe('the waste balance history page', () => {
         ],
         [
           '4 January 2026',
-          'Waste report submitted',
+          'Summary log submitted',
           '100.00',
           '100.00',
           '100.00',

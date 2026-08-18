@@ -7,7 +7,7 @@
     "prn-creation-cancelled": "{{ noteType }} cancelled before issue",
     "prn-issued": "{{ noteType }} issued",
     "prn-rejected": "{{ noteType }} rejected",
-    "summary-log-submitted": "Waste report submitted"
+    "summary-log-submitted": "Summary log submitted"
   },
   "heading": "Waste balance history",
   "noEvents": "Nothing has changed this waste balance yet.",
