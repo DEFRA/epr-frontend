@@ -24,7 +24,7 @@ const entraClaims = {
   oid: 'entra-user-id',
   preferred_username: 'jane.doe@example.com',
   aud: 'test-entra-client-id',
-  iss: 'https://login.microsoftonline.com/test-tenant-id/v2.0'
+  iss: 'http://entra-id.auth'
 }
 
 const { privateKey: privateKeyObject, publicKey: publicKeyObject } =

@@ -1,3 +1,4 @@
+import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuration.js'
 import { createEntraIdAuthProvider } from '#server/auth/plugins/entra-id.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import * as jose from 'jose'
@@ -10,6 +11,7 @@ import { describe, expect } from 'vitest'
  */
 
 const oidcConf = {
+  issuer: 'http://entra-id.auth',
   authorization_endpoint: 'http://entra-id.auth/authorize',
   token_endpoint: 'http://entra-id.auth/token',
   end_session_endpoint: 'http://entra-id.auth/logout',
@@ -39,7 +41,7 @@ const entraClaims = {
   oid: 'entra-user-id',
   preferred_username: 'jane.doe@example.com',
   aud: 'test-entra-client-id',
-  iss: 'https://login.microsoftonline.com/test-tenant-id/v2.0'
+  iss: oidcConf.issuer
 }
 
 /**
@@ -141,7 +143,7 @@ describe(createEntraIdAuthProvider, () => {
       ).rejects.toThrow('unexpected "aud" claim value')
     })
 
-    it('refuses a token issued by another tenant', async () => {
+    it('refuses a token issued by someone other than the provider the discovery document names', async () => {
       const authProvider = createEntraIdAuthProvider(oidcConf)
 
       await expect(
@@ -152,6 +154,35 @@ describe(createEntraIdAuthProvider, () => {
           })
         )
       ).rejects.toThrow('unexpected "iss" claim value')
+    })
+
+    it('refuses a discovery document that names no issuer, rather than check no issuer at all', async ({
+      msw
+    }) => {
+      const wellKnownUrl =
+        'http://entra-id.auth/.well-known/openid-configuration'
+      const { issuer: _issuer, ...withoutIssuer } = oidcConf
+      msw.use(http.get(wellKnownUrl, () => HttpResponse.json(withoutIssuer)))
+
+      await expect(
+        getOidcConfiguration(wellKnownUrl).then(createEntraIdAuthProvider)
+      ).rejects.toThrow('Entra ID discovery document names no issuer')
+    })
+
+    it('follows the discovery document to a different provider', async () => {
+      const authProvider = createEntraIdAuthProvider({
+        ...oidcConf,
+        issuer: 'http://another-entra-id.auth'
+      })
+
+      const { profile } = await authProvider.verifyBackendToken(
+        await signAccessToken({
+          ...entraClaims,
+          iss: 'http://another-entra-id.auth'
+        })
+      )
+
+      expect(profile.id).toBe('entra-user-id')
     })
   })
 })

@@ -58,8 +58,13 @@ const entraIdScopes = (clientId) => [
  * @returns {AuthProvider}
  */
 const createEntraIdAuthProvider = (oidcConf) => {
+  // `jose` treats an absent `issuer` as "do not check the issuer", so a
+  // discovery document without one would verify a token from anybody.
+  if (!oidcConf.issuer) {
+    throw new Error('Entra ID discovery document names no issuer')
+  }
+
   const clientId = config.get('entraId.clientId')
-  const tenantId = config.get('entraId.tenantId')
 
   const JWKS = jose.createRemoteJWKSet(new URL(oidcConf.jwks_uri))
 
@@ -72,7 +77,7 @@ const createEntraIdAuthProvider = (oidcConf) => {
     const { payload } = await jose.jwtVerify(token, JWKS, {
       algorithms: ['RS256'],
       audience: clientId,
-      issuer: `https://login.microsoftonline.com/${tenantId}/v2.0`
+      issuer: oidcConf.issuer
     })
 
     return /** @type {EntraIdJwtPayload} */ (payload)
