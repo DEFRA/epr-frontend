@@ -61,6 +61,8 @@ const savedSessionFrom = (request) =>
   )
 
 const refreshedProfile = { id: 'user-123', email: 'test@example.com' }
+const hashedUserId =
+  'fcdec6df4d44dbc637c7c5b58efface52a7f8a88535423430255be0bb89bedd8'
 const refreshedExpiry = new Date(Date.now() + 3600 * 1000).toISOString()
 
 /**
@@ -294,14 +296,18 @@ describe(updateUserSession, () => {
       expect(request.cookieAuth.clear).toHaveBeenCalledExactlyOnceWith()
     })
 
-    it('should say why the session ended', async () => {
+    it('should name the user whose session ended, without logging who they are', async () => {
       const request = makeRequest()
 
       await refreshWithdrawnRole(request)
 
       expect(request.logger.info).toHaveBeenCalledExactlyOnceWith({
         message: 'Backend grants the user no role, so their session was ended',
-        event: { action: 'sessionEnded', kind: 'event' }
+        event: {
+          action: 'sessionEnded',
+          kind: 'event',
+          reference: hashedUserId
+        }
       })
     })
   })

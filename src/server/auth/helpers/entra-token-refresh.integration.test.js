@@ -226,7 +226,9 @@ describe('an Entra ID session whose token is about to expire', () => {
       msw.use(identityHandler(IDENTITIES.unrecognised))
     })
 
-    it('sends the regulator back to sign in', async ({ server }) => {
+    it('ends the request at the signed-out page rather than the page asked for', async ({
+      server
+    }) => {
       const response = await requestWithSession(server)
 
       expect(response.statusCode).toBe(statusCodes.found)

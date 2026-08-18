@@ -1,5 +1,6 @@
 import { holdsNoRole } from '#server/auth/roles.js'
 import { dropUserSession } from './drop-user-session.js'
+import { hashUserId } from './hash-user-id.js'
 import { fetchIdentity } from './fetch-identity.js'
 
 /**
@@ -70,7 +71,11 @@ async function updateUserSession(
   if (holdsNoRole(identity)) {
     request.logger.info({
       message: 'Backend grants the user no role, so their session was ended',
-      event: { action: 'sessionEnded', kind: 'event' }
+      event: {
+        action: 'sessionEnded',
+        kind: 'event',
+        reference: hashUserId(profile.id)
+      }
     })
 
     await removeUserSession(request)

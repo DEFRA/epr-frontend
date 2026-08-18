@@ -1,6 +1,7 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisation.js'
 import { fetchIdentity } from '#server/auth/helpers/fetch-identity.js'
+import { hashUserId } from '#server/auth/helpers/hash-user-id.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
@@ -10,20 +11,13 @@ import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
-import { randomUUID, createHash } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { UserSession } from '#server/auth/types/session.js'
  */
-
-/**
- * Hashes a user ID to avoid logging PII while preserving uniqueness for metrics
- * @param {string} userId
- * @returns {string}
- */
-const hashUserId = (userId) => createHash('sha256').update(userId).digest('hex')
 
 /**
  * Returns the path and its Welsh localised variant
