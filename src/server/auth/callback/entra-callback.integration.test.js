@@ -7,7 +7,7 @@ import {
   IDENTITIES,
   identityHandler
 } from '#server/common/test-helpers/identity-helper.js'
-import { beforeEach, it } from '#vite/fixtures/server.js'
+import { ENTRA_ID_BASE_URL, beforeEach, it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
@@ -113,15 +113,11 @@ describe('/auth/callback/entra - GET integration', async () => {
     config.set('featureFlags.regulatorAccess', false)
   })
 
-  // The issuer the OIDC discovery document answers in `.vite/fixtures/server.js`.
-  // A token is accepted only when its `iss` matches what that document names.
-  const discoveryIssuer = 'http://entra-id.auth'
-
   const claims = {
     oid: 'entra-user-id',
     preferred_username: 'jane.doe@example.com',
     aud: 'test-entra-client-id',
-    iss: discoveryIssuer
+    iss: ENTRA_ID_BASE_URL
   }
 
   // The application role rides on the token and this app never reads it. The

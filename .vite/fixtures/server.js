@@ -27,6 +27,10 @@ import organisationsFixture from '../../fixtures/waste-organisations/organisatio
  * }} ServerFixtures
  */
 
+// The OIDC discovery document each stub provider answers names its own base
+// URL as the `issuer`, so a test that signs a token claims this in `iss`.
+const ENTRA_ID_BASE_URL = 'http://entra-id.auth'
+
 /**
  * Stub handler for AWS EC2 Instance Metadata Service (IMDS).
  * The AWS SDK attempts to fetch credentials from this endpoint when running on EC2.
@@ -136,7 +140,7 @@ const it = /** @type {TestAPI<ServerFixtures>} */ (
         const server = setupServer(
           awsEc2MetadataHandler,
           ...createOidcHandlers('http://defra-id.auth'),
-          ...createOidcHandlers('http://entra-id.auth')
+          ...createOidcHandlers(ENTRA_ID_BASE_URL)
         )
         server.listen({ onUnhandledRequest: 'error' })
 
@@ -172,4 +176,4 @@ const it = /** @type {TestAPI<ServerFixtures>} */ (
 
 const beforeEach = it.beforeEach
 
-export { beforeEach, it, it as test }
+export { ENTRA_ID_BASE_URL, beforeEach, it, it as test }

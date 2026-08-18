@@ -1,6 +1,6 @@
 import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuration.js'
 import { createEntraIdAuthProvider } from '#server/auth/plugins/entra-id.js'
-import { beforeEach, it } from '#vite/fixtures/server.js'
+import { ENTRA_ID_BASE_URL, beforeEach, it } from '#vite/fixtures/server.js'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import { createPrivateKey, generateKeyPairSync } from 'node:crypto'
@@ -11,11 +11,11 @@ import { describe, expect } from 'vitest'
  */
 
 const oidcConf = {
-  issuer: 'http://entra-id.auth',
-  authorization_endpoint: 'http://entra-id.auth/authorize',
-  token_endpoint: 'http://entra-id.auth/token',
-  end_session_endpoint: 'http://entra-id.auth/logout',
-  jwks_uri: 'http://entra-id.auth/.well-known/jwks.json'
+  issuer: ENTRA_ID_BASE_URL,
+  authorization_endpoint: `${ENTRA_ID_BASE_URL}/authorize`,
+  token_endpoint: `${ENTRA_ID_BASE_URL}/token`,
+  end_session_endpoint: `${ENTRA_ID_BASE_URL}/logout`,
+  jwks_uri: `${ENTRA_ID_BASE_URL}/.well-known/jwks.json`
 }
 
 const { privateKey: privateKeyObject, publicKey: publicKeyObject } =
@@ -159,8 +159,7 @@ describe(createEntraIdAuthProvider, () => {
     it('refuses a discovery document that names no issuer, rather than check no issuer at all', async ({
       msw
     }) => {
-      const wellKnownUrl =
-        'http://entra-id.auth/.well-known/openid-configuration'
+      const wellKnownUrl = `${ENTRA_ID_BASE_URL}/.well-known/openid-configuration`
       const { issuer: _issuer, ...withoutIssuer } = oidcConf
       msw.use(http.get(wellKnownUrl, () => HttpResponse.json(withoutIssuer)))
 
