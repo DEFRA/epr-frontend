@@ -202,7 +202,7 @@ describe('the waste balance history page', () => {
         level: 1
       })
 
-      expect(heading.textContent).toContain('Registered, not accredited')
+      expect(heading.textContent).toContain('Registered-only')
     })
 
     it("names an exporter's notes PERNs", async ({ msw, server }) => {
