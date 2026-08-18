@@ -16,6 +16,7 @@ import { regulators } from '#server/regulators/index.js'
 import { reports } from '#server/reports/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
+import { wasteBalanceHistory } from '#server/waste-balance-history/index.js'
 import inert from '@hapi/inert'
 
 export const router = {
@@ -43,7 +44,8 @@ export const router = {
         ...(config.get('featureFlags.regulatorAccess') ? [regulators] : []),
         reports,
         summaryLog,
-        summaryLogUpload
+        summaryLogUpload,
+        wasteBalanceHistory
       ])
 
       // Static assets

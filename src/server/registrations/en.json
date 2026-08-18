@@ -36,5 +36,6 @@
       "title": "Available waste balance",
       "description": "This is the balance available for creating new {{noteTypePlural}}"
     }
-  }
+  },
+  "wasteBalanceHistory": "View waste balance history"
 }

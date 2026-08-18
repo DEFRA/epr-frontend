@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { isRegulator } from '#server/auth/roles.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -89,6 +90,7 @@ export const controller = {
  *   siteName: string | null;
  *   uploadSummaryLogUrl: string;
  *   wasteBalance: { availableAmount: number | null; noteTypePlural: 'PRNs' | 'PERNs' };
+ *   wasteBalanceHistoryUrl: string | null;
  * }} RegistrationViewModel
  */
 
@@ -195,7 +197,12 @@ function buildViewModel({
     }),
     siteName,
     uploadSummaryLogUrl,
-    wasteBalance: getWasteBalanceViewData(wasteBalance, noteTypePlural)
+    wasteBalance: getWasteBalanceViewData(wasteBalance, noteTypePlural),
+    wasteBalanceHistoryUrl: getWasteBalanceHistoryUrl(
+      request,
+      organisationId,
+      registration
+    )
   }
 
   return viewModel
@@ -268,6 +275,32 @@ function getPrnViewData(
     },
     title: localise('registrations:notes.title', { noteTypePlural })
   }
+}
+
+/**
+ * The ledger this registration writes to now. A ledger is partitioned by
+ * accreditation, the registered-only phase included, so the link carries the
+ * accreditation in force, or none where the period is registered only.
+ *
+ * The page is for a regulator, so the link is gated on the role rather than on
+ * a scope: an operator holds the same `organisation.read` for its own
+ * organisation and still must not see the history.
+ * @param {HapiRequest} request
+ * @param {string} organisationId
+ * @param {Registration} registration
+ * @returns {string | null}
+ */
+function getWasteBalanceHistoryUrl(request, organisationId, registration) {
+  if (!isRegulator(request.auth.credentials)) {
+    return null
+  }
+
+  const registrationPath = `/organisations/${organisationId}/registrations/${registration.id}`
+  const ledgerPath = registration.accreditationId
+    ? `${registrationPath}/accreditations/${registration.accreditationId}`
+    : registrationPath
+
+  return request.localiseUrl(`${ledgerPath}/waste-balance-history`)
 }
 
 /**

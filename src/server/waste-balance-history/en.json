@@ -1,0 +1,25 @@
+{
+  "accreditationCaption": "Accreditation {{ accreditationNumber }}",
+  "events": {
+    "prn-accepted": "{{ noteType }} accepted",
+    "prn-cancelled-after-issue": "{{ noteType }} cancelled after issue",
+    "prn-created": "{{ noteType }} created",
+    "prn-creation-cancelled": "{{ noteType }} cancelled before issue",
+    "prn-issued": "{{ noteType }} issued",
+    "prn-rejected": "{{ noteType }} rejected",
+    "summary-log-submitted": "Waste report submitted"
+  },
+  "heading": "Waste balance history",
+  "noEvents": "Nothing has changed this waste balance yet.",
+  "pageTitle": "Waste balance history",
+  "registeredOnlyCaption": "Registered, not accredited",
+  "systemActor": "System",
+  "table": {
+    "available": "Available",
+    "balance": "Balance",
+    "date": "Date",
+    "event": "Event",
+    "tonnage": "Tonnage",
+    "who": "Who"
+  }
+}

@@ -1,4 +1,6 @@
 import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { REGULATOR_ROLE } from '#server/auth/roles.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -1249,3 +1251,67 @@ describe('a session that may not change the operator data', () => {
     expect(queryByRole(body, 'link', { name: 'Manage reports' })).toBeNull()
   })
 })
+
+describe('the waste balance history link', () => {
+  const regulatorAuth = buildMockAuth({
+    provider: OIDC_ENTRA_ID,
+    role: REGULATOR_ROLE,
+    profile: { id: 'entra-user-1', email: 'regulator@example.com' },
+    backendToken: 'test-id-token'
+  })
+
+  const registeredOnly = findRegistrationAndAccreditation(
+    fixtureData,
+    'reg-006-plastic-export-created'
+  )
+
+  /**
+   * @param {HapiServer} server
+   * @param {ReturnType<typeof buildMockAuth>} auth
+   * @param {RegistrationWithAccreditation} registration
+   */
+  const openRegistration = async (server, auth, registration) => {
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(registration)
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/organisations/6507f1f77bcf86cd79943901/registrations/${registration.registration.id}`,
+      auth
+    })
+
+    return new JSDOM(asHtml(result)).window.document.body
+  }
+
+  const historyLink = { name: 'View waste balance history' }
+
+  it('sends a regulator to the ledger of the accreditation in force', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, regulatorAuth, glassApproved)
+
+    expect(queryByRole(body, 'link', historyLink)?.getAttribute('href')).toBe(
+      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/waste-balance-history'
+    )
+  })
+
+  it('sends a regulator to the registered-only ledger where no accreditation is in force', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, regulatorAuth, registeredOnly)
+
+    expect(queryByRole(body, 'link', historyLink)?.getAttribute('href')).toBe(
+      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-006-plastic-export-created/waste-balance-history'
+    )
+  })
+
+  it('offers an operator no link at all', async ({ server }) => {
+    const body = await openRegistration(server, mockAuth, glassApproved)
+
+    expect(queryByRole(body, 'link', historyLink)).toBeNull()
+  })
+})
+
+/**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ */
