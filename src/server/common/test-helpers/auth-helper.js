@@ -1,11 +1,25 @@
 import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
-import { SCOPES } from '#server/auth/scopes.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 
 /**
+ * @import { Identity } from '#server/auth/helpers/fetch-identity.js'
  * @import { UserSession } from '#server/auth/types/session.js'
  * @import { UserOrganisations } from '#server/auth/types/organisations.js'
  */
+
+/**
+ * The two credential fields a session takes from a backend identity, for a test
+ * that builds a session with {@link buildMockAuth}. `updateUserSession` maps
+ * `/v1/me` the same way, so a test session holds what the backend granted and
+ * one place decides what an identity is.
+ * @param {Identity} identity
+ * @returns {{ role: string | null, scope: string[] }}
+ */
+export const sessionIdentity = ({ role, scopes }) => ({
+  role,
+  scope: [...scopes]
+})
 
 /**
  * Builds a `session`-strategy auth object for `server.inject`, with credentials
@@ -29,27 +43,13 @@ export const buildMockAuth = (overrides = {}) => ({
     expiresAt: '2099-01-01T00:00:00.000Z',
     idToken: 'mock-id-token',
     backendToken: 'mock-backend-token',
-    role: 'operator',
-    scope: ['organisation.linked.read', SCOPES.organisationLinkedWrite],
+    ...sessionIdentity(IDENTITIES.operator),
     urls: {
       token: 'http://defra-id.auth/token',
       logout: 'http://defra-id.auth/logout'
     },
     ...overrides
   }
-})
-
-/**
- * The two credential fields a session takes from a backend identity, for a test
- * that builds a session with {@link buildMockAuth}. `updateUserSession` maps
- * `/v1/me` the same way, so a test session holds what the backend granted and
- * one place decides what an identity is.
- * @param {{ role: string | null, scopes: readonly string[] }} identity
- * @returns {{ role: string | null, scope: string[] }}
- */
-export const sessionIdentity = ({ role, scopes }) => ({
-  role,
-  scope: [...scopes]
 })
 
 /**
