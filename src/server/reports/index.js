@@ -50,6 +50,7 @@ import {
   reportStaleErrorGetController,
   reportStaleErrorPostController
 } from './report-stale-error-controller.js'
+import { reportDataIncompleteGetController } from './report-data-incomplete-controller.js'
 import { ReportStaleError } from './helpers/stale.js'
 
 const basePath =
@@ -216,6 +217,11 @@ export const reports = {
           ...reportStaleErrorPostController,
           method: 'POST',
           path: `${periodPath}/report-stale-error`
+        },
+        {
+          ...reportDataIncompleteGetController,
+          method: 'GET',
+          path: `${periodPath}/report-data-incomplete`
         }
       ])
 
