@@ -28,8 +28,9 @@ export const sessionIdentity = ({ role, scopes }) => ({
  * individual credential fields (e.g. `backendToken`).
  *
  * The default is an operator, carrying the role and scopes the backend grants
- * a Defra ID identity. Pass `scope` to build a session that holds something
- * else.
+ * a Defra ID identity. Spread {@link sessionIdentity} to build a session for
+ * another identity. Pass `scope` alone only where the test's subject is a
+ * session holding a scope without the role that comes with it.
  * @param {Partial<UserSession>} [overrides]
  * @returns {{ strategy: string, credentials: UserSession }}
  */

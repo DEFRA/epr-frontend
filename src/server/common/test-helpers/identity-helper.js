@@ -9,8 +9,11 @@ import { http, HttpResponse } from 'msw'
  * and searches every organisation and writes nothing. An identity on no list at
  * all is granted nothing.
  *
+ * The backend decides every scope here and this fixture only restates it, so a
+ * scope it grants belongs in this list whether or not this app guards on one.
  * The regulator's `organisation.search` is the scope the regulator's own page
- * guards on, so a fixture without it describes an identity that page refuses.
+ * guards on, and is the one a stale fixture is caught on. `organisation.read`
+ * and `regulator` gate no route here, so nothing local pins them.
  *
  * `operatorWithoutWrite` is the same operator after the backend stops granting
  * the write scope: a narrower answer that still names a role.

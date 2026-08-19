@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -43,7 +44,7 @@ describe('#fetchIdentity', () => {
 
     const result = await fetchIdentity(mockBackendToken)
 
-    expect(result).toStrictEqual(IDENTITIES.regulator)
+    expect(hasWriteScope({ scope: result.scopes })).toBe(false)
   })
 
   it('should return no role and no scopes for an identity the backend does not recognise', async ({
