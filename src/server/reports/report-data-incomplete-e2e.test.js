@@ -149,7 +149,9 @@ describe('report-data-incomplete (end to end via real backend client)', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('We found 2 issues in your summary log.')
     expect(result).toContain('Row ID: 1001. Supplier name is missing')
-    expect(result).toContain('Row ID: 4001. Final destination name is missing')
+    expect(result).toContain(
+      'Row ID: 4001. Final destination facility name is missing'
+    )
   })
 })
 

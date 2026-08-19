@@ -284,7 +284,7 @@ describe('#reportDataIncompleteController', () => {
     expect(worksheetHeadings).toStrictEqual(['Exported', 'Sent on'])
     expect(bullets).toStrictEqual([
       'Row ID: 1001. Supplier name is missing',
-      'Row ID: 4001. Final destination name is missing'
+      'Row ID: 4001. Final destination facility name is missing'
     ])
   })
 
