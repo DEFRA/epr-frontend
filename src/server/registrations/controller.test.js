@@ -1252,7 +1252,7 @@ describe('a session that may not change the operator data', () => {
   })
 })
 
-describe('the waste balance history link', () => {
+describe('the waste balance ledger link', () => {
   const regulatorAuth = buildMockAuth({
     provider: OIDC_ENTRA_ID,
     role: REGULATOR_ROLE,
@@ -1282,15 +1282,15 @@ describe('the waste balance history link', () => {
     return new JSDOM(asHtml(result)).window.document.body
   }
 
-  const historyLink = { name: 'View waste balance history' }
+  const ledgerLink = { name: 'View waste balance ledger' }
 
   it('sends a regulator to the ledger of the accreditation in force', async ({
     server
   }) => {
     const body = await openRegistration(server, regulatorAuth, glassApproved)
 
-    expect(queryByRole(body, 'link', historyLink)?.getAttribute('href')).toBe(
-      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/waste-balance-history'
+    expect(queryByRole(body, 'link', ledgerLink)?.getAttribute('href')).toBe(
+      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/waste-balance-ledger'
     )
   })
 
@@ -1299,15 +1299,15 @@ describe('the waste balance history link', () => {
   }) => {
     const body = await openRegistration(server, regulatorAuth, registeredOnly)
 
-    expect(queryByRole(body, 'link', historyLink)?.getAttribute('href')).toBe(
-      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-006-plastic-export-created/waste-balance-history'
+    expect(queryByRole(body, 'link', ledgerLink)?.getAttribute('href')).toBe(
+      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-006-plastic-export-created/waste-balance-ledger'
     )
   })
 
   it('offers an operator no link at all', async ({ server }) => {
     const body = await openRegistration(server, mockAuth, glassApproved)
 
-    expect(queryByRole(body, 'link', historyLink)).toBeNull()
+    expect(queryByRole(body, 'link', ledgerLink)).toBeNull()
   })
 })
 

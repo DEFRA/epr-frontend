@@ -31,8 +31,8 @@ const accreditedRegistrationId = 'reg-001-glass-approved'
 const accreditationId = 'acc-001-glass-approved'
 const registeredOnlyRegistrationId = 'reg-006-plastic-export-created'
 
-const accreditedPath = `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/waste-balance-history`
-const registeredOnlyPath = `/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}/waste-balance-history`
+const accreditedPath = `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/waste-balance-ledger`
+const registeredOnlyPath = `/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}/waste-balance-ledger`
 
 const accreditedEventsUrl = `${backendUrl}/v1/admin/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/waste-balance-events`
 const registeredOnlyEventsUrl = `${backendUrl}/v1/admin/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}/waste-balance-events`
@@ -78,7 +78,7 @@ const rowsOf = (body) =>
     )
   )
 
-describe('the waste balance history page', () => {
+describe('the waste balance ledger page', () => {
   beforeEach(() => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       findRegistrationAndAccreditation(fixtureData, accreditedRegistrationId)
@@ -171,7 +171,7 @@ describe('the waste balance history page', () => {
       })
 
       expect(heading.textContent).toContain('Accreditation ACC001234')
-      expect(heading.textContent).toContain('Waste balance history')
+      expect(heading.textContent).toContain('Waste balance ledger')
     })
 
     it('reads the registered-only ledger, and says the period carries no accreditation', async ({
@@ -247,12 +247,12 @@ describe('the waste balance history page', () => {
       ).not.toBeNull()
     })
 
-    it('refuses an address pairing the registration with another accreditation, rather than reporting an empty history', async ({
+    it('refuses an address pairing the registration with another accreditation, rather than reporting an empty ledger', async ({
       server
     }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/acc-005-steel-approved/waste-balance-history`,
+        url: `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/acc-005-steel-approved/waste-balance-ledger`,
         auth: regulator
       })
 
@@ -276,7 +276,7 @@ describe('the waste balance history page', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/acc-not-in-organisation/waste-balance-history`,
+        url: `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/acc-not-in-organisation/waste-balance-ledger`,
         auth: regulator
       })
 

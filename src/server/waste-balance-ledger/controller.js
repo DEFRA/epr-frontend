@@ -6,7 +6,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import Boom from '@hapi/boom'
 
-import { buildHistoryRows } from './helpers/build-history-rows.js'
+import { buildLedgerRows } from './helpers/build-ledger-rows.js'
 import { fetchWasteBalanceEvents } from './helpers/fetch-waste-balance-events.js'
 
 /**
@@ -14,11 +14,11 @@ import { fetchWasteBalanceEvents } from './helpers/fetch-waste-balance-events.js
  *   organisationId: string,
  *   registrationId: string,
  *   accreditationId?: string
- * }} WasteBalanceHistoryParams
+ * }} WasteBalanceLedgerParams
  */
 
 /**
- * The history of one waste balance ledger, read as business events.
+ * One waste balance ledger, read as business events.
  *
  * The page is for a regulator, so it is gated on the role rather than on a
  * scope: an operator holds the same `organisation.read` for its own
@@ -27,14 +27,14 @@ import { fetchWasteBalanceEvents } from './helpers/fetch-waste-balance-events.js
  */
 export const controller = {
   /**
-   * @param {HapiRequest & { params: WasteBalanceHistoryParams }} request
+   * @param {HapiRequest & { params: WasteBalanceLedgerParams }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
     const session = request.auth.credentials
 
     if (!isRegulator(session)) {
-      throw Boom.forbidden('Waste balance history is for a regulator')
+      throw Boom.forbidden('Waste balance ledger is for a regulator')
     }
 
     const { organisationId, registrationId, accreditationId } = request.params
@@ -64,18 +64,18 @@ export const controller = {
     const { t: localise } = request
     const { noteType } = getNoteTypeDisplayNames(registration)
 
-    return h.view('waste-balance-history/index', {
+    return h.view('waste-balance-ledger/index', {
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}`
       ),
       caption: accreditation
-        ? localise('waste-balance-history:accreditationCaption', {
+        ? localise('waste-balance-ledger:accreditationCaption', {
             accreditationNumber: accreditation.accreditationNumber
           })
-        : localise('waste-balance-history:registeredOnlyCaption'),
-      heading: localise('waste-balance-history:heading'),
-      pageTitle: localise('waste-balance-history:pageTitle'),
-      rows: buildHistoryRows({ events, localise, noteType })
+        : localise('waste-balance-ledger:registeredOnlyCaption'),
+      heading: localise('waste-balance-ledger:heading'),
+      pageTitle: localise('waste-balance-ledger:pageTitle'),
+      rows: buildLedgerRows({ events, localise, noteType })
     })
   }
 }

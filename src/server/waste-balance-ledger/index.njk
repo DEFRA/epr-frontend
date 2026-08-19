@@ -22,17 +22,17 @@
         {% if rows | length > 0 %}
           {{ govukTable({
             head: [
-              { text: localise("waste-balance-history:table.date") },
-              { text: localise("waste-balance-history:table.event") },
-              { text: localise("waste-balance-history:table.tonnage") },
-              { text: localise("waste-balance-history:table.balance") },
-              { text: localise("waste-balance-history:table.available") },
-              { text: localise("waste-balance-history:table.who") }
+              { text: localise("waste-balance-ledger:table.date") },
+              { text: localise("waste-balance-ledger:table.event") },
+              { text: localise("waste-balance-ledger:table.tonnage") },
+              { text: localise("waste-balance-ledger:table.balance") },
+              { text: localise("waste-balance-ledger:table.available") },
+              { text: localise("waste-balance-ledger:table.who") }
             ],
             rows: rows
           }) }}
         {% else %}
-          <p class="govuk-body" data-testid="no-events">{{ localise("waste-balance-history:noEvents") }}</p>
+          <p class="govuk-body" data-testid="no-events">{{ localise("waste-balance-ledger:noEvents") }}</p>
         {% endif %}
       </div>
     </div>

@@ -90,7 +90,7 @@ export const controller = {
  *   siteName: string | null;
  *   uploadSummaryLogUrl: string;
  *   wasteBalance: { availableAmount: number | null; noteTypePlural: 'PRNs' | 'PERNs' };
- *   wasteBalanceHistoryUrl: string | null;
+ *   wasteBalanceLedgerUrl: string | null;
  * }} RegistrationViewModel
  */
 
@@ -198,7 +198,7 @@ function buildViewModel({
     siteName,
     uploadSummaryLogUrl,
     wasteBalance: getWasteBalanceViewData(wasteBalance, noteTypePlural),
-    wasteBalanceHistoryUrl: getWasteBalanceHistoryUrl(
+    wasteBalanceLedgerUrl: getWasteBalanceLedgerUrl(
       request,
       organisationId,
       registration
@@ -284,13 +284,13 @@ function getPrnViewData(
  *
  * The page is for a regulator, so the link is gated on the role rather than on
  * a scope: an operator holds the same `organisation.read` for its own
- * organisation and still must not see the history.
+ * organisation and still must not see the ledger.
  * @param {HapiRequest} request
  * @param {string} organisationId
  * @param {Registration} registration
  * @returns {string | null}
  */
-function getWasteBalanceHistoryUrl(request, organisationId, registration) {
+function getWasteBalanceLedgerUrl(request, organisationId, registration) {
   if (!isRegulator(request.auth.credentials)) {
     return null
   }
@@ -300,7 +300,7 @@ function getWasteBalanceHistoryUrl(request, organisationId, registration) {
     ? `${registrationPath}/accreditations/${registration.accreditationId}`
     : registrationPath
 
-  return request.localiseUrl(`${ledgerPath}/waste-balance-history`)
+  return request.localiseUrl(`${ledgerPath}/waste-balance-ledger`)
 }
 
 /**

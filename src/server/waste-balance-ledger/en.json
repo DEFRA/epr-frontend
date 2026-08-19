@@ -9,9 +9,9 @@
     "prn-rejected": "{{ noteType }} rejected",
     "summary-log-submitted": "Summary log submitted"
   },
-  "heading": "Waste balance history",
+  "heading": "Waste balance ledger",
   "noEvents": "Nothing has changed this waste balance yet.",
-  "pageTitle": "Waste balance history",
+  "pageTitle": "Waste balance ledger",
   "registeredOnlyCaption": "Registered-only",
   "systemActor": "System",
   "table": {

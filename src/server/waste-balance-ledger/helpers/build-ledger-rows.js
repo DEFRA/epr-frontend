@@ -24,7 +24,7 @@ const EVENT_KINDS = Object.freeze(Object.values(LEDGER_EVENT_KIND))
  */
 const eventName = ({ kind, localise, noteType }) =>
   EVENT_KINDS.includes(kind)
-    ? localise(`waste-balance-history:events.${kind}`, { noteType })
+    ? localise(`waste-balance-ledger:events.${kind}`, { noteType })
     : kind
 
 /**
@@ -54,7 +54,7 @@ const actorName = ({ createdBy, localise }) => {
   }
 
   if (createdBy.id === SYSTEM_ACTOR_ID) {
-    return localise('waste-balance-history:systemActor')
+    return localise('waste-balance-ledger:systemActor')
   }
 
   const { email, name } = createdBy
@@ -67,7 +67,7 @@ const actorName = ({ createdBy, localise }) => {
 }
 
 /**
- * Builds the table rows of the waste balance history, newest event first.
+ * Builds the table rows of the waste balance ledger, newest event first.
  *
  * There is no single "change" column, because the effects differ per event: a
  * note moves the available amount when it is created and the total when it is
@@ -80,7 +80,7 @@ const actorName = ({ createdBy, localise }) => {
  * }} params
  * @returns {{ text: string }[][]}
  */
-export const buildHistoryRows = ({ events, localise, noteType }) =>
+export const buildLedgerRows = ({ events, localise, noteType }) =>
   [...events]
     .reverse()
     .map((event) => [

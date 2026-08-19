@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
  * @import { LedgerEvent } from './fetch-waste-balance-events.js'
  */
 
-import { buildHistoryRows } from './build-history-rows.js'
+import { buildLedgerRows } from './build-ledger-rows.js'
 
 /**
  * Stands in for `request.t`. It returns the key and its interpolation so a
@@ -44,9 +44,9 @@ const cellsOf = (row) => {
   return row.map(({ text }) => text)
 }
 
-describe(buildHistoryRows, () => {
+describe(buildLedgerRows, () => {
   it('reverses the backend append order, so the newest event reads first', () => {
-    const rows = buildHistoryRows({
+    const rows = buildLedgerRows({
       events: [
         buildEvent({ createdAt: '2026-01-01T00:00:00.000Z' }),
         buildEvent({ createdAt: '2026-03-01T00:00:00.000Z' })
@@ -62,7 +62,7 @@ describe(buildHistoryRows, () => {
   })
 
   it('renders the six columns in order', () => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [buildEvent()],
       localise,
       noteType: 'PRN'
@@ -70,7 +70,7 @@ describe(buildHistoryRows, () => {
 
     expect(cellsOf(row)).toStrictEqual([
       '15 February 2026',
-      'waste-balance-history:events.prn-issued({"noteType":"PRN"})',
+      'waste-balance-ledger:events.prn-issued({"noteType":"PRN"})',
       '12.50',
       '100.00',
       '87.50',
@@ -79,14 +79,14 @@ describe(buildHistoryRows, () => {
   })
 
   it('names the note type an exporter uses, so the event reads as a PERN', () => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [buildEvent({ kind: 'prn-created' })],
       localise,
       noteType: 'PERN'
     })
 
     expect(cellsOf(row).at(1)).toBe(
-      'waste-balance-history:events.prn-created({"noteType":"PERN"})'
+      'waste-balance-ledger:events.prn-created({"noteType":"PERN"})'
     )
   })
 
@@ -99,19 +99,19 @@ describe(buildHistoryRows, () => {
     'prn-rejected',
     'summary-log-submitted'
   ])('gives %s a plain-English name', (kind) => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [buildEvent({ kind })],
       localise,
       noteType: 'PRN'
     })
 
     expect(cellsOf(row).at(1)).toBe(
-      `waste-balance-history:events.${kind}({"noteType":"PRN"})`
+      `waste-balance-ledger:events.${kind}({"noteType":"PRN"})`
     )
   })
 
   it('names an unknown kind verbatim rather than showing a missing copy key', () => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [buildEvent({ kind: 'some-later-kind' })],
       localise,
       noteType: 'PRN'
@@ -121,7 +121,7 @@ describe(buildHistoryRows, () => {
   })
 
   it('takes the tonnage of a waste report from the credit it raised', () => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [
         buildEvent({
           kind: 'summary-log-submitted',
@@ -136,17 +136,17 @@ describe(buildHistoryRows, () => {
   })
 
   it('names the system where the backfill wrote the event', () => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [buildEvent({ createdBy: { id: 'system', name: 'backfill' } })],
       localise,
       noteType: 'PRN'
     })
 
-    expect(cellsOf(row).at(5)).toBe('waste-balance-history:systemActor')
+    expect(cellsOf(row).at(5)).toBe('waste-balance-ledger:systemActor')
   })
 
   it('names an actor that carries no email by name alone', () => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [buildEvent({ createdBy: { id: 'rpd', name: 'RPD' } })],
       localise,
       noteType: 'PRN'
@@ -156,7 +156,7 @@ describe(buildHistoryRows, () => {
   })
 
   it('names an actor that carries no name by their email alone', () => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [
         buildEvent({ createdBy: { id: 'user-2', email: 'ada@example.com' } })
       ],
@@ -168,7 +168,7 @@ describe(buildHistoryRows, () => {
   })
 
   it('leaves Who empty where the actor carries neither a name nor an email', () => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [buildEvent({ createdBy: { id: 'user-3' } })],
       localise,
       noteType: 'PRN'
@@ -178,7 +178,7 @@ describe(buildHistoryRows, () => {
   })
 
   it('leaves Who empty where the event carries no actor at all', () => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [buildEvent({ createdBy: undefined })],
       localise,
       noteType: 'PRN'
@@ -188,7 +188,7 @@ describe(buildHistoryRows, () => {
   })
 
   it('shows a tonnage the payload omits as zero, as the balance columns do', () => {
-    const [row] = buildHistoryRows({
+    const [row] = buildLedgerRows({
       events: [buildEvent({ kind: 'prn-accepted', payload: {} })],
       localise,
       noteType: 'PRN'
@@ -199,7 +199,7 @@ describe(buildHistoryRows, () => {
 
   it('returns no rows for a ledger that holds no events', () => {
     expect(
-      buildHistoryRows({ events: [], localise, noteType: 'PRN' })
+      buildLedgerRows({ events: [], localise, noteType: 'PRN' })
     ).toStrictEqual([])
   })
 })
