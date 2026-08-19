@@ -441,7 +441,7 @@ describe('#reportDataIncompleteController', () => {
     )
   })
 
-  it('does not render the screen a second time after a refresh', async ({
+  it('renders the screen again on a refresh instead of ejecting to reports', async ({
     server
   }) => {
     const cookie = await triggerIncompleteRedirect(server, twoIssues)
@@ -453,18 +453,40 @@ describe('#reportDataIncompleteController', () => {
       headers: { cookie }
     })
 
-    const clearedCookie = refreshedCookie(firstView.headers['set-cookie'])
-
-    const { statusCode, headers } = await server.inject({
+    // The context is not consumed on view, so the same session cookie renders
+    // the screen again on a refresh rather than redirecting to the reports list.
+    const { statusCode, result } = await server.inject({
       method: 'GET',
       url: baseUrl,
       auth: mockAuth,
-      headers: { cookie: clearedCookie }
+      headers: { cookie }
     })
 
-    expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports`
+    expect(firstView.statusCode).toBe(statusCodes.ok)
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('We found 2 issues in your summary log.')
+  })
+
+  it('renders coherently when the issues list is empty', async ({ server }) => {
+    const cookie = await triggerIncompleteRedirect(server, {
+      total: 0,
+      issues: []
+    })
+
+    const { statusCode, result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      auth: mockAuth,
+      headers: { cookie }
+    })
+
+    const dom = new JSDOM(result)
+    const bullets = dom.window.document.querySelectorAll(
+      'ul.govuk-list--bullet li'
     )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(bullets).toHaveLength(0)
+    expect(result).toContain('We found 0 issues in your summary log.')
   })
 })
