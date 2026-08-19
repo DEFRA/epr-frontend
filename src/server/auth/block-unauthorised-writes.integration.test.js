@@ -1,10 +1,13 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
@@ -18,8 +21,7 @@ const linkingUrl = '/account/linking'
 const regulatorAuth = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-1', email: 'jane.doe@example.com' },
-  role: 'regulator_standard',
-  scope: ['organisation.read', SCOPES.organisationSearch, SCOPES.regulator]
+  ...sessionIdentity(IDENTITIES.regulator)
 })
 
 const grantedNothingAuth = buildMockAuth({

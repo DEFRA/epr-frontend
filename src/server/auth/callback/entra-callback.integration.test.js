@@ -2,7 +2,10 @@ import * as jose from 'jose'
 import { config } from '#config/config.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { assertUserSession } from '#server/common/test-helpers/auth-helper.js'
+import {
+  assertUserSession,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
 import {
   IDENTITIES,
   identityHandler
@@ -220,10 +223,7 @@ describe('/auth/callback/entra - GET integration', async () => {
     }) => {
       const session = await storedSession(server, msw)
 
-      expect(session).toMatchObject({
-        role: IDENTITIES.regulator.role,
-        scope: IDENTITIES.regulator.scopes
-      })
+      expect(session).toMatchObject(sessionIdentity(IDENTITIES.regulator))
     })
   })
 

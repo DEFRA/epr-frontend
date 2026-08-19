@@ -1,7 +1,10 @@
 import { defraIdCallbackController } from '#server/auth/callback/controller.js'
 import * as fetchIdentityModule from '#server/auth/helpers/fetch-identity.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
-import { asUserOrganisations } from '#server/common/test-helpers/auth-helper.js'
+import {
+  asUserOrganisations,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import {
   mockHapiRequest,
@@ -135,8 +138,7 @@ describe('#authCallbackController', () => {
             logout: 'http://test.auth/logout'
           },
           linkedOrganisationId: 'defra-org-uuid',
-          role: IDENTITIES.operator.role,
-          scope: IDENTITIES.operator.scopes
+          ...sessionIdentity(IDENTITIES.operator)
         }
       )
 

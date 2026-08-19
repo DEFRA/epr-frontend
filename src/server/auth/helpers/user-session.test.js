@@ -1,7 +1,10 @@
 import { config } from '#config/config.js'
 import { updateUserSession } from '#server/auth/helpers/user-session.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
-import { assertUserSession } from '#server/common/test-helpers/auth-helper.js'
+import {
+  assertUserSession,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import {
   IDENTITIES,
@@ -37,8 +40,7 @@ const existingSession = /** @type {UserSession} */ ({
   backendToken: 'old-backend-token',
   refreshToken: 'old-refresh-token',
   idTokenRefreshInProgress: true,
-  role: IDENTITIES.operator.role,
-  scope: IDENTITIES.operator.scopes,
+  ...sessionIdentity(IDENTITIES.operator),
   urls: {
     token: 'http://oidc-provider/token',
     logout: 'http://oidc-provider/logout'
@@ -191,10 +193,9 @@ describe(updateUserSession, () => {
         refreshedTokens
       )
 
-      expect(savedSessionFrom(request)).toMatchObject({
-        role: IDENTITIES.regulator.role,
-        scope: IDENTITIES.regulator.scopes
-      })
+      expect(savedSessionFrom(request)).toMatchObject(
+        sessionIdentity(IDENTITIES.regulator)
+      )
     })
 
     it('should drop a scope the backend has stopped granting', async ({

@@ -1,8 +1,9 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
+  asUserSession,
   assertUserSession,
-  asUserSession
+  sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import {
   IDENTITIES,
@@ -56,8 +57,7 @@ const entraSession = () =>
     idToken: 'old-id-token',
     backendToken: 'old-access-token',
     refreshToken: 'old-refresh-token',
-    role: IDENTITIES.regulator.role,
-    scope: IDENTITIES.regulator.scopes,
+    ...sessionIdentity(IDENTITIES.regulator),
     urls: {
       token: 'http://entra-id.auth/token',
       logout: 'http://entra-id.auth/logout'
@@ -191,10 +191,7 @@ describe('an Entra ID session whose token is about to expire', () => {
       await server.app.cache.get('entra-session-id')
     )
 
-    expect(session).toMatchObject({
-      role: IDENTITIES.regulator.role,
-      scope: IDENTITIES.regulator.scopes
-    })
+    expect(session).toMatchObject(sessionIdentity(IDENTITIES.regulator))
   })
 
   it('moves the session expiry past the moment it was about to expire', async ({

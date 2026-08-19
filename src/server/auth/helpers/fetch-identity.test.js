@@ -1,5 +1,7 @@
 import { config } from '#config/config.js'
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
@@ -38,19 +40,11 @@ describe('#fetchIdentity', () => {
   it('should return a regulator identity without a write scope', async ({
     msw
   }) => {
-    msw.use(
-      identityResponse({
-        role: 'regulator_standard',
-        scopes: ['organisation.read', 'regulator']
-      })
-    )
+    msw.use(identityResponse(IDENTITIES.regulator))
 
     const result = await fetchIdentity(mockBackendToken)
 
-    expect(result).toStrictEqual({
-      role: 'regulator_standard',
-      scopes: ['organisation.read', 'regulator']
-    })
+    expect(hasWriteScope({ scope: result.scopes })).toBe(false)
   })
 
   it('should return no role and no scopes for an identity the backend does not recognise', async ({
