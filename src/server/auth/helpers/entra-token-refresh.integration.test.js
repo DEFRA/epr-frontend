@@ -9,7 +9,7 @@ import {
   identityHandler
 } from '#server/common/test-helpers/identity-helper.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { beforeEach, it } from '#vite/fixtures/server.js'
+import { ENTRA_ID_BASE_URL, beforeEach, it } from '#vite/fixtures/server.js'
 import Iron from '@hapi/iron'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
@@ -24,7 +24,7 @@ const entraClaims = {
   oid: 'entra-user-id',
   preferred_username: 'jane.doe@example.com',
   aud: 'test-entra-client-id',
-  iss: 'https://login.microsoftonline.com/test-tenant-id/v2.0'
+  iss: ENTRA_ID_BASE_URL
 }
 
 const { privateKey: privateKeyObject, publicKey: publicKeyObject } =

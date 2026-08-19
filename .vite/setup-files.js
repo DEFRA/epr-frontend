@@ -21,6 +21,5 @@ process.env.ENTRA_OIDC_WELL_KNOWN_CONFIGURATION_URL =
   'http://entra-id.auth/.well-known/openid-configuration'
 process.env.ENTRA_CLIENT_ID = 'test-entra-client-id'
 process.env.ENTRA_CLIENT_SECRET = 'test-entra-secret'
-process.env.ENTRA_TENANT_ID = 'test-tenant-id'
 process.env.WASTE_ORGANISATIONS_API_USE_INMEMORY = 'true'
 process.env.LOG_FORMAT = 'ecs'

@@ -7,7 +7,7 @@ import {
   IDENTITIES,
   identityHandler
 } from '#server/common/test-helpers/identity-helper.js'
-import { beforeEach, it } from '#vite/fixtures/server.js'
+import { ENTRA_ID_BASE_URL, beforeEach, it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
@@ -117,7 +117,7 @@ describe('/auth/callback/entra - GET integration', async () => {
     oid: 'entra-user-id',
     preferred_username: 'jane.doe@example.com',
     aud: 'test-entra-client-id',
-    iss: 'https://login.microsoftonline.com/test-tenant-id/v2.0'
+    iss: ENTRA_ID_BASE_URL
   }
 
   // The application role rides on the token and this app never reads it. The
@@ -456,6 +456,36 @@ describe('/auth/callback/entra - GET integration', async () => {
     it('records sign in failure metric', () => {
       expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
       expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
+    })
+  })
+
+  describe('on an access token issued by someone other than the provider the discovery document names', () => {
+    let response
+
+    // Differs from the accepted token in its `iss` claim alone. It is signed
+    // by the key the JWKS endpoint answers with, so only the issuer check can
+    // refuse it. Remove that check and this test signs a regulator in.
+    beforeEach(async ({ server, msw }) => {
+      const impostorToken = await generateAccessToken({
+        ...claims,
+        iss: 'https://login.microsoftonline.com/another-tenant/v2.0',
+        roles: ['Waste.Regulator.Standard']
+      })
+
+      response = await performSignInFlow(server, msw, impostorToken)
+    })
+
+    it('refuses the sign in and redirects to the start page', () => {
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/')
+    })
+
+    it('creates no session', () => {
+      const setCookieHeaders = []
+        .concat(response.headers['set-cookie'] ?? [])
+        .join(';')
+
+      expect(setCookieHeaders).not.toContain('userSession=')
     })
   })
 

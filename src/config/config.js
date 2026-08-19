@@ -334,12 +334,6 @@ export const config = convict({
       default:
         'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration'
     },
-    tenantId: {
-      doc: 'Entra ID Tenant ID',
-      format: String,
-      env: 'ENTRA_TENANT_ID',
-      default: '6f504113-6b64-43f2-ade9-242e05780007'
-    },
     clientId: {
       doc: 'Entra ID Client ID',
       format: String,
