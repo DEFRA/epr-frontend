@@ -4,9 +4,12 @@ import { buildReportDataIncompleteView } from './helpers/report-data-incomplete.
 /**
  * Renders the exporter validation-error screen (PAE-1420) when report creation
  * was blocked because summary log rows are missing mandatory data. The
- * create-controller stores the backend's issue payload in the session and
- * redirects here; this screen reads it, guards against direct access, then
- * clears it so a refresh returns the operator to their reports.
+ * detail-controller (on the "Create draft" preview) and create-controller (on
+ * the "Use this data" POST) store the backend's issue payload in the session
+ * and redirect here; this screen reads it and guards against direct access. The
+ * context is left in place so a refresh re-renders the issues rather than
+ * ejecting the operator to their reports; a later redirect for the same period
+ * overwrites it.
  * @satisfies {Partial<HapiServerRoute<HapiRequest & { params: PeriodParams }>>}
  */
 export const reportDataIncompleteGetController = {
@@ -41,7 +44,6 @@ export const reportDataIncompleteGetController = {
     if (context?.periodPath !== periodBase) {
       return h.redirect(reportsUrl)
     }
-    request.yar.clear('reportDataIncompleteContext')
 
     const uploadUrl = request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`

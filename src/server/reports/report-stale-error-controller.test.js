@@ -40,9 +40,17 @@ async function triggerStalenessRedirect(server) {
     url: periodUrl,
     auth: mockAuth
   })
-  const setCookies = headers['set-cookie']
-  const cookies = Array.isArray(setCookies) ? setCookies : [setCookies]
-  return cookies
+  return refreshedCookie(headers['set-cookie'])
+}
+
+/**
+ * Extracts the session cookie from a Set-Cookie response header, mirroring how
+ * a browser updates its jar between requests.
+ * @param {string | string[] | undefined} setCookies
+ * @returns {string}
+ */
+function refreshedCookie(setCookies) {
+  return (Array.isArray(setCookies) ? setCookies : [setCookies])
     .filter(/** @returns {c is string} */ (c) => Boolean(c))
     .map((c) => c.split(';')[0])
     .join('; ')
@@ -180,6 +188,31 @@ describe('#reportStaleErrorController', () => {
         expect(headers.location).toBe(
           `/organisations/${organisationId}/registrations/${registrationId}/reports`
         )
+      })
+
+      it('renders the screen again on a refresh instead of ejecting to reports', async ({
+        server
+      }) => {
+        const cookie = await triggerStalenessRedirect(server)
+
+        const firstView = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie }
+        })
+
+        // The context is not consumed on view, so the same session cookie
+        // renders the error again on a refresh rather than redirecting.
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie }
+        })
+
+        expect(firstView.statusCode).toBe(statusCodes.ok)
+        expect(statusCode).toBe(statusCodes.ok)
       })
     })
 
