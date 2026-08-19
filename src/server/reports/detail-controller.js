@@ -231,6 +231,18 @@ export const detailController = {
       )
     }
 
+    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+
+    if (reportDetail.incompleteSummaryLogRows) {
+      request.yar.set('reportDataIncompleteContext', {
+        periodPath: basePath,
+        payload: reportDetail.incompleteSummaryLogRows
+      })
+      return h.redirect(
+        request.localiseUrl(`${basePath}/report-data-incomplete`)
+      )
+    }
+
     const viewData = buildViewData(
       { organisationId, registrationId },
       registration,
