@@ -49,7 +49,7 @@ const groupIssuesBySheet = (issues, localise) => {
   /** @type {Map<string, string[]>} */
   const groups = new Map()
   for (const { sheet, rowId, field } of issues) {
-    const fieldLabel = localise(`reports:reportDataIncompleteFields.${field}`, {
+    const fieldLabel = localise(`summary-log:columnHeader.${field}`, {
       defaultValue: field
     })
     const bullet = localise('reports:reportDataIncompleteRow', {
