@@ -17,7 +17,8 @@ export const REPORT_DATA_INCOMPLETE_REASON = 'report_data_incomplete'
 /**
  * The backend's report-data-incomplete 400 payload.
  * @typedef {object} ReportDataIncompletePayload
- * @property {string} reason
+ * @property {string} [reason] - Present on the create-POST 400; absent on the
+ *   GET-preview signal, which carries only the counts and issues.
  * @property {number} total - True number of missing fields; may exceed issues.
  * @property {ReportDataIncompleteIssue[]} issues - Capped list of missing fields.
  */

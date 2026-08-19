@@ -1,28 +1,25 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
-import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
-// Setup-only mocks: fetchRegistrationAndAccreditation and fetchReportDetail are
-// mocked so the crumb-priming GET renders. createReport is deliberately NOT
-// mocked — this test drives the real create-report -> fetch-json client stack
-// against an MSW-stubbed backend, so the whole wire-contract chain runs: a real
-// 400 body becomes the Boom payload the controller detects, redirects on, and
-// the screen renders. The other suites mock createReport and cover the render
-// permutations; this is the end-to-end contract anchor.
+// Setup-only mock: fetchRegistrationAndAccreditation supplies the registration
+// the detail page needs. fetchReportDetail is deliberately NOT mocked — this
+// test drives the real fetch-report-detail -> fetch-report-backend client stack
+// against an MSW-stubbed backend, so the whole wire contract runs: a real 200
+// carrying incompleteSummaryLogRows becomes the signal the detail controller
+// detects on the "Create draft" click, redirects on, and the screen renders.
+// The controller/render permutations are covered by the other suites; this is
+// the end-to-end contract anchor for the create-draft entry point.
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
-vi.mock(import('./helpers/fetch-report-detail.js'))
 
 const { fetchRegistrationAndAccreditation } =
   await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
-const { fetchReportDetail } = await import('./helpers/fetch-report-detail.js')
 
 const backendUrl = config.get('eprBackendUrl')
 const mockAuth = buildMockAuth()
@@ -43,15 +40,16 @@ const exporterRegistration = asRegistrationWithAccreditation({
   accreditation: undefined
 })
 
-const reportDetail = {
+const incompletePreview = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: null, lastUploadedAt: null },
-  details: { material: 'plastic', site: { address: {} } },
+  details: { material: 'plastic' },
   recyclingActivity: {
     totalTonnageReceived: 0,
     suppliers: [],
@@ -63,53 +61,46 @@ const reportDetail = {
     tonnageSentToExporter: 0,
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
+  },
+  incompleteSummaryLogRows: {
+    total: 2,
+    issues: [
+      { sheet: 'Exported', rowId: '1001', field: 'SUPPLIER_NAME' },
+      { sheet: 'Sent on', rowId: '4001', field: 'FINAL_DESTINATION_NAME' }
+    ]
   }
 }
 
-const incompletePayload = {
-  reason: 'report_data_incomplete',
-  total: 2,
-  issues: [
-    { sheet: 'Exported', rowId: '1001', field: 'SUPPLIER_NAME' },
-    { sheet: 'Sent on', rowId: '4001', field: 'FINAL_DESTINATION_NAME' }
-  ]
-}
-
 /**
- * Stubs the backend create call to return a real report_data_incomplete 400,
- * drives the create POST through the real client stack, and returns the
- * response plus the session cookie carrying the stored issue payload.
+ * Stubs the backend report-detail GET to return a real 200 carrying
+ * incompleteSummaryLogRows, drives the create-draft GET through the real client
+ * stack, and returns the response plus the session cookie carrying the stored
+ * issue payload.
  * @param {HapiServer} server
  * @param {{ use: (...handlers: object[]) => void }} msw
- * @returns {Promise<{ created: object, sessionCookie: string }>}
+ * @returns {Promise<{ landed: object, sessionCookie: string }>}
  */
-async function createAgainstIncompleteBackend(server, msw) {
+async function createDraftAgainstIncompleteBackend(server, msw) {
   msw.use(
-    http.post(`${backendUrl}${backendPath}`, () =>
-      HttpResponse.json(incompletePayload, { status: 400 })
+    http.get(`${backendUrl}${backendPath}`, () =>
+      HttpResponse.json(incompletePreview, { status: 200 })
     )
   )
 
-  const { cookie, crumb } = await getCsrfToken(server, periodUrl, {
+  const landed = await server.inject({
+    method: 'GET',
+    url: periodUrl,
     auth: mockAuth
   })
 
-  const created = await server.inject({
-    method: 'POST',
-    url: periodUrl,
-    auth: mockAuth,
-    headers: { cookie },
-    payload: { crumb }
-  })
-
-  const setCookies = created.headers['set-cookie']
+  const setCookies = landed.headers['set-cookie']
   const sessionCookie =
     (Array.isArray(setCookies) ? setCookies : [setCookies])
       .filter(/** @returns {c is string} */ (c) => Boolean(c))
       .map((c) => c.split(';')[0])
-      .join('; ') || cookie
+      .join('; ') || ''
 
-  return { created, sessionCookie }
+  return { landed, sessionCookie }
 }
 
 describe('report-data-incomplete (end to end via real backend client)', () => {
@@ -118,26 +109,26 @@ describe('report-data-incomplete (end to end via real backend client)', () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       exporterRegistration
     )
-    vi.mocked(fetchReportDetail).mockResolvedValue(
-      asReportDetailResponse(reportDetail)
+  })
+
+  it('redirects the create-draft click to the screen on a real 200 carrying incompleteSummaryLogRows', async ({
+    server,
+    msw
+  }) => {
+    const { landed } = await createDraftAgainstIncompleteBackend(server, msw)
+
+    expect(landed.statusCode).toBe(statusCodes.found)
+    expect(landed.headers.location).toBe(`${periodUrl}/report-data-incomplete`)
+  })
+
+  it('renders the missing fields carried on the real preview body', async ({
+    server,
+    msw
+  }) => {
+    const { sessionCookie } = await createDraftAgainstIncompleteBackend(
+      server,
+      msw
     )
-  })
-
-  it('redirects to the screen on a real backend report_data_incomplete 400', async ({
-    server,
-    msw
-  }) => {
-    const { created } = await createAgainstIncompleteBackend(server, msw)
-
-    expect(created.statusCode).toBe(statusCodes.found)
-    expect(created.headers.location).toBe(`${periodUrl}/report-data-incomplete`)
-  })
-
-  it('renders the missing fields carried on the real 400 body', async ({
-    server,
-    msw
-  }) => {
-    const { sessionCookie } = await createAgainstIncompleteBackend(server, msw)
 
     const { statusCode, result } = await server.inject({
       method: 'GET',
