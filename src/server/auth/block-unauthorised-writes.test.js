@@ -1,5 +1,6 @@
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { describe, expect, it } from 'vitest'
 import { blockUnauthorisedWrites } from './block-unauthorised-writes.js'
 
@@ -16,7 +17,7 @@ const OPERATOR_SCOPES = [
   SCOPES.organisationLinkedWrite
 ]
 
-const REGULATOR_SCOPES = ['organisation.read', SCOPES.regulator]
+const REGULATOR_SCOPES = IDENTITIES.regulator.scopes
 
 const forbidden = expect.objectContaining({
   output: expect.objectContaining({

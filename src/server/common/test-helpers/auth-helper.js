@@ -40,6 +40,19 @@ export const buildMockAuth = (overrides = {}) => ({
 })
 
 /**
+ * The two credential fields a session takes from a backend identity, for a test
+ * that builds a session with {@link buildMockAuth}. `updateUserSession` maps
+ * `/v1/me` the same way, so a test session holds what the backend granted and
+ * one place decides what an identity is.
+ * @param {{ role: string | null, scopes: readonly string[] }} identity
+ * @returns {{ role: string | null, scope: string[] }}
+ */
+export const sessionIdentity = ({ role, scopes }) => ({
+  role,
+  scope: [...scopes]
+})
+
+/**
  * Casts a partial mock object to the `UserSession` shape, for tests that seed a
  * session directly (e.g. `server.app.cache.set`).
  * @param {unknown} data
