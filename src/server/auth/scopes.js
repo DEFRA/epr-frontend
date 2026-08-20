@@ -20,15 +20,20 @@ export const SCOPES = Object.freeze({
 const WRITE_SCOPES = Object.freeze([SCOPES.organisationLinkedWrite])
 
 /**
+ * The part of a session every scope question reads. It is the scopes alone
+ * rather than a session, so a predicate serves a request whose credentials
+ * hapi has not narrowed to a `UserSession`, and an unauthenticated request
+ * answers every question with a no.
+ * @typedef {{ scope?: string[] } | null} ScopeBearingCredentials
+ */
+
+/**
  * The single answer to "may this session change anything?". Only a write scope
  * says yes, so both the write guard and the templates decide from this one
  * place, and a session the backend grants nothing is offered no write control.
  * The templates share the name, so a context key that is absent or misspelled
  * reads as `undefined` and hides the control rather than showing it.
- *
- * Takes the scopes alone rather than a session, so it serves a request whose
- * credentials hapi has not narrowed to a `UserSession`.
- * @param {{ scope?: string[] } | null} [credentials]
+ * @param {ScopeBearingCredentials} [credentials]
  * @returns {boolean}
  */
 export const hasWriteScope = (credentials) =>
@@ -38,7 +43,7 @@ export const hasWriteScope = (credentials) =>
  * The single answer to "may this session read a waste balance ledger?". The
  * route gate and the link that offers the page both decide from here, so the
  * page cannot admit a session the link hides it from, or the reverse.
- * @param {{ scope?: string[] } | null} [credentials]
+ * @param {ScopeBearingCredentials} [credentials]
  * @returns {boolean}
  */
 export const hasLedgerReadScope = (credentials) =>
