@@ -9,8 +9,9 @@ import { http, HttpResponse } from 'msw'
  * and searches every organisation and writes nothing. An identity on no list at
  * all is granted nothing.
  *
- * The backend decides every scope here and this fixture only restates it, so a
- * scope it grants belongs in this list whether or not this app guards on one.
+ * The backend decides every scope here and this fixture restates the ones this
+ * app names. A guard added later must add its scope here too, or an
+ * integration test signs a user in with less than the real session carries.
  * The regulator's `organisation.search` guards the regulator's own page and
  * `waste-balance.ledger.read` guards the waste balance ledger, so a stale
  * fixture is caught on either. `organisation.read` gates no route here, so

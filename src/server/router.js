@@ -41,11 +41,12 @@ export const router = {
         organisations,
         prns,
         registrations,
-        ...(config.get('featureFlags.regulatorAccess') ? [regulators] : []),
+        ...(config.get('featureFlags.regulatorAccess')
+          ? [regulators, wasteBalanceLedger]
+          : []),
         reports,
         summaryLog,
-        summaryLogUpload,
-        wasteBalanceLedger
+        summaryLogUpload
       ])
 
       // Static assets

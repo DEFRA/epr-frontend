@@ -17,7 +17,7 @@ import { it } from '#vite/fixtures/server.js'
 import { getByRole, queryByText } from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 
@@ -87,10 +87,18 @@ const rowsOf = (body) =>
   )
 
 describe('the waste balance ledger page', () => {
+  beforeAll(() => {
+    config.set('featureFlags.regulatorAccess', true)
+  })
+
   beforeEach(() => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       findRegistrationAndAccreditation(fixtureData, accreditedRegistrationId)
     )
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.regulatorAccess', false)
   })
 
   describe('a regulator', () => {

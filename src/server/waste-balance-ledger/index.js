@@ -21,21 +21,18 @@ export const wasteBalanceLedger = {
   plugin: {
     name: 'wasteBalanceLedger',
     register(server) {
-      const options = { auth: { scope: [SCOPES.wasteBalanceLedgerRead] } }
+      const ledgerRoute = (/** @type {string} */ path) => ({
+        ...controller,
+        method: /** @type {const} */ ('GET'),
+        options: { auth: { scope: [SCOPES.wasteBalanceLedgerRead] } },
+        path
+      })
 
       server.route([
-        {
-          ...controller,
-          method: 'GET',
-          options,
-          path: `${registrationPath}/waste-balance-ledger`
-        },
-        {
-          ...controller,
-          method: 'GET',
-          options,
-          path: `${registrationPath}/accreditations/{accreditationId}/waste-balance-ledger`
-        }
+        ledgerRoute(`${registrationPath}/waste-balance-ledger`),
+        ledgerRoute(
+          `${registrationPath}/accreditations/{accreditationId}/waste-balance-ledger`
+        )
       ])
     }
   }
