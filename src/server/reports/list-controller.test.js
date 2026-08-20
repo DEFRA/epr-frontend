@@ -1,4 +1,5 @@
 import { SCOPES } from '#server/auth/scopes.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
@@ -39,7 +40,10 @@ const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
 const readOnlyAuth = /** @type {ServerInjectOptions['auth']} */ (
   /** @type {unknown} */ ({
     strategy: 'session',
-    credentials: { ...mockCredentials, scope: [SCOPES.regulator] }
+    credentials: {
+      ...mockCredentials,
+      scope: [...IDENTITIES.operatorWithoutWrite.scopes]
+    }
   })
 )
 

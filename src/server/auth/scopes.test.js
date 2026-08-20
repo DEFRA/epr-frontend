@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hasWriteScope, SCOPES } from './scopes.js'
+import { hasLedgerReadScope, hasWriteScope, SCOPES } from './scopes.js'
 
 /**
  * @param {string[]} [scope]
@@ -11,8 +11,8 @@ describe('the scopes the backend grants', () => {
     expect(SCOPES.organisationLinkedWrite).toBe('organisation.linked.write')
   })
 
-  it('spells the regulator scope as the backend grants it', () => {
-    expect(SCOPES.regulator).toBe('regulator')
+  it('spells the waste balance ledger read scope as the backend grants it', () => {
+    expect(SCOPES.wasteBalanceLedgerRead).toBe('waste-balance.ledger.read')
   })
 })
 
@@ -26,9 +26,11 @@ describe(hasWriteScope, () => {
   })
 
   it('refuses a regulator', () => {
-    expect(hasWriteScope(credentials(['organisation.read', 'regulator']))).toBe(
-      false
-    )
+    expect(
+      hasWriteScope(
+        credentials(['organisation.read', 'waste-balance.ledger.read'])
+      )
+    ).toBe(false)
   })
 
   it('refuses a session the backend granted nothing', () => {
@@ -55,5 +57,43 @@ describe(hasWriteScope, () => {
     expect(hasWriteScope(credentials(['admin.read', 'admin.write']))).toBe(
       false
     )
+  })
+})
+
+describe(hasLedgerReadScope, () => {
+  it('admits a session the backend granted the ledger read scope', () => {
+    expect(
+      hasLedgerReadScope(
+        credentials(['organisation.read', 'waste-balance.ledger.read'])
+      )
+    ).toBe(true)
+  })
+
+  it('refuses an operator holding read and write of its own organisation', () => {
+    expect(
+      hasLedgerReadScope(
+        credentials(['organisation.linked.read', 'organisation.linked.write'])
+      )
+    ).toBe(false)
+  })
+
+  it('does not take the organisation read scope for the ledger scope', () => {
+    expect(hasLedgerReadScope(credentials(['organisation.read']))).toBe(false)
+  })
+
+  it('refuses a session the backend granted nothing', () => {
+    expect(hasLedgerReadScope(credentials([]))).toBe(false)
+  })
+
+  it('refuses a session carrying no scopes at all', () => {
+    expect(hasLedgerReadScope(credentials(undefined))).toBe(false)
+  })
+
+  it('refuses a request with no session', () => {
+    expect(hasLedgerReadScope(null)).toBe(false)
+  })
+
+  it('refuses an absent argument', () => {
+    expect(hasLedgerReadScope()).toBe(false)
   })
 })

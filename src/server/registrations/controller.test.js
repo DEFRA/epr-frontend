@@ -1,8 +1,14 @@
 import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import {
   asRegistrationWithAccreditation,
@@ -1249,3 +1255,86 @@ describe('a session that may not change the operator data', () => {
     expect(queryByRole(body, 'link', { name: 'Manage reports' })).toBeNull()
   })
 })
+
+describe('the waste balance ledger link', () => {
+  const regulatorAuth = buildMockAuth({
+    provider: OIDC_ENTRA_ID,
+    ...sessionIdentity(IDENTITIES.regulator),
+    profile: { id: 'entra-user-1', email: 'regulator@example.com' },
+    backendToken: 'test-id-token'
+  })
+
+  const registeredOnly = findRegistrationAndAccreditation(
+    fixtureData,
+    'reg-006-plastic-export-created'
+  )
+
+  /**
+   * @param {HapiServer} server
+   * @param {ReturnType<typeof buildMockAuth>} auth
+   * @param {RegistrationWithAccreditation} registration
+   */
+  const openRegistration = async (server, auth, registration) => {
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(registration)
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/organisations/6507f1f77bcf86cd79943901/registrations/${registration.registration.id}`,
+      auth
+    })
+
+    return new JSDOM(asHtml(result)).window.document.body
+  }
+
+  const ledgerLink = { name: 'View waste balance ledger' }
+
+  it('sends a regulator to the ledger of the accreditation in force', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, regulatorAuth, glassApproved)
+
+    expect(queryByRole(body, 'link', ledgerLink)?.getAttribute('href')).toBe(
+      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/waste-balance-ledger'
+    )
+  })
+
+  it('sends a regulator to the registered-only ledger where no accreditation is in force', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, regulatorAuth, registeredOnly)
+
+    expect(queryByRole(body, 'link', ledgerLink)?.getAttribute('href')).toBe(
+      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-006-plastic-export-created/waste-balance-ledger'
+    )
+  })
+
+  it('offers an operator no link at all', async ({ server }) => {
+    const body = await openRegistration(server, mockAuth, glassApproved)
+
+    expect(queryByRole(body, 'link', ledgerLink)).toBeNull()
+  })
+
+  it('offers no link to a session the backend granted no ledger scope, whatever role it carries', async ({
+    server
+  }) => {
+    const withoutLedgerScope = buildMockAuth({
+      provider: OIDC_ENTRA_ID,
+      role: IDENTITIES.regulator.role,
+      scope: [SCOPES.organisationSearch],
+      profile: { id: 'entra-user-2', email: 'no.ledger@example.com' },
+      backendToken: 'test-id-token'
+    })
+    const body = await openRegistration(
+      server,
+      withoutLedgerScope,
+      glassApproved
+    )
+
+    expect(queryByRole(body, 'link', ledgerLink)).toBeNull()
+  })
+})
+
+/**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ */

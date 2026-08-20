@@ -1,5 +1,4 @@
 import { holdsNoRole, isRegulator, REGULATOR_ROLE } from '#server/auth/roles.js'
-import { SCOPES } from '#server/auth/scopes.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { describe, expect, it } from 'vitest'
 
@@ -30,8 +29,11 @@ describe('#isRegulator', () => {
     expect(isRegulator(null)).toBe(false)
   })
 
-  it('reads the role and not the scopes, so the regulator scope alone is not an identity', () => {
-    const credentials = { role: 'operator', scope: [SCOPES.regulator] }
+  it("reads the role and not the scopes, so a regulator's scopes alone are not an identity", () => {
+    const credentials = {
+      role: 'operator',
+      scope: [...IDENTITIES.regulator.scopes]
+    }
 
     expect(isRegulator(credentials)).toBe(false)
   })

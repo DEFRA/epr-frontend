@@ -324,7 +324,7 @@ describe('/regulators/home - GET integration', () => {
         provider: OIDC_ENTRA_ID,
         profile: { id: 'entra-user-2', email: 'no.role@example.com' },
         role: REGULATOR_ROLE,
-        scope: [SCOPES.regulator]
+        scope: [SCOPES.wasteBalanceLedgerRead]
       })
     })
 

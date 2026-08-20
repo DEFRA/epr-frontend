@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { REGULATOR_ROLE } from '#server/auth/roles.js'
 import { SCOPES } from '#server/auth/scopes.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import {
   afterEach,
   beforeAll,
@@ -158,10 +159,10 @@ describe('#context', () => {
       expect(contextResult.serviceUrl).toBe('/start')
     })
 
-    it('chooses on the role, so the regulator scope alone does not rename the service', async () => {
+    it("chooses on the role, so a regulator's scopes alone do not rename the service", async () => {
       contextResult = await contextFor({
         role: 'operator',
-        scope: [SCOPES.regulator]
+        scope: [...IDENTITIES.regulator.scopes]
       })
 
       expect(contextResult.serviceName).toBe('common:serviceName')
@@ -181,7 +182,7 @@ describe('#context', () => {
           /** @type {Partial<Request>} */ ({
             auth: {
               isAuthenticated: true,
-              credentials: { scope: [SCOPES.regulator] }
+              credentials: { scope: [...IDENTITIES.regulator.scopes] }
             }
           })
         )

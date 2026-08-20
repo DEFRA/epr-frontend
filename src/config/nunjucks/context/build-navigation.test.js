@@ -1,3 +1,4 @@
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
 import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
@@ -115,13 +116,13 @@ describe('#buildNavigation', () => {
       expect(home.href).toBe('/cy/regulators/home')
     })
 
-    it('is chosen by the role, so a session holding the regulator scope alone keeps the operator shell', () => {
+    it("is chosen by the role, so a session holding a regulator's scopes alone keeps the operator shell", () => {
       const request = mockRequest({
         auth: {
           credentials: {
             ...credentials.authedWithLinkedOrg,
             role: 'operator',
-            scope: ['regulator']
+            scope: [...IDENTITIES.regulator.scopes]
           },
           strategy: SESSION_STRATEGY
         }
