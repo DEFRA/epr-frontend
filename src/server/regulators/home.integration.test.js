@@ -347,6 +347,22 @@ describe('/regulators/home - GET integration', () => {
     expect(queryByRole(body, 'button', { name: 'Search' })).not.toBeNull()
   })
 
+  it('offers the clear as the lesser action beside the search', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, { items: [acme] })
+
+    const { body } = await visit(server, '/regulators/home?search=ACME')
+
+    // Clearing a search undoes itself in one click, so it takes the
+    // secondary style rather than the warning style the design system
+    // reserves for consequences a user cannot take back.
+    expect(
+      getByRole(body, 'button', { name: 'Clear search' }).className
+    ).toContain('govuk-button--secondary')
+  })
+
   it('says no organisation was found when the search matches none', async ({
     server,
     msw
