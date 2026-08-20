@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SCOPES } from '#server/auth/scopes.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { buildListViewData } from './list-view-data.js'
 
-/** @param {Array<(typeof SCOPES)[keyof typeof SCOPES]>} scope */
+/** @param {string[]} scope */
 const createMockRequest = (scope = [SCOPES.organisationLinkedWrite]) => ({
   auth: { credentials: { scope } },
   t: vi.fn((key, params = {}) => {
@@ -351,14 +352,17 @@ describe('#buildListViewData', () => {
     })
 
     it("sends a session holding no write scope to the note's read page, because Select issues or cancels it", () => {
-      const result = buildListViewData(createMockRequest([SCOPES.regulator]), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
+      const result = buildListViewData(
+        createMockRequest([...IDENTITIES.operatorWithoutWrite.scopes]),
+        {
+          organisationId: 'org-123',
+          registrationId: 'reg-001',
+          accreditationId: 'acc-001',
+          registration: reprocessorRegistration,
+          prns: stubPrns,
+          wasteBalance: mockWasteBalance
+        }
+      )
 
       expect(result.table.rows[0][4].html).toContain(
         '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-001/view'
@@ -367,15 +371,18 @@ describe('#buildListViewData', () => {
     })
 
     it('keeps the view link on an issued note for a session holding no write scope, because it only reads', () => {
-      const result = buildListViewData(createMockRequest([SCOPES.regulator]), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        issuedPrns: stubIssuedPrns,
-        wasteBalance: mockWasteBalance
-      })
+      const result = buildListViewData(
+        createMockRequest([...IDENTITIES.operatorWithoutWrite.scopes]),
+        {
+          organisationId: 'org-123',
+          registrationId: 'reg-001',
+          accreditationId: 'acc-001',
+          registration: reprocessorRegistration,
+          prns: stubPrns,
+          issuedPrns: stubIssuedPrns,
+          wasteBalance: mockWasteBalance
+        }
+      )
 
       expect(result.issuedTable.rows[0][5].html).toContain('prn-003/view')
     })

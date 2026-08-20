@@ -1,9 +1,12 @@
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import {
@@ -34,7 +37,7 @@ const mockAuth = buildMockAuth()
 
 const regulatorAuth = buildMockAuth({
   provider: OIDC_ENTRA_ID,
-  scope: [SCOPES.regulator]
+  ...sessionIdentity(IDENTITIES.regulator)
 })
 
 const exporterRegistration = {

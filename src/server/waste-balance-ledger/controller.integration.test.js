@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import {
@@ -45,6 +46,13 @@ const regulator = buildMockAuth({
 })
 
 const operator = buildMockAuth()
+
+const regulatorWithoutLedgerScope = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-2', email: 'no.ledger@example.com' },
+  role: IDENTITIES.regulator.role,
+  scope: [SCOPES.organisationSearch]
+})
 
 const prnIssued = {
   kind: 'prn-issued',
@@ -311,6 +319,19 @@ describe('the waste balance ledger page', () => {
       })
 
       expect(statusCode).toBe(statusCodes.forbidden)
+    })
+  })
+
+  describe('a session the backend granted no ledger scope', () => {
+    it('is refused the page, whatever role it carries', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulatorWithoutLedgerScope
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(fetchRegistrationAndAccreditation).not.toHaveBeenCalled()
     })
   })
 })

@@ -4,16 +4,17 @@
  * every spelling here is that contract and nothing decides one locally.
  *
  * `organisationSearch` is checked via `options.auth.scope` on the regulator's
- * own page. `regulator` is granted by the backend to a regulator identity and
- * gates no route here. `organisationLinkedWrite` is the operator's durable write
- * permission — the backend grants it to an operator for its own organisation
- * and to nobody else. The per-request `organisation.write` is decided on each
- * backend call and never reaches a session.
+ * own page. `wasteBalanceLedgerRead` is checked the same way on the waste
+ * balance ledger, and the backend guards its own ledger routes on it too.
+ * `organisationLinkedWrite` is the operator's durable write permission — the
+ * backend grants it to an operator for its own organisation and to nobody
+ * else. The per-request `organisation.write` is decided on each backend call
+ * and never reaches a session.
  */
 export const SCOPES = Object.freeze({
   organisationLinkedWrite: 'organisation.linked.write',
   organisationSearch: 'organisation.search',
-  regulator: 'regulator'
+  wasteBalanceLedgerRead: 'waste-balance.ledger.read'
 })
 
 const WRITE_SCOPES = Object.freeze([SCOPES.organisationLinkedWrite])
@@ -32,3 +33,13 @@ const WRITE_SCOPES = Object.freeze([SCOPES.organisationLinkedWrite])
  */
 export const hasWriteScope = (credentials) =>
   WRITE_SCOPES.some((writeScope) => credentials?.scope?.includes(writeScope))
+
+/**
+ * The single answer to "may this session read a waste balance ledger?". The
+ * route gate and the link that offers the page both decide from here, so the
+ * page cannot admit a session the link hides it from, or the reverse.
+ * @param {{ scope?: string[] } | null} [credentials]
+ * @returns {boolean}
+ */
+export const hasLedgerReadScope = (credentials) =>
+  credentials?.scope?.includes(SCOPES.wasteBalanceLedgerRead) === true

@@ -1,6 +1,5 @@
 import { config } from '#config/config.js'
-import { isRegulator } from '#server/auth/roles.js'
-import { hasWriteScope } from '#server/auth/scopes.js'
+import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
@@ -282,16 +281,15 @@ function getPrnViewData(
  * accreditation, the registered-only phase included, so the link carries the
  * accreditation in force, or none where the period is registered only.
  *
- * The page is for a regulator, so the link is gated on the role rather than on
- * a scope: an operator holds the same `organisation.read` for its own
- * organisation and still must not see the ledger.
+ * The link is offered on the same scope the ledger page itself is gated on, so
+ * a session is never shown a link to a page that will refuse it.
  * @param {HapiRequest} request
  * @param {string} organisationId
  * @param {Registration} registration
  * @returns {string | null}
  */
 function getWasteBalanceLedgerUrl(request, organisationId, registration) {
-  if (!isRegulator(request.auth.credentials)) {
+  if (!hasLedgerReadScope(request.auth.credentials)) {
     return null
   }
 

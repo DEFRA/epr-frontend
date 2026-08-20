@@ -8,9 +8,12 @@ import {
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import Boom from '@hapi/boom'
@@ -225,7 +228,7 @@ describe('#listPrnsController', () => {
           url: reprocessorListUrl,
           auth: buildMockAuth({
             provider: OIDC_ENTRA_ID,
-            scope: [SCOPES.regulator]
+            ...sessionIdentity(IDENTITIES.regulator)
           })
         })
 

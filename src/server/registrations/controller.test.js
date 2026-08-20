@@ -1,10 +1,14 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { REGULATOR_ROLE } from '#server/auth/roles.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import {
   asRegistrationWithAccreditation,
@@ -1255,7 +1259,7 @@ describe('a session that may not change the operator data', () => {
 describe('the waste balance ledger link', () => {
   const regulatorAuth = buildMockAuth({
     provider: OIDC_ENTRA_ID,
-    role: REGULATOR_ROLE,
+    ...sessionIdentity(IDENTITIES.regulator),
     profile: { id: 'entra-user-1', email: 'regulator@example.com' },
     backendToken: 'test-id-token'
   })
@@ -1306,6 +1310,25 @@ describe('the waste balance ledger link', () => {
 
   it('offers an operator no link at all', async ({ server }) => {
     const body = await openRegistration(server, mockAuth, glassApproved)
+
+    expect(queryByRole(body, 'link', ledgerLink)).toBeNull()
+  })
+
+  it('offers no link to a session the backend granted no ledger scope, whatever role it carries', async ({
+    server
+  }) => {
+    const withoutLedgerScope = buildMockAuth({
+      provider: OIDC_ENTRA_ID,
+      role: IDENTITIES.regulator.role,
+      scope: [SCOPES.organisationSearch],
+      profile: { id: 'entra-user-2', email: 'no.ledger@example.com' },
+      backendToken: 'test-id-token'
+    })
+    const body = await openRegistration(
+      server,
+      withoutLedgerScope,
+      glassApproved
+    )
 
     expect(queryByRole(body, 'link', ledgerLink)).toBeNull()
   })

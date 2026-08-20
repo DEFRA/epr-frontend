@@ -1,10 +1,8 @@
-import { isRegulator } from '#server/auth/roles.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import Boom from '@hapi/boom'
 
 import { buildLedgerRows } from './helpers/build-ledger-rows.js'
 import { fetchWasteBalanceEvents } from './helpers/fetch-waste-balance-events.js'
@@ -19,10 +17,6 @@ import { fetchWasteBalanceEvents } from './helpers/fetch-waste-balance-events.js
 
 /**
  * One waste balance ledger, read as business events.
- *
- * The page is for a regulator, so it is gated on the role rather than on a
- * scope: an operator holds the same `organisation.read` for its own
- * organisation and still must not see this page.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const controller = {
@@ -32,10 +26,6 @@ export const controller = {
    */
   async handler(request, h) {
     const session = request.auth.credentials
-
-    if (!isRegulator(session)) {
-      throw Boom.forbidden('Waste balance ledger is for a regulator')
-    }
 
     const { organisationId, registrationId, accreditationId } = request.params
 
