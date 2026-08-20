@@ -55,12 +55,12 @@ const manageAccount = ({ t: localise }, session) => {
  * @returns {NavigationItem[]}
  */
 const regulatorHome = ({ localiseUrl, t: localise, path }) => {
-  const home = localiseUrl(paths.regulators.home)
+  const href = localiseUrl(paths.regulators.home)
 
   return [
     {
-      current: path === home,
-      href: home,
+      current: path === href,
+      href,
       text: localise('common:navigation:home')
     }
   ]
