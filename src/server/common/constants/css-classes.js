@@ -10,7 +10,7 @@ export const cssClasses = {
     orange: 'govuk-tag--orange',
     purple: 'govuk-tag--purple',
     red: 'govuk-tag--red',
-    turquoise: 'govuk-tag--turquoise',
+    teal: 'govuk-tag--teal',
     yellow: 'govuk-tag--yellow'
   },
   textAlign: {

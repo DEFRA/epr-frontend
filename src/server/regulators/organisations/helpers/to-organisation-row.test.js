@@ -9,11 +9,14 @@ const acme = {
   status: 'active'
 }
 
+// The two localisers share a signature, so a caller could pass them the wrong
+// way round and the type checker would not notice. Each one marks its output
+// differently, so a swap fails here rather than in a regulator's browser.
 /** @param {string} path */
-const inEnglish = (path) => path
+const inEnglish = (path) => `/en${path}`
 
 /** @param {string} key */
-const asKey = (key) => key
+const asKey = (key) => `translated:${key}`
 
 describe(toOrganisationRow, () => {
   it('projects an organisation onto the columns the browse table shows', () => {
@@ -21,10 +24,10 @@ describe(toOrganisationRow, () => {
       name: 'ACME ltd',
       organisationId: '50002',
       status: {
-        text: 'regulators:organisations:status:active',
+        text: 'translated:regulators:organisations:status:active',
         classes: 'govuk-tag--green'
       },
-      href: '/organisations/6507f1f77bcf86cd79943901'
+      href: '/en/organisations/6507f1f77bcf86cd79943901'
     })
   })
 

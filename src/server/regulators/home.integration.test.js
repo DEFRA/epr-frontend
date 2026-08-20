@@ -40,16 +40,14 @@ const acme = {
   id: '6507f1f77bcf86cd79943901',
   orgId: 50002,
   companyDetails: { name: 'ACME ltd' },
-  status: 'approved',
-  submittedToRegulator: 'ea'
+  status: 'approved'
 }
 
 const brightWaste = {
   id: '6507f1f77bcf86cd79943902',
   orgId: 50003,
   companyDetails: { name: 'Bright Waste plc' },
-  status: 'active',
-  submittedToRegulator: 'nrw'
+  status: 'active'
 }
 
 /**
@@ -228,13 +226,17 @@ describe('/regulators/home - GET integration', () => {
       (link.textContent ?? '').includes('ACME ltd')
     )
 
-    expect(action?.textContent?.trim()).toBe('View organisation ACME ltd')
+    // The visible words repeat down the column, so what tells one link from
+    // another is the hidden name a screen reader adds to it.
+    expect(
+      action?.querySelector('.govuk-visually-hidden')?.textContent?.trim()
+    ).toBe('ACME ltd')
     expect(action?.getAttribute('href')).toBe(
       '/organisations/6507f1f77bcf86cd79943901'
     )
   })
 
-  it('tags each organisation status the way the design colours it', async ({
+  it('gives each organisation status its own colour', async ({
     server,
     msw
   }) => {
@@ -249,7 +251,7 @@ describe('/regulators/home - GET integration', () => {
 
     const { body } = await visit(server, '/regulators/home')
 
-    expect(tagOf(body, 'Approved')?.className).toContain('govuk-tag--turquoise')
+    expect(tagOf(body, 'Approved')?.className).toContain('govuk-tag--teal')
     expect(tagOf(body, 'Active')?.className).toContain('govuk-tag--green')
     expect(tagOf(body, 'Rejected')?.className).toContain('govuk-tag--red')
 

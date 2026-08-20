@@ -7,15 +7,14 @@ import { cssClasses } from '#server/common/constants/css-classes.js'
  */
 
 /**
- * The colour each status wears. An organisation an operator has only applied
- * for reads as new, one a regulator has approved reads as settled, and one
- * that trades reads as live, so the colours run from blue through turquoise to
- * green. A refusal is red.
- * @type {Record<string, string>}
+ * The colour each status wears. The design names two of them: created is blue
+ * and active is green. Approved sits between the two, so it takes teal and the
+ * three read as a progression. A refusal is red.
+ * @type {Record<string, string | undefined>}
  */
 const TAG_CLASSES = {
   [ORGANISATION_STATUS.CREATED]: cssClasses.tag.blue,
-  [ORGANISATION_STATUS.APPROVED]: cssClasses.tag.turquoise,
+  [ORGANISATION_STATUS.APPROVED]: cssClasses.tag.teal,
   [ORGANISATION_STATUS.ACTIVE]: cssClasses.tag.green,
   [ORGANISATION_STATUS.REJECTED]: cssClasses.tag.red
 }
