@@ -101,6 +101,16 @@ describe('the chrome around an organisation page', () => {
       expect(navigationLabels(body)).toStrictEqual(['Home', 'Sign out'])
     })
 
+    it('marks no tab current while they read one organisation', async ({
+      server
+    }) => {
+      const body = await renderOrganisationPage(server, regulatorAuth)
+
+      expect(getByRole(body, 'link', { name: 'Home' })).not.toHaveAttribute(
+        'aria-current'
+      )
+    })
+
     it('sends the home link to the regulator home, not to the organisation being read', async ({
       server
     }) => {

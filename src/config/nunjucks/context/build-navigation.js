@@ -6,7 +6,7 @@ import { paths } from '#server/paths.js'
 
 /**
  * Navigation item
- * @typedef {{active?: boolean, href: string, text: string}} NavigationItem
+ * @typedef {{current?: boolean, href: string, text: string}} NavigationItem
  */
 
 /**
@@ -48,14 +48,19 @@ const manageAccount = ({ t: localise }, session) => {
 
 /**
  * A regulator has no linked organisation, so the operator's home link has
- * nothing to point at. Their home is the page sign-in already lands them on.
+ * nothing to point at. Their home is the page sign-in already lands them on,
+ * and that page is the organisation list. The list gets a tab of its own once
+ * it moves off home, not before.
  * @param {HapiRequest} request
  * @returns {NavigationItem[]}
  */
-const regulatorHome = ({ localiseUrl, t: localise }) => {
+const regulatorHome = ({ localiseUrl, t: localise, path }) => {
+  const href = localiseUrl(paths.regulators.home)
+
   return [
     {
-      href: localiseUrl(paths.regulators.home),
+      current: path === href,
+      href,
       text: localise('common:navigation:home')
     }
   ]
