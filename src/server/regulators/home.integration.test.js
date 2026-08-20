@@ -40,14 +40,16 @@ const acme = {
   id: '6507f1f77bcf86cd79943901',
   orgId: 50002,
   companyDetails: { name: 'ACME ltd' },
-  status: 'approved'
+  status: 'approved',
+  submittedToRegulator: 'ea'
 }
 
 const brightWaste = {
   id: '6507f1f77bcf86cd79943902',
   orgId: 50003,
   companyDetails: { name: 'Bright Waste plc' },
-  status: 'active'
+  status: 'active',
+  submittedToRegulator: 'nrw'
 }
 
 /**
@@ -195,6 +197,7 @@ describe('/regulators/home - GET integration', () => {
     ).toStrictEqual([
       'Name',
       'Organisation ID',
+      'Regulator',
       'Organisation status',
       'Actions'
     ])
@@ -210,7 +213,7 @@ describe('/regulators/home - GET integration', () => {
 
     expect(requested().searchParams.get('search')).toBe('ACME')
     expect(resultRows(body)).toStrictEqual([
-      ['ACME ltd', '50002', 'Approved', 'View organisation ACME ltd']
+      ['ACME ltd', '50002', 'EA', 'Approved', 'View organisation ACME ltd']
     ])
   })
 
@@ -294,7 +297,7 @@ describe('/regulators/home - GET integration', () => {
     ).not.toBeNull()
   })
 
-  it('marks All organisations as the service navigation tab they are on', async ({
+  it('marks home as the service navigation tab they are on', async ({
     server,
     msw
   }) => {
@@ -304,15 +307,17 @@ describe('/regulators/home - GET integration', () => {
 
     const navigation = getByRole(body, 'navigation', { name: 'Menu' })
 
+    // Home is this page while the list has nowhere else to live, so the
+    // navigation names one destination rather than two that lead here.
     expect(
       getAllByRole(navigation, 'link').map((link) =>
         (link.textContent ?? '').trim()
       )
-    ).toStrictEqual(['Home', 'All organisations', 'Sign out'])
+    ).toStrictEqual(['Home', 'Sign out'])
     expect(
-      getByRole(navigation, 'link', {
-        name: 'All organisations'
-      }).getAttribute('aria-current')
+      getByRole(navigation, 'link', { name: 'Home' }).getAttribute(
+        'aria-current'
+      )
     ).toBe('page')
   })
 
@@ -411,7 +416,7 @@ describe('/regulators/home - GET integration', () => {
     const { body } = await visit(server, '/regulators/home?search=ACME&page=1')
 
     expect(resultRows(body)).toStrictEqual([
-      ['ACME ltd', '50002', 'Approved', 'View organisation ACME ltd']
+      ['ACME ltd', '50002', 'EA', 'Approved', 'View organisation ACME ltd']
     ])
     expect(queryByText(body, 'No organisation was found.')).toBeNull()
   })

@@ -5,9 +5,6 @@
     "body": "You have signed out of the '{{ serviceName }}' service.",
     "signInAgain": "Sign in again"
   },
-  "navigation": {
-    "allOrganisations": "All organisations"
-  },
   "notAuthorised": {
     "pageTitle": "You do not have access to this service",
     "heading": "You do not have access to this service",
@@ -32,6 +29,7 @@
     "table": {
       "name": "Name",
       "organisationId": "Organisation ID",
+      "regulator": "Regulator",
       "status": "Organisation status",
       "actions": "Actions",
       "view": "View organisation"

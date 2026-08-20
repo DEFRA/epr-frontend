@@ -6,7 +6,8 @@ const acme = {
   id: '6507f1f77bcf86cd79943901',
   orgId: 50002,
   companyDetails: { name: 'ACME ltd' },
-  status: 'active'
+  status: 'active',
+  submittedToRegulator: 'ea'
 }
 
 // The two localisers share a signature, so a caller could pass them the wrong
@@ -23,6 +24,7 @@ describe(toOrganisationRow, () => {
     expect(toOrganisationRow(acme, inEnglish, asKey)).toStrictEqual({
       name: 'ACME ltd',
       organisationId: '50002',
+      regulator: 'EA',
       status: {
         text: 'translated:regulators:organisations:status:active',
         classes: 'govuk-tag--green'
@@ -35,5 +37,25 @@ describe(toOrganisationRow, () => {
     expect(toOrganisationRow(acme, (path) => `/cy${path}`, asKey).href).toBe(
       '/cy/organisations/6507f1f77bcf86cd79943901'
     )
+  })
+
+  it('names the regulator the way a regulator writes it', () => {
+    expect(
+      toOrganisationRow(
+        { ...acme, submittedToRegulator: 'nrw' },
+        inEnglish,
+        asKey
+      ).regulator
+    ).toBe('NRW')
+  })
+
+  it('leaves the regulator blank when the organisation names none', () => {
+    expect(
+      toOrganisationRow(
+        { ...acme, submittedToRegulator: undefined },
+        inEnglish,
+        asKey
+      ).regulator
+    ).toBe('')
   })
 })

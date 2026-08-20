@@ -23,8 +23,7 @@ function mockRequest(options) {
       const translations = {
         'common:navigation:home': 'Home',
         'common:navigation:manageAccount': 'Manage account',
-        'common:navigation:signOut': 'Sign out',
-        'regulators:navigation:allOrganisations': 'All organisations'
+        'common:navigation:signOut': 'Sign out'
       }
       return translations[key] || key
     }),
@@ -80,23 +79,18 @@ describe('#buildNavigation', () => {
   })
 
   describe('a regulator', () => {
-    it('is offered their home, the organisations they browse, and the sign out link', () => {
+    it('is offered their home and the sign out link', () => {
       const request = mockRequest({
         auth: { credentials: credentials.regulator, strategy: SESSION_STRATEGY }
       })
 
       expect(buildNavigation(request)).toStrictEqual([
-        { href: '/regulators/home', text: 'Home' },
-        {
-          current: true,
-          href: '/regulators/home',
-          text: 'All organisations'
-        },
+        { current: true, href: '/regulators/home', text: 'Home' },
         { href: '/logout', text: 'Sign out' }
       ])
     })
 
-    it('marks no tab current while they read a page below the list', () => {
+    it('leaves home unmarked while they read an organisation', () => {
       const request = mockRequest({
         auth: {
           credentials: credentials.regulator,
@@ -104,9 +98,9 @@ describe('#buildNavigation', () => {
         },
         path: '/organisations/6507f1f77bcf86cd79943901'
       })
-      const [, allOrganisations] = buildNavigation(request)
+      const [home] = buildNavigation(request)
 
-      expect(allOrganisations.current).toBe(false)
+      expect(home.current).toBe(false)
     })
 
     it('is offered their own home even while reading an organisation that has one', () => {
@@ -121,7 +115,11 @@ describe('#buildNavigation', () => {
       })
       const [home] = buildNavigation(request)
 
-      expect(home).toStrictEqual({ href: '/regulators/home', text: 'Home' })
+      expect(home).toStrictEqual({
+        current: true,
+        href: '/regulators/home',
+        text: 'Home'
+      })
     })
 
     it('localises their home link', () => {
@@ -133,13 +131,12 @@ describe('#buildNavigation', () => {
         localiseUrl: localiseUrl(languages.WELSH),
         path: '/cy/regulators/home'
       })
-      const [home, allOrganisations] = buildNavigation(request)
+      const [home] = buildNavigation(request)
 
-      expect(home.href).toBe('/cy/regulators/home')
-      expect(allOrganisations).toStrictEqual({
+      expect(home).toStrictEqual({
         current: true,
         href: '/cy/regulators/home',
-        text: 'All organisations'
+        text: 'Home'
       })
     })
 

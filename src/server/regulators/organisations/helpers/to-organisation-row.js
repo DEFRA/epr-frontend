@@ -8,13 +8,15 @@ import { toStatusTag } from './to-status-tag.js'
  *   id: string,
  *   orgId: number,
  *   companyDetails: { name: string },
- *   status: string
+ *   status: string,
+ *   submittedToRegulator?: string
  * }} SearchedOrganisation
  *
  * One row of the results table.
  * @typedef {{
  *   name: string,
  *   organisationId: string,
+ *   regulator: string,
  *   status: StatusTag,
  *   href: string
  * }} OrganisationRow
@@ -27,6 +29,10 @@ import { toStatusTag } from './to-status-tag.js'
  * and which carries the registration and accreditation numbers this table
  * leaves out.
  *
+ * The list is not scoped to the caller's own body, so the row names the
+ * regulator the organisation submitted to. That is the only thing telling an
+ * officer whose organisation a row belongs to.
+ *
  * The caller supplies the localiser, so following the link keeps the language
  * the regulator is reading in rather than handing them the English route.
  * @param {SearchedOrganisation} organisation
@@ -35,12 +41,13 @@ import { toStatusTag } from './to-status-tag.js'
  * @returns {OrganisationRow}
  */
 export const toOrganisationRow = (
-  { id, orgId, companyDetails, status },
+  { id, orgId, companyDetails, status, submittedToRegulator },
   localiseUrl,
   localise
 ) => ({
   name: companyDetails.name,
   organisationId: String(orgId),
+  regulator: submittedToRegulator?.toUpperCase() ?? '',
   status: toStatusTag(status, localise),
   href: localiseUrl(`/organisations/${id}`)
 })

@@ -60,6 +60,7 @@
             {% set row = [
               { text: organisation.name },
               { text: organisation.organisationId },
+              { text: organisation.regulator },
               { html: govukTag({ text: organisation.status.text, classes: organisation.status.classes }) },
               { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (organisation.href | escape) ~ '">' ~ localise('regulators:organisations:table:view') ~ '<span class="govuk-visually-hidden"> ' ~ (organisation.name | escape) ~ '</span></a>' }
             ] %}
@@ -71,6 +72,7 @@
             head: [
               { text: localise('regulators:organisations:table:name') },
               { text: localise('regulators:organisations:table:organisationId') },
+              { text: localise('regulators:organisations:table:regulator') },
               { text: localise('regulators:organisations:table:status') },
               { text: localise('regulators:organisations:table:actions') }
             ],

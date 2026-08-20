@@ -93,16 +93,12 @@ describe('the chrome around an organisation page', () => {
       expect(serviceLink(body)).toHaveAttribute('href', '/regulators/home')
     })
 
-    it('offers their own home, the organisations they browse, and the way out, and nothing else', async ({
+    it('offers their own home and the way out, and nothing else', async ({
       server
     }) => {
       const body = await renderOrganisationPage(server, regulatorAuth)
 
-      expect(navigationLabels(body)).toStrictEqual([
-        'Home',
-        'All organisations',
-        'Sign out'
-      ])
+      expect(navigationLabels(body)).toStrictEqual(['Home', 'Sign out'])
     })
 
     it('marks no tab current while they read one organisation', async ({
@@ -110,9 +106,9 @@ describe('the chrome around an organisation page', () => {
     }) => {
       const body = await renderOrganisationPage(server, regulatorAuth)
 
-      expect(
-        getByRole(body, 'link', { name: 'All organisations' })
-      ).not.toHaveAttribute('aria-current')
+      expect(getByRole(body, 'link', { name: 'Home' })).not.toHaveAttribute(
+        'aria-current'
+      )
     })
 
     it('sends the home link to the regulator home, not to the organisation being read', async ({
