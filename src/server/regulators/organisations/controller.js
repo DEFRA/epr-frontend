@@ -15,7 +15,7 @@ import { toOrganisationRow } from './helpers/to-organisation-row.js'
  */
 
 /**
- * The organisation search a regulator lands on. A regulator holds no
+ * The organisation list a regulator lands on. A regulator holds no
  * organisation of their own, so searching is how they reach an operator at
  * all, and the page shows every organisation until they narrow it.
  * @satisfies {Partial<HapiServerRoute<HapiRequest & { query: SearchQuery }>>}
@@ -47,9 +47,10 @@ export const controller = {
     return h.view('regulators/home', {
       pageTitle: request.t('regulators:organisations:pageTitle'),
       search,
+      clearSearchHref: basePath,
       username: profile.email?.split('@')[0],
       organisations: results.items.map((organisation) =>
-        toOrganisationRow(organisation, request.localiseUrl)
+        toOrganisationRow(organisation, request.localiseUrl, request.t)
       ),
       pagination: buildPaginationLinks({
         basePath,

@@ -6,40 +6,31 @@ const acme = {
   id: '6507f1f77bcf86cd79943901',
   orgId: 50002,
   companyDetails: { name: 'ACME ltd' },
-  status: 'active',
-  submittedToRegulator: 'ea'
+  status: 'active'
 }
 
+/** @param {string} path */
 const inEnglish = (path) => path
 
+/** @param {string} key */
+const asKey = (key) => key
+
 describe(toOrganisationRow, () => {
-  it('projects an organisation onto the columns the results table shows', () => {
-    expect(toOrganisationRow(acme, inEnglish)).toStrictEqual({
+  it('projects an organisation onto the columns the browse table shows', () => {
+    expect(toOrganisationRow(acme, inEnglish, asKey)).toStrictEqual({
       name: 'ACME ltd',
       organisationId: '50002',
-      regulator: 'EA',
-      status: 'active',
+      status: {
+        text: 'regulators:organisations:status:active',
+        classes: 'govuk-tag--green'
+      },
       href: '/organisations/6507f1f77bcf86cd79943901'
     })
   })
 
   it('keeps the language the regulator is reading in', () => {
-    expect(toOrganisationRow(acme, (path) => `/cy${path}`).href).toBe(
+    expect(toOrganisationRow(acme, (path) => `/cy${path}`, asKey).href).toBe(
       '/cy/organisations/6507f1f77bcf86cd79943901'
     )
-  })
-
-  it('names the regulator the way a regulator writes it', () => {
-    expect(
-      toOrganisationRow({ ...acme, submittedToRegulator: 'nrw' }, inEnglish)
-        .regulator
-    ).toBe('NRW')
-  })
-
-  it('leaves the regulator blank when the organisation names none', () => {
-    expect(
-      toOrganisationRow({ ...acme, submittedToRegulator: undefined }, inEnglish)
-        .regulator
-    ).toBe('')
   })
 })

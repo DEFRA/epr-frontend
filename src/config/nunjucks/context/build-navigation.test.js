@@ -13,7 +13,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 /**
  * @param {{
  *   auth?: { credentials: Record<string, unknown> | null, strategy?: string },
- *   localiseUrl?: (url: string) => string
+ *   localiseUrl?: (url: string) => string,
+ *   path?: string
  * }} [options]
  */
 function mockRequest(options) {
@@ -22,11 +23,13 @@ function mockRequest(options) {
       const translations = {
         'common:navigation:home': 'Home',
         'common:navigation:manageAccount': 'Manage account',
-        'common:navigation:signOut': 'Sign out'
+        'common:navigation:signOut': 'Sign out',
+        'regulators:navigation:allOrganisations': 'All organisations'
       }
       return translations[key] || key
     }),
     localiseUrl: vi.fn((path) => path),
+    path: '/regulators/home',
     ...options,
     auth: { credentials: null, strategy: SESSION_STRATEGY, ...options?.auth }
   })
@@ -77,15 +80,33 @@ describe('#buildNavigation', () => {
   })
 
   describe('a regulator', () => {
-    it('is offered their own home and the sign out link, and nothing else', () => {
+    it('is offered their home, the organisations they browse, and the sign out link', () => {
       const request = mockRequest({
         auth: { credentials: credentials.regulator, strategy: SESSION_STRATEGY }
       })
 
       expect(buildNavigation(request)).toStrictEqual([
         { href: '/regulators/home', text: 'Home' },
+        {
+          current: true,
+          href: '/regulators/home',
+          text: 'All organisations'
+        },
         { href: '/logout', text: 'Sign out' }
       ])
+    })
+
+    it('marks no tab current while they read a page below the list', () => {
+      const request = mockRequest({
+        auth: {
+          credentials: credentials.regulator,
+          strategy: SESSION_STRATEGY
+        },
+        path: '/organisations/6507f1f77bcf86cd79943901'
+      })
+      const [, allOrganisations] = buildNavigation(request)
+
+      expect(allOrganisations.current).toBe(false)
     })
 
     it('is offered their own home even while reading an organisation that has one', () => {
@@ -109,11 +130,17 @@ describe('#buildNavigation', () => {
           credentials: credentials.regulator,
           strategy: SESSION_STRATEGY
         },
-        localiseUrl: localiseUrl(languages.WELSH)
+        localiseUrl: localiseUrl(languages.WELSH),
+        path: '/cy/regulators/home'
       })
-      const [home] = buildNavigation(request)
+      const [home, allOrganisations] = buildNavigation(request)
 
       expect(home.href).toBe('/cy/regulators/home')
+      expect(allOrganisations).toStrictEqual({
+        current: true,
+        href: '/cy/regulators/home',
+        text: 'All organisations'
+      })
     })
 
     it("is chosen by the role, so a session holding a regulator's scopes alone keeps the operator shell", () => {

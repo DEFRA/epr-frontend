@@ -5,22 +5,36 @@
     "body": "You have signed out of the '{{ serviceName }}' service.",
     "signInAgain": "Sign in again"
   },
+  "navigation": {
+    "allOrganisations": "All organisations"
+  },
   "notAuthorised": {
     "pageTitle": "You do not have access to this service",
     "heading": "You do not have access to this service",
     "body": "You signed in successfully, but your account has no role in this service. To ask for access, contact us using the details at the bottom of this page."
   },
   "organisations": {
-    "pageTitle": "Organisations",
-    "heading": "Organisations",
-    "searchLabel": "Search by organisation name",
+    "pageTitle": "All organisations",
+    "heading": "All organisations",
+    "description": "Search for a reprocessor or exporter by name, or browse every organisation the service holds.",
+    "searchHeading": "Search reprocessors and exporters",
+    "searchLabel": "Organisation name",
     "searchButton": "Search",
+    "clearSearchButton": "Clear search",
+    "browseHeading": "Browse organisations",
     "noResults": "No organisation was found.",
+    "status": {
+      "created": "Created",
+      "approved": "Approved",
+      "active": "Active",
+      "rejected": "Rejected"
+    },
     "table": {
       "name": "Name",
       "organisationId": "Organisation ID",
-      "regulator": "Regulator",
-      "status": "Status"
+      "status": "Organisation status",
+      "actions": "Actions",
+      "view": "View organisation"
     }
   },
   "serviceName": "Check reprocessed or exported packaging waste"

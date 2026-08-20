@@ -53,6 +53,16 @@ const brightWaste = {
 }
 
 /**
+ * The status tag of the row naming the given organisation.
+ * @param {InstanceType<DOMWindow['HTMLElement']>} body
+ * @param {string} name
+ */
+const tagOf = (body, name) =>
+  getAllByRole(getByRole(body, 'table'), 'row')
+    .find((row) => (row.textContent ?? '').includes(name))
+    ?.querySelector('.govuk-tag')
+
+/**
  * Answers the backend's organisations call with a page built around the given
  * organisations, and hands back what the app asked for so a test can assert on
  * the request as well as the rendering.
@@ -152,7 +162,7 @@ describe('/regulators/home - GET integration', () => {
     backendReturns(msw, { items: [acme] })
 
     const { body } = await visit(server, '/regulators/home')
-    const searchBox = getByLabelText(body, 'Search by organisation name')
+    const searchBox = getByLabelText(body, 'Organisation name')
 
     expect(searchBox.closest('form')?.getAttribute('method')).toBe('get')
     expect(searchBox).toHaveProperty('name', 'search')
@@ -166,7 +176,7 @@ describe('/regulators/home - GET integration', () => {
 
     const { body } = await visit(server, '/regulators/home?search=ACME')
 
-    expect(getByLabelText(body, 'Search by organisation name')).toHaveProperty(
+    expect(getByLabelText(body, 'Organisation name')).toHaveProperty(
       'value',
       'ACME'
     )
@@ -184,7 +194,12 @@ describe('/regulators/home - GET integration', () => {
       getAllByRole(getByRole(body, 'table'), 'columnheader').map((heading) =>
         (heading.textContent ?? '').trim()
       )
-    ).toStrictEqual(['Name', 'Organisation ID', 'Regulator', 'Status'])
+    ).toStrictEqual([
+      'Name',
+      'Organisation ID',
+      'Organisation status',
+      'Actions'
+    ])
   })
 
   it('narrows the results to the organisations matching the search', async ({
@@ -197,21 +212,132 @@ describe('/regulators/home - GET integration', () => {
 
     expect(requested().searchParams.get('search')).toBe('ACME')
     expect(resultRows(body)).toStrictEqual([
-      ['ACME ltd', '50002', 'EA', 'approved']
+      ['ACME ltd', '50002', 'Approved', 'View organisation ACME ltd']
     ])
   })
 
-  it('opens the organisation from its name', async ({ server, msw }) => {
+  it('opens the organisation from the action that names it', async ({
+    server,
+    msw
+  }) => {
     backendReturns(msw, { items: [acme] })
 
     const { body } = await visit(server, '/regulators/home')
 
-    expect(
-      getByRole(getByRole(body, 'table'), 'link', { name: 'ACME ltd' })
-    ).toHaveProperty(
-      'href',
-      expect.stringContaining('/organisations/6507f1f77bcf86cd79943901')
+    const action = getAllByRole(getByRole(body, 'table'), 'link').find((link) =>
+      (link.textContent ?? '').includes('ACME ltd')
     )
+
+    expect(action?.textContent?.trim()).toBe('View organisation ACME ltd')
+    expect(action?.getAttribute('href')).toBe(
+      '/organisations/6507f1f77bcf86cd79943901'
+    )
+  })
+
+  it('tags each organisation status the way the design colours it', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, {
+      items: [
+        acme,
+        brightWaste,
+        { ...acme, id: 'org-3', orgId: 50004, status: 'created' },
+        { ...acme, id: 'org-4', orgId: 50005, status: 'rejected' }
+      ]
+    })
+
+    const { body } = await visit(server, '/regulators/home')
+
+    expect(tagOf(body, 'Approved')?.className).toContain('govuk-tag--turquoise')
+    expect(tagOf(body, 'Active')?.className).toContain('govuk-tag--green')
+    expect(tagOf(body, 'Rejected')?.className).toContain('govuk-tag--red')
+
+    const created = tagOf(body, 'Created')
+
+    expect(created?.textContent?.trim()).toBe('Created')
+    expect(created?.className).not.toContain('govuk-tag--')
+  })
+
+  it('names a status it does not know rather than leaving the cell empty', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, { items: [{ ...acme, status: 'dissolved' }] })
+
+    const { body } = await visit(server, '/regulators/home')
+
+    expect(tagOf(body, 'dissolved')?.className).toContain('govuk-tag--grey')
+  })
+
+  it('heads the page and the browse table the way the design does', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, { items: [acme] })
+
+    const { body } = await visit(server, '/regulators/home')
+
+    expect(getByRole(body, 'heading', { level: 1 }).textContent?.trim()).toBe(
+      'All organisations'
+    )
+    expect(
+      queryByRole(body, 'heading', {
+        level: 2,
+        name: 'Search reprocessors and exporters'
+      })
+    ).not.toBeNull()
+    expect(
+      queryByRole(body, 'heading', { level: 2, name: 'Browse organisations' })
+    ).not.toBeNull()
+  })
+
+  it('marks All organisations as the service navigation tab they are on', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, { items: [acme] })
+
+    const { body } = await visit(server, '/regulators/home')
+
+    const navigation = getByRole(body, 'navigation', { name: 'Menu' })
+
+    expect(
+      getAllByRole(navigation, 'link').map((link) =>
+        (link.textContent ?? '').trim()
+      )
+    ).toStrictEqual(['Home', 'All organisations', 'Sign out'])
+    expect(
+      getByRole(navigation, 'link', {
+        name: 'All organisations'
+      }).getAttribute('aria-current')
+    ).toBe('page')
+  })
+
+  it('offers only a search until the regulator has searched', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, { items: [acme] })
+
+    const { body } = await visit(server, '/regulators/home')
+
+    expect(queryByRole(body, 'button', { name: 'Search' })).not.toBeNull()
+    expect(queryByRole(body, 'button', { name: 'Clear search' })).toBeNull()
+  })
+
+  it('offers to clear a search that is running, without sending an empty one', async ({
+    server,
+    msw
+  }) => {
+    backendReturns(msw, { items: [acme] })
+
+    const { body } = await visit(server, '/regulators/home?search=ACME')
+
+    expect(
+      getByRole(body, 'button', { name: 'Clear search' }).getAttribute('href')
+    ).toBe('/regulators/home')
+    expect(queryByRole(body, 'button', { name: 'Search' })).not.toBeNull()
   })
 
   it('says no organisation was found when the search matches none', async ({
@@ -283,7 +409,7 @@ describe('/regulators/home - GET integration', () => {
     const { body } = await visit(server, '/regulators/home?search=ACME&page=1')
 
     expect(resultRows(body)).toStrictEqual([
-      ['ACME ltd', '50002', 'EA', 'approved']
+      ['ACME ltd', '50002', 'Approved', 'View organisation ACME ltd']
     ])
     expect(queryByText(body, 'No organisation was found.')).toBeNull()
   })

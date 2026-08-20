@@ -6,7 +6,7 @@ import { paths } from '#server/paths.js'
 
 /**
  * Navigation item
- * @typedef {{active?: boolean, href: string, text: string}} NavigationItem
+ * @typedef {{current?: boolean, href: string, text: string}} NavigationItem
  */
 
 /**
@@ -48,15 +48,24 @@ const manageAccount = ({ t: localise }, session) => {
 
 /**
  * A regulator has no linked organisation, so the operator's home link has
- * nothing to point at. Their home is the page sign-in already lands them on.
+ * nothing to point at. Their home is the page sign-in already lands them on,
+ * and that page is the organisation list, so both tabs address it. They part
+ * once a regulator home page of its own exists.
  * @param {HapiRequest} request
  * @returns {NavigationItem[]}
  */
-const regulatorHome = ({ localiseUrl, t: localise }) => {
+const regulatorPages = ({ localiseUrl, t: localise, path }) => {
+  const allOrganisations = localiseUrl(paths.regulators.home)
+
   return [
     {
-      href: localiseUrl(paths.regulators.home),
+      href: allOrganisations,
       text: localise('common:navigation:home')
+    },
+    {
+      current: path === allOrganisations,
+      href: allOrganisations,
+      text: localise('regulators:navigation:allOrganisations')
     }
   ]
 }
@@ -94,7 +103,7 @@ export function buildNavigation(request) {
   // role. What renders inside the shell is a question about what they may do,
   // and reads a scope.
   if (isRegulator(session)) {
-    return [...regulatorHome(request), ...signOut(request)]
+    return [...regulatorPages(request), ...signOut(request)]
   }
 
   return [

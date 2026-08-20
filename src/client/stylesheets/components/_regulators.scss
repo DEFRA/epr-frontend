@@ -1,0 +1,6 @@
+@use "govuk-frontend" as *;
+
+.epr-search-panel {
+  background-color: govuk-colour("black", $variant: "tint-95");
+  padding: govuk-spacing(6);
+}

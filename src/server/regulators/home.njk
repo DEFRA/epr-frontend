@@ -11,43 +11,57 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       <h1 class="govuk-heading-xl">{{ localise('regulators:organisations:heading') }}</h1>
-      <p class="govuk-body" data-testid="regulator-username">{{ username }}</p>
+      <p class="govuk-body">{{ localise('regulators:organisations:description') }}</p>
+      <p class="govuk-body-s" data-testid="regulator-username">{{ username }}</p>
 
-      {# A search replaces the previous one rather than narrowing it, so the
-         form carries no page and every search opens at the first page. #}
-      <form method="get" action="">
-        {{ govukInput({
-          label: {
-            text: localise('regulators:organisations:searchLabel'),
-            classes: "govuk-label--s"
-          },
-          id: "search",
-          name: "search",
-          type: "search",
-          value: search,
-          autocomplete: "off",
-          classes: "govuk-input--width-20"
-        }) }}
+      <div class="epr-search-panel govuk-!-margin-bottom-8">
+        <h2 class="govuk-heading-m">{{ localise('regulators:organisations:searchHeading') }}</h2>
 
-        {{ govukButton({ text: localise('regulators:organisations:searchButton') }) }}
-      </form>
-    </div>
-  </div>
+        {# A search replaces the previous one rather than narrowing it, so the
+           form carries no page and every search opens at the first page. #}
+        <form method="get" action="">
+          {{ govukInput({
+            label: {
+              text: localise('regulators:organisations:searchLabel'),
+              classes: "govuk-label--s"
+            },
+            id: "search",
+            name: "search",
+            type: "search",
+            value: search,
+            autocomplete: "off",
+            classes: "govuk-input--width-20"
+          }) }}
 
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
+          <div class="govuk-button-group">
+            {{ govukButton({ text: localise('regulators:organisations:searchButton') }) }}
+
+            {# Clearing is a link rather than a submit, so it drops the term by
+               addressing the unsearched page instead of sending an empty one. #}
+            {% if search %}
+              {{ govukButton({
+                text: localise('regulators:organisations:clearSearchButton'),
+                href: clearSearchHref,
+                classes: "govuk-button--warning"
+              }) }}
+            {% endif %}
+          </div>
+        </form>
+      </div>
+
+      <h2 class="govuk-heading-m">{{ localise('regulators:organisations:browseHeading') }}</h2>
+
       <div class="govuk-body" data-testid="app-page-body">
         {% if organisations.length %}
           {% set tableRows = [] %}
           {% for organisation in organisations %}
-            {# The name is the link, so it says on its own what it opens. The
-               organisation's own page carries the registration and
-               accreditation numbers this table leaves out. #}
+            {# Every action link reads the same, so each one names the
+               organisation it opens for a reader who hears the links alone. #}
             {% set row = [
-              { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (organisation.href | escape) ~ '">' ~ (organisation.name | escape) ~ '</a>' },
+              { text: organisation.name },
               { text: organisation.organisationId },
-              { text: organisation.regulator },
-              { html: govukTag({ text: organisation.status }) }
+              { html: govukTag({ text: organisation.status.text, classes: organisation.status.classes }) },
+              { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (organisation.href | escape) ~ '">' ~ localise('regulators:organisations:table:view') ~ '<span class="govuk-visually-hidden"> ' ~ (organisation.name | escape) ~ '</span></a>' }
             ] %}
             {% set tableRows = tableRows.concat([row]) %}
           {% endfor %}
@@ -57,8 +71,8 @@
             head: [
               { text: localise('regulators:organisations:table:name') },
               { text: localise('regulators:organisations:table:organisationId') },
-              { text: localise('regulators:organisations:table:regulator') },
-              { text: localise('regulators:organisations:table:status') }
+              { text: localise('regulators:organisations:table:status') },
+              { text: localise('regulators:organisations:table:actions') }
             ],
             rows: tableRows
           }) }}
