@@ -64,8 +64,9 @@ export const reportStaleErrorGetController = {
       return h.redirect(reportsUrl)
     }
 
-    request.yar.clear('reportStaleErrorContext')
-
+    // The context is left in place so a refresh re-renders the error rather than
+    // ejecting the operator to their reports; a later staleness redirect for the
+    // same period overwrites it.
     const prefix = translationKeyPrefixFor(context.reasons)
 
     const { registration } = await fetchRegistrationAndAccreditation(

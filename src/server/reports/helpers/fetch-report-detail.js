@@ -104,6 +104,10 @@ export async function fetchReportDetail(
  *     prnCancelled?: { occurredAt: string, prnId: string }
  *   },
  *   canRequestResubmission?: boolean,
+ *   incompleteSummaryLogRows?: {
+ *     total: number,
+ *     issues: { sheet: string, rowId: string, field: string }[]
+ *   },
  *   resubmissionRequired?: {
  *     operatorRequested?: {
  *       requestedAt: string,
