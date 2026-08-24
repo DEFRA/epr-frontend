@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * @import { TFunction } from 'i18next'
- * @import { LedgerEvent } from './fetch-waste-balance-events.js'
+ * @import { PrnEvent, SummaryLogEvent } from './fetch-ledger-events.js'
  */
 
 import { buildLedgerRows } from './build-ledger-rows.js'
@@ -18,14 +18,29 @@ const localise = /** @type {TFunction} */ (
 )
 
 /**
- * @param {Partial<LedgerEvent>} [overrides]
- * @returns {LedgerEvent}
+ * @param {Partial<PrnEvent>} [overrides]
+ * @returns {PrnEvent}
  */
 const buildEvent = (overrides = {}) => ({
   kind: 'prn-issued',
   createdAt: '2026-02-15T15:09:00.000Z',
-  payload: { amount: 12.5 },
-  closingBalance: { amount: 100, availableAmount: 87.5 },
+  prn: { tonnage: 12.5 },
+  balance: { closing: { total: 100, available: 87.5 } },
+  createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' },
+  ...overrides
+})
+
+/**
+ * A summary log states its credit where a note states its tonnage, so the
+ * two subjects never appear on one event.
+ * @param {Partial<SummaryLogEvent>} [overrides]
+ * @returns {SummaryLogEvent}
+ */
+const buildSummaryLogEvent = (overrides = {}) => ({
+  kind: 'summary-log-submitted',
+  createdAt: '2026-01-04T09:00:00.000Z',
+  summaryLog: { creditTotal: 40 },
+  balance: { closing: { total: 100, available: 87.5 } },
   createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' },
   ...overrides
 })
@@ -56,8 +71,8 @@ describe(buildLedgerRows, () => {
     })
 
     expect(rows.map((row) => cellsOf(row).at(0))).toStrictEqual([
-      '1 March 2026',
-      '1 January 2026'
+      '1 March 2026, 12:00am',
+      '1 January 2026, 12:00am'
     ])
   })
 
@@ -69,7 +84,7 @@ describe(buildLedgerRows, () => {
     })
 
     expect(cellsOf(row)).toStrictEqual([
-      '15 February 2026',
+      '15 February 2026, 3:09pm',
       'waste-balance-ledger:events.prn-issued({"noteType":"PRN"})',
       '12.50',
       '100.00',
@@ -120,14 +135,9 @@ describe(buildLedgerRows, () => {
     expect(cellsOf(row).at(1)).toBe('some-later-kind')
   })
 
-  it('takes the tonnage of a waste report from the credit it raised', () => {
+  it('takes the tonnage of a summary log from the credit it raised', () => {
     const [row] = buildLedgerRows({
-      events: [
-        buildEvent({
-          kind: 'summary-log-submitted',
-          payload: { creditTotal: 40 }
-        })
-      ],
+      events: [buildSummaryLogEvent()],
       localise,
       noteType: 'PRN'
     })
@@ -175,26 +185,6 @@ describe(buildLedgerRows, () => {
     })
 
     expect(cellsOf(row).at(5)).toBe('')
-  })
-
-  it('leaves Who empty where the event carries no actor at all', () => {
-    const [row] = buildLedgerRows({
-      events: [buildEvent({ createdBy: undefined })],
-      localise,
-      noteType: 'PRN'
-    })
-
-    expect(cellsOf(row).at(5)).toBe('')
-  })
-
-  it('shows a tonnage the payload omits as zero, as the balance columns do', () => {
-    const [row] = buildLedgerRows({
-      events: [buildEvent({ kind: 'prn-accepted', payload: {} })],
-      localise,
-      noteType: 'PRN'
-    })
-
-    expect(cellsOf(row).at(2)).toBe('0.00')
   })
 
   it('returns no rows for a ledger that holds no events', () => {

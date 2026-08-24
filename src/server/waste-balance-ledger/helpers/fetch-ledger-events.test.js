@@ -3,7 +3,7 @@ import { test } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
-import { fetchWasteBalanceEvents } from './fetch-waste-balance-events.js'
+import { fetchLedgerEvents } from './fetch-ledger-events.js'
 
 const backendUrl = config.get('eprBackendUrl')
 const backendToken = 'test-backend-token'
@@ -12,19 +12,29 @@ const organisationId = 'org-1'
 const registrationId = 'reg-1'
 const accreditationId = 'acc-1'
 
-const accreditationPath = `${backendUrl}/v1/admin/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`
-const registeredOnlyPath = `${backendUrl}/v1/admin/organisations/${organisationId}/registrations/${registrationId}/waste-balance-events`
+const accreditationPath = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`
+const registeredOnlyPath = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/waste-balance-ledger`
 
-describe(fetchWasteBalanceEvents, () => {
+/**
+ * @param {unknown[]} events
+ */
+const ledgerOf = (events) => ({
+  ledger: { organisationId, registrationId, accreditationId },
+  events
+})
+
+describe(fetchLedgerEvents, () => {
   test('reads the ledger of the accreditation named in the address', async ({
     msw
   }) => {
     const events = [{ kind: 'prn-issued' }]
 
-    msw.use(http.get(accreditationPath, () => HttpResponse.json(events)))
+    msw.use(
+      http.get(accreditationPath, () => HttpResponse.json(ledgerOf(events)))
+    )
 
     await expect(
-      fetchWasteBalanceEvents({
+      fetchLedgerEvents({
         organisationId,
         registrationId,
         accreditationId,
@@ -38,10 +48,12 @@ describe(fetchWasteBalanceEvents, () => {
   }) => {
     const events = [{ kind: 'summary-log-submitted' }]
 
-    msw.use(http.get(registeredOnlyPath, () => HttpResponse.json(events)))
+    msw.use(
+      http.get(registeredOnlyPath, () => HttpResponse.json(ledgerOf(events)))
+    )
 
     await expect(
-      fetchWasteBalanceEvents({
+      fetchLedgerEvents({
         organisationId,
         registrationId,
         accreditationId: undefined,
@@ -59,11 +71,11 @@ describe(fetchWasteBalanceEvents, () => {
     msw.use(
       http.get(accreditationPath, ({ request }) => {
         captured = request
-        return HttpResponse.json([])
+        return HttpResponse.json(ledgerOf([]))
       })
     )
 
-    await fetchWasteBalanceEvents({
+    await fetchLedgerEvents({
       organisationId,
       registrationId,
       accreditationId,
