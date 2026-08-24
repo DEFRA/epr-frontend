@@ -1,7 +1,7 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
-import { formatDate } from '#server/common/helpers/format-date.js'
 
 import { LEDGER_EVENT_KIND, SYSTEM_ACTOR_ID } from '../ledger-event-kinds.js'
+import { formatLedgerTimestamp } from './format-ledger-timestamp.js'
 
 /**
  * @import { TFunction } from 'i18next'
@@ -84,7 +84,7 @@ export const buildLedgerRows = ({ events, localise, noteType }) =>
   [...events]
     .reverse()
     .map((event) => [
-      { text: formatDate(event.createdAt) },
+      { text: formatLedgerTimestamp(event.createdAt) },
       { text: eventName({ kind: event.kind, localise, noteType }) },
       { text: formatTonnage(tonnageOf(event)) },
       { text: formatTonnage(event.closingBalance.amount) },

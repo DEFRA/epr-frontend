@@ -56,8 +56,8 @@ describe(buildLedgerRows, () => {
     })
 
     expect(rows.map((row) => cellsOf(row).at(0))).toStrictEqual([
-      '1 March 2026',
-      '1 January 2026'
+      '1 March 2026, 12:00am',
+      '1 January 2026, 12:00am'
     ])
   })
 
@@ -69,7 +69,7 @@ describe(buildLedgerRows, () => {
     })
 
     expect(cellsOf(row)).toStrictEqual([
-      '15 February 2026',
+      '15 February 2026, 3:09pm',
       'waste-balance-ledger:events.prn-issued({"noteType":"PRN"})',
       '12.50',
       '100.00',

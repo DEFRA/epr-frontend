@@ -121,7 +121,7 @@ describe('the waste balance ledger page', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(rowsOf(documentOf(asHtml(result)))).toStrictEqual([
         [
-          '15 February 2026',
+          '15 February 2026, 3:09pm',
           'PRN issued',
           '12.50',
           '100.00',
@@ -129,7 +129,7 @@ describe('the waste balance ledger page', () => {
           'Ada Lovelace (ada@example.com)'
         ],
         [
-          '4 January 2026',
+          '4 January 2026, 9:00am',
           'Summary log submitted',
           '100.00',
           '100.00',
@@ -159,7 +159,7 @@ describe('the waste balance ledger page', () => {
       )
 
       expect(headings).toStrictEqual([
-        'Date',
+        'Date and time',
         'Event',
         'Tonnage',
         'Balance',
