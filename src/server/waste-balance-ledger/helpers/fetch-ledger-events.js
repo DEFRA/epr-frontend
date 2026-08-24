@@ -20,8 +20,8 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  */
 
 /**
- * An entry that credits a submitted waste report. `creditTotal` is the total
- * the report itself states, not the amount the balance moved.
+ * An entry that credits a submitted summary log. `creditTotal` is the total
+ * the summary log itself states, not the amount the balance moved.
  * @typedef {LedgerEventCommon & {
  *   summaryLog: { creditTotal: number },
  *   prn?: never

@@ -28,7 +28,7 @@ const eventName = ({ kind, localise, noteType }) =>
     : kind
 
 /**
- * A waste report raises a credit against the whole period, and a note moves a
+ * A summary log raises a credit against the whole period, and a note moves a
  * single amount, so the two state their tonnage on different subjects. An
  * event carries one subject or the other, never both.
  * @param {LedgerEvent} event

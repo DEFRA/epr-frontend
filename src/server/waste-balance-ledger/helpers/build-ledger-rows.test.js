@@ -31,7 +31,7 @@ const buildEvent = (overrides = {}) => ({
 })
 
 /**
- * A waste report states its credit where a note states its tonnage, so the
+ * A summary log states its credit where a note states its tonnage, so the
  * two subjects never appear on one event.
  * @param {Partial<SummaryLogEvent>} [overrides]
  * @returns {SummaryLogEvent}
@@ -135,7 +135,7 @@ describe(buildLedgerRows, () => {
     expect(cellsOf(row).at(1)).toBe('some-later-kind')
   })
 
-  it('takes the tonnage of a waste report from the credit it raised', () => {
+  it('takes the tonnage of a summary log from the credit it raised', () => {
     const [row] = buildLedgerRows({
       events: [buildSummaryLogEvent()],
       localise,
