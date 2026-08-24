@@ -5,7 +5,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 import { buildLedgerRows } from './helpers/build-ledger-rows.js'
-import { fetchWasteBalanceEvents } from './helpers/fetch-waste-balance-events.js'
+import { fetchLedgerEvents } from './helpers/fetch-ledger-events.js'
 
 /**
  * @typedef {{
@@ -44,7 +44,7 @@ export const controller = {
         })
       : undefined
 
-    const events = await fetchWasteBalanceEvents({
+    const events = await fetchLedgerEvents({
       organisationId,
       registrationId,
       accreditationId,

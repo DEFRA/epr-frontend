@@ -35,8 +35,8 @@ const registeredOnlyRegistrationId = 'reg-006-plastic-export-created'
 const accreditedPath = `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/waste-balance-ledger`
 const registeredOnlyPath = `/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}/waste-balance-ledger`
 
-const accreditedEventsUrl = `${backendUrl}/v1/admin/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/waste-balance-events`
-const registeredOnlyEventsUrl = `${backendUrl}/v1/admin/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}/waste-balance-events`
+const accreditedLedgerUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/waste-balance-ledger`
+const registeredOnlyLedgerUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}/waste-balance-ledger`
 
 const regulator = buildMockAuth({
   provider: OIDC_ENTRA_ID,
@@ -55,20 +55,49 @@ const regulatorWithoutLedgerScope = buildMockAuth({
 })
 
 const prnIssued = {
+  id: 'evt-2',
+  number: 2,
   kind: 'prn-issued',
   createdAt: '2026-02-15T15:09:00.000Z',
-  payload: { amount: 12.5 },
-  closingBalance: { amount: 100, availableAmount: 87.5 },
+  prn: { id: 'prn-1', tonnage: 12.5 },
+  balance: {
+    opening: { total: 100, available: 100 },
+    closing: { total: 100, available: 87.5 }
+  },
   createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' }
 }
 
 const summaryLogSubmitted = {
+  id: 'evt-1',
+  number: 1,
   kind: 'summary-log-submitted',
   createdAt: '2026-01-04T09:00:00.000Z',
-  payload: { creditTotal: 100 },
-  closingBalance: { amount: 100, availableAmount: 100 },
+  summaryLog: { id: 'log-1', creditTotal: 100 },
+  balance: {
+    opening: { total: 0, available: 0 },
+    closing: { total: 100, available: 100 }
+  },
   createdBy: { id: 'system', name: 'backfill' }
 }
+
+/**
+ * A ledger read answers the address it was asked for, and the registered-only
+ * partition is keyed by a null accreditation rather than by its absence.
+ * @param {string} registrationId
+ * @param {string | null} accreditationOfLedger
+ * @returns {(events: unknown[]) => { ledger: object, events: unknown[] }}
+ */
+const ledgerOf = (registrationId, accreditationOfLedger) => (events) => ({
+  ledger: {
+    organisationId,
+    registrationId,
+    accreditationId: accreditationOfLedger
+  },
+  events
+})
+
+const accreditedLedgerOf = ledgerOf(accreditedRegistrationId, accreditationId)
+const registeredOnlyLedgerOf = ledgerOf(registeredOnlyRegistrationId, null)
 
 /**
  * @param {string} html
@@ -107,8 +136,10 @@ describe('the waste balance ledger page', () => {
       server
     }) => {
       msw.use(
-        http.get(accreditedEventsUrl, () =>
-          HttpResponse.json([summaryLogSubmitted, prnIssued])
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(
+            accreditedLedgerOf([summaryLogSubmitted, prnIssued])
+          )
         )
       )
 
@@ -144,7 +175,9 @@ describe('the waste balance ledger page', () => {
       server
     }) => {
       msw.use(
-        http.get(accreditedEventsUrl, () => HttpResponse.json([prnIssued]))
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([prnIssued]))
+        )
       )
 
       const { result } = await server.inject({
@@ -174,7 +207,11 @@ describe('the waste balance ledger page', () => {
       msw,
       server
     }) => {
-      msw.use(http.get(accreditedEventsUrl, () => HttpResponse.json([])))
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([]))
+        )
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -201,8 +238,8 @@ describe('the waste balance ledger page', () => {
         )
       )
       msw.use(
-        http.get(registeredOnlyEventsUrl, () =>
-          HttpResponse.json([summaryLogSubmitted])
+        http.get(registeredOnlyLedgerUrl, () =>
+          HttpResponse.json(registeredOnlyLedgerOf([summaryLogSubmitted]))
         )
       )
 
@@ -229,7 +266,9 @@ describe('the waste balance ledger page', () => {
         )
       )
       msw.use(
-        http.get(registeredOnlyEventsUrl, () => HttpResponse.json([prnIssued]))
+        http.get(registeredOnlyLedgerUrl, () =>
+          HttpResponse.json(registeredOnlyLedgerOf([prnIssued]))
+        )
       )
 
       const { result } = await server.inject({
@@ -247,7 +286,11 @@ describe('the waste balance ledger page', () => {
       msw,
       server
     }) => {
-      msw.use(http.get(accreditedEventsUrl, () => HttpResponse.json([])))
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([]))
+        )
+      )
 
       const { result } = await server.inject({
         method: 'GET',

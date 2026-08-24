@@ -5,7 +5,7 @@ import { formatLedgerTimestamp } from './format-ledger-timestamp.js'
 
 /**
  * @import { TFunction } from 'i18next'
- * @import { LedgerEvent } from './fetch-waste-balance-events.js'
+ * @import { LedgerEvent } from './fetch-ledger-events.js'
  */
 
 /**
@@ -29,14 +29,13 @@ const eventName = ({ kind, localise, noteType }) =>
 
 /**
  * A waste report raises a credit against the whole period, and a note moves a
- * single amount, so the two carry their tonnage on different fields.
+ * single amount, so the two state their tonnage on different subjects. An
+ * event carries one subject or the other, never both.
  * @param {LedgerEvent} event
- * @returns {number | undefined}
+ * @returns {number}
  */
 const tonnageOf = (event) =>
-  event.kind === LEDGER_EVENT_KIND.summaryLogSubmitted
-    ? event.payload.creditTotal
-    : event.payload.amount
+  event.summaryLog ? event.summaryLog.creditTotal : event.prn.tonnage
 
 /**
  * A regulator sees every actor in full. The backfill writes as a machine, so
@@ -49,10 +48,6 @@ const tonnageOf = (event) =>
  * @returns {string}
  */
 const actorName = ({ createdBy, localise }) => {
-  if (!createdBy) {
-    return ''
-  }
-
   if (createdBy.id === SYSTEM_ACTOR_ID) {
     return localise('waste-balance-ledger:systemActor')
   }
@@ -87,7 +82,7 @@ export const buildLedgerRows = ({ events, localise, noteType }) =>
       { text: formatLedgerTimestamp(event.createdAt) },
       { text: eventName({ kind: event.kind, localise, noteType }) },
       { text: formatTonnage(tonnageOf(event)) },
-      { text: formatTonnage(event.closingBalance.amount) },
-      { text: formatTonnage(event.closingBalance.availableAmount) },
+      { text: formatTonnage(event.balance.closing.total) },
+      { text: formatTonnage(event.balance.closing.available) },
       { text: actorName({ createdBy: event.createdBy, localise }) }
     ])
