@@ -55,7 +55,6 @@ const regulatorWithoutLedgerScope = buildMockAuth({
 })
 
 const prnIssued = {
-  id: 'evt-2',
   number: 2,
   kind: 'prn-issued',
   createdAt: '2026-02-15T15:09:00.000Z',
@@ -68,7 +67,6 @@ const prnIssued = {
 }
 
 const summaryLogSubmitted = {
-  id: 'evt-1',
   number: 1,
   kind: 'summary-log-submitted',
   createdAt: '2026-01-04T09:00:00.000Z',
