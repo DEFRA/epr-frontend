@@ -19,7 +19,7 @@ const asAccreditation = (a) => /** @type {Accreditation} */ (a)
 
 const baseParams = {
   now: new Date('2026-10-01T12:00:00'),
-  window: { windowStartMonth: 9, windowEndMonth: 12, windowStartTime: '09:00' },
+  window: { windowStart: '09-01T09:00', windowEnd: '12-31T23:59' },
   baseUrl: 'https://ws2.example',
   organisationId: 'org1',
   registration: asRegistration({

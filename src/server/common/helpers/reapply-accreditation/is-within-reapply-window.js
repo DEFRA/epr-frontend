@@ -1,44 +1,15 @@
-import { ukWallClockToInstant } from '#server/common/helpers/reapply-accreditation/uk-wall-clock-to-instant.js'
+import { formatUkDateTime } from '#server/common/helpers/format-time.js'
 
 /**
- * Whether `now` falls within the recurring annual reapply window.
- *
- * The window is expressed as inclusive calendar-month bounds so it recurs every
- * year: the whole of the start month through the whole of the end month, except
- * that day 1 of the start month only opens at `windowStartTime` (UK local time)
- * rather than from midnight - the downstream WS2 service the link points at
- * goes live at a specific time, not at the stroke of midnight, so showing the
- * link earlier would be a broken link. Assumes a non-wrapping window
- * (`windowStartMonth <= windowEndMonth`), enforced at config load by
- * `assertValidReapplyWindow`.
+ * Whether `now` falls within the recurring annual reapply window. Compared as
+ * a UK wall-clock stamp (`MM-DDTHH:mm`, year omitted) against `windowStart`/
+ * `windowEnd`, which are configured in the same shape - see `config.js`.
  * @param {Date} now
- * @param {{
- *   windowStartMonth: number;
- *   windowEndMonth: number;
- *   windowStartTime: string;
- * }} window
+ * @param {{ windowStart: string; windowEnd: string }} window
  * @returns {boolean}
  */
-export const isWithinReapplyWindow = (
-  now,
-  { windowStartMonth, windowEndMonth, windowStartTime }
-) => {
-  const month = now.getMonth() + 1
+export const isWithinReapplyWindow = (now, { windowStart, windowEnd }) => {
+  const stamp = formatUkDateTime(now)
 
-  if (month < windowStartMonth || month > windowEndMonth) {
-    return false
-  }
-
-  if (month > windowStartMonth) {
-    return true
-  }
-
-  const windowOpensAt = ukWallClockToInstant({
-    year: now.getFullYear(),
-    month: windowStartMonth,
-    day: 1,
-    time: windowStartTime
-  })
-
-  return now >= windowOpensAt
+  return stamp >= windowStart && stamp <= windowEnd
 }

@@ -1,8 +1,8 @@
-import { afterEach, describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 import {
   assertValidReapplyBaseUrl,
-  assertValidReapplyStartTime,
   assertValidReapplyWindow,
+  assertValidReapplyWindowBound,
   config,
   isLocalEnvironment,
   isProductionEnvironment
@@ -64,45 +64,84 @@ describe('#config', () => {
   describe(assertValidReapplyWindow, () => {
     it('should accept a valid non-wrapping window', () => {
       expect(() =>
-        assertValidReapplyWindow({ windowStartMonth: 9, windowEndMonth: 12 })
+        assertValidReapplyWindow({
+          windowStart: '09-01T09:00',
+          windowEnd: '12-31T23:59'
+        })
       ).not.toThrow()
     })
 
-    it.each([0, 13, -1])(
-      'should throw for an out-of-range windowStartMonth "%s"',
-      (windowStartMonth) => {
-        expect(() =>
-          assertValidReapplyWindow({ windowStartMonth, windowEndMonth: 12 })
-        ).toThrow(/windowStartMonth must be a month between 1 and 12/)
-      }
-    )
-
-    it('should throw for an out-of-range windowEndMonth', () => {
+    it('should accept a window whose start and end are the same instant', () => {
       expect(() =>
-        assertValidReapplyWindow({ windowStartMonth: 9, windowEndMonth: 13 })
-      ).toThrow(/windowEndMonth must be a month between 1 and 12/)
+        assertValidReapplyWindow({
+          windowStart: '09-01T09:00',
+          windowEnd: '09-01T09:00'
+        })
+      ).not.toThrow()
     })
 
-    it('should throw when the start month is after the end month', () => {
+    it('should throw when the start is after the end', () => {
       expect(() =>
-        assertValidReapplyWindow({ windowStartMonth: 12, windowEndMonth: 2 })
+        assertValidReapplyWindow({
+          windowStart: '12-01T00:00',
+          windowEnd: '02-01T00:00'
+        })
       ).toThrow(/must not be after/)
     })
   })
 
-  describe(assertValidReapplyStartTime, () => {
-    it.each(['09:00', '00:00', '23:59'])(
-      'should accept a valid 24-hour HH:mm time "%s"',
+  describe(assertValidReapplyWindowBound, () => {
+    it.each(['09-01T09:00', '01-01T00:00', '12-31T23:59'])(
+      'should accept a valid MM-DDTHH:mm bound "%s"',
       (value) => {
-        expect(() => assertValidReapplyStartTime(value)).not.toThrow()
+        expect(() => assertValidReapplyWindowBound(value)).not.toThrow()
       }
     )
 
-    it.each(['9:00', '24:00', '09:60', 'abc', ''])(
-      'should throw for an invalid time "%s"',
+    describe('29 February (depends on the current year being a leap year)', () => {
+      afterEach(() => {
+        vi.useRealTimers()
+      })
+
+      it('accepts 02-29 when the current year is a leap year', () => {
+        vi.setSystemTime(new Date('2028-06-01'))
+        expect(() => assertValidReapplyWindowBound('02-29T00:00')).not.toThrow()
+      })
+
+      it('rejects 02-29 when the current year is not a leap year', () => {
+        vi.setSystemTime(new Date('2026-06-01'))
+        expect(() => assertValidReapplyWindowBound('02-29T00:00')).toThrow(
+          /must name a real UK date/
+        )
+      })
+    })
+
+    it.each([
+      '9-01T09:00',
+      '09-1T09:00',
+      '09-01T9:00',
+      '09-01 09:00',
+      '09-01T24:00',
+      '09-01T09:60',
+      'abc',
+      ''
+    ])('should throw for a malformed bound "%s"', (value) => {
+      expect(() => assertValidReapplyWindowBound(value)).toThrow(
+        /must be MM-DDTHH:mm/
+      )
+    })
+
+    it.each([
+      '13-01T09:00',
+      '00-01T09:00',
+      '09-31T09:00',
+      '02-30T00:00',
+      '04-31T00:00'
+    ])(
+      'should throw for a bound naming a date that does not exist "%s"',
       (value) => {
-        expect(() => assertValidReapplyStartTime(value)).toThrow(
-          /windowStartTime must be a 24-hour HH:mm time/
+        expect(() => assertValidReapplyWindowBound(value)).toThrow(
+          /must name a real UK date/
         )
       }
     )

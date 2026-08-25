@@ -15,6 +15,16 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
 
+/**
+ * The highest valid day-of-month to accept, for the current year.
+ * @param {number} month 1-12
+ * @returns {number}
+ */
+function maxDayOfMonth(month) {
+  const currentYear = new Date().getFullYear()
+  return new Date(currentYear, month, 0).getDate()
+}
+
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
@@ -365,23 +375,17 @@ export const config = convict({
     }
   },
   reapplyAccreditation: {
-    windowStartMonth: {
-      doc: 'Recurring annual start month (inclusive, 1-12) of the reapply-for-accreditation window',
-      format: 'nat',
-      default: 9,
-      env: 'REAPPLY_ACCREDITATION_WINDOW_START_MONTH'
+    windowStart: {
+      doc: 'Recurring annual start (inclusive) of the reapply-for-accreditation window, as MM-DDTHH:mm in UK local time (Europe/London)',
+      format: assertValidReapplyWindowBound,
+      default: '09-01T09:05',
+      env: 'REAPPLY_ACCREDITATION_WINDOW_START'
     },
-    windowEndMonth: {
-      doc: 'Recurring annual end month (inclusive, 1-12) of the reapply-for-accreditation window',
-      format: 'nat',
-      default: 12,
-      env: 'REAPPLY_ACCREDITATION_WINDOW_END_MONTH'
-    },
-    windowStartTime: {
-      doc: 'UK local time of day (24-hour HH:mm) the window opens on day 1 of windowStartMonth',
-      format: assertValidReapplyStartTime,
-      default: '09:00',
-      env: 'REAPPLY_ACCREDITATION_WINDOW_START_TIME'
+    windowEnd: {
+      doc: 'Recurring annual end (inclusive) of the reapply-for-accreditation window, as MM-DDTHH:mm in UK local time (Europe/London)',
+      format: assertValidReapplyWindowBound,
+      default: '12-31T23:59',
+      env: 'REAPPLY_ACCREDITATION_WINDOW_END'
     },
     baseUrl: {
       doc: 'WS2 register/enrol frontend base URL the reapply link points at',
@@ -397,45 +401,45 @@ config.validate({ allowed: 'strict' })
 /**
  * Fail fast on a misconfigured reapply window. The feature has no flag and is
  * gated entirely on this config, so a silent bad value is a silent kill switch.
- * Modelling the bounds as months (rather than MM-DD strings) makes an invalid
- * date unrepresentable; this guard covers the two cases the shape still allows:
- * a month outside 1-12, and a window whose start month is after its end month.
- * Both throw at startup instead of silently misbehaving.
- * @param {{ windowStartMonth: number; windowEndMonth: number }} window
+ * Both bounds are validated for shape by `assertValidReapplyWindowBound`
+ * (invalid dates such as 02-30 are already unrepresentable by the time this
+ * runs); this guard covers the one thing a single bound cannot check on its
+ * own - the start being after the end. Because both are zero-padded
+ * `MM-DDTHH:mm`, a plain string comparison orders them correctly and stays
+ * year-independent, so the annual recurrence still holds.
+ * @param {{ windowStart: string; windowEnd: string }} window
  */
-export const assertValidReapplyWindow = ({
-  windowStartMonth,
-  windowEndMonth
-}) => {
-  for (const [key, value] of Object.entries({
-    windowStartMonth,
-    windowEndMonth
-  })) {
-    if (value < 1 || value > 12) {
-      throw new Error(
-        `reapplyAccreditation.${key} must be a month between 1 and 12, got "${value}"`
-      )
-    }
-  }
-
-  if (windowStartMonth > windowEndMonth) {
+export const assertValidReapplyWindow = ({ windowStart, windowEnd }) => {
+  if (windowStart > windowEnd) {
     throw new Error(
-      `reapplyAccreditation.windowStartMonth (${windowStartMonth}) must not be after windowEndMonth (${windowEndMonth})`
+      `reapplyAccreditation.windowStart (${windowStart}) must not be after windowEnd (${windowEnd})`
     )
   }
 }
 
 /**
- * Convict format for `reapplyAccreditation.windowStartTime`. Must be a 24-hour
- * `HH:mm` time so it is unambiguous when resolved as a UK local time (see
- * `ukWallClockToInstant`). Declared as a function so it is hoisted for the
- * schema above.
+ * Convict format for `reapplyAccreditation.windowStart` / `windowEnd`. Must be
+ * `MM-DDTHH:mm` (year omitted - the window recurs annually) naming a real UK
+ * wall-clock date and time, so an invalid date stays unrepresentable rather
+ * than silently rolling over at resolution time. Declared as a function so it
+ * is hoisted for the schema above.
  * @param {string} value
  */
-export function assertValidReapplyStartTime(value) {
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+export function assertValidReapplyWindowBound(value) {
+  const match = /^(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d)$/.exec(value)
+
+  if (!match) {
     throw new Error(
-      `reapplyAccreditation.windowStartTime must be a 24-hour HH:mm time, got "${value}"`
+      `reapplyAccreditation window bound must be MM-DDTHH:mm (24-hour), got "${value}"`
+    )
+  }
+
+  const month = Number(match[1])
+  const day = Number(match[2])
+
+  if (month < 1 || month > 12 || day < 1 || day > maxDayOfMonth(month)) {
+    throw new Error(
+      `reapplyAccreditation window bound must name a real UK date, got "${value}"`
     )
   }
 }

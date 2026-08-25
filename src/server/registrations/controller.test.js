@@ -850,37 +850,24 @@ describe('#accreditationDashboardController', () => {
     // rather than hard-coding it (else these tests rot at the year boundary).
     const currentYear = new Date().getFullYear()
     const nextYear = currentYear + 1
-    const originalWindowStartMonth = config.get(
-      'reapplyAccreditation.windowStartMonth'
-    )
-    const originalWindowEndMonth = config.get(
-      'reapplyAccreditation.windowEndMonth'
-    )
-    const originalWindowStartTime = config.get(
-      'reapplyAccreditation.windowStartTime'
-    )
+    const originalWindowStart = config.get('reapplyAccreditation.windowStart')
+    const originalWindowEnd = config.get('reapplyAccreditation.windowEnd')
     const originalBaseUrl = config.get('reapplyAccreditation.baseUrl')
 
     beforeEach(() => {
-      config.set('reapplyAccreditation.windowStartMonth', 1)
-      config.set('reapplyAccreditation.windowEndMonth', 12)
-      // '00:00' so the year-round window is open at every instant of 1 January,
-      // not just from the real windowStartTime onwards - these tests read the
-      // real clock and must not be able to flake overnight on New Year's Day.
-      config.set('reapplyAccreditation.windowStartTime', '00:00')
+      // Only one test below targets the window itself; the rest (status,
+      // year, href, write-scope) don't care when they run, so keep the
+      // window open all year to take "is today in the window?" out of play.
+      // Open from the first instant of 1 January so this can't flake
+      // overnight on New Year's Day.
+      config.set('reapplyAccreditation.windowStart', '01-01T00:00')
+      config.set('reapplyAccreditation.windowEnd', '12-31T23:59')
       config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
     })
 
     afterEach(() => {
-      config.set(
-        'reapplyAccreditation.windowStartMonth',
-        originalWindowStartMonth
-      )
-      config.set('reapplyAccreditation.windowEndMonth', originalWindowEndMonth)
-      config.set(
-        'reapplyAccreditation.windowStartTime',
-        originalWindowStartTime
-      )
+      config.set('reapplyAccreditation.windowStart', originalWindowStart)
+      config.set('reapplyAccreditation.windowEnd', originalWindowEnd)
       config.set('reapplyAccreditation.baseUrl', originalBaseUrl)
     })
 
@@ -1000,12 +987,12 @@ describe('#accreditationDashboardController', () => {
     it('hides the link but keeps the placeholder when today is outside the window', async ({
       server
     }) => {
-      // A single-month window on a month other than the current one guarantees
+      // A one-minute window on a month other than the current one guarantees
       // today falls outside it, independent of the real date the test runs on.
       const thisMonth = new Date().getMonth() + 1
-      const otherMonth = thisMonth === 1 ? 12 : 1
-      config.set('reapplyAccreditation.windowStartMonth', otherMonth)
-      config.set('reapplyAccreditation.windowEndMonth', otherMonth)
+      const otherMonth = String(thisMonth === 1 ? 12 : 1).padStart(2, '0')
+      config.set('reapplyAccreditation.windowStart', `${otherMonth}-01T00:00`)
+      config.set('reapplyAccreditation.windowEnd', `${otherMonth}-01T00:01`)
 
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         mockRegistration({
@@ -1164,27 +1151,16 @@ describe('a session that may not change the operator data', () => {
   const reapplyLink = { name: /apply for \d{4} accreditation/ }
 
   beforeEach(() => {
-    config.set('reapplyAccreditation.windowStartMonth', 1)
-    config.set('reapplyAccreditation.windowEndMonth', 12)
     // See the equivalent comment in the 'reapply for accreditation link'
     // describe block above: avoids flaking overnight on New Year's Day.
-    config.set('reapplyAccreditation.windowStartTime', '00:00')
+    config.set('reapplyAccreditation.windowStart', '01-01T00:00')
+    config.set('reapplyAccreditation.windowEnd', '12-31T23:59')
     config.set('reapplyAccreditation.baseUrl', 'https://reapply.example')
   })
 
   afterEach(() => {
-    config.set(
-      'reapplyAccreditation.windowStartMonth',
-      configuredWindow.windowStartMonth
-    )
-    config.set(
-      'reapplyAccreditation.windowEndMonth',
-      configuredWindow.windowEndMonth
-    )
-    config.set(
-      'reapplyAccreditation.windowStartTime',
-      configuredWindow.windowStartTime
-    )
+    config.set('reapplyAccreditation.windowStart', configuredWindow.windowStart)
+    config.set('reapplyAccreditation.windowEnd', configuredWindow.windowEnd)
     config.set('reapplyAccreditation.baseUrl', configuredWindow.baseUrl)
   })
 
