@@ -1,4 +1,4 @@
-import { getRedirectUrl } from '#server/auth/helpers/get-redirect-url.js'
+import { buildProviderSignOutUrl } from '#server/auth/helpers/provider-sign-out-url.js'
 import { rememberSignedOutProvider } from '#server/auth/helpers/signed-out-provider.js'
 import { paths } from '#server/paths.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
@@ -35,14 +35,7 @@ const logoutController = {
 
     rememberSignedOutProvider(h, session.provider)
 
-    const oidcProviderLogoutUrl = new URL(session.urls.logout)
-    oidcProviderLogoutUrl.searchParams.append('id_token_hint', session.idToken)
-    oidcProviderLogoutUrl.searchParams.append(
-      'post_logout_redirect_uri',
-      getRedirectUrl(request, paths.auth.postLogoutRedirect)
-    )
-
-    return h.redirect(oidcProviderLogoutUrl.toString())
+    return h.redirect(buildProviderSignOutUrl(request, session))
   }
 }
 

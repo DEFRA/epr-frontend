@@ -2,9 +2,11 @@ import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisation.js'
 import { fetchIdentity } from '#server/auth/helpers/fetch-identity.js'
 import { hashUserId } from '#server/auth/helpers/hash-user-id.js'
+import { buildProviderSignOutUrl } from '#server/auth/helpers/provider-sign-out-url.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { rememberSignedOutProvider } from '#server/auth/helpers/signed-out-provider.js'
 import { holdsNoRole } from '#server/auth/roles.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
@@ -136,6 +138,12 @@ function referrerIfPresentElseDefault(request, defaultPath) {
 }
 
 /**
+ * Refuses the sign in without creating a session, and offers the way back out
+ * of the identity provider's own session.
+ *
+ * Without that link the person is held between two systems: this service will
+ * not have them, and the provider still holds them signed in, so signing in
+ * again returns them straight here.
  * @param {HapiRequest} request
  * @param {ResponseToolkit} h
  * @param {UserSession} session
@@ -151,9 +159,18 @@ const refuseSignIn = async (request, h, session) => {
     }
   })
 
+  // The referrer was stashed to return this person to the page they started
+  // from. They are not going there, and the next sign in reads the oldest
+  // entry, so leaving it stashed sends the account they sign in as next to the
+  // page this one was looking at.
+  request.yar.flash('referrer')
+
+  rememberSignedOutProvider(h, OIDC_ENTRA_ID)
+
   return h
     .view('regulators/not-authorised', {
-      pageTitle: request.t('regulators:notAuthorised:pageTitle')
+      pageTitle: request.t('regulators:notAuthorised:pageTitle'),
+      signOutUrl: buildProviderSignOutUrl(request, session)
     })
     .code(statusCodes.forbidden)
 }

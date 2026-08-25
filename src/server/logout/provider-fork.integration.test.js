@@ -1,10 +1,10 @@
-/** @import { ServerInjectResponse } from '@hapi/hapi'; */
 import { config } from '#config/config.js'
 import { REGULATOR_ROLE } from '#server/auth/roles.js'
 import { SIGNED_OUT_PROVIDER_COOKIE } from '#server/auth/helpers/signed-out-provider.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { cookieHeaderFor } from '#server/common/test-helpers/cookie-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
@@ -19,22 +19,6 @@ const regulatorAuth = buildMockAuth({
     logout: 'http://entra-id.auth/logout'
   }
 })
-
-/**
- * The provider cookie as the browser sends it back, taken from the response
- * that set it rather than assembled by hand, so the test proves the value the
- * app writes is the value it later reads.
- * @param {ServerInjectResponse} response
- * @returns {string}
- */
-const providerCookieHeader = (response) => {
-  const setCookie = /** @type {string[]} */ (response.headers['set-cookie'])
-
-  return setCookie
-    .filter((header) => header.startsWith(`${SIGNED_OUT_PROVIDER_COOKIE}=`))
-    .map((header) => header.replace(/;.*$/, ''))
-    .join('')
-}
 
 describe('which sign out page a provider sends a user to', () => {
   beforeAll(() => {
@@ -56,7 +40,12 @@ describe('which sign out page a provider sends a user to', () => {
       const returned = await server.inject({
         method: 'GET',
         url: '/auth/logout',
-        headers: { cookie: providerCookieHeader(signOut) }
+        headers: {
+          cookie: cookieHeaderFor(
+            signOut.headers['set-cookie'],
+            SIGNED_OUT_PROVIDER_COOKIE
+          )
+        }
       })
 
       expect(returned.statusCode).toBe(statusCodes.found)
@@ -102,14 +91,43 @@ describe('which sign out page a provider sends a user to', () => {
   })
 
   describe('when an operator signs out', () => {
-    it('gives them no provider cookie at all', async ({ server }) => {
+    it('remembers no provider for them', async ({ server }) => {
       const signOut = await server.inject({
         method: 'GET',
         url: '/logout',
         auth: buildMockAuth()
       })
 
-      expect(providerCookieHeader(signOut)).toBe('')
+      expect(
+        cookieHeaderFor(
+          signOut.headers['set-cookie'],
+          SIGNED_OUT_PROVIDER_COOKIE
+        )
+      ).toBe(`${SIGNED_OUT_PROVIDER_COOKIE}=`)
+    })
+
+    it('clears a regulator cookie left behind by an earlier visit', async ({
+      server
+    }) => {
+      const signOut = await server.inject({
+        method: 'GET',
+        url: '/logout',
+        auth: buildMockAuth(),
+        headers: { cookie: `${SIGNED_OUT_PROVIDER_COOKIE}=${OIDC_ENTRA_ID}` }
+      })
+
+      const returned = await server.inject({
+        method: 'GET',
+        url: '/auth/logout',
+        headers: {
+          cookie: cookieHeaderFor(
+            signOut.headers['set-cookie'],
+            SIGNED_OUT_PROVIDER_COOKIE
+          )
+        }
+      })
+
+      expect(returned.headers.location).toBe('/logged-out')
     })
 
     it('sends them to the operator sign out page', async ({ server }) => {

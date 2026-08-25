@@ -10,6 +10,12 @@ import {
   IDENTITIES,
   identityHandler
 } from '#server/common/test-helpers/identity-helper.js'
+import { SIGNED_OUT_PROVIDER_COOKIE } from '#server/auth/helpers/signed-out-provider.js'
+import {
+  cookieHeaderFor,
+  extractCookieValues,
+  mergeCookies
+} from '#server/common/test-helpers/cookie-helper.js'
 import { ENTRA_ID_BASE_URL, beforeEach, it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
@@ -37,25 +43,34 @@ vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mock.cdpAuditing(...args)
 }))
 
-const cookieHeaderFrom = (response) => {
-  const rawCookies = response.headers['set-cookie']
-  const cookieList = Array.isArray(rawCookies)
-    ? rawCookies
-    : rawCookies
-      ? [rawCookies]
-      : []
+const cookieHeaderFrom = (response) =>
+  extractCookieValues(response.headers['set-cookie']).join('; ')
 
-  return cookieList.map((header) => header.split(';')[0]).join('; ')
-}
-
-const performSignInFlow = async (server, mswServer, tokenInfo) => {
+/**
+ * Signs in through Entra ID, from the login route to the callback.
+ *
+ * `jar` carries the cookies the browser would keep between requests. Pass the
+ * same jar to two flows to sign in twice as the same visitor; leave it out and
+ * each flow starts as a first-time visitor.
+ */
+const performSignInFlow = async (
+  server,
+  mswServer,
+  tokenInfo,
+  /** @type {{ cookie?: string }} */ jar = {}
+) => {
   const { accessToken, idToken, publicKey, referer, callbackReferer } =
     tokenInfo
   const signInResponse = await server.inject({
     method: 'GET',
     url: '/regulators/login',
-    headers: referer ? { referer } : {}
+    headers: {
+      ...(referer ? { referer } : {}),
+      ...(jar.cookie ? { cookie: jar.cookie } : {})
+    }
   })
+
+  jar.cookie = mergeCookies(jar.cookie ?? '', cookieHeaderFrom(signInResponse))
   const ssoUrl = new URL(signInResponse.headers['location'])
 
   mswServer.use(
@@ -77,14 +92,18 @@ const performSignInFlow = async (server, mswServer, tokenInfo) => {
 
   const stateParam = ssoUrl.searchParams.get('state')
   const code = randomUUID()
-  return server.inject({
+  const response = await server.inject({
     method: 'GET',
     url: `/auth/callback/entra?state=${stateParam}&code=${code}&refresh=1`,
     headers: {
-      cookie: cookieHeaderFrom(signInResponse),
+      cookie: jar.cookie,
       ...(callbackReferer ? { referer: callbackReferer } : {})
     }
   })
+
+  jar.cookie = mergeCookies(jar.cookie, cookieHeaderFrom(response))
+
+  return response
 }
 
 async function generateAccessToken(
@@ -126,10 +145,13 @@ describe('/auth/callback/entra - GET integration', async () => {
   // The application role rides on the token and this app never reads it. The
   // backend resolves it and answers over the identity endpoint, so every test
   // below varies that answer rather than the claim.
-  const regulatorToken = await generateAccessToken({
-    ...claims,
-    roles: ['Waste.Regulator.Standard']
-  })
+  const regulatorToken = {
+    ...(await generateAccessToken({
+      ...claims,
+      roles: ['Waste.Regulator.Standard']
+    })),
+    idToken: 'entra-id-token-for-the-regulator'
+  }
 
   beforeEach(({ msw }) => {
     msw.use(identityHandler(IDENTITIES.regulator))
@@ -345,23 +367,95 @@ describe('/auth/callback/entra - GET integration', async () => {
       )
     })
 
+    // The reader is told nothing about which identity provider refused them,
+    // so the guard is on what the page says. The sign out link points at the
+    // provider, so its address is read as an address and its text is read as
+    // words.
     it('names no identity provider to a reader who has just been refused', async ({
       server,
       msw
     }) => {
       const response = await performSignInFlow(server, msw, regulatorToken)
 
-      expect(asHtml(response.result)).not.toMatch(/entra/i)
+      const $ = load(asHtml(response.result))
+
+      $('[data-testid="sign-out-link"]').removeAttr('href')
+
+      expect($.html()).not.toMatch(/entra/i)
     })
 
     it('creates no session', async ({ server, msw }) => {
       const response = await performSignInFlow(server, msw, regulatorToken)
 
-      const setCookieHeaders = []
-        .concat(response.headers['set-cookie'] ?? [])
-        .join(';')
+      expect(
+        extractCookieValues(response.headers['set-cookie']).join(';')
+      ).not.toContain('userSession=')
+    })
 
-      expect(setCookieHeaders).not.toContain('userSession=')
+    it('offers a way out of the identity provider session it just refused', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      const $ = load(asHtml(response.result))
+      const href = $('[data-testid="sign-out-link"]').attr('href')
+
+      expect(href).toBeDefined()
+
+      const signOutUrl = new URL(String(href))
+
+      expect(`${signOutUrl.origin}${signOutUrl.pathname}`).toBe(
+        'http://entra-id.auth/logout'
+      )
+      expect(signOutUrl.searchParams.get('id_token_hint')).toBe(
+        regulatorToken.idToken
+      )
+      expect(signOutUrl.searchParams.get('post_logout_redirect_uri')).toMatch(
+        /\/auth\/logout$/
+      )
+    })
+
+    it('brings the refused person back to the regulator signed out page', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      const returned = await server.inject({
+        method: 'GET',
+        url: '/auth/logout',
+        headers: {
+          cookie: cookieHeaderFor(
+            response.headers['set-cookie'],
+            SIGNED_OUT_PROVIDER_COOKIE
+          )
+        }
+      })
+
+      expect(returned.statusCode).toBe(statusCodes.found)
+      expect(returned.headers.location).toBe('/regulators/logged-out')
+    })
+
+    it('does not send the next sign in to the page this one started from', async ({
+      server,
+      msw
+    }) => {
+      const jar = {}
+
+      await performSignInFlow(
+        server,
+        msw,
+        { ...regulatorToken, referer: 'http://localhost:3000/some/prior/page' },
+        jar
+      )
+
+      msw.use(identityHandler(IDENTITIES.regulator))
+
+      const response = await performSignInFlow(server, msw, regulatorToken, jar)
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/regulators/home')
     })
 
     it('leaves the refused user unauthenticated on an operator route', async ({
@@ -481,11 +575,9 @@ describe('/auth/callback/entra - GET integration', async () => {
     })
 
     it('creates no session', () => {
-      const setCookieHeaders = []
-        .concat(response.headers['set-cookie'] ?? [])
-        .join(';')
-
-      expect(setCookieHeaders).not.toContain('userSession=')
+      expect(
+        extractCookieValues(response.headers['set-cookie']).join(';')
+      ).not.toContain('userSession=')
     })
   })
 
