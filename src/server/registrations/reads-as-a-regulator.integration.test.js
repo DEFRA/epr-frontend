@@ -51,10 +51,10 @@ const regulator = buildMockAuth({
 })
 
 /**
- * A session the backend recognised as nobody. The Entra callback refuses to
- * mint one, so it cannot arrive in service. The branch is asserted against it
- * anyway, because a predicate that reads "not an operator" as "a regulator"
- * would send exactly this session to the wrong page.
+ * The Entra callback refuses to mint this session, so it cannot arrive in
+ * service. The branch is asserted against it anyway, because a predicate that
+ * reads "not an operator" as "a regulator" would send exactly this session to
+ * the wrong page.
  */
 const unrecognised = buildMockAuth({
   provider: OIDC_ENTRA_ID,

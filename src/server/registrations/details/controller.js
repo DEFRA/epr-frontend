@@ -11,7 +11,6 @@ import { fetchRegistrationDetails } from './helpers/fetch-registration-details.j
  */
 
 /**
- * One registration, as the regulator reads it.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const controller = {

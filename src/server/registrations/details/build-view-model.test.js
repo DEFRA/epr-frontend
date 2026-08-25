@@ -78,7 +78,6 @@ const build = ({ registration, accreditations } = {}) =>
   })
 
 /**
- * The accredited period at one position, asserted to be there.
  * @param {ReturnType<typeof build>} viewModel
  * @param {number} index
  */
@@ -93,7 +92,6 @@ const accreditedPeriod = (viewModel, index) => {
 }
 
 /**
- * The breadcrumb at one position, asserted to be there.
  * @param {ReturnType<typeof build>} viewModel
  * @param {number} index
  */
@@ -108,7 +106,6 @@ const breadcrumb = (viewModel, index) => {
 }
 
 /**
- * The value of the summary row under one key.
  * @param {ReturnType<typeof build>} viewModel
  * @param {string} key
  */

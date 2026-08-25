@@ -1,12 +1,10 @@
 /**
- * The stretch a registration or an accreditation covers. Each bound stands on
- * its own: the backend requires both only while the record is live, so a range
- * is always present and says nothing about whether it is filled in.
+ * The backend requires both bounds only while the record is live, so a range is
+ * always present and says nothing about whether it is filled in.
  * @typedef {{ validFrom: string | null, validTo: string | null }} DateRange
  */
 
 /**
- * The address of the site a registration names, as the backend holds it.
  * @typedef {{
  *   line1?: string,
  *   line2?: string,

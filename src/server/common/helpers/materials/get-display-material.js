@@ -41,9 +41,8 @@ const lookupOrThrow = (displayNames, key, code, label) => {
 }
 
 /**
- * Every material a record can name once the backend has resolved it to its
- * finest granularity, so glass appears as the process it was recycled by
- * rather than as glass.
+ * The backend resolves glass to the process it was recycled by, so those names
+ * are looked up alongside the rest.
  * @type {Record<string, string | undefined>}
  */
 const DETAILED_MATERIAL_DISPLAY_NAMES = {
@@ -52,12 +51,9 @@ const DETAILED_MATERIAL_DISPLAY_NAMES = {
 }
 
 /**
- * The display name of a material the backend has already resolved.
- *
  * The backend can add a material without this repo hearing about it, and a
- * regulator reads records this service did not create. A material this app
- * does not know therefore keeps its own name rather than failing the page,
- * which tells the reader what the record says.
+ * regulator reads records this service did not create, so a material this app
+ * does not know keeps its own name rather than failing the page.
  * @param {string} material
  * @returns {string}
  */

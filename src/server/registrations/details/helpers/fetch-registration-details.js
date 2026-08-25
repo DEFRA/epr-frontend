@@ -34,9 +34,6 @@ const readAs = (backendToken) => ({
 })
 
 /**
- * One registration, as the domain holds it. The keys outside `application`
- * are the ones a regulator decided; the ones inside it are the answers the
- * applicant gave on the form.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
@@ -53,8 +50,7 @@ const fetchRegistration = ({ organisationId, registrationId, backendToken }) =>
   )
 
 /**
- * Every accreditation the registration holds, an application that never
- * became one included.
+ * An application that never became an accreditation is in the collection too.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
@@ -79,16 +75,9 @@ const fetchAccreditations = async ({
 }
 
 /**
- * Everything the registration details page reads.
- *
- * The backend models a resource rather than a page, so the page asks for each
- * resource it shows: the registration, the accreditations that registration
- * holds, and the organisation. The registration carries the name the applicant
- * typed on the form, which is not the organisation's name, so the organisation
- * is read for the name the page names it by.
- *
- * The three reads do not depend on one another, so they run together and the
- * page waits once.
+ * The registration carries the name the applicant typed on the form, which is
+ * not the organisation's name, so the organisation is read as well for the name
+ * the page names it by.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,

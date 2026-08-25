@@ -128,7 +128,6 @@ const visit = async (server) => {
 }
 
 /**
- * The rows of the table one caption names, as text.
  * @param {InstanceType<DOMWindow['HTMLElement']>} body
  * @param {string} caption
  * @returns {string[][]}
@@ -143,7 +142,6 @@ const rowsOf = (body, caption) =>
     )
 
 /**
- * The value one row of the summary list shows.
  * @param {InstanceType<DOMWindow['HTMLElement']>} body
  * @param {string} key
  * @returns {string | undefined}

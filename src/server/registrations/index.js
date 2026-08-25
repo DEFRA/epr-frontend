@@ -12,12 +12,6 @@ import { readsAsARegulator } from './reads-as-a-regulator.js'
  */
 
 /**
- * The address names the registration, and who is looking at it decides what
- * they see. The operator gets the dashboard they manage the registration
- * from. The regulator gets the record of what it covers.
- *
- * The reader is chosen once, here, so the two pages share the address and
- * nothing else, and a change to either cannot reach the other.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const registrationController = {

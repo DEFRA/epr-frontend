@@ -11,7 +11,6 @@ import { paths } from '#server/paths.js'
  */
 
 /**
- * One status, as the tag that shows it.
  * @typedef {{ text: string, classes: string }} StatusTag
  */
 
@@ -34,9 +33,9 @@ import { paths } from '#server/paths.js'
  */
 
 /**
- * The tag one status wears. The backend can add a status without this repo
- * hearing about it, and `getStatusClass` answers grey for one it does not
- * know, so an unfamiliar status still names itself to the reader.
+ * The backend can add a status without this repo hearing about it, and
+ * `getStatusClass` answers grey for one it does not know, so an unfamiliar
+ * status still names itself to the reader.
  * @param {string} status
  * @returns {StatusTag}
  */
@@ -46,8 +45,6 @@ const toStatusTag = (status) => ({
 })
 
 /**
- * The stretch a record covers, as the reader sees it. A record still running
- * has no end date, so the range names the present instead of ending nowhere.
  * @param {{ validFrom: string | null, validTo: string | null }} dateRange
  * @param {(key: string) => string} localise
  * @returns {string}
@@ -66,7 +63,6 @@ const toDateRange = ({ validFrom, validTo }, localise) => {
 }
 
 /**
- * What the registration covers, from the two fields the backend keeps apart.
  * The reprocessing type is recorded when a registration is approved, so an
  * application that holds none reads as the processing type alone.
  * @param {RegistrationResource} registration
@@ -78,8 +74,6 @@ const toProcessingType = ({ reprocessingType, application }) =>
     : capitalize(application.wasteProcessingType)
 
 /**
- * A site as one line. The backend holds the address in parts and some of them
- * are optional, so the line is built from the parts that are there.
  * @param {SiteAddress} address
  * @returns {string}
  */
@@ -91,9 +85,8 @@ const toSiteLine = ({ line1, line2, town, county, postcode, fullAddress }) =>
     .join(', ')
 
 /**
- * What the registration is and covers. An exporter reprocesses nowhere this
- * service records, so a registration with no site shows no site row rather
- * than an empty one.
+ * An exporter reprocesses nowhere this service records, so a registration with
+ * no site shows no site row rather than an empty one.
  * @param {RegistrationResource} registration
  * @param {(key: string) => string} localise
  * @returns {SummaryRow[]}
@@ -128,11 +121,8 @@ const toSummaryRows = (registration, localise) => {
 }
 
 /**
- * The accredited periods, most recent first.
- *
  * An accreditation earns a number when it is granted, so one holding no number
- * never became an accreditation and names no period. Those are left out rather
- * than shown as a row with an empty first cell and nowhere to go.
+ * never became an accreditation and names no period.
  * @param {{
  *   accreditations: AccreditationResource[],
  *   registrationPath: string,
@@ -163,8 +153,6 @@ const toAccreditedPeriods = ({
   )
 
 /**
- * Orders two records by the day they started, latest first. A record that
- * never started sorts last, because it names no period at all.
  * @param {AccreditationResource} a
  * @param {AccreditationResource} b
  * @returns {number}
@@ -173,12 +161,8 @@ const byMostRecentStart = (a, b) =>
   (b.dateRange.validFrom ?? '').localeCompare(a.dateRange.validFrom ?? '')
 
 /**
- * The organisation's own name. An organisation trading under another name is
- * known by it, so that is the name the regulator is shown.
- *
- * The registration carries an `orgName` of its own, which is the name the
- * applicant typed on the form rather than the organisation's name, so the
- * heading and the breadcrumb read the organisation instead.
+ * An organisation trading under another name is known by it, so that is the
+ * name the regulator is shown.
  * @param {Organisation} organisation
  * @returns {string}
  */
@@ -186,8 +170,6 @@ const organisationName = ({ companyDetails }) =>
   companyDetails.tradingName?.trim() || companyDetails.name
 
 /**
- * One registration, as the regulator reads it: what it covers, and the
- * accredited periods it holds.
  * @param {{
  *   organisation: Organisation,
  *   registration: RegistrationResource,
