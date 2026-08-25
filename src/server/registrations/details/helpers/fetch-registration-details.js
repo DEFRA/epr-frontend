@@ -1,5 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
@@ -7,10 +7,16 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  */
 
 /**
+ * `accreditationId` names the accreditation the registration is on, and
+ * `isAccredited` says whether that accreditation is live. A cancelled one is
+ * still the accreditation the registration's records are filed under, so the
+ * two answer different questions.
  * @typedef {{
  *   organisation: Organisation,
  *   registration: RegistrationResource,
- *   accreditations: AccreditationResource[]
+ *   accreditations: AccreditationResource[],
+ *   accreditationId: string | undefined,
+ *   isAccredited: boolean
  * }} RegistrationDetails
  */
 
@@ -76,7 +82,7 @@ const fetchAccreditations = async ({
 /**
  * The registration carries the name the applicant typed on the form, which is
  * not the organisation's name, so the organisation is read as well for the name
- * the page names it by.
+ * the page names it by, and for the accreditation the registration is on.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
@@ -85,11 +91,21 @@ const fetchAccreditations = async ({
  * @returns {Promise<RegistrationDetails>}
  */
 export const fetchRegistrationDetails = async (params) => {
-  const [organisation, registration, accreditations] = await Promise.all([
-    fetchOrganisationById(params.organisationId, params.backendToken),
+  const [linked, registration, accreditations] = await Promise.all([
+    fetchRegistrationAndAccreditation(
+      params.organisationId,
+      params.registrationId,
+      params.backendToken
+    ),
     fetchRegistration(params),
     fetchAccreditations(params)
   ])
 
-  return { organisation, registration, accreditations }
+  return {
+    organisation: linked.organisationData,
+    registration,
+    accreditations,
+    accreditationId: linked.registration.accreditationId,
+    isAccredited: !!linked.accreditation
+  }
 }

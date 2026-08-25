@@ -58,6 +58,12 @@
           {{ govukInsetText({ text: localise('registrations:details:accreditedPeriods:none') }) }}
         {% endif %}
 
+        <ul class="govuk-list govuk-list--spaced govuk-!-margin-top-6">
+          {% for link in recordLinks %}
+            <li><a class="govuk-link govuk-link--no-visited-state" href="{{ link.href }}">{{ link.text }}</a></li>
+          {% endfor %}
+        </ul>
+
       </div>
     </div>
   </div>

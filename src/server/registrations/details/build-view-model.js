@@ -2,19 +2,24 @@ import { capitalize } from 'lodash-es'
 
 import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { hasLedgerReadScope } from '#server/auth/scopes.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { ScopeBearingCredentials } from '#server/auth/scopes.js'
  * @import { AccreditationResource, RegistrationResource, SiteAddress } from './helpers/types.js'
  */
 
 /**
+ * @typedef {(key: string, options?: Record<string, string>) => string} Localise
  * @typedef {{ text: string, classes: string }} StatusTag
  */
 
 /**
+ * @typedef {{ href: string, text: string }} RecordLink
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{ key: string, value: string } | { key: string, status: StatusTag }} SummaryRow
  * @typedef {{
@@ -28,6 +33,7 @@ import { paths } from '#server/paths.js'
  *   breadcrumbs: Crumb[],
  *   caption: string,
  *   pageTitle: string,
+ *   recordLinks: RecordLink[],
  *   summaryRows: SummaryRow[]
  * }} RegistrationDetailsViewModel
  */
@@ -46,7 +52,7 @@ const toStatusTag = (status) => ({
 
 /**
  * @param {{ validFrom: string | null, validTo: string | null }} dateRange
- * @param {(key: string) => string} localise
+ * @param {Localise} localise
  * @returns {string}
  */
 const toDateRange = ({ validFrom, validTo }, localise) => {
@@ -88,7 +94,7 @@ const toSiteLine = ({ line1, line2, town, county, postcode, fullAddress }) =>
  * An exporter reprocesses nowhere this service records, so a registration with
  * no site shows no site row rather than an empty one.
  * @param {RegistrationResource} registration
- * @param {(key: string) => string} localise
+ * @param {Localise} localise
  * @returns {SummaryRow[]}
  */
 const toSummaryRows = (registration, localise) => {
@@ -126,7 +132,7 @@ const toSummaryRows = (registration, localise) => {
  * @param {{
  *   accreditations: AccreditationResource[],
  *   registrationPath: string,
- *   localise: (key: string) => string,
+ *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {AccreditedPeriod[]}
@@ -161,6 +167,64 @@ const byMostRecentStart = (a, b) =>
   (b.dateRange.validFrom ?? '').localeCompare(a.dateRange.validFrom ?? '')
 
 /**
+ * The records this registration keeps, on the terms the operator's own page
+ * offers them. The note list needs a live accreditation to hold any notes; the
+ * ledger is partitioned by accreditation and falls back to the registration for
+ * a period that is registered only; the reports are the registration's whatever
+ * it is accredited for.
+ * @param {{
+ *   registration: RegistrationResource,
+ *   registrationPath: string,
+ *   accreditationId: string | undefined,
+ *   isAccredited: boolean,
+ *   credentials: ScopeBearingCredentials,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string
+ * }} params
+ * @returns {RecordLink[]}
+ */
+const toRecordLinks = ({
+  registration,
+  registrationPath,
+  accreditationId,
+  isAccredited,
+  credentials,
+  localise,
+  localiseUrl
+}) => {
+  const { noteTypePlural } = getNoteTypeDisplayNames({
+    wasteProcessingType: registration.application.wasteProcessingType
+  })
+  const accreditationPath = `${registrationPath}/accreditations/${accreditationId}`
+
+  /** @type {RecordLink[]} */
+  const links = []
+
+  if (isAccredited) {
+    links.push({
+      href: localiseUrl(`${accreditationPath}/packaging-recycling-notes`),
+      text: localise('registrations:notes.manageReadOnly', { noteTypePlural })
+    })
+  }
+
+  links.push({
+    href: localiseUrl(`${registrationPath}/reports`),
+    text: localise('registrations:manageReportsReadOnly')
+  })
+
+  if (hasLedgerReadScope(credentials)) {
+    links.push({
+      href: localiseUrl(
+        `${accreditationId ? accreditationPath : registrationPath}/waste-balance-ledger`
+      ),
+      text: localise('registrations:wasteBalanceLedger')
+    })
+  }
+
+  return links
+}
+
+/**
  * An organisation trading under another name is known by it, so that is the
  * name the regulator is shown.
  * @param {Organisation} organisation
@@ -174,7 +238,10 @@ const organisationName = ({ companyDetails }) =>
  *   organisation: Organisation,
  *   registration: RegistrationResource,
  *   accreditations: AccreditationResource[],
- *   localise: (key: string) => string,
+ *   accreditationId: string | undefined,
+ *   isAccredited: boolean,
+ *   credentials: ScopeBearingCredentials,
+ *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {RegistrationDetailsViewModel}
@@ -183,6 +250,9 @@ export const buildViewModel = ({
   organisation,
   registration,
   accreditations,
+  accreditationId,
+  isAccredited,
+  credentials,
   localise,
   localiseUrl
 }) => {
@@ -214,6 +284,15 @@ export const buildViewModel = ({
     pageTitle: registration.registrationNumber
       ? `${registration.registrationNumber}: ${heading}`
       : heading,
+    recordLinks: toRecordLinks({
+      registration,
+      registrationPath,
+      accreditationId,
+      isAccredited,
+      credentials,
+      localise,
+      localiseUrl
+    }),
     summaryRows: toSummaryRows(registration, localise)
   }
 }

@@ -64,6 +64,8 @@ const unrecognised = buildMockAuth({
 
 /** @type {RegistrationDetails} */
 const registrationDetails = {
+  accreditationId: undefined,
+  isAccredited: false,
   organisation: asOrganisation({
     id: organisationId,
     companyDetails: { name: 'Kirkby Plastics Ltd' }
