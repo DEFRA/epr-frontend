@@ -34,7 +34,6 @@ const aRegistrationWithSite = (address) => ({
   registrationNumber: 'R26ER5001180041PL',
   status: 'approved',
   reprocessingType: 'input',
-  dateRange: { validFrom: '2026-01-01', validTo: null },
   application: {
     orgName: 'Kirkby Plastics',
     submittedToRegulator: 'ea',

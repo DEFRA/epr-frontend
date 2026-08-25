@@ -25,6 +25,8 @@
 
         {{ govukSummaryList({ rows: summaryListRows }) }}
 
+        <h2 class="govuk-heading-m">{{ localise('registrations:details:accreditedPeriods:heading') }}</h2>
+
         {% if accreditedPeriods.length %}
           {% set accreditedRows = [] %}
           {% for period in accreditedPeriods %}
@@ -38,11 +40,11 @@
             ]]) %}
           {% endfor %}
 
-          {# The caption names the table, so a reader who moves by table hears
-             which periods it lists, and it renders as the section heading. #}
+          {# The heading above already shows the name, so the caption carries
+             it only for a reader who moves by table. #}
           {{ govukTable({
             caption: localise('registrations:details:accreditedPeriods:heading'),
-            captionClasses: "govuk-table__caption--m",
+            captionClasses: "govuk-visually-hidden",
             firstCellIsHeader: true,
             head: [
               { text: localise('registrations:details:accreditedPeriods:number') },
@@ -53,7 +55,6 @@
             rows: accreditedRows
           }) }}
         {% else %}
-          <h2 class="govuk-heading-m">{{ localise('registrations:details:accreditedPeriods:heading') }}</h2>
           {{ govukInsetText({ text: localise('registrations:details:accreditedPeriods:none') }) }}
         {% endif %}
 

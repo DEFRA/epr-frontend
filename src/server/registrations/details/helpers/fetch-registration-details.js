@@ -20,7 +20,7 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  * @returns {string}
  */
 const registrationPath = (organisationId, registrationId) =>
-  `/v1/organisations/${organisationId}/registrations/${registrationId}`
+  `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}`
 
 /**
  * @param {string} backendToken

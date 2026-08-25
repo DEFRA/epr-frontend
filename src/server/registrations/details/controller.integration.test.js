@@ -54,7 +54,6 @@ const registration = {
   registrationNumber: 'R26ER5001180041PL',
   status: 'approved',
   reprocessingType: 'input',
-  dateRange: { validFrom: '2025-01-01', validTo: null },
   application: {
     orgName: 'Kirkby Plastics',
     submittedToRegulator: 'ea',
@@ -279,6 +278,23 @@ describe('the registration details page a regulator reads', () => {
     ])
   })
 
+  it('names the accredited periods section whether or not it lists any', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { accreditations: [anAccreditation({})] })
+    const withPeriods = await visit(server)
+
+    backendHolds(msw, { accreditations: [] })
+    const withNone = await visit(server)
+
+    for (const { body } of [withPeriods, withNone]) {
+      expect(
+        getByRole(body, 'heading', { name: 'Accredited periods', level: 2 })
+      ).not.toBeNull()
+    }
+  })
+
   it('opens each accredited period at its own address', async ({
     server,
     msw
@@ -294,7 +310,7 @@ describe('the registration details page a regulator reads', () => {
     ).toBe(`${path}/accreditations/acc-002`)
   })
 
-  it('leaves out an application that never became an accreditation', async ({
+  it('shows the empty state where the only application never became an accreditation', async ({
     server,
     msw
   }) => {
@@ -356,8 +372,7 @@ describe('the registration details page a regulator reads', () => {
         ...registration,
         registrationNumber: null,
         status: 'created',
-        reprocessingType: null,
-        dateRange: { validFrom: null, validTo: null }
+        reprocessingType: null
       }
     })
 

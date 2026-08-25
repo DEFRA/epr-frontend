@@ -31,7 +31,6 @@
  *   registrationNumber: string | null,
  *   status: string,
  *   reprocessingType: string | null,
- *   dateRange: DateRange,
  *   application: {
  *     orgName: string,
  *     submittedToRegulator: string,
