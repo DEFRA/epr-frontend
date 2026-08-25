@@ -435,6 +435,23 @@ describe('the registration details page a regulator reads', () => {
     ).toBe(`${path}/accreditations/acc-002/waste-balance-ledger`)
   })
 
+  it('offers those four routes and nothing else', async ({ server, msw }) => {
+    backendHolds(msw, { accreditations: [anAccreditation({ id: 'acc-002' })] })
+
+    const { body } = await visit(server)
+
+    const offered = [...body.querySelectorAll('#main-content a[href]')].map(
+      (link) => (link.getAttribute('href') ?? '').replace(/acc-002/g, '{acc}')
+    )
+
+    expect(offered.sort()).toStrictEqual([
+      `${path}/accreditations/{acc}`,
+      `${path}/accreditations/{acc}/packaging-recycling-notes`,
+      `${path}/accreditations/{acc}/waste-balance-ledger`,
+      `${path}/reports`
+    ])
+  })
+
   it('follows the accreditation the registration is on rather than the most recent one', async ({
     server,
     msw
