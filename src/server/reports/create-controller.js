@@ -3,6 +3,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { createReport } from './helpers/create-report.js'
 import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { isReportDataIncompleteError } from './helpers/report-data-incomplete.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: PeriodParams }>>} */
@@ -32,6 +33,8 @@ export const createController = {
 
     validateCadenceForRegistration(cadence, accreditation)
 
+    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+
     try {
       await createReport(
         organisationId,
@@ -44,6 +47,17 @@ export const createController = {
       )
     } catch (error) {
       const boomError = /** @type {Boom} */ (error)
+
+      if (isReportDataIncompleteError(boomError)) {
+        request.yar.set('reportDataIncompleteContext', {
+          periodPath: basePath,
+          payload: boomError.output.payload
+        })
+        return h.redirect(
+          request.localiseUrl(`${basePath}/report-data-incomplete`)
+        )
+      }
+
       const isConflict =
         boomError.isBoom && boomError.output.statusCode === statusCodes.conflict
 
@@ -51,8 +65,6 @@ export const createController = {
         throw error
       }
     }
-
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
 
     const nextPage = `${basePath}${getInProgressActionPath(registration, accreditation, cadence)}`
 

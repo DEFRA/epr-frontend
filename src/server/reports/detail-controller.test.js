@@ -1801,6 +1801,39 @@ describe('#detailReportsController', () => {
     })
   })
 
+  describe('when the summary log has incomplete mandatory data', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        exporterRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue({
+        ...emptyExporterReportDetail,
+        incompleteSummaryLogRows: {
+          total: 2,
+          issues: [
+            { sheet: 'Exported', rowId: '1001', field: 'SUPPLIER_NAME' },
+            { sheet: 'Sent on', rowId: '4001', field: 'FINAL_DESTINATION_NAME' }
+          ]
+        }
+      })
+    })
+
+    it('redirects to the report-data-incomplete screen instead of the preview', async ({
+      server
+    }) => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: exporterDetailUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(
+        `${exporterDetailUrl}/report-data-incomplete`
+      )
+    })
+  })
+
   describe('when report already exists', () => {
     it('should redirect to reports landing page instead of rendering', async ({
       server

@@ -464,6 +464,52 @@ describe('#createReportController', () => {
     })
   })
 
+  describe('when backend returns report_data_incomplete 400', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        registeredOnlyExporterRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
+      vi.mocked(createReport).mockRejectedValue({
+        isBoom: true,
+        output: {
+          statusCode: statusCodes.badRequest,
+          payload: {
+            reason: 'report_data_incomplete',
+            total: 2,
+            issues: [
+              { sheet: 'Exported', rowId: '1001', field: 'SUPPLIER_NAME' },
+              {
+                sheet: 'Sent on',
+                rowId: '4001',
+                field: 'FINAL_DESTINATION_NAME'
+              }
+            ]
+          }
+        }
+      })
+    })
+
+    it('redirects to the report-data-incomplete screen', async ({ server }) => {
+      const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+        auth: mockAuth
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: detailUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${detailUrl}/report-data-incomplete`)
+    })
+  })
+
   describe('CSRF protection', () => {
     it('should return 403 when crumb is missing', async ({ server }) => {
       const { statusCode } = await server.inject({
