@@ -7,12 +7,6 @@ import { paths } from '#server/paths.js'
  */
 
 /**
- * Builds the URL that ends the provider's own session and returns the person
- * to this service.
- *
- * Reads the two values every session carries and nothing else, so a sign-in
- * this service refuses — which holds a session object but is never given a
- * session cookie — can offer the same way out as a sign-in it accepts.
  * @param {HapiRequest} request
  * @param {UserSession} session
  * @returns {string}

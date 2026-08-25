@@ -138,12 +138,6 @@ function referrerIfPresentElseDefault(request, defaultPath) {
 }
 
 /**
- * Refuses the sign in without creating a session, and offers the way back out
- * of the identity provider's own session.
- *
- * Without that link the person is held between two systems: this service will
- * not have them, and the provider still holds them signed in, so signing in
- * again returns them straight here.
  * @param {HapiRequest} request
  * @param {ResponseToolkit} h
  * @param {UserSession} session
@@ -159,10 +153,8 @@ const refuseSignIn = async (request, h, session) => {
     }
   })
 
-  // The referrer was stashed to return this person to the page they started
-  // from. They are not going there, and the next sign in reads the oldest
-  // entry, so leaving it stashed sends the account they sign in as next to the
-  // page this one was looking at.
+  // Reading the flash discards it. The next sign in reads the oldest entry, so
+  // a referrer left stashed here would send the next account to this one's page.
   request.yar.flash('referrer')
 
   rememberSignedOutProvider(h, OIDC_ENTRA_ID)

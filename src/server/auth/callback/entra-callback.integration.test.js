@@ -47,11 +47,9 @@ const cookieHeaderFrom = (response) =>
   extractCookieValues(response.headers['set-cookie']).join('; ')
 
 /**
- * Signs in through Entra ID, from the login route to the callback.
- *
- * `jar` carries the cookies the browser would keep between requests. Pass the
- * same jar to two flows to sign in twice as the same visitor; leave it out and
- * each flow starts as a first-time visitor.
+ * `jar` is mutated with the cookies each response sets. Pass the same jar to
+ * two flows to sign in twice as one visitor; omit it and each flow is a new
+ * visitor.
  */
 const performSignInFlow = async (
   server,
@@ -367,10 +365,8 @@ describe('/auth/callback/entra - GET integration', async () => {
       )
     })
 
-    // The reader is told nothing about which identity provider refused them,
-    // so the guard is on what the page says. The sign out link points at the
-    // provider, so its address is read as an address and its text is read as
-    // words.
+    // The sign out link's address is the provider's, so it is dropped before
+    // the page is searched for the provider's name.
     it('names no identity provider to a reader who has just been refused', async ({
       server,
       msw

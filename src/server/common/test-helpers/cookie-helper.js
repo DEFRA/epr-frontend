@@ -33,10 +33,8 @@ export function mergeCookies(...cookieStrings) {
 }
 
 /**
- * A `Cookie` request header carrying one named cookie, taken from the response
- * that set it rather than assembled by hand, so a test proves the value the app
- * writes is the value it later reads. Empty when the response set no such
- * cookie.
+ * A `Cookie` request header carrying one named cookie from a Set-Cookie
+ * header, empty if it set no such cookie
  * @param {string | string[] | undefined} setCookieHeader
  * @param {string} name
  * @returns {string}
