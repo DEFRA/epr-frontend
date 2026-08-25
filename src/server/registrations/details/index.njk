@@ -1,0 +1,63 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-xl">{{ caption }}</span>
+          {{ localise('registrations:details:heading') }}
+        </h1>
+
+        {% set summaryListRows = [] %}
+        {% for row in summaryRows %}
+          {% if row.status %}
+            {% set value = { html: govukTag({ text: row.status.text, classes: row.status.classes }) } %}
+          {% else %}
+            {% set value = { text: row.value } %}
+          {% endif %}
+          {% set summaryListRows = summaryListRows.concat([{ key: { text: row.key }, value: value }]) %}
+        {% endfor %}
+
+        {{ govukSummaryList({ rows: summaryListRows }) }}
+
+        {% if accreditedPeriods.length %}
+          {% set accreditedRows = [] %}
+          {% for period in accreditedPeriods %}
+            {# Every action link reads the same, so each one names the
+               accreditation it opens for a reader who hears the links alone. #}
+            {% set accreditedRows = accreditedRows.concat([[
+              { text: period.number },
+              { text: period.dateRange },
+              { html: govukTag({ text: period.status.text, classes: period.status.classes }) },
+              { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (period.href | escape) ~ '">' ~ localise('registrations:details:accreditedPeriods:view') ~ '<span class="govuk-visually-hidden"> ' ~ (period.number | escape) ~ '</span></a>' }
+            ]]) %}
+          {% endfor %}
+
+          {# The caption names the table, so a reader who moves by table hears
+             which periods it lists, and it renders as the section heading. #}
+          {{ govukTable({
+            caption: localise('registrations:details:accreditedPeriods:heading'),
+            captionClasses: "govuk-table__caption--m",
+            firstCellIsHeader: true,
+            head: [
+              { text: localise('registrations:details:accreditedPeriods:number') },
+              { text: localise('registrations:details:accreditedPeriods:dateRange') },
+              { text: localise('registrations:details:accreditedPeriods:status') },
+              { text: localise('registrations:details:accreditedPeriods:actions') }
+            ],
+            rows: accreditedRows
+          }) }}
+        {% else %}
+          <h2 class="govuk-heading-m">{{ localise('registrations:details:accreditedPeriods:heading') }}</h2>
+          {{ govukInsetText({ text: localise('registrations:details:accreditedPeriods:none') }) }}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
