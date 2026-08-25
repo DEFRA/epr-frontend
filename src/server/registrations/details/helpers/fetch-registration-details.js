@@ -50,7 +50,6 @@ const fetchRegistration = ({ organisationId, registrationId, backendToken }) =>
   )
 
 /**
- * An application that never became an accreditation is in the collection too.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
