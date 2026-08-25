@@ -1,3 +1,4 @@
+import { consentController } from './consent-controller.js'
 import { controller } from './controller.js'
 
 /**
@@ -17,6 +18,11 @@ export const cookies = {
           options: {
             auth: false
           }
+        },
+        {
+          ...consentController,
+          method: 'POST',
+          path: '/cookies/consent'
         }
       ])
     }

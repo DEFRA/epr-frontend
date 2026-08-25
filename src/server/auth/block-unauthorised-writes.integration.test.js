@@ -192,4 +192,37 @@ describe('write guard', () => {
 
     expect(statusCode).toBeLessThan(statusCodes.badRequest)
   })
+
+  describe('recording a cookie choice', () => {
+    it('lets a signed-out visitor post their consent', async ({ server }) => {
+      const { cookie, crumb } = await getCsrfToken(server, '/cookies')
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/cookies/consent',
+        headers: { cookie },
+        payload: { crumb, analytics: 'rejected', returnUrl: '/cookies' }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+    })
+
+    it('still blocks a signed-in session that holds no write scope from writing elsewhere', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, linkingUrl, {
+        auth: grantedNothingAuth
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: linkingUrl,
+        headers: { cookie },
+        auth: grantedNothingAuth,
+        payload: { crumb, organisationId }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+  })
 })

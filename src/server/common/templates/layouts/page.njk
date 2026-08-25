@@ -4,6 +4,7 @@
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/cookie-banner/macro.njk" import govukCookieBanner %}
 {% from "govuk/components/phase-banner/macro.njk" import govukPhaseBanner %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
@@ -17,6 +18,41 @@
 
 {% block head %}
   <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">
+{% endblock %}
+
+{# The design system requires the banner after <body> and before the skip link #}
+{% block bodyStart %}
+  {% if analytics.shouldAskConsent %}
+    <form method="post" action="/cookies/consent">
+      <input type="hidden" name="crumb" value="{{ crumb }}" />
+      <input type="hidden" name="returnUrl" value="{{ analytics.returnUrl }}" />
+      {{ govukCookieBanner({
+        ariaLabel: localise('common:cookieBanner:heading', { serviceName: serviceName }),
+        messages: [{
+          headingText: localise('common:cookieBanner:heading', { serviceName: serviceName }),
+          html: '<p class="govuk-body">' + localise('common:cookieBanner:essential') + '</p><p class="govuk-body">' + localise('common:cookieBanner:analytics') + '</p>',
+          actions: [
+            {
+              text: localise('common:cookieBanner:accept'),
+              type: 'submit',
+              name: 'analytics',
+              value: 'accepted'
+            },
+            {
+              text: localise('common:cookieBanner:reject'),
+              type: 'submit',
+              name: 'analytics',
+              value: 'rejected'
+            },
+            {
+              text: localise('common:cookieBanner:viewCookies'),
+              href: localiseUrl('/cookies')
+            }
+          ]
+        }]
+      }) }}
+    </form>
+  {% endif %}
 {% endblock %}
 
 {% block header %}
