@@ -356,6 +356,14 @@ export const config = convict({
       env: 'AUDIT_ENABLED'
     }
   },
+  analytics: {
+    isEnabled: {
+      doc: 'Is analytics enabled',
+      format: Boolean,
+      default: false,
+      env: 'ANALYTICS_ENABLED'
+    }
+  },
   featureFlags: {
     regulatorAccess: {
       doc: 'Feature Flag: Enable Entra ID login for regulators',
