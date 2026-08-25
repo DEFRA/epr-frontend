@@ -269,6 +269,11 @@ describe('#context', () => {
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
+        analytics: {
+          hasConsented: false,
+          returnUrl: '/',
+          shouldAskConsent: false
+        },
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
@@ -354,6 +359,11 @@ describe('#context cache', () => {
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
+        analytics: {
+          hasConsented: false,
+          returnUrl: '/',
+          shouldAskConsent: false
+        },
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
