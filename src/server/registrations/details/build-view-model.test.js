@@ -14,6 +14,7 @@ const localise = createMockLocalise({
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { ScopeBearingCredentials } from '#server/auth/scopes.js'
+ * @import { LinkedAccreditation } from './helpers/fetch-registration-details.js'
  * @import { AccreditationResource, RegistrationResource, SiteAddress } from './helpers/types.js'
  */
 
@@ -67,24 +68,21 @@ const anAccreditation = (overrides) => ({
  * @param {{
  *   registration?: RegistrationResource,
  *   accreditations?: AccreditationResource[],
- *   accreditationId?: string,
- *   isAccredited?: boolean,
+ *   linkedAccreditation?: LinkedAccreditation | null,
  *   credentials?: ScopeBearingCredentials
  * }} [overrides]
  */
 const build = ({
   registration,
   accreditations,
-  accreditationId,
-  isAccredited = false,
+  linkedAccreditation = null,
   credentials = null
 } = {}) =>
   buildViewModel({
     organisation,
     registration: registration ?? aRegistrationWithSite({ line1: 'Unit 4' }),
     accreditations: accreditations ?? [],
-    accreditationId,
-    isAccredited,
+    linkedAccreditation,
     credentials,
     localise,
     localiseUrl: (path) => path
@@ -225,8 +223,7 @@ describe(buildViewModel, () => {
         ),
         registration: aRegistrationWithSite({ line1: 'Unit 4' }),
         accreditations: [],
-        accreditationId: undefined,
-        isAccredited: false,
+        linkedAccreditation: null,
         credentials: null,
         localise,
         localiseUrl: (path) => path

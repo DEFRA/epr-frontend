@@ -7,16 +7,17 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
  */
 
 /**
- * `accreditationId` names the accreditation the registration is on, and
- * `isAccredited` says whether that accreditation is live. A cancelled one is
- * still the accreditation the registration's records are filed under, so the
- * two answer different questions.
+ * A cancelled accreditation is still the one the registration's records are
+ * filed under, so the link and its liveness are two answers rather than one.
+ * @typedef {{ id: string, isLive: boolean }} LinkedAccreditation
+ */
+
+/**
  * @typedef {{
  *   organisation: Organisation,
  *   registration: RegistrationResource,
  *   accreditations: AccreditationResource[],
- *   accreditationId: string | undefined,
- *   isAccredited: boolean
+ *   linkedAccreditation: LinkedAccreditation | null
  * }} RegistrationDetails
  */
 
@@ -101,11 +102,14 @@ export const fetchRegistrationDetails = async (params) => {
     fetchAccreditations(params)
   ])
 
+  const { accreditationId } = linked.registration
+
   return {
     organisation: linked.organisationData,
     registration,
     accreditations,
-    accreditationId: linked.registration.accreditationId,
-    isAccredited: !!linked.accreditation
+    linkedAccreditation: accreditationId
+      ? { id: accreditationId, isLive: !!linked.accreditation }
+      : null
   }
 }

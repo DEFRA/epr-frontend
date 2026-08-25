@@ -10,6 +10,7 @@ import { paths } from '#server/paths.js'
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { ScopeBearingCredentials } from '#server/auth/scopes.js'
+ * @import { LinkedAccreditation } from './helpers/fetch-registration-details.js'
  * @import { AccreditationResource, RegistrationResource, SiteAddress } from './helpers/types.js'
  */
 
@@ -168,15 +169,11 @@ const byMostRecentStart = (a, b) =>
 
 /**
  * The records this registration keeps, on the terms the operator's own page
- * offers them. The note list needs a live accreditation to hold any notes; the
- * ledger is partitioned by accreditation and falls back to the registration for
- * a period that is registered only; the reports are the registration's whatever
- * it is accredited for.
+ * offers them.
  * @param {{
  *   registration: RegistrationResource,
  *   registrationPath: string,
- *   accreditationId: string | undefined,
- *   isAccredited: boolean,
+ *   linkedAccreditation: LinkedAccreditation | null,
  *   credentials: ScopeBearingCredentials,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
@@ -186,8 +183,7 @@ const byMostRecentStart = (a, b) =>
 const toRecordLinks = ({
   registration,
   registrationPath,
-  accreditationId,
-  isAccredited,
+  linkedAccreditation,
   credentials,
   localise,
   localiseUrl
@@ -195,14 +191,16 @@ const toRecordLinks = ({
   const { noteTypePlural } = getNoteTypeDisplayNames({
     wasteProcessingType: registration.application.wasteProcessingType
   })
-  const accreditationPath = `${registrationPath}/accreditations/${accreditationId}`
+  const recordsPath = linkedAccreditation
+    ? `${registrationPath}/accreditations/${linkedAccreditation.id}`
+    : registrationPath
 
   /** @type {RecordLink[]} */
   const links = []
 
-  if (isAccredited) {
+  if (linkedAccreditation?.isLive) {
     links.push({
-      href: localiseUrl(`${accreditationPath}/packaging-recycling-notes`),
+      href: localiseUrl(`${recordsPath}/packaging-recycling-notes`),
       text: localise('registrations:notes.manageReadOnly', { noteTypePlural })
     })
   }
@@ -214,9 +212,7 @@ const toRecordLinks = ({
 
   if (hasLedgerReadScope(credentials)) {
     links.push({
-      href: localiseUrl(
-        `${accreditationId ? accreditationPath : registrationPath}/waste-balance-ledger`
-      ),
+      href: localiseUrl(`${recordsPath}/waste-balance-ledger`),
       text: localise('registrations:wasteBalanceLedger')
     })
   }
@@ -238,8 +234,7 @@ const organisationName = ({ companyDetails }) =>
  *   organisation: Organisation,
  *   registration: RegistrationResource,
  *   accreditations: AccreditationResource[],
- *   accreditationId: string | undefined,
- *   isAccredited: boolean,
+ *   linkedAccreditation: LinkedAccreditation | null,
  *   credentials: ScopeBearingCredentials,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
@@ -250,8 +245,7 @@ export const buildViewModel = ({
   organisation,
   registration,
   accreditations,
-  accreditationId,
-  isAccredited,
+  linkedAccreditation,
   credentials,
   localise,
   localiseUrl
@@ -287,8 +281,7 @@ export const buildViewModel = ({
     recordLinks: toRecordLinks({
       registration,
       registrationPath,
-      accreditationId,
-      isAccredited,
+      linkedAccreditation,
       credentials,
       localise,
       localiseUrl
