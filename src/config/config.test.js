@@ -1,6 +1,7 @@
 import { afterEach, describe, it, expect } from 'vitest'
 import {
   assertValidReapplyBaseUrl,
+  assertValidReapplyStartTime,
   assertValidReapplyWindow,
   config,
   isLocalEnvironment,
@@ -87,6 +88,24 @@ describe('#config', () => {
         assertValidReapplyWindow({ windowStartMonth: 12, windowEndMonth: 2 })
       ).toThrow(/must not be after/)
     })
+  })
+
+  describe(assertValidReapplyStartTime, () => {
+    it.each(['09:00', '00:00', '23:59'])(
+      'should accept a valid 24-hour HH:mm time "%s"',
+      (value) => {
+        expect(() => assertValidReapplyStartTime(value)).not.toThrow()
+      }
+    )
+
+    it.each(['9:00', '24:00', '09:60', 'abc', ''])(
+      'should throw for an invalid time "%s"',
+      (value) => {
+        expect(() => assertValidReapplyStartTime(value)).toThrow(
+          /windowStartTime must be a 24-hour HH:mm time/
+        )
+      }
+    )
   })
 
   describe(assertValidReapplyBaseUrl, () => {

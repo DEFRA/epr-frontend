@@ -377,6 +377,12 @@ export const config = convict({
       default: 12,
       env: 'REAPPLY_ACCREDITATION_WINDOW_END_MONTH'
     },
+    windowStartTime: {
+      doc: 'UK local time of day (24-hour HH:mm) the window opens on day 1 of windowStartMonth',
+      format: assertValidReapplyStartTime,
+      default: '09:00',
+      env: 'REAPPLY_ACCREDITATION_WINDOW_START_TIME'
+    },
     baseUrl: {
       doc: 'WS2 register/enrol frontend base URL the reapply link points at',
       format: assertValidReapplyBaseUrl,
@@ -415,6 +421,21 @@ export const assertValidReapplyWindow = ({
   if (windowStartMonth > windowEndMonth) {
     throw new Error(
       `reapplyAccreditation.windowStartMonth (${windowStartMonth}) must not be after windowEndMonth (${windowEndMonth})`
+    )
+  }
+}
+
+/**
+ * Convict format for `reapplyAccreditation.windowStartTime`. Must be a 24-hour
+ * `HH:mm` time so it is unambiguous when resolved as a UK local time (see
+ * `ukWallClockToInstant`). Declared as a function so it is hoisted for the
+ * schema above.
+ * @param {string} value
+ */
+export function assertValidReapplyStartTime(value) {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+    throw new Error(
+      `reapplyAccreditation.windowStartTime must be a 24-hour HH:mm time, got "${value}"`
     )
   }
 }

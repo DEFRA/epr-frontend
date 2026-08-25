@@ -856,11 +856,18 @@ describe('#accreditationDashboardController', () => {
     const originalWindowEndMonth = config.get(
       'reapplyAccreditation.windowEndMonth'
     )
+    const originalWindowStartTime = config.get(
+      'reapplyAccreditation.windowStartTime'
+    )
     const originalBaseUrl = config.get('reapplyAccreditation.baseUrl')
 
     beforeEach(() => {
       config.set('reapplyAccreditation.windowStartMonth', 1)
       config.set('reapplyAccreditation.windowEndMonth', 12)
+      // '00:00' so the year-round window is open at every instant of 1 January,
+      // not just from the real windowStartTime onwards - these tests read the
+      // real clock and must not be able to flake overnight on New Year's Day.
+      config.set('reapplyAccreditation.windowStartTime', '00:00')
       config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
     })
 
@@ -870,6 +877,10 @@ describe('#accreditationDashboardController', () => {
         originalWindowStartMonth
       )
       config.set('reapplyAccreditation.windowEndMonth', originalWindowEndMonth)
+      config.set(
+        'reapplyAccreditation.windowStartTime',
+        originalWindowStartTime
+      )
       config.set('reapplyAccreditation.baseUrl', originalBaseUrl)
     })
 
@@ -1155,6 +1166,9 @@ describe('a session that may not change the operator data', () => {
   beforeEach(() => {
     config.set('reapplyAccreditation.windowStartMonth', 1)
     config.set('reapplyAccreditation.windowEndMonth', 12)
+    // See the equivalent comment in the 'reapply for accreditation link'
+    // describe block above: avoids flaking overnight on New Year's Day.
+    config.set('reapplyAccreditation.windowStartTime', '00:00')
     config.set('reapplyAccreditation.baseUrl', 'https://reapply.example')
   })
 
@@ -1166,6 +1180,10 @@ describe('a session that may not change the operator data', () => {
     config.set(
       'reapplyAccreditation.windowEndMonth',
       configuredWindow.windowEndMonth
+    )
+    config.set(
+      'reapplyAccreditation.windowStartTime',
+      configuredWindow.windowStartTime
     )
     config.set('reapplyAccreditation.baseUrl', configuredWindow.baseUrl)
   })

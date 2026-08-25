@@ -19,7 +19,7 @@ const asAccreditation = (a) => /** @type {Accreditation} */ (a)
 
 const baseParams = {
   now: new Date('2026-10-01T12:00:00'),
-  window: { windowStartMonth: 9, windowEndMonth: 12 },
+  window: { windowStartMonth: 9, windowEndMonth: 12, windowStartTime: '09:00' },
   baseUrl: 'https://ws2.example',
   organisationId: 'org1',
   registration: asRegistration({
@@ -130,6 +130,15 @@ describe('#buildReapplyAccreditation', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
       now: new Date('2026-08-31T12:00:00')
+    })
+
+    expect(result).toBeNull()
+  })
+
+  test('is not visible before the window opening time on day 1 of the start month', () => {
+    const result = buildReapplyAccreditation({
+      ...baseParams,
+      now: new Date('2026-09-01T07:00:00Z')
     })
 
     expect(result).toBeNull()
