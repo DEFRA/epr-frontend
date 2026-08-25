@@ -130,9 +130,9 @@ const toSummaryRows = (registration, localise) => {
 /**
  * The accredited periods, most recent first.
  *
- * An accreditation earns a number when it is granted, so the ones without a
- * number never became accreditations and name no period. They are left out
- * rather than shown as a row with an empty first cell and nowhere to go.
+ * An accreditation earns a number when it is granted, so one holding no number
+ * never became an accreditation and names no period. Those are left out rather
+ * than shown as a row with an empty first cell and nowhere to go.
  * @param {{
  *   accreditations: AccreditationResource[],
  *   registrationPath: string,
@@ -148,9 +148,8 @@ const toAccreditedPeriods = ({
   localiseUrl
 }) =>
   [...accreditations].sort(byMostRecentStart).flatMap((accreditation) =>
-    accreditation.accreditationNumber === null
-      ? []
-      : [
+    accreditation.accreditationNumber
+      ? [
           {
             number: accreditation.accreditationNumber,
             dateRange: toDateRange(accreditation.dateRange, localise),
@@ -160,6 +159,7 @@ const toAccreditedPeriods = ({
             )
           }
         ]
+      : []
   )
 
 /**

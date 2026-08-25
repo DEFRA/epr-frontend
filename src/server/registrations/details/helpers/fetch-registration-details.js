@@ -15,17 +15,68 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  */
 
 /**
- * @param {string} path
- * @param {string} backendToken
- * @returns {Promise<object>}
+ * @param {string} organisationId
+ * @param {string} registrationId
+ * @returns {string}
  */
-const get = (path, backendToken) =>
-  fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
+const registrationPath = (organisationId, registrationId) =>
+  `/v1/organisations/${organisationId}/registrations/${registrationId}`
+
+/**
+ * @param {string} backendToken
+ * @returns {RequestInit}
+ */
+const readAs = (backendToken) => ({
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${backendToken}`
+  }
+})
+
+/**
+ * One registration, as the domain holds it. The keys outside `application`
+ * are the ones a regulator decided; the ones inside it are the answers the
+ * applicant gave on the form.
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   backendToken: string
+ * }} params
+ * @returns {Promise<RegistrationResource>}
+ */
+const fetchRegistration = ({ organisationId, registrationId, backendToken }) =>
+  /** @type {Promise<RegistrationResource>} */ (
+    fetchJsonFromBackend(
+      registrationPath(organisationId, registrationId),
+      readAs(backendToken)
+    )
+  )
+
+/**
+ * Every accreditation the registration holds, an application that never
+ * became one included.
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   backendToken: string
+ * }} params
+ * @returns {Promise<AccreditationResource[]>}
+ */
+const fetchAccreditations = async ({
+  organisationId,
+  registrationId,
+  backendToken
+}) => {
+  const { accreditations } =
+    /** @type {{ accreditations: AccreditationResource[] }} */ (
+      await fetchJsonFromBackend(
+        `${registrationPath(organisationId, registrationId)}/accreditations`,
+        readAs(backendToken)
+      )
+    )
+
+  return accreditations
+}
 
 /**
  * Everything the registration details page reads.
@@ -45,26 +96,12 @@ const get = (path, backendToken) =>
  * }} params
  * @returns {Promise<RegistrationDetails>}
  */
-export const fetchRegistrationDetails = async ({
-  organisationId,
-  registrationId,
-  backendToken
-}) => {
-  const registrationPath = `/v1/organisations/${organisationId}/registrations/${registrationId}`
-
+export const fetchRegistrationDetails = async (params) => {
   const [organisation, registration, accreditations] = await Promise.all([
-    fetchOrganisationById(organisationId, backendToken),
-    /** @type {Promise<RegistrationResource>} */ (
-      get(registrationPath, backendToken)
-    ),
-    /** @type {Promise<{ accreditations: AccreditationResource[] }>} */ (
-      get(`${registrationPath}/accreditations`, backendToken)
-    )
+    fetchOrganisationById(params.organisationId, params.backendToken),
+    fetchRegistration(params),
+    fetchAccreditations(params)
   ])
 
-  return {
-    organisation,
-    registration,
-    accreditations: accreditations.accreditations
-  }
+  return { organisation, registration, accreditations }
 }
