@@ -1,9 +1,18 @@
 const MEASUREMENT_LIBRARY = 'https://www.googletagmanager.com/gtag/js'
 
-const publishedMeasurementId = () =>
-  document
-    .querySelector('meta[name="analytics-measurement-id"]')
-    ?.getAttribute('content')
+/**
+ * @param {string} name
+ */
+const published = (name) =>
+  document.querySelector(`meta[name="${name}"]`)?.getAttribute('content')
+
+/**
+ * The page reports the step it is, not the address it was reached at. Journey
+ * addresses carry identifiers, so reporting them would scatter one step across
+ * thousands of values and hand those identifiers to a third party.
+ */
+const reportedLocation = () =>
+  new URL(published('analytics-page-path') ?? '/', window.location.origin).href
 
 /**
  * The measurement library reads its queue off the window, so the name is fixed
@@ -27,7 +36,7 @@ const alreadyLoaded = (src) =>
  * consent was refused or never asked, and nothing should load.
  */
 export const startAnalytics = () => {
-  const measurementId = publishedMeasurementId()
+  const measurementId = published('analytics-measurement-id')
 
   if (!measurementId) {
     return
@@ -45,7 +54,7 @@ export const startAnalytics = () => {
   document.head.appendChild(tag)
 
   enqueue(['js', new Date()])
-  enqueue(['config', measurementId])
+  enqueue(['config', measurementId, { page_location: reportedLocation() }])
 }
 
 startAnalytics()

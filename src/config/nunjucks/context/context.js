@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
 import { analyticsConsent } from '#server/common/helpers/analytics/consent.js'
+import { analyticsPagePath } from '#server/common/helpers/analytics/page-path.js'
 import { isRegulator } from '#server/auth/roles.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
@@ -84,7 +85,8 @@ export function context(request) {
   return {
     analytics: {
       ...analyticsConsent(request),
-      measurementId: config.get('analytics.measurementId')
+      measurementId: config.get('analytics.measurementId'),
+      pagePath: analyticsPagePath(request)
     },
     assetPath: `${assetPath}/assets`,
     breadcrumbs: [],
