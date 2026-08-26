@@ -10,7 +10,7 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { load } from 'cheerio'
+import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
@@ -32,6 +32,14 @@ const grantedNothingAuth = buildMockAuth({
 })
 
 const operatorAuth = buildMockAuth()
+
+/**
+ * Write controls are forms inside main. A form has no ARIA role unless it is
+ * named, so there is nothing for a role query to match here.
+ * @param {unknown} result
+ */
+const writeControlsIn = (result) =>
+  new JSDOM(asHtml(result)).window.document.querySelectorAll('main form')
 
 describe('write guard', () => {
   beforeAll(() => {
@@ -148,7 +156,7 @@ describe('write guard', () => {
       auth: grantedNothingAuth
     })
 
-    expect(load(asHtml(result))('main form')).toHaveLength(0)
+    expect(writeControlsIn(result)).toHaveLength(0)
   })
 
   it('shows an operator the write controls on an operator page', async ({
@@ -160,7 +168,7 @@ describe('write guard', () => {
       auth: operatorAuth
     })
 
-    expect(load(asHtml(result))('main form')).toHaveLength(1)
+    expect(writeControlsIn(result)).toHaveLength(1)
   })
 
   it('shows a regulator no write controls on the same page', async ({
@@ -172,7 +180,7 @@ describe('write guard', () => {
       auth: regulatorAuth
     })
 
-    expect(load(asHtml(result))('main form')).toHaveLength(0)
+    expect(writeControlsIn(result)).toHaveLength(0)
   })
 
   it.for([
