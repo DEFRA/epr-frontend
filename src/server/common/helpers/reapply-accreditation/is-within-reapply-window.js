@@ -1,21 +1,15 @@
+import { formatUkDateTime } from '#server/common/helpers/format-time.js'
+
 /**
- * Whether `now` falls within the recurring annual reapply window.
- *
- * The window is expressed as inclusive calendar-month bounds so it recurs every
- * year: the whole of the start month through the whole of the end month. The
- * AC only ever uses month boundaries (Jan-Aug is months 1-8, Sept-Dec is months
- * 9-12), so month granularity is exact rather than a simplification. Assumes a
- * non-wrapping window (`windowStartMonth <= windowEndMonth`), enforced at config
- * load by `assertValidReapplyWindow`.
+ * Whether `now` falls within the recurring annual reapply window. Compared as
+ * a UK wall-clock stamp (`MM-DDTHH:mm`, year omitted) against `windowStart`/
+ * `windowEnd`, which are configured in the same shape - see `config.js`.
  * @param {Date} now
- * @param {{ windowStartMonth: number; windowEndMonth: number }} window
+ * @param {{ windowStart: string; windowEnd: string }} window
  * @returns {boolean}
  */
-export const isWithinReapplyWindow = (
-  now,
-  { windowStartMonth, windowEndMonth }
-) => {
-  const month = now.getMonth() + 1
+export const isWithinReapplyWindow = (now, { windowStart, windowEnd }) => {
+  const stamp = formatUkDateTime(now)
 
-  return month >= windowStartMonth && month <= windowEndMonth
+  return stamp >= windowStart && stamp <= windowEnd
 }
