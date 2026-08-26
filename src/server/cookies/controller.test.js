@@ -89,9 +89,7 @@ describe('#cookiesController', () => {
       })
 
       const $ = load(asHtml(result))
-      const names = $(
-        '[data-testid="essential-cookies"] .govuk-table__body .govuk-table__row'
-      )
+      const names = $('.govuk-table__body .govuk-table__row')
         .map((_, row) => $(row).find('td, th').first().text().trim())
         .get()
 

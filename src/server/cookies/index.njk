@@ -14,7 +14,6 @@
       <p class="govuk-body">{{ localise('cookies:essentialCookies:description') }}</p>
 
       {{ govukTable({
-        attributes: { 'data-testid': 'essential-cookies' },
         head: [
           { text: localise('cookies:table:name') },
           { text: localise('cookies:table:purpose') },
@@ -55,7 +54,6 @@
         <p class="govuk-body">{{ localise('cookies:analyticsCookies:description') }}</p>
 
         {{ govukTable({
-          attributes: { 'data-testid': 'analytics-cookies' },
           head: [
             { text: localise('cookies:table:name') },
             { text: localise('cookies:table:purpose') },
@@ -75,7 +73,7 @@
           ]
         }) }}
 
-        <form method="post" action="/cookies/consent" data-testid="analytics-choice">
+        <form method="post" action="/cookies/consent">
           <input type="hidden" name="crumb" value="{{ crumb }}" />
           <input type="hidden" name="returnUrl" value="/cookies" />
           {{ govukRadios({
