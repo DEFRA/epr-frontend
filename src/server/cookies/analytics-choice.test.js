@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { ANALYTICS_CONSENT_COOKIE } from '#server/common/helpers/analytics/consent.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
+import { getByRole, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
@@ -24,29 +25,40 @@ const getCookiesPage = async (server, consent) => {
 }
 
 /**
+ * The table a heading introduces, so a test names the section the way the page
+ * does rather than reaching for a selector the page only carries for tests.
  * @param {Awaited<ReturnType<typeof getCookiesPage>>} body
- * @param {string} testId
+ * @param {string | RegExp} heading
  */
-const rowsOf = (body, testId) =>
-  Array.from(body.querySelectorAll(`[data-testid="${testId}"] tbody tr`)).map(
+const tableUnder = (body, heading) => {
+  const sections = Array.from(body.querySelectorAll('h2, table'))
+  const start = sections.indexOf(getByRole(body, 'heading', { name: heading }))
+
+  return sections
+    .slice(start + 1)
+    .find((element) => element.tagName === 'TABLE')
+}
+
+/**
+ * @param {Awaited<ReturnType<typeof getCookiesPage>>} body
+ * @param {string | RegExp} heading
+ */
+const rowsOf = (body, heading) =>
+  Array.from(tableUnder(body, heading)?.querySelectorAll('tbody tr') ?? []).map(
     (row) =>
       Array.from(row.querySelectorAll('td, th')).map((cell) =>
         (cell.textContent ?? '').trim()
       )
   )
 
-/**
- * @param {Awaited<ReturnType<typeof getCookiesPage>>} body
- */
-const analyticsTableOf = (body) =>
-  body.querySelector('[data-testid="analytics-cookies"]')
-
 describe('#analyticsChoice', () => {
   describe('when analytics is disabled', () => {
     it('should not list the analytics cookies', async ({ server }) => {
       const body = await getCookiesPage(server)
 
-      expect(analyticsTableOf(body)).toBeNull()
+      expect(
+        queryByRole(body, 'heading', { name: /analytics cookies/i })
+      ).toBeNull()
     })
 
     it('should not offer a choice', async ({ server }) => {
@@ -69,7 +81,7 @@ describe('#analyticsChoice', () => {
       const body = await getCookiesPage(server)
 
       expect(
-        rowsOf(body, 'analytics-cookies').map(([name]) => name)
+        rowsOf(body, /analytics cookies/i).map(([name]) => name)
       ).toStrictEqual(['_ga', '_ga_'])
     })
 
@@ -77,7 +89,7 @@ describe('#analyticsChoice', () => {
       const body = await getCookiesPage(server)
 
       expect(
-        rowsOf(body, 'analytics-cookies').map(([, , expires]) => expires)
+        rowsOf(body, /analytics cookies/i).map(([, , expires]) => expires)
       ).toStrictEqual(['400 days', '400 days'])
     })
 
@@ -112,7 +124,9 @@ describe('#analyticsChoice', () => {
       server
     }) => {
       const body = await getCookiesPage(server)
-      const form = body.querySelector('form[data-testid="analytics-choice"]')
+      const form = getByRole(body, 'group', {
+        name: /accept analytics cookies/i
+      }).closest('form')
 
       expect(form?.getAttribute('action')).toBe('/cookies/consent')
       expect(form?.getAttribute('method')).toBe('post')
@@ -127,7 +141,7 @@ describe('#analyticsChoice', () => {
       server
     }) => {
       const body = await getCookiesPage(server)
-      const names = rowsOf(body, 'essential-cookies').map(([name]) => name)
+      const names = rowsOf(body, 'Essential cookies').map(([name]) => name)
 
       expect(names).toContain(ANALYTICS_CONSENT_COOKIE)
     })
