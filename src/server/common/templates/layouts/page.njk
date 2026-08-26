@@ -19,6 +19,10 @@
 
 {% block head %}
   <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">
+  {% if analytics.hasConsented %}
+    <meta name="analytics-measurement-id" content="{{ analytics.measurementId }}">
+    <script type="module" src="{{ getAssetPath('analytics.js') }}"></script>
+  {% endif %}
 {% endblock %}
 
 {# The design system requires the banner after <body> and before the skip link #}
