@@ -89,9 +89,19 @@ describe('#cookiesController', () => {
       })
 
       const $ = load(asHtml(result))
-      const rows = $('.govuk-table__body .govuk-table__row')
+      const names = $(
+        '[data-testid="essential-cookies"] .govuk-table__body .govuk-table__row'
+      )
+        .map((_, row) => $(row).find('td, th').first().text().trim())
+        .get()
 
-      expect(rows).toHaveLength(4)
+      expect(names).toStrictEqual([
+        'Crumb',
+        'Session',
+        'userSession',
+        'signedOutProvider',
+        'analyticsConsent'
+      ])
     })
 
     it('should render cookie names in the table', async ({ server }) => {

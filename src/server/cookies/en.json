@@ -1,4 +1,24 @@
 {
+  "analyticsCookies": {
+    "heading": "Analytics cookies (optional)",
+    "description": "With your permission, we use Google Analytics to collect data about how you use this service. This information helps us improve it.",
+    "ga": {
+      "name": "_ga",
+      "purpose": "Checks if you have visited the service before. This helps us count how many people use it.",
+      "expires": "400 days"
+    },
+    "gaProperty": {
+      "name": "_ga_",
+      "purpose": "Helps us measure how you use the service.",
+      "expires": "400 days"
+    }
+  },
+  "choice": {
+    "heading": "Do you want to accept analytics cookies?",
+    "accept": "Use cookies that measure my service use",
+    "reject": "Do not use cookies that measure my service use",
+    "save": "Save cookie settings"
+  },
   "essentialCookies": {
     "heading": "Essential cookies",
     "description": "Essential cookies keep your information secure while you use this service. We do not need to ask permission to use them."
@@ -30,6 +50,11 @@
       "name": "signedOutProvider",
       "purpose": "Remembers how you signed in, so that after you sign out we can offer you the right way to sign in again.",
       "expires": "10 minutes"
+    },
+    "analyticsConsent": {
+      "name": "analyticsConsent",
+      "purpose": "Remembers whether you accepted or rejected analytics cookies.",
+      "expires": "1 year"
     }
   }
 }

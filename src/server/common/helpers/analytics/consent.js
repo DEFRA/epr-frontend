@@ -25,12 +25,14 @@ const readConsent = (request) => {
 }
 
 /**
- * Whether analytics may run, and whether we still need to ask. Both answers
- * come from one place so a page cannot show the banner while already tracking,
- * or track while still asking. `returnUrl` sends the visitor back to the page
- * they answered from, and is server-built so it is always a local path.
+ * Whether analytics may run, and whether we still need to ask. Every answer
+ * comes from one place so a page cannot show the banner while already tracking,
+ * or track while still asking. `hasRejected` is not the negation of
+ * `hasConsented`: a visitor who has answered nothing has neither. `returnUrl`
+ * sends the visitor back to the page they answered from, and is server-built so
+ * it is always a local path.
  * @param {HapiRequest | null} request
- * @returns {{ hasConsented: boolean, returnUrl: string, shouldAskConsent: boolean }}
+ * @returns {{ hasConsented: boolean, hasRejected: boolean, isEnabled: boolean, returnUrl: string, shouldAskConsent: boolean }}
  */
 export const analyticsConsent = (request) => {
   const returnUrl = request?.url
@@ -38,13 +40,21 @@ export const analyticsConsent = (request) => {
     : '/'
 
   if (!config.get('analytics.isEnabled')) {
-    return { hasConsented: false, returnUrl, shouldAskConsent: false }
+    return {
+      hasConsented: false,
+      hasRejected: false,
+      isEnabled: false,
+      returnUrl,
+      shouldAskConsent: false
+    }
   }
 
   const consent = readConsent(request)
 
   return {
     hasConsented: consent === ANALYTICS_CONSENT.accepted,
+    hasRejected: consent === ANALYTICS_CONSENT.rejected,
+    isEnabled: true,
     returnUrl,
     shouldAskConsent: consent === null
   }
