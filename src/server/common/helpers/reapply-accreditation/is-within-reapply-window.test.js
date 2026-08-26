@@ -13,22 +13,22 @@ describe('#isWithinReapplyWindow', () => {
       expect(isWithinReapplyWindow(now, defaultWindow)).toBe(false)
     })
 
-    test('returns false before the opening time on day 1 of the start month', () => {
+    test('returns false before the configured opening time', () => {
       const now = new Date('2026-09-01T07:59:00Z')
       expect(isWithinReapplyWindow(now, defaultWindow)).toBe(false)
     })
 
-    test('returns true exactly at the opening time on day 1 of the start month', () => {
+    test('returns true exactly at the configured opening time', () => {
       const now = new Date('2026-09-01T08:00:00Z')
       expect(isWithinReapplyWindow(now, defaultWindow)).toBe(true)
     })
 
-    test('returns true just after the opening time on day 1 of the start month', () => {
+    test('returns true just after the configured opening time', () => {
       const now = new Date('2026-09-01T08:01:00Z')
       expect(isWithinReapplyWindow(now, defaultWindow)).toBe(true)
     })
 
-    test('returns true for the whole of the second day of the start month', () => {
+    test('returns true for the whole of the day after the window opens', () => {
       const now = new Date('2026-09-02T00:00:00Z')
       expect(isWithinReapplyWindow(now, defaultWindow)).toBe(true)
     })
@@ -60,7 +60,7 @@ describe('#isWithinReapplyWindow', () => {
       ).toBe(true)
     })
 
-    test('returns false on day 1 of the start month before the opening time', () => {
+    test('returns false before the configured opening time on the start date', () => {
       const now = new Date('2026-01-01T07:00:00Z')
       expect(
         isWithinReapplyWindow(now, {
