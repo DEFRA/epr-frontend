@@ -372,6 +372,12 @@ export const config = convict({
       format: Boolean,
       default: false,
       env: 'ANALYTICS_ENABLED'
+    },
+    measurementId: {
+      doc: 'Measurement id of the analytics property to report to',
+      format: String,
+      default: '',
+      env: 'ANALYTICS_MEASUREMENT_ID'
     }
   },
   featureFlags: {

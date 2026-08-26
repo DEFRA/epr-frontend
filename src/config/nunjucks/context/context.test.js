@@ -273,6 +273,7 @@ describe('#context', () => {
           hasConsented: false,
           hasRejected: false,
           isEnabled: false,
+          measurementId: '',
           returnUrl: '/',
           shouldAskConsent: false
         },
@@ -365,6 +366,7 @@ describe('#context cache', () => {
           hasConsented: false,
           hasRejected: false,
           isEnabled: false,
+          measurementId: '',
           returnUrl: '/',
           shouldAskConsent: false
         },

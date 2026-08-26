@@ -82,7 +82,10 @@ export function context(request) {
   const { serviceNameKey, serviceUrl } = buildService(request)
 
   return {
-    analytics: analyticsConsent(request),
+    analytics: {
+      ...analyticsConsent(request),
+      measurementId: config.get('analytics.measurementId')
+    },
     assetPath: `${assetPath}/assets`,
     breadcrumbs: [],
     hasWriteScope: hasWriteScope(request?.auth?.credentials),
