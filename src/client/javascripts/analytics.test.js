@@ -8,10 +8,11 @@ const measurementId = 'G-TESTONLY01'
  * @param {string} [id]
  */
 const givenMeasurementId = (id, pagePath = '/start') => {
-  document.head.innerHTML = id
-    ? `<meta name="analytics-measurement-id" content="${id}">
-       <meta name="analytics-page-path" content="${pagePath}">`
-    : ''
+  document.head.innerHTML =
+    id === undefined
+      ? ''
+      : `<meta name="analytics-measurement-id" content="${id}">
+         <meta name="analytics-page-path" content="${pagePath}">`
 }
 
 const loadedTagUrls = () =>

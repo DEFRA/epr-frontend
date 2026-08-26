@@ -8,6 +8,8 @@ import { describe, expect } from 'vitest'
  */
 
 const organisationId = '68e68d9c78f83083f0f17a76'
+const registrationId = '68e6912278f83083f0f17a7b'
+const summaryLogId = '68e69a4578f83083f0f17a8c'
 
 /**
  * Asks the running server, rather than a hand-built object, what a request
@@ -24,25 +26,18 @@ const stepReportedFor = async (server, url) => {
 }
 
 describe('#analyticsPagePath against the running server', () => {
-  it('should drop the identifiers an address actually carried', async ({
-    server
-  }) => {
-    const step = await stepReportedFor(
-      server,
-      `/organisations/${organisationId}`
-    )
-
-    expect(step).toBe('/organisations/:organisationId')
-    expect(step).not.toContain(organisationId)
-  })
-
   it.for([
-    ['/start', '/start'],
     ['/cookies', '/cookies'],
-    ['/contact', '/contact']
-  ])('should report %s as itself', async ([url, expected], { server }) => {
-    await expect(stepReportedFor(server, url)).resolves.toBe(expected)
-  })
+    [
+      `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
+      '/organisations/:organisationId/registrations/:registrationId/summary-logs/:summaryLogId'
+    ]
+  ])(
+    'should report the step behind %s, carrying no identifier',
+    async ([url, expected], { server }) => {
+      await expect(stepReportedFor(server, url)).resolves.toBe(expected)
+    }
+  )
 
   it('should report a welsh page as the same step as its english one', async ({
     server

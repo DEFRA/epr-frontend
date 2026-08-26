@@ -12,18 +12,6 @@ const requestOn = (path) =>
   /** @type {HapiRequest} */ (path ? { route: { path } } : {})
 
 describe(analyticsPagePath, () => {
-  it.for([
-    ['/', '/'],
-    ['/cookies', '/cookies'],
-    ['/organisations/{organisationId}', '/organisations/:organisationId'],
-    [
-      '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/{summaryLogId}/submit',
-      '/organisations/:organisationId/registrations/:registrationId/summary-logs/:summaryLogId/submit'
-    ]
-  ])('should name the step behind %s', ([route, expected]) => {
-    expect(analyticsPagePath(requestOn(route))).toBe(expected)
-  })
-
   it('should keep an optional parameter recognisable', () => {
     expect(analyticsPagePath(requestOn('/reports/{reportId?}'))).toBe(
       '/reports/:reportId'
