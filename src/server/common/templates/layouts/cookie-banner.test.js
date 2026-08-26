@@ -41,10 +41,12 @@ describe('#cookieBanner', () => {
   describe('when analytics is enabled and no choice has been made', () => {
     beforeAll(() => {
       config.set('analytics.isEnabled', true)
+      config.set('analytics.measurementId', 'G-TESTONLY01')
     })
 
     afterAll(() => {
       config.set('analytics.isEnabled', false)
+      config.set('analytics.measurementId', '')
     })
 
     it('should render the banner naming the service', async ({ server }) => {
@@ -145,10 +147,12 @@ describe('#cookieBanner', () => {
   describe('when a choice has already been made', () => {
     beforeAll(() => {
       config.set('analytics.isEnabled', true)
+      config.set('analytics.measurementId', 'G-TESTONLY01')
     })
 
     afterAll(() => {
       config.set('analytics.isEnabled', false)
+      config.set('analytics.measurementId', '')
     })
 
     it.for(['accepted', 'rejected'])(
