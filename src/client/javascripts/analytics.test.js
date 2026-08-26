@@ -69,7 +69,7 @@ describe('#startAnalytics', () => {
 
     startAnalytics()
 
-    expect(window.dataLayer[0]).toStrictEqual(['earlier'])
+    expect(window.dataLayer?.[0]).toStrictEqual(['earlier'])
   })
 
   it('should not load the library twice', () => {
