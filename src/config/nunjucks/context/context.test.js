@@ -274,6 +274,7 @@ describe('#context', () => {
           hasRejected: false,
           isEnabled: false,
           measurementId: '',
+          pagePath: '/',
           returnUrl: '/',
           shouldAskConsent: false
         },
@@ -367,6 +368,7 @@ describe('#context cache', () => {
           hasRejected: false,
           isEnabled: false,
           measurementId: '',
+          pagePath: '/',
           returnUrl: '/',
           shouldAskConsent: false
         },

@@ -68,6 +68,11 @@ describe('#analytics switched on end to end', () => {
           .querySelector('meta[name="analytics-measurement-id"]')
           ?.getAttribute('content')
       ).toBe(measurementId)
+      expect(
+        document
+          .querySelector('meta[name="analytics-page-path"]')
+          ?.getAttribute('content')
+      ).toBe('/start')
     })
   })
 

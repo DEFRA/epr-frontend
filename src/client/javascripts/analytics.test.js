@@ -7,9 +7,10 @@ const measurementId = 'G-TESTONLY01'
 /**
  * @param {string} [id]
  */
-const givenMeasurementId = (id) => {
+const givenMeasurementId = (id, pagePath = '/start') => {
   document.head.innerHTML = id
-    ? `<meta name="analytics-measurement-id" content="${id}">`
+    ? `<meta name="analytics-measurement-id" content="${id}">
+       <meta name="analytics-page-path" content="${pagePath}">`
     : ''
 }
 
@@ -41,7 +42,41 @@ describe('#startAnalytics', () => {
 
     expect(window.dataLayer).toStrictEqual([
       ['js', expect.any(Date)],
-      ['config', measurementId]
+      [
+        'config',
+        measurementId,
+        { page_location: 'http://localhost:3000/start' }
+      ]
+    ])
+  })
+
+  it('should report the step rather than the address it arrived at', () => {
+    givenMeasurementId(
+      measurementId,
+      '/organisations/:organisationId/registrations/:registrationId/summary-logs/:summaryLogId/submit'
+    )
+
+    startAnalytics()
+
+    expect(window.dataLayer?.[1]).toStrictEqual([
+      'config',
+      measurementId,
+      {
+        page_location:
+          'http://localhost:3000/organisations/:organisationId/registrations/:registrationId/summary-logs/:summaryLogId/submit'
+      }
+    ])
+  })
+
+  it('should report the root when the page names no step', () => {
+    document.head.innerHTML = `<meta name="analytics-measurement-id" content="${measurementId}">`
+
+    startAnalytics()
+
+    expect(window.dataLayer?.[1]).toStrictEqual([
+      'config',
+      measurementId,
+      { page_location: 'http://localhost:3000/' }
     ])
   })
 
