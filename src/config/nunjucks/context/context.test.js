@@ -271,6 +271,8 @@ describe('#context', () => {
       expect(contextResult).toStrictEqual({
         analytics: {
           hasConsented: false,
+          hasRejected: false,
+          isEnabled: false,
           returnUrl: '/',
           shouldAskConsent: false
         },
@@ -361,6 +363,8 @@ describe('#context cache', () => {
       expect(contextResult).toStrictEqual({
         analytics: {
           hasConsented: false,
+          hasRejected: false,
+          isEnabled: false,
           returnUrl: '/',
           shouldAskConsent: false
         },
