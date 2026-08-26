@@ -21,7 +21,7 @@ describe(cspOptions, () => {
   it('should not reach any google origin when analytics is disabled', () => {
     const options = cspOptions({
       isProduction: false,
-      isAnalyticsEnabled: false
+      allowAnalytics: false
     })
 
     expect(options).toStrictEqual({
@@ -44,7 +44,7 @@ describe(cspOptions, () => {
   it('should allow the gtag script and analytics endpoints when analytics is enabled', () => {
     const options = cspOptions({
       isProduction: true,
-      isAnalyticsEnabled: true
+      allowAnalytics: true
     })
 
     expect(options).toStrictEqual({

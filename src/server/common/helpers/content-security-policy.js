@@ -47,26 +47,26 @@ export function cspFormAction({ isProduction }) {
  * exists for a Tag Manager noscript iframe, and nonce propagation for tags
  * injected at runtime. Both are Tag Manager costs, and gtag.js alone incurs
  * neither.
- * @param {{ isAnalyticsEnabled: boolean, isProduction: boolean }} options
+ * @param {{ allowAnalytics: boolean, isProduction: boolean }} options
  * @returns {BlankieOptions}
  */
-export const cspOptions = ({ isAnalyticsEnabled, isProduction }) => ({
+export const cspOptions = ({ allowAnalytics, isProduction }) => ({
   defaultSrc: ['self'],
   fontSrc: ['self', 'data:'],
   connectSrc: [
     'self',
     'wss',
     'data:',
-    ...(isAnalyticsEnabled ? analyticsConnectSrc : [])
+    ...(allowAnalytics ? analyticsConnectSrc : [])
   ],
   mediaSrc: ['self'],
   styleSrc: ['self'],
   scriptSrc: [
     'self',
     govukInlineScriptHash,
-    ...(isAnalyticsEnabled ? analyticsScriptSrc : [])
+    ...(allowAnalytics ? analyticsScriptSrc : [])
   ],
-  imgSrc: ['self', 'data:', ...(isAnalyticsEnabled ? analyticsImgSrc : [])],
+  imgSrc: ['self', 'data:', ...(allowAnalytics ? analyticsImgSrc : [])],
   frameSrc: ['self', 'data:'],
   objectSrc: ['none'],
   frameAncestors: ['none'],
@@ -82,7 +82,7 @@ export const cspOptions = ({ isAnalyticsEnabled, isProduction }) => ({
 const contentSecurityPolicy = {
   plugin: Blankie,
   options: cspOptions({
-    isAnalyticsEnabled: isAnalyticsEnabled(),
+    allowAnalytics: isAnalyticsEnabled(),
     isProduction: config.get('isProduction')
   })
 }
