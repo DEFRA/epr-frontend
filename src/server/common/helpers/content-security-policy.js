@@ -1,5 +1,6 @@
 import Blankie from 'blankie'
 import { config } from '#config/config.js'
+import { isAnalyticsEnabled } from '#server/common/helpers/analytics/enabled.js'
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
@@ -81,7 +82,7 @@ export const cspOptions = ({ isAnalyticsEnabled, isProduction }) => ({
 const contentSecurityPolicy = {
   plugin: Blankie,
   options: cspOptions({
-    isAnalyticsEnabled: config.get('analytics.isEnabled'),
+    isAnalyticsEnabled: isAnalyticsEnabled(),
     isProduction: config.get('isProduction')
   })
 }

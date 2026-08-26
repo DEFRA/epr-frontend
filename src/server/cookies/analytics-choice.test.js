@@ -71,10 +71,12 @@ describe('#analyticsChoice', () => {
   describe('when analytics is enabled', () => {
     beforeAll(() => {
       config.set('analytics.isEnabled', true)
+      config.set('analytics.measurementId', 'G-TESTONLY01')
     })
 
     afterAll(() => {
       config.set('analytics.isEnabled', false)
+      config.set('analytics.measurementId', '')
     })
 
     it('should list the analytics cookies it may set', async ({ server }) => {
