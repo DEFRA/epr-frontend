@@ -135,7 +135,7 @@ describe('#buildReapplyAccreditation', () => {
     expect(result).toBeNull()
   })
 
-  test('is not visible before the window opening time on day 1 of the start month', () => {
+  test('is not visible before the configured window opening time', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
       now: new Date('2026-09-01T07:00:00Z')
