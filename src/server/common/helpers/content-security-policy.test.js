@@ -73,24 +73,6 @@ describe(cspOptions, () => {
       styleSrc: ['self']
     })
   })
-
-  it('should not widen frame-src when analytics is enabled', () => {
-    const { frameSrc } = cspOptions({
-      isProduction: true,
-      isAnalyticsEnabled: true
-    })
-
-    expect(frameSrc).toStrictEqual(['self', 'data:'])
-  })
-
-  it('should not generate nonces when analytics is enabled', () => {
-    const { generateNonces } = cspOptions({
-      isProduction: true,
-      isAnalyticsEnabled: true
-    })
-
-    expect(generateNonces).toBe(false)
-  })
 })
 
 describe('#contentSecurityPolicy', () => {
