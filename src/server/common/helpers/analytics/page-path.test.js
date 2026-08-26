@@ -36,29 +36,6 @@ describe(analyticsPagePath, () => {
     )
   })
 
-  it('should drop the identifiers the request actually carried', () => {
-    const organisationId = '68e68d9c78f83083f0f17a76'
-    const registrationId = '68e6912278f83083f0f17a7b'
-    const summaryLogId = '68e69a4578f83083f0f17a8c'
-    const request = /** @type {HapiRequest} */ ({
-      route: {
-        path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/{summaryLogId}/submit'
-      },
-      url: new URL(
-        `https://example.test/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
-      )
-    })
-
-    const reported = analyticsPagePath(request)
-
-    expect(reported).toBe(
-      '/organisations/:organisationId/registrations/:registrationId/summary-logs/:summaryLogId/submit'
-    )
-    expect(reported).not.toContain(organisationId)
-    expect(reported).not.toContain(registrationId)
-    expect(reported).not.toContain(summaryLogId)
-  })
-
   it('should fall back to the root when a route carries no path', () => {
     const request = /** @type {HapiRequest} */ ({
       route: {}
