@@ -1,4 +1,4 @@
-import { analyticsPagePath } from '#server/common/helpers/analytics/page-path.js'
+import { analyticsPagePath } from '#server/common/analytics/page-path.js'
 import { describe, expect, it } from 'vitest'
 
 /**

@@ -1,6 +1,6 @@
 import Blankie from 'blankie'
 import { config } from '#config/config.js'
-import { isAnalyticsEnabled } from '#server/common/helpers/analytics/enabled.js'
+import { isAnalyticsEnabled } from '#server/common/analytics/enabled.js'
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'

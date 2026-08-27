@@ -1,7 +1,7 @@
 import {
   ANALYTICS_CONSENT,
   ANALYTICS_CONSENT_COOKIE
-} from '#server/common/helpers/analytics/consent.js'
+} from '#server/common/analytics/consent.js'
 import Joi from 'joi'
 
 /**

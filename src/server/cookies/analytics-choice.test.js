@@ -1,5 +1,5 @@
 import { config } from '#config/config.js'
-import { ANALYTICS_CONSENT_COOKIE } from '#server/common/helpers/analytics/consent.js'
+import { ANALYTICS_CONSENT_COOKIE } from '#server/common/analytics/consent.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, queryByRole } from '@testing-library/dom'

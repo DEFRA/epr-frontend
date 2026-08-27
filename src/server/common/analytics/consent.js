@@ -1,4 +1,4 @@
-import { isAnalyticsEnabled } from '#server/common/helpers/analytics/enabled.js'
+import { isAnalyticsEnabled } from '#server/common/analytics/enabled.js'
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'

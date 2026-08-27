@@ -1,5 +1,5 @@
 import { asHapiRequest } from '#server/common/hapi-types.js'
-import { analyticsPagePath } from '#server/common/helpers/analytics/page-path.js'
+import { analyticsPagePath } from '#server/common/analytics/page-path.js'
 import { it } from '#vite/fixtures/server.js'
 import { describe, expect } from 'vitest'
 
