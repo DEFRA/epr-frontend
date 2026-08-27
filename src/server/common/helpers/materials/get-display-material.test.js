@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { getDisplayMaterial } from './get-display-material.js'
+import {
+  getDetailedMaterialDisplayName,
+  getDisplayMaterial
+} from './get-display-material.js'
 
 const asRegistrationInput = (data) =>
   /** @type {Parameters<typeof getDisplayMaterial>[0]} */ (data)
@@ -78,5 +81,20 @@ describe(getDisplayMaterial, () => {
         getDisplayMaterial(asRegistrationInput(registration))
       ).toThrow(expect.objectContaining({ isBoom: true, ...expected }))
     })
+  })
+})
+
+describe(getDetailedMaterialDisplayName, () => {
+  it.each([
+    ['plastic', 'Plastic'],
+    ['fibre', 'Fibre-based composite'],
+    ['glass_re_melt', 'Glass remelt'],
+    ['glass_other', 'Glass other']
+  ])('names %s as %s', (material, expected) => {
+    expect(getDetailedMaterialDisplayName(material)).toBe(expected)
+  })
+
+  it('keeps the name of a material this app does not know', () => {
+    expect(getDetailedMaterialDisplayName('cardboard')).toBe('cardboard')
   })
 })

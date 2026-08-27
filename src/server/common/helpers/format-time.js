@@ -24,3 +24,40 @@ export function formatTime(isoString) {
 
   return formatted.replace(/\s/g, '')
 }
+
+const ukDateTimeParts = new Intl.DateTimeFormat('en-GB', {
+  timeZone: UK_TIME_ZONE,
+  hour12: false,
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit'
+})
+
+/**
+ * Format a moment as a UK local `MM-DDTHH:mm` stamp - zero-padded and
+ * machine-comparable, not for display (use formatDate/formatTime for that).
+ * `date` must be unambiguous (Date, epoch ms, or an ISO string with a
+ * zone/offset) - a zoneless ISO string is parsed in the runtime's zone first.
+ * e.g. "2026-09-01T08:30:00Z" (BST) → "09-01T09:30"
+ * @param {Date | string | number | null | undefined} date
+ * @returns {string} empty string when `date` is not a valid date
+ */
+export function formatUkDateTime(date) {
+  if (date === null || date === undefined) {
+    return ''
+  }
+
+  const asDate = date instanceof Date ? date : new Date(date)
+
+  if (Number.isNaN(asDate.getTime())) {
+    return ''
+  }
+
+  /** @type {Record<string, string>} */
+  const parts = ukDateTimeParts
+    .formatToParts(asDate)
+    .reduce((acc, { type, value }) => ({ ...acc, [type]: value }), {})
+
+  return `${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`
+}
