@@ -1,0 +1,81 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% macro registrationsTable(site) %}
+  {% set registrationRows = [] %}
+  {% for registration in site.registrations %}
+    {# Every action link reads the same, so each one names the registration it
+       opens for a reader who moves by link. #}
+    {% set registrationRows = registrationRows.concat([[
+      { text: registration.number or localise('organisations:details:table:notApplicable') },
+      { html: govukTag({ text: registration.status.text, classes: registration.status.classes }) },
+      { text: registration.material },
+      { text: registration.regulator },
+      { html: govukTag({ text: registration.accreditation.text, classes: registration.accreditation.classes }) if registration.accreditation else localise('organisations:details:table:notApplicable') },
+      { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (registration.href | escape) ~ '">' ~ localise('organisations:details:table:view') ~ '<span class="govuk-visually-hidden"> ' ~ ((registration.number or registration.material) | escape) ~ '</span></a>' }
+    ]]) %}
+  {% endfor %}
+
+  {{ govukTable({
+    caption: site.name,
+    captionClasses: "govuk-table__caption--m",
+    firstCellIsHeader: true,
+    head: [
+      { text: localise('organisations:details:table:number') },
+      { text: localise('organisations:details:table:registrationStatus') },
+      { text: localise('organisations:details:table:material') },
+      { text: localise('organisations:details:table:regulator') },
+      { text: localise('organisations:details:table:accreditation') },
+      { text: localise('organisations:details:table:actions') }
+    ],
+    rows: registrationRows
+  }) }}
+{% endmacro %}
+
+{% macro renderSites(tables) %}
+  {% if tables.length %}
+    {% for site in tables %}
+      {{ registrationsTable(site) }}
+    {% endfor %}
+  {% else %}
+    {{ govukInsetText({ text: localise('organisations:details:table:none') }) }}
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-xl">{{ caption }}</span>
+          {{ localise('organisations:details:heading') }}
+        </h1>
+
+        {% if shouldRenderTabs %}
+          <div class="govuk-tabs">
+            <ul class="govuk-tabs__list">
+              <li class="govuk-tabs__list-item{% if activeTab == 'REPROCESSOR' %} govuk-tabs__list-item--selected{% endif %}">
+                <a class="govuk-tabs__tab" href="{{ reprocessorUrl }}">
+                  {{ localise('organisations:details:tabs:reprocessor') }}
+                </a>
+              </li>
+              <li class="govuk-tabs__list-item{% if activeTab == 'EXPORTER' %} govuk-tabs__list-item--selected{% endif %}">
+                <a class="govuk-tabs__tab" href="{{ exporterUrl }}">
+                  {{ localise('organisations:details:tabs:exporter') }}
+                </a>
+              </li>
+            </ul>
+            <div class="govuk-tabs__panel">
+              {{ renderSites(siteTables) }}
+            </div>
+          </div>
+        {% else %}
+          {{ renderSites(siteTables) }}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

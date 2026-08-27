@@ -1,5 +1,33 @@
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { controller } from './controller.js'
+import { controller as detailsController } from './details/controller.js'
 import { errorController } from './error-controller.js'
+
+/**
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ */
+
+/**
+ * @typedef {{ organisationId: string }} OrganisationParams
+ */
+
+/**
+ * The address is the organisation's, whoever is reading it. An operator sees
+ * the dashboard they manage the organisation from; a regulator sees the record.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const organisationController = {
+  /**
+   * @param {HapiRequest & { params: OrganisationParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    return readsAsARegulator(request.auth.credentials)
+      ? detailsController.handler(request, h)
+      : controller.handler(request, h)
+  }
+}
 
 /**
  * Sets up the routes used in the organisations page.
@@ -12,12 +40,12 @@ export const organisations = {
     register(server) {
       server.route([
         {
-          ...controller,
+          ...organisationController,
           method: 'GET',
           path: '/organisations/{organisationId}'
         },
         {
-          ...controller,
+          ...organisationController,
           method: 'GET',
           path: '/organisations/{organisationId}/exporting'
         },

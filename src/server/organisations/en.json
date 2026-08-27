@@ -1,4 +1,24 @@
 {
+  "details": {
+    "allOrganisations": "All organisations",
+    "heading": "Organisation homepage",
+    "table": {
+      "accreditation": "Accreditation",
+      "actions": "Actions",
+      "material": "Material",
+      "none": "This organisation holds no registrations of this kind.",
+      "notApplicable": "Not applicable",
+      "number": "Registration number",
+      "registrationStatus": "Registration status",
+      "regulator": "Regulator",
+      "unknownSite": "Unknown site",
+      "view": "View registration"
+    },
+    "tabs": {
+      "exporter": "Exporter",
+      "reprocessor": "Reprocessor"
+    }
+  },
   "pageTitle": "Home: {{name}}",
   "table": {
     "titleReprocessor": "Select site and material",
