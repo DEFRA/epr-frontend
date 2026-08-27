@@ -1,0 +1,45 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block beforeContent %}
+  {{ govukBackLink({ text: localise("common:back"), href: backUrl }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-xl">{{ caption }}</span>
+          {{ entryHeading }}
+        </h1>
+
+        {{ govukSummaryList({ rows: summaryRows }) }}
+
+        <h2 class="govuk-heading-l">{{ heading }}</h2>
+
+        {% if rows | length > 0 %}
+          {{ govukTable({
+            head: [
+              { text: localise("waste-balance-ledger:table.date") },
+              { text: localise("waste-balance-ledger:table.event") },
+              { text: localise("waste-balance-ledger:table.record") },
+              { text: localise("waste-balance-ledger:table.change"), format: "numeric" },
+              { text: localise("waste-balance-ledger:table.availableTonnes"), format: "numeric" }
+            ],
+            rows: rows
+          }) }}
+
+          <p class="govuk-body">
+            <a class="govuk-link" href="{{ allEventsUrl }}">{{ localise("waste-balance-ledger:allEventsLink") }}</a>
+          </p>
+        {% else %}
+          <p class="govuk-body" data-testid="no-events">{{ localise("waste-balance-ledger:noEvents") }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

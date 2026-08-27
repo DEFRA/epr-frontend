@@ -1,6 +1,11 @@
 import { SCOPES } from '#server/auth/scopes.js'
 
 import { controller } from './controller.js'
+import {
+  allEventsController,
+  eventController,
+  overviewController
+} from './preview-controllers.js'
 
 const registrationPath =
   '/organisations/{organisationId}/registrations/{registrationId}'
@@ -28,11 +33,29 @@ export const wasteBalanceLedger = {
         path
       })
 
+      const accreditationPath = `${registrationPath}/accreditations/{accreditationId}`
+
       server.route([
         ledgerRoute(`${registrationPath}/waste-balance-ledger`),
-        ledgerRoute(
-          `${registrationPath}/accreditations/{accreditationId}/waste-balance-ledger`
-        )
+        ledgerRoute(`${accreditationPath}/waste-balance-ledger`),
+        {
+          ...overviewController,
+          method: /** @type {const} */ ('GET'),
+          options: { auth: { scope: [SCOPES.wasteBalanceLedgerRead] } },
+          path: `${accreditationPath}/ledger-overview`
+        },
+        {
+          ...allEventsController,
+          method: /** @type {const} */ ('GET'),
+          options: { auth: { scope: [SCOPES.wasteBalanceLedgerRead] } },
+          path: `${accreditationPath}/waste-balance-ledger/all`
+        },
+        {
+          ...eventController,
+          method: /** @type {const} */ ('GET'),
+          options: { auth: { scope: [SCOPES.wasteBalanceLedgerRead] } },
+          path: `${accreditationPath}/waste-balance-ledger/events/{number}`
+        }
       ])
     }
   }

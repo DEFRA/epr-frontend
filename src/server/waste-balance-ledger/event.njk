@@ -1,0 +1,26 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block beforeContent %}
+  {{ govukBackLink({ text: localise("waste-balance-ledger:backToLedger"), href: backUrl }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-xl">{{ caption }}</span>
+          {{ heading }}
+        </h1>
+
+        {{ govukSummaryList({ rows: rows }) }}
+
+        {{ govukPagination({ previous: previous, next: next }) }}
+      </div>
+    </div>
+  </div>
+{% endblock %}
