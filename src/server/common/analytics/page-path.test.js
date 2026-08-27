@@ -12,16 +12,12 @@ const requestOn = (path) =>
   /** @type {HapiRequest} */ (path ? { route: { path } } : {})
 
 describe(analyticsPagePath, () => {
-  it('should keep an optional parameter recognisable', () => {
-    expect(analyticsPagePath(requestOn('/reports/{reportId?}'))).toBe(
-      '/reports/:reportId'
-    )
-  })
-
-  it('should keep a multi-segment parameter recognisable', () => {
-    expect(analyticsPagePath(requestOn('/public/{param*}'))).toBe(
-      '/public/:param'
-    )
+  it.each([
+    ['an optional parameter', '/reports/{reportId?}', '/reports/:reportId'],
+    ['a multi-segment parameter', '/public/{param*}', '/public/:param'],
+    ['a counted multi-segment parameter', '/public/{param*2}', '/public/:param']
+  ])('should keep %s recognisable', (_, path, expected) => {
+    expect(analyticsPagePath(requestOn(path))).toBe(expected)
   })
 
   it('should fall back to the root when a route carries no path', () => {

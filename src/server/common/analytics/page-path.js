@@ -2,7 +2,7 @@
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
-const PARAMETER = /\{(\w+)[?*]?\}/g
+const PARAMETER = /\{(\w+)[?*]?\d*\}/g
 
 /**
  * Names the step a request is on, rather than the address it arrived at.
