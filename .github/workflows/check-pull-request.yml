@@ -71,6 +71,15 @@ jobs:
           comment-header: lint-types-prod
           fail-on: all
 
+      - uses: DEFRA/epr-re-ex-service/.github/actions/lint-types@main
+        if: ${{ !cancelled() }}
+        with:
+          npm-script: lint:types:client
+          tsconfig: src/client/tsconfig.json
+          label: Client
+          comment-header: lint-types-client
+          fail-on: all
+
   type-check-tests:
     name: Lint Types - Tests
     runs-on: ubuntu-latest
