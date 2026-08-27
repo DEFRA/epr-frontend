@@ -1,4 +1,4 @@
-import { config } from '#config/config.js'
+import { isAnalyticsEnabled } from '#server/common/analytics/enabled.js'
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
@@ -39,7 +39,7 @@ export const analyticsConsent = (request) => {
     ? `${request.url.pathname}${request.url.search}`
     : '/'
 
-  if (!config.get('analytics.isEnabled')) {
+  if (!isAnalyticsEnabled()) {
     return {
       hasConsented: false,
       hasRejected: false,

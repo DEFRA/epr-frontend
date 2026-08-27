@@ -1,5 +1,5 @@
 import { config } from '#config/config.js'
-import { ANALYTICS_CONSENT_COOKIE } from '#server/common/helpers/analytics/consent.js'
+import { ANALYTICS_CONSENT_COOKIE } from '#server/common/analytics/consent.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, queryByRole } from '@testing-library/dom'
@@ -41,10 +41,12 @@ describe('#cookieBanner', () => {
   describe('when analytics is enabled and no choice has been made', () => {
     beforeAll(() => {
       config.set('analytics.isEnabled', true)
+      config.set('analytics.measurementId', 'G-TESTONLY01')
     })
 
     afterAll(() => {
       config.set('analytics.isEnabled', false)
+      config.set('analytics.measurementId', '')
     })
 
     it('should render the banner naming the service', async ({ server }) => {
@@ -145,10 +147,12 @@ describe('#cookieBanner', () => {
   describe('when a choice has already been made', () => {
     beforeAll(() => {
       config.set('analytics.isEnabled', true)
+      config.set('analytics.measurementId', 'G-TESTONLY01')
     })
 
     afterAll(() => {
       config.set('analytics.isEnabled', false)
+      config.set('analytics.measurementId', '')
     })
 
     it.for(['accepted', 'rejected'])(

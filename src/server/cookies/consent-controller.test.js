@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { ANALYTICS_CONSENT_COOKIE } from '#server/common/helpers/analytics/consent.js'
+import { ANALYTICS_CONSENT_COOKIE } from '#server/common/analytics/consent.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { describe, expect } from 'vitest'

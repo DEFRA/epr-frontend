@@ -27,6 +27,9 @@ export default {
   entry: {
     application: {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
+    },
+    analytics: {
+      import: ['./javascripts/analytics.js']
     }
   },
   experiments: {

@@ -1,5 +1,5 @@
 import { config } from '#config/config.js'
-import { ANALYTICS_CONSENT_COOKIE } from '#server/common/helpers/analytics/consent.js'
+import { ANALYTICS_CONSENT_COOKIE } from '#server/common/analytics/consent.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, queryByRole } from '@testing-library/dom'
@@ -71,10 +71,12 @@ describe('#analyticsChoice', () => {
   describe('when analytics is enabled', () => {
     beforeAll(() => {
       config.set('analytics.isEnabled', true)
+      config.set('analytics.measurementId', 'G-TESTONLY01')
     })
 
     afterAll(() => {
       config.set('analytics.isEnabled', false)
+      config.set('analytics.measurementId', '')
     })
 
     it('should list the analytics cookies it may set', async ({ server }) => {
