@@ -67,7 +67,7 @@ jobs:
         with:
           npm-script: lint:types
           tsconfig: jsconfig.typecheck.json
-          label: Prod
+          label: Server
           comment-header: lint-types-prod
           fail-on: all
 
