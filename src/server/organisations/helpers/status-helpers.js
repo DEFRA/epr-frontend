@@ -23,9 +23,6 @@ export function getStatusClass(status) {
 }
 
 /**
- * The backend can add a status without this repo hearing about it, and
- * `getStatusClass` answers grey for one it does not know, so an unfamiliar
- * status still names itself to the reader.
  * @param {string} status
  * @returns {StatusTag}
  */

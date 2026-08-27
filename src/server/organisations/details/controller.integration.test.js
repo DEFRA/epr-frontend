@@ -38,12 +38,6 @@ const regulator = buildMockAuth({
   ...sessionIdentity(IDENTITIES.regulator)
 })
 
-/**
- * The Entra callback refuses to mint this session, so it cannot arrive in
- * service. The branch is asserted against it anyway, because a predicate that
- * reads "not an operator" as "a regulator" would send exactly this session to
- * the wrong page.
- */
 const unrecognised = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-2', email: 'nobody@example.gov.uk' },
@@ -113,8 +107,6 @@ const rowsOf = (body) =>
   getAllByRole(within(documentOf(body)).getByRole('table'), 'row')
     .slice(1)
     .map((row) =>
-      // The number is a row header and the rest are cells, so the two roles
-      // are read in turn to recover the row as the reader meets it.
       [...queryAllByRole(row, 'rowheader'), ...queryAllByRole(row, 'cell')].map(
         (cell) => cell.textContent?.trim()
       )
@@ -178,7 +170,7 @@ describe('the organisation homepage a regulator reads', () => {
         'Aluminium',
         'SEPA',
         'Not applicable',
-        'View registration Aluminium'
+        'View registration Aluminium, Rejected'
       ]
     ])
   })
@@ -188,8 +180,6 @@ describe('the organisation homepage a regulator reads', () => {
 
     expect(
       getByRole(documentOf(body), 'link', {
-        // The number sits in a visually hidden span, and the accessible name
-        // is computed by joining the two runs rather than the text between.
         name: /^View registration\s*R26ER5001180041PL$/
       }).getAttribute('href')
     ).toBe(`/organisations/${organisationId}/registrations/reg-001`)
@@ -251,8 +241,6 @@ describe('who the organisation page renders for', () => {
     const surfaceOff = await visit(server, operator)
     config.set('featureFlags.regulatorAccess', true)
 
-    // Naming the status as well as matching the bodies: two identical error
-    // pages would otherwise satisfy the comparison and prove nothing.
     expect(surfaceOn.statusCode).toBe(statusCodes.ok)
     expect(surfaceOff.statusCode).toBe(statusCodes.ok)
     expect(surfaceOff.body).toBe(surfaceOn.body)

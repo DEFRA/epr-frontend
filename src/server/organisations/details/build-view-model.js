@@ -1,3 +1,4 @@
+import { MATERIAL } from '#domain/organisations/model.js'
 import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import {
   isExporterRegistration,
@@ -17,12 +18,6 @@ import { paths } from '#server/paths.js'
  * @typedef {(key: string, options?: Record<string, string>) => string} Localise
  * @typedef {'REPROCESSOR' | 'EXPORTER'} Tab
  * @typedef {{ text: string, href?: string }} Crumb
- */
-
-/**
- * One registration as the table reads it. A registration that never earned a
- * number, and one that is on no accreditation, each leave their cell unset
- * rather than carrying copy the template is free to choose.
  * @typedef {{
  *   id: string,
  *   number: string | null,
@@ -30,7 +25,8 @@ import { paths } from '#server/paths.js'
  *   material: string,
  *   regulator: string,
  *   accreditation: StatusTag | null,
- *   href: string
+ *   href: string,
+ *   linkName: string
  * }} RegistrationRow
  * @typedef {{ name: string | null, registrations: RegistrationRow[] }} SiteTable
  * @typedef {{
@@ -46,19 +42,17 @@ import { paths } from '#server/paths.js'
  */
 
 /**
- * The backend resolves glass to the process it was recycled by, and names the
- * material itself for everything else. A regulator reads records this service
- * did not create, so a material it does not know keeps its own name rather
- * than failing the page.
  * @param {Registration} registration
  * @returns {string}
  */
 const toMaterialName = ({ material, glassRecyclingProcess }) =>
-  getDetailedMaterialDisplayName(glassRecyclingProcess?.[0] ?? material)
+  getDetailedMaterialDisplayName(
+    material === MATERIAL.GLASS
+      ? (glassRecyclingProcess?.[0] ?? material)
+      : material
+  )
 
 /**
- * An exporter reprocesses nowhere this service records, so its registrations
- * are listed under no site at all rather than under an empty heading.
  * @param {Registration} registration
  * @param {Localise} localise
  * @returns {string | null}
@@ -83,22 +77,26 @@ const toRegistrationRow = ({
   accreditation,
   organisationId,
   localiseUrl
-}) => ({
-  id: registration.id,
-  number: registration.registrationNumber ?? null,
-  status: toStatusTag(registration.status),
-  material: toMaterialName(registration),
-  regulator: registration.submittedToRegulator.toUpperCase(),
-  accreditation: accreditation ? toStatusTag(accreditation.status) : null,
-  href: localiseUrl(
-    `/organisations/${organisationId}/registrations/${registration.id}`
-  )
-})
+}) => {
+  const number = registration.registrationNumber ?? null
+  const status = toStatusTag(registration.status)
+  const material = toMaterialName(registration)
+
+  return {
+    id: registration.id,
+    number,
+    status,
+    material,
+    regulator: registration.submittedToRegulator.toUpperCase(),
+    accreditation: accreditation ? toStatusTag(accreditation.status) : null,
+    href: localiseUrl(
+      `/organisations/${organisationId}/registrations/${registration.id}`
+    ),
+    linkName: number ?? `${material}, ${status.text}`
+  }
+}
 
 /**
- * Groups rows under the site they are processed at, keeping the record's own
- * order: sites in the order they are first met, registrations in the order the
- * organisation lists them.
  * @param {SiteTable[]} tables
  * @param {{ name: string | null, row: RegistrationRow }} entry
  * @returns {SiteTable[]}
@@ -116,9 +114,6 @@ const addToSite = (tables, { name, row }) => {
 }
 
 /**
- * The whole record, not the operator's actionable subset: a regulator reading
- * an organisation is shown every registration it holds, whatever its status,
- * and the accreditation each one is on, whatever that status is too.
  * @param {{
  *   organisation: Organisation,
  *   includes: (registration: Registration) => boolean,
@@ -153,15 +148,6 @@ const toSiteTables = ({ organisation, includes, localise, localiseUrl }) => {
 }
 
 /**
- * An organisation trading under another name is known by it, so that is the
- * name the regulator is shown.
- * @param {Organisation} organisation
- * @returns {string}
- */
-const organisationName = ({ companyDetails }) =>
-  companyDetails.tradingName?.trim() || companyDetails.name
-
-/**
  * @param {{
  *   organisation: Organisation,
  *   activeTab: Tab,
@@ -176,7 +162,7 @@ export const buildViewModel = ({
   localise,
   localiseUrl
 }) => {
-  const name = organisationName(organisation)
+  const name = organisation.companyDetails.name
   const heading = localise('organisations:details:heading')
   const organisationPath = `/organisations/${organisation.id}`
 
@@ -187,12 +173,12 @@ export const buildViewModel = ({
   const reprocessorTables = tablesOf(isReprocessorRegistration)
   const exporterTables = tablesOf(isExporterRegistration)
 
-  // The tabs are the only way to reach the exporting address, so an
-  // organisation that exports and reprocesses nowhere is shown what it has
-  // rather than an empty reprocessor table it cannot navigate out of.
-  const tab =
-    activeTab === 'REPROCESSOR' && reprocessorTables.length === 0
-      ? 'EXPORTER'
+  const reprocessesNothing = reprocessorTables.length === 0
+  const exportsNothing = exporterTables.length === 0
+  const tab = reprocessesNothing
+    ? 'EXPORTER'
+    : exportsNothing
+      ? 'REPROCESSOR'
       : activeTab
 
   return {
@@ -208,7 +194,7 @@ export const buildViewModel = ({
     exporterUrl: localiseUrl(`${organisationPath}/exporting`),
     pageTitle: `${name}: ${heading}`,
     reprocessorUrl: localiseUrl(organisationPath),
-    shouldRenderTabs: reprocessorTables.length > 0 && exporterTables.length > 0,
+    shouldRenderTabs: !reprocessesNothing && !exportsNothing,
     siteTables: tab === 'EXPORTER' ? exporterTables : reprocessorTables
   }
 }

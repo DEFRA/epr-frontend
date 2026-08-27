@@ -4,8 +4,6 @@ import { describe, expect, it } from 'vitest'
 
 import { buildViewModel } from './build-view-model.js'
 
-// Only the keys these assertions read are translated. The rendered copy is
-// asserted against the real en.json by the page's integration test.
 const localise = createMockLocalise({
   'organisations:details:allOrganisations': 'All organisations',
   'organisations:details:heading': 'Organisation homepage',
@@ -97,14 +95,6 @@ describe(buildViewModel, () => {
     expect(build().caption).toBe('Kirkby Plastics Ltd')
   })
 
-  it('prefers the trading name the organisation is known by', () => {
-    const model = build({
-      companyDetails: { name: 'Kirkby Plastics Ltd', tradingName: 'Kirkby' }
-    })
-
-    expect(model.caption).toBe('Kirkby')
-  })
-
   it('walks back to the organisation list', () => {
     expect(build().breadcrumbs).toEqual([
       { text: 'All organisations', href: '/en/regulators/home' },
@@ -167,8 +157,6 @@ describe(buildViewModel, () => {
     expect(model.siteTables[0].registrations[0].number).toBeNull()
   })
 
-  // The operator's own page hides these, because the operator can act on
-  // neither. A regulator is reading the record, so the record is what it shows.
   it('keeps a rejected registration and a rejected accreditation', () => {
     const model = build({
       registrations: [
@@ -258,8 +246,59 @@ describe(buildViewModel, () => {
     expect(build().shouldRenderTabs).toBe(false)
   })
 
-  // Without the tabs there is no link to the exporting address, so landing on
-  // the reprocessor table would be a dead end.
+  it('shows a reprocessor-only organisation what it has', () => {
+    const model = build({ activeTab: 'EXPORTER' })
+
+    expect(model).toMatchObject({
+      activeTab: 'REPROCESSOR',
+      shouldRenderTabs: false,
+      siteTables: [{ registrations: [{ id: 'reg-001' }] }]
+    })
+  })
+
+  it('names a numbered registration by its number in the link', () => {
+    const [{ registrations }] = build().siteTables
+
+    expect(registrations[0].linkName).toBe('R26ER5001180041PL')
+  })
+
+  it('names a numberless registration by what its row shows', () => {
+    const model = build({
+      registrations: [
+        aRegistration({
+          status: 'created',
+          registrationNumber: undefined,
+          material: 'aluminium'
+        })
+      ]
+    })
+
+    expect(model.siteTables[0].registrations[0].linkName).toBe(
+      'Aluminium, Created'
+    )
+  })
+
+  it('keeps the material of a glass registration with no process recorded', () => {
+    const model = build({
+      registrations: [aRegistration({ material: 'glass' })]
+    })
+
+    expect(model.siteTables[0].registrations[0].material).toBe('glass')
+  })
+
+  it('reads glass as the process it was recycled by', () => {
+    const model = build({
+      registrations: [
+        aRegistration({
+          material: 'glass',
+          glassRecyclingProcess: ['glass_re_melt']
+        })
+      ]
+    })
+
+    expect(model.siteTables[0].registrations[0].material).toBe('Glass remelt')
+  })
+
   it('shows an exporter-only organisation what it has', () => {
     const model = build({
       registrations: [

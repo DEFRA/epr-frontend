@@ -13,8 +13,6 @@ import { errorController } from './error-controller.js'
  */
 
 /**
- * The address is the organisation's, whoever is reading it. An operator sees
- * the dashboard they manage the organisation from; a regulator sees the record.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const organisationController = {

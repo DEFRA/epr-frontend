@@ -5,15 +5,13 @@
 {% macro registrationsTable(site) %}
   {% set registrationRows = [] %}
   {% for registration in site.registrations %}
-    {# Every action link reads the same, so each one names the registration it
-       opens for a reader who moves by link. #}
     {% set registrationRows = registrationRows.concat([[
       { text: registration.number or localise('organisations:details:table:notApplicable') },
       { html: govukTag({ text: registration.status.text, classes: registration.status.classes }) },
       { text: registration.material },
       { text: registration.regulator },
       { html: govukTag({ text: registration.accreditation.text, classes: registration.accreditation.classes }) if registration.accreditation else localise('organisations:details:table:notApplicable') },
-      { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (registration.href | escape) ~ '">' ~ localise('organisations:details:table:view') ~ '<span class="govuk-visually-hidden"> ' ~ ((registration.number or registration.material) | escape) ~ '</span></a>' }
+      { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (registration.href | escape) ~ '">' ~ localise('organisations:details:table:view') ~ '<span class="govuk-visually-hidden"> ' ~ (registration.linkName | escape) ~ '</span></a>' }
     ]]) %}
   {% endfor %}
 
