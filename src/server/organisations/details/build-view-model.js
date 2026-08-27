@@ -1,20 +1,21 @@
-import { capitalize } from 'lodash-es'
-
 import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
-import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
+import {
+  isExporterRegistration,
+  isReprocessorRegistration
+} from '#server/common/helpers/prns/registration-helpers.js'
+import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  */
 
 /**
  * @typedef {(key: string, options?: Record<string, string>) => string} Localise
  * @typedef {'REPROCESSOR' | 'EXPORTER'} Tab
- * @typedef {{ text: string, classes: string }} StatusTag
  * @typedef {{ text: string, href?: string }} Crumb
  */
 
@@ -43,23 +44,6 @@ import { paths } from '#server/paths.js'
  *   siteTables: SiteTable[]
  * }} OrganisationDetailsViewModel
  */
-
-const TABS = Object.freeze({
-  EXPORTER: 'exporter',
-  REPROCESSOR: 'reprocessor'
-})
-
-/**
- * The backend can add a status without this repo hearing about it, and
- * `getStatusClass` answers grey for one it does not know, so an unfamiliar
- * status still names itself to the reader.
- * @param {string} status
- * @returns {StatusTag}
- */
-const toStatusTag = (status) => ({
-  text: capitalize(status),
-  classes: `govuk-tag--${getStatusClass(status)}`
-})
 
 /**
  * The backend resolves glass to the process it was recycled by, and names the
@@ -137,18 +121,13 @@ const addToSite = (tables, { name, row }) => {
  * and the accreditation each one is on, whatever that status is too.
  * @param {{
  *   organisation: Organisation,
- *   wasteProcessingType: string,
+ *   includes: (registration: Registration) => boolean,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {SiteTable[]}
  */
-const toSiteTables = ({
-  organisation,
-  wasteProcessingType,
-  localise,
-  localiseUrl
-}) => {
+const toSiteTables = ({ organisation, includes, localise, localiseUrl }) => {
   const accreditationById = new Map(
     organisation.accreditations.map((accreditation) => [
       accreditation.id,
@@ -156,25 +135,21 @@ const toSiteTables = ({
     ])
   )
 
-  return organisation.registrations
-    .filter(
-      (registration) => registration.wasteProcessingType === wasteProcessingType
-    )
-    .reduce(
-      (tables, registration) =>
-        addToSite(tables, {
-          name: toSiteName(registration, localise),
-          row: toRegistrationRow({
-            registration,
-            accreditation: registration.accreditationId
-              ? accreditationById.get(registration.accreditationId)
-              : undefined,
-            organisationId: organisation.id,
-            localiseUrl
-          })
-        }),
-      /** @type {SiteTable[]} */ ([])
-    )
+  return organisation.registrations.filter(includes).reduce(
+    (tables, registration) =>
+      addToSite(tables, {
+        name: toSiteName(registration, localise),
+        row: toRegistrationRow({
+          registration,
+          accreditation: registration.accreditationId
+            ? accreditationById.get(registration.accreditationId)
+            : undefined,
+          organisationId: organisation.id,
+          localiseUrl
+        })
+      }),
+    /** @type {SiteTable[]} */ ([])
+  )
 }
 
 /**
@@ -205,14 +180,23 @@ export const buildViewModel = ({
   const heading = localise('organisations:details:heading')
   const organisationPath = `/organisations/${organisation.id}`
 
-  const forTab = (/** @type {string} */ wasteProcessingType) =>
-    toSiteTables({ organisation, wasteProcessingType, localise, localiseUrl })
+  const tablesOf = (
+    /** @type {(registration: Registration) => boolean} */ includes
+  ) => toSiteTables({ organisation, includes, localise, localiseUrl })
 
-  const reprocessorTables = forTab(TABS.REPROCESSOR)
-  const exporterTables = forTab(TABS.EXPORTER)
+  const reprocessorTables = tablesOf(isReprocessorRegistration)
+  const exporterTables = tablesOf(isExporterRegistration)
+
+  // The tabs are the only way to reach the exporting address, so an
+  // organisation that exports and reprocesses nowhere is shown what it has
+  // rather than an empty reprocessor table it cannot navigate out of.
+  const tab =
+    activeTab === 'REPROCESSOR' && reprocessorTables.length === 0
+      ? 'EXPORTER'
+      : activeTab
 
   return {
-    activeTab,
+    activeTab: tab,
     breadcrumbs: [
       {
         text: localise('organisations:details:allOrganisations'),
@@ -225,6 +209,6 @@ export const buildViewModel = ({
     pageTitle: `${name}: ${heading}`,
     reprocessorUrl: localiseUrl(organisationPath),
     shouldRenderTabs: reprocessorTables.length > 0 && exporterTables.length > 0,
-    siteTables: activeTab === 'EXPORTER' ? exporterTables : reprocessorTables
+    siteTables: tab === 'EXPORTER' ? exporterTables : reprocessorTables
   }
 }

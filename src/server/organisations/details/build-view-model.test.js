@@ -257,4 +257,21 @@ describe(buildViewModel, () => {
   it('offers no tabs when the organisation only reprocesses', () => {
     expect(build().shouldRenderTabs).toBe(false)
   })
+
+  // Without the tabs there is no link to the exporting address, so landing on
+  // the reprocessor table would be a dead end.
+  it('shows an exporter-only organisation what it has', () => {
+    const model = build({
+      registrations: [
+        aRegistration({ id: 'reg-002', wasteProcessingType: 'exporter' })
+      ],
+      activeTab: 'REPROCESSOR'
+    })
+
+    expect(model).toMatchObject({
+      activeTab: 'EXPORTER',
+      shouldRenderTabs: false,
+      siteTables: [{ registrations: [{ id: 'reg-002' }] }]
+    })
+  })
 })
