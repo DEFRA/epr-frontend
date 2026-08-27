@@ -1,6 +1,7 @@
 import Blankie from 'blankie'
 import { config } from '#config/config.js'
 import { isAnalyticsEnabled } from '#server/common/analytics/enabled.js'
+import { analyticsOrigins } from '#server/common/analytics/origins.js'
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
@@ -29,15 +30,6 @@ import { isAnalyticsEnabled } from '#server/common/analytics/enabled.js'
 const govukInlineScriptHash =
   "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='"
 
-// gtag.js is served from googletagmanager.com even when Tag Manager itself is
-// not in play. The GA4 endpoints receive the measurements.
-const analyticsScriptSrc = ['https://www.googletagmanager.com']
-const analyticsConnectSrc = [
-  'https://*.google-analytics.com',
-  'https://*.analytics.google.com'
-]
-const analyticsImgSrc = ['https://*.google-analytics.com']
-
 export function cspFormAction({ isProduction }) {
   return isProduction ? ['self'] : ['self', 'localhost:*']
 }
@@ -57,16 +49,16 @@ export const cspOptions = ({ allowAnalytics, isProduction }) => ({
     'self',
     'wss',
     'data:',
-    ...(allowAnalytics ? analyticsConnectSrc : [])
+    ...(allowAnalytics ? analyticsOrigins.connect : [])
   ],
   mediaSrc: ['self'],
   styleSrc: ['self'],
   scriptSrc: [
     'self',
     govukInlineScriptHash,
-    ...(allowAnalytics ? analyticsScriptSrc : [])
+    ...(allowAnalytics ? analyticsOrigins.script : [])
   ],
-  imgSrc: ['self', 'data:', ...(allowAnalytics ? analyticsImgSrc : [])],
+  imgSrc: ['self', 'data:', ...(allowAnalytics ? analyticsOrigins.img : [])],
   frameSrc: ['self', 'data:'],
   objectSrc: ['none'],
   frameAncestors: ['none'],
