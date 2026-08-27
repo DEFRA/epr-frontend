@@ -3,6 +3,26 @@
   "accreditationNumber": "Accreditation number",
   "chooseTask": "Choose a task",
   "contactRegulator": "contact your regulator",
+  "details": {
+    "accreditedPeriods": {
+      "actions": "Actions",
+      "dateRange": "Date range",
+      "heading": "Accredited periods",
+      "none": "This registration holds no accreditation.",
+      "number": "Accreditation number",
+      "status": "Accreditation status",
+      "view": "View accreditation"
+    },
+    "allOrganisations": "All organisations",
+    "current": "Current",
+    "heading": "Registration details",
+    "summary": {
+      "material": "Material",
+      "processingType": "Processing type",
+      "site": "Site",
+      "status": "Status"
+    }
+  },
   "manageReports": "Manage reports",
   "manageReportsReadOnly": "View reports",
   "notes": {
