@@ -2,11 +2,12 @@ import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisation.js'
 import { fetchIdentity } from '#server/auth/helpers/fetch-identity.js'
 import { hashUserId } from '#server/auth/helpers/hash-user-id.js'
-import { buildProviderSignOutUrl } from '#server/auth/helpers/provider-sign-out-url.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
-import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { rememberSignedOutProvider } from '#server/auth/helpers/signed-out-provider.js'
+import {
+  OIDC_ENTRA_ID,
+  SELECT_ACCOUNT_QUERY
+} from '#server/auth/plugins/entra-id.js'
 import { holdsNoRole } from '#server/auth/roles.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
@@ -157,12 +158,10 @@ const refuseSignIn = async (request, h, session) => {
   // a referrer left stashed here would send the next account to this one's page.
   request.yar.flash('referrer')
 
-  rememberSignedOutProvider(h, OIDC_ENTRA_ID)
-
   return h
     .view('regulators/not-authorised', {
       pageTitle: request.t('regulators:notAuthorised:pageTitle'),
-      signOutUrl: buildProviderSignOutUrl(request, session)
+      signInUrl: `${request.localiseUrl(paths.auth.entraId.login)}?${SELECT_ACCOUNT_QUERY}`
     })
     .code(statusCodes.forbidden)
 }

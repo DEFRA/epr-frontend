@@ -17,6 +17,15 @@ import { recordSignInReferrer } from '../helpers/record-sign-in-referrer.js'
 export const OIDC_ENTRA_ID = 'entra-id'
 
 /**
+ * Marks a sign in that asks Entra ID which account to use. Entra ID returns
+ * whoever is already signed in unless the authorize request asks otherwise, so
+ * an account this service has refused signs straight back in and meets the
+ * same refusal. Asking on every sign in would put an account picker in front
+ * of the regulators who hold one account.
+ */
+export const SELECT_ACCOUNT_QUERY = 'selectAccount'
+
+/**
  * The app asks for `api://{clientId}/.default` as a resource scope for its own
  * app registration, so Entra issues an access token — rather than the id
  * token — carrying the `roles` app-role assignment claim. Sign-in and refresh
@@ -175,9 +184,10 @@ const createEntraId = (oidcConf, authProvider) => ({
             credentials.scope = []
           }
         },
-        providerParams: () => ({
-          response_mode: 'query'
-        })
+        providerParams: (request) =>
+          Object.hasOwn(request.query, SELECT_ACCOUNT_QUERY)
+            ? { response_mode: 'query', prompt: 'select_account' }
+            : { response_mode: 'query' }
       })
     }
   }

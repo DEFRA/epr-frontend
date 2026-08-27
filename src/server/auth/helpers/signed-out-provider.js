@@ -39,20 +39,13 @@ export const registerSignedOutProviderCookie = (server) => {
  * Records who signed the user out, for the page that greets them when they
  * come back. Only a regulator sign-out is worth remembering, so an operator
  * signing out is given no cookie at all.
- *
- * A refused regulator gets the cookie on a page they may never leave, so it
- * outlives that visit. An operator sign-out clears it rather than ignoring it,
- * or the operator is greeted by the regulator page.
  * @param {ResponseToolkit} h
  * @param {string} provider
  */
 export const rememberSignedOutProvider = (h, provider) => {
   if (provider === OIDC_ENTRA_ID) {
     h.state(SIGNED_OUT_PROVIDER_COOKIE, provider)
-    return
   }
-
-  h.unstate(SIGNED_OUT_PROVIDER_COOKIE)
 }
 
 /**

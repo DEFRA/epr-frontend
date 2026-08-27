@@ -31,18 +31,3 @@ export function mergeCookies(...cookieStrings) {
     .map(([k, v]) => `${k}=${v}`)
     .join('; ')
 }
-
-/**
- * A `Cookie` request header carrying one named cookie from a Set-Cookie
- * header, empty if it set no such cookie
- * @param {string | string[] | undefined} setCookieHeader
- * @param {string} name
- * @returns {string}
- */
-export function cookieHeaderFor(setCookieHeader, name) {
-  return (
-    extractCookieValues(setCookieHeader).find((value) =>
-      value.startsWith(`${name}=`)
-    ) ?? ''
-  )
-}

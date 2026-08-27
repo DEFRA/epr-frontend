@@ -10,9 +10,8 @@ import {
   IDENTITIES,
   identityHandler
 } from '#server/common/test-helpers/identity-helper.js'
-import { SIGNED_OUT_PROVIDER_COOKIE } from '#server/auth/helpers/signed-out-provider.js'
+import { SELECT_ACCOUNT_QUERY } from '#server/auth/plugins/entra-id.js'
 import {
-  cookieHeaderFor,
   extractCookieValues,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
@@ -143,13 +142,10 @@ describe('/auth/callback/entra - GET integration', async () => {
   // The application role rides on the token and this app never reads it. The
   // backend resolves it and answers over the identity endpoint, so every test
   // below varies that answer rather than the claim.
-  const regulatorToken = {
-    ...(await generateAccessToken({
-      ...claims,
-      roles: ['Waste.Regulator.Standard']
-    })),
-    idToken: 'entra-id-token-for-the-regulator'
-  }
+  const regulatorToken = await generateAccessToken({
+    ...claims,
+    roles: ['Waste.Regulator.Standard']
+  })
 
   beforeEach(({ msw }) => {
     msw.use(identityHandler(IDENTITIES.regulator))
@@ -365,19 +361,13 @@ describe('/auth/callback/entra - GET integration', async () => {
       )
     })
 
-    // The sign out link's address is the provider's, so it is dropped before
-    // the page is searched for the provider's name.
     it('names no identity provider to a reader who has just been refused', async ({
       server,
       msw
     }) => {
       const response = await performSignInFlow(server, msw, regulatorToken)
 
-      const $ = load(asHtml(response.result))
-
-      $('[data-testid="sign-out-link"]').removeAttr('href')
-
-      expect($.html()).not.toMatch(/entra/i)
+      expect(asHtml(response.result)).not.toMatch(/entra/i)
     })
 
     it('creates no session', async ({ server, msw }) => {
@@ -388,49 +378,16 @@ describe('/auth/callback/entra - GET integration', async () => {
       ).not.toContain('userSession=')
     })
 
-    it('offers a way out of the identity provider session it just refused', async ({
+    it('offers a sign in that asks which account to use', async ({
       server,
       msw
     }) => {
       const response = await performSignInFlow(server, msw, regulatorToken)
 
       const $ = load(asHtml(response.result))
-      const href = $('[data-testid="sign-out-link"]').attr('href')
+      const href = $('[data-testid="sign-in-link"]').attr('href')
 
-      expect(href).toBeDefined()
-
-      const signOutUrl = new URL(String(href))
-
-      expect(`${signOutUrl.origin}${signOutUrl.pathname}`).toBe(
-        'http://entra-id.auth/logout'
-      )
-      expect(signOutUrl.searchParams.get('id_token_hint')).toBe(
-        regulatorToken.idToken
-      )
-      expect(signOutUrl.searchParams.get('post_logout_redirect_uri')).toMatch(
-        /\/auth\/logout$/
-      )
-    })
-
-    it('brings the refused person back to the regulator signed out page', async ({
-      server,
-      msw
-    }) => {
-      const response = await performSignInFlow(server, msw, regulatorToken)
-
-      const returned = await server.inject({
-        method: 'GET',
-        url: '/auth/logout',
-        headers: {
-          cookie: cookieHeaderFor(
-            response.headers['set-cookie'],
-            SIGNED_OUT_PROVIDER_COOKIE
-          )
-        }
-      })
-
-      expect(returned.statusCode).toBe(statusCodes.found)
-      expect(returned.headers.location).toBe('/regulators/logged-out')
+      expect(href).toBe(`/regulators/login?${SELECT_ACCOUNT_QUERY}`)
     })
 
     it('does not send the next sign in to the page this one started from', async ({

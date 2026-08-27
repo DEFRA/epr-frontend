@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { SELECT_ACCOUNT_QUERY } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
@@ -61,5 +62,29 @@ describe('#regulatorsLoginController - integration', () => {
         expect(mockSignInAttemptedMetric).toHaveBeenCalledWith('entra-id')
       }
     )
+  })
+
+  describe('which account the provider signs the user in as', () => {
+    const promptAskedFor = async (server, url) => {
+      const response = await server.inject({ method: 'GET', url })
+
+      return new URL(
+        /** @type {string} */ (response.headers.location)
+      ).searchParams.get('prompt')
+    }
+
+    it('lets the user choose when the sign in asks for a choice', async ({
+      server
+    }) => {
+      await expect(
+        promptAskedFor(server, `/regulators/login?${SELECT_ACCOUNT_QUERY}`)
+      ).resolves.toBe('select_account')
+    })
+
+    it('signs an everyday sign in straight in', async ({ server }) => {
+      await expect(
+        promptAskedFor(server, '/regulators/login')
+      ).resolves.toBeNull()
+    })
   })
 })
