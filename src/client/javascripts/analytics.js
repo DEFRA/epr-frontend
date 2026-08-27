@@ -15,13 +15,21 @@ const reportedLocation = () =>
   new URL(published('analytics-page-path') ?? '/', window.location.origin).href
 
 /**
- * The measurement library reads its queue off the window, so the name is fixed
- * by the vendor rather than chosen here.
- * @param {unknown[]} entry
+ * The measurement library reads an `arguments` object as a command and anything
+ * else as a plain data push, and only a non-arrow function produces one.
  */
-const enqueue = (entry) => {
-  window.dataLayer = window.dataLayer ?? []
-  window.dataLayer.push(entry)
+const asCommand = function () {
+  return arguments
+}
+
+/**
+ * The queue lives on the window under a name fixed by the vendor, and the
+ * library adopts whatever it finds there once loaded.
+ * @param {...unknown} command
+ */
+const gtag = (...command) => {
+  window.dataLayer ??= []
+  window.dataLayer.push(asCommand(...command))
 }
 
 /**
@@ -53,8 +61,8 @@ export const startAnalytics = () => {
   tag.src = src
   document.head.appendChild(tag)
 
-  enqueue(['js', new Date()])
-  enqueue(['config', measurementId, { page_location: reportedLocation() }])
+  gtag('js', new Date())
+  gtag('config', measurementId, { page_location: reportedLocation() })
 }
 
 startAnalytics()

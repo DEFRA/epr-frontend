@@ -15,6 +15,14 @@ const givenMeasurementId = (id, pagePath = '/start') => {
          <meta name="analytics-page-path" content="${pagePath}">`
 }
 
+/**
+ * The measurement library tells a command apart from a plain data push by the
+ * entry being an `arguments` object, so the expected values are built as one.
+ */
+const command = function () {
+  return arguments
+}
+
 const loadedTagUrls = () =>
   Array.from(document.head.querySelectorAll('script')).map(
     (script) => script.src
@@ -42,12 +50,10 @@ describe('#startAnalytics', () => {
     startAnalytics()
 
     expect(window.dataLayer).toStrictEqual([
-      ['js', expect.any(Date)],
-      [
-        'config',
-        measurementId,
-        { page_location: 'http://localhost:3000/start' }
-      ]
+      command('js', expect.any(Date)),
+      command('config', measurementId, {
+        page_location: 'http://localhost:3000/start'
+      })
     ])
   })
 
@@ -59,14 +65,12 @@ describe('#startAnalytics', () => {
 
     startAnalytics()
 
-    expect(window.dataLayer?.[1]).toStrictEqual([
-      'config',
-      measurementId,
-      {
+    expect(window.dataLayer?.[1]).toStrictEqual(
+      command('config', measurementId, {
         page_location:
           'http://localhost:3000/organisations/:organisationId/registrations/:registrationId/summary-logs/:summaryLogId/submit'
-      }
-    ])
+      })
+    )
   })
 
   it('should report the root when the page names no step', () => {
@@ -74,11 +78,11 @@ describe('#startAnalytics', () => {
 
     startAnalytics()
 
-    expect(window.dataLayer?.[1]).toStrictEqual([
-      'config',
-      measurementId,
-      { page_location: 'http://localhost:3000/' }
-    ])
+    expect(window.dataLayer?.[1]).toStrictEqual(
+      command('config', measurementId, {
+        page_location: 'http://localhost:3000/'
+      })
+    )
   })
 
   it('should do nothing when no id is published', () => {
