@@ -53,7 +53,8 @@ describe(cspOptions, () => {
         'wss',
         'data:',
         'https://*.google-analytics.com',
-        'https://*.analytics.google.com'
+        'https://*.analytics.google.com',
+        'https://www.googletagmanager.com'
       ],
       defaultSrc: ['self'],
       fontSrc: ['self', 'data:'],
