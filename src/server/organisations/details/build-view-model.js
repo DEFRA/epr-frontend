@@ -149,6 +149,30 @@ const toSiteTables = ({ organisation, includes, localise, localiseUrl }) => {
 
 /**
  * @param {{
+ *   reprocessorTables: SiteTable[],
+ *   exporterTables: SiteTable[],
+ *   activeTab: Tab
+ * }} params
+ * @returns {Tab}
+ */
+const toTabWithRegistrations = ({
+  reprocessorTables,
+  exporterTables,
+  activeTab
+}) => {
+  if (reprocessorTables.length === 0) {
+    return 'EXPORTER'
+  }
+
+  if (exporterTables.length === 0) {
+    return 'REPROCESSOR'
+  }
+
+  return activeTab
+}
+
+/**
+ * @param {{
  *   organisation: Organisation,
  *   activeTab: Tab,
  *   localise: Localise,
@@ -173,13 +197,12 @@ export const buildViewModel = ({
   const reprocessorTables = tablesOf(isReprocessorRegistration)
   const exporterTables = tablesOf(isExporterRegistration)
 
-  const reprocessesNothing = reprocessorTables.length === 0
-  const exportsNothing = exporterTables.length === 0
-  const tab = reprocessesNothing
-    ? 'EXPORTER'
-    : exportsNothing
-      ? 'REPROCESSOR'
-      : activeTab
+  const holdsBoth = reprocessorTables.length > 0 && exporterTables.length > 0
+  const tab = toTabWithRegistrations({
+    reprocessorTables,
+    exporterTables,
+    activeTab
+  })
 
   return {
     activeTab: tab,
@@ -194,7 +217,7 @@ export const buildViewModel = ({
     exporterUrl: localiseUrl(`${organisationPath}/exporting`),
     pageTitle: `${name}: ${heading}`,
     reprocessorUrl: localiseUrl(organisationPath),
-    shouldRenderTabs: !reprocessesNothing && !exportsNothing,
+    shouldRenderTabs: holdsBoth,
     siteTables: tab === 'EXPORTER' ? exporterTables : reprocessorTables
   }
 }
