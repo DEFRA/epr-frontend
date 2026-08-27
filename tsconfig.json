@@ -23,12 +23,5 @@
     ".prettierrc.*",
     ".vite/**/*.js"
   ],
-  "exclude": [
-    ".cache",
-    ".public",
-    ".server",
-    "coverage",
-    "node_modules",
-    "src/client"
-  ]
+  "exclude": [".cache", ".public", ".server", "coverage", "node_modules"]
 }
