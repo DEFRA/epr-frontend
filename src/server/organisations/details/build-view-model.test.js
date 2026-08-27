@@ -96,7 +96,7 @@ describe(buildViewModel, () => {
   })
 
   it('walks back to the organisation list', () => {
-    expect(build().breadcrumbs).toEqual([
+    expect(build().breadcrumbs).toStrictEqual([
       { text: 'All organisations', href: '/en/regulators/home' },
       { text: 'Kirkby Plastics Ltd' }
     ])
@@ -123,7 +123,7 @@ describe(buildViewModel, () => {
   it('tags the registration status', () => {
     const [{ registrations }] = build().siteTables
 
-    expect(registrations[0].status).toEqual({
+    expect(registrations[0].status).toStrictEqual({
       text: 'Approved',
       classes: 'govuk-tag--green'
     })
@@ -135,7 +135,7 @@ describe(buildViewModel, () => {
       accreditations: [anAccreditation({ status: 'rejected' })]
     })
 
-    expect(model.siteTables[0].registrations[0].accreditation).toEqual({
+    expect(model.siteTables[0].registrations[0].accreditation).toStrictEqual({
       text: 'Rejected',
       classes: 'govuk-tag--orange'
     })
@@ -165,10 +165,9 @@ describe(buildViewModel, () => {
       ]
     })
 
-    expect(model.siteTables[0].registrations.map(({ id }) => id)).toEqual([
-      'reg-001',
-      'reg-002'
-    ])
+    expect(model.siteTables[0].registrations.map(({ id }) => id)).toStrictEqual(
+      ['reg-001', 'reg-002']
+    )
   })
 
   it('groups registrations under the site they are processed at', () => {
@@ -188,7 +187,7 @@ describe(buildViewModel, () => {
         name,
         registrations.map(({ id }) => id)
       ])
-    ).toEqual([
+    ).toStrictEqual([
       ['Site name A', ['reg-001', 'reg-003']],
       ['Site name B', ['reg-002']]
     ])
@@ -224,7 +223,7 @@ describe(buildViewModel, () => {
       model.siteTables.flatMap(({ registrations }) =>
         registrations.map(({ id }) => id)
       )
-    ).toEqual(['reg-002'])
+    ).toStrictEqual(['reg-002'])
   })
 
   it('offers both tabs when the organisation does both', () => {

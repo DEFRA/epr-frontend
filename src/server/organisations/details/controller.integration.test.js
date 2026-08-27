@@ -142,7 +142,7 @@ describe('the organisation homepage a regulator reads', () => {
         within(documentOf(body)).getByRole('table'),
         'columnheader'
       ).map((cell) => cell.textContent?.trim())
-    ).toEqual([
+    ).toStrictEqual([
       'Registration number',
       'Registration status',
       'Material',
@@ -155,7 +155,7 @@ describe('the organisation homepage a regulator reads', () => {
   it('reads each registration out of the record', async ({ server }) => {
     const { body } = await visit(server, regulator)
 
-    expect(rowsOf(body)).toEqual([
+    expect(rowsOf(body)).toStrictEqual([
       [
         'R26ER5001180041PL',
         'Approved',
@@ -200,7 +200,7 @@ describe('the organisation homepage a regulator reads', () => {
   }) => {
     const { body } = await visit(server, regulator, `${path}/exporting`)
 
-    expect(rowsOf(body).map(([number]) => number)).toEqual([
+    expect(rowsOf(body).map(([number]) => number)).toStrictEqual([
       'R26EX5001180041PA'
     ])
   })
