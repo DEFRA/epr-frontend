@@ -277,12 +277,12 @@ describe(buildViewModel, () => {
     )
   })
 
-  it('keeps the material of a glass registration with no process recorded', () => {
+  it('reads a glass registration with no process settled as glass', () => {
     const model = build({
       registrations: [aRegistration({ material: 'glass' })]
     })
 
-    expect(model.siteTables[0].registrations[0].material).toBe('glass')
+    expect(model.siteTables[0].registrations[0].material).toBe('Glass')
   })
 
   it('reads glass as the process it was recycled by', () => {

@@ -41,13 +41,14 @@ const lookupOrThrow = (displayNames, key, code, label) => {
 }
 
 /**
- * The backend resolves glass to the process it was recycled by, so those names
- * are looked up alongside the rest.
+ * A glass registration names the process it applied for once that process is
+ * settled, and reads as glass until then.
  * @type {Record<string, string | undefined>}
  */
 const DETAILED_MATERIAL_DISPLAY_NAMES = {
   ...MATERIAL_DISPLAY_NAMES,
-  ...GLASS_DISPLAY_NAMES
+  ...GLASS_DISPLAY_NAMES,
+  [MATERIAL.GLASS]: 'Glass'
 }
 
 /**
