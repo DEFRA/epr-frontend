@@ -298,6 +298,19 @@ describe(buildViewModel, () => {
     expect(model.siteTables[0].registrations[0].material).toBe('Glass remelt')
   })
 
+  it('reads a glass registration carrying both processes as glass', () => {
+    const model = build({
+      registrations: [
+        aRegistration({
+          material: 'glass',
+          glassRecyclingProcess: ['glass_re_melt', 'glass_other']
+        })
+      ]
+    })
+
+    expect(model.siteTables[0].registrations[0].material).toBe('Glass')
+  })
+
   it('shows an exporter-only organisation what it has', () => {
     const model = build({
       registrations: [

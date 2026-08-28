@@ -42,13 +42,15 @@ import { paths } from '#server/paths.js'
  */
 
 /**
+ * A glass record is for the process it was split to, and one carrying any
+ * number of processes but one was never split, so it is for glass alone.
  * @param {Registration} registration
  * @returns {string}
  */
 const toMaterialName = ({ material, glassRecyclingProcess }) =>
   getDetailedMaterialDisplayName(
-    material === MATERIAL.GLASS
-      ? (glassRecyclingProcess?.[0] ?? material)
+    material === MATERIAL.GLASS && glassRecyclingProcess?.length === 1
+      ? glassRecyclingProcess[0]
       : material
   )
 
