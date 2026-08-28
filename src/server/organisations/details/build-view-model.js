@@ -1,9 +1,9 @@
+import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
 import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
  */
@@ -51,7 +51,7 @@ const toMaterialName = ({ material, application }) =>
  * @returns {string | null}
  */
 const toSiteName = ({ application }, localise) =>
-  application.wasteProcessingType === 'exporter'
+  application.wasteProcessingType === WASTE_PROCESSING_TYPE.EXPORTER
     ? null
     : (application.site?.address?.line1 ??
       localise('organisations:details:table:unknownSite'))
@@ -154,7 +154,7 @@ const toTabWithRegistrations = ({
  * The organisation is read for its own name alone. Everything the page says
  * about registrations comes from the registrations collection.
  * @param {{
- *   organisation: Pick<Organisation, 'id' | 'companyDetails'>,
+ *   organisation: { id: string, companyDetails: { name: string } },
  *   registrations: RegistrationResource[],
  *   activeTab: Tab,
  *   localise: Localise,
@@ -184,10 +184,12 @@ export const buildViewModel = ({
     })
 
   const reprocessorTables = tablesOf(
-    ({ application }) => application.wasteProcessingType === 'reprocessor'
+    ({ application }) =>
+      application.wasteProcessingType === WASTE_PROCESSING_TYPE.REPROCESSOR
   )
   const exporterTables = tablesOf(
-    ({ application }) => application.wasteProcessingType === 'exporter'
+    ({ application }) =>
+      application.wasteProcessingType === WASTE_PROCESSING_TYPE.EXPORTER
   )
 
   const holdsBoth = reprocessorTables.length > 0 && exporterTables.length > 0

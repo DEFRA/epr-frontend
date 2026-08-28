@@ -4,7 +4,6 @@ import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { fetchOrganisationRegistrations } from '#server/common/helpers/organisations/fetch-organisation-registrations.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import {
   buildMockAuth,
@@ -13,7 +12,7 @@ import {
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
-import { it } from '#vite/fixtures/server.js'
+import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getAllByRole,
   getByRole,
@@ -22,16 +21,15 @@ import {
   within
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
-vi.mock(
-  import('#server/common/helpers/organisations/fetch-organisation-registrations.js')
-)
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 
+const backendUrl = config.get('eprBackendUrl')
 const organisationId = '6507f1f77bcf86cd79943901'
 const path = `/organisations/${organisationId}`
 
@@ -80,8 +78,9 @@ const exportedPaper = {
 }
 
 /**
- * The same three registrations as the collection answers them: glass resolved
- * to its process, and what the applicant asked for kept beside it.
+ * The same three registrations as the collection answers them: in the order the
+ * contract promises, with glass resolved to its process and what the applicant
+ * asked for kept beside it.
  * @type {RegistrationResource[]}
  */
 const registrations = [
@@ -108,22 +107,6 @@ const registrations = [
     }
   },
   {
-    id: 'reg-002',
-    organisation: { id: organisationId },
-    registrationNumber: null,
-    status: 'rejected',
-    material: 'aluminium',
-    reprocessingType: null,
-    accreditations: [],
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'sepa',
-      material: 'aluminium',
-      wasteProcessingType: 'reprocessor',
-      site: { address: { line1: 'Site name A' } }
-    }
-  },
-  {
     id: 'reg-003',
     organisation: { id: organisationId },
     registrationNumber: 'R26EX5001180041PA',
@@ -137,6 +120,22 @@ const registrations = [
       material: 'paper',
       wasteProcessingType: 'exporter',
       site: null
+    }
+  },
+  {
+    id: 'reg-002',
+    organisation: { id: organisationId },
+    registrationNumber: null,
+    status: 'rejected',
+    material: 'aluminium',
+    reprocessingType: null,
+    accreditations: [],
+    application: {
+      orgName: 'Kirkby Plastics',
+      submittedToRegulator: 'sepa',
+      material: 'aluminium',
+      wasteProcessingType: 'reprocessor',
+      site: { address: { line1: 'Site name A' } }
     }
   }
 ]
@@ -184,10 +183,15 @@ describe('the organisation homepage a regulator reads', () => {
     config.set('featureFlags.regulatorAccess', true)
   })
 
-  beforeEach(() => {
+  beforeEach(({ msw }) => {
     vi.mocked(fetchWasteBalances).mockResolvedValue({})
     vi.mocked(fetchOrganisationById).mockResolvedValue(organisation)
-    vi.mocked(fetchOrganisationRegistrations).mockResolvedValue(registrations)
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/${organisationId}/registrations`,
+        () => HttpResponse.json({ registrations })
+      )
+    )
   })
 
   afterAll(() => {
@@ -279,10 +283,15 @@ describe('who the organisation page renders for', () => {
     config.set('featureFlags.regulatorAccess', true)
   })
 
-  beforeEach(() => {
+  beforeEach(({ msw }) => {
     vi.mocked(fetchWasteBalances).mockResolvedValue({})
     vi.mocked(fetchOrganisationById).mockResolvedValue(organisation)
-    vi.mocked(fetchOrganisationRegistrations).mockResolvedValue(registrations)
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/${organisationId}/registrations`,
+        () => HttpResponse.json({ registrations })
+      )
+    )
   })
 
   afterAll(() => {

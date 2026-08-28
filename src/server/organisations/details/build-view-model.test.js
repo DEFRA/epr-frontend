@@ -13,7 +13,6 @@ const localise = createMockLocalise({
 const localiseUrl = (/** @type {string} */ path) => `/en${path}`
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
  * @import {
  *   AccreditationLink,
  *   RegistrationResource
@@ -61,15 +60,13 @@ const anAccreditation = (overrides) => ({
 /**
  * @param {{
  *   registrations?: RegistrationResource[],
- *   companyDetails?: Organisation['companyDetails'],
+ *   companyDetails?: { name: string },
  *   activeTab?: 'REPROCESSOR' | 'EXPORTER'
  * }} [overrides]
  */
 const build = ({
   registrations = [aRegistration()],
-  companyDetails = /** @type {Organisation['companyDetails']} */ (
-    /** @type {unknown} */ ({ name: 'Kirkby Plastics Ltd' })
-  ),
+  companyDetails = { name: 'Kirkby Plastics Ltd' },
   activeTab = 'REPROCESSOR'
 } = {}) =>
   buildViewModel({
@@ -82,16 +79,15 @@ const build = ({
 
 /**
  * @param {ReturnType<typeof build>} viewModel
- * @param {number} [index]
  */
-const firstRow = (viewModel, index = 0) => {
-  const table = viewModel.siteTables[index]
+const firstRow = (viewModel) => {
+  const row = viewModel.siteTables[0]?.registrations[0]
 
-  if (!table?.registrations[0]) {
-    throw new Error(`expected a registration in table ${index}`)
+  if (!row) {
+    throw new Error('expected a registration in the first site table')
   }
 
-  return table.registrations[0]
+  return row
 }
 
 describe(buildViewModel, () => {
