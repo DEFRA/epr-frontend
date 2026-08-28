@@ -4,18 +4,6 @@
 /** @import {Registration} from '#domain/organisations/registration.js' */
 
 /**
- * Status values for registrations and accreditations
- * @typedef {typeof REG_ACC_STATUS[keyof typeof REG_ACC_STATUS]} RegAccStatus
- */
-export const REG_ACC_STATUS = Object.freeze({
-  CREATED: 'created',
-  APPROVED: 'approved',
-  CANCELLED: 'cancelled',
-  REJECTED: 'rejected',
-  SUSPENDED: 'suspended'
-})
-
-/**
  * Status values a registration can hold.
  * @typedef {typeof REGISTRATION_STATUS[keyof typeof REGISTRATION_STATUS]} RegistrationStatus
  */
@@ -37,6 +25,10 @@ export const ACCREDITATION_STATUS = Object.freeze({
   REJECTED: 'rejected',
   SUSPENDED: 'suspended'
 })
+
+/**
+ * @typedef {RegistrationStatus | AccreditationStatus} RegOrAccStatus
+ */
 
 /**
  * Status values for organisations
@@ -233,7 +225,7 @@ export const USER_ROLES = Object.freeze({
 
 /**
  * @typedef {{
- *   status: RegAccStatus;
+ *   status: RegOrAccStatus;
  *   updatedAt: string;
  *   updatedBy?: string;
  * }} StatusHistoryItem
