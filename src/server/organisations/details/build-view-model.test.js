@@ -141,6 +141,23 @@ describe(buildViewModel, () => {
     ])
   })
 
+  it('tags every accreditation rather than choosing between them', () => {
+    const model = build({
+      registrations: [
+        aRegistration({
+          accreditations: [
+            anAccreditation({ id: 'acc-001' }),
+            anAccreditation({ id: 'acc-002', status: 'suspended' })
+          ]
+        })
+      ]
+    })
+
+    expect(
+      firstRow(model).accreditations.map(({ text }) => text)
+    ).toStrictEqual(['Approved', 'Suspended'])
+  })
+
   it('tags none where the registration holds none', () => {
     expect(firstRow(build()).accreditations).toStrictEqual([])
   })
