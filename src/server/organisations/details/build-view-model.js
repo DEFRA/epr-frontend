@@ -127,6 +127,9 @@ const toSiteTables = ({
   )
 
 /**
+ * A reader who asks for a tab holding nothing is moved to the one that holds
+ * something. An organisation holding nothing at all has no tab to move them to,
+ * so the tab they asked for stands.
  * @param {{
  *   reprocessorTables: SiteTable[],
  *   exporterTables: SiteTable[],
@@ -139,11 +142,11 @@ const toTabWithRegistrations = ({
   exporterTables,
   activeTab
 }) => {
-  if (reprocessorTables.length === 0) {
+  if (reprocessorTables.length === 0 && exporterTables.length > 0) {
     return 'EXPORTER'
   }
 
-  if (exporterTables.length === 0) {
+  if (exporterTables.length === 0 && reprocessorTables.length > 0) {
     return 'REPROCESSOR'
   }
 

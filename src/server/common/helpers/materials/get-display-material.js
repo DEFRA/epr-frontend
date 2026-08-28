@@ -41,8 +41,9 @@ const lookupOrThrow = (displayNames, key, code, label) => {
 }
 
 /**
- * A glass registration names the process it applied for once that process is
- * settled, and reads as glass until then.
+ * Names plain glass, which the map above omits: a registration that has not
+ * resolved to one of the two glass processes has only the coarse answer to
+ * show.
  * @type {Record<string, string | undefined>}
  */
 const DETAILED_MATERIAL_DISPLAY_NAMES = {

@@ -16,6 +16,29 @@ export const REG_ACC_STATUS = Object.freeze({
 })
 
 /**
+ * Status values a registration can hold.
+ * @typedef {typeof REGISTRATION_STATUS[keyof typeof REGISTRATION_STATUS]} RegistrationStatus
+ */
+export const REGISTRATION_STATUS = Object.freeze({
+  CREATED: 'created',
+  APPROVED: 'approved',
+  CANCELLED: 'cancelled',
+  REJECTED: 'rejected'
+})
+
+/**
+ * Status values an accreditation can hold.
+ * @typedef {typeof ACCREDITATION_STATUS[keyof typeof ACCREDITATION_STATUS]} AccreditationStatus
+ */
+export const ACCREDITATION_STATUS = Object.freeze({
+  CREATED: 'created',
+  APPROVED: 'approved',
+  CANCELLED: 'cancelled',
+  REJECTED: 'rejected',
+  SUSPENDED: 'suspended'
+})
+
+/**
  * Status values for organisations
  * @typedef {typeof ORGANISATION_STATUS[keyof typeof ORGANISATION_STATUS]} OrganisationStatus
  */
@@ -111,6 +134,10 @@ export const GLASS_RECYCLING_PROCESS = Object.freeze({
   GLASS_RE_MELT: 'glass_re_melt',
   GLASS_OTHER: 'glass_other'
 })
+
+/**
+ * @typedef {Exclude<Material, typeof MATERIAL.GLASS> | GlassRecyclingProcess} DetailedMaterial
+ */
 
 /** @type {readonly (Material | GlassRecyclingProcess)[]} */
 export const TONNAGE_MONITORING_MATERIALS = Object.freeze([
