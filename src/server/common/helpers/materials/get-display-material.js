@@ -41,6 +41,27 @@ const lookupOrThrow = (displayNames, key, code, label) => {
 }
 
 /**
+ * A glass registration names the process it applied for once that process is
+ * settled, and reads as glass until then.
+ * @type {Record<string, string | undefined>}
+ */
+const DETAILED_MATERIAL_DISPLAY_NAMES = {
+  ...MATERIAL_DISPLAY_NAMES,
+  ...GLASS_DISPLAY_NAMES,
+  [MATERIAL.GLASS]: 'Glass'
+}
+
+/**
+ * The backend can add a material without this repo hearing about it, and a
+ * regulator reads records this service did not create, so a material this app
+ * does not know keeps its own name rather than failing the page.
+ * @param {string} material
+ * @returns {string}
+ */
+export const getDetailedMaterialDisplayName = (material) =>
+  DETAILED_MATERIAL_DISPLAY_NAMES[material] ?? material
+
+/**
  * Gets the display name for a registration's material.
  * For glass, uses the first glassRecyclingProcess entry as the lookup key.
  * @param {{material: Material, glassRecyclingProcess?: GlassRecyclingProcess[]}} registration
