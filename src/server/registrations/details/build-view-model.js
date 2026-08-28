@@ -3,6 +3,7 @@ import { capitalize } from 'lodash-es'
 import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { hasLedgerReadScope } from '#server/auth/scopes.js'
+import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
@@ -12,7 +13,6 @@ import { toDateRange } from './helpers/date-range.js'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { ScopeBearingCredentials } from '#server/auth/scopes.js'
- * @import { LinkedAccreditation } from './helpers/fetch-registration-details.js'
  * @import { AccreditationResource, Localise } from './helpers/types.js'
  * @import { RegistrationResource, SiteAddress } from '#server/common/helpers/organisations/registration-resource.js'
  */
@@ -150,7 +150,6 @@ const byMostRecentStart = (a, b) =>
  * @param {{
  *   registration: RegistrationResource,
  *   registrationPath: string,
- *   linkedAccreditation: LinkedAccreditation | null,
  *   credentials: ScopeBearingCredentials,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
@@ -160,7 +159,6 @@ const byMostRecentStart = (a, b) =>
 const toRecordLinks = ({
   registration,
   registrationPath,
-  linkedAccreditation,
   credentials,
   localise,
   localiseUrl
@@ -168,14 +166,15 @@ const toRecordLinks = ({
   const { noteTypePlural } = getNoteTypeDisplayNames({
     wasteProcessingType: registration.application.wasteProcessingType
   })
-  const recordsPath = linkedAccreditation
-    ? `${registrationPath}/accreditations/${linkedAccreditation.id}`
+  const [accreditation] = registration.accreditations
+  const recordsPath = accreditation
+    ? `${registrationPath}/accreditations/${accreditation.id}`
     : registrationPath
 
   /** @type {RecordLink[]} */
   const links = []
 
-  if (linkedAccreditation?.isLive) {
+  if (isAccreditationActive(accreditation)) {
     links.push({
       href: localiseUrl(`${recordsPath}/packaging-recycling-notes`),
       text: localise('registrations:notes.manageReadOnly', { noteTypePlural })
@@ -211,7 +210,6 @@ const organisationName = ({ companyDetails }) =>
  *   organisation: Organisation,
  *   registration: RegistrationResource,
  *   accreditations: AccreditationResource[],
- *   linkedAccreditation: LinkedAccreditation | null,
  *   credentials: ScopeBearingCredentials,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
@@ -222,7 +220,6 @@ export const buildViewModel = ({
   organisation,
   registration,
   accreditations,
-  linkedAccreditation,
   credentials,
   localise,
   localiseUrl
@@ -258,7 +255,6 @@ export const buildViewModel = ({
     recordLinks: toRecordLinks({
       registration,
       registrationPath,
-      linkedAccreditation,
       credentials,
       localise,
       localiseUrl
