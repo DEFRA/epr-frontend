@@ -1,8 +1,10 @@
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
+/** @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'; */
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { fetchOrganisationRegistrations } from '#server/common/helpers/organisations/fetch-organisation-registrations.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import {
   buildMockAuth,
@@ -24,6 +26,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
+)
+vi.mock(
+  import('#server/common/helpers/organisations/fetch-organisation-registrations.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 
@@ -74,6 +79,68 @@ const exportedPaper = {
   wasteProcessingType: 'exporter'
 }
 
+/**
+ * The same three registrations as the collection answers them: glass resolved
+ * to its process, and what the applicant asked for kept beside it.
+ * @type {RegistrationResource[]}
+ */
+const registrations = [
+  {
+    id: 'reg-001',
+    organisation: { id: organisationId },
+    registrationNumber: 'R26ER5001180041PL',
+    status: 'approved',
+    material: 'glass_re_melt',
+    reprocessingType: 'input',
+    accreditations: [
+      {
+        id: 'acc-001',
+        accreditationNumber: 'A26ER5001180114GR',
+        status: 'approved'
+      }
+    ],
+    application: {
+      orgName: 'Kirkby Plastics',
+      submittedToRegulator: 'ea',
+      material: 'glass',
+      wasteProcessingType: 'reprocessor',
+      site: { address: { line1: 'Site name A' } }
+    }
+  },
+  {
+    id: 'reg-002',
+    organisation: { id: organisationId },
+    registrationNumber: null,
+    status: 'rejected',
+    material: 'aluminium',
+    reprocessingType: null,
+    accreditations: [],
+    application: {
+      orgName: 'Kirkby Plastics',
+      submittedToRegulator: 'sepa',
+      material: 'aluminium',
+      wasteProcessingType: 'reprocessor',
+      site: { address: { line1: 'Site name A' } }
+    }
+  },
+  {
+    id: 'reg-003',
+    organisation: { id: organisationId },
+    registrationNumber: 'R26EX5001180041PA',
+    status: 'approved',
+    material: 'paper',
+    reprocessingType: null,
+    accreditations: [],
+    application: {
+      orgName: 'Kirkby Plastics',
+      submittedToRegulator: 'ea',
+      material: 'paper',
+      wasteProcessingType: 'exporter',
+      site: null
+    }
+  }
+]
+
 const organisation = asOrganisation({
   id: organisationId,
   companyDetails: { name: 'Kirkby Plastics Ltd' },
@@ -120,6 +187,7 @@ describe('the organisation homepage a regulator reads', () => {
   beforeEach(() => {
     vi.mocked(fetchWasteBalances).mockResolvedValue({})
     vi.mocked(fetchOrganisationById).mockResolvedValue(organisation)
+    vi.mocked(fetchOrganisationRegistrations).mockResolvedValue(registrations)
   })
 
   afterAll(() => {
@@ -214,6 +282,7 @@ describe('who the organisation page renders for', () => {
   beforeEach(() => {
     vi.mocked(fetchWasteBalances).mockResolvedValue({})
     vi.mocked(fetchOrganisationById).mockResolvedValue(organisation)
+    vi.mocked(fetchOrganisationRegistrations).mockResolvedValue(registrations)
   })
 
   afterAll(() => {

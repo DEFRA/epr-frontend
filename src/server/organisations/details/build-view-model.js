@@ -1,17 +1,11 @@
-import { MATERIAL } from '#domain/organisations/model.js'
 import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import {
-  isExporterRegistration,
-  isReprocessorRegistration
-} from '#server/common/helpers/prns/registration-helpers.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
+ * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
  */
 
 /**
@@ -24,7 +18,7 @@ import { paths } from '#server/paths.js'
  *   status: StatusTag,
  *   material: string,
  *   regulator: string,
- *   accreditation: StatusTag | null,
+ *   accreditations: StatusTag[],
  *   href: string,
  *   linkName: string
  * }} RegistrationRow
@@ -42,45 +36,36 @@ import { paths } from '#server/paths.js'
  */
 
 /**
- * A glass record is for the process it was split to, and one carrying any
- * number of processes but one was never split, so it is for glass alone.
- * @param {Registration} registration
+ * A registration that has resolved to no material of its own has only what the
+ * applicant applied for to show, which is the coarse answer they gave.
+ * @param {RegistrationResource} registration
  * @returns {string}
  */
-const toMaterialName = ({ material, glassRecyclingProcess }) =>
-  getDetailedMaterialDisplayName(
-    material === MATERIAL.GLASS && glassRecyclingProcess?.length === 1
-      ? glassRecyclingProcess[0]
-      : material
-  )
+const toMaterialName = ({ material, application }) =>
+  getDetailedMaterialDisplayName(material ?? application.material)
 
 /**
- * @param {Registration} registration
+ * An exporter reprocesses nowhere this service records, so it heads no site.
+ * @param {RegistrationResource} registration
  * @param {Localise} localise
  * @returns {string | null}
  */
-const toSiteName = (registration, localise) =>
-  isExporterRegistration(registration)
+const toSiteName = ({ application }, localise) =>
+  application.wasteProcessingType === 'exporter'
     ? null
-    : (registration.site?.address?.line1 ??
+    : (application.site?.address?.line1 ??
       localise('organisations:details:table:unknownSite'))
 
 /**
  * @param {{
- *   registration: Registration,
- *   accreditation: Accreditation | undefined,
+ *   registration: RegistrationResource,
  *   organisationId: string,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {RegistrationRow}
  */
-const toRegistrationRow = ({
-  registration,
-  accreditation,
-  organisationId,
-  localiseUrl
-}) => {
-  const number = registration.registrationNumber ?? null
+const toRegistrationRow = ({ registration, organisationId, localiseUrl }) => {
+  const number = registration.registrationNumber
   const status = toStatusTag(registration.status)
   const material = toMaterialName(registration)
 
@@ -89,8 +74,10 @@ const toRegistrationRow = ({
     number,
     status,
     material,
-    regulator: registration.submittedToRegulator.toUpperCase(),
-    accreditation: accreditation ? toStatusTag(accreditation.status) : null,
+    regulator: registration.application.submittedToRegulator.toUpperCase(),
+    accreditations: registration.accreditations.map(({ status: held }) =>
+      toStatusTag(held)
+    ),
     href: localiseUrl(
       `/organisations/${organisationId}/registrations/${registration.id}`
     ),
@@ -117,37 +104,27 @@ const addToSite = (tables, { name, row }) => {
 
 /**
  * @param {{
- *   organisation: Organisation,
- *   includes: (registration: Registration) => boolean,
+ *   registrations: RegistrationResource[],
+ *   organisationId: string,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {SiteTable[]}
  */
-const toSiteTables = ({ organisation, includes, localise, localiseUrl }) => {
-  const accreditationById = new Map(
-    organisation.accreditations.map((accreditation) => [
-      accreditation.id,
-      accreditation
-    ])
-  )
-
-  return organisation.registrations.filter(includes).reduce(
+const toSiteTables = ({
+  registrations,
+  organisationId,
+  localise,
+  localiseUrl
+}) =>
+  registrations.reduce(
     (tables, registration) =>
       addToSite(tables, {
         name: toSiteName(registration, localise),
-        row: toRegistrationRow({
-          registration,
-          accreditation: registration.accreditationId
-            ? accreditationById.get(registration.accreditationId)
-            : undefined,
-          organisationId: organisation.id,
-          localiseUrl
-        })
+        row: toRegistrationRow({ registration, organisationId, localiseUrl })
       }),
     /** @type {SiteTable[]} */ ([])
   )
-}
 
 /**
  * @param {{
@@ -174,8 +151,11 @@ const toTabWithRegistrations = ({
 }
 
 /**
+ * The organisation is read for its own name alone. Everything the page says
+ * about registrations comes from the registrations collection.
  * @param {{
- *   organisation: Organisation,
+ *   organisation: Pick<Organisation, 'id' | 'companyDetails'>,
+ *   registrations: RegistrationResource[],
  *   activeTab: Tab,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
@@ -184,6 +164,7 @@ const toTabWithRegistrations = ({
  */
 export const buildViewModel = ({
   organisation,
+  registrations,
   activeTab,
   localise,
   localiseUrl
@@ -193,11 +174,21 @@ export const buildViewModel = ({
   const organisationPath = `/organisations/${organisation.id}`
 
   const tablesOf = (
-    /** @type {(registration: Registration) => boolean} */ includes
-  ) => toSiteTables({ organisation, includes, localise, localiseUrl })
+    /** @type {(registration: RegistrationResource) => boolean} */ includes
+  ) =>
+    toSiteTables({
+      registrations: registrations.filter(includes),
+      organisationId: organisation.id,
+      localise,
+      localiseUrl
+    })
 
-  const reprocessorTables = tablesOf(isReprocessorRegistration)
-  const exporterTables = tablesOf(isExporterRegistration)
+  const reprocessorTables = tablesOf(
+    ({ application }) => application.wasteProcessingType === 'reprocessor'
+  )
+  const exporterTables = tablesOf(
+    ({ application }) => application.wasteProcessingType === 'exporter'
+  )
 
   const holdsBoth = reprocessorTables.length > 0 && exporterTables.length > 0
   const tab = toTabWithRegistrations({
