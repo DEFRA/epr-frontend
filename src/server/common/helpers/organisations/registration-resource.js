@@ -22,8 +22,11 @@
  */
 
 /**
- * One registration, as `/v1/organisations/{id}/registrations` and
- * `/v1/organisations/{id}/registrations/{id}` both answer.
+ * What this service reads of a registration, as
+ * `/v1/organisations/{id}/registrations` and
+ * `/v1/organisations/{id}/registrations/{id}` both answer it. The resource
+ * carries more than this, so a key's absence here says no page has needed it
+ * yet rather than that the backend leaves it out.
  *
  * The keys outside `application` are the ones a regulator decides. The keys
  * inside it are the answers the applicant gave on the form, so `orgName` is
