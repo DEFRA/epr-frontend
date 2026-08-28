@@ -24,7 +24,7 @@
       </a>
     </p>
 
-    {% if satisfactionSurvey.prnUrl %}
+    {% if satisfactionSurvey.prn.href %}
     <h2 class="govuk-heading-m">{{ whatHappensNextHeading }}</h2>
     {% endif %}
 
@@ -38,10 +38,7 @@
       <a href="{{ managePrnsLink.href }}" class="govuk-link">{{ managePrnsLink.text }}</a>
     </p>
 
-    {{ appSatisfactionSurvey({
-      href: satisfactionSurvey.prnUrl,
-      text: localise('common:satisfactionSurvey:link')
-    }) }}
+    {{ appSatisfactionSurvey(satisfactionSurvey.prn) }}
 
     <p class="govuk-body">
       <a href="{{ returnHomeLink.href }}" class="govuk-link">{{ returnHomeLink.text }}</a>

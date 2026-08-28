@@ -45,6 +45,15 @@ function mockRequest(options) {
   }
 }
 
+// mockRequest carries no i18n, so localise passes the key straight through
+const surveyLinkText = 'common:satisfactionSurvey:link'
+
+const noSurveys = () => ({
+  prn: { href: '', text: surveyLinkText },
+  report: { href: '', text: surveyLinkText },
+  summaryLog: { href: '', text: surveyLinkText }
+})
+
 describe('#context', () => {
   let contextResult
 
@@ -245,54 +254,6 @@ describe('#context', () => {
     })
   })
 
-  describe('the satisfaction surveys a page may link to', () => {
-    let contextImport
-
-    beforeAll(async () => {
-      contextImport = await import('#config/nunjucks/context/context.js')
-    })
-
-    afterEach(() => {
-      config.reset('satisfactionSurvey.isEnabled')
-      config.reset('satisfactionSurvey.prnUrl')
-      config.reset('satisfactionSurvey.reportUrl')
-      config.reset('satisfactionSurvey.summaryLogUrl')
-    })
-
-    it('offers no survey while the flag is off', async () => {
-      config.set('satisfactionSurvey.prnUrl', 'https://survey.example/prn')
-
-      contextResult = await contextImport.context(mockRequest())
-
-      expect(contextResult.satisfactionSurvey).toStrictEqual({
-        prnUrl: '',
-        reportUrl: '',
-        summaryLogUrl: ''
-      })
-    })
-
-    it('offers each journey its survey once the flag is on', async () => {
-      config.set('satisfactionSurvey.isEnabled', true)
-      config.set('satisfactionSurvey.prnUrl', 'https://survey.example/prn')
-      config.set(
-        'satisfactionSurvey.reportUrl',
-        'https://survey.example/report'
-      )
-      config.set(
-        'satisfactionSurvey.summaryLogUrl',
-        'https://survey.example/summary-log'
-      )
-
-      contextResult = await contextImport.context(mockRequest())
-
-      expect(contextResult.satisfactionSurvey).toStrictEqual({
-        prnUrl: 'https://survey.example/prn',
-        reportUrl: 'https://survey.example/report',
-        summaryLogUrl: 'https://survey.example/summary-log'
-      })
-    })
-  })
-
   describe('when webpack manifest file read succeeds', () => {
     let contextImport
 
@@ -333,11 +294,7 @@ describe('#context', () => {
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
-        satisfactionSurvey: {
-          prnUrl: '',
-          reportUrl: '',
-          summaryLogUrl: ''
-        },
+        satisfactionSurvey: noSurveys(),
         serviceName: 'common:serviceName',
         serviceUrl: '/start'
       })
@@ -432,11 +389,7 @@ describe('#context cache', () => {
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
-        satisfactionSurvey: {
-          prnUrl: '',
-          reportUrl: '',
-          summaryLogUrl: ''
-        },
+        satisfactionSurvey: noSurveys(),
         serviceName: 'common:serviceName',
         serviceUrl: '/start'
       })

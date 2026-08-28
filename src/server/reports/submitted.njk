@@ -31,13 +31,10 @@
       </a>
     </p>
 
-    {% if satisfactionSurvey.reportUrl %}
+    {% if satisfactionSurvey.report.href %}
     <h2 class="govuk-heading-m">{{ nextStepsHeading }}</h2>
 
-    {{ appSatisfactionSurvey({
-      href: satisfactionSurvey.reportUrl,
-      text: localise('common:satisfactionSurvey:link')
-    }) }}
+    {{ appSatisfactionSurvey(satisfactionSurvey.report) }}
     {% endif %}
 
     <p class="govuk-body">

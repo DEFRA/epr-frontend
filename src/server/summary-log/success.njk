@@ -31,10 +31,7 @@
     }) }}
     {% endif %}
 
-    {{ appSatisfactionSurvey({
-      href: satisfactionSurvey.summaryLogUrl,
-      text: localise('common:satisfactionSurvey:link')
-    }) }}
+    {{ appSatisfactionSurvey(satisfactionSurvey.summaryLog) }}
 
     <p class="govuk-body">
       <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
