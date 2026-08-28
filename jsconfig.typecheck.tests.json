@@ -10,5 +10,5 @@
     "**/test-fixtures.js",
     "**/*.d.ts"
   ],
-  "exclude": ["node_modules", ".vite"]
+  "exclude": ["node_modules", ".vite", "src/client/**"]
 }

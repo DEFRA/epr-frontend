@@ -80,6 +80,19 @@ const READ_METHOD = /\smethod\s*=\s*"get"/i
 const OVERRIDDEN_METHOD = /formmethod/i
 
 /**
+ * Recording a cookie choice is a write that a session holding no write scope
+ * has to be able to submit, because consent is asked of a signed-out visitor
+ * before anything is set. It changes how the browser is treated rather than
+ * what the service holds, and never reaches the backend, so the write scope has
+ * nothing to say about it. `blockUnauthorisedWrites` exempts the same path for
+ * the same reason.
+ *
+ * Keyed on the exact action rather than on the template or a class name, so it
+ * covers this one form and nothing that grows up beside it.
+ */
+const CONSENT_FORM = /\saction\s*=\s*"\/cookies\/consent"/i
+
+/**
  * Lines holding a `<form>` that no enclosing `{% if hasWriteScope %}` covers.
  * Reads each tag in the order it appears, so a condition opened after a form on
  * the same line does not count, and an `{% else %}` or `{% elif %}` drops the
@@ -134,6 +147,7 @@ const unguardedFormLines = (source) => {
         openConditions[openConditions.length - 1] = condition ?? ''
       } else if (
         !(exemptsReads && READ_METHOD.test(formAttributes ?? '')) &&
+        !CONSENT_FORM.test(formAttributes ?? '') &&
         !openConditions.some(guardsWrites)
       ) {
         unguarded.push(index + 1)
