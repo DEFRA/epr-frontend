@@ -49,6 +49,8 @@ export const REGULATOR = Object.freeze({
 })
 
 /**
+ * The material as the applicant declared it on the form, which is one of the
+ * seven the form offers and so includes plain `glass`.
  * @typedef {typeof MATERIAL[keyof typeof MATERIAL]} AppliedForMaterial
  */
 export const MATERIAL = Object.freeze({
@@ -127,7 +129,15 @@ export const GLASS_RECYCLING_PROCESS = Object.freeze({
   GLASS_OTHER: 'glass_other'
 })
 
-/** @type {readonly (AppliedForMaterial | GlassRecyclingProcess)[]} */
+/**
+ * The material a record is for. Glass is the only material that sub-divides,
+ * so this is one of the six that do not, or one of the two glass recycling
+ * processes. Plain `glass` is not one of them: a record still holding it has
+ * not been split, and so is not yet for either.
+ * @typedef {Exclude<AppliedForMaterial, 'glass'> | GlassRecyclingProcess} Material
+ */
+
+/** @type {readonly Material[]} */
 export const TONNAGE_MONITORING_MATERIALS = Object.freeze([
   ...Object.values(MATERIAL).filter((m) => m !== MATERIAL.GLASS),
   ...Object.values(GLASS_RECYCLING_PROCESS)
