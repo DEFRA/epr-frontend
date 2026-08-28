@@ -127,9 +127,6 @@ const toSiteTables = ({
   )
 
 /**
- * A reader who asks for a tab holding nothing is moved to the one that holds
- * something. An organisation holding nothing at all has no tab to move them to,
- * so the tab they asked for stands.
  * @param {{
  *   reprocessorTables: SiteTable[],
  *   exporterTables: SiteTable[],
