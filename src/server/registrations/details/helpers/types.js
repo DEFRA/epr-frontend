@@ -23,11 +23,16 @@
  * The keys outside `application` are the ones a regulator decides. The keys
  * inside it are the answers the applicant gave on the form, so `orgName` is
  * the name they typed and not the organisation's own name.
+ *
+ * The material appears in both places and means a different thing in each: the
+ * top-level one is what the registration resolved to, and it is absent until it
+ * resolves to exactly one.
  * @typedef {{
  *   id: string,
- *   organisationId: string,
+ *   organisation: { id: string },
  *   registrationNumber: string | null,
  *   status: string,
+ *   material?: string,
  *   reprocessingType: string | null,
  *   application: {
  *     orgName: string,

@@ -69,6 +69,15 @@ const toProcessingType = ({ reprocessingType, application }) =>
     : capitalize(application.wasteProcessingType)
 
 /**
+ * A registration that has resolved to no material of its own has only what the
+ * applicant applied for to show, which is the coarse answer they gave.
+ * @param {RegistrationResource} registration
+ * @returns {string}
+ */
+const toMaterial = ({ material, application }) =>
+  getDetailedMaterialDisplayName(material ?? application.material)
+
+/**
  * @param {SiteAddress} address
  * @returns {string}
  */
@@ -101,7 +110,7 @@ const toSummaryRows = (registration, localise) => {
     },
     {
       key: localise('registrations:details:summary:material'),
-      value: getDetailedMaterialDisplayName(application.material)
+      value: toMaterial(registration)
     }
   ]
 
@@ -239,7 +248,7 @@ export const buildViewModel = ({
   localiseUrl
 }) => {
   const name = organisationName(organisation)
-  const registrationPath = `/organisations/${registration.organisationId}/registrations/${registration.id}`
+  const registrationPath = `/organisations/${registration.organisation.id}/registrations/${registration.id}`
   const heading = localise('registrations:details:heading')
 
   return {
@@ -256,7 +265,7 @@ export const buildViewModel = ({
       },
       {
         text: name,
-        href: localiseUrl(`/organisations/${registration.organisationId}`)
+        href: localiseUrl(`/organisations/${registration.organisation.id}`)
       },
       { text: heading }
     ],

@@ -78,9 +78,10 @@ const organisationHolding = (accreditations, accreditationId) => ({
 /** @type {RegistrationResource} */
 const registration = {
   id: registrationId,
-  organisationId,
+  organisation: { id: organisationId },
   registrationNumber: 'R26ER5001180041PL',
   status: 'approved',
+  material: 'plastic',
   reprocessingType: 'input',
   application: {
     orgName: 'Kirkby Plastics',

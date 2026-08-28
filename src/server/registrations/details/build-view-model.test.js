@@ -8,6 +8,7 @@ import { buildViewModel } from './build-view-model.js'
 const localise = createMockLocalise({
   'registrations:details:current': 'Current',
   'registrations:details:heading': 'Registration details',
+  'registrations:details:summary:material': 'Material',
   'registrations:details:summary:site': 'Site'
 })
 
@@ -32,9 +33,10 @@ const organisation = /** @type {Organisation} */ (
  */
 const aRegistrationWithSite = (address) => ({
   id: 'reg-001',
-  organisationId,
+  organisation: { id: organisationId },
   registrationNumber: 'R26ER5001180041PL',
   status: 'approved',
+  material: 'plastic',
   reprocessingType: 'input',
   application: {
     orgName: 'Kirkby Plastics',
@@ -205,6 +207,35 @@ describe(buildViewModel, () => {
       })
 
       expect(accreditedPeriod(viewModel, 0).dateRange).toBe('')
+    })
+  })
+
+  describe('the material', () => {
+    it('is the one the registration resolved to', () => {
+      const registration = aRegistrationWithSite({ line1: 'Unit 4' })
+      const viewModel = build({
+        registration: {
+          ...registration,
+          material: 'glass_re_melt',
+          application: { ...registration.application, material: 'glass' }
+        }
+      })
+
+      expect(summaryValue(viewModel, 'Material')).toBe('Glass remelt')
+    })
+
+    it('is what was applied for where the registration resolved to none', () => {
+      const { material: _material, ...unresolved } = aRegistrationWithSite({
+        line1: 'Unit 4'
+      })
+      const viewModel = build({
+        registration: {
+          ...unresolved,
+          application: { ...unresolved.application, material: 'glass' }
+        }
+      })
+
+      expect(summaryValue(viewModel, 'Material')).toBe('Glass')
     })
   })
 
