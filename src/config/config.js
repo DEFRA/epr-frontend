@@ -380,6 +380,32 @@ export const config = convict({
       env: 'ANALYTICS_MEASUREMENT_ID'
     }
   },
+  satisfactionSurvey: {
+    isEnabled: {
+      doc: 'Feature Flag: Show the satisfaction survey link on completion pages',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_SATISFACTION_SURVEYS'
+    },
+    prnUrl: {
+      doc: 'Satisfaction survey for the issue a PRN or PERN journey',
+      format: String,
+      default: '',
+      env: 'SATISFACTION_SURVEY_PRN_URL'
+    },
+    reportUrl: {
+      doc: 'Satisfaction survey for the submit your report journey',
+      format: String,
+      default: '',
+      env: 'SATISFACTION_SURVEY_REPORT_URL'
+    },
+    summaryLogUrl: {
+      doc: 'Satisfaction survey for the update your summary log journey',
+      format: String,
+      default: '',
+      env: 'SATISFACTION_SURVEY_SUMMARY_LOG_URL'
+    }
+  },
   featureFlags: {
     regulatorAccess: {
       doc: 'Feature Flag: Enable Entra ID login for regulators',
