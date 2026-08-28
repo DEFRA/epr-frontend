@@ -89,7 +89,8 @@ describe(getDetailedMaterialDisplayName, () => {
     ['plastic', 'Plastic'],
     ['fibre', 'Fibre-based composite'],
     ['glass_re_melt', 'Glass remelt'],
-    ['glass_other', 'Glass other']
+    ['glass_other', 'Glass other'],
+    ['glass', 'Glass']
   ])('names %s as %s', (material, expected) => {
     expect(getDetailedMaterialDisplayName(material)).toBe(expected)
   })
