@@ -40,16 +40,15 @@ const lookupOrThrow = (displayNames, key, code, label) => {
   return displayName
 }
 
-/**
- * Names plain glass, which the map above omits: a registration that has not
- * resolved to one of the two glass processes has only the coarse answer to
- * show.
- * @type {Record<string, string | undefined>}
- */
+const UNRESOLVED_GLASS_DISPLAY_NAME = Object.freeze({
+  [MATERIAL.GLASS]: 'Glass'
+})
+
+/** @type {Record<string, string | undefined>} */
 const DETAILED_MATERIAL_DISPLAY_NAMES = {
   ...MATERIAL_DISPLAY_NAMES,
   ...GLASS_DISPLAY_NAMES,
-  [MATERIAL.GLASS]: 'Glass'
+  ...UNRESOLVED_GLASS_DISPLAY_NAME
 }
 
 /**
