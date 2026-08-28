@@ -49,7 +49,7 @@ export const REGULATOR = Object.freeze({
 })
 
 /**
- * @typedef {typeof MATERIAL[keyof typeof MATERIAL]} Material
+ * @typedef {typeof MATERIAL[keyof typeof MATERIAL]} AppliedForMaterial
  */
 export const MATERIAL = Object.freeze({
   ALUMINIUM: 'aluminium',
@@ -127,7 +127,7 @@ export const GLASS_RECYCLING_PROCESS = Object.freeze({
   GLASS_OTHER: 'glass_other'
 })
 
-/** @type {readonly (Material | GlassRecyclingProcess)[]} */
+/** @type {readonly (AppliedForMaterial | GlassRecyclingProcess)[]} */
 export const TONNAGE_MONITORING_MATERIALS = Object.freeze([
   ...Object.values(MATERIAL).filter((m) => m !== MATERIAL.GLASS),
   ...Object.values(GLASS_RECYCLING_PROCESS)

@@ -3,7 +3,7 @@ import { MATERIAL } from '#domain/organisations/model.js'
 import { internal } from '#server/common/helpers/logging/cdp-boom.js'
 
 /**
- * @import { Material, GlassRecyclingProcess } from '#domain/organisations/model.js'
+ * @import { AppliedForMaterial, GlassRecyclingProcess } from '#domain/organisations/model.js'
  */
 
 const MATERIAL_DISPLAY_NAMES = Object.freeze({
@@ -64,7 +64,7 @@ export const getDetailedMaterialDisplayName = (material) =>
 /**
  * Gets the display name for a registration's material.
  * For glass, uses the first glassRecyclingProcess entry as the lookup key.
- * @param {{material: Material, glassRecyclingProcess?: GlassRecyclingProcess[]}} registration
+ * @param {{material: AppliedForMaterial, glassRecyclingProcess?: GlassRecyclingProcess[]}} registration
  * @returns {string}
  */
 export const getDisplayMaterial = ({ material, glassRecyclingProcess }) => {
