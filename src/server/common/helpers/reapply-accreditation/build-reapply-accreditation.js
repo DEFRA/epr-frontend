@@ -1,9 +1,13 @@
 import { getYear, parseISO } from 'date-fns'
 
-import { REG_ACC_STATUS } from '#domain/organisations/model.js'
+import {
+  ACCREDITATION_STATUS,
+  REGISTRATION_STATUS
+} from '#domain/organisations/model.js'
 import { isWithinReapplyWindow } from '#server/common/helpers/reapply-accreditation/is-within-reapply-window.js'
 
 /**
+ * @import { AccreditationStatus } from '#domain/organisations/model.js'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  */
@@ -13,12 +17,12 @@ import { isWithinReapplyWindow } from '#server/common/helpers/reapply-accreditat
  * link (PAE-1791 AC 5/6). Unlike `isAccreditationActive` this includes
  * `cancelled`: a cancelled accreditation is still a prior accreditation
  * eligible for renewal.
- * @type {Set<string>}
+ * @type {Set<AccreditationStatus>}
  */
 const ACCREDITED_STATUSES = new Set([
-  REG_ACC_STATUS.APPROVED,
-  REG_ACC_STATUS.SUSPENDED,
-  REG_ACC_STATUS.CANCELLED
+  ACCREDITATION_STATUS.APPROVED,
+  ACCREDITATION_STATUS.SUSPENDED,
+  ACCREDITATION_STATUS.CANCELLED
 ])
 
 /**
@@ -57,7 +61,7 @@ export const buildReapplyAccreditation = ({
     // link rather than render a broken same-origin relative href.
     !baseUrl ||
     !isWithinReapplyWindow(now, window) ||
-    registration.status !== REG_ACC_STATUS.APPROVED ||
+    registration.status !== REGISTRATION_STATUS.APPROVED ||
     !accreditation ||
     !ACCREDITED_STATUSES.has(accreditation.status) ||
     // `validFrom` is typed as optional on non-approved accreditation shapes, so

@@ -1,4 +1,14 @@
 /**
+ * @import {
+ *   AccreditationStatus,
+ *   RegistrationStatus,
+ *   RegulatorValue,
+ *   ReprocessingType,
+ *   WasteProcessingTypeValue
+ * } from '#domain/organisations/model.js'
+ */
+
+/**
  * @typedef {{
  *   line1?: string,
  *   line2?: string,
@@ -17,7 +27,7 @@
  * @typedef {{
  *   id: string,
  *   accreditationNumber: string | null,
- *   status: string
+ *   status: AccreditationStatus
  * }} AccreditationLink
  */
 
@@ -39,15 +49,15 @@
  *   id: string,
  *   organisation: { id: string },
  *   registrationNumber: string | null,
- *   status: string,
+ *   status: RegistrationStatus,
  *   material?: string,
- *   reprocessingType: string | null,
+ *   reprocessingType: ReprocessingType | null,
  *   accreditations: AccreditationLink[],
  *   application: {
  *     orgName: string,
- *     submittedToRegulator: string,
+ *     submittedToRegulator: RegulatorValue,
  *     material: string,
- *     wasteProcessingType: string,
+ *     wasteProcessingType: WasteProcessingTypeValue,
  *     site: { address: SiteAddress } | null
  *   }
  * }} RegistrationResource

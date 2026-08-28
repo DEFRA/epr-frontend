@@ -139,11 +139,11 @@ const toTabWithRegistrations = ({
   exporterTables,
   activeTab
 }) => {
-  if (reprocessorTables.length === 0) {
+  if (reprocessorTables.length === 0 && exporterTables.length > 0) {
     return 'EXPORTER'
   }
 
-  if (exporterTables.length === 0) {
+  if (exporterTables.length === 0 && reprocessorTables.length > 0) {
     return 'REPROCESSOR'
   }
 

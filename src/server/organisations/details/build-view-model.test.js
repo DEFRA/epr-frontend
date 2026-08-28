@@ -312,6 +312,12 @@ describe(buildViewModel, () => {
     })
   })
 
+  it('leaves the tab alone where there is nothing to move the reader to', () => {
+    expect(
+      build({ registrations: [], activeTab: 'REPROCESSOR' }).activeTab
+    ).toBe('REPROCESSOR')
+  })
+
   it('names a numbered registration by its number in the link', () => {
     expect(firstRow(build()).linkName).toBe('R26ER5001180041PL')
   })
