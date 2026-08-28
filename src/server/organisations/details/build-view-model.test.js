@@ -1,4 +1,3 @@
-/** @import { RegistrationSite } from '#domain/organisations/registration.js'; */
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { describe, expect, it } from 'vitest'
 
@@ -14,81 +13,82 @@ const localise = createMockLocalise({
 const localiseUrl = (/** @type {string} */ path) => `/en${path}`
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import {
+ *   AccreditationLink,
+ *   RegistrationResource
+ * } from '#server/common/helpers/organisations/registration-resource.js'
  */
 
 const organisationId = '6507f1f77bcf86cd79943901'
 
 /**
- * @param {string} line1
- * @returns {RegistrationSite}
+ * @param {{
+ *   application?: Partial<RegistrationResource['application']>
+ * } & Partial<Omit<RegistrationResource, 'application'>>} [overrides]
+ * @returns {RegistrationResource}
  */
-const aSiteAt = (line1) => ({
-  address: { line1 },
-  gridReference: 'SE 29845 30826',
-  siteCapacity: []
+const aRegistration = ({ application, ...overrides } = {}) => ({
+  id: 'reg-001',
+  organisation: { id: organisationId },
+  registrationNumber: 'R26ER5001180041PL',
+  status: 'approved',
+  material: 'plastic',
+  reprocessingType: 'input',
+  accreditations: [],
+  application: {
+    orgName: 'Kirkby Plastics',
+    submittedToRegulator: 'ea',
+    material: 'plastic',
+    wasteProcessingType: 'reprocessor',
+    site: { address: { line1: 'Site name A' } },
+    ...application
+  },
+  ...overrides
 })
 
 /**
- * @param {Partial<Registration>} overrides
- * @returns {Registration}
+ * @param {Partial<AccreditationLink>} [overrides]
+ * @returns {AccreditationLink}
  */
-const aRegistration = (overrides) =>
-  /** @type {Registration} */ (
-    /** @type {unknown} */ ({
-      id: 'reg-001',
-      registrationNumber: 'R26ER5001180041PL',
-      status: 'approved',
-      material: 'plastic',
-      submittedToRegulator: 'ea',
-      wasteProcessingType: 'reprocessor',
-      site: aSiteAt('Site name A'),
-      ...overrides
-    })
-  )
-
-/**
- * @param {Partial<Accreditation>} overrides
- * @returns {Accreditation}
- */
-const anAccreditation = (overrides) =>
-  /** @type {Accreditation} */ (
-    /** @type {unknown} */ ({
-      id: 'acc-001',
-      status: 'approved',
-      ...overrides
-    })
-  )
+const anAccreditation = (overrides) => ({
+  id: 'acc-001',
+  accreditationNumber: 'A26ER5001180114PL',
+  status: 'approved',
+  ...overrides
+})
 
 /**
  * @param {{
- *   registrations?: Registration[],
- *   accreditations?: Accreditation[],
- *   companyDetails?: { name: string, tradingName?: string },
+ *   registrations?: RegistrationResource[],
+ *   companyDetails?: { name: string },
  *   activeTab?: 'REPROCESSOR' | 'EXPORTER'
  * }} [overrides]
  */
 const build = ({
-  registrations = [aRegistration({})],
-  accreditations = [],
+  registrations = [aRegistration()],
   companyDetails = { name: 'Kirkby Plastics Ltd' },
   activeTab = 'REPROCESSOR'
 } = {}) =>
   buildViewModel({
-    organisation: /** @type {Organisation} */ (
-      /** @type {unknown} */ ({
-        id: organisationId,
-        companyDetails,
-        registrations,
-        accreditations
-      })
-    ),
+    organisation: { id: organisationId, companyDetails },
+    registrations,
     activeTab,
     localise,
     localiseUrl
   })
+
+/**
+ * @param {ReturnType<typeof build>} viewModel
+ */
+const firstRow = (viewModel) => {
+  const row = viewModel.siteTables[0]?.registrations[0]
+
+  if (!row) {
+    throw new Error('expected a registration in the first site table')
+  }
+
+  return row
+}
 
 describe(buildViewModel, () => {
   it('names the organisation in the caption', () => {
@@ -103,17 +103,13 @@ describe(buildViewModel, () => {
   })
 
   it('links each registration to its own page', () => {
-    const [site] = build().siteTables
-
-    expect(site.registrations[0].href).toBe(
+    expect(firstRow(build()).href).toBe(
       `/en/organisations/${organisationId}/registrations/reg-001`
     )
   })
 
   it('shows the registration number, material and regulator', () => {
-    const [{ registrations }] = build().siteTables
-
-    expect(registrations[0]).toMatchObject({
+    expect(firstRow(build())).toMatchObject({
       number: 'R26ER5001180041PL',
       material: 'Plastic',
       regulator: 'EA'
@@ -121,40 +117,55 @@ describe(buildViewModel, () => {
   })
 
   it('tags the registration status', () => {
-    const [{ registrations }] = build().siteTables
-
-    expect(registrations[0].status).toStrictEqual({
+    expect(firstRow(build()).status).toStrictEqual({
       text: 'Approved',
       classes: 'govuk-tag--green'
     })
   })
 
-  it('tags the accreditation the registration is on', () => {
+  it('tags each accreditation the registration holds', () => {
     const model = build({
-      registrations: [aRegistration({ accreditationId: 'acc-001' })],
-      accreditations: [anAccreditation({ status: 'rejected' })]
+      registrations: [
+        aRegistration({
+          accreditations: [anAccreditation({ status: 'rejected' })]
+        })
+      ]
     })
 
-    expect(model.siteTables[0].registrations[0].accreditation).toStrictEqual({
-      text: 'Rejected',
-      classes: 'govuk-tag--orange'
-    })
+    expect(firstRow(model).accreditations).toStrictEqual([
+      { text: 'Rejected', classes: 'govuk-tag--orange' }
+    ])
   })
 
-  it('leaves the accreditation unset when the registration is on none', () => {
-    const [{ registrations }] = build().siteTables
+  it('tags every accreditation rather than choosing between them', () => {
+    const model = build({
+      registrations: [
+        aRegistration({
+          accreditations: [
+            anAccreditation({ id: 'acc-001' }),
+            anAccreditation({ id: 'acc-002', status: 'suspended' })
+          ]
+        })
+      ]
+    })
 
-    expect(registrations[0].accreditation).toBeNull()
+    expect(
+      firstRow(model).accreditations.map(({ text }) => text)
+    ).toStrictEqual(['Approved', 'Suspended'])
+  })
+
+  it('tags none where the registration holds none', () => {
+    expect(firstRow(build()).accreditations).toStrictEqual([])
   })
 
   it('leaves the number unset on a registration that never earned one', () => {
     const model = build({
       registrations: [
-        aRegistration({ status: 'created', registrationNumber: undefined })
+        aRegistration({ status: 'created', registrationNumber: null })
       ]
     })
 
-    expect(model.siteTables[0].registrations[0].number).toBeNull()
+    expect(firstRow(model).number).toBeNull()
   })
 
   it('keeps a rejected registration and a rejected accreditation', () => {
@@ -165,9 +176,22 @@ describe(buildViewModel, () => {
       ]
     })
 
-    expect(model.siteTables[0].registrations.map(({ id }) => id)).toStrictEqual(
-      ['reg-001', 'reg-002']
-    )
+    expect(
+      model.siteTables[0]?.registrations.map(({ id }) => id)
+    ).toStrictEqual(['reg-001', 'reg-002'])
+  })
+
+  it('keeps the order the collection answered in', () => {
+    const model = build({
+      registrations: [
+        aRegistration({ id: 'reg-002', registrationNumber: null }),
+        aRegistration({ id: 'reg-001' })
+      ]
+    })
+
+    expect(
+      model.siteTables[0]?.registrations.map(({ id }) => id)
+    ).toStrictEqual(['reg-002', 'reg-001'])
   })
 
   it('groups registrations under the site they are processed at', () => {
@@ -176,7 +200,7 @@ describe(buildViewModel, () => {
         aRegistration({ id: 'reg-001' }),
         aRegistration({
           id: 'reg-002',
-          site: aSiteAt('Site name B')
+          application: { site: { address: { line1: 'Site name B' } } }
         }),
         aRegistration({ id: 'reg-003' })
       ]
@@ -195,26 +219,31 @@ describe(buildViewModel, () => {
 
   it('names a reprocessing site the record gives no address for', () => {
     const model = build({
-      registrations: [aRegistration({ site: undefined })]
+      registrations: [aRegistration({ application: { site: null } })]
     })
 
-    expect(model.siteTables[0].name).toBe('Unknown site')
+    expect(model.siteTables[0]?.name).toBe('Unknown site')
   })
 
   it('gives an exporter no site heading, because it reprocesses nowhere', () => {
     const model = build({
-      registrations: [aRegistration({ wasteProcessingType: 'exporter' })],
+      registrations: [
+        aRegistration({ application: { wasteProcessingType: 'exporter' } })
+      ],
       activeTab: 'EXPORTER'
     })
 
-    expect(model.siteTables[0].name).toBeNull()
+    expect(model.siteTables[0]?.name).toBeNull()
   })
 
   it('shows only the registrations of the tab being read', () => {
     const model = build({
       registrations: [
-        aRegistration({ id: 'reg-001', wasteProcessingType: 'reprocessor' }),
-        aRegistration({ id: 'reg-002', wasteProcessingType: 'exporter' })
+        aRegistration({ id: 'reg-001' }),
+        aRegistration({
+          id: 'reg-002',
+          application: { wasteProcessingType: 'exporter' }
+        })
       ],
       activeTab: 'EXPORTER'
     })
@@ -229,8 +258,11 @@ describe(buildViewModel, () => {
   it('offers both tabs when the organisation does both', () => {
     const model = build({
       registrations: [
-        aRegistration({ id: 'reg-001', wasteProcessingType: 'reprocessor' }),
-        aRegistration({ id: 'reg-002', wasteProcessingType: 'exporter' })
+        aRegistration({ id: 'reg-001' }),
+        aRegistration({
+          id: 'reg-002',
+          application: { wasteProcessingType: 'exporter' }
+        })
       ]
     })
 
@@ -255,66 +287,13 @@ describe(buildViewModel, () => {
     })
   })
 
-  it('names a numbered registration by its number in the link', () => {
-    const [{ registrations }] = build().siteTables
-
-    expect(registrations[0].linkName).toBe('R26ER5001180041PL')
-  })
-
-  it('names a numberless registration by what its row shows', () => {
-    const model = build({
-      registrations: [
-        aRegistration({
-          status: 'created',
-          registrationNumber: undefined,
-          material: 'aluminium'
-        })
-      ]
-    })
-
-    expect(model.siteTables[0].registrations[0].linkName).toBe(
-      'Aluminium, Created'
-    )
-  })
-
-  it('reads a glass registration with no process settled as glass', () => {
-    const model = build({
-      registrations: [aRegistration({ material: 'glass' })]
-    })
-
-    expect(model.siteTables[0].registrations[0].material).toBe('Glass')
-  })
-
-  it('reads glass as the process it was recycled by', () => {
-    const model = build({
-      registrations: [
-        aRegistration({
-          material: 'glass',
-          glassRecyclingProcess: ['glass_re_melt']
-        })
-      ]
-    })
-
-    expect(model.siteTables[0].registrations[0].material).toBe('Glass remelt')
-  })
-
-  it('reads a glass registration carrying both processes as glass', () => {
-    const model = build({
-      registrations: [
-        aRegistration({
-          material: 'glass',
-          glassRecyclingProcess: ['glass_re_melt', 'glass_other']
-        })
-      ]
-    })
-
-    expect(model.siteTables[0].registrations[0].material).toBe('Glass')
-  })
-
   it('shows an exporter-only organisation what it has', () => {
     const model = build({
       registrations: [
-        aRegistration({ id: 'reg-002', wasteProcessingType: 'exporter' })
+        aRegistration({
+          id: 'reg-002',
+          application: { wasteProcessingType: 'exporter' }
+        })
       ],
       activeTab: 'REPROCESSOR'
     })
@@ -324,5 +303,52 @@ describe(buildViewModel, () => {
       shouldRenderTabs: false,
       siteTables: [{ registrations: [{ id: 'reg-002' }] }]
     })
+  })
+
+  it('says an organisation holding nothing has no site tables', () => {
+    expect(build({ registrations: [] })).toMatchObject({
+      shouldRenderTabs: false,
+      siteTables: []
+    })
+  })
+
+  it('names a numbered registration by its number in the link', () => {
+    expect(firstRow(build()).linkName).toBe('R26ER5001180041PL')
+  })
+
+  it('names a numberless registration by what its row shows', () => {
+    const model = build({
+      registrations: [
+        aRegistration({
+          status: 'created',
+          registrationNumber: null,
+          material: 'aluminium'
+        })
+      ]
+    })
+
+    expect(firstRow(model).linkName).toBe('Aluminium, Created')
+  })
+
+  it('reads the material the registration resolved to', () => {
+    const model = build({
+      registrations: [
+        aRegistration({
+          material: 'glass_re_melt',
+          application: { material: 'glass' }
+        })
+      ]
+    })
+
+    expect(firstRow(model).material).toBe('Glass remelt')
+  })
+
+  it('reads what was applied for where nothing resolved', () => {
+    const { material: _material, ...unresolved } = aRegistration({
+      application: { material: 'glass' }
+    })
+    const model = build({ registrations: [unresolved] })
+
+    expect(firstRow(model).material).toBe('Glass')
   })
 })

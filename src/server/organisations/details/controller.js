@@ -1,4 +1,5 @@
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { fetchOrganisationRegistrations } from '#server/common/helpers/organisations/fetch-organisation-registrations.js'
 import { buildViewModel } from './build-view-model.js'
 
 /**
@@ -20,15 +21,16 @@ export const controller = {
     const { organisationId } = request.params
     const { backendToken } = request.auth.credentials
 
-    const organisation = await fetchOrganisationById(
-      organisationId,
-      backendToken
-    )
+    const [organisation, registrations] = await Promise.all([
+      fetchOrganisationById(organisationId, backendToken),
+      fetchOrganisationRegistrations(organisationId, backendToken)
+    ])
 
     return h.view(
       'organisations/details/index',
       buildViewModel({
         organisation,
+        registrations,
         activeTab: request.path.endsWith('/exporting')
           ? 'EXPORTER'
           : 'REPROCESSOR',

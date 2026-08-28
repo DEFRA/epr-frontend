@@ -76,6 +76,7 @@ const registrationDetails = {
     status: 'approved',
     material: 'plastic',
     reprocessingType: 'input',
+    accreditations: [],
     application: {
       orgName: 'Kirkby Plastics',
       submittedToRegulator: 'ea',

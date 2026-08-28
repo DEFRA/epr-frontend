@@ -24,7 +24,8 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
 /**
  * @import { DOMWindow } from 'jsdom'
  * @import { SetupServerApi } from 'msw/node'
- * @import { AccreditationResource, RegistrationResource } from './helpers/types.js'
+ * @import { AccreditationResource } from './helpers/types.js'
+ * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -83,6 +84,7 @@ const registration = {
   status: 'approved',
   material: 'plastic',
   reprocessingType: 'input',
+  accreditations: [],
   application: {
     orgName: 'Kirkby Plastics',
     submittedToRegulator: 'ea',
