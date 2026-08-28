@@ -15,8 +15,16 @@ const PARAMETER = /\{(\w+)(?:\?|\*\d*)?\}/g
  *
  * Colons rather than braces because braces are not valid in a path and the
  * result is reported as one.
+ * @param {string | undefined} routePath
+ * @returns {string}
+ */
+export const analyticsStep = (routePath) =>
+  routePath?.replace(PARAMETER, ':$1') ?? '/'
+
+/**
+ * The step the request being served is on.
  * @param {HapiRequest | null} request
  * @returns {string}
  */
 export const analyticsPagePath = (request) =>
-  request?.route?.path?.replace(PARAMETER, ':$1') ?? '/'
+  analyticsStep(request?.route?.path)
