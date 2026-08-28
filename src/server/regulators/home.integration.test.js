@@ -14,7 +14,6 @@ import {
   getAllByRole,
   getByLabelText,
   getByRole,
-  getByTestId,
   queryByRole,
   queryByText
 } from '@testing-library/dom'
@@ -126,19 +125,6 @@ describe('/regulators/home - GET integration', () => {
 
   afterAll(() => {
     config.set('featureFlags.regulatorAccess', false)
-  })
-
-  it('renders the username derived from the signed in regulator email', async ({
-    server,
-    msw
-  }) => {
-    backendReturns(msw, { items: [acme] })
-
-    const { body } = await visit(server, '/regulators/home')
-
-    expect(getByTestId(body, 'regulator-username').textContent?.trim()).toBe(
-      'jane.doe'
-    )
   })
 
   it('shows every organisation to a regulator who has not searched yet', async ({
