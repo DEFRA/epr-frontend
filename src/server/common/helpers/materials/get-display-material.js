@@ -7,20 +7,9 @@ import { internal } from '#server/common/helpers/logging/cdp-boom.js'
  */
 
 /** @type {Record<string, string | undefined>} */
-const GLASS_MATERIAL_DISPLAY_NAMES = Object.freeze({
+const GLASS_RECYCLING_PROCESS_DISPLAY_NAMES = Object.freeze({
   glass_re_melt: 'Glass remelt',
   glass_other: 'Glass other'
-})
-
-/** @type {Record<string, string | undefined>} */
-const MATERIAL_DISPLAY_NAMES = Object.freeze({
-  aluminium: 'Aluminium',
-  fibre: 'Fibre-based composite',
-  paper: 'Paper and board',
-  plastic: 'Plastic',
-  steel: 'Steel',
-  wood: 'Wood',
-  ...GLASS_MATERIAL_DISPLAY_NAMES
 })
 
 /** @type {Record<string, string | undefined>} */
@@ -62,7 +51,7 @@ const lookupOrThrow = (displayNames, key, code, label) => {
  * @returns {string}
  */
 export const getMaterialDisplayName = (material) =>
-  MATERIAL_DISPLAY_NAMES[material] ??
+  GLASS_RECYCLING_PROCESS_DISPLAY_NAMES[material] ??
   APPLIED_FOR_MATERIAL_DISPLAY_NAMES[material] ??
   material
 
@@ -84,7 +73,7 @@ export const getRegistrationMaterialDisplayName = ({
     }
 
     return lookupOrThrow(
-      GLASS_MATERIAL_DISPLAY_NAMES,
+      GLASS_RECYCLING_PROCESS_DISPLAY_NAMES,
       glassRecyclingProcess[0],
       errorCodes.glassRecyclingProcessUnknown,
       'glassRecyclingProcess'
