@@ -454,7 +454,10 @@ describe('the registration details page a regulator reads', () => {
     ])
   })
 
-  it('follows the accreditation the registration is on rather than the most recent one', async ({
+  // The linked accreditation is neither the most recent of the two nor the
+  // first the periods table lists, so an implementation reading either from
+  // that table fails here.
+  it('follows the accreditation the registration is on rather than one off the periods table', async ({
     server,
     msw
   }) => {
@@ -466,11 +469,11 @@ describe('the registration details page a regulator reads', () => {
 
     backendHolds(msw, {
       accreditations: [
-        linked,
         anAccreditation({
           id: 'acc-002',
           dateRange: { validFrom: '2026-07-01', validTo: null }
-        })
+        }),
+        linked
       ],
       registration: registrationLinking(linked)
     })

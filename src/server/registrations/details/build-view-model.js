@@ -166,6 +166,8 @@ const toRecordLinks = ({
   const { noteTypePlural } = getNoteTypeDisplayNames({
     wasteProcessingType: registration.application.wasteProcessingType
   })
+  // The note list and the ledger each address one accreditation's records, so
+  // they follow the one the registration names. The store links one.
   const [accreditation] = registration.accreditations
   const recordsPath = accreditation
     ? `${registrationPath}/accreditations/${accreditation.id}`

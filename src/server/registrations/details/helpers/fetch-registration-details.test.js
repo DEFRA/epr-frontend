@@ -71,6 +71,8 @@ const accreditations = [
 ]
 
 /**
+ * The backend answers the registration and its accreditations from one lookup,
+ * so a registration it does not hold fails both reads rather than one.
  * @param {SetupServerApi} msw
  * @param {{ registrationStatus?: number }} [overrides]
  */
@@ -83,7 +85,9 @@ const backendHolds = (msw, { registrationStatus } = {}) => {
         : HttpResponse.json(registration)
     ),
     http.get(`${registrationUrl}/accreditations`, () =>
-      HttpResponse.json({ accreditations })
+      registrationStatus
+        ? new HttpResponse(null, { status: registrationStatus })
+        : HttpResponse.json({ accreditations })
     )
   )
 }
@@ -122,15 +126,15 @@ describe(fetchRegistrationDetails, () => {
 
     await fetchRegistrationDetails(params)
 
-    expect(authorisations).toStrictEqual([
-      'Bearer test-id-token',
-      'Bearer test-id-token',
-      'Bearer test-id-token'
-    ])
+    expect(authorisations).toHaveLength(3)
+    expect(new Set(authorisations)).toStrictEqual(
+      new Set(['Bearer test-id-token'])
+    )
   })
 
-  // The status alone reaches the browser; the code and the event are what CDP
-  // indexes the failure by, so they are asserted rather than the status alone.
+  // Both reads 404 and they race, so the failure that surfaces is whichever
+  // settled first. The status alone reaches the browser; the code and the event
+  // are what CDP indexes it by, so those are what is asserted.
   test('names the registration a regulator asked for where the backend holds none', async ({
     msw
   }) => {

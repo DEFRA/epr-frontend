@@ -40,29 +40,16 @@ const readAs = (backendToken) => ({
 })
 
 /**
- * A registration this organisation does not hold is a 404 from the route
- * itself. It is re-thrown so the log line names what was asked for under the
- * code CDP indexes this failure by, rather than carrying the backend's own.
- * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   backendToken: string
- * }} params
- * @returns {Promise<RegistrationResource>}
+ * A registration this organisation does not hold is a 404 from the registration
+ * route and from its accreditations route alike, and the two race. Either is
+ * re-thrown as the same failure, so the log line names what was asked for under
+ * the code CDP indexes it by whichever read lost.
+ * @param {{ organisationId: string, registrationId: string }} params
+ * @returns {(error: unknown) => never}
  */
-const fetchRegistration = async ({
-  organisationId,
-  registrationId,
-  backendToken
-}) => {
-  try {
-    return /** @type {RegistrationResource} */ (
-      await fetchJsonFromBackend(
-        registrationPath(organisationId, registrationId),
-        readAs(backendToken)
-      )
-    )
-  } catch (error) {
+const asMissingRegistration =
+  ({ organisationId, registrationId }) =>
+  (error) => {
     if (!Boom.isBoom(error, statusCodes.notFound)) {
       throw error
     }
@@ -74,7 +61,22 @@ const fetchRegistration = async ({
       }
     })
   }
-}
+
+/**
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   backendToken: string
+ * }} params
+ * @returns {Promise<RegistrationResource>}
+ */
+const fetchRegistration = (params) =>
+  /** @type {Promise<RegistrationResource>} */ (
+    fetchJsonFromBackend(
+      registrationPath(params.organisationId, params.registrationId),
+      readAs(params.backendToken)
+    ).catch(asMissingRegistration(params))
+  )
 
 /**
  * @param {{
@@ -84,17 +86,13 @@ const fetchRegistration = async ({
  * }} params
  * @returns {Promise<AccreditationResource[]>}
  */
-const fetchAccreditations = async ({
-  organisationId,
-  registrationId,
-  backendToken
-}) => {
+const fetchAccreditations = async (params) => {
   const { accreditations } =
     /** @type {{ accreditations: AccreditationResource[] }} */ (
       await fetchJsonFromBackend(
-        `${registrationPath(organisationId, registrationId)}/accreditations`,
-        readAs(backendToken)
-      )
+        `${registrationPath(params.organisationId, params.registrationId)}/accreditations`,
+        readAs(params.backendToken)
+      ).catch(asMissingRegistration(params))
     )
 
   return accreditations

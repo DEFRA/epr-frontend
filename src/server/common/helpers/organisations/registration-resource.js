@@ -23,9 +23,7 @@
 
 /**
  * The accreditation a registration holds, as the registration names it. The
- * accreditation's own content is its sub-resource's to serve. The store links
- * a registration to one accreditation, so the array is empty or holds that
- * one.
+ * accreditation's own content is its sub-resource's to serve.
  * @typedef {{
  *   id: string,
  *   accreditationNumber: string | null,
