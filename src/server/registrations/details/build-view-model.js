@@ -4,11 +4,12 @@ import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { hasLedgerReadScope } from '#server/auth/scopes.js'
-import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
+import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { ScopeBearingCredentials } from '#server/auth/scopes.js'
  * @import { LinkedAccreditation } from './helpers/fetch-registration-details.js'
  * @import { AccreditationResource, RegistrationResource, SiteAddress } from './helpers/types.js'
@@ -16,7 +17,6 @@ import { paths } from '#server/paths.js'
 
 /**
  * @typedef {(key: string, options?: Record<string, string>) => string} Localise
- * @typedef {{ text: string, classes: string }} StatusTag
  */
 
 /**
@@ -38,18 +38,6 @@ import { paths } from '#server/paths.js'
  *   summaryRows: SummaryRow[]
  * }} RegistrationDetailsViewModel
  */
-
-/**
- * The backend can add a status without this repo hearing about it, and
- * `getStatusClass` answers grey for one it does not know, so an unfamiliar
- * status still names itself to the reader.
- * @param {string} status
- * @returns {StatusTag}
- */
-const toStatusTag = (status) => ({
-  text: capitalize(status),
-  classes: `govuk-tag--${getStatusClass(status)}`
-})
 
 /**
  * @param {{ validFrom: string | null, validTo: string | null }} dateRange
@@ -79,6 +67,15 @@ const toProcessingType = ({ reprocessingType, application }) =>
   reprocessingType
     ? `${capitalize(application.wasteProcessingType)} (${reprocessingType})`
     : capitalize(application.wasteProcessingType)
+
+/**
+ * A registration that has resolved to no material of its own has only what the
+ * applicant applied for to show, which is the coarse answer they gave.
+ * @param {RegistrationResource} registration
+ * @returns {string}
+ */
+const toMaterial = ({ material, application }) =>
+  getDetailedMaterialDisplayName(material ?? application.material)
 
 /**
  * @param {SiteAddress} address
@@ -113,7 +110,7 @@ const toSummaryRows = (registration, localise) => {
     },
     {
       key: localise('registrations:details:summary:material'),
-      value: getDetailedMaterialDisplayName(application.material)
+      value: toMaterial(registration)
     }
   ]
 
@@ -251,7 +248,7 @@ export const buildViewModel = ({
   localiseUrl
 }) => {
   const name = organisationName(organisation)
-  const registrationPath = `/organisations/${registration.organisationId}/registrations/${registration.id}`
+  const registrationPath = `/organisations/${registration.organisation.id}/registrations/${registration.id}`
   const heading = localise('registrations:details:heading')
 
   return {
@@ -268,7 +265,7 @@ export const buildViewModel = ({
       },
       {
         text: name,
-        href: localiseUrl(`/organisations/${registration.organisationId}`)
+        href: localiseUrl(`/organisations/${registration.organisation.id}`)
       },
       { text: heading }
     ],
