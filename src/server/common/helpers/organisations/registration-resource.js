@@ -1,11 +1,9 @@
 /**
  * @import {
  *   AccreditationStatus,
- *   Material,
  *   RegistrationStatus,
  *   RegulatorValue,
  *   ReprocessingType,
- *   ResolvedMaterial,
  *   WasteProcessingTypeValue
  * } from '#domain/organisations/model.js'
  */
@@ -52,13 +50,13 @@
  *   organisation: { id: string },
  *   registrationNumber: string | null,
  *   status: RegistrationStatus,
- *   material?: ResolvedMaterial,
+ *   material?: string,
  *   reprocessingType: ReprocessingType | null,
  *   accreditations: AccreditationLink[],
  *   application: {
  *     orgName: string,
  *     submittedToRegulator: RegulatorValue,
- *     material: Material,
+ *     material: string,
  *     wasteProcessingType: WasteProcessingTypeValue,
  *     site: { address: SiteAddress } | null
  *   }

@@ -135,10 +135,6 @@ export const GLASS_RECYCLING_PROCESS = Object.freeze({
   GLASS_OTHER: 'glass_other'
 })
 
-/**
- * @typedef {Exclude<Material, typeof MATERIAL.GLASS> | GlassRecyclingProcess} ResolvedMaterial
- */
-
 /** @type {readonly (Material | GlassRecyclingProcess)[]} */
 export const TONNAGE_MONITORING_MATERIALS = Object.freeze([
   ...Object.values(MATERIAL).filter((m) => m !== MATERIAL.GLASS),

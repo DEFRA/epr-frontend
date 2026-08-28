@@ -40,15 +40,15 @@ const lookupOrThrow = (displayNames, key, code, label) => {
   return displayName
 }
 
-const UNRESOLVED_GLASS_DISPLAY_NAME = Object.freeze({
-  [MATERIAL.GLASS]: 'Glass'
-})
-
-/** @type {Record<string, string | undefined>} */
-const RESOLVED_OR_APPLIED_MATERIAL_DISPLAY_NAMES = {
+/**
+ * A glass registration names the process it applied for once that process is
+ * settled, and reads as glass until then.
+ * @type {Record<string, string | undefined>}
+ */
+const DETAILED_MATERIAL_DISPLAY_NAMES = {
   ...MATERIAL_DISPLAY_NAMES,
   ...GLASS_DISPLAY_NAMES,
-  ...UNRESOLVED_GLASS_DISPLAY_NAME
+  [MATERIAL.GLASS]: 'Glass'
 }
 
 /**
@@ -58,8 +58,8 @@ const RESOLVED_OR_APPLIED_MATERIAL_DISPLAY_NAMES = {
  * @param {string} material
  * @returns {string}
  */
-export const getResolvedOrAppliedMaterialDisplayName = (material) =>
-  RESOLVED_OR_APPLIED_MATERIAL_DISPLAY_NAMES[material] ?? material
+export const getDetailedMaterialDisplayName = (material) =>
+  DETAILED_MATERIAL_DISPLAY_NAMES[material] ?? material
 
 /**
  * Gets the display name for a registration's material.
