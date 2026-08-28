@@ -1,6 +1,6 @@
 import { capitalize } from 'lodash-es'
 
-import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { getResolvedOrAppliedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { hasLedgerReadScope } from '#server/auth/scopes.js'
@@ -76,7 +76,7 @@ const toProcessingType = ({ reprocessingType, application }) =>
  * @returns {string}
  */
 const toMaterial = ({ material, application }) =>
-  getDetailedMaterialDisplayName(material ?? application.material)
+  getResolvedOrAppliedMaterialDisplayName(material ?? application.material)
 
 /**
  * @param {SiteAddress} address

@@ -136,7 +136,7 @@ export const GLASS_RECYCLING_PROCESS = Object.freeze({
 })
 
 /**
- * @typedef {Exclude<Material, typeof MATERIAL.GLASS> | GlassRecyclingProcess} DetailedMaterial
+ * @typedef {Exclude<Material, typeof MATERIAL.GLASS> | GlassRecyclingProcess} ResolvedMaterial
  */
 
 /** @type {readonly (Material | GlassRecyclingProcess)[]} */

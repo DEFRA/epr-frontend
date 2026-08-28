@@ -45,7 +45,7 @@ const UNRESOLVED_GLASS_DISPLAY_NAME = Object.freeze({
 })
 
 /** @type {Record<string, string | undefined>} */
-const DETAILED_MATERIAL_DISPLAY_NAMES = {
+const RESOLVED_OR_APPLIED_MATERIAL_DISPLAY_NAMES = {
   ...MATERIAL_DISPLAY_NAMES,
   ...GLASS_DISPLAY_NAMES,
   ...UNRESOLVED_GLASS_DISPLAY_NAME
@@ -58,8 +58,8 @@ const DETAILED_MATERIAL_DISPLAY_NAMES = {
  * @param {string} material
  * @returns {string}
  */
-export const getDetailedMaterialDisplayName = (material) =>
-  DETAILED_MATERIAL_DISPLAY_NAMES[material] ?? material
+export const getResolvedOrAppliedMaterialDisplayName = (material) =>
+  RESOLVED_OR_APPLIED_MATERIAL_DISPLAY_NAMES[material] ?? material
 
 /**
  * Gets the display name for a registration's material.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  getDetailedMaterialDisplayName,
+  getResolvedOrAppliedMaterialDisplayName,
   getDisplayMaterial
 } from './get-display-material.js'
 
@@ -84,17 +84,20 @@ describe(getDisplayMaterial, () => {
   })
 })
 
-describe(getDetailedMaterialDisplayName, () => {
+describe(getResolvedOrAppliedMaterialDisplayName, () => {
   it.each([
     ['plastic', 'Plastic'],
     ['fibre', 'Fibre-based composite'],
     ['glass_re_melt', 'Glass remelt'],
-    ['glass_other', 'Glass other']
+    ['glass_other', 'Glass other'],
+    ['glass', 'Glass']
   ])('names %s as %s', (material, expected) => {
-    expect(getDetailedMaterialDisplayName(material)).toBe(expected)
+    expect(getResolvedOrAppliedMaterialDisplayName(material)).toBe(expected)
   })
 
   it('keeps the name of a material this app does not know', () => {
-    expect(getDetailedMaterialDisplayName('cardboard')).toBe('cardboard')
+    expect(getResolvedOrAppliedMaterialDisplayName('cardboard')).toBe(
+      'cardboard'
+    )
   })
 })
