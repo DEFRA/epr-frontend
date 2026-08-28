@@ -1,7 +1,7 @@
 import { capitalize } from 'lodash-es'
 
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
@@ -115,7 +115,7 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
   /** @type {TableCell[]} */
   const cells = [
     {
-      text: getDisplayMaterial(registration),
+      text: getRegistrationMaterialDisplayName(registration),
       classes: 'govuk-!-width-one-quarter'
     },
     {

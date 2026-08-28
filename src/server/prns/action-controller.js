@@ -10,7 +10,7 @@ import {
 } from './helpers/build-prn-detail-rows.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const actionController = {
@@ -95,7 +95,7 @@ function buildActionViewData({
   const { isExporter, noteType, noteTypeFull } =
     getNoteTypeDisplayNames(registration)
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-  const displayMaterial = getDisplayMaterial(registration)
+  const displayMaterial = getRegistrationMaterialDisplayName(registration)
   const isNotDraft = prn.status !== 'draft'
   const statusConfig = getStatusConfig(prn.status, localise)
 
