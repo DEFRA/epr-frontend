@@ -1,3 +1,5 @@
+{% if params.href %}
 <p class="govuk-body">
   <a class="govuk-link" href="{{ params.href }}" target="_blank" rel="noopener noreferrer">{{ params.text }}</a>
 </p>
+{% endif %}

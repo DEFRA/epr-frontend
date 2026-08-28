@@ -72,5 +72,6 @@ export const renderComponent = (componentName, params, callBlock) =>
  * @returns {InstanceType<DOMWindow['HTMLElement']>}
  */
 export const renderComponentDom = (componentName, params, callBlock) =>
-  new JSDOM(renderComponentHtml(componentName, params, callBlock)).window
-    .document.body
+  new JSDOM(renderComponentHtml(componentName, params, callBlock), {
+    url: 'http://localhost'
+  }).window.document.body
