@@ -41,13 +41,13 @@ export const analyticsPageReferrer = (request) => {
     return null
   }
 
-  const referer = request.headers?.referer
+  const referer = String(request.headers?.referer ?? '')
 
   if (!referer) {
     return null
   }
 
-  const arrivedFrom = new URL(referer, request.url)
+  const arrivedFrom = new URL(referer, request.url.href)
 
   if (arrivedFrom.host !== request.url.host) {
     return null

@@ -22,6 +22,9 @@
   {% if analytics.hasConsented %}
     <meta name="analytics-measurement-id" content="{{ analytics.measurementId }}">
     <meta name="analytics-page-path" content="{{ analytics.pagePath }}">
+    {% if analytics.pageReferrer !== null %}
+      <meta name="analytics-page-referrer" content="{{ analytics.pageReferrer }}">
+    {% endif %}
     <script type="module" src="{{ getAssetPath('analytics.js') }}"></script>
   {% endif %}
 {% endblock %}
