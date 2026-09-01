@@ -114,13 +114,21 @@ async function applyBackendIdentity(session) {
 }
 
 /**
+ * The referrer stash is a queue, and a sign in that ends without redirecting
+ * leaves its entry in it. A regulator sign in can follow a refusal that did
+ * exactly that, so it asks for the newest entry rather than an abandoned one
+ * sitting in front of its own.
  * @param {HapiRequest} request
  * @param {string} defaultPath
+ * @param {{ preferNewest?: boolean }} [options]
  */
-function referrerIfPresentElseDefault(request, defaultPath) {
-  // A refused sign in abandons its stashed referrer, so the queue can still
-  // hold an attempt that never landed. The newest entry is this sign in's own.
-  const referrer = request.yar.flash('referrer')?.at(-1)
+function referrerIfPresentElseDefault(
+  request,
+  defaultPath,
+  { preferNewest = false } = {}
+) {
+  const stashed = request.yar.flash('referrer')
+  const referrer = preferNewest ? stashed?.at(-1) : stashed?.at(0)
 
   const skipReferrers = [
     ...withWelsh(paths.start),
@@ -210,13 +218,16 @@ const entraIdCallbackController = {
 
       const redirectUrl = referrerIfPresentElseDefault(
         request,
-        request.localiseUrl(paths.regulators.home)
+        request.localiseUrl(paths.regulators.home),
+        { preferNewest: true }
       )
 
       return h.redirect(redirectUrl)
     }
 
-    return h.redirect(referrerIfPresentElseDefault(request, '/'))
+    return h.redirect(
+      referrerIfPresentElseDefault(request, '/', { preferNewest: true })
+    )
   }
 }
 
