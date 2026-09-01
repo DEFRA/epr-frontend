@@ -128,7 +128,7 @@ describe('the accreditation details view model', () => {
   })
 
   it('shows the status as a tag and the number beside it', () => {
-    expect(build().summaryRows).toEqual([
+    expect(build().summaryRows).toStrictEqual([
       {
         key: 'Accreditation status',
         status: { text: 'Approved', classes: 'govuk-tag--green' }
@@ -138,14 +138,14 @@ describe('the accreditation details view model', () => {
   })
 
   it('shows an empty number for an accreditation that never got one', () => {
-    expect(build({ accreditationNumber: null }).summaryRows[1]).toEqual({
+    expect(build({ accreditationNumber: null }).summaryRows[1]).toStrictEqual({
       key: 'Accreditation number',
       value: ''
     })
   })
 
   it('walks back to the registration and the organisation', () => {
-    expect(build().breadcrumbs).toEqual([
+    expect(build().breadcrumbs).toStrictEqual([
       { text: 'All organisations', href: '/regulators/home' },
       { text: 'Kirkby Plastics Ltd', href: `/organisations/${organisationId}` },
       {
