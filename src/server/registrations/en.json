@@ -18,7 +18,9 @@
       "heading": "Accreditation",
       "summary": {
         "number": "Accreditation number",
-        "status": "Accreditation status"
+        "status": "Accreditation status",
+        "wasteBalance": "Waste balance (tonnes)",
+        "wasteBalanceAvailable": "Waste balance available (tonnes)"
       }
     },
     "allOrganisations": "All organisations",

@@ -6,6 +6,7 @@ import { buildViewModel } from './build-view-model.js'
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { AccreditationResource } from '../helpers/types.js'
  */
 
@@ -14,6 +15,10 @@ const localise = createMockLocalise({
   'registrations:details:accreditation:heading': 'Accreditation',
   'registrations:details:accreditation:summary:number': 'Accreditation number',
   'registrations:details:accreditation:summary:status': 'Accreditation status',
+  'registrations:details:accreditation:summary:wasteBalance':
+    'Waste balance (tonnes)',
+  'registrations:details:accreditation:summary:wasteBalanceAvailable':
+    'Waste balance available (tonnes)',
   'registrations:details:allOrganisations': 'All organisations',
   'registrations:details:current': 'Current',
   'registrations:details:heading': 'Registration details'
@@ -65,15 +70,23 @@ const anAccreditation = (overrides) => ({
   ...overrides
 })
 
+const aWasteBalance = { amount: 1234.5, availableAmount: 987.25 }
+
 /**
  * @param {Partial<AccreditationResource>} [accreditationOverrides]
  * @param {Partial<Registration>} [registrationOverrides]
+ * @param {WasteBalance | null} [wasteBalance]
  */
-const build = (accreditationOverrides, registrationOverrides) =>
+const build = (
+  accreditationOverrides,
+  registrationOverrides,
+  wasteBalance = aWasteBalance
+) =>
   buildViewModel({
     organisation,
     registration: aRegistration(registrationOverrides),
     accreditation: anAccreditation(accreditationOverrides),
+    wasteBalance,
     localise,
     localiseUrl
   })
@@ -104,6 +117,7 @@ describe('the accreditation details view model', () => {
       ),
       registration: aRegistration(),
       accreditation: anAccreditation(),
+      wasteBalance: aWasteBalance,
       localise,
       localiseUrl
     })
@@ -127,13 +141,15 @@ describe('the accreditation details view model', () => {
     ).toBe('Accreditation')
   })
 
-  it('shows the status as a tag and the number beside it', () => {
+  it('shows the status as a tag, then the number, then the two balances', () => {
     expect(build().summaryRows).toStrictEqual([
       {
         key: 'Accreditation status',
         status: { text: 'Approved', classes: 'govuk-tag--green' }
       },
-      { key: 'Accreditation number', value: 'A26ER5001180114PL' }
+      { key: 'Accreditation number', value: 'A26ER5001180114PL' },
+      { key: 'Waste balance (tonnes)', value: '1,234.50' },
+      { key: 'Waste balance available (tonnes)', value: '987.25' }
     ])
   })
 
@@ -142,6 +158,22 @@ describe('the accreditation details view model', () => {
       key: 'Accreditation number',
       value: ''
     })
+  })
+
+  it('shows a balance of nothing as zero rather than as blank', () => {
+    expect(
+      build(undefined, undefined, { amount: 0, availableAmount: 0 })
+        .summaryRows[2]
+    ).toStrictEqual({ key: 'Waste balance (tonnes)', value: '0.00' })
+  })
+
+  it('leaves both balances blank when the balance could not be read', () => {
+    expect(
+      build(undefined, undefined, null).summaryRows.slice(2)
+    ).toStrictEqual([
+      { key: 'Waste balance (tonnes)', value: '' },
+      { key: 'Waste balance available (tonnes)', value: '' }
+    ])
   })
 
   it('walks back to the registration and the organisation', () => {
