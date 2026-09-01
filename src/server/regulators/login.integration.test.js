@@ -1,6 +1,10 @@
 import { config } from '#config/config.js'
 import { SELECT_ACCOUNT_QUERY } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+
+/**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
@@ -65,6 +69,10 @@ describe('#regulatorsLoginController - integration', () => {
   })
 
   describe('the account prompt in the authorize request', () => {
+    /**
+     * @param {HapiServer} server
+     * @param {string} url
+     */
     const promptAskedFor = async (server, url) => {
       const response = await server.inject({ method: 'GET', url })
 
