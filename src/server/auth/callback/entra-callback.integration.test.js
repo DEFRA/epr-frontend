@@ -21,6 +21,11 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
 
+/**
+ * @import { SetupServerApi } from 'msw/node'
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
+
 const mock = {
   cdpAuditing: vi.fn(),
   signInSuccessMetric: vi.fn(),
@@ -340,25 +345,52 @@ describe('/auth/callback/entra - GET integration', async () => {
   })
 
   describe('on successful return from Entra ID - authorised regulator, after an attempt that was refused', () => {
-    it('ignores the refused attempt referrer and lands on the regulators home page', async ({
-      server,
-      msw
-    }) => {
+    /**
+     * @param {HapiServer} server
+     * @param {SetupServerApi} msw
+     * @param {{ referer?: string }} secondSignIn
+     */
+    const refusedThenSignedIn = async (server, msw, secondSignIn) => {
       const jar = {}
 
       msw.use(identityHandler(IDENTITIES.unrecognised))
       await performSignInFlow(
         server,
         msw,
-        { ...regulatorToken, referer: 'http://localhost:3000/some/prior/page' },
+        { ...regulatorToken, referer: 'http://localhost:3000/refused/page' },
         jar
       )
 
       msw.use(identityHandler(IDENTITIES.regulator))
-      const response = await performSignInFlow(server, msw, regulatorToken, jar)
+
+      return performSignInFlow(
+        server,
+        msw,
+        { ...regulatorToken, ...secondSignIn },
+        jar
+      )
+    }
+
+    it('prefers the page this sign in started from over the refused attempt one', async ({
+      server,
+      msw
+    }) => {
+      const response = await refusedThenSignedIn(server, msw, {
+        referer: 'http://localhost:3000/fresh/page'
+      })
 
       expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers['location']).toBe('/regulators/home')
+      expect(response.headers['location']).toBe('/fresh/page')
+    })
+
+    it('falls back to the refused attempt page when this sign in started from nowhere', async ({
+      server,
+      msw
+    }) => {
+      const response = await refusedThenSignedIn(server, msw, {})
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/refused/page')
     })
   })
 

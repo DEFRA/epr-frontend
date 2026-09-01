@@ -118,7 +118,9 @@ async function applyBackendIdentity(session) {
  * @param {string} defaultPath
  */
 function referrerIfPresentElseDefault(request, defaultPath) {
-  const referrer = request.yar.flash('referrer')?.at(0)
+  // A refused sign in abandons its stashed referrer, so the queue can still
+  // hold an attempt that never landed. The newest entry is this sign in's own.
+  const referrer = request.yar.flash('referrer')?.at(-1)
 
   const skipReferrers = [
     ...withWelsh(paths.start),
@@ -153,10 +155,6 @@ const refuseSignIn = async (request, h, session) => {
       reference: hashUserId(session.profile.id)
     }
   })
-
-  // Reading the flash discards it. The next sign in reads the oldest entry, so
-  // a referrer left stashed here would send the next account to this one's page.
-  request.yar.flash('referrer')
 
   return h
     .view('regulators/not-authorised', {
