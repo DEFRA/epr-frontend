@@ -5,6 +5,8 @@ import {
   classifierTail
 } from '#server/common/helpers/logging/cdp-boom.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -38,6 +40,8 @@ export const discardGetController = {
     const { noteType } = getNoteTypeDisplayNames(registration)
 
     const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
+
+    await journeyMetrics.start(request, JOURNEY.discardPrnPern)
 
     return h.view('prns/discard', {
       pageTitle: localise('prns:discard:pageTitle', { noteType }),
@@ -80,6 +84,8 @@ export const discardPostController = {
       )
 
       request.yar.clear('prnDraft')
+
+      await journeyMetrics.end(request, JOURNEY.discardPrnPern, 'discarded')
 
       return h.redirect(createUrl)
     } catch (error) {

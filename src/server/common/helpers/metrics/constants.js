@@ -21,5 +21,21 @@ export const JOURNEY = Object.freeze({
     start: 'SaveOrSubmitReportStart',
     submitted: 'SubmitReportEnd',
     draft: 'SaveDraftReportEnd'
+  }),
+  cancelPrnPern: Object.freeze({
+    start: 'CancelPRNPERNStart',
+    cancelled: 'CancelPRNPERNEnd'
+  }),
+  discardPrnPern: Object.freeze({
+    start: 'DiscardPRNPERNStart',
+    discarded: 'DiscardPRNPERNEnd'
+  }),
+  deletePrnPern: Object.freeze({
+    start: 'DeletePRNPERNStart',
+    deleted: 'DeletePRNPERNEnd'
+  }),
+  deleteReport: Object.freeze({
+    start: 'DeleteReportStart',
+    deleted: 'DeleteReportEnd'
   })
 })

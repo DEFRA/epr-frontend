@@ -4,6 +4,8 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { deleteReport } from './helpers/delete-report.js'
 
 const payloadSchema = Joi.object({
@@ -77,6 +79,8 @@ export const deleteGetController = {
       backUrl: resolveBackUrl(request)
     }
 
+    await journeyMetrics.start(request, JOURNEY.deleteReport)
+
     return h.view('reports/confirm-delete', viewData)
   }
 }
@@ -113,6 +117,8 @@ export const deletePostController = {
       submissionNumber,
       session.backendToken
     )
+
+    await journeyMetrics.end(request, JOURNEY.deleteReport, 'deleted')
 
     return h.redirect(
       request.localiseUrl(
