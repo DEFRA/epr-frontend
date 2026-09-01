@@ -3,6 +3,8 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const summaryLogUploadController = {
@@ -56,6 +58,10 @@ export const summaryLogUploadController = {
             backendToken: session.backendToken
           })
         : {}
+
+      if (uploadUrl) {
+        await journeyMetrics.start(request, JOURNEY.uploadSummaryLog)
+      }
 
       const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`
 

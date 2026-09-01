@@ -7,6 +7,8 @@ import {
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByLabelText, getByRole, getByText } from '@testing-library/dom'
@@ -35,6 +37,14 @@ const mockOrganisationData = /** @type {Organisation} */ (
   /** @type {unknown} */ ({
     id: '123',
     registrations: [{ id: '456', status: 'approved' }]
+  })
+)
+
+vi.mock(
+  import('#server/common/helpers/metrics/index.js'),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    journeyMetrics: { start: vi.fn(), end: vi.fn() }
   })
 )
 
@@ -135,6 +145,33 @@ describe('#summaryLogUploadController', () => {
     )
 
     expect($('main h1').text()).toContain('Summary log')
+  })
+
+  it('should record the journey start when an upload is initiated', async ({
+    server
+  }) => {
+    await server.inject({ method: 'GET', url, auth: mockAuth })
+
+    expect(journeyMetrics.start).toHaveBeenCalledWith(
+      expect.anything(),
+      JOURNEY.uploadSummaryLog
+    )
+  })
+
+  it('should not record a journey start for a regulator opening the page', async ({
+    server
+  }) => {
+    await server.inject({
+      method: 'GET',
+      url,
+      auth: buildMockAuth({
+        provider: OIDC_ENTRA_ID,
+        idToken: 'test-id-token',
+        ...sessionIdentity(IDENTITIES.regulator)
+      })
+    })
+
+    expect(journeyMetrics.start).not.toHaveBeenCalled()
   })
 
   it('should display error page without leaking backend error details', async ({
