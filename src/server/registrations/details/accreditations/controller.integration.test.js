@@ -107,15 +107,14 @@ describe('the accreditation details page', () => {
     expect(body).toContain('A26ER5001180114PL')
   })
 
-  it('shows the waste balance and the part of it still available', async ({
+  it('shows the balance still available, and not the total behind it', async ({
     server
   }) => {
     const { body } = await visit(server, regulator)
 
-    expect(body).toContain('Waste balance (tonnes)')
-    expect(body).toContain('1,234.50')
     expect(body).toContain('Waste balance available (tonnes)')
     expect(body).toContain('987.25')
+    expect(body).not.toContain('1,234.50')
   })
 
   it('offers a way back to the registration', async ({ server }) => {

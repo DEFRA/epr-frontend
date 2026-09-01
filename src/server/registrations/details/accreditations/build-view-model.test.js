@@ -15,8 +15,6 @@ const localise = createMockLocalise({
   'registrations:details:accreditation:heading': 'Accreditation',
   'registrations:details:accreditation:summary:number': 'Accreditation number',
   'registrations:details:accreditation:summary:status': 'Accreditation status',
-  'registrations:details:accreditation:summary:wasteBalance':
-    'Waste balance (tonnes)',
   'registrations:details:accreditation:summary:wasteBalanceAvailable':
     'Waste balance available (tonnes)',
   'registrations:details:allOrganisations': 'All organisations',
@@ -141,14 +139,13 @@ describe('the accreditation details view model', () => {
     ).toBe('Accreditation')
   })
 
-  it('shows the status as a tag, then the number, then the two balances', () => {
+  it('shows the status as a tag, then the number, then the available balance', () => {
     expect(build().summaryRows).toStrictEqual([
       {
         key: 'Accreditation status',
         status: { text: 'Approved', classes: 'govuk-tag--green' }
       },
       { key: 'Accreditation number', value: 'A26ER5001180114PL' },
-      { key: 'Waste balance (tonnes)', value: '1,234.50' },
       { key: 'Waste balance available (tonnes)', value: '987.25' }
     ])
   })
@@ -164,16 +161,17 @@ describe('the accreditation details view model', () => {
     expect(
       build(undefined, undefined, { amount: 0, availableAmount: 0 })
         .summaryRows[2]
-    ).toStrictEqual({ key: 'Waste balance (tonnes)', value: '0.00' })
+    ).toStrictEqual({
+      key: 'Waste balance available (tonnes)',
+      value: '0.00'
+    })
   })
 
-  it('leaves both balances blank when the balance could not be read', () => {
-    expect(
-      build(undefined, undefined, null).summaryRows.slice(2)
-    ).toStrictEqual([
-      { key: 'Waste balance (tonnes)', value: '' },
-      { key: 'Waste balance available (tonnes)', value: '' }
-    ])
+  it('leaves the balance blank when it could not be read', () => {
+    expect(build(undefined, undefined, null).summaryRows[2]).toStrictEqual({
+      key: 'Waste balance available (tonnes)',
+      value: ''
+    })
   })
 
   it('walks back to the registration and the organisation', () => {

@@ -58,9 +58,16 @@ const toHeading = (accreditation, localise) => {
 }
 
 /**
+ * The balance not already committed to a note. `availableAmount` falls when a
+ * PRN is created rather than when it is issued, so tonnage a note has been
+ * drawn against stops counting as available from the moment it is spoken for.
+ * The total the accreditation has ever held is deliberately not shown beside
+ * it: a regulator asks what is left, and two tonnages invite the wrong one to
+ * be read.
+ *
  * A tonnage the page could not read is left blank rather than shown as zero,
- * which would read as a balance that has been spent down to nothing. The row
- * itself stays, so the list holds the same four keys either way.
+ * which would read as a balance spent down to nothing. The row itself stays,
+ * so the list holds the same three keys either way.
  * @param {number | undefined} amount
  * @returns {string}
  */
@@ -81,10 +88,6 @@ const toSummaryRows = (accreditation, wasteBalance, localise) => [
   {
     key: localise('registrations:details:accreditation:summary:number'),
     value: accreditation.accreditationNumber ?? ''
-  },
-  {
-    key: localise('registrations:details:accreditation:summary:wasteBalance'),
-    value: toTonnage(wasteBalance?.amount)
   },
   {
     key: localise(
