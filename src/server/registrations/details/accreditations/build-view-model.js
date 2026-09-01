@@ -1,3 +1,4 @@
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
@@ -7,6 +8,7 @@ import { toDateRange } from '../helpers/date-range.js'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { AccreditationResource } from '../helpers/types.js'
  */
 
@@ -56,11 +58,29 @@ const toHeading = (accreditation, localise) => {
 }
 
 /**
+ * The balance not already committed to a note. `availableAmount` falls when a
+ * PRN is created rather than when it is issued, so tonnage a note has been
+ * drawn against stops counting as available from the moment it is spoken for.
+ * The total the accreditation has ever held is deliberately not shown beside
+ * it: a regulator asks what is left, and two tonnages invite the wrong one to
+ * be read.
+ *
+ * A tonnage the page could not read is left blank rather than shown as zero,
+ * which would read as a balance spent down to nothing. The row itself stays,
+ * so the list holds the same three keys either way.
+ * @param {number | undefined} amount
+ * @returns {string}
+ */
+const toTonnage = (amount) =>
+  amount === undefined ? '' : formatTonnage(amount)
+
+/**
  * @param {AccreditationResource} accreditation
+ * @param {WasteBalance | null} wasteBalance
  * @param {Localise} localise
  * @returns {SummaryRow[]}
  */
-const toSummaryRows = (accreditation, localise) => [
+const toSummaryRows = (accreditation, wasteBalance, localise) => [
   {
     key: localise('registrations:details:accreditation:summary:status'),
     status: toStatusTag(accreditation.status)
@@ -68,6 +88,12 @@ const toSummaryRows = (accreditation, localise) => [
   {
     key: localise('registrations:details:accreditation:summary:number'),
     value: accreditation.accreditationNumber ?? ''
+  },
+  {
+    key: localise(
+      'registrations:details:accreditation:summary:wasteBalanceAvailable'
+    ),
+    value: toTonnage(wasteBalance?.availableAmount)
   }
 ]
 
@@ -76,6 +102,7 @@ const toSummaryRows = (accreditation, localise) => [
  *   organisation: Organisation,
  *   registration: Registration,
  *   accreditation: AccreditationResource,
+ *   wasteBalance: WasteBalance | null,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
@@ -85,6 +112,7 @@ export const buildViewModel = ({
   organisation,
   registration,
   accreditation,
+  wasteBalance,
   localise,
   localiseUrl
 }) => {
@@ -114,6 +142,6 @@ export const buildViewModel = ({
     pageTitle: accreditation.accreditationNumber
       ? `${accreditation.accreditationNumber}: ${pageName}`
       : pageName,
-    summaryRows: toSummaryRows(accreditation, localise)
+    summaryRows: toSummaryRows(accreditation, wasteBalance, localise)
   }
 }

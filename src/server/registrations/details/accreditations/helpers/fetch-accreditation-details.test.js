@@ -5,6 +5,7 @@ import { fetchAccreditationDetails } from './fetch-accreditation-details.js'
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
  */
 
 vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
@@ -16,17 +17,28 @@ vi.mock(
     fetchRegistrationAndAccreditation: vi.fn()
   })
 )
+vi.mock(
+  import('#server/common/helpers/waste-balance/get-waste-balance.js'),
+  () => ({
+    getWasteBalance: vi.fn()
+  })
+)
 
 const { fetchJsonFromBackend } =
   await import('#server/common/helpers/fetch-json-from-backend.js')
 const { fetchRegistrationAndAccreditation } =
   await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+const { getWasteBalance } =
+  await import('#server/common/helpers/waste-balance/get-waste-balance.js')
 
 describe(fetchAccreditationDetails, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const accreditationId = 'acc-789'
   const backendToken = 'test-token'
+  const logger = /** @type {TypedLogger} */ (
+    /** @type {unknown} */ ({ error: vi.fn() })
+  )
 
   const organisation = /** @type {Organisation} */ (
     /** @type {unknown} */ ({ id: organisationId, companyDetails: {} })
@@ -38,6 +50,7 @@ describe(fetchAccreditationDetails, () => {
     })
   )
   const accreditation = { id: accreditationId, accreditationNumber: 'A123' }
+  const wasteBalance = { amount: 120.5, availableAmount: 80.25 }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -46,6 +59,7 @@ describe(fetchAccreditationDetails, () => {
       registration
     })
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(accreditation)
+    vi.mocked(getWasteBalance).mockResolvedValue(wasteBalance)
   })
 
   it('reads the accreditation from the path the backend serves it at', async () => {
@@ -53,7 +67,8 @@ describe(fetchAccreditationDetails, () => {
       organisationId,
       registrationId,
       accreditationId,
-      backendToken
+      backendToken,
+      logger
     })
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -72,7 +87,8 @@ describe(fetchAccreditationDetails, () => {
       organisationId: 'org/123',
       registrationId: 'reg&456',
       accreditationId: 'acc?789',
-      backendToken
+      backendToken,
+      logger
     })
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -86,7 +102,8 @@ describe(fetchAccreditationDetails, () => {
       organisationId,
       registrationId,
       accreditationId,
-      backendToken
+      backendToken,
+      logger
     })
 
     expect(fetchRegistrationAndAccreditation).toHaveBeenCalledWith(
@@ -96,18 +113,52 @@ describe(fetchAccreditationDetails, () => {
     )
   })
 
-  it('combines the organisation, the registration and the accreditation', async () => {
+  it('reads the waste balance the accreditation holds', async () => {
+    await fetchAccreditationDetails({
+      organisationId,
+      registrationId,
+      accreditationId,
+      backendToken,
+      logger
+    })
+
+    expect(getWasteBalance).toHaveBeenCalledWith(
+      organisationId,
+      accreditationId,
+      backendToken,
+      logger
+    )
+  })
+
+  it('combines the organisation, the registration, the accreditation and its balance', async () => {
     const result = await fetchAccreditationDetails({
       organisationId,
       registrationId,
       accreditationId,
-      backendToken
+      backendToken,
+      logger
     })
 
     expect(result).toStrictEqual({
       organisation,
       registration,
-      accreditation
+      accreditation,
+      wasteBalance
     })
+  })
+
+  it('reports a balance it could not read as absent rather than failing the page', async () => {
+    vi.mocked(getWasteBalance).mockResolvedValue(null)
+
+    const result = await fetchAccreditationDetails({
+      organisationId,
+      registrationId,
+      accreditationId,
+      backendToken,
+      logger
+    })
+
+    expect(result.wasteBalance).toBeNull()
+    expect(result.accreditation).toStrictEqual(accreditation)
   })
 })
