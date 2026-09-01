@@ -9,7 +9,8 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { TRANSACTION_END, TRANSACTION_START } from './constants.js'
 
 /**
- * @import { TransactionValue } from './constants.js'
+ * @import { Journey } from './constants.js'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
 /**
@@ -62,18 +63,41 @@ export const metrics = {
   }
 }
 
+/** @param {Journey} journey */
+const startedKey = (journey) => `journeyStarted:${journey.start}`
+
 /**
  * Journey start and end events feeding the mandatory GDS KPIs. Both phases share
  * one metric name so the totals read without knowing the journeys, and carry the
  * journey as a dimension so each one is its own series.
+ *
+ * A start counts once per attempt: revisiting the first page, or re-entering a
+ * resumable journey, must not inflate the started count that completion rate
+ * divides by. The marker is cleared on the end so a later attempt counts again.
  */
 export const journeyMetrics = {
-  /** @param {TransactionValue} journey */
-  async start(journey) {
-    return metricsCounter(TRANSACTION_START, { journey })
+  /**
+   * @param {HapiRequest} request
+   * @param {Journey} journey
+   */
+  async start(request, journey) {
+    if (request.yar.get(startedKey(journey))) {
+      return
+    }
+
+    request.yar.set(startedKey(journey), true)
+
+    return metricsCounter(TRANSACTION_START, { journey: journey.start })
   },
-  /** @param {TransactionValue} journey */
-  async end(journey) {
-    return metricsCounter(TRANSACTION_END, { journey })
+  /**
+   * @template {Journey & Record<string, string>} J
+   * @param {HapiRequest} request
+   * @param {J} journey
+   * @param {Exclude<keyof J, 'start'>} outcome
+   */
+  async end(request, journey, outcome) {
+    request.yar.clear(startedKey(journey))
+
+    return metricsCounter(TRANSACTION_END, { journey: journey[outcome] })
   }
 }

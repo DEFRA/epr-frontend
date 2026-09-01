@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 
-import { TRANSACTION } from './constants.js'
+import { JOURNEY } from './constants.js'
 import { journeyMetrics, metrics } from './index.js'
 import { config } from '#config/config.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
@@ -75,12 +75,24 @@ describe('#metrics', () => {
   })
 
   describe('journey events', () => {
+    const createRequest = (session = new Map()) =>
+      /** @type {never} */ (
+        /** @type {unknown} */ ({
+          yar: {
+            get: (key) => session.get(key),
+            set: (key, value) => session.set(key, value),
+            clear: (key) => session.delete(key)
+          }
+        })
+      )
+
     beforeEach(() => {
+      vi.clearAllMocks()
       config.set('isMetricsEnabled', true)
     })
 
-    it('should record a transaction start under a single metric name', async () => {
-      await journeyMetrics.start(TRANSACTION.uploadSummaryLogStart)
+    it('should record a start under a single metric name', async () => {
+      await journeyMetrics.start(createRequest(), JOURNEY.uploadSummaryLog)
 
       expect(mockPutMetric).toHaveBeenCalledWith(
         'TransactionStart',
@@ -90,8 +102,12 @@ describe('#metrics', () => {
       )
     })
 
-    it('should record a transaction end under a single metric name', async () => {
-      await journeyMetrics.end(TRANSACTION.uploadSummaryLogEnd)
+    it('should record an end under a single metric name', async () => {
+      await journeyMetrics.end(
+        createRequest(),
+        JOURNEY.uploadSummaryLog,
+        'uploaded'
+      )
 
       expect(mockPutMetric).toHaveBeenCalledWith(
         'TransactionEnd',
@@ -101,23 +117,64 @@ describe('#metrics', () => {
       )
     })
 
-    it.for([
-      ['start', TRANSACTION.saveOrIssuePrnPernStart],
-      ['end', TRANSACTION.issuePrnPernEnd],
-      ['end', TRANSACTION.saveDraftPrnPernEnd]
-    ])(
-      'should carry %s transaction %s as the journey dimension',
-      async ([phase, transaction]) => {
-        await journeyMetrics[phase](transaction)
+    it('should carry the start value as the journey dimension', async () => {
+      await journeyMetrics.start(createRequest(), JOURNEY.saveOrIssuePrnPern)
 
-        expect(mockPutDimensions).toHaveBeenCalledWith({ journey: transaction })
+      expect(mockPutDimensions).toHaveBeenCalledWith({
+        journey: 'SaveOrIssuePRNPERNStart'
+      })
+    })
+
+    it.each(
+      /** @type {const} */ ([
+        ['issued', 'IssuePRNPERNEnd'],
+        ['draft', 'SaveDraftPRNPERNEnd']
+      ])
+    )(
+      'should carry the %s outcome as the journey dimension',
+      async (outcome, expected) => {
+        await journeyMetrics.end(
+          createRequest(),
+          JOURNEY.saveOrIssuePrnPern,
+          outcome
+        )
+
+        expect(mockPutDimensions).toHaveBeenCalledWith({ journey: expected })
       }
     )
+
+    it('should record a start only once per attempt', async () => {
+      const request = createRequest()
+
+      await journeyMetrics.start(request, JOURNEY.saveOrSubmitReport)
+      await journeyMetrics.start(request, JOURNEY.saveOrSubmitReport)
+
+      expect(mockPutMetric).toHaveBeenCalledTimes(1)
+    })
+
+    it('should count a fresh start once the journey has ended', async () => {
+      const request = createRequest()
+
+      await journeyMetrics.start(request, JOURNEY.saveOrSubmitReport)
+      await journeyMetrics.end(request, JOURNEY.saveOrSubmitReport, 'submitted')
+      await journeyMetrics.start(request, JOURNEY.saveOrSubmitReport)
+
+      expect(mockPutMetric).toHaveBeenCalledTimes(3)
+    })
+
+    it('should track each journey separately', async () => {
+      const request = createRequest()
+
+      await journeyMetrics.start(request, JOURNEY.saveOrSubmitReport)
+      await journeyMetrics.start(request, JOURNEY.uploadSummaryLog)
+
+      expect(mockPutMetric).toHaveBeenCalledTimes(2)
+    })
 
     it('should not record when metrics are disabled', async () => {
       config.set('isMetricsEnabled', false)
 
-      await journeyMetrics.start(TRANSACTION.saveOrSubmitReportStart)
+      await journeyMetrics.start(createRequest(), JOURNEY.saveOrSubmitReport)
 
       expect(mockFlush).not.toHaveBeenCalled()
     })
