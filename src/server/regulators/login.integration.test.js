@@ -64,7 +64,7 @@ describe('#regulatorsLoginController - integration', () => {
     )
   })
 
-  describe('which account the provider signs the user in as', () => {
+  describe('the account prompt in the authorize request', () => {
     const promptAskedFor = async (server, url) => {
       const response = await server.inject({ method: 'GET', url })
 
@@ -73,7 +73,7 @@ describe('#regulatorsLoginController - integration', () => {
       ).searchParams.get('prompt')
     }
 
-    it('lets the user choose when the sign in asks for a choice', async ({
+    it('asks Entra ID for an account picker when the sign in is marked for one', async ({
       server
     }) => {
       await expect(
@@ -81,7 +81,9 @@ describe('#regulatorsLoginController - integration', () => {
       ).resolves.toBe('select_account')
     })
 
-    it('signs an everyday sign in straight in', async ({ server }) => {
+    it('asks for no picker on an ordinary sign in, so a regulator with one account is not interrupted', async ({
+      server
+    }) => {
       await expect(
         promptAskedFor(server, '/regulators/login')
       ).resolves.toBeNull()

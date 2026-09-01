@@ -339,6 +339,29 @@ describe('/auth/callback/entra - GET integration', async () => {
     )
   })
 
+  describe('on successful return from Entra ID - authorised regulator, after an attempt that was refused', () => {
+    it('ignores the refused attempt referrer and lands on the regulators home page', async ({
+      server,
+      msw
+    }) => {
+      const jar = {}
+
+      msw.use(identityHandler(IDENTITIES.unrecognised))
+      await performSignInFlow(
+        server,
+        msw,
+        { ...regulatorToken, referer: 'http://localhost:3000/some/prior/page' },
+        jar
+      )
+
+      msw.use(identityHandler(IDENTITIES.regulator))
+      const response = await performSignInFlow(server, msw, regulatorToken, jar)
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/regulators/home')
+    })
+  })
+
   describe('on successful return from Entra ID - an identity the backend does not recognise', () => {
     beforeEach(({ msw }) => {
       msw.use(identityHandler(IDENTITIES.unrecognised))
@@ -388,27 +411,6 @@ describe('/auth/callback/entra - GET integration', async () => {
       const href = $('[data-testid="sign-in-link"]').attr('href')
 
       expect(href).toBe(`/regulators/login?${SELECT_ACCOUNT_QUERY}`)
-    })
-
-    it('does not send the next sign in to the page this one started from', async ({
-      server,
-      msw
-    }) => {
-      const jar = {}
-
-      await performSignInFlow(
-        server,
-        msw,
-        { ...regulatorToken, referer: 'http://localhost:3000/some/prior/page' },
-        jar
-      )
-
-      msw.use(identityHandler(IDENTITIES.regulator))
-
-      const response = await performSignInFlow(server, msw, regulatorToken, jar)
-
-      expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers['location']).toBe('/regulators/home')
     })
 
     it('leaves the refused user unauthenticated on an operator route', async ({
