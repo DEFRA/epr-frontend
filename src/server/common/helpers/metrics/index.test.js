@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 
-import { metrics } from './index.js'
+import { TRANSACTION } from './constants.js'
+import { journeyMetrics, metrics } from './index.js'
 import { config } from '#config/config.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
@@ -71,6 +72,55 @@ describe('#metrics', () => {
         })
       }
     )
+  })
+
+  describe('journey events', () => {
+    beforeEach(() => {
+      config.set('isMetricsEnabled', true)
+    })
+
+    it('should record a transaction start under a single metric name', async () => {
+      await journeyMetrics.start(TRANSACTION.uploadSummaryLogStart)
+
+      expect(mockPutMetric).toHaveBeenCalledWith(
+        'TransactionStart',
+        1,
+        Unit.Count,
+        StorageResolution.Standard
+      )
+    })
+
+    it('should record a transaction end under a single metric name', async () => {
+      await journeyMetrics.end(TRANSACTION.uploadSummaryLogEnd)
+
+      expect(mockPutMetric).toHaveBeenCalledWith(
+        'TransactionEnd',
+        1,
+        Unit.Count,
+        StorageResolution.Standard
+      )
+    })
+
+    it.for([
+      ['start', TRANSACTION.saveOrIssuePrnPernStart],
+      ['end', TRANSACTION.issuePrnPernEnd],
+      ['end', TRANSACTION.saveDraftPrnPernEnd]
+    ])(
+      'should carry %s transaction %s as the journey dimension',
+      async ([phase, transaction]) => {
+        await journeyMetrics[phase](transaction)
+
+        expect(mockPutDimensions).toHaveBeenCalledWith({ journey: transaction })
+      }
+    )
+
+    it('should not record when metrics are disabled', async () => {
+      config.set('isMetricsEnabled', false)
+
+      await journeyMetrics.start(TRANSACTION.saveOrSubmitReportStart)
+
+      expect(mockFlush).not.toHaveBeenCalled()
+    })
   })
 
   describe('when metrics throws', () => {

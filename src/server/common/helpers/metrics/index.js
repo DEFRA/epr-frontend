@@ -6,6 +6,11 @@ import {
 
 import { config } from '#config/config.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { TRANSACTION_END, TRANSACTION_START } from './constants.js'
+
+/**
+ * @import { TransactionValue } from './constants.js'
+ */
 
 /**
  * Aws embedded metrics wrapper
@@ -54,5 +59,21 @@ export const metrics = {
   /** @param {string} oidcProvider */
   async signOutSuccess(oidcProvider) {
     return metricsCounter('signOutSuccess', { oidcProvider })
+  }
+}
+
+/**
+ * Journey start and end events feeding the mandatory GDS KPIs. Both phases share
+ * one metric name so the totals read without knowing the journeys, and carry the
+ * journey as a dimension so each one is its own series.
+ */
+export const journeyMetrics = {
+  /** @param {TransactionValue} journey */
+  async start(journey) {
+    return metricsCounter(TRANSACTION_START, { journey })
+  },
+  /** @param {TransactionValue} journey */
+  async end(journey) {
+    return metricsCounter(TRANSACTION_END, { journey })
   }
 }
