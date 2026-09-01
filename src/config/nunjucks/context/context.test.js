@@ -45,6 +45,15 @@ function mockRequest(options) {
   }
 }
 
+// mockRequest carries no i18n, so localise passes the key straight through
+const surveyLinkText = 'common:satisfactionSurvey:link'
+
+const noSurveys = () => ({
+  prn: { href: '', text: surveyLinkText },
+  report: { href: '', text: surveyLinkText },
+  summaryLog: { href: '', text: surveyLinkText }
+})
+
 describe('#context', () => {
   let contextResult
 
@@ -285,6 +294,7 @@ describe('#context', () => {
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
+        satisfactionSurvey: noSurveys(),
         serviceName: 'common:serviceName',
         serviceUrl: '/start'
       })
@@ -379,6 +389,7 @@ describe('#context cache', () => {
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
+        satisfactionSurvey: noSurveys(),
         serviceName: 'common:serviceName',
         serviceUrl: '/start'
       })

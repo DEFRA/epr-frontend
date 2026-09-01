@@ -1,4 +1,5 @@
 {% extends 'layouts/page.njk' %}
+{% from "satisfaction-survey/macro.njk" import appSatisfactionSurvey %}
 
 {% block content %}
 <div class="govuk-grid-row">
@@ -23,6 +24,10 @@
       </a>
     </p>
 
+    {% if satisfactionSurvey.prn.href %}
+    <h2 class="govuk-heading-m">{{ whatHappensNextHeading }}</h2>
+    {% endif %}
+
     {% if hasWriteScope %}
     <p class="govuk-body">
       <a href="{{ issueAnotherLink.href }}" class="govuk-link">{{ issueAnotherLink.text }}</a>
@@ -32,6 +37,8 @@
     <p class="govuk-body">
       <a href="{{ managePrnsLink.href }}" class="govuk-link">{{ managePrnsLink.text }}</a>
     </p>
+
+    {{ appSatisfactionSurvey(satisfactionSurvey.prn) }}
 
     <p class="govuk-body">
       <a href="{{ returnHomeLink.href }}" class="govuk-link">{{ returnHomeLink.text }}</a>
