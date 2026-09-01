@@ -1,6 +1,6 @@
 import { controller } from './controller.js'
 import { controller as detailsController } from './details/controller.js'
-import { readsAsARegulator } from './reads-as-a-regulator.js'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'

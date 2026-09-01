@@ -3,7 +3,8 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
- * @import { AccreditationResource, RegistrationResource } from './types.js'
+ * @import { AccreditationResource } from './types.js'
+ * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
  */
 
 /**

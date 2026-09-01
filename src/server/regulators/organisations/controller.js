@@ -28,7 +28,7 @@ export const controller = {
   },
   async handler(request, h) {
     const { page, search } = request.query
-    const { backendToken, profile } = request.auth.credentials
+    const { backendToken } = request.auth.credentials
 
     const results = await fetchOrganisations({ page, search, backendToken })
     const basePath = request.localiseUrl(paths.regulators.home)
@@ -48,7 +48,6 @@ export const controller = {
       pageTitle: request.t('regulators:organisations:pageTitle'),
       search,
       clearSearchHref: basePath,
-      username: profile.email?.split('@')[0],
       organisations: results.items.map((organisation) =>
         toOrganisationRow(organisation, request.localiseUrl, request.t)
       ),
