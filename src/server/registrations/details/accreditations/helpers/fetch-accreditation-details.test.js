@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchAccreditationDetails } from './fetch-accreditation-details.js'
 
+/**
+ * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
+ */
+
 vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
   fetchJsonFromBackend: vi.fn()
 }))
@@ -23,8 +28,15 @@ describe(fetchAccreditationDetails, () => {
   const accreditationId = 'acc-789'
   const backendToken = 'test-token'
 
-  const organisation = { id: organisationId, companyDetails: {} }
-  const registration = { id: registrationId, registrationNumber: 'R123' }
+  const organisation = /** @type {Organisation} */ (
+    /** @type {unknown} */ ({ id: organisationId, companyDetails: {} })
+  )
+  const registration = /** @type {Registration} */ (
+    /** @type {unknown} */ ({
+      id: registrationId,
+      registrationNumber: 'R123'
+    })
+  )
   const accreditation = { id: accreditationId, accreditationNumber: 'A123' }
 
   beforeEach(() => {

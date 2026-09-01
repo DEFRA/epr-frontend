@@ -36,7 +36,7 @@ const organisationName = ({ companyDetails }) =>
  * The three records the page sits under, in the order the breadcrumbs walk
  * them. A record that holds no number has nothing to name it by, so it is left
  * out rather than shown as an empty gap between two dashes.
- * @param {string[]} parts
+ * @param {(string | null | undefined)[]} parts
  * @returns {string}
  */
 const toCaption = (parts) => parts.filter(Boolean).join(' - ')
