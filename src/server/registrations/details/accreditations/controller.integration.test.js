@@ -59,7 +59,34 @@ const accreditationDetails = {
       wasteProcessingType: 'reprocessor'
     }
   },
-  wasteBalance: { amount: 1234.5, availableAmount: 987.25 }
+  wasteBalance: { amount: 1234.5, availableAmount: 987.25 },
+  cadence: 'monthly',
+  reportingPeriods: [
+    /** @type {AccreditationDetails['reportingPeriods'][number]} */ (
+      /** @type {unknown} */ ({
+        year: 2026,
+        period: 8,
+        submissionNumber: 1,
+        startDate: '2026-08-01',
+        endDate: '2026-08-31',
+        dueDate: '2026-09-20',
+        periodStatus: 'submitted',
+        report: { submittedAt: '2026-09-15T15:09:00.000Z' }
+      })
+    ),
+    /** @type {AccreditationDetails['reportingPeriods'][number]} */ (
+      /** @type {unknown} */ ({
+        year: 2026,
+        period: 7,
+        submissionNumber: 1,
+        startDate: '2026-07-01',
+        endDate: '2026-07-31',
+        dueDate: '2026-08-20',
+        periodStatus: 'overdue',
+        report: null
+      })
+    )
+  ]
 }
 
 /**
@@ -115,6 +142,79 @@ describe('the accreditation details page', () => {
     expect(body).toContain('Waste balance available (tonnes)')
     expect(body).toContain('987.25')
     expect(body).not.toContain('1,234.50')
+  })
+
+  it('lists the reporting periods below the summary, under their five headings', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+
+    const table = documentOf(body).querySelector(
+      '[data-testid="reports-table"]'
+    )
+    const headings = [...(table?.querySelectorAll('thead th') ?? [])].map(
+      (cell) => cell.textContent?.trim()
+    )
+
+    expect(body.indexOf('govuk-summary-list')).toBeLessThan(
+      body.indexOf('data-testid="reports-table"')
+    )
+    expect(headings).toStrictEqual([
+      'Period',
+      'Due date',
+      'Submission date',
+      'Status',
+      'Actions'
+    ])
+  })
+
+  it('reads a submitted period, its period naming the row', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+
+    const firstRow = documentOf(body).querySelector(
+      '[data-testid="reports-table"] tbody tr'
+    )
+    const cells = [...(firstRow?.querySelectorAll('th, td') ?? [])].map(
+      (cell) => cell.textContent?.trim()
+    )
+
+    expect(firstRow?.firstElementChild?.tagName).toBe('TH')
+    expect(cells).toStrictEqual([
+      'August, 2026',
+      '20 Sept 2026',
+      '15 Sept 2026, 4:09pm',
+      'Submitted',
+      'View report August, 2026'
+    ])
+    expect(body).toContain(
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/8/submissions/1/view`
+    )
+  })
+
+  it('says why the table is empty rather than showing an empty table', async ({
+    server
+  }) => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+      ...accreditationDetails,
+      cadence: null,
+      reportingPeriods: []
+    })
+
+    const { body } = await visit(server, regulator)
+
+    expect(body).not.toContain('data-testid="reports-table"')
+    expect(body).toContain('data-testid="no-reports"')
+    expect(body).toContain('There are no reporting periods')
+  })
+
+  it('offers no way to change anything on the page', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    const main = documentOf(body).querySelector('#main-content')
+
+    expect(main?.querySelectorAll('button, form')).toHaveLength(0)
   })
 
   it('offers a way back to the registration', async ({ server }) => {

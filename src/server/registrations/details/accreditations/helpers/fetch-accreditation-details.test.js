@@ -51,6 +51,22 @@ describe(fetchAccreditationDetails, () => {
   )
   const accreditation = { id: accreditationId, accreditationNumber: 'A123' }
   const wasteBalance = { amount: 120.5, availableAmount: 80.25 }
+  const reportingPeriods = [
+    {
+      year: 2026,
+      period: 8,
+      submissionNumber: 1,
+      startDate: '2026-08-01',
+      endDate: '2026-08-31',
+      dueDate: '2026-09-20',
+      periodStatus: 'submitted',
+      report: null
+    }
+  ]
+  const calendar = { cadence: 'monthly', reportingPeriods }
+
+  const isCalendarPath = (/** @type {string} */ path) =>
+    path.endsWith('/reports/calendar')
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -58,7 +74,11 @@ describe(fetchAccreditationDetails, () => {
       organisationData: organisation,
       registration
     })
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(accreditation)
+    vi.mocked(fetchJsonFromBackend).mockImplementation((path) =>
+      isCalendarPath(path)
+        ? Promise.resolve(calendar)
+        : Promise.resolve(accreditation)
+    )
     vi.mocked(getWasteBalance).mockResolvedValue(wasteBalance)
   })
 
@@ -130,7 +150,7 @@ describe(fetchAccreditationDetails, () => {
     )
   })
 
-  it('combines the organisation, the registration, the accreditation and its balance', async () => {
+  it('combines the organisation, the registration, the accreditation, its balance and its reporting calendar', async () => {
     const result = await fetchAccreditationDetails({
       organisationId,
       registrationId,
@@ -143,7 +163,49 @@ describe(fetchAccreditationDetails, () => {
       organisation,
       registration,
       accreditation,
-      wasteBalance
+      wasteBalance,
+      reportingPeriods,
+      cadence: 'monthly'
+    })
+  })
+
+  it('reads the reporting calendar from the address the operator page reads it at', async () => {
+    await fetchAccreditationDetails({
+      organisationId,
+      registrationId,
+      accreditationId,
+      backendToken,
+      logger
+    })
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+      expect.any(Object)
+    )
+  })
+
+  it('reports a calendar it could not read as no periods rather than failing the page', async () => {
+    const err = new Error('calendar unavailable')
+    vi.mocked(fetchJsonFromBackend).mockImplementation((path) =>
+      isCalendarPath(path)
+        ? Promise.reject(err)
+        : Promise.resolve(accreditation)
+    )
+
+    const result = await fetchAccreditationDetails({
+      organisationId,
+      registrationId,
+      accreditationId,
+      backendToken,
+      logger
+    })
+
+    expect(result.reportingPeriods).toStrictEqual([])
+    expect(result.cadence).toBeNull()
+    expect(result.accreditation).toStrictEqual(accreditation)
+    expect(logger.error).toHaveBeenCalledWith({
+      message: `Failed to fetch reporting periods for organisation ${organisationId} registration ${registrationId}`,
+      err
     })
   })
 
