@@ -12,7 +12,13 @@ import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchAccreditationDetails } from './helpers/fetch-accreditation-details.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole, getByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByTestId,
+  getByText,
+  within
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -133,12 +139,11 @@ const visit = async (server, auth) => {
 /** @param {string} body */
 const documentOf = (body) => new JSDOM(body).window.document.body
 
-/**
- * @param {ReturnType<typeof documentOf>} body
- * @param {string} selector
- */
-const cellsOf = (body, selector) =>
-  [...body.querySelectorAll(selector)].map((cell) => cell.textContent?.trim())
+/** @param {ReturnType<typeof documentOf>} body */
+const ledgerTable = (body) => getByTestId(body, 'waste-balance-ledger-table')
+
+/** @param {ReturnType<typeof getAllByRole>} cells */
+const textOf = (cells) => cells.map((cell) => cell.textContent?.trim())
 
 /**
  * The ledger read follows the session: the helper is asked to read it only
@@ -289,7 +294,7 @@ describe('the accreditation details page', () => {
       getByRole(document, 'heading', { level: 2, name: 'Waste balance ledger' })
     ).toBeDefined()
     expect(
-      cellsOf(document, '[data-testid="waste-balance-ledger-table"] thead th')
+      textOf(getAllByRole(ledgerTable(document), 'columnheader'))
     ).toStrictEqual([
       'Date and time',
       'Event',
@@ -304,21 +309,12 @@ describe('the accreditation details page', () => {
     server
   }) => {
     const { body } = await visit(server, regulator)
-    const document = documentOf(body)
+    const [, firstRow] = getAllByRole(ledgerTable(documentOf(body)), 'row')
 
-    expect(
-      cellsOf(
-        document,
-        '[data-testid="waste-balance-ledger-table"] tbody tr:first-child th'
-      )
-    ).toStrictEqual(['15 February 2026, 3:09pm'])
-    expect(
-      cellsOf(
-        document,
-        '[data-testid="waste-balance-ledger-table"] tbody tr:first-child > *'
-      )
-    ).toStrictEqual([
-      '15 February 2026, 3:09pm',
+    expect(within(firstRow).getByRole('rowheader').textContent?.trim()).toBe(
+      '15 February 2026, 3:09pm'
+    )
+    expect(textOf(within(firstRow).getAllByRole('cell'))).toStrictEqual([
       'PRN issued',
       '12.50',
       '100.00',
@@ -338,8 +334,7 @@ describe('the accreditation details page', () => {
     expect(body).not.toContain('data-testid="waste-balance-ledger-table"')
     expect(
       getByText(documentOf(body), 'Nothing has changed this waste balance yet.')
-        .className
-    ).toBe('govuk-body app-colour-secondary')
+    ).toHaveClass('app-colour-secondary')
   })
 
   it('reads no ledger, and shows none, for a regulator the backend granted no ledger scope', async ({
