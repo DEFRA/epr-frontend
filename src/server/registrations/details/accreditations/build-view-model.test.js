@@ -1,3 +1,4 @@
+import { CADENCE } from '#server/reports/constants.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { describe, expect, it } from 'vitest'
 
@@ -7,20 +8,37 @@ import { buildViewModel } from './build-view-model.js'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
+ * @import { CadenceValue } from '#server/reports/constants.js'
+ * @import { ReportingPeriod, ReportListItem } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource } from '../helpers/types.js'
+ * @import { TableRow } from './build-view-model.js'
  */
 
 const localise = createMockLocalise({
   'registrations:details:accreditation:breadcrumb': 'Accreditation details',
   'registrations:details:accreditation:heading': 'Accreditation',
+  'registrations:details:accreditation:reports:actions': 'Actions',
+  'registrations:details:accreditation:reports:dueDate': 'Due date',
+  'registrations:details:accreditation:reports:period': 'Period',
+  'registrations:details:accreditation:reports:status': 'Status',
+  'registrations:details:accreditation:reports:submissionDate':
+    'Submission date',
   'registrations:details:accreditation:summary:number': 'Accreditation number',
   'registrations:details:accreditation:summary:status': 'Accreditation status',
   'registrations:details:accreditation:summary:wasteBalanceAvailable':
     'Waste balance available (tonnes)',
   'registrations:details:allOrganisations': 'All organisations',
   'registrations:details:current': 'Current',
+  'registrations:details:heading': 'Registration details',
   'registrations:details:period': '{{from}} to {{to}}',
-  'registrations:details:heading': 'Registration details'
+  'reports:actionView': 'View report',
+  'reports:months.7': 'July',
+  'reports:months.8': 'August',
+  'reports:months.12': 'December',
+  'reports:quarterlyPeriod': 'Quarter {{number}}, {{year}}',
+  'reports:statusOverdue': 'Overdue',
+  'reports:statusResubmitted': 'Resubmitted',
+  'reports:statusSubmitted': 'Submitted'
 })
 
 /** @type {(path: string) => string} */
@@ -72,23 +90,58 @@ const anAccreditation = (overrides) => ({
 const aWasteBalance = { amount: 1234.5, availableAmount: 987.25 }
 
 /**
+ * @param {Partial<ReportingPeriod>} [overrides]
+ * @returns {ReportingPeriod}
+ */
+const aPeriod = (overrides) =>
+  /** @type {ReportingPeriod} */ (
+    /** @type {unknown} */ ({
+      year: 2026,
+      period: 8,
+      submissionNumber: 1,
+      startDate: '2026-08-01',
+      endDate: '2026-08-31',
+      dueDate: '2026-09-20',
+      periodStatus: 'submitted',
+      report: { submittedAt: '2026-09-15T15:09:00.000Z' },
+      ...overrides
+    })
+  )
+
+/** @type {{ cadence: CadenceValue | null, reportingPeriods: ReportingPeriod[] }} */
+const noCalendar = { cadence: CADENCE.MONTHLY, reportingPeriods: [] }
+
+/**
  * @param {Partial<AccreditationResource>} [accreditationOverrides]
  * @param {Partial<Registration>} [registrationOverrides]
  * @param {WasteBalance | null} [wasteBalance]
+ * @param {{ cadence: CadenceValue | null, reportingPeriods: ReportingPeriod[] }} [calendar]
  */
 const build = (
   accreditationOverrides,
   registrationOverrides,
-  wasteBalance = aWasteBalance
+  wasteBalance = aWasteBalance,
+  calendar = noCalendar
 ) =>
   buildViewModel({
     organisation,
     registration: aRegistration(registrationOverrides),
     accreditation: anAccreditation(accreditationOverrides),
     wasteBalance,
+    reportingPeriods: calendar.reportingPeriods,
+    cadence: calendar.cadence,
     localise,
     localiseUrl
   })
+
+/**
+ * @param {ReportingPeriod[]} reportingPeriods
+ * @param {CadenceValue | null} [cadence]
+ * @returns {TableRow[]}
+ */
+const reportRows = (reportingPeriods, cadence = CADENCE.MONTHLY) =>
+  build(undefined, undefined, aWasteBalance, { cadence, reportingPeriods })
+    .reports.rows
 
 describe('the accreditation details view model', () => {
   it('names the organisation, the registration and the accreditation in the caption', () => {
@@ -117,6 +170,8 @@ describe('the accreditation details view model', () => {
       registration: aRegistration(),
       accreditation: anAccreditation(),
       wasteBalance: aWasteBalance,
+      reportingPeriods: [],
+      cadence: CADENCE.MONTHLY,
       localise,
       localiseUrl
     })
@@ -199,5 +254,101 @@ describe('the accreditation details view model', () => {
     expect(build({ accreditationNumber: null }).pageTitle).toBe(
       'Accreditation details'
     )
+  })
+})
+
+describe('the reports table on the accreditation details view model', () => {
+  const viewPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+
+  it('names the five columns the design asks for, sizing the four data columns and hugging the actions', () => {
+    expect(build().reports.head).toStrictEqual([
+      { text: 'Period', classes: 'govuk-!-width-one-quarter' },
+      { text: 'Due date', classes: 'govuk-!-width-one-quarter' },
+      { text: 'Submission date', classes: 'govuk-!-width-one-quarter' },
+      { text: 'Status', classes: 'govuk-!-width-one-quarter' },
+      { text: 'Actions', classes: 'govuk-!-text-align-right' }
+    ])
+  })
+
+  it('shows a submitted period with the moment it arrived and a way to read it', () => {
+    expect(reportRows([aPeriod()])).toStrictEqual([
+      [
+        { text: 'August, 2026' },
+        { text: '20 Sept 2026' },
+        { text: '15 Sept 2026, 4:09pm' },
+        {
+          html: '<strong class="govuk-tag govuk-tag--green">Submitted</strong>'
+        },
+        {
+          html: `<a href="${viewPath}/2026/monthly/8/submissions/1/view" class="govuk-link">View report <span class="govuk-visually-hidden">August, 2026</span></a>`,
+          classes: 'govuk-!-text-align-right'
+        }
+      ]
+    ])
+  })
+
+  it('leaves an unsubmitted period without a submission date and without a link to a report that does not exist', () => {
+    expect(
+      reportRows([
+        aPeriod({ period: 7, periodStatus: 'overdue', report: null })
+      ])
+    ).toStrictEqual([
+      [
+        { text: 'July, 2026' },
+        { text: '20 Sept 2026' },
+        { text: '' },
+        { html: '<strong class="govuk-tag govuk-tag--red">Overdue</strong>' },
+        { text: '', classes: 'govuk-!-text-align-right' }
+      ]
+    ])
+  })
+
+  it('reads a later submission as resubmitted, from the period rather than from its report', () => {
+    const rows = reportRows([
+      aPeriod({
+        submissionNumber: 2,
+        report: /** @type {ReportListItem} */ (
+          /** @type {unknown} */ ({
+            submittedAt: '2026-09-15T15:09:00.000Z',
+            submissionNumber: 1
+          })
+        )
+      })
+    ])
+
+    expect(rows[0][3]).toStrictEqual({
+      html: '<strong class="govuk-tag govuk-tag--green">Resubmitted</strong>'
+    })
+  })
+
+  it('names a quarterly period by its quarter', () => {
+    const rows = reportRows(
+      [aPeriod({ period: 3, report: null, periodStatus: 'overdue' })],
+      CADENCE.QUARTERLY
+    )
+
+    expect(rows[0][0]).toStrictEqual({ text: 'Quarter 3, 2026' })
+  })
+
+  it('leads with the most recent period, whatever order the calendar answered in', () => {
+    const rows = reportRows([
+      aPeriod({ year: 2025, period: 12 }),
+      aPeriod({ period: 8 }),
+      aPeriod({ period: 7 })
+    ])
+
+    expect(rows.map((row) => row[0])).toStrictEqual([
+      { text: 'August, 2026' },
+      { text: 'July, 2026' },
+      { text: 'December, 2025' }
+    ])
+  })
+
+  it('shows no rows for an accreditation with no reporting periods', () => {
+    expect(reportRows([])).toStrictEqual([])
+  })
+
+  it('shows no rows for a calendar the page could not read', () => {
+    expect(reportRows([], null)).toStrictEqual([])
   })
 })
