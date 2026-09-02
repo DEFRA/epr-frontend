@@ -9,11 +9,10 @@ import { toDateRange } from '../helpers/date-range.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
- * @import { AccreditationResource } from '../helpers/types.js'
+ * @import { AccreditationResource, Localise } from '../helpers/types.js'
  */
 
 /**
- * @typedef {(key: string, options?: Record<string, string>) => string} Localise
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{ key: string, value: string } | { key: string, status: StatusTag }} SummaryRow
  * @typedef {{

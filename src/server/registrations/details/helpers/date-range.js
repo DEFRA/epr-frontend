@@ -1,11 +1,7 @@
 import { formatDate } from '#server/common/helpers/format-date.js'
 
 /**
- * @import { DateRange } from './types.js'
- */
-
-/**
- * @typedef {(key: string, options?: Record<string, string>) => string} Localise
+ * @import { DateRange, Localise } from './types.js'
  */
 
 /**
