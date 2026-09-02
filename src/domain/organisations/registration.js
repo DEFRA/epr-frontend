@@ -1,5 +1,5 @@
 /** @import {Accreditation} from '#domain/organisations/accreditation.js' */
-/** @import {GlassRecyclingProcess, Material, User} from '#domain/organisations/model.js' */
+/** @import {AppliedForMaterial, GlassRecyclingProcess, User} from '#domain/organisations/model.js' */
 
 /**
  * @typedef {{
@@ -36,7 +36,7 @@
  *  accreditationId?: string;
  *  approvedPersons: User[]
  *  formSubmissionTime: string;
- *  material: Material;
+ *  material: AppliedForMaterial;
  *  glassRecyclingProcess?: GlassRecyclingProcess[];
  *  orgName: string;
  *  site: RegistrationSite;

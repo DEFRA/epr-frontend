@@ -1,7 +1,7 @@
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { buildActionLinkHtml } from './helpers/build-action-link-html.js'
@@ -233,7 +233,7 @@ export const listController = {
         )
       ])
 
-    const material = getDisplayMaterial(registration)
+    const material = getRegistrationMaterialDisplayName(registration)
 
     const { activeHeader, submittedHeader } = buildHeaders(localise)
 

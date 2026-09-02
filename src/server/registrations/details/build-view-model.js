@@ -1,9 +1,6 @@
 import { capitalize } from 'lodash-es'
 
-import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { hasLedgerReadScope } from '#server/auth/scopes.js'
-import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
@@ -12,13 +9,11 @@ import { toDateRange } from './helpers/date-range.js'
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
- * @import { ScopeBearingCredentials } from '#server/auth/scopes.js'
  * @import { AccreditationResource, Localise } from './helpers/types.js'
  * @import { RegistrationResource, SiteAddress } from '#server/common/helpers/organisations/registration-resource.js'
  */
 
 /**
- * @typedef {{ href: string, text: string }} RecordLink
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{ key: string, value: string } | { key: string, status: StatusTag }} SummaryRow
  * @typedef {{
@@ -32,7 +27,6 @@ import { toDateRange } from './helpers/date-range.js'
  *   breadcrumbs: Crumb[],
  *   caption: string,
  *   pageTitle: string,
- *   recordLinks: RecordLink[],
  *   summaryRows: SummaryRow[]
  * }} RegistrationDetailsViewModel
  */
@@ -55,7 +49,7 @@ const toProcessingType = ({ reprocessingType, application }) =>
  * @returns {string}
  */
 const toMaterial = ({ material, application }) =>
-  getDetailedMaterialDisplayName(material ?? application.material)
+  getMaterialDisplayName(material ?? application.material)
 
 /**
  * @param {SiteAddress} address
@@ -145,60 +139,6 @@ const byMostRecentStart = (a, b) =>
   (b.dateRange.validFrom ?? '').localeCompare(a.dateRange.validFrom ?? '')
 
 /**
- * The records this registration keeps, on the terms the operator's own page
- * offers them.
- * @param {{
- *   registration: RegistrationResource,
- *   registrationPath: string,
- *   credentials: ScopeBearingCredentials,
- *   localise: Localise,
- *   localiseUrl: (path: string) => string
- * }} params
- * @returns {RecordLink[]}
- */
-const toRecordLinks = ({
-  registration,
-  registrationPath,
-  credentials,
-  localise,
-  localiseUrl
-}) => {
-  const { noteTypePlural } = getNoteTypeDisplayNames({
-    wasteProcessingType: registration.application.wasteProcessingType
-  })
-  // The note list and the ledger each address one accreditation's records, so
-  // they follow the one the registration names. The store links one.
-  const [accreditation] = registration.accreditations
-  const recordsPath = accreditation
-    ? `${registrationPath}/accreditations/${accreditation.id}`
-    : registrationPath
-
-  /** @type {RecordLink[]} */
-  const links = []
-
-  if (isAccreditationActive(accreditation)) {
-    links.push({
-      href: localiseUrl(`${recordsPath}/packaging-recycling-notes`),
-      text: localise('registrations:notes.manageReadOnly', { noteTypePlural })
-    })
-  }
-
-  links.push({
-    href: localiseUrl(`${registrationPath}/reports`),
-    text: localise('registrations:manageReportsReadOnly')
-  })
-
-  if (hasLedgerReadScope(credentials)) {
-    links.push({
-      href: localiseUrl(`${recordsPath}/waste-balance-ledger`),
-      text: localise('registrations:wasteBalanceLedger')
-    })
-  }
-
-  return links
-}
-
-/**
  * An organisation trading under another name is known by it, so that is the
  * name the regulator is shown.
  * @param {Organisation} organisation
@@ -212,7 +152,6 @@ const organisationName = ({ companyDetails }) =>
  *   organisation: Organisation,
  *   registration: RegistrationResource,
  *   accreditations: AccreditationResource[],
- *   credentials: ScopeBearingCredentials,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
@@ -222,7 +161,6 @@ export const buildViewModel = ({
   organisation,
   registration,
   accreditations,
-  credentials,
   localise,
   localiseUrl
 }) => {
@@ -254,13 +192,6 @@ export const buildViewModel = ({
     pageTitle: registration.registrationNumber
       ? `${registration.registrationNumber}: ${heading}`
       : heading,
-    recordLinks: toRecordLinks({
-      registration,
-      registrationPath,
-      credentials,
-      localise,
-      localiseUrl
-    }),
     summaryRows: toSummaryRows(registration, localise)
   }
 }
