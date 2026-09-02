@@ -3,7 +3,9 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
+import { buildRegulatorReportContext } from './helpers/regulator-report-context.js'
 import {
   buildPrnSummaryViewData,
   buildWasteExportedViewData,
@@ -233,6 +235,8 @@ function buildViewData({
   period,
   status,
   backUrl,
+  caption,
+  breadcrumbs,
   reportsUrl,
   makeChangesUrl,
   localise
@@ -261,6 +265,8 @@ function buildViewData({
     ...buildStatusDetails(reportDetail, status, localise),
     isDraft,
     backUrl: isDraft ? null : backUrl,
+    caption,
+    breadcrumbs,
 
     material,
     periodLabel,
@@ -314,22 +320,23 @@ export const viewGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration, accreditation }, reportDetail] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.backendToken
-      ),
-      fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        session.backendToken
-      )
-    ])
+    const [{ organisationData, registration, accreditation }, reportDetail] =
+      await Promise.all([
+        fetchRegistrationAndAccreditation(
+          organisationId,
+          registrationId,
+          session.backendToken
+        ),
+        fetchReportDetail(
+          organisationId,
+          registrationId,
+          year,
+          cadence,
+          period,
+          submissionNumber,
+          session.backendToken
+        )
+      ])
 
     const currentStatus = reportDetail.status?.currentStatus
     if (
@@ -340,10 +347,22 @@ export const viewGetController = {
     }
 
     const reportsPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-    const backUrl = request.localiseUrl(reportsPath)
     const reportsUrl = request.localiseUrl(reportsPath)
     const periodPath = `${reportsPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
     const makeChangesUrl = request.localiseUrl(`${periodPath}/make-changes`)
+
+    // A regulator reaches this page from an accreditation, not from the
+    // operator's own reports list, so they are given the trail they walked
+    // rather than a way into a list that is not theirs.
+    const regulatorContext = readsAsARegulator(session)
+      ? buildRegulatorReportContext({
+          organisation: organisationData,
+          registration,
+          accreditation,
+          localise,
+          localiseUrl: request.localiseUrl
+        })
+      : null
 
     return h.view(
       'reports/view',
@@ -355,7 +374,9 @@ export const viewGetController = {
         cadence,
         period,
         status: currentStatus,
-        backUrl,
+        backUrl: regulatorContext?.backUrl ?? request.localiseUrl(reportsPath),
+        caption: regulatorContext?.caption,
+        breadcrumbs: regulatorContext?.breadcrumbs,
         reportsUrl,
         makeChangesUrl,
         localise

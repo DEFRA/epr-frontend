@@ -1,6 +1,11 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
@@ -18,7 +23,11 @@ vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 const mockAuth = buildMockAuth()
 
-async function loadPage({ server, registrationAndAccreditation }) {
+async function loadPage({
+  server,
+  registrationAndAccreditation,
+  auth = mockAuth
+}) {
   vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
     registrationAndAccreditation
   )
@@ -27,14 +36,19 @@ async function loadPage({ server, registrationAndAccreditation }) {
   return await server.inject({
     method: 'GET',
     url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/view`,
-    auth: mockAuth
+    auth
   })
 }
 
-async function loadPageBody({ server, registrationAndAccreditation }) {
+async function loadPageBody({
+  server,
+  registrationAndAccreditation,
+  auth = mockAuth
+}) {
   const { result } = await loadPage({
     server,
-    registrationAndAccreditation
+    registrationAndAccreditation,
+    auth
   })
 
   const dom = new JSDOM(result)
@@ -1783,6 +1797,131 @@ describe('#viewController', () => {
           expect(body.textContent).not.toContain('Make changes to this report')
         })
       })
+    })
+  })
+
+  describe('as a regulator', () => {
+    const regulatorAuth = buildMockAuth(sessionIdentity(IDENTITIES.regulator))
+
+    const namedOrganisation = {
+      ...mockAccreditedReprocessor,
+      organisationData: {
+        id: 'org-123',
+        companyDetails: { name: 'Kirkby Plastics Ltd' }
+      },
+      accreditation: { id: 'acc-001', accreditationNumber: 'ACC009876' }
+    }
+
+    beforeAll(() => {
+      config.set('featureFlags.regulatorAccess', true)
+    })
+
+    afterAll(() => {
+      config.set('featureFlags.regulatorAccess', false)
+    })
+
+    it('names the organisation, the registration and the accreditation above the heading', async ({
+      server
+    }) => {
+      const body = await loadPageBody({
+        server,
+        registrationAndAccreditation: namedOrganisation,
+        auth: regulatorAuth
+      })
+
+      expect(
+        getByText(body, 'Kirkby Plastics Ltd - REG001234 - ACC009876')
+      ).toBeDefined()
+    })
+
+    it('knows an organisation by its trading name where it has one', async ({
+      server
+    }) => {
+      const body = await loadPageBody({
+        server,
+        registrationAndAccreditation: {
+          ...namedOrganisation,
+          organisationData: {
+            id: 'org-123',
+            companyDetails: {
+              name: 'Kirkby Plastics Ltd',
+              tradingName: 'Kirkby Recycling'
+            }
+          }
+        },
+        auth: regulatorAuth
+      })
+
+      expect(body.textContent).toContain('Kirkby Recycling')
+    })
+
+    it('walks back through the accreditation the report was owed under', async ({
+      server
+    }) => {
+      const body = await loadPageBody({
+        server,
+        registrationAndAccreditation: namedOrganisation,
+        auth: regulatorAuth
+      })
+
+      const crumbs = getAllByRole(body, 'listitem')
+        .map((item) => item.textContent?.trim())
+        .filter(Boolean)
+
+      expect(crumbs).toEqual(
+        expect.arrayContaining([
+          'All organisations',
+          'Kirkby Plastics Ltd',
+          'Registration details',
+          'Accreditation details',
+          'Report'
+        ])
+      )
+    })
+
+    it('stops the trail at the registration where there is no accreditation', async ({
+      server
+    }) => {
+      const body = await loadPageBody({
+        server,
+        registrationAndAccreditation: {
+          ...namedOrganisation,
+          accreditation: undefined
+        },
+        auth: regulatorAuth
+      })
+
+      expect(body.textContent).not.toContain('Accreditation details')
+      expect(body.textContent).toContain('Registration details')
+    })
+
+    it('offers no back link into the operator reports list', async ({
+      server
+    }) => {
+      const body = await loadPageBody({
+        server,
+        registrationAndAccreditation: namedOrganisation,
+        auth: regulatorAuth
+      })
+
+      expect(body.querySelector('.govuk-back-link')).toBeNull()
+    })
+
+    it('leaves the operator with their back link and no caption', async ({
+      server
+    }) => {
+      const body = await loadPageBody({
+        server,
+        registrationAndAccreditation: namedOrganisation
+      })
+
+      const backLink = body.querySelector('.govuk-back-link')
+
+      expect(backLink).not.toBeNull()
+      expect(backLink?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports'
+      )
+      expect(body.querySelector('.govuk-caption-xl')).toBeNull()
     })
   })
 })

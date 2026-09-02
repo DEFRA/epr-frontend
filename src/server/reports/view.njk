@@ -10,8 +10,13 @@
 {% from "report-section/macro.njk" import reportSection %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
+{# A regulator gets the trail they walked to reach this report. An operator has
+   only ever one reports list, so a back link into it says everything a trail
+   would, and this page has always shown one. #}
 {% block beforeContent %}
-  {% if backUrl %}
+  {% if breadcrumbs.length > 1 %}
+    {{ super() }}
+  {% elif backUrl %}
     {{ govukBackLink({
       text: localise("common:back"),
       href: backUrl
@@ -22,7 +27,12 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+      <h1 class="govuk-heading-xl">
+        {% if caption %}
+          <span class="govuk-caption-xl">{{ caption }}</span>
+        {% endif %}
+        {{ heading }}
+      </h1>
 
       {% if isDraft %}
         <p class="govuk-body">{{ introText }}</p>

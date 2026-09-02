@@ -285,6 +285,7 @@
   "useThisData": "Use this data",
   "view": {
     "createdByLabel": "Created by:",
+    "breadcrumb": "Report",
     "createdOnLabel": "Created on:",
     "createdOnValue": "{{ date }} at {{ time }}",
     "detailsHeading": "Details",
