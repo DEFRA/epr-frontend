@@ -35,7 +35,6 @@ export const controller = {
         organisation,
         registration,
         accreditations,
-        credentials: request.auth.credentials,
         localise: request.t,
         localiseUrl: request.localiseUrl
       })
