@@ -9,9 +9,8 @@ import { recordSignInReferrer } from '../helpers/record-sign-in-referrer.js'
 
 /**
  * @import { AzureB2CTokenParams, BellProfileTarget, OAuthTokenParams } from '../types/auth.js'
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { Request, ServerRegisterPluginObject } from '@hapi/hapi'
  * @import { AuthProvider } from '../types/auth-provider.js'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { OidcConfig } from '../helpers/get-oidc-configuration.js'
  */
 
@@ -185,7 +184,7 @@ const createEntraId = (oidcConf, authProvider) => ({
             credentials.scope = []
           }
         },
-        /** @param {HapiRequest} request */
+        /** @param {Request} request */
         providerParams: (request) =>
           Object.hasOwn(request.query, SELECT_ACCOUNT_QUERY)
             ? { response_mode: 'query', prompt: 'select_account' }
