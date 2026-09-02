@@ -51,30 +51,17 @@ const regulatorWithoutLedgerScope = buildMockAuth({
   })
 })
 
+/**
+ * The page names the organisation and asks it nothing else, so this holds no
+ * registrations and no accreditations. A page that still read the stored
+ * document for either would fail against it rather than quietly pass.
+ */
 const organisation = {
   id: organisationId,
   orgId: 500118,
   companyDetails: { name: 'Kirkby Plastics Ltd' },
-  status: 'approved',
-  registrations: [],
-  accreditations: []
+  status: 'approved'
 }
-
-/**
- * The organisation record carries the accreditation the registration is on, so
- * a fixture that varies the links varies this.
- * @param {AccreditationResource[]} accreditations
- * @param {string} [accreditationId]
- */
-const organisationHolding = (accreditations, accreditationId) => ({
-  ...organisation,
-  registrations: [{ id: registrationId, accreditationId }],
-  accreditations: accreditations.map(({ id, accreditationNumber, status }) => ({
-    id,
-    accreditationNumber,
-    status
-  }))
-})
 
 /** @type {RegistrationResource} */
 const registration = {
@@ -120,27 +107,32 @@ const anAccreditation = (overrides) => ({
 })
 
 /**
+ * The registration names the accreditation it is on as a link summary, which
+ * is what the page follows. The sub-resource lists them in full, and the two
+ * are separate fixtures so a test can make them disagree.
+ * @param {AccreditationResource} accreditation
+ * @returns {RegistrationResource}
+ */
+const registrationLinking = ({ id, accreditationNumber, status }) => ({
+  ...registration,
+  accreditations: [{ id, accreditationNumber, status }]
+})
+
+/**
  * @param {SetupServerApi} msw
  * @param {{
  *   registration?: RegistrationResource,
  *   accreditations?: AccreditationResource[],
- *   accreditationId?: string,
  *   organisation?: object
  * }} [overrides]
  */
 const backendHolds = (msw, overrides = {}) => {
   const registrationUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}`
   const accreditations = overrides.accreditations ?? []
-  const held =
-    overrides.organisation ??
-    organisationHolding(
-      accreditations,
-      overrides.accreditationId ?? accreditations[0]?.id
-    )
 
   msw.use(
     http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
-      HttpResponse.json(held)
+      HttpResponse.json(overrides.organisation ?? organisation)
     ),
     http.get(registrationUrl, () =>
       HttpResponse.json(overrides.registration ?? registration)
@@ -377,7 +369,7 @@ describe('the registration details page a regulator reads', () => {
   }) => {
     backendHolds(msw, {
       organisation: {
-        ...organisationHolding([], undefined),
+        ...organisation,
         companyDetails: {
           name: 'Kirkby Plastics Ltd',
           tradingName: 'Kirkby Recycling'
@@ -418,9 +410,11 @@ describe('the registration details page a regulator reads', () => {
     server,
     msw
   }) => {
+    const accreditation = anAccreditation({ id: 'acc-002' })
+
     backendHolds(msw, {
-      accreditations: [anAccreditation({ id: 'acc-002' })],
-      accreditationId: 'acc-002'
+      accreditations: [accreditation],
+      registration: registrationLinking(accreditation)
     })
 
     const { body } = await visit(server)
@@ -439,7 +433,12 @@ describe('the registration details page a regulator reads', () => {
   })
 
   it('offers those four routes and nothing else', async ({ server, msw }) => {
-    backendHolds(msw, { accreditations: [anAccreditation({ id: 'acc-002' })] })
+    const accreditation = anAccreditation({ id: 'acc-002' })
+
+    backendHolds(msw, {
+      accreditations: [accreditation],
+      registration: registrationLinking(accreditation)
+    })
 
     const { body } = await visit(server)
 
@@ -455,23 +454,28 @@ describe('the registration details page a regulator reads', () => {
     ])
   })
 
-  it('follows the accreditation the registration is on rather than the most recent one', async ({
+  // The linked accreditation is neither the most recent of the two nor the
+  // first the periods table lists, so an implementation reading either from
+  // that table fails here.
+  it('follows the accreditation the registration is on rather than one off the periods table', async ({
     server,
     msw
   }) => {
+    const linked = anAccreditation({
+      id: 'acc-001',
+      accreditationNumber: 'A26ER5001180097PL',
+      dateRange: { validFrom: '2026-02-15', validTo: '2026-03-31' }
+    })
+
     backendHolds(msw, {
       accreditations: [
         anAccreditation({
-          id: 'acc-001',
-          accreditationNumber: 'A26ER5001180097PL',
-          dateRange: { validFrom: '2026-02-15', validTo: '2026-03-31' }
-        }),
-        anAccreditation({
           id: 'acc-002',
           dateRange: { validFrom: '2026-07-01', validTo: null }
-        })
+        }),
+        linked
       ],
-      accreditationId: 'acc-001'
+      registration: registrationLinking(linked)
     })
 
     const { body } = await visit(server)
@@ -490,16 +494,19 @@ describe('the registration details page a regulator reads', () => {
     server,
     msw
   }) => {
+    const accreditation = anAccreditation({})
+    const linking = registrationLinking(accreditation)
+
     backendHolds(msw, {
       registration: {
-        ...registration,
+        ...linking,
         application: {
-          ...registration.application,
+          ...linking.application,
           wasteProcessingType: 'exporter',
           site: null
         }
       },
-      accreditations: [anAccreditation({})]
+      accreditations: [accreditation]
     })
 
     const { body } = await visit(server)
@@ -511,8 +518,14 @@ describe('the registration details page a regulator reads', () => {
     server,
     msw
   }) => {
+    const accreditation = anAccreditation({
+      id: 'acc-002',
+      status: 'cancelled'
+    })
+
     backendHolds(msw, {
-      accreditations: [anAccreditation({ id: 'acc-002', status: 'cancelled' })]
+      accreditations: [accreditation],
+      registration: registrationLinking(accreditation)
     })
 
     const { body } = await visit(server)
@@ -548,7 +561,12 @@ describe('the registration details page a regulator reads', () => {
     server,
     msw
   }) => {
-    backendHolds(msw, { accreditations: [anAccreditation({})] })
+    const accreditation = anAccreditation({})
+
+    backendHolds(msw, {
+      accreditations: [accreditation],
+      registration: registrationLinking(accreditation)
+    })
 
     const { body } = await visit(server, regulatorWithoutLedgerScope)
 

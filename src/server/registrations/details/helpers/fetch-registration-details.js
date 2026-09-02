@@ -1,5 +1,10 @@
+import Boom from '@hapi/boom'
+
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
@@ -8,17 +13,10 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
  */
 
 /**
- * A cancelled accreditation is still the one the registration's records are
- * filed under, so the link and its liveness are two answers rather than one.
- * @typedef {{ id: string, isLive: boolean }} LinkedAccreditation
- */
-
-/**
  * @typedef {{
  *   organisation: Organisation,
  *   registration: RegistrationResource,
- *   accreditations: AccreditationResource[],
- *   linkedAccreditation: LinkedAccreditation | null
+ *   accreditations: AccreditationResource[]
  * }} RegistrationDetails
  */
 
@@ -42,6 +40,29 @@ const readAs = (backendToken) => ({
 })
 
 /**
+ * A registration this organisation does not hold is a 404 from the registration
+ * route and from its accreditations route alike, and the two race. Either is
+ * re-thrown as the same failure, so the log line names what was asked for under
+ * the code CDP indexes it by whichever read lost.
+ * @param {{ organisationId: string, registrationId: string }} params
+ * @returns {(error: unknown) => never}
+ */
+const asMissingRegistration =
+  ({ organisationId, registrationId }) =>
+  (error) => {
+    if (!Boom.isBoom(error, statusCodes.notFound)) {
+      throw error
+    }
+
+    throw notFound('Registration not found', errorCodes.registrationNotFound, {
+      event: {
+        action: 'fetch_registration',
+        reason: `organisationId=${organisationId} registrationId=${registrationId}`
+      }
+    })
+  }
+
+/**
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
@@ -49,12 +70,12 @@ const readAs = (backendToken) => ({
  * }} params
  * @returns {Promise<RegistrationResource>}
  */
-const fetchRegistration = ({ organisationId, registrationId, backendToken }) =>
+const fetchRegistration = (params) =>
   /** @type {Promise<RegistrationResource>} */ (
     fetchJsonFromBackend(
-      registrationPath(organisationId, registrationId),
-      readAs(backendToken)
-    )
+      registrationPath(params.organisationId, params.registrationId),
+      readAs(params.backendToken)
+    ).catch(asMissingRegistration(params))
   )
 
 /**
@@ -65,17 +86,13 @@ const fetchRegistration = ({ organisationId, registrationId, backendToken }) =>
  * }} params
  * @returns {Promise<AccreditationResource[]>}
  */
-const fetchAccreditations = async ({
-  organisationId,
-  registrationId,
-  backendToken
-}) => {
+const fetchAccreditations = async (params) => {
   const { accreditations } =
     /** @type {{ accreditations: AccreditationResource[] }} */ (
       await fetchJsonFromBackend(
-        `${registrationPath(organisationId, registrationId)}/accreditations`,
-        readAs(backendToken)
-      )
+        `${registrationPath(params.organisationId, params.registrationId)}/accreditations`,
+        readAs(params.backendToken)
+      ).catch(asMissingRegistration(params))
     )
 
   return accreditations
@@ -84,7 +101,7 @@ const fetchAccreditations = async ({
 /**
  * The registration carries the name the applicant typed on the form, which is
  * not the organisation's name, so the organisation is read as well for the name
- * the page names it by, and for the accreditation the registration is on.
+ * the page names it by.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
@@ -93,24 +110,11 @@ const fetchAccreditations = async ({
  * @returns {Promise<RegistrationDetails>}
  */
 export const fetchRegistrationDetails = async (params) => {
-  const [linked, registration, accreditations] = await Promise.all([
-    fetchRegistrationAndAccreditation(
-      params.organisationId,
-      params.registrationId,
-      params.backendToken
-    ),
+  const [organisation, registration, accreditations] = await Promise.all([
+    fetchOrganisationById(params.organisationId, params.backendToken),
     fetchRegistration(params),
     fetchAccreditations(params)
   ])
 
-  const { accreditationId } = linked.registration
-
-  return {
-    organisation: linked.organisationData,
-    registration,
-    accreditations,
-    linkedAccreditation: accreditationId
-      ? { id: accreditationId, isLive: !!linked.accreditation }
-      : null
-  }
+  return { organisation, registration, accreditations }
 }
