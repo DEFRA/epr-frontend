@@ -1,6 +1,8 @@
 /**
  * @import {
  *   AccreditationStatus,
+ *   AppliedForMaterial,
+ *   Material,
  *   RegistrationStatus,
  *   RegulatorValue,
  *   ReprocessingType,
@@ -50,13 +52,13 @@
  *   organisation: { id: string },
  *   registrationNumber: string | null,
  *   status: RegistrationStatus,
- *   material?: string,
+ *   material?: Material,
  *   reprocessingType: ReprocessingType | null,
  *   accreditations: AccreditationLink[],
  *   application: {
  *     orgName: string,
  *     submittedToRegulator: RegulatorValue,
- *     material: string,
+ *     material: AppliedForMaterial,
  *     wasteProcessingType: WasteProcessingTypeValue,
  *     site: { address: SiteAddress } | null
  *   }

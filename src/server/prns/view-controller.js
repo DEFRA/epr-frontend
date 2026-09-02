@@ -18,7 +18,7 @@ import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisat
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
@@ -194,7 +194,7 @@ async function handleDraftView(
 
   const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
 
-  const displayMaterial = getDisplayMaterial(registration)
+  const displayMaterial = getRegistrationMaterialDisplayName(registration)
 
   const prnDetailRows = buildDraftPrnDetailRows({
     prnDraft,
@@ -283,7 +283,7 @@ async function handleExistingView(
     `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
   )
 
-  const displayMaterial = getDisplayMaterial(registration)
+  const displayMaterial = getRegistrationMaterialDisplayName(registration)
 
   const statusConfig = getStatusConfig(prn.status, localise)
   const isNotDraft = prn.status !== 'draft'

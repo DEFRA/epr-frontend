@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
 import { analyticsConsent } from '#server/common/analytics/consent.js'
 import { analyticsPagePath } from '#server/common/analytics/page-path.js'
+import { analyticsPageReferrer } from '#server/common/analytics/page-referrer.js'
 import { satisfactionSurveyLinks } from '#server/common/satisfaction-survey/links.js'
 import { isRegulator } from '#server/auth/roles.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
@@ -87,7 +88,8 @@ export function context(request) {
     analytics: {
       ...analyticsConsent(request),
       measurementId: config.get('analytics.measurementId'),
-      pagePath: analyticsPagePath(request)
+      pagePath: analyticsPagePath(request),
+      pageReferrer: analyticsPageReferrer(request)
     },
     assetPath: `${assetPath}/assets`,
     breadcrumbs: [],

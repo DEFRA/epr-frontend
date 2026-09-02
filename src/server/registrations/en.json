@@ -16,6 +16,15 @@
     "accreditation": {
       "breadcrumb": "Accreditation details",
       "heading": "Accreditation",
+      "reports": {
+        "actions": "Actions",
+        "dueDate": "Due date",
+        "heading": "Reports",
+        "none": "There are no reporting periods for this accreditation yet. Periods appear once one has ended.",
+        "period": "Period",
+        "status": "Status",
+        "submissionDate": "Submission date"
+      },
       "summary": {
         "number": "Accreditation number",
         "status": "Accreditation status",
@@ -24,6 +33,7 @@
     },
     "allOrganisations": "All organisations",
     "current": "Current",
+    "period": "{{from}} to {{to}}",
     "heading": "Registration details",
     "summary": {
       "material": "Material",

@@ -7,6 +7,7 @@ import { buildViewModel } from './build-view-model.js'
 // asserted against the real en.json by the page's integration test.
 const localise = createMockLocalise({
   'registrations:details:current': 'Current',
+  'registrations:details:period': '{{from}} to {{to}}',
   'registrations:details:heading': 'Registration details',
   'registrations:details:summary:material': 'Material',
   'registrations:details:summary:site': 'Site'
@@ -14,8 +15,6 @@ const localise = createMockLocalise({
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
- * @import { ScopeBearingCredentials } from '#server/auth/scopes.js'
- * @import { LinkedAccreditation } from './helpers/fetch-registration-details.js'
  * @import { AccreditationResource } from './helpers/types.js'
  * @import { RegistrationResource, SiteAddress } from '#server/common/helpers/organisations/registration-resource.js'
  */
@@ -71,23 +70,14 @@ const anAccreditation = (overrides) => ({
 /**
  * @param {{
  *   registration?: RegistrationResource,
- *   accreditations?: AccreditationResource[],
- *   linkedAccreditation?: LinkedAccreditation | null,
- *   credentials?: ScopeBearingCredentials
+ *   accreditations?: AccreditationResource[]
  * }} [overrides]
  */
-const build = ({
-  registration,
-  accreditations,
-  linkedAccreditation = null,
-  credentials = null
-} = {}) =>
+const build = ({ registration, accreditations } = {}) =>
   buildViewModel({
     organisation,
     registration: registration ?? aRegistrationWithSite({ line1: 'Unit 4' }),
     accreditations: accreditations ?? [],
-    linkedAccreditation,
-    credentials,
     localise,
     localiseUrl: (path) => path
   })
@@ -197,7 +187,7 @@ describe(buildViewModel, () => {
       })
 
       expect(accreditedPeriod(viewModel, 0).dateRange).toBe(
-        '1 July 2026 - Current'
+        '1 July 2026 to Current'
       )
     })
 
@@ -256,8 +246,6 @@ describe(buildViewModel, () => {
         ),
         registration: aRegistrationWithSite({ line1: 'Unit 4' }),
         accreditations: [],
-        linkedAccreditation: null,
-        credentials: null,
         localise,
         localiseUrl: (path) => path
       })

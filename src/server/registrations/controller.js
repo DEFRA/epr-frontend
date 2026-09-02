@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
@@ -146,7 +146,7 @@ function buildViewModel({
     ? null
     : (registration.site?.address?.line1 ??
       localise('registrations:unknownSite'))
-  const material = getDisplayMaterial(registration)
+  const material = getRegistrationMaterialDisplayName(registration)
 
   const uploadSummaryLogUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`

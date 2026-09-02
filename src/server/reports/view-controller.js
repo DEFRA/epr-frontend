@@ -11,7 +11,7 @@ import {
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -238,7 +238,7 @@ function buildViewData({
   localise
 }) {
   const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
-  const material = getDisplayMaterial(registration)
+  const material = getRegistrationMaterialDisplayName(registration)
   const periodLabel = formatPeriodLabelWithComma(
     { year, period },
     cadence,

@@ -73,6 +73,20 @@ describe('#startAnalytics', () => {
     )
   })
 
+  it('should report the step the visitor came from, not the address', () => {
+    givenMeasurementId(measurementId)
+    document.head.innerHTML += `<meta name="analytics-page-referrer" content="/organisations/:organisationId">`
+
+    startAnalytics()
+
+    expect(window.dataLayer?.[1]).toStrictEqual(
+      command('config', measurementId, {
+        page_location: 'http://localhost:3000/start',
+        page_referrer: 'http://localhost:3000/organisations/:organisationId'
+      })
+    )
+  })
+
   it('should report the root when the page names no step', () => {
     document.head.innerHTML = `<meta name="analytics-measurement-id" content="${measurementId}">`
 
