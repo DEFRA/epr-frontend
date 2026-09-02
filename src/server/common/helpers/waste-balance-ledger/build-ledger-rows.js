@@ -1,11 +1,14 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 
-import { LEDGER_EVENT_KIND, SYSTEM_ACTOR_ID } from '../ledger-event-kinds.js'
+import { LEDGER_EVENT_KIND, SYSTEM_ACTOR_ID } from './ledger-event-kinds.js'
 import { formatLedgerTimestamp } from './format-ledger-timestamp.js'
 
 /**
- * @import { TFunction } from 'i18next'
  * @import { LedgerEvent } from './fetch-ledger-events.js'
+ */
+
+/**
+ * @typedef {(key: string, options?: Record<string, string>) => string} Localise
  */
 
 /**
@@ -19,7 +22,7 @@ const EVENT_KINDS = Object.freeze(Object.values(LEDGER_EVENT_KIND))
 /**
  * The name the page gives an event. A kind the backend adds later has no copy
  * here, so it reads as itself rather than as a missing copy key.
- * @param {{ kind: string, localise: TFunction, noteType: 'PRN' | 'PERN' }} params
+ * @param {{ kind: string, localise: Localise, noteType: 'PRN' | 'PERN' }} params
  * @returns {string}
  */
 const eventName = ({ kind, localise, noteType }) =>
@@ -44,7 +47,7 @@ const tonnageOf = (event) =>
  * Only the id is certain, so each of the name and the email can be the whole
  * answer. An actor that carries neither reads as an empty cell, which says
  * less than the page would like but never says something untrue.
- * @param {{ createdBy: LedgerEvent['createdBy'], localise: TFunction }} params
+ * @param {{ createdBy: LedgerEvent['createdBy'], localise: Localise }} params
  * @returns {string}
  */
 const actorName = ({ createdBy, localise }) => {
@@ -70,7 +73,7 @@ const actorName = ({ createdBy, localise }) => {
  * totals beside the event name carry that honestly.
  * @param {{
  *   events: LedgerEvent[],
- *   localise: TFunction,
+ *   localise: Localise,
  *   noteType: 'PRN' | 'PERN'
  * }} params
  * @returns {{ text: string }[][]}
