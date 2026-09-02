@@ -8,8 +8,11 @@
       <div class="govuk-body" data-testid="app-page-body">
 
         <h1 class="govuk-heading-xl">
-          <span class="govuk-caption-xl">{{ caption }}</span>
+          <span class="govuk-caption-l govuk-!-margin-bottom-4">{{ caption }}</span>
           {{ heading }}
+          {% if period %}
+            <span class="govuk-!-display-block govuk-!-font-size-36 govuk-!-margin-top-4">{{ period }}</span>
+          {% endif %}
         </h1>
 
         {% set summaryListRows = [] %}

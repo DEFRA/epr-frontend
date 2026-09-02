@@ -95,8 +95,11 @@ describe('the accreditation details page', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(
-      getByRole(documentOf(body), 'heading', { level: 1 }).textContent?.trim()
-    ).toContain('Accreditation 1 July 2026 - 31 December 2026')
+      getByRole(documentOf(body), 'heading', { level: 1 }).textContent?.replace(
+        /\s+/g,
+        ' '
+      )
+    ).toContain('Accreditation 1 July to 31 December 2026')
   })
 
   it('shows the status and the number', async ({ server }) => {
