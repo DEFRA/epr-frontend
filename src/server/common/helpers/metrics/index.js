@@ -17,8 +17,13 @@ import { TRANSACTION_END, TRANSACTION_START } from './constants.js'
  * Aws embedded metrics wrapper
  * @param {string} metricName
  * @param {Record<string, string>} dimensions
+ * @param {{ replaceDefaults?: boolean }} [options] replaceDefaults drops the
+ *   LogGroup, ServiceName and ServiceType the library adds of its own accord.
+ *   CloudWatch identifies a series by its whole dimension set, so carrying them
+ *   means a query has to name all four to match -- and one of them, the log
+ *   group, differs per environment, which makes a dashboard unpromotable.
  */
-async function metricsCounter(metricName, dimensions) {
+async function metricsCounter(metricName, dimensions, options = {}) {
   const value = 1
   const isMetricsEnabled = config.get('isMetricsEnabled')
   if (!isMetricsEnabled) {
@@ -27,7 +32,13 @@ async function metricsCounter(metricName, dimensions) {
 
   try {
     const metricsLogger = createMetricsLogger()
-    metricsLogger.putDimensions(dimensions)
+
+    if (options.replaceDefaults) {
+      metricsLogger.setDimensions(dimensions, false)
+    } else {
+      metricsLogger.putDimensions(dimensions)
+    }
+
     metricsLogger.putMetric(
       metricName,
       value,
@@ -87,7 +98,11 @@ export const journeyMetrics = {
 
     request.yar.set(startedKey(journey), true)
 
-    return metricsCounter(TRANSACTION_START, { journey: journey.start })
+    return metricsCounter(
+      TRANSACTION_START,
+      { journey: journey.start },
+      { replaceDefaults: true }
+    )
   },
   /**
    * @template {Journey & Record<string, string>} J
@@ -98,6 +113,10 @@ export const journeyMetrics = {
   async end(request, journey, outcome) {
     request.yar.clear(startedKey(journey))
 
-    return metricsCounter(TRANSACTION_END, { journey: journey[outcome] })
+    return metricsCounter(
+      TRANSACTION_END,
+      { journey: journey[outcome] },
+      { replaceDefaults: true }
+    )
   }
 }

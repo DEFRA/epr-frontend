@@ -10,6 +10,7 @@ import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 const mockPutMetric = vi.fn()
 const mockFlush = vi.fn()
 const mockPutDimensions = vi.fn()
+const mockSetDimensions = vi.fn()
 const mockLogger = createMockLogger()
 
 vi.mock(import('aws-embedded-metrics'), async (importOriginal) => {
@@ -22,6 +23,7 @@ vi.mock(import('aws-embedded-metrics'), async (importOriginal) => {
         /** @type {unknown} */ ({
           putMetric: mockPutMetric,
           putDimensions: mockPutDimensions,
+          setDimensions: mockSetDimensions,
           flush: mockFlush
         })
       )
@@ -120,9 +122,16 @@ describe('#metrics', () => {
     it('should carry the start value as the journey dimension', async () => {
       await journeyMetrics.start(createRequest(), JOURNEY.saveOrIssuePrnPern)
 
-      expect(mockPutDimensions).toHaveBeenCalledWith({
-        journey: 'SaveOrIssuePRNPERNStart'
-      })
+      expect(mockSetDimensions).toHaveBeenCalledWith(
+        { journey: 'SaveOrIssuePRNPERNStart' },
+        false
+      )
+    })
+
+    it('should not carry the library default dimensions', async () => {
+      await journeyMetrics.start(createRequest(), JOURNEY.saveOrIssuePrnPern)
+
+      expect(mockPutDimensions).not.toHaveBeenCalled()
     })
 
     it.each(
@@ -139,7 +148,10 @@ describe('#metrics', () => {
           outcome
         )
 
-        expect(mockPutDimensions).toHaveBeenCalledWith({ journey: expected })
+        expect(mockSetDimensions).toHaveBeenCalledWith(
+          { journey: expected },
+          false
+        )
       }
     )
 
