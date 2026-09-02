@@ -30,9 +30,9 @@ export const analyticsPageReferrer = (request) => {
     return null
   }
 
-  const referer = String(request.headers?.referer ?? '')
+  const referer = request.headers?.referer
 
-  if (!referer) {
+  if (typeof referer !== 'string' || referer === '') {
     return null
   }
 
