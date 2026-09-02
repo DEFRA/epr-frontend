@@ -1,7 +1,7 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
 /**
  * Build view data for the create PRN/PERN page
@@ -9,7 +9,7 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
  * @param {object} options
  * @param {string} options.organisationId
  * @param {string} options.registrationId
- * @param {{wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[]}} options.registration
+ * @param {{wasteProcessingType: string, material: AppliedForMaterial, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[]}} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
  * @param {{availableAmount: number} | null} [options.wasteBalance]
  * @returns {object}
@@ -22,7 +22,7 @@ export function buildCreatePrnViewData(
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
   const pageTitle = localise('prns:create:pageTitle', { noteType })
-  const material = getDisplayMaterial(registration)
+  const material = getRegistrationMaterialDisplayName(registration)
 
   const wasteBalanceText = wasteBalance
     ? localise('prns:create:wasteBalanceText', {
@@ -74,5 +74,5 @@ export function buildCreatePrnViewData(
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { Material, GlassRecyclingProcess } from '#domain/organisations/model.js'
+ * @import { AppliedForMaterial, GlassRecyclingProcess } from '#domain/organisations/model.js'
  */

@@ -1,5 +1,5 @@
 import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
-import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
@@ -42,7 +42,7 @@ import { paths } from '#server/paths.js'
  * @returns {string}
  */
 const toMaterialName = ({ material, application }) =>
-  getDetailedMaterialDisplayName(material ?? application.material)
+  getMaterialDisplayName(material ?? application.material)
 
 /**
  * An exporter reprocesses nowhere this service records, so it heads no site.
