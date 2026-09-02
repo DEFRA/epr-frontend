@@ -300,13 +300,22 @@ describe('the accreditation details page', () => {
     ])
   })
 
-  it('reads the ledger newest first', async ({ server }) => {
+  it('reads the ledger newest first, the date naming the row', async ({
+    server
+  }) => {
     const { body } = await visit(server, regulator)
+    const document = documentOf(body)
 
     expect(
       cellsOf(
-        documentOf(body),
-        '[data-testid="waste-balance-ledger-table"] tbody tr:first-child td'
+        document,
+        '[data-testid="waste-balance-ledger-table"] tbody tr:first-child th'
+      )
+    ).toStrictEqual(['15 February 2026, 3:09pm'])
+    expect(
+      cellsOf(
+        document,
+        '[data-testid="waste-balance-ledger-table"] tbody tr:first-child > *'
       )
     ).toStrictEqual([
       '15 February 2026, 3:09pm',
@@ -329,7 +338,8 @@ describe('the accreditation details page', () => {
     expect(body).not.toContain('data-testid="waste-balance-ledger-table"')
     expect(
       getByText(documentOf(body), 'Nothing has changed this waste balance yet.')
-    ).toBeDefined()
+        .className
+    ).toBe('govuk-body app-colour-secondary')
   })
 
   it('reads no ledger, and shows none, for a regulator the backend granted no ledger scope', async ({

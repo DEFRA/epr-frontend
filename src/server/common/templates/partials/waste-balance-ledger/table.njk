@@ -3,6 +3,7 @@
 {% if ledgerRows | length > 0 %}
   {{ govukTable({
     attributes: { "data-testid": "waste-balance-ledger-table" },
+    firstCellIsHeader: true,
     head: [
       { text: localise("waste-balance-ledger:table.date") },
       { text: localise("waste-balance-ledger:table.event") },
@@ -14,5 +15,5 @@
     rows: ledgerRows
   }) }}
 {% else %}
-  <p class="govuk-body" data-testid="no-events">{{ localise("waste-balance-ledger:noEvents") }}</p>
+  <p class="govuk-body app-colour-secondary" data-testid="no-events">{{ localise("waste-balance-ledger:noEvents") }}</p>
 {% endif %}
