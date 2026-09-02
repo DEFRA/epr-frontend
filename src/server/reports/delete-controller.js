@@ -1,7 +1,7 @@
 import Joi from 'joi'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { deleteReport } from './helpers/delete-report.js'
@@ -65,7 +65,7 @@ export const deleteGetController = {
       session.backendToken
     )
 
-    const material = getDisplayMaterial(registration)
+    const material = getRegistrationMaterialDisplayName(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
     const viewData = {

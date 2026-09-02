@@ -3,7 +3,7 @@ import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
@@ -271,7 +271,7 @@ export const listController = {
         )
       ])
 
-    const material = getDisplayMaterial(registration)
+    const material = getRegistrationMaterialDisplayName(registration)
 
     const { activeHeader, submittedHeader } = buildHeaders(localise)
 

@@ -1,6 +1,6 @@
 import { capitalize } from 'lodash-es'
 
-import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
@@ -49,7 +49,7 @@ const toProcessingType = ({ reprocessingType, application }) =>
  * @returns {string}
  */
 const toMaterial = ({ material, application }) =>
-  getDetailedMaterialDisplayName(material ?? application.material)
+  getMaterialDisplayName(material ?? application.material)
 
 /**
  * @param {SiteAddress} address

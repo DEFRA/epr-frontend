@@ -2,7 +2,7 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -113,7 +113,7 @@ function buildViewData(
   localise,
   localiseUrl
 ) {
-  const material = getDisplayMaterial(registration)
+  const material = getRegistrationMaterialDisplayName(registration)
   const periodLabel = formatPeriodLabelWithComma(
     { year: reportDetail.year, period: reportDetail.period },
     reportDetail.cadence,
