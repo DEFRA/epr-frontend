@@ -6,6 +6,9 @@ import { fetchAccreditationDetails } from './fetch-accreditation-details.js'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+ * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
+ * @import { ReportingCalendar } from './fetch-accreditation-details.js'
  */
 
 vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
@@ -51,6 +54,7 @@ describe(fetchAccreditationDetails, () => {
   )
   const accreditation = { id: accreditationId, accreditationNumber: 'A123' }
   const wasteBalance = { amount: 120.5, availableAmount: 80.25 }
+  /** @type {ReportingPeriod[]} */
   const reportingPeriods = [
     {
       year: 2026,
@@ -63,7 +67,9 @@ describe(fetchAccreditationDetails, () => {
       report: null
     }
   ]
+  /** @type {ReportingCalendar} */
   const calendar = { cadence: 'monthly', reportingPeriods }
+  /** @type {LedgerEvent[]} */
   const ledgerEvents = [
     {
       kind: 'prn-issued',
@@ -80,7 +86,10 @@ describe(fetchAccreditationDetails, () => {
     path.endsWith('/waste-balance-ledger')
 
   /**
-   * @param {{ calendar?: Promise<unknown>, ledger?: Promise<unknown> }} [answers]
+   * @param {{
+   *   calendar?: Promise<ReportingCalendar>,
+   *   ledger?: Promise<{ events: LedgerEvent[] }>
+   * }} [answers]
    */
   const backendAnswers = ({
     calendar: calendarAnswer = Promise.resolve(calendar),
