@@ -1,4 +1,5 @@
 {% extends 'layouts/page.njk' %}
+{% from "satisfaction-survey/macro.njk" import appSatisfactionSurvey %}
 
 {% block content %}
 <div class="govuk-grid-row">
@@ -29,6 +30,8 @@
       href: '/organisations/' + organisationId + '/registrations/' + registrationId + '/reports'
     }) }}
     {% endif %}
+
+    {{ appSatisfactionSurvey(satisfactionSurvey.summaryLog) }}
 
     <p class="govuk-body">
       <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>

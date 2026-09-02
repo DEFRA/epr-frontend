@@ -1,5 +1,10 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
@@ -7,9 +12,15 @@ import {
   asPackagingRecyclingNote
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole, getByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { describe, expect, vi } from 'vitest'
+import { afterEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -389,6 +400,94 @@ describe('#issuedController', () => {
         expect(returnHomeLink.getAttribute('href')).toBe(
           `/organisations/${organisationId}/registrations/${registrationId}`
         )
+      })
+
+      describe('satisfaction survey', () => {
+        const surveyUrl = 'https://survey.example/prn'
+        const surveyText =
+          'What do you think of this service? (opens in a new tab)'
+
+        const liveSurvey = () => {
+          config.set('satisfactionSurvey.isEnabled', true)
+          config.set('satisfactionSurvey.prnUrl', surveyUrl)
+        }
+
+        afterEach(() => {
+          config.reset('satisfactionSurvey.isEnabled')
+          config.reset('satisfactionSurvey.prnUrl')
+        })
+
+        const getMain = async (server, auth = mockAuth) => {
+          const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
+            auth
+          })
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: issuedUrl,
+            auth,
+            headers: { cookie: csrfCookie }
+          })
+          const { body } = new JSDOM(result).window.document
+
+          return getByRole(body, 'main')
+        }
+
+        it('says nothing about what happens next while the surveys are switched off', async ({
+          server
+        }) => {
+          const main = await getMain(server)
+
+          expect(queryByText(main, surveyText)).toBeNull()
+          expect(
+            queryByRole(main, 'heading', { name: 'What happens next' })
+          ).toBeNull()
+        })
+
+        it('asks what the user thinks after managing notes, before sending them home', async ({
+          server
+        }) => {
+          liveSurvey()
+
+          const main = await getMain(server)
+
+          expect(
+            queryByRole(main, 'heading', { name: 'What happens next' })
+          ).not.toBeNull()
+          expect(
+            getAllByRole(main, 'link').map((link) => link.textContent?.trim())
+          ).toStrictEqual([
+            'Issue another PRN',
+            'Manage PRNs',
+            surveyText,
+            'Return to home'
+          ])
+        })
+
+        it('still asks a user who cannot issue notes', async ({ server }) => {
+          liveSurvey()
+
+          const main = await getMain(
+            server,
+            buildMockAuth(sessionIdentity(IDENTITIES.operatorWithoutWrite))
+          )
+
+          expect(
+            getAllByRole(main, 'link').map((link) => link.textContent?.trim())
+          ).toStrictEqual(['Manage PRNs', surveyText, 'Return to home'])
+        })
+
+        it('sends the user to the notes survey, not one from another journey', async ({
+          server
+        }) => {
+          liveSurvey()
+
+          const main = await getMain(server)
+
+          expect(
+            getByRole(main, 'link', { name: surveyText }).getAttribute('href')
+          ).toBe(surveyUrl)
+        })
       })
 
       it('redirects to view page if PRN not in awaiting_acceptance status', async ({

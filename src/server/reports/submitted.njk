@@ -1,5 +1,6 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "satisfaction-survey/macro.njk" import appSatisfactionSurvey %}
 
 {% block content %}
 <div class="govuk-grid-row">
@@ -29,6 +30,12 @@
         {{ viewReportLink.text }}
       </a>
     </p>
+
+    {% if satisfactionSurvey.report.href %}
+    <h2 class="govuk-heading-m">{{ nextStepsHeading }}</h2>
+
+    {{ appSatisfactionSurvey(satisfactionSurvey.report) }}
+    {% endif %}
 
     <p class="govuk-body">
       <a href="{{ returnToReportsLink.href }}" class="govuk-link">{{ returnToReportsLink.text }}</a>

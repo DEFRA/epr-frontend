@@ -198,6 +198,7 @@
   "submittedFutureChangesGuidance": "If you make changes to your summary log that affect the data you've just submitted, you'll need to submit a new report for this period.",
   "submittedHeading": "{{ periodLabel }} report submitted to regulator",
   "submittedMaterialLabel": "Material:",
+  "submittedNextStepsHeading": "What happens next",
   "submittedPageTitle": "Report submitted: {{ material }}: {{ periodLabel }}",
   "submittedRegistrationLabel": "Registration:",
   "submittedReturnToReports": "Return to your reports",

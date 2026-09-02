@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
 import { analyticsConsent } from '#server/common/analytics/consent.js'
 import { analyticsPagePath } from '#server/common/analytics/page-path.js'
+import { satisfactionSurveyLinks } from '#server/common/satisfaction-survey/links.js'
 import { isRegulator } from '#server/auth/roles.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
@@ -92,6 +93,7 @@ export function context(request) {
     breadcrumbs: [],
     hasWriteScope: hasWriteScope(request?.auth?.credentials),
     navigation: buildNavigation(request),
+    satisfactionSurvey: satisfactionSurveyLinks(i18n.localise),
     serviceName: i18n.localise(serviceNameKey),
     serviceUrl,
     ...i18n,
