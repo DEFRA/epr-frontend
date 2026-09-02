@@ -1,4 +1,8 @@
 /**
+ * @import { AccreditationStatus } from '#domain/organisations/model.js'
+ */
+
+/**
  * The backend requires both bounds only while the record is live, so a range is
  * always present and says nothing about whether it is filled in.
  * @typedef {{ validFrom: string | null, validTo: string | null }} DateRange
@@ -12,7 +16,7 @@
  * @typedef {{
  *   id: string,
  *   accreditationNumber: string | null,
- *   status: string,
+ *   status: AccreditationStatus,
  *   reprocessingType: string | null,
  *   dateRange: DateRange,
  *   application: {
