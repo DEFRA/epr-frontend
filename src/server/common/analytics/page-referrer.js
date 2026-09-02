@@ -1,27 +1,16 @@
 import { analyticsStep } from '#server/common/analytics/page-path.js'
-import { pathPrefix } from '#server/common/constants/languages.js'
+import { withoutLanguagePrefix } from '#server/common/helpers/language-prefix.js'
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
 /**
- * Hapi serves an address matching no route on a wildcard route of its own, so
- * this is the step the page itself reports when it is a not-found page. A
- * referrer matching nothing reports the same one rather than inventing a
- * second name for it.
+ * The route pattern Hapi serves an address matching no route on, so this is the
+ * step the page itself reports when it is a not-found page. A referrer matching
+ * nothing reports the same one rather than inventing a second name for it.
  */
-const NOT_FOUND = '/{p*}'
-
-/**
- * The language prefix is stripped before routing, so a referrer has to be put
- * back into the same shape before it can be matched.
- * @param {string} path
- */
-const asRouted = (path) =>
-  path === pathPrefix.cy || path.startsWith(`${pathPrefix.cy}/`)
-    ? path.slice(pathPrefix.cy.length) || '/'
-    : path
+const NOT_FOUND_ROUTE = '/{p*}'
 
 /**
  * Names the step the visitor came from, rather than the address they came from.
@@ -54,7 +43,7 @@ export const analyticsPageReferrer = (request) => {
   }
 
   return analyticsStep(
-    request.server.match('get', asRouted(arrivedFrom.pathname))?.path ??
-      NOT_FOUND
+    request.server.match('get', withoutLanguagePrefix(arrivedFrom.pathname))
+      ?.path ?? NOT_FOUND_ROUTE
   )
 }
