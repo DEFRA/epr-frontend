@@ -1,4 +1,5 @@
 import convict from 'convict'
+import Joi from 'joi'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -24,6 +25,18 @@ function maxDayOfMonth(month) {
   const currentYear = new Date().getFullYear()
   return new Date(currentYear, month, 0).getDate()
 }
+
+/**
+ * @param {string} value
+ */
+export const assertOptionalHttpUrl = (value) =>
+  Joi.assert(
+    value,
+    Joi.string()
+      .allow('')
+      .uri({ scheme: ['http', 'https'] }),
+    'must be empty or an http(s) URL:'
+  )
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
@@ -380,6 +393,32 @@ export const config = convict({
       env: 'ANALYTICS_MEASUREMENT_ID'
     }
   },
+  satisfactionSurvey: {
+    isEnabled: {
+      doc: 'Feature Flag: Show the satisfaction survey link on completion pages',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_SATISFACTION_SURVEYS'
+    },
+    prnUrl: {
+      doc: 'Satisfaction survey for the issue a PRN or PERN journey',
+      format: assertOptionalHttpUrl,
+      default: '',
+      env: 'SATISFACTION_SURVEY_PRN_URL'
+    },
+    reportUrl: {
+      doc: 'Satisfaction survey for the submit your report journey',
+      format: assertOptionalHttpUrl,
+      default: '',
+      env: 'SATISFACTION_SURVEY_REPORT_URL'
+    },
+    summaryLogUrl: {
+      doc: 'Satisfaction survey for the update your summary log journey',
+      format: assertOptionalHttpUrl,
+      default: '',
+      env: 'SATISFACTION_SURVEY_SUMMARY_LOG_URL'
+    }
+  },
   featureFlags: {
     regulatorAccess: {
       doc: 'Feature Flag: Enable Entra ID login for regulators',
@@ -403,7 +442,7 @@ export const config = convict({
     },
     baseUrl: {
       doc: 'WS2 register/enrol frontend base URL the reapply link points at',
-      format: assertValidReapplyBaseUrl,
+      format: assertOptionalHttpUrl,
       default: '',
       env: 'REAPPLY_ACCREDITATION_BASE_URL'
     }
@@ -454,34 +493,6 @@ export function assertValidReapplyWindowBound(value) {
   if (month < 1 || month > 12 || day < 1 || day > maxDayOfMonth(month)) {
     throw new Error(
       `reapplyAccreditation window bound must name a real UK date, got "${value}"`
-    )
-  }
-}
-
-/**
- * Convict format for `reapplyAccreditation.baseUrl`. Empty means the feature is
- * off (no WS2 host wired up yet); any other value must be a valid http(s) URL so
- * a malformed host fails at startup rather than rendering a broken link at
- * request time. Declared as a function so it is hoisted for the schema above.
- * @param {string} value
- */
-export function assertValidReapplyBaseUrl(value) {
-  if (value === '') {
-    return
-  }
-
-  let url
-  try {
-    url = new URL(value)
-  } catch {
-    throw new Error(
-      `reapplyAccreditation.baseUrl must be empty or a valid URL, got "${value}"`
-    )
-  }
-
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw new Error(
-      `reapplyAccreditation.baseUrl must be an http(s) URL, got "${value}"`
     )
   }
 }

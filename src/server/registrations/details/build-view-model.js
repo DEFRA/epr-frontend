@@ -1,11 +1,12 @@
 import { capitalize } from 'lodash-es'
 
 import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { formatDate } from '#server/common/helpers/format-date.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { hasLedgerReadScope } from '#server/auth/scopes.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
+
+import { toDateRange } from './helpers/date-range.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
@@ -39,24 +40,6 @@ import { paths } from '#server/paths.js'
  *   summaryRows: SummaryRow[]
  * }} RegistrationDetailsViewModel
  */
-
-/**
- * @param {{ validFrom: string | null, validTo: string | null }} dateRange
- * @param {Localise} localise
- * @returns {string}
- */
-const toDateRange = ({ validFrom, validTo }, localise) => {
-  if (!validFrom) {
-    return ''
-  }
-
-  const from = formatDate(validFrom)
-  const to = validTo
-    ? formatDate(validTo)
-    : localise('registrations:details:current')
-
-  return `${from} - ${to}`
-}
 
 /**
  * The reprocessing type is recorded when a registration is approved, so an

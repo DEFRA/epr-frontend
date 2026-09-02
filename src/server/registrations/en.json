@@ -13,6 +13,15 @@
       "status": "Accreditation status",
       "view": "View accreditation"
     },
+    "accreditation": {
+      "breadcrumb": "Accreditation details",
+      "heading": "Accreditation",
+      "summary": {
+        "number": "Accreditation number",
+        "status": "Accreditation status",
+        "wasteBalanceAvailable": "Waste balance available (tonnes)"
+      }
+    },
     "allOrganisations": "All organisations",
     "current": "Current",
     "heading": "Registration details",

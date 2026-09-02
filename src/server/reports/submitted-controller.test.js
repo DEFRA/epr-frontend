@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
@@ -5,9 +6,15 @@ import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtu
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole, getByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -234,6 +241,71 @@ describe('#submittedController', () => {
       const { body } = dom.window.document
 
       expect(body.querySelector('.govuk-back-link')).toBeNull()
+    })
+
+    describe('satisfaction survey', () => {
+      const surveyUrl = 'https://survey.example/report'
+      const surveyText =
+        'What do you think of this service? (opens in a new tab)'
+
+      const liveSurvey = () => {
+        config.set('satisfactionSurvey.isEnabled', true)
+        config.set('satisfactionSurvey.reportUrl', surveyUrl)
+      }
+
+      afterEach(() => {
+        config.reset('satisfactionSurvey.isEnabled')
+        config.reset('satisfactionSurvey.reportUrl')
+      })
+
+      const getMain = async (server) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: submittedUrl,
+          auth: mockAuth
+        })
+        const { body } = new JSDOM(result).window.document
+
+        return getByRole(body, 'main')
+      }
+
+      it('says nothing about what happens next while the surveys are switched off', async ({
+        server
+      }) => {
+        const main = await getMain(server)
+
+        expect(queryByText(main, surveyText)).toBeNull()
+        expect(
+          queryByRole(main, 'heading', { name: 'What happens next' })
+        ).toBeNull()
+      })
+
+      it('asks what the user thinks under what happens next, before sending them back', async ({
+        server
+      }) => {
+        liveSurvey()
+
+        const main = await getMain(server)
+
+        expect(
+          queryByRole(main, 'heading', { name: 'What happens next' })
+        ).not.toBeNull()
+        expect(
+          getAllByRole(main, 'link').map((link) => link.textContent?.trim())
+        ).toStrictEqual([surveyText, 'Return to your reports'])
+      })
+
+      it('sends the user to the report survey, not one from another journey', async ({
+        server
+      }) => {
+        liveSurvey()
+
+        const main = await getMain(server)
+
+        expect(
+          getByRole(main, 'link', { name: surveyText }).getAttribute('href')
+        ).toBe(surveyUrl)
+      })
     })
 
     it('should return 200 on refresh (repeated GET)', async ({ server }) => {

@@ -101,7 +101,8 @@
     "prnNumberLabel": "{{noteType}} number:",
     "viewButton": "View {{noteType}} (opens in a new tab)",
     "issueAnotherLink": "Issue another {{noteType}}",
-    "managePrnsLink": "Manage {{noteTypePlural}}"
+    "managePrnsLink": "Manage {{noteTypePlural}}",
+    "whatHappensNextHeading": "What happens next"
   },
   "issuedByLabel": "Issued by",
   "issuedDateLabel": "Issued date",

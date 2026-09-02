@@ -68,6 +68,7 @@ export const issuedController = {
       prnNumberLabel: localise('prns:issued:prnNumberLabel', { noteType }),
       prnNumber,
       wasteBalanceMessage: localise('prns:issued:wasteBalanceMessage'),
+      whatHappensNextHeading: localise('prns:issued:whatHappensNextHeading'),
       viewButton: {
         text: localise('prns:issued:viewButton', { noteType }),
         href: viewUrl

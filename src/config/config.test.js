@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest'
 import {
-  assertValidReapplyBaseUrl,
+  assertOptionalHttpUrl,
   assertValidReapplyWindow,
   assertValidReapplyWindowBound,
   config,
@@ -147,27 +147,43 @@ describe('#config', () => {
     )
   })
 
-  describe(assertValidReapplyBaseUrl, () => {
-    it('should accept an empty value (feature off)', () => {
-      expect(() => assertValidReapplyBaseUrl('')).not.toThrow()
+  describe(assertOptionalHttpUrl, () => {
+    it.each([
+      '',
+      'http://ws2.example',
+      'https://forms.example/survey?id=abc123'
+    ])('should accept "%s"', (value) => {
+      expect(() => assertOptionalHttpUrl(value)).not.toThrow()
     })
 
-    it('should accept a valid https URL', () => {
-      expect(() =>
-        assertValidReapplyBaseUrl('https://ws2.example')
-      ).not.toThrow()
-    })
+    it.each(['ftp://ws2.example', 'ws2.example', '   '])(
+      'should throw for "%s"',
+      (value) => {
+        expect(() => assertOptionalHttpUrl(value)).toThrow(
+          /must be empty or an http\(s\) URL/
+        )
+      }
+    )
+  })
 
-    it('should throw for a value that is not a URL', () => {
-      expect(() => assertValidReapplyBaseUrl('not a url')).toThrow(
-        /must be empty or a valid URL/
-      )
-    })
+  describe('custom formats wired into the schema', () => {
+    it.each(
+      /** @type {[Parameters<typeof config.reset>[0], string, RegExp][]} */ ([
+        ['satisfactionSurvey.prnUrl', 'not a url', /http\(s\) URL/],
+        ['satisfactionSurvey.reportUrl', 'not a url', /http\(s\) URL/],
+        ['satisfactionSurvey.summaryLogUrl', 'not a url', /http\(s\) URL/],
+        ['reapplyAccreditation.baseUrl', 'not a url', /http\(s\) URL/],
+        ['reapplyAccreditation.windowStart', '09-31T09:00', /real UK date/],
+        ['reapplyAccreditation.windowEnd', 'abc', /MM-DDTHH:mm/]
+      ])
+    )('should reject %s = "%s" at startup', (key, value, message) => {
+      config.set(key, value)
 
-    it('should throw for a non-http(s) URL', () => {
-      expect(() => assertValidReapplyBaseUrl('ftp://ws2.example')).toThrow(
-        /must be an http\(s\) URL/
-      )
+      try {
+        expect(() => config.validate({ allowed: 'strict' })).toThrow(message)
+      } finally {
+        config.reset(key)
+      }
     })
   })
 })
