@@ -11,7 +11,7 @@ import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchAccreditationDetails } from './helpers/fetch-accreditation-details.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole } from '@testing-library/dom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -95,8 +95,25 @@ describe('the accreditation details page', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(
-      getByRole(documentOf(body), 'heading', { level: 1 }).textContent?.trim()
-    ).toContain('Accreditation 1 July 2026 - 31 December 2026')
+      getByRole(documentOf(body), 'heading', { level: 1 }).textContent?.replace(
+        /\s+/g,
+        ' '
+      )
+    ).toContain('Accreditation 1 July to 31 December 2026')
+  })
+
+  it('sets the caption a size down and the period on its own line', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const heading = getByRole(documentOf(body), 'heading', { level: 1 })
+
+    expect(getByText(heading, /Kirkby Plastics Ltd/).className).toBe(
+      'govuk-caption-m govuk-!-margin-bottom-4'
+    )
+    expect(getByText(heading, '1 July to 31 December 2026').className).toBe(
+      'govuk-!-display-block govuk-!-font-size-36'
+    )
   })
 
   it('shows the status and the number', async ({ server }) => {

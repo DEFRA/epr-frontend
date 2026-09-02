@@ -153,6 +153,64 @@ describe('#authCallbackController', () => {
       expect(result).toBe('redirect-response')
     })
 
+    it('takes the newest stashed referrer when the operator has more than one', async () => {
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockResolvedValue(
+        asUserOrganisations({
+          current: { id: 'defra-org-uuid', name: 'Test Defra Organisation' },
+          linked: {
+            id: 'defra-org-uuid',
+            name: 'Test Defra Organisation',
+            linkedBy: { email: 'user@example.com', id: 'user-123' },
+            linkedAt: '2025-12-10T09:00:00.000Z'
+          },
+          unlinked: []
+        })
+      )
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: {
+              id: 'user-123',
+              email: 'test@example.com',
+              displayName: 'Test User',
+              firstName: 'Test',
+              lastName: 'User'
+            },
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
+            refreshToken: 'mock-refresh-token',
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
+          }
+        },
+        server: {
+          app: { cache: { set: vi.fn().mockResolvedValue(undefined) } }
+        },
+        cookieAuth: { set: vi.fn() },
+        logger: { info: vi.fn(), error: vi.fn() },
+        yar: {
+          flash: vi.fn().mockReturnValue(['/first/page', '/second/page'])
+        },
+        localiseUrl: vi.fn((url) => url)
+      }
+
+      const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
+
+      await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
+
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/second/page')
+    })
+
     it('should log sign-in with userId for unique user logging', async () => {
       const mockProfile = {
         id: 'user-456',

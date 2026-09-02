@@ -24,6 +24,7 @@
     },
     "allOrganisations": "All organisations",
     "current": "Current",
+    "period": "{{from}} to {{to}}",
     "heading": "Registration details",
     "summary": {
       "material": "Material",

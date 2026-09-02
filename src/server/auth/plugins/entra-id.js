@@ -9,12 +9,21 @@ import { recordSignInReferrer } from '../helpers/record-sign-in-referrer.js'
 
 /**
  * @import { AzureB2CTokenParams, BellProfileTarget, OAuthTokenParams } from '../types/auth.js'
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { Request, ServerRegisterPluginObject } from '@hapi/hapi'
  * @import { AuthProvider } from '../types/auth-provider.js'
  * @import { OidcConfig } from '../helpers/get-oidc-configuration.js'
  */
 
 export const OIDC_ENTRA_ID = 'entra-id'
+
+/**
+ * Marks a sign in that asks Entra ID which account to use. Entra ID returns
+ * whoever is already signed in unless the authorize request asks otherwise, so
+ * an account this service has refused signs straight back in and meets the
+ * same refusal. Asking on every sign in would put an account picker in front
+ * of the regulators who hold one account.
+ */
+export const SELECT_ACCOUNT_QUERY = 'selectAccount'
 
 /**
  * The app asks for `api://{clientId}/.default` as a resource scope for its own
@@ -175,9 +184,11 @@ const createEntraId = (oidcConf, authProvider) => ({
             credentials.scope = []
           }
         },
-        providerParams: () => ({
-          response_mode: 'query'
-        })
+        /** @param {Request} request */
+        providerParams: (request) =>
+          Object.hasOwn(request.query, SELECT_ACCOUNT_QUERY)
+            ? { response_mode: 'query', prompt: 'select_account' }
+            : { response_mode: 'query' }
       })
     }
   }

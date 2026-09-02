@@ -3,11 +3,11 @@ import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
- * @import { Material, GlassRecyclingProcess } from '#domain/organisations/model.js'
+ * @import { AppliedForMaterial, GlassRecyclingProcess } from '#domain/organisations/model.js'
  */
 
 /**
- * @typedef {{ wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[] }} ViewDataRegistration
+ * @typedef {{ wasteProcessingType: string, material: AppliedForMaterial, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[] }} ViewDataRegistration
  */
 
 const createMockRequest = () =>
