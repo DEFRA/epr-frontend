@@ -6,6 +6,9 @@
       <div class="govuk-body" data-testid="app-page-body">
         <h1 class="govuk-heading-l">{{ localise('regulators:notAuthorised:heading') }}</h1>
         <p class="govuk-body">{{ localise('regulators:notAuthorised:body') }}</p>
+        <p class="govuk-body">
+          <a class="govuk-link" href="{{ signInUrl }}" data-testid="sign-in-link">{{ localise('regulators:notAuthorised:signIn') }}</a>
+        </p>
       </div>
     </div>
   </div>

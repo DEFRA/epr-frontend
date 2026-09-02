@@ -8,8 +8,11 @@
       <div class="govuk-body" data-testid="app-page-body">
 
         <h1 class="govuk-heading-xl">
-          <span class="govuk-caption-xl">{{ caption }}</span>
+          <span class="govuk-caption-m govuk-!-margin-bottom-4">{{ caption }}</span>
           {{ heading }}
+          {% if period %}
+            <span class="govuk-!-display-block govuk-!-font-size-36">{{ period }}</span>
+          {% endif %}
         </h1>
 
         {% set summaryListRows = [] %}
@@ -23,6 +26,19 @@
         {% endfor %}
 
         {{ govukSummaryList({ rows: summaryListRows }) }}
+
+        <h2 class="govuk-heading-m">{{ localise("registrations:details:accreditation:reports:heading") }}</h2>
+
+        {% if reports.rows | length > 0 %}
+          {{ govukTable({
+            attributes: { "data-testid": "reports-table" },
+            firstCellIsHeader: true,
+            head: reports.head,
+            rows: reports.rows
+          }) }}
+        {% else %}
+          <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise("registrations:details:accreditation:reports:none") }}</p>
+        {% endif %}
 
       </div>
     </div>

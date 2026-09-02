@@ -26,14 +26,20 @@ export const controller = {
     const { organisationId, registrationId, accreditationId } = request.params
     const { backendToken } = request.auth.credentials
 
-    const { organisation, registration, accreditation, wasteBalance } =
-      await fetchAccreditationDetails({
-        organisationId,
-        registrationId,
-        accreditationId,
-        backendToken,
-        logger: request.logger
-      })
+    const {
+      organisation,
+      registration,
+      accreditation,
+      wasteBalance,
+      reportingPeriods,
+      cadence
+    } = await fetchAccreditationDetails({
+      organisationId,
+      registrationId,
+      accreditationId,
+      backendToken,
+      logger: request.logger
+    })
 
     return h.view(
       'registrations/details/accreditations/index',
@@ -42,6 +48,8 @@ export const controller = {
         registration,
         accreditation,
         wasteBalance,
+        reportingPeriods,
+        cadence,
         localise: request.t,
         localiseUrl: request.localiseUrl
       })

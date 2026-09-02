@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -56,7 +56,7 @@ export const createdController = {
       throw Boom.notFound()
     }
 
-    const material = getDisplayMaterial(registration)
+    const material = getRegistrationMaterialDisplayName(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
     // A resubmission draft keeps the period in its Requires resubmission state,

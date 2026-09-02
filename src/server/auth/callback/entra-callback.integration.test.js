@@ -10,11 +10,22 @@ import {
   IDENTITIES,
   identityHandler
 } from '#server/common/test-helpers/identity-helper.js'
+import { SELECT_ACCOUNT_QUERY } from '#server/auth/plugins/entra-id.js'
+import { paths } from '#server/paths.js'
+import {
+  extractCookieValues,
+  mergeCookies
+} from '#server/common/test-helpers/cookie-helper.js'
 import { ENTRA_ID_BASE_URL, beforeEach, it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
+
+/**
+ * @import { SetupServerApi } from 'msw/node'
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
 
 const mock = {
   cdpAuditing: vi.fn(),
@@ -37,25 +48,32 @@ vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mock.cdpAuditing(...args)
 }))
 
-const cookieHeaderFrom = (response) => {
-  const rawCookies = response.headers['set-cookie']
-  const cookieList = Array.isArray(rawCookies)
-    ? rawCookies
-    : rawCookies
-      ? [rawCookies]
-      : []
+const cookieHeaderFrom = (response) =>
+  extractCookieValues(response.headers['set-cookie']).join('; ')
 
-  return cookieList.map((header) => header.split(';')[0]).join('; ')
-}
-
-const performSignInFlow = async (server, mswServer, tokenInfo) => {
+/**
+ * `jar` is mutated with the cookies each response sets. Pass the same jar to
+ * two flows to sign in twice as one visitor; omit it and each flow is a new
+ * visitor.
+ */
+const performSignInFlow = async (
+  server,
+  mswServer,
+  tokenInfo,
+  /** @type {{ cookie?: string }} */ jar = {}
+) => {
   const { accessToken, idToken, publicKey, referer, callbackReferer } =
     tokenInfo
   const signInResponse = await server.inject({
     method: 'GET',
     url: '/regulators/login',
-    headers: referer ? { referer } : {}
+    headers: {
+      ...(referer ? { referer } : {}),
+      ...(jar.cookie ? { cookie: jar.cookie } : {})
+    }
   })
+
+  jar.cookie = mergeCookies(jar.cookie ?? '', cookieHeaderFrom(signInResponse))
   const ssoUrl = new URL(signInResponse.headers['location'])
 
   mswServer.use(
@@ -77,14 +95,18 @@ const performSignInFlow = async (server, mswServer, tokenInfo) => {
 
   const stateParam = ssoUrl.searchParams.get('state')
   const code = randomUUID()
-  return server.inject({
+  const response = await server.inject({
     method: 'GET',
     url: `/auth/callback/entra?state=${stateParam}&code=${code}&refresh=1`,
     headers: {
-      cookie: cookieHeaderFrom(signInResponse),
+      cookie: jar.cookie,
       ...(callbackReferer ? { referer: callbackReferer } : {})
     }
   })
+
+  jar.cookie = mergeCookies(jar.cookie, cookieHeaderFrom(response))
+
+  return response
 }
 
 async function generateAccessToken(
@@ -323,6 +345,67 @@ describe('/auth/callback/entra - GET integration', async () => {
     )
   })
 
+  describe('on successful return from Entra ID - authorised regulator, after an attempt that was refused', () => {
+    const pageTheRefusedAttemptSetOutFor =
+      'http://localhost:3000/page/before/refusal'
+
+    /**
+     * The refusal page is served by the callback route, so a sign in started
+     * from its link arrives with the callback URL as its referrer.
+     */
+    const refusalPage = `http://localhost:3000${paths.auth.entraId.callback}?state=abc&code=def`
+
+    /**
+     * @param {HapiServer} server
+     * @param {SetupServerApi} msw
+     * @param {string} secondSignInReferer
+     */
+    const refusedThenSignedIn = async (server, msw, secondSignInReferer) => {
+      const jar = {}
+
+      msw.use(identityHandler(IDENTITIES.unrecognised))
+      await performSignInFlow(
+        server,
+        msw,
+        { ...regulatorToken, referer: pageTheRefusedAttemptSetOutFor },
+        jar
+      )
+
+      msw.use(identityHandler(IDENTITIES.regulator))
+
+      return performSignInFlow(
+        server,
+        msw,
+        { ...regulatorToken, referer: secondSignInReferer },
+        jar
+      )
+    }
+
+    it('returns to the page the refused attempt set out for when this sign in starts from the refusal page', async ({
+      server,
+      msw
+    }) => {
+      const response = await refusedThenSignedIn(server, msw, refusalPage)
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/page/before/refusal')
+    })
+
+    it('prefers the page this sign in started from when it did not start from the refusal page', async ({
+      server,
+      msw
+    }) => {
+      const response = await refusedThenSignedIn(
+        server,
+        msw,
+        'http://localhost:3000/fresh/page'
+      )
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/fresh/page')
+    })
+  })
+
   describe('on successful return from Entra ID - an identity the backend does not recognise', () => {
     beforeEach(({ msw }) => {
       msw.use(identityHandler(IDENTITIES.unrecognised))
@@ -357,11 +440,21 @@ describe('/auth/callback/entra - GET integration', async () => {
     it('creates no session', async ({ server, msw }) => {
       const response = await performSignInFlow(server, msw, regulatorToken)
 
-      const setCookieHeaders = []
-        .concat(response.headers['set-cookie'] ?? [])
-        .join(';')
+      expect(
+        extractCookieValues(response.headers['set-cookie']).join(';')
+      ).not.toContain('userSession=')
+    })
 
-      expect(setCookieHeaders).not.toContain('userSession=')
+    it('offers a sign in that asks which account to use', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      const $ = load(asHtml(response.result))
+      const href = $('[data-testid="sign-in-link"]').attr('href')
+
+      expect(href).toBe(`/regulators/login?${SELECT_ACCOUNT_QUERY}`)
     })
 
     it('leaves the refused user unauthenticated on an operator route', async ({
@@ -481,11 +574,9 @@ describe('/auth/callback/entra - GET integration', async () => {
     })
 
     it('creates no session', () => {
-      const setCookieHeaders = []
-        .concat(response.headers['set-cookie'] ?? [])
-        .join(';')
-
-      expect(setCookieHeaders).not.toContain('userSession=')
+      expect(
+        extractCookieValues(response.headers['set-cookie']).join(';')
+      ).not.toContain('userSession=')
     })
   })
 
