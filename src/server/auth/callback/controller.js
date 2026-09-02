@@ -4,7 +4,10 @@ import { fetchIdentity } from '#server/auth/helpers/fetch-identity.js'
 import { hashUserId } from '#server/auth/helpers/hash-user-id.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
-import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import {
+  OIDC_ENTRA_ID,
+  SELECT_ACCOUNT_QUERY
+} from '#server/auth/plugins/entra-id.js'
 import { holdsNoRole } from '#server/auth/roles.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
@@ -111,11 +114,13 @@ async function applyBackendIdentity(session) {
 }
 
 /**
+ * The referrer stash is a queue, and a sign in that ends without redirecting
+ * leaves its entry in it, so the newest entry is the one this sign in recorded.
  * @param {HapiRequest} request
  * @param {string} defaultPath
  */
 function referrerIfPresentElseDefault(request, defaultPath) {
-  const referrer = request.yar.flash('referrer')?.at(0)
+  const referrer = request.yar.flash('referrer')?.at(-1)
 
   const skipReferrers = [
     ...withWelsh(paths.start),
@@ -153,7 +158,8 @@ const refuseSignIn = async (request, h, session) => {
 
   return h
     .view('regulators/not-authorised', {
-      pageTitle: request.t('regulators:notAuthorised:pageTitle')
+      pageTitle: request.t('regulators:notAuthorised:pageTitle'),
+      signInUrl: `${request.localiseUrl(paths.auth.entraId.login)}?${SELECT_ACCOUNT_QUERY}`
     })
     .code(statusCodes.forbidden)
 }

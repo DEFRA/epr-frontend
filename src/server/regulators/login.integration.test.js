@@ -1,5 +1,10 @@
 import { config } from '#config/config.js'
+import { SELECT_ACCOUNT_QUERY } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+
+/**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
@@ -61,5 +66,35 @@ describe('#regulatorsLoginController - integration', () => {
         expect(mockSignInAttemptedMetric).toHaveBeenCalledWith('entra-id')
       }
     )
+  })
+
+  describe('the account prompt in the authorize request', () => {
+    /**
+     * @param {HapiServer} server
+     * @param {string} url
+     */
+    const promptAskedFor = async (server, url) => {
+      const response = await server.inject({ method: 'GET', url })
+
+      return new URL(
+        /** @type {string} */ (response.headers.location)
+      ).searchParams.get('prompt')
+    }
+
+    it('asks Entra ID for an account picker when the sign in is marked for one', async ({
+      server
+    }) => {
+      await expect(
+        promptAskedFor(server, `/regulators/login?${SELECT_ACCOUNT_QUERY}`)
+      ).resolves.toBe('select_account')
+    })
+
+    it('asks for no picker on an ordinary sign in, so a regulator with one account is not interrupted', async ({
+      server
+    }) => {
+      await expect(
+        promptAskedFor(server, '/regulators/login')
+      ).resolves.toBeNull()
+    })
   })
 })
