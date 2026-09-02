@@ -109,10 +109,10 @@ describe('the accreditation details page', () => {
     const heading = getByRole(documentOf(body), 'heading', { level: 1 })
 
     expect(getByText(heading, /Kirkby Plastics Ltd/).className).toBe(
-      'govuk-caption-l govuk-!-margin-bottom-4'
+      'govuk-caption-m govuk-!-margin-bottom-4'
     )
     expect(getByText(heading, '1 July to 31 December 2026').className).toBe(
-      'govuk-!-display-block govuk-!-font-size-36 govuk-!-margin-top-4'
+      'govuk-!-display-block govuk-!-font-size-36'
     )
   })
 
