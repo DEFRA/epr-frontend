@@ -1,6 +1,7 @@
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   buildMockAuth,
@@ -33,6 +34,35 @@ const regulator = buildMockAuth({
   profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
   ...sessionIdentity(IDENTITIES.regulator)
 })
+
+const regulatorWithoutLedgerScope = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-2', email: 'no.ledger@example.gov.uk' },
+  role: IDENTITIES.regulator.role,
+  scope: [SCOPES.organisationSearch]
+})
+
+/** @type {AccreditationDetails['ledgerEvents']} */
+const ledgerEvents = [
+  {
+    kind: 'summary-log-submitted',
+    createdAt: '2026-01-04T09:00:00.000Z',
+    createdBy: { id: 'system' },
+    summaryLog: { creditTotal: 100 },
+    balance: { closing: { total: 100, available: 100 } }
+  },
+  {
+    kind: 'prn-issued',
+    createdAt: '2026-02-15T15:09:00.000Z',
+    createdBy: {
+      id: 'user-1',
+      name: 'Ada Lovelace',
+      email: 'ada@example.com'
+    },
+    prn: { tonnage: 12.5 },
+    balance: { closing: { total: 100, available: 87.5 } }
+  }
+]
 
 /** @type {AccreditationDetails} */
 const accreditationDetails = {
@@ -86,7 +116,8 @@ const accreditationDetails = {
         report: null
       })
     )
-  ]
+  ],
+  ledgerEvents
 }
 
 /**
@@ -101,6 +132,25 @@ const visit = async (server, auth) => {
 
 /** @param {string} body */
 const documentOf = (body) => new JSDOM(body).window.document.body
+
+/**
+ * @param {ReturnType<typeof documentOf>} body
+ * @param {string} selector
+ */
+const cellsOf = (body, selector) =>
+  [...body.querySelectorAll(selector)].map((cell) => cell.textContent?.trim())
+
+/**
+ * The ledger read follows the session: the helper is asked to read it only
+ * where the session may, and answers none where it was not asked.
+ */
+const detailsForTheSession = () =>
+  vi
+    .mocked(fetchAccreditationDetails)
+    .mockImplementation(async ({ canReadLedger }) => ({
+      ...accreditationDetails,
+      ledgerEvents: canReadLedger ? ledgerEvents : null
+    }))
 
 describe('the accreditation details page', () => {
   beforeAll(() => {
@@ -224,6 +274,93 @@ describe('the accreditation details page', () => {
     expect(body).not.toContain('data-testid="reports-table"')
     expect(body).toContain('data-testid="no-reports"')
     expect(body).toContain('There are no reporting periods')
+  })
+
+  it('lists the waste balance ledger beneath the reports, under its six headings', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const document = documentOf(body)
+
+    expect(body.indexOf('data-testid="reports-table"')).toBeLessThan(
+      body.indexOf('data-testid="waste-balance-ledger-table"')
+    )
+    expect(
+      getByRole(document, 'heading', { level: 2, name: 'Waste balance ledger' })
+    ).toBeDefined()
+    expect(
+      cellsOf(document, '[data-testid="waste-balance-ledger-table"] thead th')
+    ).toStrictEqual([
+      'Date and time',
+      'Event',
+      'Tonnage',
+      'Balance',
+      'Available',
+      'Who'
+    ])
+  })
+
+  it('reads the ledger newest first', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(
+      cellsOf(
+        documentOf(body),
+        '[data-testid="waste-balance-ledger-table"] tbody tr:first-child td'
+      )
+    ).toStrictEqual([
+      '15 February 2026, 3:09pm',
+      'PRN issued',
+      '12.50',
+      '100.00',
+      '87.50',
+      'Ada Lovelace (ada@example.com)'
+    ])
+  })
+
+  it('says so where nothing has moved the balance yet', async ({ server }) => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+      ...accreditationDetails,
+      ledgerEvents: []
+    })
+
+    const { body } = await visit(server, regulator)
+
+    expect(body).not.toContain('data-testid="waste-balance-ledger-table"')
+    expect(
+      getByText(documentOf(body), 'Nothing has changed this waste balance yet.')
+    ).toBeDefined()
+  })
+
+  it('reads no ledger, and shows none, for a regulator the backend granted no ledger scope', async ({
+    server
+  }) => {
+    detailsForTheSession()
+
+    const { statusCode, body } = await visit(
+      server,
+      regulatorWithoutLedgerScope
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(fetchAccreditationDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ canReadLedger: false })
+    )
+    expect(body).not.toContain('Waste balance ledger')
+    expect(body).not.toContain('Nothing has changed this waste balance yet.')
+  })
+
+  it('reads the ledger for a regulator holding the ledger scope', async ({
+    server
+  }) => {
+    detailsForTheSession()
+
+    const { body } = await visit(server, regulator)
+
+    expect(fetchAccreditationDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ canReadLedger: true })
+    )
+    expect(body).toContain('data-testid="waste-balance-ledger-table"')
   })
 
   it('offers no way to change anything on the page', async ({ server }) => {

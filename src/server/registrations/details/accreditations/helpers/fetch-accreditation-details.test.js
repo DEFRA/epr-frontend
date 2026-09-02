@@ -64,9 +64,53 @@ describe(fetchAccreditationDetails, () => {
     }
   ]
   const calendar = { cadence: 'monthly', reportingPeriods }
+  const ledgerEvents = [
+    {
+      kind: 'prn-issued',
+      createdAt: '2026-02-15T15:09:00.000Z',
+      createdBy: { id: 'user-1', name: 'Ada Lovelace' },
+      prn: { tonnage: 12.5 },
+      balance: { closing: { total: 100, available: 87.5 } }
+    }
+  ]
 
   const isCalendarPath = (/** @type {string} */ path) =>
     path.endsWith('/reports/calendar')
+  const isLedgerPath = (/** @type {string} */ path) =>
+    path.endsWith('/waste-balance-ledger')
+
+  /**
+   * @param {{ calendar?: Promise<unknown>, ledger?: Promise<unknown> }} [answers]
+   */
+  const backendAnswers = ({
+    calendar: calendarAnswer = Promise.resolve(calendar),
+    ledger: ledgerAnswer = Promise.resolve({ events: ledgerEvents })
+  } = {}) =>
+    vi.mocked(fetchJsonFromBackend).mockImplementation((path) => {
+      if (isCalendarPath(path)) {
+        return calendarAnswer
+      }
+
+      if (isLedgerPath(path)) {
+        return ledgerAnswer
+      }
+
+      return Promise.resolve(accreditation)
+    })
+
+  /**
+   * @param {Partial<Parameters<typeof fetchAccreditationDetails>[0]>} [overrides]
+   */
+  const fetchDetails = (overrides) =>
+    fetchAccreditationDetails({
+      organisationId,
+      registrationId,
+      accreditationId,
+      backendToken,
+      canReadLedger: true,
+      logger,
+      ...overrides
+    })
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -74,22 +118,12 @@ describe(fetchAccreditationDetails, () => {
       organisationData: organisation,
       registration
     })
-    vi.mocked(fetchJsonFromBackend).mockImplementation((path) =>
-      isCalendarPath(path)
-        ? Promise.resolve(calendar)
-        : Promise.resolve(accreditation)
-    )
+    backendAnswers()
     vi.mocked(getWasteBalance).mockResolvedValue(wasteBalance)
   })
 
   it('reads the accreditation from the path the backend serves it at', async () => {
-    await fetchAccreditationDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken,
-      logger
-    })
+    await fetchDetails()
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`,
@@ -103,12 +137,10 @@ describe(fetchAccreditationDetails, () => {
   })
 
   it('encodes URL path parameters with special characters', async () => {
-    await fetchAccreditationDetails({
+    await fetchDetails({
       organisationId: 'org/123',
       registrationId: 'reg&456',
-      accreditationId: 'acc?789',
-      backendToken,
-      logger
+      accreditationId: 'acc?789'
     })
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -118,13 +150,7 @@ describe(fetchAccreditationDetails, () => {
   })
 
   it('reads the organisation and the registration alongside the accreditation', async () => {
-    await fetchAccreditationDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken,
-      logger
-    })
+    await fetchDetails()
 
     expect(fetchRegistrationAndAccreditation).toHaveBeenCalledWith(
       organisationId,
@@ -134,13 +160,7 @@ describe(fetchAccreditationDetails, () => {
   })
 
   it('reads the waste balance the accreditation holds', async () => {
-    await fetchAccreditationDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken,
-      logger
-    })
+    await fetchDetails()
 
     expect(getWasteBalance).toHaveBeenCalledWith(
       organisationId,
@@ -151,13 +171,7 @@ describe(fetchAccreditationDetails, () => {
   })
 
   it('combines the organisation, the registration, the accreditation, its balance and its reporting calendar', async () => {
-    const result = await fetchAccreditationDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken,
-      logger
-    })
+    const result = await fetchDetails()
 
     expect(result).toStrictEqual({
       organisation,
@@ -165,18 +179,13 @@ describe(fetchAccreditationDetails, () => {
       accreditation,
       wasteBalance,
       reportingPeriods,
-      cadence: 'monthly'
+      cadence: 'monthly',
+      ledgerEvents
     })
   })
 
   it('reads the reporting calendar from the address the operator page reads it at', async () => {
-    await fetchAccreditationDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken,
-      logger
-    })
+    await fetchDetails()
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
@@ -186,19 +195,9 @@ describe(fetchAccreditationDetails, () => {
 
   it('reports a calendar it could not read as no periods rather than failing the page', async () => {
     const err = new Error('calendar unavailable')
-    vi.mocked(fetchJsonFromBackend).mockImplementation((path) =>
-      isCalendarPath(path)
-        ? Promise.reject(err)
-        : Promise.resolve(accreditation)
-    )
+    backendAnswers({ calendar: Promise.reject(err) })
 
-    const result = await fetchAccreditationDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken,
-      logger
-    })
+    const result = await fetchDetails()
 
     expect(result.reportingPeriods).toStrictEqual([])
     expect(result.cadence).toBeNull()
@@ -212,15 +211,48 @@ describe(fetchAccreditationDetails, () => {
   it('reports a balance it could not read as absent rather than failing the page', async () => {
     vi.mocked(getWasteBalance).mockResolvedValue(null)
 
-    const result = await fetchAccreditationDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken,
-      logger
-    })
+    const result = await fetchDetails()
 
     expect(result.wasteBalance).toBeNull()
     expect(result.accreditation).toStrictEqual(accreditation)
+  })
+
+  describe('the waste balance ledger', () => {
+    it('reads the ledger of the accreditation the address names', async () => {
+      await fetchDetails()
+
+      expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+        `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${backendToken}`
+          }
+        }
+      )
+    })
+
+    it('answers the events in the order the backend appended them', async () => {
+      const result = await fetchDetails()
+
+      expect(result.ledgerEvents).toStrictEqual(ledgerEvents)
+    })
+
+    it('asks for no ledger, and answers none, for a session that may not read one', async () => {
+      const result = await fetchDetails({ canReadLedger: false })
+
+      expect(result.ledgerEvents).toBeNull()
+      expect(fetchJsonFromBackend).not.toHaveBeenCalledWith(
+        expect.stringMatching(/waste-balance-ledger$/),
+        expect.any(Object)
+      )
+    })
+
+    it('fails the page for a ledger it could not read', async () => {
+      const err = new Error('ledger unavailable')
+      backendAnswers({ ledger: Promise.reject(err) })
+
+      await expect(fetchDetails()).rejects.toBe(err)
+    })
   })
 })

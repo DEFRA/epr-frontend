@@ -40,6 +40,12 @@
           <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise("registrations:details:accreditation:reports:none") }}</p>
         {% endif %}
 
+        {% if ledger %}
+          <h2 class="govuk-heading-m">{{ localise("waste-balance-ledger:heading") }}</h2>
+          {% set ledgerRows = ledger.rows %}
+          {% include "partials/waste-balance-ledger/table.njk" %}
+        {% endif %}
+
       </div>
     </div>
   </div>
