@@ -13,12 +13,8 @@ import { toDateRange } from './helpers/date-range.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { ScopeBearingCredentials } from '#server/auth/scopes.js'
  * @import { LinkedAccreditation } from './helpers/fetch-registration-details.js'
- * @import { AccreditationResource } from './helpers/types.js'
+ * @import { AccreditationResource, Localise } from './helpers/types.js'
  * @import { RegistrationResource, SiteAddress } from '#server/common/helpers/organisations/registration-resource.js'
- */
-
-/**
- * @typedef {(key: string, options?: Record<string, string>) => string} Localise
  */
 
 /**

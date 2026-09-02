@@ -7,6 +7,7 @@ import { buildViewModel } from './build-view-model.js'
 // asserted against the real en.json by the page's integration test.
 const localise = createMockLocalise({
   'registrations:details:current': 'Current',
+  'registrations:details:period': '{{from}} to {{to}}',
   'registrations:details:heading': 'Registration details',
   'registrations:details:summary:material': 'Material',
   'registrations:details:summary:site': 'Site'
@@ -197,7 +198,7 @@ describe(buildViewModel, () => {
       })
 
       expect(accreditedPeriod(viewModel, 0).dateRange).toBe(
-        '1 July 2026 - Current'
+        '1 July 2026 to Current'
       )
     })
 

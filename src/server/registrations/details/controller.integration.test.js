@@ -304,13 +304,13 @@ describe('the registration details page a regulator reads', () => {
     expect(rowsOf(body, 'Accredited periods')).toStrictEqual([
       [
         'A26ER5001180114PL',
-        '1 July 2026 - Current',
+        '1 July 2026 to Current',
         'Approved',
         'View accreditation A26ER5001180114PL'
       ],
       [
         'A26ER5001180097PL',
-        '15 February 2026 - 31 March 2026',
+        '15 February to 31 March 2026',
         'Cancelled',
         'View accreditation A26ER5001180097PL'
       ]

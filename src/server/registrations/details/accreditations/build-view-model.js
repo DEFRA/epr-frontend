@@ -19,11 +19,10 @@ import { toDateRange } from '../helpers/date-range.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { AccreditationResource } from '../helpers/types.js'
+ * @import { AccreditationResource, Localise } from '../helpers/types.js'
  */
 
 /**
- * @typedef {(key: string, options?: Record<string, string>) => string} Localise
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{ key: string, value: string } | { key: string, status: StatusTag }} SummaryRow
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
@@ -33,6 +32,7 @@ import { toDateRange } from '../helpers/date-range.js'
  *   breadcrumbs: Crumb[],
  *   caption: string,
  *   heading: string,
+ *   period: string,
  *   pageTitle: string,
  *   reports: ReportsTable,
  *   summaryRows: SummaryRow[]
@@ -56,20 +56,6 @@ const organisationName = ({ companyDetails }) =>
  * @returns {string}
  */
 const toCaption = (parts) => parts.filter(Boolean).join(' - ')
-
-/**
- * The validity period is the heading. An accreditation that has not been
- * approved names no period, so the heading is the page's own name alone.
- * @param {AccreditationResource} accreditation
- * @param {Localise} localise
- * @returns {string}
- */
-const toHeading = (accreditation, localise) => {
-  const name = localise('registrations:details:accreditation:heading')
-  const period = toDateRange(accreditation.dateRange, localise)
-
-  return period ? `${name} ${period}` : name
-}
 
 /**
  * The balance not already committed to a note. `availableAmount` falls when a
@@ -289,7 +275,8 @@ export const buildViewModel = ({
       registration.registrationNumber,
       accreditation.accreditationNumber
     ]),
-    heading: toHeading(accreditation, localise),
+    heading: localise('registrations:details:accreditation:heading'),
+    period: toDateRange(accreditation.dateRange, localise),
     pageTitle: accreditation.accreditationNumber
       ? `${accreditation.accreditationNumber}: ${pageName}`
       : pageName,

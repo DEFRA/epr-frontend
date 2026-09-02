@@ -8,7 +8,8 @@
   "notAuthorised": {
     "pageTitle": "You do not have access to this service",
     "heading": "You do not have access to this service",
-    "body": "You signed in successfully, but your account has no role in this service. To ask for access, contact us using the details at the bottom of this page."
+    "body": "You signed in successfully, but your account has no role in this service. To ask for access, contact us using the details at the bottom of this page.",
+    "signIn": "Sign in with a different account"
   },
   "organisations": {
     "pageTitle": "All organisations",

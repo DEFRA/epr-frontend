@@ -30,6 +30,7 @@ const localise = createMockLocalise({
   'registrations:details:allOrganisations': 'All organisations',
   'registrations:details:current': 'Current',
   'registrations:details:heading': 'Registration details',
+  'registrations:details:period': '{{from}} to {{to}}',
   'reports:actionView': 'View report',
   'reports:months.7': 'July',
   'reports:months.8': 'August',
@@ -178,20 +179,24 @@ describe('the accreditation details view model', () => {
     expect(model.caption).toContain('Kirkby Recycling')
   })
 
-  it('names the validity period in the heading', () => {
-    expect(build().heading).toBe('Accreditation 1 July 2026 - 31 December 2026')
+  it('names the page alone in the heading', () => {
+    expect(build().heading).toBe('Accreditation')
+  })
+
+  it('names the validity period beneath the heading', () => {
+    expect(build().period).toBe('1 July to 31 December 2026')
   })
 
   it('reads an accreditation with no end date as current', () => {
     expect(
-      build({ dateRange: { validFrom: '2026-07-01', validTo: null } }).heading
-    ).toBe('Accreditation 1 July 2026 - Current')
+      build({ dateRange: { validFrom: '2026-07-01', validTo: null } }).period
+    ).toBe('1 July 2026 to Current')
   })
 
   it('names no period for an accreditation that has not been approved', () => {
     expect(
-      build({ dateRange: { validFrom: null, validTo: null } }).heading
-    ).toBe('Accreditation')
+      build({ dateRange: { validFrom: null, validTo: null } }).period
+    ).toBe('')
   })
 
   it('shows the status as a tag, then the number, then the available balance', () => {
