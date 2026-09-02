@@ -1,18 +1,15 @@
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
-import { formatTime } from '#server/common/helpers/format-time.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { SUBMISSION_STATUS } from './constants.js'
+import { buildActionLinkHtml } from './helpers/build-action-link-html.js'
+import { buildPeriodPath } from './helpers/build-period-path.js'
+import { buildStatusTagHtml } from './helpers/build-status-tag-html.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
-import {
-  getStatusLabel,
-  getStatusTagClass
-} from './helpers/format-submission-status.js'
-import { isResubmission } from './helpers/resubmission.js'
+import { formatSubmittedDateTime } from './helpers/format-submitted-date-time.js'
 import {
   actionReads,
   getActionLabel,
@@ -26,46 +23,6 @@ import {
  * @typedef {TableCell[]} TableRow
  * @typedef {{ organisationId: string, registrationId: string }} ReportListParams
  */
-
-/**
- * @param {string} actionLabel
- * @param {string} url
- * @param {string} label
- * @returns {string}
- */
-const buildActionLinkHtml = (actionLabel, url, label) =>
-  `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
-
-/**
- * A submitted period that is a resubmission (a later submission for the period,
- * flag-gated) reads "Resubmitted" rather than "Submitted". The backend emits no
- * distinct status for this, so the label is derived from the submission number
- * at this call site; the tag colour stays green, as submitted.
- * @param {SubmissionStatusValue} status
- * @param {TFunction} localise
- * @param {number} submissionNumber
- * @returns {string}
- */
-const buildStatusTagHtml = (status, localise, submissionNumber) => {
-  const statusLabel =
-    status === SUBMISSION_STATUS.SUBMITTED && isResubmission(submissionNumber)
-      ? localise('reports:statusResubmitted')
-      : getStatusLabel(status, localise)
-  const statusTagClass = getStatusTagClass(status)
-
-  return `<strong class="govuk-tag ${statusTagClass}">${escapeHtml(statusLabel)}</strong>`
-}
-
-/**
- * @param {string | null | undefined} isoString
- * @returns {string}
- */
-const formatSubmittedDateTime = (isoString) => {
-  if (!isoString) {
-    return ''
-  }
-  return `${formatDateShort(isoString)}, ${formatTime(isoString)}`
-}
 
 /**
  * The row's action link, or an empty cell where the session may not take the
@@ -143,7 +100,12 @@ function buildRows({
   const submittedRows = []
 
   for (const period of reportingPeriods) {
-    const periodPath = `/organisations/${organisationId}/registrations/${registration.id}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
+    const periodPath = buildPeriodPath({
+      organisationId,
+      registrationId: registration.id,
+      period,
+      cadence
+    })
 
     const label = formatPeriodLabelWithComma(period, cadence, localise)
 
@@ -320,6 +282,6 @@ export const listController = {
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
- * @import { CadenceValue, SubmissionStatusValue } from './constants.js'
+ * @import { CadenceValue } from './constants.js'
  * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
  */
