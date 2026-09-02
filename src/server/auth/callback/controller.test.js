@@ -153,7 +153,7 @@ describe('#authCallbackController', () => {
       expect(result).toBe('redirect-response')
     })
 
-    it('takes the oldest stashed referrer when the operator has more than one', async () => {
+    it('takes the newest stashed referrer when the operator has more than one', async () => {
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
       ).mockResolvedValue(
@@ -208,7 +208,7 @@ describe('#authCallbackController', () => {
         asResponseToolkit(mockH)
       )
 
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/first/page')
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/second/page')
     })
 
     it('should log sign-in with userId for unique user logging', async () => {
