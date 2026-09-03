@@ -16,6 +16,9 @@ import {
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportAttempt } from './helpers/report-attempt.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
@@ -255,6 +258,13 @@ export const checkPostController = {
       },
       transition,
       session.backendToken
+    )
+
+    await journeyMetrics.end(
+      request,
+      JOURNEY.createReport,
+      reportAttempt(request.params),
+      'draft'
     )
 
     return h.redirect(

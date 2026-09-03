@@ -15,6 +15,8 @@ import {
 } from './helpers/build-prn-detail-rows.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -138,6 +140,13 @@ export const viewPostController = {
         status: result.status,
         wasteProcessingType: prnDraft.wasteProcessingType
       })
+
+      await journeyMetrics.end(
+        request,
+        JOURNEY.createPrnPern,
+        accreditationId,
+        'draft'
+      )
 
       return h.redirect(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`

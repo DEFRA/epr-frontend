@@ -8,6 +8,8 @@ import {
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import {
   getByRole,
@@ -30,6 +32,14 @@ vi.mock(
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/update-report-status.js'))
+
+vi.mock(
+  import('#server/common/helpers/metrics/index.js'),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    journeyMetrics: { start: vi.fn(), end: vi.fn() }
+  })
+)
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
@@ -1999,6 +2009,39 @@ describe('#checkController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
+    })
+  })
+
+  describe('journey events', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        exporterRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
+      vi.mocked(updateReportStatus).mockResolvedValue({ ok: true })
+    })
+
+    it('should record the create journey end once the report is ready to submit', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+        auth: mockAuth
+      })
+
+      await server.inject({
+        method: 'POST',
+        url: baseUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb, version: 1 }
+      })
+
+      expect(journeyMetrics.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.createReport,
+        'reg-001/2026/quarterly/1/1',
+        'draft'
+      )
     })
   })
 })

@@ -8,19 +8,25 @@ export const TRANSACTION_END = 'TransactionEnd'
  * @typedef {typeof JOURNEY[keyof typeof JOURNEY]} Journey
  */
 export const JOURNEY = Object.freeze({
-  saveOrIssuePrnPern: Object.freeze({
+  createPrnPern: Object.freeze({
     start: 'SaveOrIssuePRNPERNStart',
-    issued: 'IssuePRNPERNEnd',
     draft: 'SaveDraftPRNPERNEnd'
+  }),
+  issuePrnPern: Object.freeze({
+    start: 'IssuePRNPERNStart',
+    issued: 'IssuePRNPERNEnd'
   }),
   uploadSummaryLog: Object.freeze({
     start: 'UploadSummaryLogStart',
     uploaded: 'UploadSummaryLogEnd'
   }),
-  saveOrSubmitReport: Object.freeze({
+  createReport: Object.freeze({
     start: 'SaveOrSubmitReportStart',
-    submitted: 'SubmitReportEnd',
     draft: 'SaveDraftReportEnd'
+  }),
+  submitReport: Object.freeze({
+    start: 'SubmitReportStart',
+    submitted: 'SubmitReportEnd'
   }),
   cancelPrnPern: Object.freeze({
     start: 'CancelPRNPERNStart',

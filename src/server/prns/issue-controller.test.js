@@ -10,6 +10,8 @@ import {
   asPackagingRecyclingNote,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -20,6 +22,14 @@ vi.mock(
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
+
+vi.mock(
+  import('#server/common/helpers/metrics/index.js'),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    journeyMetrics: { start: vi.fn(), end: vi.fn() }
+  })
+)
 
 const { getRequiredRegistrationWithAccreditation } =
   await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -316,6 +326,35 @@ describe('#issueController', () => {
         // Session prnNumber should NOT be used (ID mismatch)
         expect(queryByText(main, /ER2625001A/)).toBeNull()
       })
+    })
+  })
+
+  describe('journey events', () => {
+    it('should record the issue journey end once the note is issued', async ({
+      server
+    }) => {
+      const { cookie: csrfCookie, crumb } = await getCsrfToken(
+        server,
+        viewUrl,
+        {
+          auth: mockAuth
+        }
+      )
+
+      await server.inject({
+        method: 'POST',
+        url: issueUrl,
+        auth: mockAuth,
+        headers: { cookie: csrfCookie },
+        payload: { crumb }
+      })
+
+      expect(journeyMetrics.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.issuePrnPern,
+        prnId,
+        'issued'
+      )
     })
   })
 })

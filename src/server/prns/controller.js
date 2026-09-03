@@ -1,6 +1,8 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
@@ -53,6 +55,8 @@ export const controller = {
       registrationId,
       wasteBalance
     })
+
+    await journeyMetrics.start(request, JOURNEY.createPrnPern, accreditationId)
 
     // Check for insufficient balance error from redirect
     const { t: localise } = request

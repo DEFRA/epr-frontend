@@ -4,6 +4,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportAttempt } from './helpers/report-attempt.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { deleteReport } from './helpers/delete-report.js'
@@ -11,19 +12,6 @@ import { deleteReport } from './helpers/delete-report.js'
 const payloadSchema = Joi.object({
   crumb: Joi.string()
 })
-
-/**
- * Identifies the report submission a delete journey is acting on, so concurrent
- * attempts in one session count and clear independently.
- * @param {PeriodParams} params
- */
-const reportAttempt = ({
-  registrationId,
-  year,
-  cadence,
-  period,
-  submissionNumber
-}) => `${registrationId}/${year}/${cadence}/${period}/${submissionNumber}`
 
 /**
  * @param {HapiRequest} request
