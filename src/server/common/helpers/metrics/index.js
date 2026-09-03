@@ -87,13 +87,10 @@ const startedKey = (journey, attempt) =>
  * one metric name so the totals read without knowing the journeys, and carry the
  * journey as a dimension so each one is its own series.
  *
- * A start counts once per attempt: revisiting the first page, or re-entering a
- * resumable journey, must not inflate the started count that completion rate
- * divides by. The attempt identifies what is being acted on, so a session may
- * hold several attempts at one journey at once and an abandoned one does not
- * suppress the next. An end only counts against a start recorded in the same
- * session, which keeps the two sides paired: a session that loses its marker
- * under-reports the end rather than reporting an end no start divides.
+ * The attempt identifies what is being acted on, so one session can hold several
+ * attempts at a journey at once. Ends only count against a start held in the
+ * same session, so a lost marker under-reports rather than putting completion
+ * rate above 100%.
  */
 export const journeyMetrics = {
   /**

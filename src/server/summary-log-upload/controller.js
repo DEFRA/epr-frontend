@@ -50,7 +50,9 @@ export const summaryLogUploadController = {
     try {
       // Starting an upload creates a summary log, so this GET writes. A session
       // holding no write scope reads the page without one; the form is hidden.
-      const { uploadUrl } = hasWriteScope(session)
+      const canUpload = hasWriteScope(session)
+
+      const { uploadUrl } = canUpload
         ? await initiateSummaryLogUpload({
             organisationId,
             registrationId,
@@ -59,7 +61,7 @@ export const summaryLogUploadController = {
           })
         : {}
 
-      if (uploadUrl) {
+      if (canUpload) {
         await journeyMetrics.start(
           request,
           JOURNEY.uploadSummaryLog,

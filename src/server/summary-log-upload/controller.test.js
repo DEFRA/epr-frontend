@@ -147,7 +147,7 @@ describe('#summaryLogUploadController', () => {
     expect($('main h1').text()).toContain('Summary log')
   })
 
-  it('should record the journey start when an upload is initiated', async ({
+  it('should record the journey start when an operator opens the upload page', async ({
     server
   }) => {
     await server.inject({ method: 'GET', url, auth: mockAuth })
