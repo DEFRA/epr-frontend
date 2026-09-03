@@ -611,7 +611,8 @@ describe('#discardController', () => {
 
       expect(journeyMetrics.start).toHaveBeenCalledWith(
         expect.anything(),
-        JOURNEY.discardPrnPern
+        JOURNEY.discardPrnPern,
+        prnId
       )
     })
 
@@ -631,6 +632,7 @@ describe('#discardController', () => {
       expect(journeyMetrics.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.discardPrnPern,
+        prnId,
         'discarded'
       )
     })

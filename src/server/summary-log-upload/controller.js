@@ -60,7 +60,11 @@ export const summaryLogUploadController = {
         : {}
 
       if (uploadUrl) {
-        await journeyMetrics.start(request, JOURNEY.uploadSummaryLog)
+        await journeyMetrics.start(
+          request,
+          JOURNEY.uploadSummaryLog,
+          registrationId
+        )
       }
 
       const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`

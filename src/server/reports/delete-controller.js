@@ -13,6 +13,19 @@ const payloadSchema = Joi.object({
 })
 
 /**
+ * Identifies the report submission a delete journey is acting on, so concurrent
+ * attempts in one session count and clear independently.
+ * @param {PeriodParams} params
+ */
+const reportAttempt = ({
+  registrationId,
+  year,
+  cadence,
+  period,
+  submissionNumber
+}) => `${registrationId}/${year}/${cadence}/${period}/${submissionNumber}`
+
+/**
  * @param {HapiRequest} request
  */
 function resolveBackUrl(request) {
@@ -79,7 +92,11 @@ export const deleteGetController = {
       backUrl: resolveBackUrl(request)
     }
 
-    await journeyMetrics.start(request, JOURNEY.deleteReport)
+    await journeyMetrics.start(
+      request,
+      JOURNEY.deleteReport,
+      reportAttempt(request.params)
+    )
 
     return h.view('reports/confirm-delete', viewData)
   }
@@ -118,7 +135,12 @@ export const deletePostController = {
       session.backendToken
     )
 
-    await journeyMetrics.end(request, JOURNEY.deleteReport, 'deleted')
+    await journeyMetrics.end(
+      request,
+      JOURNEY.deleteReport,
+      reportAttempt(request.params),
+      'deleted'
+    )
 
     return h.redirect(
       request.localiseUrl(

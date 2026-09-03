@@ -13,6 +13,8 @@ import { TRANSACTION_END, TRANSACTION_START } from './constants.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
+const isMetricsEnabled = () => config.get('isMetricsEnabled')
+
 /**
  * Aws embedded metrics wrapper
  * @param {string} metricName
@@ -25,8 +27,7 @@ import { TRANSACTION_END, TRANSACTION_START } from './constants.js'
  */
 async function metricsCounter(metricName, dimensions, options = {}) {
   const value = 1
-  const isMetricsEnabled = config.get('isMetricsEnabled')
-  if (!isMetricsEnabled) {
+  if (!isMetricsEnabled()) {
     return
   }
 
@@ -74,8 +75,12 @@ export const metrics = {
   }
 }
 
-/** @param {Journey} journey */
-const startedKey = (journey) => `journeyStarted:${journey.start}`
+/**
+ * @param {Journey} journey
+ * @param {string} attempt
+ */
+const startedKey = (journey, attempt) =>
+  `journeyStarted:${journey.start}:${attempt}`
 
 /**
  * Journey start and end events feeding the mandatory GDS KPIs. Both phases share
@@ -84,19 +89,30 @@ const startedKey = (journey) => `journeyStarted:${journey.start}`
  *
  * A start counts once per attempt: revisiting the first page, or re-entering a
  * resumable journey, must not inflate the started count that completion rate
- * divides by. The marker is cleared on the end so a later attempt counts again.
+ * divides by. The attempt identifies what is being acted on, so a session may
+ * hold several attempts at one journey at once and an abandoned one does not
+ * suppress the next. An end only counts against a start recorded in the same
+ * session, which keeps the two sides paired: a session that loses its marker
+ * under-reports the end rather than reporting an end no start divides.
  */
 export const journeyMetrics = {
   /**
    * @param {HapiRequest} request
    * @param {Journey} journey
+   * @param {string} attempt
    */
-  async start(request, journey) {
-    if (request.yar.get(startedKey(journey))) {
+  async start(request, journey, attempt) {
+    if (!isMetricsEnabled()) {
       return
     }
 
-    request.yar.set(startedKey(journey), true)
+    const key = startedKey(journey, attempt)
+
+    if (request.yar.get(key)) {
+      return
+    }
+
+    request.yar.set(key, true)
 
     return metricsCounter(
       TRANSACTION_START,
@@ -108,10 +124,21 @@ export const journeyMetrics = {
    * @template {Journey & Record<string, string>} J
    * @param {HapiRequest} request
    * @param {J} journey
+   * @param {string} attempt
    * @param {Exclude<keyof J, 'start'>} outcome
    */
-  async end(request, journey, outcome) {
-    request.yar.clear(startedKey(journey))
+  async end(request, journey, attempt, outcome) {
+    if (!isMetricsEnabled()) {
+      return
+    }
+
+    const key = startedKey(journey, attempt)
+
+    if (!request.yar.get(key)) {
+      return
+    }
+
+    request.yar.clear(key)
 
     return metricsCounter(
       TRANSACTION_END,

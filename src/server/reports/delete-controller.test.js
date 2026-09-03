@@ -38,6 +38,7 @@ const registeredOnlyExporter = asRegistrationWithAccreditation({
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
 const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/delete`
+const reportAttempt = `${registrationId}/2026/quarterly/1/1`
 
 vi.mock(
   import('#server/common/helpers/metrics/index.js'),
@@ -402,7 +403,8 @@ describe('#deleteController', () => {
 
       expect(journeyMetrics.start).toHaveBeenCalledWith(
         expect.anything(),
-        JOURNEY.deleteReport
+        JOURNEY.deleteReport,
+        reportAttempt
       )
     })
 
@@ -424,6 +426,7 @@ describe('#deleteController', () => {
       expect(journeyMetrics.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.deleteReport,
+        reportAttempt,
         'deleted'
       )
     })

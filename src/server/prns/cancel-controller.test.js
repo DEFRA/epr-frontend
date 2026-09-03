@@ -380,7 +380,8 @@ describe('#cancelController', () => {
 
       expect(journeyMetrics.start).toHaveBeenCalledWith(
         expect.anything(),
-        JOURNEY.cancelPrnPern
+        JOURNEY.cancelPrnPern,
+        prnId
       )
     })
 
@@ -402,6 +403,7 @@ describe('#cancelController', () => {
       expect(journeyMetrics.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.cancelPrnPern,
+        prnId,
         'cancelled'
       )
     })

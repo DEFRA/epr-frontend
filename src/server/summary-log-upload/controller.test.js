@@ -154,7 +154,8 @@ describe('#summaryLogUploadController', () => {
 
     expect(journeyMetrics.start).toHaveBeenCalledWith(
       expect.anything(),
-      JOURNEY.uploadSummaryLog
+      JOURNEY.uploadSummaryLog,
+      registrationId
     )
   })
 
