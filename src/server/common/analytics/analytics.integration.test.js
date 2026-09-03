@@ -3,6 +3,7 @@ import { it } from '#vite/fixtures/server.js'
 import { JSDOM } from 'jsdom'
 import { afterEach, describe, expect, vi } from 'vitest'
 
+const authority = 'localhost:3000'
 const measurementId = 'G-TESTONLY01'
 const consented = { cookie: 'analyticsConsent=accepted' }
 
@@ -73,6 +74,38 @@ describe('#analytics switched on end to end', () => {
           .querySelector('meta[name="analytics-page-path"]')
           ?.getAttribute('content')
       ).toBe('/start')
+    })
+  })
+
+  describe('when the visitor came from somewhere', () => {
+    it.for([
+      [
+        'this service',
+        `http://${authority}/organisations/68e68d9c78f83083f0f17a76`,
+        '/organisations/:organisationId'
+      ],
+      ['another site', 'https://www.gov.uk/guidance/packaging-waste', null]
+    ])('should publish the step behind %s', async ([, referer, expected]) => {
+      const server = await serverStartedWith({
+        ANALYTICS_ENABLED: 'true',
+        ANALYTICS_MEASUREMENT_ID: measurementId
+      })
+
+      const { result } = await server.inject({
+        authority,
+        method: 'GET',
+        url: '/start',
+        headers: { ...consented, referer: String(referer) }
+      })
+      await server.stop()
+
+      const { document } = new JSDOM(asHtml(result)).window
+
+      expect(
+        document
+          .querySelector('meta[name="analytics-page-referrer"]')
+          ?.getAttribute('content') ?? null
+      ).toBe(expected)
     })
   })
 
