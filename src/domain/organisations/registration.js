@@ -52,7 +52,6 @@
  *  registrationNumber: string;
  *  status: 'approved';
  *  validFrom: string;
- *  validTo: string;
  * }} RegistrationApproved
  */
 
@@ -62,7 +61,6 @@
  *  cbduNumber?: string;
  *  status: 'created'|'rejected'|'archived';
  *  validFrom?: string;
- *  validTo?: string
  * }} RegistrationOther
  */
 
