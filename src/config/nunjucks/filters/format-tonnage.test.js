@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+  formatSignedTonnage,
   formatTonnage,
   formatWholeNumberTonnage
 } from '#config/nunjucks/filters/format-tonnage.js'
@@ -65,5 +66,29 @@ describe('#formatWholeNumberTonnage', () => {
 
   test('returns 0 for undefined value', () => {
     expect(formatWholeNumberTonnage(undefined)).toBe('0')
+  })
+})
+
+describe('#formatSignedTonnage', () => {
+  test('marks a tonnage that went up with a plus', () => {
+    expect(formatSignedTonnage(100)).toBe('+100.00')
+  })
+
+  test('marks a tonnage that went down with a minus', () => {
+    expect(formatSignedTonnage(-12.5)).toBe('-12.50')
+  })
+
+  test('separates thousands, as an unsigned tonnage does', () => {
+    expect(formatSignedTonnage(4000.755)).toBe('+4,000.76')
+  })
+
+  test('leaves a movement of nothing unsigned', () => {
+    expect(formatSignedTonnage(0)).toBe('0.00')
+  })
+
+  describe('with locale', () => {
+    test('formats with provided locale', () => {
+      expect(formatSignedTonnage(-1234.56, 'de-DE')).toBe('-1.234,56')
+    })
   })
 })

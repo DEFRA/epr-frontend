@@ -1,11 +1,13 @@
+/** @import { DateRange } from '#server/common/helpers/organisations/registration-resource.js'; */
 /**
  * @import { AccreditationStatus } from '#domain/organisations/model.js'
  */
 
 /**
- * The backend requires both bounds only while the record is live, so a range is
- * always present and says nothing about whether it is filled in.
- * @typedef {{ validFrom: string | null, validTo: string | null }} DateRange
+ * Re-exported so a page's helpers keep one import for the types they read. It
+ * is defined beside `RegistrationResource`, which is the shallower module and
+ * the one a common helper can reach.
+ * @typedef {DateRange} DateRange
  */
 
 /**

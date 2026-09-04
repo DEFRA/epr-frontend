@@ -18,7 +18,7 @@ import {
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect } from 'vitest'
+import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 /**
  * @import { DOMWindow } from 'jsdom'
@@ -59,6 +59,7 @@ const registration = {
   status: 'approved',
   material: 'plastic',
   reprocessingType: 'input',
+  dateRange: { validFrom: '2026-01-01' },
   accreditations: [],
   application: {
     orgName: 'Kirkby Plastics',
@@ -350,6 +351,98 @@ describe('the registration details page a regulator reads', () => {
     ).not.toBeNull()
   })
 
+  it('lists a registered-only year per year the registration has run', async ({
+    server,
+    msw
+  }) => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-06-15T00:00:00Z'))
+
+    try {
+      backendHolds(msw, {
+        registration: {
+          ...registration,
+          dateRange: { validFrom: '2025-03-01' }
+        }
+      })
+
+      const { body } = await visit(server)
+
+      expect(
+        getByRole(body, 'heading', { name: 'Registered-only', level: 2 })
+      ).not.toBeNull()
+
+      expect(rowsOf(body, 'Registered-only')).toStrictEqual([
+        ['2026', 'View reg-only period 2026'],
+        ['2025', 'View reg-only period 2025']
+      ])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('opens each registered-only year at its own address', async ({
+    server,
+    msw
+  }) => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-06-15T00:00:00Z'))
+
+    try {
+      backendHolds(msw, {
+        registration: {
+          ...registration,
+          dateRange: { validFrom: '2026-01-01' }
+        }
+      })
+
+      const { body } = await visit(server)
+
+      expect(
+        getByRole(body, 'link', {
+          name: /^View reg-only period\s*2026$/
+        }).getAttribute('href')
+      ).toBe(`${path}/registered-only-periods/2026`)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('shows the registered-only empty state for a registration with no start date', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      registration: {
+        ...registration,
+        dateRange: { validFrom: null }
+      }
+    })
+
+    const { body } = await visit(server)
+
+    expect(
+      queryByText(body, 'This registration holds no registered-only period.')
+    ).not.toBeNull()
+  })
+
+  // The accredited table is what a regulator already reads here, so the second
+  // one has to sit after it rather than displace it.
+  it('keeps the accredited periods above the registered-only ones', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { accreditations: [anAccreditation({})] })
+
+    const { body } = await visit(server)
+
+    const headings = [
+      ...body.querySelectorAll('[data-testid="app-page-body"] h2')
+    ].map((heading) => heading.textContent?.trim())
+
+    expect(headings).toStrictEqual(['Accredited periods', 'Registered-only'])
+  })
+
   it('names the organisation by its trading name where it holds one', async ({
     server,
     msw
@@ -394,22 +487,41 @@ describe('the registration details page a regulator reads', () => {
   })
 
   // The note list, the reports and the waste balance ledger are all reachable
-  // by their own routes; the design offers none of them from here.
-  it('offers the accreditation and nothing else', async ({ server, msw }) => {
-    const accreditation = anAccreditation({ id: 'acc-002' })
+  // by their own routes; the design offers none of them from here. The two it
+  // does offer are an accreditation and a registered-only year.
+  //
+  // The registration has no end date, so the years it offers run to the current
+  // one and would grow every January. The clock is pinned so the whole set can
+  // be compared - which is what makes a route arriving here have to be
+  // justified rather than pass unnoticed.
+  it('offers the accreditation and the registered-only year, and nothing else', async ({
+    server,
+    msw
+  }) => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-06-15T00:00:00Z'))
 
-    backendHolds(msw, {
-      accreditations: [accreditation],
-      registration: registrationLinking(accreditation)
-    })
+    try {
+      const accreditation = anAccreditation({ id: 'acc-002' })
 
-    const { body } = await visit(server)
+      backendHolds(msw, {
+        accreditations: [accreditation],
+        registration: registrationLinking(accreditation)
+      })
 
-    const offered = [...body.querySelectorAll('#main-content a[href]')].map(
-      (link) => link.getAttribute('href')
-    )
+      const { body } = await visit(server)
 
-    expect(offered).toStrictEqual([`${path}/accreditations/acc-002`])
+      const offered = [...body.querySelectorAll('#main-content a[href]')].map(
+        (link) => link.getAttribute('href')
+      )
+
+      expect(offered).toStrictEqual([
+        `${path}/accreditations/acc-002`,
+        `${path}/registered-only-periods/2026`
+      ])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('offers a regulator no control that changes the registration', async ({

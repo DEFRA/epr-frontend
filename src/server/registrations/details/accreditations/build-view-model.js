@@ -5,7 +5,7 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
-import { SUBMISSION_STATUS } from '#server/reports/constants.js'
+import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
 import { buildPeriodPath } from '#server/reports/helpers/build-period-path.js'
 import { buildStatusTagHtml } from '#server/reports/helpers/build-status-tag-html.js'
@@ -182,10 +182,18 @@ const toActionCell = ({
 }
 
 /**
- * One row per reporting period the accreditation owes. A calendar the page
- * could not read arrives as no periods and no cadence, and a period cannot be
- * named without the cadence that says whether it is a month or a quarter, so
- * that answers no rows.
+ * One row per reporting period the accreditation owes.
+ *
+ * An accredited operator reports monthly and a registered-only one quarterly,
+ * so the calendar's cadence is what says which of the two regulator pages the
+ * periods belong on: monthly here, quarterly on the registered-only period's
+ * page. The calendar answers one cadence for the registration, so an
+ * accreditation whose registration currently owes quarterly reports lists none
+ * here rather than showing periods that are not its to show.
+ *
+ * A calendar the page could not read arrives as no periods and no cadence, and
+ * a period cannot be named without the cadence that says whether it is a month
+ * or a quarter, so that answers no rows either.
  * @param {{
  *   cadence: CadenceValue | null,
  *   localise: Localise,
@@ -204,7 +212,7 @@ const toReportRows = ({
   registrationId,
   reportingPeriods
 }) => {
-  if (!cadence) {
+  if (cadence !== CADENCE.MONTHLY) {
     return []
   }
 
