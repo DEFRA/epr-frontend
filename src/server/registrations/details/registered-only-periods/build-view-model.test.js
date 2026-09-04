@@ -27,7 +27,7 @@ const localise = createMockLocalise({
   // Read by the shared report helpers rather than by this view model, so the
   // real strings are asserted by the page's integration test.
   'reports:quarterlyPeriod': 'Quarter {{number}}, {{year}}',
-  'reports:actionView': 'View report'
+  'reports:actionView': 'View'
 })
 
 const organisationId = '6507f1f77bcf86cd79943901'

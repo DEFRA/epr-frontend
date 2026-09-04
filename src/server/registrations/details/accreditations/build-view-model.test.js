@@ -36,7 +36,7 @@ const localise = createMockLocalise({
   'waste-balance-ledger:events.summary-log-submitted': 'Summary log submitted',
   'waste-balance-ledger:systemActor': 'System',
   'waste-balance-ledger:table.noMovement': 'N/A',
-  'reports:actionView': 'View report',
+  'reports:actionView': 'View',
   'reports:months.7': 'July',
   'reports:months.8': 'August',
   'reports:months.12': 'December',
@@ -326,7 +326,7 @@ describe('the reports table on the accreditation details view model', () => {
           html: '<strong class="govuk-tag govuk-tag--green">Submitted</strong>'
         },
         {
-          html: `<a href="${viewPath}/2026/monthly/8/submissions/1/view" class="govuk-link">View report <span class="govuk-visually-hidden">August, 2026</span></a>`,
+          html: `<a href="${viewPath}/2026/monthly/8/submissions/1/view" class="govuk-link">View <span class="govuk-visually-hidden">August, 2026</span></a>`,
           classes: 'govuk-!-text-align-right'
         }
       ]
