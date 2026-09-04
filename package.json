@@ -85,7 +85,7 @@
     "i18next": "26.3.6",
     "i18next-fs-backend": "2.6.7",
     "i18next-http-middleware": "3.9.8",
-    "ioredis": "5.11.1",
+    "ioredis": "6.0.0",
     "jose": "6.2.8",
     "lodash-es": "4.18.1",
     "nunjucks": "3.2.4",
