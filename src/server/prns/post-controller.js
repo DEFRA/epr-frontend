@@ -121,6 +121,55 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
 }
 
 /**
+ * Re-render the create form when the entered tonnage exceeds the
+ * available waste balance fetched at submission time.
+ * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
+ * @param {ResponseToolkit} h
+ * @param {Array<WasteOrganisation>} organisations
+ * @param {WasteBalance} wasteBalance
+ */
+async function handleInsufficientBalance(
+  request,
+  h,
+  organisations,
+  wasteBalance
+) {
+  const { organisationId, registrationId, accreditationId } = request.params
+  const session = request.auth.credentials
+  const { t: localise } = request
+
+  const message = localise('prns:insufficientBalanceError')
+
+  const errors = { tonnage: { text: message } }
+  const errorSummary = {
+    title: localise('prns:errorSummaryTitle'),
+    list: [{ text: message, href: '#tonnage' }]
+  }
+
+  const { registration } = await getRequiredRegistrationWithAccreditation({
+    organisationId,
+    registrationId,
+    backendToken: session.backendToken,
+    accreditationId
+  })
+
+  const viewData = buildCreatePrnViewData(request, {
+    organisationId,
+    recipients: mapToSelectOptions(organisations),
+    registration,
+    registrationId,
+    wasteBalance
+  })
+
+  return h.view('prns/create', {
+    ...viewData,
+    errors,
+    errorSummary,
+    formValues: request.payload
+  })
+}
+
+/**
  * @param {CreatePrnResponse} result - The created PRN draft from the backend
  * @param {string} recipientDisplayName - The resolved display name for the recipient
  * @param {string | undefined} notes - Issuer notes
@@ -262,13 +311,30 @@ export const postController = {
     const session = request.auth.credentials
     const { tonnage, recipient, notes } = request.payload
 
-    const { organisations } =
-      await request.wasteOrganisationsService.getOrganisations()
+    const [{ organisations }, wasteBalance] = await Promise.all([
+      request.wasteOrganisationsService.getOrganisations(),
+      getWasteBalance(
+        organisationId,
+        accreditationId,
+        session.backendToken,
+        request.logger
+      )
+    ])
 
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
       return handleInvalidRecipient(request, h, organisations)
+    }
+
+    // Pre-check tonnage against the available balance fetched at submission
+    // time. Fail open when the lookup is unavailable (wasteBalance is null) —
+    // the backend backstop and confirm-time checks still apply.
+    if (
+      wasteBalance &&
+      Number.parseInt(tonnage, 10) > wasteBalance.availableAmount
+    ) {
+      return handleInsufficientBalance(request, h, organisations, wasteBalance)
     }
 
     const issuedToOrganisation = {
@@ -327,6 +393,7 @@ export const postController = {
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { CreatePrnResponse } from './helpers/create-prn.js'
  * @import { PrnListParams } from './helpers/session-types.js'
  */

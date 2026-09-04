@@ -611,6 +611,242 @@ describe('#postCreatePrnController', () => {
       })
     })
 
+    describe('balance pre-check', () => {
+      const insufficientBalanceMessage =
+        'The tonnage you entered exceeds your available waste balance'
+
+      const draftResult = /** @type {CreatePrnResponse} */ (
+        /** @type {unknown} */ ({
+          id: 'prn-789',
+          tonnage: 500,
+          material: 'plastic',
+          status: 'draft',
+          wasteProcessingType: 'reprocessor',
+          processToBeUsed: 'R3',
+          isDecemberWaste: false
+        })
+      )
+
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+      })
+
+      it('re-renders create form with inline tonnage error when PRN tonnage exceeds available balance', async ({
+        server
+      }) => {
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '600', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(createPrn).not.toHaveBeenCalled()
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(
+          getByText(errorSummary, insufficientBalanceMessage)
+        ).toBeDefined()
+
+        const inlineError = body.querySelector('#tonnage-error')
+        expect(inlineError.textContent).toContain(insufficientBalanceMessage)
+      })
+
+      it('preserves entered values when PRN tonnage exceeds available balance', async ({
+        server
+      }) => {
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '600', crumb }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const tonnageField = body.querySelector('#tonnage')
+        expect(tonnageField.value).toBe('600')
+        const notesField = getByRole(main, 'textbox', { name: /notes/i })
+        expect(notesField.value).toBe('Test notes')
+        const selectedOption = body.querySelector('#recipient option[selected]')
+        expect(selectedOption.value).toBe(validPayload.recipient)
+      })
+
+      it('re-renders create form with inline tonnage error when PERN tonnage exceeds available balance', async ({
+        server
+      }) => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: {
+            ...validPayload,
+            tonnage: '600',
+            wasteProcessingType: 'exporter',
+            crumb
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(createPrn).not.toHaveBeenCalled()
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(
+          getByText(errorSummary, insufficientBalanceMessage)
+        ).toBeDefined()
+
+        const inlineError = body.querySelector('#tonnage-error')
+        expect(inlineError.textContent).toContain(insufficientBalanceMessage)
+      })
+
+      it('proceeds when tonnage equals available balance', async ({
+        server
+      }) => {
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+        vi.mocked(createPrn).mockResolvedValue(draftResult)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '500', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-789/view`
+        )
+      })
+
+      it('proceeds when tonnage is below available balance', async ({
+        server
+      }) => {
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+        vi.mocked(createPrn).mockResolvedValue(draftResult)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+      })
+
+      it('fails open and proceeds when the balance lookup is unavailable', async ({
+        server
+      }) => {
+        vi.mocked(getWasteBalance).mockResolvedValue(null)
+        vi.mocked(createPrn).mockResolvedValue(draftResult)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '600', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+      })
+
+      it('fetches the balance at submission time for the current accreditation', async ({
+        server
+      }) => {
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+        vi.mocked(createPrn).mockResolvedValue(draftResult)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        expect(getWasteBalance).toHaveBeenCalledWith(
+          organisationId,
+          accreditationId,
+          'mock-backend-token',
+          expect.anything()
+        )
+      })
+    })
+
     describe('when API call fails', () => {
       it('throws error when createPrn fails', async ({ server }) => {
         vi.mocked(createPrn).mockRejectedValue(new Error('API error'))
