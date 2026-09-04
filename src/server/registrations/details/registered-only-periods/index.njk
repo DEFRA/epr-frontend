@@ -1,0 +1,34 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-m govuk-!-margin-bottom-4">{{ caption }}</span>
+          {{ heading }}
+        </h1>
+
+        {% if not hasData %}
+          <p class="govuk-body" data-testid="no-data">{{ localise('registrations:details:registeredOnlyPeriod:noData') }}</p>
+          <p class="govuk-body" data-testid="return-to-registration">{{ localise('registrations:details:registeredOnlyPeriod:returnToRegistration') }}</p>
+        {% else %}
+          <h2 class="govuk-heading-m">{{ localise('registrations:details:registeredOnlyPeriod:reports:heading') }}</h2>
+
+          {% if reports.rows | length > 0 %}
+            {{ govukTable({
+              attributes: { "data-testid": "reports-table" },
+              firstCellIsHeader: true,
+              head: reports.head,
+              rows: reports.rows
+            }) }}
+          {% else %}
+            <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise('registrations:details:registeredOnlyPeriod:reports:none') }}</p>
+          {% endif %}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

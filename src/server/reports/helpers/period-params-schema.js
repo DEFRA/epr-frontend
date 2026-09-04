@@ -18,8 +18,13 @@ import { CADENCE } from '../constants.js'
  * }} PeriodParams
  */
 
-const MIN_YEAR = 2024
-const MAX_YEAR = 2100
+/**
+ * The years the service will answer for at all. Exported so every route
+ * carrying a `{year}` is bound the same way — a year one address accepts and
+ * another rejects is worse than either bound.
+ */
+export const MIN_YEAR = 2024
+export const MAX_YEAR = 2100
 const MAX_PERIOD = 12
 
 export const periodParamsSchema = Joi.object({

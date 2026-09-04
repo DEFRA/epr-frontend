@@ -368,13 +368,17 @@ describe('the reports table on the accreditation details view model', () => {
     })
   })
 
-  it('names a quarterly period by its quarter', () => {
+  // An accredited operator reports monthly. A registration currently owing
+  // quarterly reports has a registered-only period, and those quarters are that
+  // page's to show rather than this one's - the calendar answers one cadence,
+  // so showing them here would put the same periods on two pages.
+  it('shows no rows where the registration owes quarterly reports', () => {
     const rows = reportRows(
       [aPeriod({ period: 3, report: null, periodStatus: 'overdue' })],
       CADENCE.QUARTERLY
     )
 
-    expect(rows[0][0]).toStrictEqual({ text: 'Quarter 3, 2026' })
+    expect(rows).toStrictEqual([])
   })
 
   it('leads with the most recent period, whatever order the calendar answered in', () => {

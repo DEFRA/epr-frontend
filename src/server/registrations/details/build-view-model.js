@@ -5,6 +5,7 @@ import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
 import { toDateRange } from './helpers/date-range.js'
+import { registrationYears } from './helpers/registered-only.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
@@ -23,10 +24,15 @@ import { toDateRange } from './helpers/date-range.js'
  *   href: string
  * }} AccreditedPeriod
  * @typedef {{
+ *   year: string,
+ *   href: string
+ * }} RegisteredOnlyPeriod
+ * @typedef {{
  *   accreditedPeriods: AccreditedPeriod[],
  *   breadcrumbs: Crumb[],
  *   caption: string,
  *   pageTitle: string,
+ *   registeredOnlyPeriods: RegisteredOnlyPeriod[],
  *   summaryRows: SummaryRow[]
  * }} RegistrationDetailsViewModel
  */
@@ -139,6 +145,30 @@ const byMostRecentStart = (a, b) =>
   (b.dateRange.validFrom ?? '').localeCompare(a.dateRange.validFrom ?? '')
 
 /**
+ * One row per year the registration has existed over, whether or not it held an
+ * accreditation for all of it. A year fully covered by an accreditation still
+ * gets a row: the page it opens is what says so, rather than the row's absence
+ * leaving a regulator to infer it.
+ *
+ * `registrationYears` answers most recent first, so nothing is sorted here.
+ * @param {{
+ *   registration: RegistrationResource,
+ *   registrationPath: string,
+ *   localiseUrl: (path: string) => string
+ * }} params
+ * @returns {RegisteredOnlyPeriod[]}
+ */
+const toRegisteredOnlyPeriods = ({
+  registration,
+  registrationPath,
+  localiseUrl
+}) =>
+  registrationYears({ dateRange: registration.dateRange }).map((year) => ({
+    year: String(year),
+    href: localiseUrl(`${registrationPath}/registered-only-periods/${year}`)
+  }))
+
+/**
  * An organisation trading under another name is known by it, so that is the
  * name the regulator is shown.
  * @param {Organisation} organisation
@@ -192,6 +222,11 @@ export const buildViewModel = ({
     pageTitle: registration.registrationNumber
       ? `${registration.registrationNumber}: ${heading}`
       : heading,
+    registeredOnlyPeriods: toRegisteredOnlyPeriods({
+      registration,
+      registrationPath,
+      localiseUrl
+    }),
     summaryRows: toSummaryRows(registration, localise)
   }
 }
