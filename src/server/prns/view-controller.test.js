@@ -34,6 +34,7 @@ vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
@@ -50,6 +51,8 @@ const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 const { fetchWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
+const { getWasteBalance } =
+  await import('#server/common/helpers/waste-balance/get-waste-balance.js')
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -171,6 +174,13 @@ describe('#viewController', () => {
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
     vi.mocked(fetchWasteBalances).mockResolvedValue({
       'acc-001': { amount: 1000, availableAmount: 500 }
+    })
+    // Seeding a draft goes through the create endpoint, which pre-checks the
+    // balance via getWasteBalance. Keep that balance ample so drafts seed;
+    // confirm-step tests drive the balance via fetchWasteBalances instead.
+    vi.mocked(getWasteBalance).mockResolvedValue({
+      amount: 1000,
+      availableAmount: 500
     })
   })
 
