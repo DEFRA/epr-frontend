@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 /**
- * @import { TFunction } from 'i18next'
+ * @import { Localise } from './build-ledger-rows.js'
  * @import { PrnEvent, SummaryLogEvent } from './fetch-ledger-events.js'
  */
 
@@ -9,13 +9,11 @@ import { buildLedgerRows } from './build-ledger-rows.js'
 
 /**
  * Stands in for `request.t`. It returns the key and its interpolation so a
- * test asserts which copy was chosen without restating the copy itself. The
- * cast supplies i18next's brand, which is a nominal marker no stub can carry.
- * @type {TFunction}
+ * test asserts which copy was chosen without restating the copy itself.
+ * @type {Localise}
  */
-const localise = /** @type {TFunction} */ (
-  (key, values) => (values ? `${key}(${JSON.stringify(values)})` : key)
-)
+const localise = (key, values) =>
+  values ? `${key}(${JSON.stringify(values)})` : key
 
 /**
  * @param {Partial<PrnEvent>} [overrides]

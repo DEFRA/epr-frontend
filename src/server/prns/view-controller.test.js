@@ -17,6 +17,8 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getByRole,
@@ -35,6 +37,14 @@ vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
+
+vi.mock(
+  import('#server/common/helpers/metrics/index.js'),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    journeyMetrics: { start: vi.fn(), end: vi.fn() }
+  })
+)
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
@@ -1879,6 +1889,45 @@ describe('#viewController', () => {
           mockCredentials.backendToken
         )
       })
+    })
+  })
+
+  describe('journey events', () => {
+    it('should record the create journey end once the note is confirmed', async ({
+      server
+    }) => {
+      const { cookie: csrfCookie, crumb } = await getCsrfToken(
+        server,
+        createUrl,
+        { auth: mockAuth }
+      )
+
+      const createResponse = await server.inject({
+        method: 'POST',
+        url: createUrl,
+        auth: mockAuth,
+        headers: { cookie: csrfCookie },
+        payload: { ...validPayload, crumb }
+      })
+
+      const cookies = mergeCookies(
+        csrfCookie,
+        ...extractCookieValues(createResponse.headers['set-cookie'])
+      )
+
+      await server.inject({
+        method: 'POST',
+        url: viewUrl,
+        auth: mockAuth,
+        headers: { cookie: cookies },
+        payload: { crumb }
+      })
+
+      expect(journeyMetrics.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.createPrn,
+        accreditationId
+      )
     })
   })
 })
