@@ -339,7 +339,7 @@ describe('the accreditation details page', () => {
       'N/A',
       '87.50',
       'Ada Lovelace (ada@example.com)',
-      'View PRN 240000123'
+      'View 240000123'
     ])
   })
 
@@ -351,7 +351,7 @@ describe('the accreditation details page', () => {
 
     expect(
       within(firstRow)
-        .getByRole('link', { name: 'View PRN 240000123' })
+        .getByRole('link', { name: 'View 240000123' })
         .getAttribute('href')
     ).toBe(`${path}/packaging-recycling-notes/prn-001/view`)
   })

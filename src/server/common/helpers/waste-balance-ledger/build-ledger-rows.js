@@ -117,17 +117,17 @@ const notesCancelledBeforeIssue = (events) =>
  * rather than linking at nothing.
  *
  * Where several rows concern one note, they lead to the same place and read
- * the same, which is what a reader following any of them should expect. The
- * link names its note so that two notes are never confused for one, and a note
- * still awaiting issue - which has no number - is named by when the event
- * happened, that being the only other thing on the row that tells it apart.
+ * the same, which is what a reader following any of them should expect. Every
+ * link reads alike to the eye, so each carries a visually-hidden name for the
+ * note it opens: its number, or - for a note still awaiting issue, which has
+ * none - when the event happened, that being the only other thing on the row
+ * that tells it apart.
  * @param {{
  *   accreditationId: string | undefined,
  *   cancelledBeforeIssue: Set<string>,
  *   event: LedgerEvent,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   noteType: 'PRN' | 'PERN',
  *   organisationId: string,
  *   registrationId: string
  * }} params
@@ -139,7 +139,6 @@ const actionCell = ({
   event,
   localise,
   localiseUrl,
-  noteType,
   organisationId,
   registrationId
 }) => {
@@ -164,7 +163,7 @@ const actionCell = ({
 
   return {
     html: buildActionLinkHtml(
-      localise('waste-balance-ledger:viewNote', { noteType }),
+      localise('waste-balance-ledger:actionView'),
       url,
       event.prn.prnNumber ?? formatLedgerTimestamp(event.createdAt)
     ),
@@ -262,7 +261,6 @@ export const buildLedgerRows = ({
       event,
       localise,
       localiseUrl,
-      noteType,
       organisationId,
       registrationId
     })

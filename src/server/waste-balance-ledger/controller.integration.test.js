@@ -167,7 +167,7 @@ describe('the waste balance ledger page', () => {
           'N/A',
           '87.50',
           'Ada Lovelace (ada@example.com)',
-          'View PRN 240000123'
+          'View 240000123'
         ],
         [
           '1 February 2026, 10:30am',
@@ -175,7 +175,7 @@ describe('the waste balance ledger page', () => {
           '-12.50',
           '87.50',
           'Ada Lovelace (ada@example.com)',
-          'View PRN 1 February 2026, 10:30am'
+          'View 1 February 2026, 10:30am'
         ],
         [
           '4 January 2026, 9:00am',
@@ -207,9 +207,7 @@ describe('the waste balance ledger page', () => {
       const body = documentOf(asHtml(result))
 
       expect(
-        getByRole(body, 'link', { name: 'View PRN 240000123' }).getAttribute(
-          'href'
-        )
+        getByRole(body, 'link', { name: 'View 240000123' }).getAttribute('href')
       ).toBe(
         `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-1/view`
       )
@@ -233,7 +231,7 @@ describe('the waste balance ledger page', () => {
 
       const body = documentOf(asHtml(result))
 
-      expect(queryByText(body, 'View PRN')).toBeNull()
+      expect(queryByText(body, 'View')).toBeNull()
     })
 
     it('heads the six columns, and offers neither a sequence number nor a payload', async ({

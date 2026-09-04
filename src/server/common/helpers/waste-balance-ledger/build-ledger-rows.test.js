@@ -143,7 +143,7 @@ describe(buildLedgerRows, () => {
       'waste-balance-ledger:table.noMovement',
       '87.50',
       'Ada Lovelace (ada@example.com)',
-      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:viewNote({&quot;noteType&quot;:&quot;PRN&quot;}) <span class="govuk-visually-hidden">15 February 2026, 3:09pm</span></a>'
+      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:actionView <span class="govuk-visually-hidden">15 February 2026, 3:09pm</span></a>'
     ])
   })
 
@@ -253,18 +253,7 @@ describe(buildLedgerRows, () => {
     const [row] = buildRows({ events: [buildNumberedEvent()] })
 
     expect(cellsOf(row).at(5)).toBe(
-      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:viewNote({&quot;noteType&quot;:&quot;PRN&quot;}) <span class="govuk-visually-hidden">240000123</span></a>'
-    )
-  })
-
-  it("calls an exporter's note a PERN in the link that opens it", () => {
-    const [row] = buildRows({
-      events: [buildNumberedEvent()],
-      noteType: 'PERN'
-    })
-
-    expect(cellsOf(row).at(5)).toContain(
-      'waste-balance-ledger:viewNote({&quot;noteType&quot;:&quot;PERN&quot;})'
+      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:actionView <span class="govuk-visually-hidden">240000123</span></a>'
     )
   })
 

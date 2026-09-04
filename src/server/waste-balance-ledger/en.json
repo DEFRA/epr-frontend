@@ -1,5 +1,6 @@
 {
   "accreditationCaption": "Accreditation {{ accreditationNumber }}",
+  "actionView": "View",
   "events": {
     "prn-accepted": "{{ noteType }} accepted",
     "prn-cancelled-after-issue": "{{ noteType }} cancelled after issue",
@@ -22,6 +23,5 @@
     "noMovement": "N/A",
     "tonnage": "Tonnage",
     "who": "Who"
-  },
-  "viewNote": "View {{ noteType }}"
+  }
 }
