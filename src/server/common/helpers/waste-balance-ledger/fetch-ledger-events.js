@@ -23,8 +23,10 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  */
 
 /**
- * An entry that credits a submitted summary log. `creditTotal` is the total
- * the summary log itself states, which is not the amount the balance moved.
+ * An entry that credits a submitted summary log. `creditTotal` is the running
+ * total the period stands at once this submission is counted, not the amount
+ * the balance moved: a resubmission states a new total and moves the balance
+ * by the difference against the last one.
  * @typedef {LedgerEventCommon & {
  *   summaryLog: { creditTotal: number },
  *   prn?: never

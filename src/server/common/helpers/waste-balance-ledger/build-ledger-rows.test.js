@@ -152,7 +152,15 @@ describe(buildLedgerRows, () => {
 
   it('says an event that moved the available balance by nothing moved nothing', () => {
     const [row] = buildLedgerRows({
-      events: [buildEvent({ kind: 'prn-accepted' })],
+      events: [
+        buildEvent({
+          kind: 'prn-accepted',
+          balance: {
+            opening: { total: 87.5, available: 87.5 },
+            closing: { total: 87.5, available: 87.5 }
+          }
+        })
+      ],
       localise,
       noteType: 'PRN'
     })
