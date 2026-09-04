@@ -108,7 +108,7 @@ const documentOf = (html) => new JSDOM(html).window.document.body
  */
 const rowsOf = (body) =>
   Array.from(body.querySelectorAll('tbody tr')).map((row) =>
-    Array.from(row.querySelectorAll('td')).map((cell) =>
+    Array.from(row.querySelectorAll('th, td')).map((cell) =>
       cell.textContent.trim()
     )
   )
