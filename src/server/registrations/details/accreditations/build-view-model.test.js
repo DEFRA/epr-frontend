@@ -36,7 +36,7 @@ const localise = createMockLocalise({
   'waste-balance-ledger:events.summary-log-submitted': 'Summary log submitted',
   'waste-balance-ledger:systemActor': 'System',
   'waste-balance-ledger:table.noMovement': 'N/A',
-  'waste-balance-ledger:viewPrn': 'View PRN',
+  'waste-balance-ledger:viewNote': 'View {{noteType}}',
   'reports:actionView': 'View report',
   'reports:months.7': 'July',
   'reports:months.8': 'August',
@@ -422,7 +422,8 @@ describe('the waste balance ledger on the accreditation details view model', () 
         { text: '87.50', format: 'numeric' },
         { text: 'Ada Lovelace (ada@example.com)' },
         {
-          html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-001/view" class="govuk-link">View PRN <span class="govuk-visually-hidden">240000123</span></a>`
+          html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-001/view" class="govuk-link">View PRN <span class="govuk-visually-hidden">240000123</span></a>`,
+          classes: 'govuk-!-text-align-right'
         }
       ],
       [
@@ -431,18 +432,22 @@ describe('the waste balance ledger on the accreditation details view model', () 
         { text: '+100.00', format: 'numeric' },
         { text: '100.00', format: 'numeric' },
         { text: 'System' },
-        { text: '' }
+        { text: '', classes: 'govuk-!-text-align-right' }
       ]
     ])
   })
 
-  it("names an exporter's notes PERNs", () => {
+  it("names an exporter's notes PERNs, in the link that opens one as well as in the event", () => {
     const rows = ledgerOf([prnIssued], {
       wasteProcessingType: 'exporter'
     })?.rows
 
     expect(rows?.at(0)?.at(1)).toStrictEqual({
       html: 'PERN issued<br>\n240000123'
+    })
+    expect(rows?.at(0)?.at(5)).toStrictEqual({
+      html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-001/view" class="govuk-link">View PERN <span class="govuk-visually-hidden">240000123</span></a>`,
+      classes: 'govuk-!-text-align-right'
     })
   })
 })

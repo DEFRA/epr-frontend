@@ -23,5 +23,5 @@
     "tonnage": "Tonnage",
     "who": "Who"
   },
-  "viewPrn": "View PRN"
+  "viewNote": "View {{ noteType }}"
 }

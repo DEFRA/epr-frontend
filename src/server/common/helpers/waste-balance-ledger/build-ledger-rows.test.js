@@ -143,11 +143,11 @@ describe(buildLedgerRows, () => {
       'waste-balance-ledger:table.noMovement',
       '87.50',
       'Ada Lovelace (ada@example.com)',
-      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:viewPrn <span class="govuk-visually-hidden">15 February 2026, 3:09pm</span></a>'
+      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:viewNote({&quot;noteType&quot;:&quot;PRN&quot;}) <span class="govuk-visually-hidden">15 February 2026, 3:09pm</span></a>'
     ])
   })
 
-  it('right-aligns the two number columns, and only those', () => {
+  it('marks the two number columns numeric, and only those', () => {
     const [row] = buildRows({ events: [buildEvent()] })
 
     expect(
@@ -253,8 +253,61 @@ describe(buildLedgerRows, () => {
     const [row] = buildRows({ events: [buildNumberedEvent()] })
 
     expect(cellsOf(row).at(5)).toBe(
-      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:viewPrn <span class="govuk-visually-hidden">240000123</span></a>'
+      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:viewNote({&quot;noteType&quot;:&quot;PRN&quot;}) <span class="govuk-visually-hidden">240000123</span></a>'
     )
+  })
+
+  it("calls an exporter's note a PERN in the link that opens it", () => {
+    const [row] = buildRows({
+      events: [buildNumberedEvent()],
+      noteType: 'PERN'
+    })
+
+    expect(cellsOf(row).at(5)).toContain(
+      'waste-balance-ledger:viewNote({&quot;noteType&quot;:&quot;PERN&quot;})'
+    )
+  })
+
+  it('offers nothing to open on any event of a note cancelled before issue, which no longer exists to open', () => {
+    const rows = buildRows({
+      events: [
+        buildNoteCreatedEvent(),
+        buildEvent({
+          kind: 'prn-creation-cancelled',
+          createdAt: '2026-02-20T09:00:00.000Z'
+        })
+      ]
+    })
+
+    expect(rows.map((row) => cellsOf(row).at(5))).toStrictEqual(['', ''])
+  })
+
+  it('still opens a note the ledger holds no cancellation of', () => {
+    const rows = buildRows({
+      events: [
+        buildNoteCreatedEvent(),
+        buildEvent({
+          kind: 'prn-creation-cancelled',
+          createdAt: '2026-02-20T09:00:00.000Z',
+          prn: { id: 'prn-2', prnNumber: null, tonnage: 3 }
+        })
+      ]
+    })
+
+    expect(cellsOf(rows.at(1)).at(5)).toContain(
+      '/packaging-recycling-notes/prn-1/view'
+    )
+  })
+
+  it('aligns the action column with the one above it on the page', () => {
+    const rows = buildRows({
+      events: [buildNumberedEvent(), buildSummaryLogEvent()]
+    })
+
+    expect(rows.map((row) => row.at(5)?.classes)).toStrictEqual([
+      'govuk-!-text-align-right',
+      'govuk-!-text-align-right'
+    ])
   })
 
   it('names an unnumbered note by when the event happened, so the links stay apart', () => {

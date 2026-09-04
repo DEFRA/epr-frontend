@@ -2,6 +2,7 @@ import {
   formatSignedTonnage,
   formatTonnage
 } from '#config/nunjucks/filters/format-tonnage.js'
+import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
 
@@ -17,7 +18,9 @@ import { formatLedgerTimestamp } from './format-ledger-timestamp.js'
  */
 
 /**
- * @typedef {{ text: string, format?: string } | { html: string }} TableCell
+ * @typedef {{ classes?: string, format?: string } & (
+ *   { text: string } | { html: string }
+ * )} TableCell
  */
 
 /**
@@ -92,19 +95,39 @@ const notePath = ({ organisationId, registrationId, accreditationId, prnId }) =>
     .join('')
 
 /**
- * The action the row offers. Only an event that concerns a note has a note to
- * open, and only a ledger addressed by an accreditation carries the id that
- * note lives under, so every other row's cell is empty rather than linking at
- * nothing.
+ * The notes the ledger shows the cancellation of. Cancelling a note before it
+ * is issued deletes it, and a deleted note can no longer be read, so its
+ * events are the ones with nothing behind them to open.
+ * @param {LedgerEvent[]} events
+ * @returns {Set<string>}
+ */
+const notesCancelledBeforeIssue = (events) =>
+  new Set(
+    events.flatMap((event) =>
+      event.prn && event.kind === LEDGER_EVENT_KIND.prnCreationCancelled
+        ? [event.prn.id]
+        : []
+    )
+  )
+
+/**
+ * The action the row offers. A row has a note to open only where the event
+ * concerns one, the ledger is addressed by the accreditation that note lives
+ * under, and the note is still there to read; every other row's cell is empty
+ * rather than linking at nothing.
  *
- * The link names the note it opens, so a ledger of otherwise identical links
- * stays distinguishable. A note that has no number yet is named by when the
- * event happened, which is the only other thing on the row that tells it apart.
+ * Where several rows concern one note, they lead to the same place and read
+ * the same, which is what a reader following any of them should expect. The
+ * link names its note so that two notes are never confused for one, and a note
+ * still awaiting issue - which has no number - is named by when the event
+ * happened, that being the only other thing on the row that tells it apart.
  * @param {{
  *   accreditationId: string | undefined,
+ *   cancelledBeforeIssue: Set<string>,
  *   event: LedgerEvent,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
+ *   noteType: 'PRN' | 'PERN',
  *   organisationId: string,
  *   registrationId: string
  * }} params
@@ -112,14 +135,22 @@ const notePath = ({ organisationId, registrationId, accreditationId, prnId }) =>
  */
 const actionCell = ({
   accreditationId,
+  cancelledBeforeIssue,
   event,
   localise,
   localiseUrl,
+  noteType,
   organisationId,
   registrationId
 }) => {
-  if (!event.prn || !accreditationId) {
-    return { text: '' }
+  const empty = { text: '', classes: cssClasses.textAlign.right }
+
+  if (
+    !event.prn ||
+    !accreditationId ||
+    cancelledBeforeIssue.has(event.prn.id)
+  ) {
+    return empty
   }
 
   const url = localiseUrl(
@@ -133,10 +164,11 @@ const actionCell = ({
 
   return {
     html: buildActionLinkHtml(
-      localise('waste-balance-ledger:viewPrn'),
+      localise('waste-balance-ledger:viewNote', { noteType }),
       url,
       event.prn.prnNumber ?? formatLedgerTimestamp(event.createdAt)
-    )
+    ),
+    classes: cssClasses.textAlign.right
   }
 }
 
@@ -209,8 +241,10 @@ export const buildLedgerRows = ({
   noteType,
   organisationId,
   registrationId
-}) =>
-  [...events].reverse().map((event) => [
+}) => {
+  const cancelledBeforeIssue = notesCancelledBeforeIssue(events)
+
+  return [...events].reverse().map((event) => [
     { text: formatLedgerTimestamp(event.createdAt) },
     eventCell({ event, localise, noteType }),
     {
@@ -224,10 +258,13 @@ export const buildLedgerRows = ({
     { text: actorName({ createdBy: event.createdBy, localise }) },
     actionCell({
       accreditationId,
+      cancelledBeforeIssue,
       event,
       localise,
       localiseUrl,
+      noteType,
       organisationId,
       registrationId
     })
   ])
+}

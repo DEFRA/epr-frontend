@@ -10,7 +10,10 @@
       { text: localise("waste-balance-ledger:table.tonnage"), format: "numeric" },
       { text: localise("waste-balance-ledger:table.available"), format: "numeric" },
       { text: localise("waste-balance-ledger:table.who") },
-      { text: localise("waste-balance-ledger:table.actions") }
+      {
+        text: localise("waste-balance-ledger:table.actions"),
+        classes: "govuk-!-text-align-right"
+      }
     ],
     rows: ledgerRows
   }) }}
