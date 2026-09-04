@@ -68,7 +68,6 @@ export const submittedController = {
       materialLabel: localise('reports:submittedMaterialLabel'),
       material,
       futureChangesGuidance: localise('reports:submittedFutureChangesGuidance'),
-      nextStepsHeading: localise('reports:submittedNextStepsHeading'),
       returnToReportsLink: {
         text: localise('reports:submittedReturnToReports'),
         href: request.localiseUrl(reportsUrl)
