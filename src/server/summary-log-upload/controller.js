@@ -3,6 +3,8 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const summaryLogUploadController = {
@@ -48,7 +50,9 @@ export const summaryLogUploadController = {
     try {
       // Starting an upload creates a summary log, so this GET writes. A session
       // holding no write scope reads the page without one; the form is hidden.
-      const { uploadUrl } = hasWriteScope(session)
+      const canUpload = hasWriteScope(session)
+
+      const { uploadUrl } = canUpload
         ? await initiateSummaryLogUpload({
             organisationId,
             registrationId,
@@ -56,6 +60,14 @@ export const summaryLogUploadController = {
             backendToken: session.backendToken
           })
         : {}
+
+      if (canUpload) {
+        await journeyMetrics.start(
+          request,
+          JOURNEY.uploadSummaryLog,
+          registrationId
+        )
+      }
 
       const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`
 
