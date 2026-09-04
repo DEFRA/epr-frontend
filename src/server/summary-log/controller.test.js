@@ -583,8 +583,8 @@ describe('#summaryLogUploadProgressController', () => {
 
     describe('satisfaction survey', () => {
       const surveyUrl = 'https://survey.example/summary-log'
-      const surveyText =
-        'What do you think of this service? (opens in a new tab)'
+      const surveyTitle = 'Help us improve this service'
+      const surveyText = 'Give us your feedback (opens in a new tab)'
 
       const liveSurvey = () => {
         config.set('satisfactionSurvey.isEnabled', true)
@@ -600,6 +600,17 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.submitted
       })
 
+      const getBody = async (server) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        return new JSDOM(result, { url: 'http://localhost' }).window.document
+          .body
+      }
+
       it('asks nothing while the surveys are switched off', async ({
         server
       }) => {
@@ -607,9 +618,9 @@ describe('#summaryLogUploadProgressController', () => {
           submittedWithoutClosedAdjustment()
         )
 
-        const main = await getMain(server)
+        const body = await getBody(server)
 
-        expect(queryByText(main, surveyText)).toBeNull()
+        expect(queryByText(body, surveyTitle)).toBeNull()
       })
 
       it.for([
@@ -622,16 +633,19 @@ describe('#summaryLogUploadProgressController', () => {
           summaryLogStatus: submittedWithClosedAdjustment
         }
       ])(
-        'asks last after $description, once the user has nothing left to act on',
+        'asks below the page content after $description, leaving the links the user must act on alone',
         async ({ summaryLogStatus }, { server }) => {
           liveSurvey()
           mockFetchSummaryLogStatus.mockResolvedValueOnce(summaryLogStatus())
 
-          const main = await getMain(server)
+          const body = await getBody(server)
+          const main = getByRole(body, 'main')
 
+          expect(getByText(body, surveyTitle)).toBeDefined()
+          expect(queryByText(main, surveyTitle)).toBeNull()
           expect(
             getAllByRole(main, 'link').map((link) => link.textContent?.trim())
-          ).toStrictEqual([surveyText, 'Return to home'])
+          ).toStrictEqual(['Return to home'])
         }
       )
 
@@ -643,10 +657,10 @@ describe('#summaryLogUploadProgressController', () => {
           submittedWithoutClosedAdjustment()
         )
 
-        const main = await getMain(server)
+        const body = await getBody(server)
 
         expect(
-          getByRole(main, 'link', { name: surveyText }).getAttribute('href')
+          getByRole(body, 'link', { name: surveyText }).getAttribute('href')
         ).toBe(surveyUrl)
       })
     })

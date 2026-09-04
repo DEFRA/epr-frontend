@@ -24,9 +24,7 @@
       </a>
     </p>
 
-    {% if satisfactionSurvey.prn.href %}
     <h2 class="govuk-heading-m">{{ whatHappensNextHeading }}</h2>
-    {% endif %}
 
     {% if hasWriteScope %}
     <p class="govuk-body">
@@ -38,11 +36,13 @@
       <a href="{{ managePrnsLink.href }}" class="govuk-link">{{ managePrnsLink.text }}</a>
     </p>
 
-    {{ appSatisfactionSurvey(satisfactionSurvey.prn) }}
-
     <p class="govuk-body">
       <a href="{{ returnHomeLink.href }}" class="govuk-link">{{ returnHomeLink.text }}</a>
     </p>
   </div>
 </div>
+{% endblock %}
+
+{% block footerStart %}
+{{ appSatisfactionSurvey(satisfactionSurvey.prn) }}
 {% endblock %}

@@ -404,8 +404,8 @@ describe('#issuedController', () => {
 
       describe('satisfaction survey', () => {
         const surveyUrl = 'https://survey.example/prn'
-        const surveyText =
-          'What do you think of this service? (opens in a new tab)'
+        const surveyTitle = 'Help us improve this service'
+        const surveyText = 'Give us your feedback (opens in a new tab)'
 
         const liveSurvey = () => {
           config.set('satisfactionSurvey.isEnabled', true)
@@ -417,7 +417,7 @@ describe('#issuedController', () => {
           config.reset('satisfactionSurvey.prnUrl')
         })
 
-        const getMain = async (server, auth = mockAuth) => {
+        const getBody = async (server, auth = mockAuth) => {
           const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
             auth
           })
@@ -428,38 +428,44 @@ describe('#issuedController', () => {
             auth,
             headers: { cookie: csrfCookie }
           })
-          const { body } = new JSDOM(result).window.document
 
-          return getByRole(body, 'main')
+          return new JSDOM(result, { url: 'http://localhost' }).window.document
+            .body
         }
 
-        it('says nothing about what happens next while the surveys are switched off', async ({
+        it('asks nothing while the surveys are switched off', async ({
           server
         }) => {
-          const main = await getMain(server)
+          const body = await getBody(server)
 
-          expect(queryByText(main, surveyText)).toBeNull()
-          expect(
-            queryByRole(main, 'heading', { name: 'What happens next' })
-          ).toBeNull()
+          expect(queryByText(body, surveyTitle)).toBeNull()
         })
 
-        it('asks what the user thinks after managing notes, before sending them home', async ({
+        it('still says what happens next while the surveys are switched off', async ({
           server
         }) => {
-          liveSurvey()
-
-          const main = await getMain(server)
+          const main = getByRole(await getBody(server), 'main')
 
           expect(
             queryByRole(main, 'heading', { name: 'What happens next' })
           ).not.toBeNull()
+        })
+
+        it('asks below the page content, leaving what happens next alone', async ({
+          server
+        }) => {
+          liveSurvey()
+
+          const body = await getBody(server)
+          const main = getByRole(body, 'main')
+
+          expect(getByText(body, surveyTitle)).toBeDefined()
+          expect(queryByText(main, surveyTitle)).toBeNull()
           expect(
             getAllByRole(main, 'link').map((link) => link.textContent?.trim())
           ).toStrictEqual([
             'Issue another PRN',
             'Manage PRNs',
-            surveyText,
             'Return to home'
           ])
         })
@@ -467,14 +473,12 @@ describe('#issuedController', () => {
         it('still asks a user who cannot issue notes', async ({ server }) => {
           liveSurvey()
 
-          const main = await getMain(
+          const body = await getBody(
             server,
             buildMockAuth(sessionIdentity(IDENTITIES.operatorWithoutWrite))
           )
 
-          expect(
-            getAllByRole(main, 'link').map((link) => link.textContent?.trim())
-          ).toStrictEqual(['Manage PRNs', surveyText, 'Return to home'])
+          expect(getByText(body, surveyTitle)).toBeDefined()
         })
 
         it('sends the user to the notes survey, not one from another journey', async ({
@@ -482,10 +486,10 @@ describe('#issuedController', () => {
         }) => {
           liveSurvey()
 
-          const main = await getMain(server)
+          const body = await getBody(server)
 
           expect(
-            getByRole(main, 'link', { name: surveyText }).getAttribute('href')
+            getByRole(body, 'link', { name: surveyText }).getAttribute('href')
           ).toBe(surveyUrl)
         })
       })
