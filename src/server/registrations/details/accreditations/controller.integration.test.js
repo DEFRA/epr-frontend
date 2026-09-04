@@ -55,7 +55,24 @@ const ledgerEvents = [
     createdAt: '2026-01-04T09:00:00.000Z',
     createdBy: { id: 'system' },
     summaryLog: { creditTotal: 100 },
-    balance: { closing: { total: 100, available: 100 } }
+    balance: {
+      opening: { total: 0, available: 0 },
+      closing: { total: 100, available: 100 }
+    }
+  },
+  {
+    kind: 'prn-created',
+    createdAt: '2026-02-01T10:30:00.000Z',
+    createdBy: {
+      id: 'user-1',
+      name: 'Ada Lovelace',
+      email: 'ada@example.com'
+    },
+    prn: { tonnage: 12.5 },
+    balance: {
+      opening: { total: 100, available: 100 },
+      closing: { total: 100, available: 87.5 }
+    }
   },
   {
     kind: 'prn-issued',
@@ -66,7 +83,10 @@ const ledgerEvents = [
       email: 'ada@example.com'
     },
     prn: { tonnage: 12.5 },
-    balance: { closing: { total: 100, available: 87.5 } }
+    balance: {
+      opening: { total: 100, available: 87.5 },
+      closing: { total: 87.5, available: 87.5 }
+    }
   }
 ]
 
@@ -281,7 +301,7 @@ describe('the accreditation details page', () => {
     expect(body).toContain('There are no reporting periods')
   })
 
-  it('lists the waste balance ledger beneath the reports, under its six headings', async ({
+  it('lists the waste balance ledger beneath the reports, under its five headings', async ({
     server
   }) => {
     const { body } = await visit(server, regulator)
@@ -296,11 +316,10 @@ describe('the accreditation details page', () => {
     expect(
       textOf(getAllByRole(ledgerTable(document), 'columnheader'))
     ).toStrictEqual([
-      'Date and time',
+      'Date',
       'Event',
       'Tonnage',
-      'Balance',
-      'Available',
+      'Waste balance available (tonnes)',
       'Who'
     ])
   })
@@ -316,11 +335,27 @@ describe('the accreditation details page', () => {
     )
     expect(textOf(within(firstRow).getAllByRole('cell'))).toStrictEqual([
       'PRN issued',
-      '12.50',
-      '100.00',
+      'N/A',
       '87.50',
       'Ada Lovelace (ada@example.com)'
     ])
+  })
+
+  it('states what each event moved the available balance by', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const [, , noteCreated, summaryLogSubmitted] = getAllByRole(
+      ledgerTable(documentOf(body)),
+      'row'
+    )
+
+    expect(textOf(within(noteCreated).getAllByRole('cell')).at(1)).toBe(
+      '-12.50'
+    )
+    expect(textOf(within(summaryLogSubmitted).getAllByRole('cell')).at(1)).toBe(
+      '+100.00'
+    )
   })
 
   it('says so where nothing has moved the balance yet', async ({ server }) => {

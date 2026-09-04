@@ -1,4 +1,7 @@
-import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import {
+  formatSignedTonnage,
+  formatTonnage
+} from '#config/nunjucks/filters/format-tonnage.js'
 
 import { LEDGER_EVENT_KIND, SYSTEM_ACTOR_ID } from './ledger-event-kinds.js'
 import { formatLedgerTimestamp } from './format-ledger-timestamp.js'
@@ -31,14 +34,19 @@ const eventName = ({ kind, localise, noteType }) =>
     : kind
 
 /**
- * A summary log raises a credit against the whole period, and a note moves a
- * single amount, so the two state their tonnage on different subjects. An
- * event carries one subject or the other, never both.
- * @param {LedgerEvent} event
- * @returns {number}
+ * What the event moved the available balance by, signed, and the copy for
+ * nothing where it moved it by nothing: issuing a note settles an amount that
+ * was already held back, and accepting or rejecting one settles nothing at all.
+ * @param {{ balance: LedgerEvent['balance'], localise: Localise }} params
+ * @returns {string}
  */
-const tonnageOf = (event) =>
-  event.summaryLog ? event.summaryLog.creditTotal : event.prn.tonnage
+const movementOf = ({ balance, localise }) => {
+  const movement = balance.closing.available - balance.opening.available
+
+  return movement === 0
+    ? localise('waste-balance-ledger:table.noMovement')
+    : formatSignedTonnage(movement)
+}
 
 /**
  * A regulator sees every actor in full. The backfill writes as a machine, so
@@ -67,25 +75,27 @@ const actorName = ({ createdBy, localise }) => {
 /**
  * Builds the table rows of the waste balance ledger, newest event first.
  *
- * There is no single "change" column, because the effects differ per event: a
- * note moves the available amount when it is created and the total when it is
- * issued, and moves neither when it is accepted or rejected. The two running
- * totals beside the event name carry that honestly.
+ * The ledger reads as a running account of the available balance: what each
+ * event moved, and what it left. The total behind the available amount moves
+ * on its own schedule and is not part of that account.
  * @param {{
  *   events: LedgerEvent[],
  *   localise: Localise,
  *   noteType: 'PRN' | 'PERN'
  * }} params
- * @returns {{ text: string }[][]}
+ * @returns {{ text: string, format?: string }[][]}
  */
 export const buildLedgerRows = ({ events, localise, noteType }) =>
-  [...events]
-    .reverse()
-    .map((event) => [
-      { text: formatLedgerTimestamp(event.createdAt) },
-      { text: eventName({ kind: event.kind, localise, noteType }) },
-      { text: formatTonnage(tonnageOf(event)) },
-      { text: formatTonnage(event.balance.closing.total) },
-      { text: formatTonnage(event.balance.closing.available) },
-      { text: actorName({ createdBy: event.createdBy, localise }) }
-    ])
+  [...events].reverse().map((event) => [
+    { text: formatLedgerTimestamp(event.createdAt) },
+    { text: eventName({ kind: event.kind, localise, noteType }) },
+    {
+      text: movementOf({ balance: event.balance, localise }),
+      format: 'numeric'
+    },
+    {
+      text: formatTonnage(event.balance.closing.available),
+      format: 'numeric'
+    },
+    { text: actorName({ createdBy: event.createdBy, localise }) }
+  ])

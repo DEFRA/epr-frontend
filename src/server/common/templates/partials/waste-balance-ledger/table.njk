@@ -7,9 +7,8 @@
     head: [
       { text: localise("waste-balance-ledger:table.date") },
       { text: localise("waste-balance-ledger:table.event") },
-      { text: localise("waste-balance-ledger:table.tonnage") },
-      { text: localise("waste-balance-ledger:table.balance") },
-      { text: localise("waste-balance-ledger:table.available") },
+      { text: localise("waste-balance-ledger:table.tonnage"), format: "numeric" },
+      { text: localise("waste-balance-ledger:table.available"), format: "numeric" },
       { text: localise("waste-balance-ledger:table.who") }
     ],
     rows: ledgerRows

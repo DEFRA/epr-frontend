@@ -76,7 +76,10 @@ describe(fetchAccreditationDetails, () => {
       createdAt: '2026-02-15T15:09:00.000Z',
       createdBy: { id: 'user-1', name: 'Ada Lovelace' },
       prn: { tonnage: 12.5 },
-      balance: { closing: { total: 100, available: 87.5 } }
+      balance: {
+        opening: { total: 100, available: 87.5 },
+        closing: { total: 87.5, available: 87.5 }
+      }
     }
   ]
 
