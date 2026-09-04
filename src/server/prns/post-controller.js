@@ -198,8 +198,9 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
  * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
  * @param {ResponseToolkit} h
  * @param {Array<WasteOrganisation>} organisations
+ * @param {WasteBalance | null} wasteBalance - reused from the handler's submission-time fetch
  */
-async function handleInvalidRecipient(request, h, organisations) {
+async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
   const { organisationId, registrationId, accreditationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
@@ -215,20 +216,12 @@ async function handleInvalidRecipient(request, h, organisations) {
     list: [{ text: message, href: '#recipient' }]
   }
 
-  const [{ registration }, wasteBalance] = await Promise.all([
-    getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      backendToken: session.backendToken,
-      accreditationId
-    }),
-    getWasteBalance(
-      organisationId,
-      accreditationId,
-      session.backendToken,
-      request.logger
-    )
-  ])
+  const { registration } = await getRequiredRegistrationWithAccreditation({
+    organisationId,
+    registrationId,
+    backendToken: session.backendToken,
+    accreditationId
+  })
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
@@ -327,7 +320,7 @@ export const postController = {
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      return handleInvalidRecipient(request, h, organisations)
+      return handleInvalidRecipient(request, h, organisations, wasteBalance)
     }
 
     // Pre-check tonnage against the available balance fetched at submission
