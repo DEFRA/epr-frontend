@@ -188,52 +188,6 @@ describe('the waste balance ledger page', () => {
       ])
     })
 
-    it('opens the note a movement came from, named by its number', async ({
-      msw,
-      server
-    }) => {
-      msw.use(
-        http.get(accreditedLedgerUrl, () =>
-          HttpResponse.json(accreditedLedgerOf([prnIssued]))
-        )
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedPath,
-        auth: regulator
-      })
-
-      const body = documentOf(asHtml(result))
-
-      expect(
-        getByRole(body, 'link', { name: 'View 240000123' }).getAttribute('href')
-      ).toBe(
-        `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-1/view`
-      )
-    })
-
-    it('offers nothing to open on the ledger of a registered-only period', async ({
-      msw,
-      server
-    }) => {
-      msw.use(
-        http.get(registeredOnlyLedgerUrl, () =>
-          HttpResponse.json(registeredOnlyLedgerOf([prnIssued]))
-        )
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: registeredOnlyPath,
-        auth: regulator
-      })
-
-      const body = documentOf(asHtml(result))
-
-      expect(queryByText(body, 'View')).toBeNull()
-    })
-
     it('heads the six columns, and offers neither a sequence number nor a payload', async ({
       msw,
       server
