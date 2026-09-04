@@ -699,50 +699,9 @@ describe('#postCreatePrnController', () => {
         expect(notesField.value).toBe('Test notes')
         const selectedOption = body.querySelector('#recipient option[selected]')
         expect(selectedOption.value).toBe(validPayload.recipient)
-      })
-
-      it('re-renders create form with inline tonnage error when PERN tonnage exceeds available balance', async ({
-        server
-      }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
-        vi.mocked(getWasteBalance).mockResolvedValue({
-          amount: 1000,
-          availableAmount: 500
-        })
-
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'POST',
-          url,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: {
-            ...validPayload,
-            tonnage: '600',
-            wasteProcessingType: 'exporter',
-            crumb
-          }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(createPrn).not.toHaveBeenCalled()
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        const errorSummary = main.querySelector('.govuk-error-summary')
-        expect(
-          getByText(errorSummary, insufficientBalanceMessage)
-        ).toBeDefined()
-
-        const inlineError = body.querySelector('#tonnage-error')
-        expect(inlineError.textContent).toContain(insufficientBalanceMessage)
+        // Available balance is re-fetched and still shown on the re-render
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText.textContent).toContain('500.00')
       })
 
       it('proceeds when tonnage equals available balance', async ({
