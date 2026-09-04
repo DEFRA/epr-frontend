@@ -328,8 +328,8 @@ export const postController = {
     }
 
     // Pre-check tonnage against the available balance fetched at submission
-    // time. Fail open when the lookup is unavailable (wasteBalance is null) —
-    // the backend backstop and confirm-time checks still apply.
+    // time. Fail open when the lookup is unavailable (wasteBalance is null);
+    // the confirm-time re-check remains as a later guard.
     if (
       wasteBalance &&
       Number.parseInt(tonnage, 10) > wasteBalance.availableAmount
