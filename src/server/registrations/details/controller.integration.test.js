@@ -59,7 +59,7 @@ const registration = {
   status: 'approved',
   material: 'plastic',
   reprocessingType: 'input',
-  dateRange: { validFrom: '2026-01-01', validTo: null },
+  dateRange: { validFrom: '2026-01-01' },
   accreditations: [],
   application: {
     orgName: 'Kirkby Plastics',
@@ -362,7 +362,7 @@ describe('the registration details page a regulator reads', () => {
       backendHolds(msw, {
         registration: {
           ...registration,
-          dateRange: { validFrom: '2025-03-01', validTo: null }
+          dateRange: { validFrom: '2025-03-01' }
         }
       })
 
@@ -392,7 +392,7 @@ describe('the registration details page a regulator reads', () => {
       backendHolds(msw, {
         registration: {
           ...registration,
-          dateRange: { validFrom: '2026-01-01', validTo: null }
+          dateRange: { validFrom: '2026-01-01' }
         }
       })
 
@@ -415,7 +415,7 @@ describe('the registration details page a regulator reads', () => {
     backendHolds(msw, {
       registration: {
         ...registration,
-        dateRange: { validFrom: null, validTo: null }
+        dateRange: { validFrom: null }
       }
     })
 

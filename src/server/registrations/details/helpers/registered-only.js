@@ -1,5 +1,5 @@
 /**
- * @import { DateRange } from '#server/common/helpers/organisations/registration-resource.js'
+ * @import { RegistrationDateRange } from '#server/common/helpers/organisations/registration-resource.js'
  * @import { AccreditationResource } from './types.js'
  */
 
@@ -38,13 +38,12 @@ const shiftDay = (day, days) => {
  * The years a registration has existed over, most recent first.
  *
  * A registration has no end date — it does not expire the way an accreditation
- * does — so the list always runs to the current year and grows each January.
- * The resource still carries a `validTo`, and it is deliberately not read: see
- * PAE-1904, which removes it.
+ * does (PAE-1904) — so the list always runs to the current year and grows each
+ * January.
  *
  * A registration is given its `validFrom` when it is approved, so one that has
  * not been approved has existed over no year a regulator can open.
- * @param {{ dateRange: DateRange, now?: Date }} params
+ * @param {{ dateRange: RegistrationDateRange, now?: Date }} params
  * @returns {number[]}
  */
 export const registrationYears = ({ dateRange, now = new Date() }) => {
@@ -136,7 +135,7 @@ const subtract = (remaining, occupied) =>
  * holds no registered-only time at all, which is what a page shows the "this
  * period holds no data" message for.
  * @param {{
- *   dateRange: DateRange,
+ *   dateRange: RegistrationDateRange,
  *   accreditations: AccreditationResource[],
  *   year: number,
  *   now?: Date

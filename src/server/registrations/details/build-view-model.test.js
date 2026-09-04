@@ -39,7 +39,7 @@ const aRegistrationWithSite = (address) => ({
   status: 'approved',
   material: 'plastic',
   reprocessingType: 'input',
-  dateRange: { validFrom: '2026-01-01', validTo: null },
+  dateRange: { validFrom: '2026-01-01' },
   accreditations: [],
   application: {
     orgName: 'Kirkby Plastics',
@@ -328,7 +328,7 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...aRegistrationWithSite({ line1: 'Unit 4' }),
-          dateRange: { validFrom: '2024-06-01', validTo: null }
+          dateRange: { validFrom: '2024-06-01' }
         }
       })
 
@@ -352,7 +352,7 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...aRegistrationWithSite({ line1: 'Unit 4' }),
-          dateRange: { validFrom: null, validTo: null }
+          dateRange: { validFrom: null }
         }
       })
 
@@ -365,7 +365,7 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...aRegistrationWithSite({ line1: 'Unit 4' }),
-          dateRange: { validFrom: '2026-01-01', validTo: null }
+          dateRange: { validFrom: '2026-01-01' }
         },
         accreditations: [
           anAccreditation({
@@ -385,7 +385,7 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...aRegistrationWithSite({ line1: 'Unit 4' }),
-          dateRange: { validFrom: '2026-01-01', validTo: '2027-01-01' }
+          dateRange: { validFrom: '2026-01-01' }
         }
       })
 
@@ -400,7 +400,7 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...aRegistrationWithSite({ line1: 'Unit 4' }),
-          dateRange: { validFrom: '2026-01-01', validTo: null }
+          dateRange: { validFrom: '2026-01-01' }
         },
         accreditations: [
           anAccreditation({

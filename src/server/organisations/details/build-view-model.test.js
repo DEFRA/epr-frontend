@@ -34,7 +34,7 @@ const aRegistration = ({ application, ...overrides } = {}) => ({
   status: 'approved',
   material: 'plastic',
   reprocessingType: 'input',
-  dateRange: { validFrom: null, validTo: null },
+  dateRange: { validFrom: null },
   accreditations: [],
   application: {
     orgName: 'Kirkby Plastics',

@@ -13,6 +13,19 @@
         {% if not hasData %}
           <p class="govuk-body" data-testid="no-data">{{ localise('registrations:details:registeredOnlyPeriod:noData') }}</p>
           <p class="govuk-body" data-testid="return-to-registration">{{ localise('registrations:details:registeredOnlyPeriod:returnToRegistration') }}</p>
+        {% else %}
+          <h2 class="govuk-heading-m">{{ localise('registrations:details:registeredOnlyPeriod:reports:heading') }}</h2>
+
+          {% if reports.rows | length > 0 %}
+            {{ govukTable({
+              attributes: { "data-testid": "reports-table" },
+              firstCellIsHeader: true,
+              head: reports.head,
+              rows: reports.rows
+            }) }}
+          {% else %}
+            <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise('registrations:details:registeredOnlyPeriod:reports:none') }}</p>
+          {% endif %}
         {% endif %}
 
       </div>

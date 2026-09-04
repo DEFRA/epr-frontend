@@ -37,7 +37,7 @@ describe(registrationYears, () => {
   it('names no year for a registration that was never approved', () => {
     expect(
       registrationYears({
-        dateRange: { validFrom: null, validTo: null },
+        dateRange: { validFrom: null },
         now
       })
     ).toStrictEqual([])
@@ -46,7 +46,7 @@ describe(registrationYears, () => {
   it('runs from the year it started to the current year, most recent first', () => {
     expect(
       registrationYears({
-        dateRange: { validFrom: '2024-06-01', validTo: null },
+        dateRange: { validFrom: '2024-06-01' },
         now
       })
     ).toStrictEqual([2026, 2025, 2024])
@@ -55,19 +55,7 @@ describe(registrationYears, () => {
   it('names one year for a registration that started this year', () => {
     expect(
       registrationYears({
-        dateRange: { validFrom: '2026-02-01', validTo: null },
-        now
-      })
-    ).toStrictEqual([2026])
-  })
-
-  // Registrations do not expire (PAE-1904), so the end date the backend still
-  // sends is not read. Honouring it would offer a regulator a year that has
-  // not started.
-  it('ignores a validTo in the future rather than naming a year that has not started', () => {
-    expect(
-      registrationYears({
-        dateRange: { validFrom: '2026-01-01', validTo: '2027-01-01' },
+        dateRange: { validFrom: '2026-02-01' },
         now
       })
     ).toStrictEqual([2026])
@@ -78,7 +66,7 @@ describe(registrationYears, () => {
   it('names no year for a registration that has not started yet', () => {
     expect(
       registrationYears({
-        dateRange: { validFrom: '2027-01-01', validTo: null },
+        dateRange: { validFrom: '2027-01-01' },
         now
       })
     ).toStrictEqual([])
@@ -87,7 +75,7 @@ describe(registrationYears, () => {
   it('reads the starting year as UTC', () => {
     expect(
       registrationYears({
-        dateRange: { validFrom: '2026-01-01T00:00:00Z', validTo: null },
+        dateRange: { validFrom: '2026-01-01T00:00:00Z' },
         now
       })
     ).toStrictEqual([2026])
@@ -108,7 +96,7 @@ describe(registeredOnlyStretches, () => {
     year = 2026
   } = {}) =>
     registeredOnlyStretches({
-      dateRange: { validFrom, validTo: null },
+      dateRange: { validFrom },
       accreditations,
       year,
       now

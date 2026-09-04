@@ -8,7 +8,7 @@ import {
   MIN_YEAR
 } from '#server/reports/helpers/period-params-schema.js'
 
-import { fetchRegistrationDetails } from '../helpers/fetch-registration-details.js'
+import { fetchRegisteredOnlyPeriod } from './helpers/fetch-registered-only-period.js'
 import { registrationYears } from '../helpers/registered-only.js'
 
 /**
@@ -69,11 +69,13 @@ export const controller = {
     const { organisationId, registrationId, year } = request.params
     const { backendToken } = request.auth.credentials
 
-    const { organisation, registration, accreditations } =
-      await fetchRegistrationDetails({
+    const { organisation, registration, accreditations, reportingPeriods } =
+      await fetchRegisteredOnlyPeriod({
         organisationId,
         registrationId,
-        backendToken
+        backendToken,
+        year,
+        logger: request.logger
       })
 
     // A well-formed year the registration never ran over is a page about
@@ -92,6 +94,7 @@ export const controller = {
         organisation,
         registration,
         accreditations,
+        reportingPeriods,
         year,
         localise: request.t,
         localiseUrl: request.localiseUrl

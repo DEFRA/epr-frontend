@@ -24,13 +24,18 @@
  */
 
 /**
- * The period a record is valid over. The backend requires both bounds only
- * while the record is live, so a range is always present and says nothing about
- * whether it is filled in.
- *
- * A registration's `validTo` is served but not read: registrations do not
- * expire (PAE-1904), so nothing derives an end date from one.
+ * The period an accreditation is valid over. The backend requires both bounds
+ * only while it is approved or suspended, so the range is always present and
+ * says nothing about whether it is filled in.
  * @typedef {{ validFrom: string | null, validTo: string | null }} DateRange
+ */
+
+/**
+ * When a registration started. **Registrations do not expire** (PAE-1904), so
+ * unlike an accreditation there is no end bound to read — the backend serves
+ * `validFrom` alone. A registration is given it when it is approved, so one
+ * that has not been approved carries null.
+ * @typedef {{ validFrom: string | null }} RegistrationDateRange
  */
 
 /**
@@ -64,7 +69,7 @@
  *   status: RegistrationStatus,
  *   material?: Material,
  *   reprocessingType: ReprocessingType | null,
- *   dateRange: DateRange,
+ *   dateRange: RegistrationDateRange,
  *   accreditations: AccreditationLink[],
  *   application: {
  *     orgName: string,

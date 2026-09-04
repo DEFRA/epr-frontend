@@ -14,14 +14,15 @@ import { getByRole, queryByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
-import { fetchRegistrationDetails } from '../helpers/fetch-registration-details.js'
+import { fetchRegisteredOnlyPeriod } from './helpers/fetch-registered-only-period.js'
 
 /**
- * @import { RegistrationDetails } from '../helpers/fetch-registration-details.js'
+ * @import { RegisteredOnlyPeriodDetails } from './helpers/fetch-registered-only-period.js'
+ * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource } from '../helpers/types.js'
  */
 
-vi.mock(import('../helpers/fetch-registration-details.js'))
+vi.mock(import('./helpers/fetch-registered-only-period.js'))
 
 const organisationId = '6507f1f77bcf86cd79943901'
 const registrationId = 'reg-001'
@@ -62,30 +63,50 @@ const anAccreditation = (validFrom, validTo = null) =>
   })
 
 /**
+ * The first quarter of the page's year, reported. The seeded accreditation
+ * starts in July, so this quarter was owed while registered-only.
+ */
+const aSubmittedFirstQuarter = /** @type {ReportingPeriod} */ (
+  /** @type {unknown} */ ({
+    year: YEAR,
+    period: 1,
+    submissionNumber: 1,
+    startDate: `${YEAR}-01-01`,
+    endDate: `${YEAR}-03-31`,
+    dueDate: `${YEAR}-04-20`,
+    periodStatus: 'submitted',
+    report: { submittedAt: `${YEAR}-04-15T15:09:00.000Z` }
+  })
+)
+
+/**
  * @param {{
  *   accreditations?: AccreditationResource[],
  *   registrationNumber?: string | null,
+ *   reportingPeriods?: ReportingPeriod[],
  *   validFrom?: string | null
  * }} [overrides]
- * @returns {RegistrationDetails}
+ * @returns {RegisteredOnlyPeriodDetails}
  */
 const registrationDetails = ({
   accreditations = [],
   registrationNumber = 'R26ER5001180041PL',
+  reportingPeriods = [],
   validFrom = '2026-01-01'
 } = {}) => ({
+  reportingPeriods,
   organisation: asOrganisation({
     id: organisationId,
     companyDetails: { name: 'Kirkby Plastics Ltd' }
   }),
-  registration: /** @type {RegistrationDetails['registration']} */ ({
+  registration: /** @type {RegisteredOnlyPeriodDetails['registration']} */ ({
     id: registrationId,
     organisation: { id: organisationId },
     registrationNumber,
     status: 'approved',
     material: 'plastic',
     reprocessingType: 'input',
-    dateRange: { validFrom, validTo: null },
+    dateRange: { validFrom },
     accreditations: [],
     application: {
       orgName: 'Kirkby Plastics',
@@ -122,7 +143,9 @@ describe('the registered-only period page', () => {
   })
 
   beforeEach(() => {
-    vi.mocked(fetchRegistrationDetails).mockResolvedValue(registrationDetails())
+    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
+      registrationDetails()
+    )
   })
 
   afterAll(() => {
@@ -154,7 +177,7 @@ describe('the registered-only period page', () => {
   it('drops the number for a registration that holds none', async ({
     server
   }) => {
-    vi.mocked(fetchRegistrationDetails).mockResolvedValue(
+    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
       registrationDetails({ registrationNumber: null })
     )
 
@@ -170,7 +193,7 @@ describe('the registered-only period page', () => {
   it('says the period holds nothing where the accreditation ran from the start', async ({
     server
   }) => {
-    vi.mocked(fetchRegistrationDetails).mockResolvedValue(
+    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
       registrationDetails({ accreditations: [anAccreditation('2026-01-01')] })
     )
 
@@ -188,7 +211,7 @@ describe('the registered-only period page', () => {
   it('says nothing of the sort where the year holds registered-only time', async ({
     server
   }) => {
-    vi.mocked(fetchRegistrationDetails).mockResolvedValue(
+    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
       registrationDetails({ accreditations: [anAccreditation('2026-03-01')] })
     )
 
@@ -200,6 +223,86 @@ describe('the registered-only period page', () => {
     ).toBeNull()
     expect(
       queryByText(document, /If you’d like to see the accreditation details/)
+    ).toBeNull()
+  })
+
+  // The quarters a registered-only operator owed are the point of the page, so
+  // the real copy is asserted here rather than against a mocked localiser.
+  it('lists the quarters the operator owed while registered-only', async ({
+    server
+  }) => {
+    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
+      registrationDetails({
+        accreditations: [anAccreditation('2026-07-01')],
+        reportingPeriods: [aSubmittedFirstQuarter]
+      })
+    )
+
+    const { body } = await visit(server, regulator)
+    const document = documentOf(body)
+
+    expect(
+      getByRole(document, 'heading', { name: 'Reports', level: 2 })
+    ).not.toBeNull()
+
+    const table = document.querySelector('[data-testid="reports-table"]')
+
+    expect(table?.textContent?.replace(/\s+/g, ' ')).toContain(
+      'Quarter 1, 2026'
+    )
+    expect(table?.textContent).toContain('20 Apr 2026')
+    expect(table?.textContent).toContain('Submitted')
+  })
+
+  it('opens a submitted quarter at the report it holds', async ({ server }) => {
+    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
+      registrationDetails({
+        accreditations: [anAccreditation('2026-07-01')],
+        reportingPeriods: [aSubmittedFirstQuarter]
+      })
+    )
+
+    const { body } = await visit(server, regulator)
+
+    expect(
+      getByRole(documentOf(body), 'link', {
+        name: /^View report\s*Quarter 1, 2026$/
+      }).getAttribute('href')
+    ).toBe(
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/view`
+    )
+  })
+
+  it('says so where the year holds registered-only time but no ended period', async ({
+    server
+  }) => {
+    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
+      registrationDetails({ reportingPeriods: [] })
+    )
+
+    const { body } = await visit(server, regulator)
+
+    expect(
+      queryByText(
+        documentOf(body),
+        /There are no reporting periods for this registered-only period yet/
+      )
+    ).not.toBeNull()
+  })
+
+  // The empty state replaces the page's content rather than sitting above it.
+  it('shows no reports section at all where the period holds nothing', async ({
+    server
+  }) => {
+    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
+      registrationDetails({ accreditations: [anAccreditation('2026-01-01')] })
+    )
+
+    const { body } = await visit(server, regulator)
+    const document = documentOf(body)
+
+    expect(
+      document.querySelector('[data-testid="app-page-body"] h2')
     ).toBeNull()
   })
 
