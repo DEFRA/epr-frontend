@@ -68,7 +68,7 @@ const ledgerEvents = [
       name: 'Ada Lovelace',
       email: 'ada@example.com'
     },
-    prn: { tonnage: 12.5 },
+    prn: { id: 'prn-001', prnNumber: null, tonnage: 12.5 },
     balance: {
       opening: { total: 100, available: 100 },
       closing: { total: 100, available: 87.5 }
@@ -82,7 +82,7 @@ const ledgerEvents = [
       name: 'Ada Lovelace',
       email: 'ada@example.com'
     },
-    prn: { tonnage: 12.5 },
+    prn: { id: 'prn-001', prnNumber: '240000123', tonnage: 12.5 },
     balance: {
       opening: { total: 100, available: 87.5 },
       closing: { total: 87.5, available: 87.5 }
@@ -301,7 +301,7 @@ describe('the accreditation details page', () => {
     expect(body).toContain('There are no reporting periods')
   })
 
-  it('lists the waste balance ledger beneath the reports, under its five headings', async ({
+  it('lists the waste balance ledger beneath the reports, under its six headings', async ({
     server
   }) => {
     const { body } = await visit(server, regulator)
@@ -320,7 +320,8 @@ describe('the accreditation details page', () => {
       'Event',
       'Tonnage',
       'Waste balance available (tonnes)',
-      'Who'
+      'Who',
+      'Actions'
     ])
   })
 
@@ -334,11 +335,25 @@ describe('the accreditation details page', () => {
       '15 February 2026, 3:09pm'
     )
     expect(textOf(within(firstRow).getAllByRole('cell'))).toStrictEqual([
-      'PRN issued',
+      'PRN issued\n240000123',
       'N/A',
       '87.50',
-      'Ada Lovelace (ada@example.com)'
+      'Ada Lovelace (ada@example.com)',
+      'View 240000123'
     ])
+  })
+
+  it('opens the note a movement came from, named by its number', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const [, firstRow] = getAllByRole(ledgerTable(documentOf(body)), 'row')
+
+    expect(
+      within(firstRow)
+        .getByRole('link', { name: 'View 240000123' })
+        .getAttribute('href')
+    ).toBe(`${path}/packaging-recycling-notes/prn-001/view`)
   })
 
   it('states what each event moved the available balance by', async ({

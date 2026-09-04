@@ -65,7 +65,15 @@ export const controller = {
         : localise('waste-balance-ledger:registeredOnlyCaption'),
       heading: localise('waste-balance-ledger:heading'),
       pageTitle: localise('waste-balance-ledger:pageTitle'),
-      ledgerRows: buildLedgerRows({ events, localise, noteType })
+      ledgerRows: buildLedgerRows({
+        accreditationId,
+        events,
+        localise,
+        localiseUrl: request.localiseUrl,
+        noteType,
+        organisationId,
+        registrationId
+      })
     })
   }
 }
