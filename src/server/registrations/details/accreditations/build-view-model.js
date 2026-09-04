@@ -1,6 +1,8 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
@@ -17,6 +19,7 @@ import { toDateRange } from '../helpers/date-range.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource, Localise } from '../helpers/types.js'
@@ -28,10 +31,12 @@ import { toDateRange } from '../helpers/date-range.js'
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
  * @typedef {TableCell[]} TableRow
  * @typedef {{ head: TableRow, rows: TableRow[] }} ReportsTable
+ * @typedef {{ rows: TableRow[] }} LedgerTable
  * @typedef {{
  *   breadcrumbs: Crumb[],
  *   caption: string,
  *   heading: string,
+ *   ledger: LedgerTable | null,
  *   period: string,
  *   pageTitle: string,
  *   reports: ReportsTable,
@@ -239,6 +244,27 @@ const toReportRows = ({
 }
 
 /**
+ * The whole of the accreditation's own ledger, newest event first, or no
+ * ledger at all where the session may not read one. An empty ledger is still
+ * a ledger: the section says nothing has moved the balance yet.
+ * @param {{
+ *   ledgerEvents: LedgerEvent[] | null,
+ *   localise: Localise,
+ *   registration: Registration
+ * }} params
+ * @returns {LedgerTable | null}
+ */
+const toLedger = ({ ledgerEvents, localise, registration }) => {
+  if (ledgerEvents === null) {
+    return null
+  }
+
+  const { noteType } = getNoteTypeDisplayNames(registration)
+
+  return { rows: buildLedgerRows({ events: ledgerEvents, localise, noteType }) }
+}
+
+/**
  * @param {{
  *   organisation: Organisation,
  *   registration: Registration,
@@ -246,6 +272,7 @@ const toReportRows = ({
  *   wasteBalance: WasteBalance | null,
  *   reportingPeriods: ReportingPeriod[],
  *   cadence: CadenceValue | null,
+ *   ledgerEvents: LedgerEvent[] | null,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
@@ -258,6 +285,7 @@ export const buildViewModel = ({
   wasteBalance,
   reportingPeriods,
   cadence,
+  ledgerEvents,
   localise,
   localiseUrl
 }) => {
@@ -284,6 +312,7 @@ export const buildViewModel = ({
       accreditation.accreditationNumber
     ]),
     heading: localise('registrations:details:accreditation:heading'),
+    ledger: toLedger({ ledgerEvents, localise, registration }),
     period: toDateRange(accreditation.dateRange, localise),
     pageTitle: accreditation.accreditationNumber
       ? `${accreditation.accreditationNumber}: ${pageName}`

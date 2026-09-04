@@ -4,8 +4,8 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
-import { buildLedgerRows } from './helpers/build-ledger-rows.js'
-import { fetchLedgerEvents } from './helpers/fetch-ledger-events.js'
+import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
+import { fetchLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
 
 /**
  * @typedef {{
@@ -65,7 +65,7 @@ export const controller = {
         : localise('waste-balance-ledger:registeredOnlyCaption'),
       heading: localise('waste-balance-ledger:heading'),
       pageTitle: localise('waste-balance-ledger:pageTitle'),
-      rows: buildLedgerRows({ events, localise, noteType })
+      ledgerRows: buildLedgerRows({ events, localise, noteType })
     })
   }
 }

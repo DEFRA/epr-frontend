@@ -6,6 +6,8 @@ import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtu
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { createReport } from '#server/reports/helpers/create-report.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { beforeEach, describe, expect, vi } from 'vitest'
@@ -15,6 +17,14 @@ vi.mock(
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('#server/reports/helpers/create-report.js'))
+
+vi.mock(
+  import('#server/common/helpers/metrics/index.js'),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    journeyMetrics: { start: vi.fn(), end: vi.fn() }
+  })
+)
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -519,6 +529,40 @@ describe('#createReportController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.forbidden)
+    })
+  })
+
+  describe('journey events', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        reprocessorRegistration
+      )
+      vi.mocked(createReport).mockResolvedValue({
+        id: 'report-001',
+        status: 'in_progress'
+      })
+    })
+
+    it('should record the create journey start when the report is begun', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+        auth: mockAuth
+      })
+
+      await server.inject({
+        method: 'POST',
+        url: detailUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(journeyMetrics.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.createReport,
+        'reg-001/2026/quarterly/1/1'
+      )
     })
   })
 })

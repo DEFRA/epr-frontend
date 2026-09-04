@@ -3,6 +3,8 @@ import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getByLabelText,
@@ -18,6 +20,14 @@ vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+
+vi.mock(
+  import('#server/common/helpers/metrics/index.js'),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    journeyMetrics: { start: vi.fn(), end: vi.fn() }
+  })
+)
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -567,6 +577,30 @@ describe('#createPrnController', () => {
         const errorSummary = main.querySelector('.govuk-error-summary')
         expect(errorSummary).toBeNull()
       })
+    })
+  })
+
+  describe('journey events', () => {
+    beforeEach(() => {
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+    })
+
+    it('should record the create journey start when the form renders', async ({
+      server
+    }) => {
+      await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      expect(journeyMetrics.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.createPrn,
+        'acc-001'
+      )
     })
   })
 })

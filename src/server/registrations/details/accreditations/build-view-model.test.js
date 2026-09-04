@@ -10,6 +10,7 @@ import { buildViewModel } from './build-view-model.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod, ReportListItem } from '#server/reports/helpers/fetch-reporting-periods.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { AccreditationResource } from '../helpers/types.js'
  * @import { TableRow } from './build-view-model.js'
  */
@@ -31,6 +32,9 @@ const localise = createMockLocalise({
   'registrations:details:current': 'Current',
   'registrations:details:heading': 'Registration details',
   'registrations:details:period': '{{from}} to {{to}}',
+  'waste-balance-ledger:events.prn-issued': '{{noteType}} issued',
+  'waste-balance-ledger:events.summary-log-submitted': 'Summary log submitted',
+  'waste-balance-ledger:systemActor': 'System',
   'reports:actionView': 'View report',
   'reports:months.7': 'July',
   'reports:months.8': 'August',
@@ -111,17 +115,37 @@ const aPeriod = (overrides) =>
 /** @type {{ cadence: CadenceValue | null, reportingPeriods: ReportingPeriod[] }} */
 const noCalendar = { cadence: CADENCE.MONTHLY, reportingPeriods: [] }
 
+/** @type {LedgerEvent} */
+const prnIssued = {
+  kind: 'prn-issued',
+  createdAt: '2026-02-15T15:09:00.000Z',
+  createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' },
+  prn: { tonnage: 12.5 },
+  balance: { closing: { total: 100, available: 87.5 } }
+}
+
+/** @type {LedgerEvent} */
+const summaryLogSubmitted = {
+  kind: 'summary-log-submitted',
+  createdAt: '2026-01-04T09:00:00.000Z',
+  createdBy: { id: 'system' },
+  summaryLog: { creditTotal: 100 },
+  balance: { closing: { total: 100, available: 100 } }
+}
+
 /**
  * @param {Partial<AccreditationResource>} [accreditationOverrides]
  * @param {Partial<Registration>} [registrationOverrides]
  * @param {WasteBalance | null} [wasteBalance]
  * @param {{ cadence: CadenceValue | null, reportingPeriods: ReportingPeriod[] }} [calendar]
+ * @param {LedgerEvent[] | null} [ledgerEvents]
  */
 const build = (
   accreditationOverrides,
   registrationOverrides,
   wasteBalance = aWasteBalance,
-  calendar = noCalendar
+  calendar = noCalendar,
+  ledgerEvents = null
 ) =>
   buildViewModel({
     organisation,
@@ -130,9 +154,23 @@ const build = (
     wasteBalance,
     reportingPeriods: calendar.reportingPeriods,
     cadence: calendar.cadence,
+    ledgerEvents,
     localise,
     localiseUrl
   })
+
+/**
+ * @param {LedgerEvent[] | null} ledgerEvents
+ * @param {Partial<Registration>} [registrationOverrides]
+ */
+const ledgerOf = (ledgerEvents, registrationOverrides) =>
+  build(
+    undefined,
+    registrationOverrides,
+    aWasteBalance,
+    noCalendar,
+    ledgerEvents
+  ).ledger
 
 /**
  * @param {ReportingPeriod[]} reportingPeriods
@@ -172,6 +210,7 @@ describe('the accreditation details view model', () => {
       wasteBalance: aWasteBalance,
       reportingPeriods: [],
       cadence: CADENCE.MONTHLY,
+      ledgerEvents: null,
       localise,
       localiseUrl
     })
@@ -354,5 +393,44 @@ describe('the reports table on the accreditation details view model', () => {
 
   it('shows no rows for a calendar the page could not read', () => {
     expect(reportRows([], null)).toStrictEqual([])
+  })
+})
+
+describe('the waste balance ledger on the accreditation details view model', () => {
+  it('offers no ledger where none was read', () => {
+    expect(ledgerOf(null)).toBeNull()
+  })
+
+  it('offers an empty ledger where nothing has moved the balance yet', () => {
+    expect(ledgerOf([])).toStrictEqual({ rows: [] })
+  })
+
+  it('reads the events newest first, each with its tonnage, both balances and its actor', () => {
+    expect(ledgerOf([summaryLogSubmitted, prnIssued])?.rows).toStrictEqual([
+      [
+        { text: '15 February 2026, 3:09pm' },
+        { text: 'PRN issued' },
+        { text: '12.50' },
+        { text: '100.00' },
+        { text: '87.50' },
+        { text: 'Ada Lovelace (ada@example.com)' }
+      ],
+      [
+        { text: '4 January 2026, 9:00am' },
+        { text: 'Summary log submitted' },
+        { text: '100.00' },
+        { text: '100.00' },
+        { text: '100.00' },
+        { text: 'System' }
+      ]
+    ])
+  })
+
+  it("names an exporter's notes PERNs", () => {
+    const rows = ledgerOf([prnIssued], {
+      wasteProcessingType: 'exporter'
+    })?.rows
+
+    expect(rows?.at(0)?.at(1)).toStrictEqual({ text: 'PERN issued' })
   })
 })

@@ -3,6 +3,8 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -21,6 +23,14 @@ vi.mock(
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/update-report-status.js'))
+
+vi.mock(
+  import('#server/common/helpers/metrics/index.js'),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    journeyMetrics: { start: vi.fn(), end: vi.fn() }
+  })
+)
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
@@ -1758,6 +1768,70 @@ describe('#submitController', () => {
           'You must enter your full name as it appears on this account'
         )
       })
+    })
+  })
+
+  describe('journey events', () => {
+    const attempt = 'reg-001/2026/quarterly/1/1'
+
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        exporterRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
+      vi.mocked(updateReportStatus).mockResolvedValue({ ok: true })
+    })
+
+    it('should record the submit journey start when the report can be submitted', async ({
+      server
+    }) => {
+      await server.inject({ method: 'GET', url: baseUrl, auth: mockAuth })
+
+      expect(journeyMetrics.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.submitReport,
+        attempt
+      )
+    })
+
+    it('should not record the submit journey start once the report is submitted', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportDetail).mockResolvedValue({
+        ...exporterReportDetail,
+        status: {
+          .../** @type {NonNullable<ReportDetailResponse['status']>} */ (
+            exporterReportDetail.status
+          ),
+          currentStatus: 'submitted'
+        }
+      })
+
+      await server.inject({ method: 'GET', url: baseUrl, auth: mockAuth })
+
+      expect(journeyMetrics.start).not.toHaveBeenCalled()
+    })
+
+    it('should record the submit journey end once the report is submitted', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+        auth: mockAuth
+      })
+
+      await server.inject({
+        method: 'POST',
+        url: baseUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb, version: 1, submissionDeclaredBy: 'Test User' }
+      })
+
+      expect(journeyMetrics.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.submitReport,
+        attempt
+      )
     })
   })
 })
