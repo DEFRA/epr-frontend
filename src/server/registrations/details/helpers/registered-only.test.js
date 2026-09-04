@@ -220,4 +220,31 @@ describe(registeredOnlyStretches, () => {
   it('holds nothing for a registration that was never approved', () => {
     expect(stretches({ validFrom: null })).toStrictEqual([])
   })
+
+  // Older persisted records carry a full ISO datetime where newer ones carry a
+  // bare date, and a datetime sorts after the bare date for the same day. Left
+  // unnormalised that reads as "the registration starts after today", and the
+  // page tells a regulator the period holds nothing.
+  it('reads a start date stored as a full ISO datetime as the day it names', () => {
+    expect(stretches({ validFrom: '2026-06-15T00:00:00.000Z' })).toStrictEqual([
+      { from: '2026-06-15', to: '2026-06-15' }
+    ])
+  })
+
+  it('never leaks a datetime into the stretch it answers with', () => {
+    expect(
+      stretches({
+        validFrom: '2026-01-01T00:00:00.000Z',
+        accreditations: [anAccreditation('2026-03-01')]
+      })
+    ).toStrictEqual([{ from: '2026-01-01', to: '2026-02-28' }])
+  })
+
+  it('reads an accreditation stored as a full ISO datetime the same way', () => {
+    expect(
+      stretches({
+        accreditations: [anAccreditation('2026-03-01T00:00:00.000Z')]
+      })
+    ).toStrictEqual([{ from: '2026-01-01', to: '2026-02-28' }])
+  })
 })

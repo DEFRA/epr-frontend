@@ -1,67 +1,85 @@
+import {
+  calendarDate,
+  utcCalendarDate
+} from '#server/common/helpers/calendar-date.js'
+
 /**
+ * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
  * @import { RegistrationDateRange } from '#server/common/helpers/organisations/registration-resource.js'
  * @import { AccreditationResource } from './types.js'
  */
 
 /**
- * @typedef {{ from: string, to: string }} Stretch
+ * @typedef {{ from: CalendarDate, to: CalendarDate }} Stretch
  */
 
 /**
- * A date as the records carry it, which is a day rather than an instant.
- * @param {Date} date
- * @returns {string}
- */
-const toDay = (date) => date.toISOString().slice(0, 10)
-
-/**
- * Every date here is a `YYYY-MM-DD` day, which sorts in date order as a string.
+ * Every date here is a `CalendarDate`, which sorts in date order as a string.
  * They are ordered with `localeCompare` rather than `<` and `>`: the relational
  * operators coerce, so comparing two strings with them reads as an accident
  * even when it is not. Parsing to `Date` instead would only add a timezone to
  * get wrong.
- * @param {string} day
- * @param {string} other
+ *
+ * The brand is what makes that safe. A raw stored value may be a bare date or a
+ * full ISO datetime, and the datetime sorts after the bare date for the same
+ * day — so every one is normalised through `calendarDate` before it reaches a
+ * comparison, and the type stops one that was not.
+ * @param {CalendarDate} day
+ * @param {CalendarDate} other
  * @returns {boolean}
  */
 const isBefore = (day, other) => day.localeCompare(other) < 0
 
 /**
- * @param {string} day
- * @param {string} other
+ * @param {CalendarDate} day
+ * @param {CalendarDate} other
  * @returns {boolean}
  */
 const isAfter = (day, other) => day.localeCompare(other) > 0
 
 /**
- * @param {string} day
- * @param {string} other
- * @returns {string}
+ * @param {CalendarDate} day
+ * @param {CalendarDate} other
+ * @returns {CalendarDate}
  */
 const later = (day, other) => (isAfter(day, other) ? day : other)
 
 /**
- * @param {string} day
- * @param {string} other
- * @returns {string}
+ * @param {CalendarDate} day
+ * @param {CalendarDate} other
+ * @returns {CalendarDate}
  */
 const earlier = (day, other) => (isBefore(day, other) ? day : other)
 
 /**
- * @param {string} day
+ * @param {CalendarDate} day
  * @returns {number}
  */
 const yearOf = (day) => new Date(day).getUTCFullYear()
 
 /**
- * @param {string} day
+ * The first day of a year, as a calendar date.
+ * @param {number} year
+ * @returns {CalendarDate}
+ */
+const firstDayOf = (year) => calendarDate(`${year}-01-01`)
+
+/**
+ * The last day of a year, as a calendar date.
+ * @param {number} year
+ * @returns {CalendarDate}
+ */
+const lastDayOf = (year) => calendarDate(`${year}-12-31`)
+
+/**
+ * @param {CalendarDate} day
  * @param {number} days
- * @returns {string}
+ * @returns {CalendarDate}
  */
 const shiftDay = (day, days) => {
   const shifted = new Date(day)
   shifted.setUTCDate(shifted.getUTCDate() + days)
-  return toDay(shifted)
+  return utcCalendarDate(shifted)
 }
 
 /**
@@ -83,7 +101,7 @@ export const registrationYears = ({ dateRange, now = new Date() }) => {
     return []
   }
 
-  const firstYear = yearOf(validFrom)
+  const firstYear = yearOf(calendarDate(validFrom))
   const lastYear = now.getUTCFullYear()
 
   // A registration granted ahead of the year it covers has not existed over
@@ -99,12 +117,12 @@ export const registrationYears = ({ dateRange, now = new Date() }) => {
  * registration did, or on 1 January if that was earlier, and closes today or on
  * 31 December, whichever comes first — a year that has not finished is only
  * registered up to today.
- * @param {{ validFrom: string, year: number, today: string }} params
+ * @param {{ validFrom: CalendarDate, year: number, today: CalendarDate }} params
  * @returns {Stretch | null}
  */
 const registeredStretch = ({ validFrom, year, today }) => {
-  const from = later(validFrom, `${year}-01-01`)
-  const to = earlier(today, `${year}-12-31`)
+  const from = later(validFrom, firstDayOf(year))
+  const to = earlier(today, lastDayOf(year))
 
   return isAfter(from, to) ? null : { from, to }
 }
@@ -118,13 +136,18 @@ const registeredStretch = ({ validFrom, year, today }) => {
  * names — which is why this cannot key on the current status the way
  * `isRegistrationAccredited` does.
  * @param {AccreditationResource[]} accreditations
- * @param {string} today
+ * @param {CalendarDate} today
  * @returns {Stretch[]}
  */
 const accreditedStretches = (accreditations, today) =>
   accreditations.flatMap(({ dateRange }) =>
     dateRange.validFrom
-      ? [{ from: dateRange.validFrom, to: dateRange.validTo ?? today }]
+      ? [
+          {
+            from: calendarDate(dateRange.validFrom),
+            to: dateRange.validTo ? calendarDate(dateRange.validTo) : today
+          }
+        ]
       : []
   )
 
@@ -192,8 +215,12 @@ export const registeredOnlyStretches = ({
     return []
   }
 
-  const today = toDay(now)
-  const registered = registeredStretch({ validFrom, year, today })
+  const today = utcCalendarDate(now)
+  const registered = registeredStretch({
+    validFrom: calendarDate(validFrom),
+    year,
+    today
+  })
 
   if (!registered) {
     return []
