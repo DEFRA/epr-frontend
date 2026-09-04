@@ -17,6 +17,9 @@ import { buildCreatePrnViewData } from './view-data.js'
 
 const MIN_TONNAGE = 1
 
+const CREATE_VIEW = 'prns/create'
+const ERROR_SUMMARY_TITLE_KEY = 'prns:errorSummaryTitle'
+
 const ERROR_KEYS = Object.freeze({
   notesTooLong: 'notesTooLong',
   recipientInvalid: 'recipientInvalid',
@@ -114,7 +117,7 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
   return {
     errors,
     errorSummary: {
-      title: localise('prns:errorSummaryTitle'),
+      title: localise(ERROR_SUMMARY_TITLE_KEY),
       list: errorList
     }
   }
@@ -142,7 +145,7 @@ async function handleInsufficientBalance(
 
   const errors = { tonnage: { text: message } }
   const errorSummary = {
-    title: localise('prns:errorSummaryTitle'),
+    title: localise(ERROR_SUMMARY_TITLE_KEY),
     list: [{ text: message, href: '#tonnage' }]
   }
 
@@ -161,7 +164,7 @@ async function handleInsufficientBalance(
     wasteBalance
   })
 
-  return h.view('prns/create', {
+  return h.view(CREATE_VIEW, {
     ...viewData,
     errors,
     errorSummary,
@@ -208,7 +211,7 @@ async function handleInvalidRecipient(request, h, organisations) {
 
   const errors = { recipient: { text: message } }
   const errorSummary = {
-    title: localise('prns:errorSummaryTitle'),
+    title: localise(ERROR_SUMMARY_TITLE_KEY),
     list: [{ text: message, href: '#recipient' }]
   }
 
@@ -235,7 +238,7 @@ async function handleInvalidRecipient(request, h, organisations) {
     wasteBalance
   })
 
-  return h.view('prns/create', {
+  return h.view(CREATE_VIEW, {
     ...viewData,
     errors,
     errorSummary,
@@ -292,7 +295,7 @@ export const postController = {
         })
 
         return h
-          .view('prns/create', {
+          .view(CREATE_VIEW, {
             ...viewData,
             errors,
             errorSummary,
