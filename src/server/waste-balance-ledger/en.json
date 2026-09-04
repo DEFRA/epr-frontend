@@ -15,10 +15,10 @@
   "registeredOnlyCaption": "Registered-only",
   "systemActor": "System",
   "table": {
-    "available": "Available",
-    "balance": "Balance",
-    "date": "Date and time",
+    "available": "Waste balance available (tonnes)",
+    "date": "Date",
     "event": "Event",
+    "noMovement": "N/A",
     "tonnage": "Tonnage",
     "who": "Who"
   }

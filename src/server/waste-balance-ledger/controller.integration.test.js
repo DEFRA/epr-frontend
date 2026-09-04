@@ -54,14 +54,26 @@ const regulatorWithoutLedgerScope = buildMockAuth({
   scope: [SCOPES.organisationSearch]
 })
 
-const prnIssued = {
+const prnCreated = {
   number: 2,
-  kind: 'prn-issued',
-  createdAt: '2026-02-15T15:09:00.000Z',
+  kind: 'prn-created',
+  createdAt: '2026-02-01T10:30:00.000Z',
   prn: { id: 'prn-1', tonnage: 12.5 },
   balance: {
     opening: { total: 100, available: 100 },
     closing: { total: 100, available: 87.5 }
+  },
+  createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' }
+}
+
+const prnIssued = {
+  number: 3,
+  kind: 'prn-issued',
+  createdAt: '2026-02-15T15:09:00.000Z',
+  prn: { id: 'prn-1', tonnage: 12.5 },
+  balance: {
+    opening: { total: 100, available: 87.5 },
+    closing: { total: 87.5, available: 87.5 }
   },
   createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' }
 }
@@ -129,14 +141,14 @@ describe('the waste balance ledger page', () => {
   })
 
   describe('a regulator', () => {
-    it('reads the ledger of the accreditation the address names', async ({
+    it('reads the ledger of the accreditation the address names, each event stating what it moved', async ({
       msw,
       server
     }) => {
       msw.use(
         http.get(accreditedLedgerUrl, () =>
           HttpResponse.json(
-            accreditedLedgerOf([summaryLogSubmitted, prnIssued])
+            accreditedLedgerOf([summaryLogSubmitted, prnCreated, prnIssued])
           )
         )
       )
@@ -152,23 +164,28 @@ describe('the waste balance ledger page', () => {
         [
           '15 February 2026, 3:09pm',
           'PRN issued',
-          '12.50',
-          '100.00',
+          'N/A',
+          '87.50',
+          'Ada Lovelace (ada@example.com)'
+        ],
+        [
+          '1 February 2026, 10:30am',
+          'PRN created',
+          '-12.50',
           '87.50',
           'Ada Lovelace (ada@example.com)'
         ],
         [
           '4 January 2026, 9:00am',
           'Summary log submitted',
-          '100.00',
-          '100.00',
+          '+100.00',
           '100.00',
           'System'
         ]
       ])
     })
 
-    it('heads the six columns, and offers neither a sequence number nor a payload', async ({
+    it('heads the five columns, and offers neither a sequence number nor a payload', async ({
       msw,
       server
     }) => {
@@ -190,11 +207,10 @@ describe('the waste balance ledger page', () => {
       )
 
       expect(headings).toStrictEqual([
-        'Date and time',
+        'Date',
         'Event',
         'Tonnage',
-        'Balance',
-        'Available',
+        'Waste balance available (tonnes)',
         'Who'
       ])
       expect(queryByText(body, 'Number')).toBeNull()
