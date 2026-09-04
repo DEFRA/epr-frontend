@@ -65,6 +65,33 @@ const eventCell = ({ event, localise, noteType }) => {
 }
 
 /**
+ * Where one note lives. Every segment is an id read off an address or off the
+ * backend, and the path it builds goes straight into an href, so each is
+ * encoded rather than trusted to be URL-safe.
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   accreditationId: string,
+ *   prnId: string
+ * }} ids
+ * @returns {string}
+ */
+const notePath = ({ organisationId, registrationId, accreditationId, prnId }) =>
+  [
+    'organisations',
+    organisationId,
+    'registrations',
+    registrationId,
+    'accreditations',
+    accreditationId,
+    'packaging-recycling-notes',
+    prnId,
+    'view'
+  ]
+    .map((segment) => `/${encodeURIComponent(segment)}`)
+    .join('')
+
+/**
  * The action the row offers. Only an event that concerns a note has a note to
  * open, and only a ledger addressed by an accreditation carries the id that
  * note lives under, so every other row's cell is empty rather than linking at
@@ -96,7 +123,12 @@ const actionCell = ({
   }
 
   const url = localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${event.prn.id}/view`
+    notePath({
+      organisationId,
+      registrationId,
+      accreditationId,
+      prnId: event.prn.id
+    })
   )
 
   return {
