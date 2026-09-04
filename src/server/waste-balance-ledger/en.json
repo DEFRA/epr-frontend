@@ -1,5 +1,6 @@
 {
   "accreditationCaption": "Accreditation {{ accreditationNumber }}",
+  "actionView": "View",
   "events": {
     "prn-accepted": "{{ noteType }} accepted",
     "prn-cancelled-after-issue": "{{ noteType }} cancelled after issue",
@@ -15,6 +16,7 @@
   "registeredOnlyCaption": "Registered-only",
   "systemActor": "System",
   "table": {
+    "actions": "Actions",
     "available": "Waste balance available (tonnes)",
     "date": "Date",
     "event": "Event",

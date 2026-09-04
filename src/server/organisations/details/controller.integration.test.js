@@ -237,7 +237,7 @@ describe('the organisation homepage a regulator reads', () => {
         'Glass remelt',
         'EA',
         'Approved',
-        'View registration R26ER5001180041PL'
+        'View R26ER5001180041PL'
       ],
       [
         'Not applicable',
@@ -245,7 +245,7 @@ describe('the organisation homepage a regulator reads', () => {
         'Aluminium',
         'SEPA',
         'Not applicable',
-        'View registration Aluminium, Rejected'
+        'View Aluminium, Rejected'
       ]
     ])
   })
@@ -255,7 +255,7 @@ describe('the organisation homepage a regulator reads', () => {
 
     expect(
       getByRole(documentOf(body), 'link', {
-        name: /^View registration\s*R26ER5001180041PL$/
+        name: /^View\s*R26ER5001180041PL$/
       }).getAttribute('href')
     ).toBe(`/organisations/${organisationId}/registrations/reg-001`)
   })

@@ -58,7 +58,7 @@ const prnCreated = {
   number: 2,
   kind: 'prn-created',
   createdAt: '2026-02-01T10:30:00.000Z',
-  prn: { id: 'prn-1', tonnage: 12.5 },
+  prn: { id: 'prn-1', prnNumber: null, tonnage: 12.5 },
   balance: {
     opening: { total: 100, available: 100 },
     closing: { total: 100, available: 87.5 }
@@ -70,7 +70,7 @@ const prnIssued = {
   number: 3,
   kind: 'prn-issued',
   createdAt: '2026-02-15T15:09:00.000Z',
-  prn: { id: 'prn-1', tonnage: 12.5 },
+  prn: { id: 'prn-1', prnNumber: '240000123', tonnage: 12.5 },
   balance: {
     opening: { total: 100, available: 87.5 },
     closing: { total: 87.5, available: 87.5 }
@@ -163,29 +163,32 @@ describe('the waste balance ledger page', () => {
       expect(rowsOf(documentOf(asHtml(result)))).toStrictEqual([
         [
           '15 February 2026, 3:09pm',
-          'PRN issued',
+          'PRN issued\n240000123',
           'N/A',
           '87.50',
-          'Ada Lovelace (ada@example.com)'
+          'Ada Lovelace (ada@example.com)',
+          'View 240000123'
         ],
         [
           '1 February 2026, 10:30am',
           'PRN created',
           '-12.50',
           '87.50',
-          'Ada Lovelace (ada@example.com)'
+          'Ada Lovelace (ada@example.com)',
+          'View 1 February 2026, 10:30am'
         ],
         [
           '4 January 2026, 9:00am',
           'Summary log submitted',
           '+100.00',
           '100.00',
-          'System'
+          'System',
+          ''
         ]
       ])
     })
 
-    it('heads the five columns, and offers neither a sequence number nor a payload', async ({
+    it('heads the six columns, and offers neither a sequence number nor a payload', async ({
       msw,
       server
     }) => {
@@ -211,7 +214,8 @@ describe('the waste balance ledger page', () => {
         'Event',
         'Tonnage',
         'Waste balance available (tonnes)',
-        'Who'
+        'Who',
+        'Actions'
       ])
       expect(queryByText(body, 'Number')).toBeNull()
       expect(queryByText(body, 'Payload')).toBeNull()
@@ -293,7 +297,7 @@ describe('the waste balance ledger page', () => {
 
       const body = documentOf(asHtml(result))
 
-      expect(rowsOf(body).at(0)?.at(1)).toBe('PERN issued')
+      expect(rowsOf(body).at(0)?.at(1)).toBe('PERN issued\n240000123')
     })
 
     it('says so where nothing has moved the balance yet', async ({

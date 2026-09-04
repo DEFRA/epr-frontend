@@ -199,7 +199,7 @@ describe('/regulators/home - GET integration', () => {
 
     expect(requested().searchParams.get('search')).toBe('ACME')
     expect(resultRows(body)).toStrictEqual([
-      ['ACME ltd', '50002', 'EA', 'Approved', 'View organisation ACME ltd']
+      ['ACME ltd', '50002', 'EA', 'Approved', 'View ACME ltd']
     ])
   })
 
@@ -418,7 +418,7 @@ describe('/regulators/home - GET integration', () => {
     const { body } = await visit(server, '/regulators/home?search=ACME&page=1')
 
     expect(resultRows(body)).toStrictEqual([
-      ['ACME ltd', '50002', 'EA', 'Approved', 'View organisation ACME ltd']
+      ['ACME ltd', '50002', 'EA', 'Approved', 'View ACME ltd']
     ])
     expect(queryByText(body, 'No organisation was found.')).toBeNull()
   })

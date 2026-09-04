@@ -270,7 +270,7 @@ describe('the registered-only period page', () => {
 
     expect(
       getByRole(documentOf(body), 'link', {
-        name: /^View report\s*Quarter 1, 2026$/
+        name: /^View\s*Quarter 1, 2026$/
       }).getAttribute('href')
     ).toBe(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/view`
