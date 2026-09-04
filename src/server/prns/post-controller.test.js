@@ -3,6 +3,7 @@ import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asCreatePrnResponse } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -615,17 +616,15 @@ describe('#postCreatePrnController', () => {
       const insufficientBalanceMessage =
         'The tonnage you entered exceeds your available waste balance'
 
-      const draftResult = /** @type {CreatePrnResponse} */ (
-        /** @type {unknown} */ ({
-          id: 'prn-789',
-          tonnage: 500,
-          material: 'plastic',
-          status: 'draft',
-          wasteProcessingType: 'reprocessor',
-          processToBeUsed: 'R3',
-          isDecemberWaste: false
-        })
-      )
+      const draftResult = asCreatePrnResponse({
+        id: 'prn-789',
+        tonnage: 500,
+        material: 'plastic',
+        status: 'draft',
+        wasteProcessingType: 'reprocessor',
+        processToBeUsed: 'R3',
+        isDecemberWaste: false
+      })
 
       beforeEach(() => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
