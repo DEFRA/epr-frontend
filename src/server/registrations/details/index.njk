@@ -43,6 +43,7 @@
           {# The heading above already shows the name, so the caption carries
              it only for a reader who moves by table. #}
           {{ govukTable({
+            attributes: { "data-testid": "accredited-periods-table" },
             caption: localise('registrations:details:accreditedPeriods:heading'),
             captionClasses: "govuk-visually-hidden",
             firstCellIsHeader: true,
@@ -56,6 +57,39 @@
           }) }}
         {% else %}
           {{ govukInsetText({ text: localise('registrations:details:accreditedPeriods:none') }) }}
+        {% endif %}
+
+        <h2 class="govuk-heading-m">{{ localise('registrations:details:registeredOnlyPeriods:heading') }}</h2>
+
+        {% if registeredOnlyPeriods.length %}
+          {% set registeredOnlyRows = [] %}
+          {% for period in registeredOnlyPeriods %}
+            {# Every action link reads the same, so each one names the year it
+               opens for a reader who hears the links alone. #}
+            {% set registeredOnlyRows = registeredOnlyRows.concat([[
+              { text: period.year },
+              { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (period.href | escape) ~ '">' ~ localise('registrations:details:registeredOnlyPeriods:view') ~ '<span class="govuk-visually-hidden"> ' ~ (period.year | escape) ~ '</span></a>' }
+            ]]) %}
+          {% endfor %}
+
+          {# The heading above already names the section, so the caption carries
+             it only for a reader who moves by table. #}
+          {{ govukTable({
+            attributes: { "data-testid": "registered-only-table" },
+            caption: localise('registrations:details:registeredOnlyPeriods:heading'),
+            captionClasses: "govuk-visually-hidden",
+            firstCellIsHeader: true,
+            head: [
+              { text: localise('registrations:details:registeredOnlyPeriods:period') },
+              { text: localise('registrations:details:registeredOnlyPeriods:actions') }
+            ],
+            rows: registeredOnlyRows
+          }) }}
+        {% else %}
+          {{ govukInsetText({
+            attributes: { "data-testid": "no-registered-only" },
+            text: localise('registrations:details:registeredOnlyPeriods:none')
+          }) }}
         {% endif %}
 
       </div>

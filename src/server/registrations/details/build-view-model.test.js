@@ -1,5 +1,6 @@
+import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { buildViewModel } from './build-view-model.js'
 
@@ -38,6 +39,7 @@ const aRegistrationWithSite = (address) => ({
   status: 'approved',
   material: 'plastic',
   reprocessingType: 'input',
+  dateRange: { validFrom: '2026-01-01' },
   accreditations: [],
   application: {
     orgName: 'Kirkby Plastics',
@@ -308,5 +310,114 @@ describe(buildViewModel, () => {
     })
 
     expect(viewModel.accreditedPeriods).toHaveLength(2)
+  })
+
+  describe('registered-only periods', () => {
+    // The clock decides how many years a live registration has run over, so it
+    // is pinned rather than read.
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-06-15T00:00:00Z'))
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('offers a year per year the registration has run, most recent first', () => {
+      const viewModel = build({
+        registration: {
+          ...aRegistrationWithSite({ line1: 'Unit 4' }),
+          dateRange: { validFrom: '2024-06-01' }
+        }
+      })
+
+      expect(viewModel.registeredOnlyPeriods).toStrictEqual([
+        {
+          year: '2026',
+          href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/registered-only-periods/2026'
+        },
+        {
+          year: '2025',
+          href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/registered-only-periods/2025'
+        },
+        {
+          year: '2024',
+          href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/registered-only-periods/2024'
+        }
+      ])
+    })
+
+    it('offers no year for a registration that was never approved', () => {
+      const viewModel = build({
+        registration: {
+          ...aRegistrationWithSite({ line1: 'Unit 4' }),
+          dateRange: { validFrom: null }
+        }
+      })
+
+      expect(viewModel.registeredOnlyPeriods).toStrictEqual([])
+    })
+
+    // A year the accreditation covered entirely still gets a row. The page it
+    // opens is what says the period holds nothing.
+    it('offers a year the registration held an accreditation for throughout', () => {
+      const viewModel = build({
+        registration: {
+          ...aRegistrationWithSite({ line1: 'Unit 4' }),
+          dateRange: { validFrom: '2026-01-01' }
+        },
+        accreditations: [
+          anAccreditation({
+            dateRange: { validFrom: '2026-01-01', validTo: null }
+          })
+        ]
+      })
+
+      expect(
+        viewModel.registeredOnlyPeriods.map(({ year }) => year)
+      ).toStrictEqual(['2026'])
+    })
+
+    // Registrations do not expire, so an end date the backend still sends must
+    // not offer a regulator a year that has not started.
+    it('ignores a registration validTo in the future', () => {
+      const viewModel = build({
+        registration: {
+          ...aRegistrationWithSite({ line1: 'Unit 4' }),
+          dateRange: { validFrom: '2026-01-01' }
+        }
+      })
+
+      expect(
+        viewModel.registeredOnlyPeriods.map(({ year }) => year)
+      ).toStrictEqual(['2026'])
+    })
+
+    // The accredited table is what a regulator already reads here, so adding a
+    // second one beside it has to leave the first untouched.
+    it('leaves the accredited periods exactly as they were', () => {
+      const viewModel = build({
+        registration: {
+          ...aRegistrationWithSite({ line1: 'Unit 4' }),
+          dateRange: { validFrom: '2026-01-01' }
+        },
+        accreditations: [
+          anAccreditation({
+            accreditationNumber: 'A26ER5001180114PL',
+            dateRange: { validFrom: '2026-03-01', validTo: null }
+          })
+        ]
+      })
+
+      expect(viewModel.accreditedPeriods).toStrictEqual([
+        {
+          number: 'A26ER5001180114PL',
+          dateRange: '1 March 2026 to Current',
+          status: toStatusTag('approved'),
+          href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/accreditations/acc-001'
+        }
+      ])
+    })
   })
 })
