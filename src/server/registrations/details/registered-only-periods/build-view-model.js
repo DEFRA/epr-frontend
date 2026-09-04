@@ -8,10 +8,14 @@ import { buildStatusTagHtml } from '#server/reports/helpers/build-status-tag-htm
 import { formatPeriodLabelWithComma } from '#server/reports/helpers/format-period-label.js'
 import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitted-date-time.js'
 
-import { registeredOnlyStretches } from '../helpers/registered-only.js'
+import {
+  overlapsAnyStretch,
+  registeredOnlyStretches
+} from '../helpers/registered-only.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { Stretch } from '../helpers/registered-only.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource, Localise } from '../helpers/types.js'
  * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
@@ -88,21 +92,16 @@ const toReportsHead = (localise) => [
 
 /**
  * Whether a reporting period falls inside a stretch the operator held a
- * registration and no accreditation over.
- *
- * The rule is **overlap, not containment**: a period the operator was
- * registered-only for even one day of is a period they owed a registered-only
- * report for. A quarter that straddles the day an accreditation began belongs
- * to both this page and the accreditation's, and is shown on both rather than
- * being lost between them.
- * @param {{ from: string, to: string }[]} stretches
+ * registration and no accreditation over. The overlap rule, and the ordering of
+ * the days it compares, both belong to the helper.
+ * @param {Stretch[]} stretches
  * @returns {(period: ReportingPeriod) => boolean}
  */
 const withinAStretch = (stretches) => (period) =>
-  stretches.some(
-    (stretch) =>
-      period.startDate <= stretch.to && period.endDate >= stretch.from
-  )
+  overlapsAnyStretch(stretches, {
+    from: period.startDate,
+    to: period.endDate
+  })
 
 /**
  * A regulator opens this page to read what happened lately, so the newest
@@ -157,7 +156,7 @@ const toActionCell = ({
  *   organisationId: string,
  *   registrationId: string,
  *   reportingPeriods: ReportingPeriod[],
- *   stretches: { from: string, to: string }[]
+ *   stretches: Stretch[]
  * }} params
  * @returns {TableRow[]}
  */

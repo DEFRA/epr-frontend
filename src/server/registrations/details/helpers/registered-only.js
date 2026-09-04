@@ -8,14 +8,44 @@
  */
 
 /**
- * A date as the records carry it, which is a day rather than an instant. Every
- * comparison here is between two such values, so they are compared as strings:
- * `YYYY-MM-DD` sorts lexicographically in date order, and parsing would only
- * add a timezone to get wrong.
+ * A date as the records carry it, which is a day rather than an instant.
  * @param {Date} date
  * @returns {string}
  */
 const toDay = (date) => date.toISOString().slice(0, 10)
+
+/**
+ * Every date here is a `YYYY-MM-DD` day, which sorts in date order as a string.
+ * They are ordered with `localeCompare` rather than `<` and `>`: the relational
+ * operators coerce, so comparing two strings with them reads as an accident
+ * even when it is not. Parsing to `Date` instead would only add a timezone to
+ * get wrong.
+ * @param {string} day
+ * @param {string} other
+ * @returns {boolean}
+ */
+const isBefore = (day, other) => day.localeCompare(other) < 0
+
+/**
+ * @param {string} day
+ * @param {string} other
+ * @returns {boolean}
+ */
+const isAfter = (day, other) => day.localeCompare(other) > 0
+
+/**
+ * @param {string} day
+ * @param {string} other
+ * @returns {string}
+ */
+const later = (day, other) => (isAfter(day, other) ? day : other)
+
+/**
+ * @param {string} day
+ * @param {string} other
+ * @returns {string}
+ */
+const earlier = (day, other) => (isBefore(day, other) ? day : other)
 
 /**
  * @param {string} day
@@ -73,11 +103,10 @@ export const registrationYears = ({ dateRange, now = new Date() }) => {
  * @returns {Stretch | null}
  */
 const registeredStretch = ({ validFrom, year, today }) => {
-  const from = validFrom > `${year}-01-01` ? validFrom : `${year}-01-01`
-  const yearEnd = `${year}-12-31`
-  const to = today < yearEnd ? today : yearEnd
+  const from = later(validFrom, `${year}-01-01`)
+  const to = earlier(today, `${year}-12-31`)
 
-  return from > to ? null : { from, to }
+  return isAfter(from, to) ? null : { from, to }
 }
 
 /**
@@ -100,6 +129,29 @@ const accreditedStretches = (accreditations, today) =>
   )
 
 /**
+ * Whether two stretches share at least one day.
+ *
+ * **Overlap, not containment.** A reporting period the operator was
+ * registered-only for even one day of is one they owed a registered-only report
+ * for, so a period straddling the day an accreditation began belongs to both
+ * that accreditation and this page rather than being lost between them.
+ * @param {Stretch} one
+ * @param {Stretch} other
+ * @returns {boolean}
+ */
+export const overlaps = (one, other) =>
+  !isAfter(one.from, other.to) && !isBefore(one.to, other.from)
+
+/**
+ * Whether a span of days touches any of the stretches given.
+ * @param {Stretch[]} stretches
+ * @param {Stretch} span
+ * @returns {boolean}
+ */
+export const overlapsAnyStretch = (stretches, span) =>
+  stretches.some((stretch) => overlaps(span, stretch))
+
+/**
  * Removes one occupied stretch from the stretches still unaccounted for. A
  * stretch the accreditation covers entirely disappears; one it splits leaves
  * the days either side of it.
@@ -109,18 +161,18 @@ const accreditedStretches = (accreditations, today) =>
  */
 const subtract = (remaining, occupied) =>
   remaining.flatMap((stretch) => {
-    if (occupied.to < stretch.from || occupied.from > stretch.to) {
+    if (!overlaps(stretch, occupied)) {
       return [stretch]
     }
 
     /** @type {Stretch[]} */
     const kept = []
 
-    if (occupied.from > stretch.from) {
+    if (isAfter(occupied.from, stretch.from)) {
       kept.push({ from: stretch.from, to: shiftDay(occupied.from, -1) })
     }
 
-    if (occupied.to < stretch.to) {
+    if (isBefore(occupied.to, stretch.to)) {
       kept.push({ from: shiftDay(occupied.to, 1), to: stretch.to })
     }
 
@@ -161,7 +213,10 @@ export const registeredOnlyStretches = ({
     return []
   }
 
-  return accreditedStretches(accreditations, today).reduce(subtract, [
-    registered
-  ])
+  // Wrapped rather than passed directly: `reduce` also hands the callback the
+  // index and the array, and `subtract` takes two arguments.
+  return accreditedStretches(accreditations, today).reduce(
+    (remaining, occupied) => subtract(remaining, occupied),
+    [registered]
+  )
 }
