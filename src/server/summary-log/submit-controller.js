@@ -48,8 +48,7 @@ export const submitSummaryLogController = {
       await journeyMetrics.end(
         request,
         JOURNEY.uploadSummaryLog,
-        registrationId,
-        'uploaded'
+        registrationId
       )
 
       return h.redirect(redirectUrl)

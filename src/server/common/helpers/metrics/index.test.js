@@ -112,12 +112,7 @@ describe('#metrics', () => {
       const request = createRequest()
       await journeyMetrics.start(request, JOURNEY.uploadSummaryLog, attempt)
 
-      await journeyMetrics.end(
-        request,
-        JOURNEY.uploadSummaryLog,
-        attempt,
-        'uploaded'
-      )
+      await journeyMetrics.end(request, JOURNEY.uploadSummaryLog, attempt)
 
       expect(mockPutMetric).toHaveBeenCalledWith(
         'TransactionEnd',
@@ -128,36 +123,28 @@ describe('#metrics', () => {
     })
 
     it('should carry the start value as the journey dimension', async () => {
-      await journeyMetrics.start(
-        createRequest(),
-        JOURNEY.createPrnPern,
-        attempt
-      )
+      await journeyMetrics.start(createRequest(), JOURNEY.createPrn, attempt)
 
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'SaveOrIssuePRNPERNStart' },
+        { journey: 'SaveDraftPRNStart' },
         false
       )
     })
 
     it('should not carry the library default dimensions', async () => {
-      await journeyMetrics.start(
-        createRequest(),
-        JOURNEY.createPrnPern,
-        attempt
-      )
+      await journeyMetrics.start(createRequest(), JOURNEY.createPrn, attempt)
 
       expect(mockPutDimensions).not.toHaveBeenCalled()
     })
 
-    it('should carry the outcome value as the journey dimension', async () => {
+    it('should carry the end value as the journey dimension', async () => {
       const request = createRequest()
-      await journeyMetrics.start(request, JOURNEY.issuePrnPern, attempt)
+      await journeyMetrics.start(request, JOURNEY.issuePrn, attempt)
 
-      await journeyMetrics.end(request, JOURNEY.issuePrnPern, attempt, 'issued')
+      await journeyMetrics.end(request, JOURNEY.issuePrn, attempt)
 
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'IssuePRNPERNEnd' },
+        { journey: 'IssuePRNEnd' },
         false
       )
     })
@@ -175,7 +162,7 @@ describe('#metrics', () => {
       const request = createRequest()
 
       await journeyMetrics.start(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.end(request, JOURNEY.createReport, attempt, 'draft')
+      await journeyMetrics.end(request, JOURNEY.createReport, attempt)
       await journeyMetrics.start(request, JOURNEY.createReport, attempt)
 
       expect(mockPutMetric).toHaveBeenCalledTimes(3)
@@ -200,12 +187,7 @@ describe('#metrics', () => {
     })
 
     it('should not record an end for an attempt that never started', async () => {
-      await journeyMetrics.end(
-        createRequest(),
-        JOURNEY.deleteReport,
-        attempt,
-        'deleted'
-      )
+      await journeyMetrics.end(createRequest(), JOURNEY.deleteReport, attempt)
 
       expect(mockPutMetric).not.toHaveBeenCalled()
     })
@@ -213,13 +195,8 @@ describe('#metrics', () => {
     it('should not record an end for a different attempt at the same journey', async () => {
       const request = createRequest()
 
-      await journeyMetrics.start(request, JOURNEY.cancelPrnPern, 'note-1')
-      await journeyMetrics.end(
-        request,
-        JOURNEY.cancelPrnPern,
-        'note-2',
-        'cancelled'
-      )
+      await journeyMetrics.start(request, JOURNEY.cancelPrn, 'note-1')
+      await journeyMetrics.end(request, JOURNEY.cancelPrn, 'note-2')
 
       expect(mockPutMetric).toHaveBeenCalledTimes(1)
     })
@@ -227,19 +204,9 @@ describe('#metrics', () => {
     it('should record only one end per start', async () => {
       const request = createRequest()
 
-      await journeyMetrics.start(request, JOURNEY.cancelPrnPern, attempt)
-      await journeyMetrics.end(
-        request,
-        JOURNEY.cancelPrnPern,
-        attempt,
-        'cancelled'
-      )
-      await journeyMetrics.end(
-        request,
-        JOURNEY.cancelPrnPern,
-        attempt,
-        'cancelled'
-      )
+      await journeyMetrics.start(request, JOURNEY.cancelPrn, attempt)
+      await journeyMetrics.end(request, JOURNEY.cancelPrn, attempt)
+      await journeyMetrics.end(request, JOURNEY.cancelPrn, attempt)
 
       expect(mockPutMetric).toHaveBeenCalledTimes(2)
     })
@@ -250,7 +217,7 @@ describe('#metrics', () => {
       const request = createRequest(yar)
 
       await journeyMetrics.start(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.end(request, JOURNEY.createReport, attempt, 'draft')
+      await journeyMetrics.end(request, JOURNEY.createReport, attempt)
 
       expect(mockFlush).not.toHaveBeenCalled()
       expect(yar.get).not.toHaveBeenCalled()

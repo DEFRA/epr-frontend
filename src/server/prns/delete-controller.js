@@ -31,7 +31,7 @@ export const deleteGetController = {
 
     const { noteType } = getNoteTypeDisplayNames(registration)
 
-    await journeyMetrics.start(request, JOURNEY.deletePrnPern, prnId)
+    await journeyMetrics.start(request, JOURNEY.deletePrn, prnId)
 
     return h.view('prns/delete', {
       pageTitle: localise('prns:delete:pageTitle', { noteType }),
@@ -74,7 +74,7 @@ export const deletePostController = {
         backendToken
       )
 
-      await journeyMetrics.end(request, JOURNEY.deletePrnPern, prnId, 'deleted')
+      await journeyMetrics.end(request, JOURNEY.deletePrn, prnId)
 
       return h.redirect(redirectBasePath)
     } catch (error) {

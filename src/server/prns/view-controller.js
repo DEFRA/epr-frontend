@@ -17,6 +17,7 @@ import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisa
 import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { buildPrnBasePath } from './helpers/fetch-prn-context.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -69,14 +70,17 @@ export const viewPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, accreditationId, prnId } = request.params
+    const { organisationId, registrationId, accreditationId, prnId } =
+      request.params
     const session = request.auth.credentials
 
     /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
 
     if (prnDraft?.id !== prnId) {
-      return h.redirect(`${notesPath(request.params)}/create`)
+      return h.redirect(
+        `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create`
+      )
     }
 
     try {
@@ -87,10 +91,20 @@ export const viewPostController = {
       )
       const availableAmount =
         wasteBalanceMap[accreditationId]?.availableAmount ?? 0
+      const prnParams = {
+        organisationId,
+        registrationId,
+        accreditationId,
+        prnId
+      }
 
       return await (prnDraft.tonnage > availableAmount
-        ? discardDraftOverBalance(request, h, { availableAmount, prnDraft })
-        : confirmDraft(request, h, { prnDraft }))
+        ? discardDraftOverBalance(request, h, {
+            ...prnParams,
+            availableAmount,
+            prnDraft
+          })
+        : confirmDraft(request, h, { ...prnParams, prnDraft }))
     } catch (error) {
       if (error.isBoom) {
         throw error
@@ -110,24 +124,24 @@ export const viewPostController = {
   }
 }
 
-/** @param {PrnDetailParams} params */
-const notesPath = ({ organisationId, registrationId, accreditationId }) =>
-  `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-
 /**
  * Discards a draft whose tonnage no longer fits the available waste balance.
- * @param {HapiRequest & { params: PrnDetailParams }} request
+ * @param {HapiRequest} request
  * @param {ResponseToolkit} h
- * @param {{ availableAmount: number, prnDraft: PrnDraftSession }} params
+ * @param {PrnDetailParams & { availableAmount: number, prnDraft: PrnDraftSession }} params
  */
 const discardDraftOverBalance = async (
   request,
   h,
-  { availableAmount, prnDraft }
+  {
+    organisationId,
+    registrationId,
+    accreditationId,
+    prnId,
+    availableAmount,
+    prnDraft
+  }
 ) => {
-  const { organisationId, registrationId, accreditationId, prnId } =
-    request.params
-
   request.logger.warn({
     message: 'PRN tonnage exceeds available waste balance',
     event: {
@@ -149,20 +163,21 @@ const discardDraftOverBalance = async (
   request.yar.clear('prnDraft')
 
   return h.redirect(
-    `${notesPath(request.params)}/create?error=insufficient_balance`
+    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance`
   )
 }
 
 /**
  * Moves a draft to awaiting authorisation, ending the create journey.
- * @param {HapiRequest & { params: PrnDetailParams }} request
+ * @param {HapiRequest} request
  * @param {ResponseToolkit} h
- * @param {{ prnDraft: PrnDraftSession }} params
+ * @param {PrnDetailParams & { prnDraft: PrnDraftSession }} params
  */
-const confirmDraft = async (request, h, { prnDraft }) => {
-  const { organisationId, registrationId, accreditationId, prnId } =
-    request.params
-
+const confirmDraft = async (
+  request,
+  h,
+  { organisationId, registrationId, accreditationId, prnId, prnDraft }
+) => {
   const result = await updatePrnStatus(
     organisationId,
     registrationId,
@@ -181,14 +196,11 @@ const confirmDraft = async (request, h, { prnDraft }) => {
     wasteProcessingType: prnDraft.wasteProcessingType
   })
 
-  await journeyMetrics.end(
-    request,
-    JOURNEY.createPrnPern,
-    accreditationId,
-    'draft'
-  )
+  await journeyMetrics.end(request, JOURNEY.createPrn, accreditationId)
 
-  return h.redirect(`${notesPath(request.params)}/${prnId}/created`)
+  return h.redirect(
+    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/${prnId}/created`
+  )
 }
 
 /**

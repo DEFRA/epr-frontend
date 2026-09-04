@@ -263,8 +263,7 @@ export const checkPostController = {
     await journeyMetrics.end(
       request,
       JOURNEY.createReport,
-      reportAttempt(request.params),
-      'draft'
+      reportAttempt(request.params)
     )
 
     return h.redirect(

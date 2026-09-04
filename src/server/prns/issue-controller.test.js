@@ -351,9 +351,8 @@ describe('#issueController', () => {
 
       expect(journeyMetrics.end).toHaveBeenCalledWith(
         expect.anything(),
-        JOURNEY.issuePrnPern,
-        prnId,
-        'issued'
+        JOURNEY.issuePrn,
+        prnId
       )
     })
   })

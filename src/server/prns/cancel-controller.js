@@ -31,7 +31,7 @@ export const cancelGetController = {
 
     const { noteType } = getNoteTypeDisplayNames(registration)
 
-    await journeyMetrics.start(request, JOURNEY.cancelPrnPern, prnId)
+    await journeyMetrics.start(request, JOURNEY.cancelPrn, prnId)
 
     return h.view('prns/cancel', {
       pageTitle: localise('prns:cancel:pageTitle', { noteType }),
@@ -81,12 +81,7 @@ export const cancelPostController = {
         backendToken
       )
 
-      await journeyMetrics.end(
-        request,
-        JOURNEY.cancelPrnPern,
-        prnId,
-        'cancelled'
-      )
+      await journeyMetrics.end(request, JOURNEY.cancelPrn, prnId)
 
       return h.redirect(
         `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes/${noteId}/cancelled`

@@ -135,8 +135,7 @@ describe('#submitSummaryLogController', () => {
     expect(journeyMetrics.end).toHaveBeenCalledWith(
       expect.anything(),
       JOURNEY.uploadSummaryLog,
-      registrationId,
-      'uploaded'
+      registrationId
     )
   })
 

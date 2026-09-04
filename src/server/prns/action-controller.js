@@ -62,7 +62,7 @@ export const actionController = {
     })
 
     if (viewData.issueButton) {
-      await journeyMetrics.start(request, JOURNEY.issuePrnPern, prnId)
+      await journeyMetrics.start(request, JOURNEY.issuePrn, prnId)
     }
 
     return h.view('prns/action', viewData)

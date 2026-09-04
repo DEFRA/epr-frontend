@@ -426,8 +426,7 @@ describe('#deleteController', () => {
       expect(journeyMetrics.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.deleteReport,
-        reportAttempt,
-        'deleted'
+        reportAttempt
       )
     })
   })

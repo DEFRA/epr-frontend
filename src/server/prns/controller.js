@@ -56,7 +56,7 @@ export const controller = {
       wasteBalance
     })
 
-    await journeyMetrics.start(request, JOURNEY.createPrnPern, accreditationId)
+    await journeyMetrics.start(request, JOURNEY.createPrn, accreditationId)
 
     // Check for insufficient balance error from redirect
     const { t: localise } = request

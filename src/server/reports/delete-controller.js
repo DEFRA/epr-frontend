@@ -126,8 +126,7 @@ export const deletePostController = {
     await journeyMetrics.end(
       request,
       JOURNEY.deleteReport,
-      reportAttempt(request.params),
-      'deleted'
+      reportAttempt(request.params)
     )
 
     return h.redirect(

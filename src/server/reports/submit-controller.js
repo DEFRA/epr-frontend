@@ -472,8 +472,7 @@ export const submitPostController = {
     await journeyMetrics.end(
       request,
       JOURNEY.submitReport,
-      reportAttempt(request.params),
-      'submitted'
+      reportAttempt(request.params)
     )
 
     return h.redirect(

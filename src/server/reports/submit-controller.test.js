@@ -1830,8 +1830,7 @@ describe('#submitController', () => {
       expect(journeyMetrics.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.submitReport,
-        attempt,
-        'submitted'
+        attempt
       )
     })
   })

@@ -762,7 +762,7 @@ describe('#actionController', () => {
 
       expect(journeyMetrics.start).toHaveBeenCalledWith(
         expect.anything(),
-        JOURNEY.issuePrnPern,
+        JOURNEY.issuePrn,
         prnId
       )
     })

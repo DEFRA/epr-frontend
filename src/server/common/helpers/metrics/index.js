@@ -1,7 +1,7 @@
 import {
   createMetricsLogger,
-  Unit,
-  StorageResolution
+  StorageResolution,
+  Unit
 } from 'aws-embedded-metrics'
 
 import { config } from '#config/config.js'
@@ -9,7 +9,7 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { TRANSACTION_END, TRANSACTION_START } from './constants.js'
 
 /**
- * @import { Journey } from './constants.js'
+ * @import { JourneyEntry } from './constants.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
@@ -76,11 +76,10 @@ export const metrics = {
 }
 
 /**
- * @param {Journey} journey
+ * @param {JourneyEntry} journey
  * @param {string} attempt
  */
-const startedKey = (journey, attempt) =>
-  `journeyStarted:${journey.start}:${attempt}`
+const journeyKey = (journey, attempt) => `journey:${journey.start}:${attempt}`
 
 /**
  * Journey start and end events feeding the mandatory GDS KPIs. Both phases share
@@ -95,15 +94,16 @@ const startedKey = (journey, attempt) =>
 export const journeyMetrics = {
   /**
    * @param {HapiRequest} request
-   * @param {Journey} journey
+   * @param {JourneyEntry} journey
    * @param {string} attempt
+   * @returns {Promise<void>}
    */
   async start(request, journey, attempt) {
     if (!isMetricsEnabled()) {
       return
     }
 
-    const key = startedKey(journey, attempt)
+    const key = journeyKey(journey, attempt)
 
     if (request.yar.get(key)) {
       return
@@ -111,25 +111,24 @@ export const journeyMetrics = {
 
     request.yar.set(key, true)
 
-    return metricsCounter(
+    void metricsCounter(
       TRANSACTION_START,
       { journey: journey.start },
       { replaceDefaults: true }
     )
   },
   /**
-   * @template {Journey & Record<string, string>} J
    * @param {HapiRequest} request
-   * @param {J} journey
+   * @param {JourneyEntry} journey
    * @param {string} attempt
-   * @param {Exclude<keyof J, 'start'>} outcome
+   * @returns {Promise<void>}
    */
-  async end(request, journey, attempt, outcome) {
+  async end(request, journey, attempt) {
     if (!isMetricsEnabled()) {
       return
     }
 
-    const key = startedKey(journey, attempt)
+    const key = journeyKey(journey, attempt)
 
     if (!request.yar.get(key)) {
       return
@@ -137,9 +136,9 @@ export const journeyMetrics = {
 
     request.yar.clear(key)
 
-    return metricsCounter(
+    void metricsCounter(
       TRANSACTION_END,
-      { journey: journey[outcome] },
+      { journey: journey.end },
       { replaceDefaults: true }
     )
   }

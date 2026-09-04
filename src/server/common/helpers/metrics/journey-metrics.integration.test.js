@@ -280,7 +280,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
 
       expect(mockPutMetric).toHaveBeenCalledTimes(1)
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'DeletePRNPERNStart' },
+        { journey: 'DeletePRNStart' },
         false
       )
     })
@@ -314,7 +314,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
       )
       expect(endCalls).toHaveLength(1)
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'DeletePRNPERNEnd' },
+        { journey: 'DeletePRNEnd' },
         false
       )
     })

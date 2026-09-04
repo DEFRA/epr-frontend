@@ -2039,8 +2039,7 @@ describe('#checkController', () => {
       expect(journeyMetrics.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.createReport,
-        'reg-001/2026/quarterly/1/1',
-        'draft'
+        'reg-001/2026/quarterly/1/1'
       )
     })
   })

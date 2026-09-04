@@ -2,46 +2,50 @@ export const TRANSACTION_START = 'TransactionStart'
 export const TRANSACTION_END = 'TransactionEnd'
 
 /**
- * Journeys feeding the mandatory GDS KPIs. Each holds the dimension value for
- * its start and one per possible ending, named as agreed on PAE-1781 so the
- * dashboard's series labels come straight from these values.
- * @typedef {typeof JOURNEY[keyof typeof JOURNEY]} Journey
+ * @typedef {{ start: string, end: string }} JourneyEntry
+ */
+
+/**
+ * Journeys feeding the mandatory GDS KPIs, one dimension value per start and
+ * end. A journey with more than one ending gets its own entry rather than
+ * sharing one with several end keys.
+ * @type {Record<string, JourneyEntry>}
  */
 export const JOURNEY = Object.freeze({
-  createPrnPern: Object.freeze({
-    start: 'SaveOrIssuePRNPERNStart',
-    draft: 'SaveDraftPRNPERNEnd'
+  createPrn: Object.freeze({
+    start: 'SaveDraftPRNStart',
+    end: 'SaveDraftPRNEnd'
   }),
-  issuePrnPern: Object.freeze({
-    start: 'IssuePRNPERNStart',
-    issued: 'IssuePRNPERNEnd'
+  issuePrn: Object.freeze({
+    start: 'IssuePRNStart',
+    end: 'IssuePRNEnd'
   }),
   uploadSummaryLog: Object.freeze({
     start: 'UploadSummaryLogStart',
-    uploaded: 'UploadSummaryLogEnd'
+    end: 'UploadSummaryLogEnd'
   }),
   createReport: Object.freeze({
-    start: 'SaveOrSubmitReportStart',
-    draft: 'SaveDraftReportEnd'
+    start: 'SaveDraftReportStart',
+    end: 'SaveDraftReportEnd'
   }),
   submitReport: Object.freeze({
     start: 'SubmitReportStart',
-    submitted: 'SubmitReportEnd'
+    end: 'SubmitReportEnd'
   }),
-  cancelPrnPern: Object.freeze({
-    start: 'CancelPRNPERNStart',
-    cancelled: 'CancelPRNPERNEnd'
+  cancelPrn: Object.freeze({
+    start: 'CancelPRNStart',
+    end: 'CancelPRNEnd'
   }),
-  discardPrnPern: Object.freeze({
-    start: 'DiscardPRNPERNStart',
-    discarded: 'DiscardPRNPERNEnd'
+  discardPrn: Object.freeze({
+    start: 'DiscardPRNStart',
+    end: 'DiscardPRNEnd'
   }),
-  deletePrnPern: Object.freeze({
-    start: 'DeletePRNPERNStart',
-    deleted: 'DeletePRNPERNEnd'
+  deletePrn: Object.freeze({
+    start: 'DeletePRNStart',
+    end: 'DeletePRNEnd'
   }),
   deleteReport: Object.freeze({
     start: 'DeleteReportStart',
-    deleted: 'DeleteReportEnd'
+    end: 'DeleteReportEnd'
   })
 })

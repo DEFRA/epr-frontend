@@ -598,7 +598,7 @@ describe('#createPrnController', () => {
 
       expect(journeyMetrics.start).toHaveBeenCalledWith(
         expect.anything(),
-        JOURNEY.createPrnPern,
+        JOURNEY.createPrn,
         'acc-001'
       )
     })

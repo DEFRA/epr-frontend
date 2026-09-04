@@ -41,7 +41,7 @@ export const discardGetController = {
 
     const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
 
-    await journeyMetrics.start(request, JOURNEY.discardPrnPern, prnId)
+    await journeyMetrics.start(request, JOURNEY.discardPrn, prnId)
 
     return h.view('prns/discard', {
       pageTitle: localise('prns:discard:pageTitle', { noteType }),
@@ -85,12 +85,7 @@ export const discardPostController = {
 
       request.yar.clear('prnDraft')
 
-      await journeyMetrics.end(
-        request,
-        JOURNEY.discardPrnPern,
-        prnId,
-        'discarded'
-      )
+      await journeyMetrics.end(request, JOURNEY.discardPrn, prnId)
 
       return h.redirect(createUrl)
     } catch (error) {

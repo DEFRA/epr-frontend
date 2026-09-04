@@ -1925,9 +1925,8 @@ describe('#viewController', () => {
 
       expect(journeyMetrics.end).toHaveBeenCalledWith(
         expect.anything(),
-        JOURNEY.createPrnPern,
-        accreditationId,
-        'draft'
+        JOURNEY.createPrn,
+        accreditationId
       )
     })
   })

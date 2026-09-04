@@ -32,7 +32,7 @@ export const issueController = {
         prnNumber: updatedPrn.prnNumber
       })
 
-      await journeyMetrics.end(request, JOURNEY.issuePrnPern, prnId, 'issued')
+      await journeyMetrics.end(request, JOURNEY.issuePrn, prnId)
 
       return h.redirect(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`

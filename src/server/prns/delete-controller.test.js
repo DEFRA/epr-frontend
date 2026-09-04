@@ -361,7 +361,7 @@ describe('#deleteController', () => {
 
       expect(journeyMetrics.start).toHaveBeenCalledWith(
         expect.anything(),
-        JOURNEY.deletePrnPern,
+        JOURNEY.deletePrn,
         prnId
       )
     })
@@ -383,9 +383,8 @@ describe('#deleteController', () => {
 
       expect(journeyMetrics.end).toHaveBeenCalledWith(
         expect.anything(),
-        JOURNEY.deletePrnPern,
-        prnId,
-        'deleted'
+        JOURNEY.deletePrn,
+        prnId
       )
     })
   })
