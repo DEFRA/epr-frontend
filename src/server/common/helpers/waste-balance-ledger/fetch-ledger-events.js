@@ -37,8 +37,12 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * An entry that concerns a single note. `tonnage` is the tonnage of the note
  * itself, which the page does not show: what it shows is the amount the
  * balance moved, and issuing a note moves the available balance by nothing.
+ *
+ * `id` addresses the note, so the entry can offer a way into it. `prnNumber`
+ * is the number the note is known by, which it is given when it is issued and
+ * so does not have for its whole life.
  * @typedef {LedgerEventCommon & {
- *   prn: { tonnage: number },
+ *   prn: { id: string, prnNumber: string | null, tonnage: number },
  *   summaryLog?: never
  * }} PrnEvent
  */

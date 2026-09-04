@@ -200,6 +200,27 @@ describe('#viewController', () => {
         expect(getByText(main, /Plastic/i)).toBeDefined()
       })
 
+      it('reads the note to a regulator without offering a way to change it', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: buildMockAuth({
+            provider: OIDC_ENTRA_ID,
+            ...sessionIdentity(IDENTITIES.regulator)
+          })
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
+        expect(main.querySelector('form')).toBeNull()
+        expect(main.querySelector('button')).toBeNull()
+      })
+
       it('displays issuer organisation name on certificate page', async ({
         server
       }) => {

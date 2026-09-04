@@ -36,6 +36,7 @@ const localise = createMockLocalise({
   'waste-balance-ledger:events.summary-log-submitted': 'Summary log submitted',
   'waste-balance-ledger:systemActor': 'System',
   'waste-balance-ledger:table.noMovement': 'N/A',
+  'waste-balance-ledger:viewPrn': 'View PRN',
   'reports:actionView': 'View report',
   'reports:months.7': 'July',
   'reports:months.8': 'August',
@@ -121,7 +122,7 @@ const prnIssued = {
   kind: 'prn-issued',
   createdAt: '2026-02-15T15:09:00.000Z',
   createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' },
-  prn: { tonnage: 12.5 },
+  prn: { id: 'prn-001', prnNumber: '240000123', tonnage: 12.5 },
   balance: {
     opening: { total: 100, available: 87.5 },
     closing: { total: 87.5, available: 87.5 }
@@ -412,17 +413,21 @@ describe('the waste balance ledger on the accreditation details view model', () 
     expect(ledgerOf([summaryLogSubmitted, prnIssued])?.rows).toStrictEqual([
       [
         { text: '15 February 2026, 3:09pm' },
-        { text: 'PRN issued' },
+        { html: 'PRN issued<br>\n240000123' },
         { text: 'N/A', format: 'numeric' },
         { text: '87.50', format: 'numeric' },
-        { text: 'Ada Lovelace (ada@example.com)' }
+        { text: 'Ada Lovelace (ada@example.com)' },
+        {
+          html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-001/view" class="govuk-link">View PRN <span class="govuk-visually-hidden">240000123</span></a>`
+        }
       ],
       [
         { text: '4 January 2026, 9:00am' },
         { text: 'Summary log submitted' },
         { text: '+100.00', format: 'numeric' },
         { text: '100.00', format: 'numeric' },
-        { text: 'System' }
+        { text: 'System' },
+        { text: '' }
       ]
     ])
   })
@@ -432,6 +437,8 @@ describe('the waste balance ledger on the accreditation details view model', () 
       wasteProcessingType: 'exporter'
     })?.rows
 
-    expect(rows?.at(0)?.at(1)).toStrictEqual({ text: 'PERN issued' })
+    expect(rows?.at(0)?.at(1)).toStrictEqual({
+      html: 'PERN issued<br>\n240000123'
+    })
   })
 })

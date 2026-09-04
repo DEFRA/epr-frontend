@@ -240,20 +240,40 @@ const toReportRows = ({
  * ledger at all where the session may not read one. An empty ledger is still
  * a ledger: the section says nothing has moved the balance yet.
  * @param {{
+ *   accreditationId: string,
  *   ledgerEvents: LedgerEvent[] | null,
  *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   organisationId: string,
  *   registration: Registration
  * }} params
  * @returns {LedgerTable | null}
  */
-const toLedger = ({ ledgerEvents, localise, registration }) => {
+const toLedger = ({
+  accreditationId,
+  ledgerEvents,
+  localise,
+  localiseUrl,
+  organisationId,
+  registration
+}) => {
   if (ledgerEvents === null) {
     return null
   }
 
   const { noteType } = getNoteTypeDisplayNames(registration)
 
-  return { rows: buildLedgerRows({ events: ledgerEvents, localise, noteType }) }
+  return {
+    rows: buildLedgerRows({
+      accreditationId,
+      events: ledgerEvents,
+      localise,
+      localiseUrl,
+      noteType,
+      organisationId,
+      registrationId: registration.id
+    })
+  }
 }
 
 /**
@@ -304,7 +324,14 @@ export const buildViewModel = ({
       accreditation.accreditationNumber
     ]),
     heading: localise('registrations:details:accreditation:heading'),
-    ledger: toLedger({ ledgerEvents, localise, registration }),
+    ledger: toLedger({
+      accreditationId: accreditation.id,
+      ledgerEvents,
+      localise,
+      localiseUrl,
+      organisationId: organisation.id,
+      registration
+    }),
     period: toDateRange(accreditation.dateRange, localise),
     pageTitle: accreditation.accreditationNumber
       ? `${accreditation.accreditationNumber}: ${pageName}`

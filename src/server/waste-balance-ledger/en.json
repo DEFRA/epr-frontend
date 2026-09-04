@@ -15,11 +15,13 @@
   "registeredOnlyCaption": "Registered-only",
   "systemActor": "System",
   "table": {
+    "actions": "Actions",
     "available": "Waste balance available (tonnes)",
     "date": "Date",
     "event": "Event",
     "noMovement": "N/A",
     "tonnage": "Tonnage",
     "who": "Who"
-  }
+  },
+  "viewPrn": "View PRN"
 }

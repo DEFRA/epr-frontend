@@ -2,6 +2,8 @@ import {
   formatSignedTonnage,
   formatTonnage
 } from '#config/nunjucks/filters/format-tonnage.js'
+import { escapeHtml } from '#server/common/helpers/escape-html.js'
+import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
 
 import { LEDGER_EVENT_KIND, SYSTEM_ACTOR_ID } from './ledger-event-kinds.js'
 import { formatLedgerTimestamp } from './format-ledger-timestamp.js'
@@ -12,6 +14,10 @@ import { formatLedgerTimestamp } from './format-ledger-timestamp.js'
 
 /**
  * @typedef {(key: string, options?: Record<string, string>) => string} Localise
+ */
+
+/**
+ * @typedef {{ text: string, format?: string } | { html: string }} TableCell
  */
 
 /**
@@ -32,6 +38,75 @@ const eventName = ({ kind, localise, noteType }) =>
   EVENT_KINDS.includes(kind)
     ? localise(`waste-balance-ledger:events.${kind}`, { noteType })
     : kind
+
+/**
+ * What the event concerns: its name, and beneath it the number of the note it
+ * concerns where that note has one.
+ *
+ * The cell carries markup only where there is a second line to carry. An event
+ * that names no numbered note stays a text cell, escaped by the table macro
+ * rather than here.
+ * @param {{
+ *   event: LedgerEvent,
+ *   localise: Localise,
+ *   noteType: 'PRN' | 'PERN'
+ * }} params
+ * @returns {TableCell}
+ */
+const eventCell = ({ event, localise, noteType }) => {
+  const name = eventName({ kind: event.kind, localise, noteType })
+  const prnNumber = event.prn?.prnNumber
+
+  if (!prnNumber) {
+    return { text: name }
+  }
+
+  return { html: `${escapeHtml(name)}<br>\n${escapeHtml(prnNumber)}` }
+}
+
+/**
+ * The action the row offers. Only an event that concerns a note has a note to
+ * open, and only a ledger addressed by an accreditation carries the id that
+ * note lives under, so every other row's cell is empty rather than linking at
+ * nothing.
+ *
+ * The link names the note it opens, so a ledger of otherwise identical links
+ * stays distinguishable. A note that has no number yet is named by when the
+ * event happened, which is the only other thing on the row that tells it apart.
+ * @param {{
+ *   accreditationId: string | undefined,
+ *   event: LedgerEvent,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   organisationId: string,
+ *   registrationId: string
+ * }} params
+ * @returns {TableCell}
+ */
+const actionCell = ({
+  accreditationId,
+  event,
+  localise,
+  localiseUrl,
+  organisationId,
+  registrationId
+}) => {
+  if (!event.prn || !accreditationId) {
+    return { text: '' }
+  }
+
+  const url = localiseUrl(
+    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${event.prn.id}/view`
+  )
+
+  return {
+    html: buildActionLinkHtml(
+      localise('waste-balance-ledger:viewPrn'),
+      url,
+      event.prn.prnNumber ?? formatLedgerTimestamp(event.createdAt)
+    )
+  }
+}
 
 /**
  * What the event moved the available balance by, signed, and the copy for
@@ -78,17 +153,34 @@ const actorName = ({ createdBy, localise }) => {
  * The ledger reads as a running account of the available balance: what each
  * event moved, and what it left. The total behind the available amount moves
  * on its own schedule and is not part of that account.
+ *
+ * The address the ledger was read from is passed in whole, because a row links
+ * out to the note behind it and a note lives under an accreditation. The
+ * registered-only partition is addressed without one, so it has nothing to
+ * link at.
  * @param {{
+ *   accreditationId: string | undefined,
  *   events: LedgerEvent[],
  *   localise: Localise,
- *   noteType: 'PRN' | 'PERN'
+ *   localiseUrl: (path: string) => string,
+ *   noteType: 'PRN' | 'PERN',
+ *   organisationId: string,
+ *   registrationId: string
  * }} params
- * @returns {{ text: string, format?: string }[][]}
+ * @returns {TableCell[][]}
  */
-export const buildLedgerRows = ({ events, localise, noteType }) =>
+export const buildLedgerRows = ({
+  accreditationId,
+  events,
+  localise,
+  localiseUrl,
+  noteType,
+  organisationId,
+  registrationId
+}) =>
   [...events].reverse().map((event) => [
     { text: formatLedgerTimestamp(event.createdAt) },
-    { text: eventName({ kind: event.kind, localise, noteType }) },
+    eventCell({ event, localise, noteType }),
     {
       text: movementOf({ balance: event.balance, localise }),
       format: 'numeric'
@@ -97,5 +189,13 @@ export const buildLedgerRows = ({ events, localise, noteType }) =>
       text: formatTonnage(event.balance.closing.available),
       format: 'numeric'
     },
-    { text: actorName({ createdBy: event.createdBy, localise }) }
+    { text: actorName({ createdBy: event.createdBy, localise }) },
+    actionCell({
+      accreditationId,
+      event,
+      localise,
+      localiseUrl,
+      organisationId,
+      registrationId
+    })
   ])
