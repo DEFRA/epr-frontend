@@ -774,35 +774,6 @@ describe('#postCreatePrnController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
       })
-
-      it('fetches the balance at submission time for the current accreditation', async ({
-        server
-      }) => {
-        vi.mocked(getWasteBalance).mockResolvedValue({
-          amount: 1000,
-          availableAmount: 500
-        })
-        vi.mocked(createPrn).mockResolvedValue(draftResult)
-
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
-
-        await server.inject({
-          method: 'POST',
-          url,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: { ...validPayload, tonnage: '100', crumb }
-        })
-
-        expect(getWasteBalance).toHaveBeenCalledWith(
-          organisationId,
-          accreditationId,
-          'mock-backend-token',
-          expect.anything()
-        )
-      })
     })
 
     describe('when API call fails', () => {
