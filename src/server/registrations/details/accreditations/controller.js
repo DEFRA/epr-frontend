@@ -1,3 +1,5 @@
+import { hasLedgerReadScope } from '#server/auth/scopes.js'
+
 import { buildViewModel } from './build-view-model.js'
 import { fetchAccreditationDetails } from './helpers/fetch-accreditation-details.js'
 
@@ -15,6 +17,9 @@ import { fetchAccreditationDetails } from './helpers/fetch-accreditation-details
  */
 
 /**
+ * The ledger section is offered on the same scope the ledger itself is gated
+ * on, so a session the backend would refuse the ledger is shown no section
+ * rather than an error.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const controller = {
@@ -32,12 +37,14 @@ export const controller = {
       accreditation,
       wasteBalance,
       reportingPeriods,
-      cadence
+      cadence,
+      ledgerEvents
     } = await fetchAccreditationDetails({
       organisationId,
       registrationId,
       accreditationId,
       backendToken,
+      canReadLedger: hasLedgerReadScope(request.auth.credentials),
       logger: request.logger
     })
 
@@ -50,6 +57,7 @@ export const controller = {
         wasteBalance,
         reportingPeriods,
         cadence,
+        ledgerEvents,
         localise: request.t,
         localiseUrl: request.localiseUrl
       })
