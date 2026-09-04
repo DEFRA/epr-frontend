@@ -31,6 +31,19 @@
         "wasteBalanceAvailable": "Waste balance available (tonnes)"
       }
     },
+    "registeredOnlyPeriod": {
+      "breadcrumb": "{{year}} Registered-only periods",
+      "heading": "{{year}} Registered-only periods",
+      "noData": "This registered-only period doesn’t have any data because this operator has been accredited since the start of the registration period.",
+      "returnToRegistration": "If you’d like to see the accreditation details please return to the registration details page."
+    },
+    "registeredOnlyPeriods": {
+      "actions": "Actions",
+      "heading": "Registered-only",
+      "none": "This registration holds no registered-only period.",
+      "period": "Period",
+      "view": "View reg-only period"
+    },
     "allOrganisations": "All organisations",
     "current": "Current",
     "period": "{{from}} to {{to}}",

@@ -37,6 +37,7 @@ const registration = {
   status: 'approved',
   material: 'plastic',
   reprocessingType: 'input',
+  dateRange: { validFrom: '2026-01-01', validTo: null },
   accreditations: [
     {
       id: 'acc-001',

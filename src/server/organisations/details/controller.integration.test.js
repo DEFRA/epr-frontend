@@ -91,6 +91,7 @@ const registrations = [
     status: 'approved',
     material: 'glass_re_melt',
     reprocessingType: 'input',
+    dateRange: { validFrom: null, validTo: null },
     accreditations: [
       {
         id: 'acc-001',
@@ -113,6 +114,7 @@ const registrations = [
     status: 'approved',
     material: 'paper',
     reprocessingType: null,
+    dateRange: { validFrom: null, validTo: null },
     accreditations: [],
     application: {
       orgName: 'Kirkby Plastics',
@@ -129,6 +131,7 @@ const registrations = [
     status: 'rejected',
     material: 'aluminium',
     reprocessingType: null,
+    dateRange: { validFrom: null, validTo: null },
     accreditations: [],
     application: {
       orgName: 'Kirkby Plastics',
