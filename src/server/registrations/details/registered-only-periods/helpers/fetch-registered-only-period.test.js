@@ -36,7 +36,6 @@ const params = {
   organisationId,
   registrationId,
   backendToken,
-  year: 2026,
   logger
 }
 
@@ -50,24 +49,24 @@ describe(fetchRegisteredOnlyPeriod, () => {
     error.mockClear()
   })
 
-  it('returns the registration alongside the quarters the year holds', async () => {
+  it('returns the registration alongside the reporting calendar', async () => {
     await expect(fetchRegisteredOnlyPeriod(params)).resolves.toStrictEqual({
       ...details,
+      cadence: 'quarterly',
       reportingPeriods: [firstQuarter]
     })
   })
 
-  // Left to itself the calendar answers the cadence the registration owes now,
-  // which for an operator since accredited is monthly - not the quarters this
-  // page is about.
-  it('asks the calendar for the page year, quarterly', async () => {
+  // The same address the operator's own reports page reads, asked nothing
+  // further: what a registration owes is the backend's to decide, and one
+  // endpoint answering both audiences is what keeps them agreeing.
+  it('asks the calendar the same question the operator page asks', async () => {
     await fetchRegisteredOnlyPeriod(params)
 
     expect(fetchReportingPeriods).toHaveBeenCalledWith(
       organisationId,
       registrationId,
-      backendToken,
-      { year: 2026, cadence: 'quarterly' }
+      backendToken
     )
   })
 
@@ -76,6 +75,7 @@ describe(fetchRegisteredOnlyPeriod, () => {
 
     await expect(fetchRegisteredOnlyPeriod(params)).resolves.toStrictEqual({
       ...details,
+      cadence: null,
       reportingPeriods: []
     })
   })
@@ -87,7 +87,7 @@ describe(fetchRegisteredOnlyPeriod, () => {
 
     expect(error).toHaveBeenCalledWith(
       expect.objectContaining({
-        message: expect.stringContaining('2026 quarterly calendar')
+        message: expect.stringContaining('reporting calendar')
       })
     )
   })

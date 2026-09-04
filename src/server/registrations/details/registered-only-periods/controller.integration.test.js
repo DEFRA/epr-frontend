@@ -18,6 +18,7 @@ import { fetchRegisteredOnlyPeriod } from './helpers/fetch-registered-only-perio
 
 /**
  * @import { RegisteredOnlyPeriodDetails } from './helpers/fetch-registered-only-period.js'
+ * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource } from '../helpers/types.js'
  */
@@ -82,6 +83,7 @@ const aSubmittedFirstQuarter = /** @type {ReportingPeriod} */ (
 /**
  * @param {{
  *   accreditations?: AccreditationResource[],
+ *   cadence?: CadenceValue | null,
  *   registrationNumber?: string | null,
  *   reportingPeriods?: ReportingPeriod[],
  *   validFrom?: string | null
@@ -90,10 +92,12 @@ const aSubmittedFirstQuarter = /** @type {ReportingPeriod} */ (
  */
 const registrationDetails = ({
   accreditations = [],
+  cadence = 'quarterly',
   registrationNumber = 'R26ER5001180041PL',
   reportingPeriods = [],
   validFrom = '2026-01-01'
 } = {}) => ({
+  cadence,
   reportingPeriods,
   organisation: asOrganisation({
     id: organisationId,

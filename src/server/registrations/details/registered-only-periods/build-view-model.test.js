@@ -6,6 +6,7 @@ import { buildViewModel } from './build-view-model.js'
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { AccreditationResource } from '../helpers/types.js'
+ * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
  */
@@ -92,6 +93,7 @@ const anAccreditation = (validFrom, validTo = null) =>
  *   organisation?: Organisation,
  *   registration?: RegistrationResource,
  *   accreditations?: AccreditationResource[],
+ *   cadence?: CadenceValue | null,
  *   reportingPeriods?: ReportingPeriod[],
  *   year?: number
  * }} [overrides]
@@ -100,6 +102,7 @@ const build = ({
   organisation,
   registration,
   accreditations,
+  cadence = 'quarterly',
   reportingPeriods,
   year
 } = {}) =>
@@ -107,6 +110,7 @@ const build = ({
     organisation: organisation ?? anOrganisation(),
     registration: registration ?? aRegistration(),
     accreditations: accreditations ?? [],
+    cadence,
     reportingPeriods: reportingPeriods ?? [],
     year: year ?? 2026,
     localise,
@@ -218,35 +222,27 @@ describe(buildViewModel, () => {
       ])
     })
 
-    it('shows a quarter the operator was registered-only for', () => {
-      const [row] = build({
-        accreditations: [anAccreditation('2026-07-01')],
-        reportingPeriods: [aQuarter(1)]
-      }).reports.rows
+    it('shows a quarter the calendar answered with', () => {
+      const [row] = build({ reportingPeriods: [aQuarter(1)] }).reports.rows
 
       expect(row?.[0]).toStrictEqual({ text: 'Quarter 1, 2026' })
       expect(row?.[1]).toStrictEqual({ text: '20 Apr 2026' })
     })
 
-    // Overlap, not containment: a quarter the operator was registered-only for
-    // even one day of is one they owed a registered-only report for.
-    it('keeps a quarter the accreditation began partway through', () => {
-      const rows = build({
-        accreditations: [anAccreditation('2026-02-15')],
-        reportingPeriods: [aQuarter(1), aQuarter(2)]
-      }).reports.rows
-
-      expect(rows.map((row) => row[0])).toStrictEqual([
-        { text: 'Quarter 1, 2026' }
-      ])
-    })
-
-    it('drops a quarter the operator held an accreditation throughout', () => {
+    // The calendar answers one cadence for the registration. Monthly periods
+    // are the accreditation page's to show, so they are not repeated here.
+    it('shows nothing where the registration currently owes monthly reports', () => {
       expect(
         build({
-          accreditations: [anAccreditation('2026-01-01')],
+          cadence: 'monthly',
           reportingPeriods: [aQuarter(1), aQuarter(2)]
         }).reports.rows
+      ).toStrictEqual([])
+    })
+
+    it('shows nothing where the calendar could not be read', () => {
+      expect(
+        build({ cadence: null, reportingPeriods: [aQuarter(1)] }).reports.rows
       ).toStrictEqual([])
     })
 

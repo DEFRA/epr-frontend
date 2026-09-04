@@ -130,26 +130,12 @@ const accreditedStretches = (accreditations, today) =>
 
 /**
  * Whether two stretches share at least one day.
- *
- * **Overlap, not containment.** A reporting period the operator was
- * registered-only for even one day of is one they owed a registered-only report
- * for, so a period straddling the day an accreditation began belongs to both
- * that accreditation and this page rather than being lost between them.
  * @param {Stretch} one
  * @param {Stretch} other
  * @returns {boolean}
  */
-export const overlaps = (one, other) =>
+const overlaps = (one, other) =>
   !isAfter(one.from, other.to) && !isBefore(one.to, other.from)
-
-/**
- * Whether a span of days touches any of the stretches given.
- * @param {Stretch[]} stretches
- * @param {Stretch} span
- * @returns {boolean}
- */
-export const overlapsAnyStretch = (stretches, span) =>
-  stretches.some((stretch) => overlaps(span, stretch))
 
 /**
  * Removes one occupied stretch from the stretches still unaccounted for. A

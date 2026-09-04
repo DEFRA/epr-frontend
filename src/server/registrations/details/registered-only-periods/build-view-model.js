@@ -8,14 +8,11 @@ import { buildStatusTagHtml } from '#server/reports/helpers/build-status-tag-htm
 import { formatPeriodLabelWithComma } from '#server/reports/helpers/format-period-label.js'
 import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitted-date-time.js'
 
-import {
-  overlapsAnyStretch,
-  registeredOnlyStretches
-} from '../helpers/registered-only.js'
+import { registeredOnlyStretches } from '../helpers/registered-only.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Stretch } from '../helpers/registered-only.js'
+ * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource, Localise } from '../helpers/types.js'
  * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
@@ -91,19 +88,6 @@ const toReportsHead = (localise) => [
 ]
 
 /**
- * Whether a reporting period falls inside a stretch the operator held a
- * registration and no accreditation over. The overlap rule, and the ordering of
- * the days it compares, both belong to the helper.
- * @param {Stretch[]} stretches
- * @returns {(period: ReportingPeriod) => boolean}
- */
-const withinAStretch = (stretches) => (period) =>
-  overlapsAnyStretch(stretches, {
-    from: period.startDate,
-    to: period.endDate
-  })
-
-/**
  * A regulator opens this page to read what happened lately, so the newest
  * period leads. The order the calendar answered in is not relied on.
  * @param {ReportingPeriod} a
@@ -149,14 +133,25 @@ const toActionCell = ({
 }
 
 /**
- * One row per quarter the operator owed a report for while registered-only.
+ * One row per quarter the calendar answered with.
+ *
+ * A registered-only operator reports quarterly and an accredited one monthly,
+ * so the calendar's cadence is what says which of the two regulator pages the
+ * periods belong on: quarterly here, monthly on the accreditation page. The
+ * calendar answers one cadence for the registration, so a page shown the other
+ * one lists nothing rather than showing periods that are not its to show.
+ *
+ * That is deliberately coarser than the rule liability will eventually follow —
+ * a suspended or cancelled stretch owes a registered-only report for the quarter
+ * it falls in, and the calendar does not yet say so. Deciding periods from
+ * status over time is its own ticket; this page shows what the operator is shown
+ * until then, rather than computing a second, disagreeing answer.
  * @param {{
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   organisationId: string,
  *   registrationId: string,
- *   reportingPeriods: ReportingPeriod[],
- *   stretches: Stretch[]
+ *   reportingPeriods: ReportingPeriod[]
  * }} params
  * @returns {TableRow[]}
  */
@@ -165,46 +160,43 @@ const toReportRows = ({
   localiseUrl,
   organisationId,
   registrationId,
-  reportingPeriods,
-  stretches
-}) =>
   reportingPeriods
-    .filter(withinAStretch(stretches))
-    .sort(mostRecentFirst)
-    .map((period) => {
-      const label = formatPeriodLabelWithComma(
-        period,
-        CADENCE.QUARTERLY,
-        localise
-      )
+}) =>
+  [...reportingPeriods].sort(mostRecentFirst).map((period) => {
+    const label = formatPeriodLabelWithComma(
+      period,
+      CADENCE.QUARTERLY,
+      localise
+    )
 
-      return [
-        { text: label },
-        { text: formatDateShort(period.dueDate) },
-        { text: formatSubmittedDateTime(period.report?.submittedAt) },
-        {
-          html: buildStatusTagHtml(
-            period.periodStatus,
-            localise,
-            period.submissionNumber
-          )
-        },
-        toActionCell({
-          label,
+    return [
+      { text: label },
+      { text: formatDateShort(period.dueDate) },
+      { text: formatSubmittedDateTime(period.report?.submittedAt) },
+      {
+        html: buildStatusTagHtml(
+          period.periodStatus,
           localise,
-          localiseUrl,
-          organisationId,
-          period,
-          registrationId
-        })
-      ]
-    })
+          period.submissionNumber
+        )
+      },
+      toActionCell({
+        label,
+        localise,
+        localiseUrl,
+        organisationId,
+        period,
+        registrationId
+      })
+    ]
+  })
 
 /**
  * @param {{
  *   organisation: Organisation,
  *   registration: RegistrationResource,
  *   accreditations: AccreditationResource[],
+ *   cadence: CadenceValue | null,
  *   reportingPeriods: ReportingPeriod[],
  *   year: number,
  *   localise: Localise,
@@ -216,6 +208,7 @@ export const buildViewModel = ({
   organisation,
   registration,
   accreditations,
+  cadence,
   reportingPeriods,
   year,
   localise,
@@ -230,13 +223,16 @@ export const buildViewModel = ({
     }
   )
 
-  // Computed once: it decides both whether the page holds anything and which
-  // of the year's quarters belong to it.
   const stretches = registeredOnlyStretches({
     dateRange: registration.dateRange,
     accreditations,
     year
   })
+
+  // The calendar answers one cadence for the registration. Quarterly is what a
+  // registered-only operator owes, so anything else belongs to the accreditation
+  // page rather than to this one.
+  const quarterlyPeriods = cadence === CADENCE.QUARTERLY ? reportingPeriods : []
 
   return {
     breadcrumbs: [
@@ -272,8 +268,7 @@ export const buildViewModel = ({
         localiseUrl,
         organisationId: organisation.id,
         registrationId: registration.id,
-        reportingPeriods,
-        stretches
+        reportingPeriods: quarterlyPeriods
       })
     }
   }

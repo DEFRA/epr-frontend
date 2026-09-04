@@ -69,14 +69,18 @@ export const controller = {
     const { organisationId, registrationId, year } = request.params
     const { backendToken } = request.auth.credentials
 
-    const { organisation, registration, accreditations, reportingPeriods } =
-      await fetchRegisteredOnlyPeriod({
-        organisationId,
-        registrationId,
-        backendToken,
-        year,
-        logger: request.logger
-      })
+    const {
+      organisation,
+      registration,
+      accreditations,
+      cadence,
+      reportingPeriods
+    } = await fetchRegisteredOnlyPeriod({
+      organisationId,
+      registrationId,
+      backendToken,
+      logger: request.logger
+    })
 
     // A well-formed year the registration never ran over is a page about
     // nothing, so it is not found rather than rendered empty.
@@ -94,6 +98,7 @@ export const controller = {
         organisation,
         registration,
         accreditations,
+        cadence,
         reportingPeriods,
         year,
         localise: request.t,

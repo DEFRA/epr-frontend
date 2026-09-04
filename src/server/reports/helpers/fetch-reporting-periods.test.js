@@ -79,46 +79,4 @@ describe(fetchReportingPeriods, () => {
       fetchReportingPeriods(organisationId, registrationId, backendToken)
     ).rejects.toThrow('Network error')
   })
-
-  // A caller reading a period that has closed names the year and cadence it
-  // wants, rather than taking the one the registration owes today.
-  it('asks for a named year and cadence', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await fetchReportingPeriods(organisationId, registrationId, backendToken, {
-      year: 2025,
-      cadence: 'quarterly'
-    })
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/calendar?year=2025&cadence=quarterly',
-      expect.any(Object)
-    )
-  })
-
-  it('asks for a year alone', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await fetchReportingPeriods(organisationId, registrationId, backendToken, {
-      year: 2025
-    })
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/calendar?year=2025',
-      expect.any(Object)
-    )
-  })
-
-  it('asks for a cadence alone', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await fetchReportingPeriods(organisationId, registrationId, backendToken, {
-      cadence: 'quarterly'
-    })
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/calendar?cadence=quarterly',
-      expect.any(Object)
-    )
-  })
 })
