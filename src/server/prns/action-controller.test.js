@@ -7,6 +7,8 @@ import {
   asIssuedToOrganisation,
   asPackagingRecyclingNote
 } from '#server/common/test-helpers/prn-fixtures.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import Boom from '@hapi/boom'
@@ -17,6 +19,14 @@ vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
+
+vi.mock(
+  import('#server/common/helpers/metrics/index.js'),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    journeyMetrics: { start: vi.fn(), end: vi.fn() }
+  })
+)
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -741,6 +751,30 @@ describe('#actionController', () => {
       const returnLink = getByText(main, /Return to PRN list/i)
       expect(returnLink).toBeDefined()
       expect(returnLink.getAttribute('href')).toBe(basePath)
+    })
+  })
+
+  describe('journey events', () => {
+    it('should record the issue journey start when the note can be issued', async ({
+      server
+    }) => {
+      await server.inject({ method: 'GET', url: actionUrl, auth: mockAuth })
+
+      expect(journeyMetrics.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.issuePrn,
+        prnId
+      )
+    })
+
+    it('should not record the issue journey start once the note is issued', async ({
+      server
+    }) => {
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnIssued)
+
+      await server.inject({ method: 'GET', url: actionUrl, auth: mockAuth })
+
+      expect(journeyMetrics.start).not.toHaveBeenCalled()
     })
   })
 })

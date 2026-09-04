@@ -1,6 +1,8 @@
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 
 const UPLOAD_CONFLICT_VIEW = 'summary-log/upload-conflict'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
@@ -42,6 +44,12 @@ export const submitSummaryLogController = {
           [summaryLogId]: responseData
         }
       })
+
+      await journeyMetrics.end(
+        request,
+        JOURNEY.uploadSummaryLog,
+        registrationId
+      )
 
       return h.redirect(redirectUrl)
     } catch (err) {

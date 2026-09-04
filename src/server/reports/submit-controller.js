@@ -24,6 +24,9 @@ import {
   getStatusTagClass
 } from './helpers/format-submission-status.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportAttempt } from './helpers/report-attempt.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { isResubmission } from './helpers/resubmission.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { buildValidationErrors } from './helpers/validation.js'
@@ -391,6 +394,12 @@ export const submitGetController = {
 
     const viewData = await buildViewData(request)
 
+    await journeyMetrics.start(
+      request,
+      JOURNEY.submitReport,
+      reportAttempt(request.params)
+    )
+
     return h.view('reports/submit', viewData)
   }
 }
@@ -458,6 +467,12 @@ export const submitPostController = {
       },
       transition,
       session.backendToken
+    )
+
+    await journeyMetrics.end(
+      request,
+      JOURNEY.submitReport,
+      reportAttempt(request.params)
     )
 
     return h.redirect(

@@ -15,6 +15,9 @@ import {
 } from './helpers/build-prn-detail-rows.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { buildPrnBasePath } from './helpers/fetch-prn-context.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -71,77 +74,37 @@ export const viewPostController = {
       request.params
     const session = request.auth.credentials
 
-    // Retrieve draft PRN data from session
     /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
 
     if (prnDraft?.id !== prnId) {
-      // No draft in session or ID mismatch - redirect to create page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+        `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create`
       )
     }
 
     try {
-      // Re-validate tonnage against Available Waste Balance before confirming
       const wasteBalanceMap = await fetchWasteBalances(
         organisationId,
         [accreditationId],
         session.backendToken
       )
-      const wasteBalance = wasteBalanceMap[accreditationId]
-      const availableAmount = wasteBalance?.availableAmount ?? 0
-
-      if (prnDraft.tonnage > availableAmount) {
-        // Tonnage exceeds available balance - cancel draft and redirect with error
-        request.logger.warn({
-          message: 'PRN tonnage exceeds available waste balance',
-          event: {
-            action: 'prn_tonnage_exceeds_balance',
-            reference: prnId,
-            reason: `tonnage=${prnDraft.tonnage} availableAmount=${availableAmount}`
-          }
-        })
-
-        await updatePrnStatus(
-          organisationId,
-          registrationId,
-          accreditationId,
-          prnId,
-          { status: 'discarded' },
-          session.backendToken
-        )
-
-        request.yar.clear('prnDraft')
-
-        return h.redirect(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create?error=insufficient_balance`
-        )
-      }
-
-      // Update PRN status from draft to awaiting_authorisation
-      const result = await updatePrnStatus(
+      const availableAmount =
+        wasteBalanceMap[accreditationId]?.availableAmount ?? 0
+      const prnParams = {
         organisationId,
         registrationId,
         accreditationId,
-        prnId,
-        { status: 'awaiting_authorisation' },
-        session.backendToken
-      )
+        prnId
+      }
 
-      // Clear draft and store for created page
-      request.yar.clear('prnDraft')
-      request.yar.set('prnCreated', {
-        id: result.id,
-        tonnage: result.tonnage,
-        material: result.material,
-        status: result.status,
-        wasteProcessingType: prnDraft.wasteProcessingType
-      })
-
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
-      )
+      return await (prnDraft.tonnage > availableAmount
+        ? discardDraftOverBalance(request, h, {
+            ...prnParams,
+            availableAmount,
+            prnDraft
+          })
+        : confirmDraft(request, h, { ...prnParams, prnDraft }))
     } catch (error) {
       if (error.isBoom) {
         throw error
@@ -159,6 +122,85 @@ export const viewPostController = {
       )
     }
   }
+}
+
+/**
+ * Discards a draft whose tonnage no longer fits the available waste balance.
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {PrnDetailParams & { availableAmount: number, prnDraft: PrnDraftSession }} params
+ */
+const discardDraftOverBalance = async (
+  request,
+  h,
+  {
+    organisationId,
+    registrationId,
+    accreditationId,
+    prnId,
+    availableAmount,
+    prnDraft
+  }
+) => {
+  request.logger.warn({
+    message: 'PRN tonnage exceeds available waste balance',
+    event: {
+      action: 'prn_tonnage_exceeds_balance',
+      reference: prnId,
+      reason: `tonnage=${prnDraft.tonnage} availableAmount=${availableAmount}`
+    }
+  })
+
+  await updatePrnStatus(
+    organisationId,
+    registrationId,
+    accreditationId,
+    prnId,
+    { status: 'discarded' },
+    request.auth.credentials.backendToken
+  )
+
+  request.yar.clear('prnDraft')
+
+  return h.redirect(
+    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance`
+  )
+}
+
+/**
+ * Moves a draft to awaiting authorisation, ending the create journey.
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {PrnDetailParams & { prnDraft: PrnDraftSession }} params
+ */
+const confirmDraft = async (
+  request,
+  h,
+  { organisationId, registrationId, accreditationId, prnId, prnDraft }
+) => {
+  const result = await updatePrnStatus(
+    organisationId,
+    registrationId,
+    accreditationId,
+    prnId,
+    { status: 'awaiting_authorisation' },
+    request.auth.credentials.backendToken
+  )
+
+  request.yar.clear('prnDraft')
+  request.yar.set('prnCreated', {
+    id: result.id,
+    tonnage: result.tonnage,
+    material: result.material,
+    status: result.status,
+    wasteProcessingType: prnDraft.wasteProcessingType
+  })
+
+  await journeyMetrics.end(request, JOURNEY.createPrn, accreditationId)
+
+  return h.redirect(
+    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/${prnId}/created`
+  )
 }
 
 /**
