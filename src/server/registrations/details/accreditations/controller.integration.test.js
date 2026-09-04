@@ -278,7 +278,7 @@ describe('the accreditation details page', () => {
       '20 Sept 2026',
       '15 Sept 2026, 4:09pm',
       'Submitted',
-      'View report August, 2026'
+      'View August, 2026'
     ])
     expect(body).toContain(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/8/submissions/1/view`

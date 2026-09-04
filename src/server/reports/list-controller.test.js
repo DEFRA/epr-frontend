@@ -821,7 +821,7 @@ describe('#listReportsController', () => {
         'Submitted',
         '',
         '',
-        'View report January, 2026'
+        'View January, 2026'
       ])
     })
   })
@@ -901,7 +901,7 @@ describe('#listReportsController', () => {
             'Submitted',
             '5 Feb 2026, 6:22pm',
             'Matt Davis',
-            'View report January, 2026'
+            'View January, 2026'
           ]
         ]
       })
@@ -1560,7 +1560,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchReportingPeriods).mockResolvedValue(resubmittedResponse)
     })
 
-    it('renders the period as Resubmitted with a green tag and View report in the Submitted table', async ({
+    it('renders the period as Resubmitted with a green tag and a View link in the Submitted table', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -1583,7 +1583,7 @@ describe('#listReportsController', () => {
             'Resubmitted',
             '5 Feb 2026, 6:22pm',
             'Matt Davis',
-            'View report January, 2026'
+            'View January, 2026'
           ]
         ]
       })
@@ -1593,7 +1593,7 @@ describe('#listReportsController', () => {
       )
       expect(tag?.classList.contains('govuk-tag--green')).toBe(true)
 
-      // View report must open the resubmission (submissionNumber 2), the report
+      // The View link must open the resubmission (submissionNumber 2), the report
       // that replaced the original, not the superseded submissionNumber 1.
       const viewLink = submittedTable?.querySelector('a.govuk-link')
       expect(viewLink?.getAttribute('href')).toBe(
@@ -1648,7 +1648,7 @@ describe('#listReportsController', () => {
           'Submitted',
           '5 Feb 2026, 6:22pm',
           'Matt Davis',
-          'View report January, 2026'
+          'View January, 2026'
         ]
       ])
       expect(
