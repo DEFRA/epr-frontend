@@ -4,9 +4,9 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * What every entry of a waste balance ledger states, whichever thing it
  * concerns.
  *
- * `balance` carries the running totals either side of the event. Only the
- * closing pair is declared, because the page shows the state each event left
- * behind rather than the state it found.
+ * `balance` carries the running totals either side of the event. Both pairs
+ * are declared, because the page states what an event moved as well as what it
+ * left behind, and the movement is the difference between the two.
  *
  * An actor carries an id and nothing else for certain. A machine writer has no
  * email, and a record written before a name was captured has no name, so the
@@ -15,13 +15,16 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  *   kind: string,
  *   createdAt: string,
  *   createdBy: { id: string, name?: string, email?: string },
- *   balance: { closing: { total: number, available: number } }
+ *   balance: {
+ *     opening: { total: number, available: number },
+ *     closing: { total: number, available: number }
+ *   }
  * }} LedgerEventCommon
  */
 
 /**
  * An entry that credits a submitted summary log. `creditTotal` is the total
- * the summary log itself states, not the amount the balance moved.
+ * the summary log itself states, which is not the amount the balance moved.
  * @typedef {LedgerEventCommon & {
  *   summaryLog: { creditTotal: number },
  *   prn?: never
@@ -30,8 +33,8 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 
 /**
  * An entry that concerns a single note. `tonnage` is the tonnage of the note
- * itself, not the amount the balance moved: accepting or rejecting a note
- * moves neither total.
+ * itself, which the page does not show: what it shows is the amount the
+ * balance moved, and issuing a note moves the available balance by nothing.
  * @typedef {LedgerEventCommon & {
  *   prn: { tonnage: number },
  *   summaryLog?: never

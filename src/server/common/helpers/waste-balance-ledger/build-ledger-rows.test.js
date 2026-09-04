@@ -16,6 +16,8 @@ const localise = (key, values) =>
   values ? `${key}(${JSON.stringify(values)})` : key
 
 /**
+ * Issuing a note settles an amount the balance was already holding back, so it
+ * takes the total down and leaves the available amount where it stood.
  * @param {Partial<PrnEvent>} [overrides]
  * @returns {PrnEvent}
  */
@@ -23,10 +25,29 @@ const buildEvent = (overrides = {}) => ({
   kind: 'prn-issued',
   createdAt: '2026-02-15T15:09:00.000Z',
   prn: { tonnage: 12.5 },
-  balance: { closing: { total: 100, available: 87.5 } },
+  balance: {
+    opening: { total: 100, available: 87.5 },
+    closing: { total: 87.5, available: 87.5 }
+  },
   createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' },
   ...overrides
 })
+
+/**
+ * Creating a note holds its tonnage back, so the available amount falls by it
+ * while the total stands.
+ * @param {Partial<PrnEvent>} [overrides]
+ * @returns {PrnEvent}
+ */
+const buildNoteCreatedEvent = (overrides = {}) =>
+  buildEvent({
+    kind: 'prn-created',
+    balance: {
+      opening: { total: 100, available: 100 },
+      closing: { total: 100, available: 87.5 }
+    },
+    ...overrides
+  })
 
 /**
  * A summary log states its credit where a note states its tonnage, so the
@@ -38,7 +59,10 @@ const buildSummaryLogEvent = (overrides = {}) => ({
   kind: 'summary-log-submitted',
   createdAt: '2026-01-04T09:00:00.000Z',
   summaryLog: { creditTotal: 40 },
-  balance: { closing: { total: 100, available: 87.5 } },
+  balance: {
+    opening: { total: 60, available: 47.5 },
+    closing: { total: 100, available: 87.5 }
+  },
   createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' },
   ...overrides
 })
@@ -74,7 +98,7 @@ describe(buildLedgerRows, () => {
     ])
   })
 
-  it('renders the six columns in order', () => {
+  it('renders the five columns in order', () => {
     const [row] = buildLedgerRows({
       events: [buildEvent()],
       localise,
@@ -84,11 +108,56 @@ describe(buildLedgerRows, () => {
     expect(cellsOf(row)).toStrictEqual([
       '15 February 2026, 3:09pm',
       'waste-balance-ledger:events.prn-issued({"noteType":"PRN"})',
-      '12.50',
-      '100.00',
+      'waste-balance-ledger:table.noMovement',
       '87.50',
       'Ada Lovelace (ada@example.com)'
     ])
+  })
+
+  it('right-aligns the two number columns, and only those', () => {
+    const [row] = buildLedgerRows({
+      events: [buildEvent()],
+      localise,
+      noteType: 'PRN'
+    })
+
+    expect(row?.map(({ format }) => format)).toStrictEqual([
+      undefined,
+      undefined,
+      'numeric',
+      'numeric',
+      undefined
+    ])
+  })
+
+  it('states what creating a note took out of the available balance', () => {
+    const [row] = buildLedgerRows({
+      events: [buildNoteCreatedEvent()],
+      localise,
+      noteType: 'PRN'
+    })
+
+    expect(cellsOf(row).at(2)).toBe('-12.50')
+  })
+
+  it('states what a submitted summary log added to the available balance', () => {
+    const [row] = buildLedgerRows({
+      events: [buildSummaryLogEvent()],
+      localise,
+      noteType: 'PRN'
+    })
+
+    expect(cellsOf(row).at(2)).toBe('+40.00')
+  })
+
+  it('says an event that moved the available balance by nothing moved nothing', () => {
+    const [row] = buildLedgerRows({
+      events: [buildEvent({ kind: 'prn-accepted' })],
+      localise,
+      noteType: 'PRN'
+    })
+
+    expect(cellsOf(row).at(2)).toBe('waste-balance-ledger:table.noMovement')
   })
 
   it('names the note type an exporter uses, so the event reads as a PERN', () => {
@@ -133,16 +202,6 @@ describe(buildLedgerRows, () => {
     expect(cellsOf(row).at(1)).toBe('some-later-kind')
   })
 
-  it('takes the tonnage of a summary log from the credit it raised', () => {
-    const [row] = buildLedgerRows({
-      events: [buildSummaryLogEvent()],
-      localise,
-      noteType: 'PRN'
-    })
-
-    expect(cellsOf(row).at(2)).toBe('40.00')
-  })
-
   it('names the system where the backfill wrote the event', () => {
     const [row] = buildLedgerRows({
       events: [buildEvent({ createdBy: { id: 'system', name: 'backfill' } })],
@@ -150,7 +209,7 @@ describe(buildLedgerRows, () => {
       noteType: 'PRN'
     })
 
-    expect(cellsOf(row).at(5)).toBe('waste-balance-ledger:systemActor')
+    expect(cellsOf(row).at(4)).toBe('waste-balance-ledger:systemActor')
   })
 
   it('names an actor that carries no email by name alone', () => {
@@ -160,7 +219,7 @@ describe(buildLedgerRows, () => {
       noteType: 'PRN'
     })
 
-    expect(cellsOf(row).at(5)).toBe('RPD')
+    expect(cellsOf(row).at(4)).toBe('RPD')
   })
 
   it('names an actor that carries no name by their email alone', () => {
@@ -172,7 +231,7 @@ describe(buildLedgerRows, () => {
       noteType: 'PRN'
     })
 
-    expect(cellsOf(row).at(5)).toBe('ada@example.com')
+    expect(cellsOf(row).at(4)).toBe('ada@example.com')
   })
 
   it('leaves Who empty where the actor carries neither a name nor an email', () => {
@@ -182,7 +241,7 @@ describe(buildLedgerRows, () => {
       noteType: 'PRN'
     })
 
-    expect(cellsOf(row).at(5)).toBe('')
+    expect(cellsOf(row).at(4)).toBe('')
   })
 
   it('returns no rows for a ledger that holds no events', () => {
