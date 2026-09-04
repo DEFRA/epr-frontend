@@ -50,8 +50,7 @@ const baseRegistration = {
   wasteProcessingType: 'exporter',
   registrationNumber: 'REG001234',
   status: 'approved',
-  validFrom: '2026-01-01',
-  validTo: '2027-01-01'
+  validFrom: '2026-01-01'
 }
 
 /** @type {Organisation} */

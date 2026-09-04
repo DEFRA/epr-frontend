@@ -288,6 +288,7 @@ describe('#context', () => {
           isEnabled: false,
           measurementId: '',
           pagePath: '/',
+          pageReferrer: null,
           returnUrl: '/',
           shouldAskConsent: false
         },
@@ -383,6 +384,7 @@ describe('#context cache', () => {
           isEnabled: false,
           measurementId: '',
           pagePath: '/',
+          pageReferrer: null,
           returnUrl: '/',
           shouldAskConsent: false
         },

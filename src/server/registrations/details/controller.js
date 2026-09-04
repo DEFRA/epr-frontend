@@ -22,7 +22,7 @@ export const controller = {
     const { organisationId, registrationId } = request.params
     const { backendToken } = request.auth.credentials
 
-    const { organisation, registration, accreditations, linkedAccreditation } =
+    const { organisation, registration, accreditations } =
       await fetchRegistrationDetails({
         organisationId,
         registrationId,
@@ -35,8 +35,6 @@ export const controller = {
         organisation,
         registration,
         accreditations,
-        linkedAccreditation,
-        credentials: request.auth.credentials,
         localise: request.t,
         localiseUrl: request.localiseUrl
       })

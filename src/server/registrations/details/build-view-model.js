@@ -1,27 +1,19 @@
 import { capitalize } from 'lodash-es'
 
-import { getDetailedMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { formatDate } from '#server/common/helpers/format-date.js'
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { hasLedgerReadScope } from '#server/auth/scopes.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
+
+import { toDateRange } from './helpers/date-range.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
- * @import { ScopeBearingCredentials } from '#server/auth/scopes.js'
- * @import { LinkedAccreditation } from './helpers/fetch-registration-details.js'
- * @import { AccreditationResource } from './helpers/types.js'
+ * @import { AccreditationResource, Localise } from './helpers/types.js'
  * @import { RegistrationResource, SiteAddress } from '#server/common/helpers/organisations/registration-resource.js'
  */
 
 /**
- * @typedef {(key: string, options?: Record<string, string>) => string} Localise
- */
-
-/**
- * @typedef {{ href: string, text: string }} RecordLink
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{ key: string, value: string } | { key: string, status: StatusTag }} SummaryRow
  * @typedef {{
@@ -35,28 +27,9 @@ import { paths } from '#server/paths.js'
  *   breadcrumbs: Crumb[],
  *   caption: string,
  *   pageTitle: string,
- *   recordLinks: RecordLink[],
  *   summaryRows: SummaryRow[]
  * }} RegistrationDetailsViewModel
  */
-
-/**
- * @param {{ validFrom: string | null, validTo: string | null }} dateRange
- * @param {Localise} localise
- * @returns {string}
- */
-const toDateRange = ({ validFrom, validTo }, localise) => {
-  if (!validFrom) {
-    return ''
-  }
-
-  const from = formatDate(validFrom)
-  const to = validTo
-    ? formatDate(validTo)
-    : localise('registrations:details:current')
-
-  return `${from} - ${to}`
-}
 
 /**
  * The reprocessing type is recorded when a registration is approved, so an
@@ -76,7 +49,7 @@ const toProcessingType = ({ reprocessingType, application }) =>
  * @returns {string}
  */
 const toMaterial = ({ material, application }) =>
-  getDetailedMaterialDisplayName(material ?? application.material)
+  getMaterialDisplayName(material ?? application.material)
 
 /**
  * @param {SiteAddress} address
@@ -166,59 +139,6 @@ const byMostRecentStart = (a, b) =>
   (b.dateRange.validFrom ?? '').localeCompare(a.dateRange.validFrom ?? '')
 
 /**
- * The records this registration keeps, on the terms the operator's own page
- * offers them.
- * @param {{
- *   registration: RegistrationResource,
- *   registrationPath: string,
- *   linkedAccreditation: LinkedAccreditation | null,
- *   credentials: ScopeBearingCredentials,
- *   localise: Localise,
- *   localiseUrl: (path: string) => string
- * }} params
- * @returns {RecordLink[]}
- */
-const toRecordLinks = ({
-  registration,
-  registrationPath,
-  linkedAccreditation,
-  credentials,
-  localise,
-  localiseUrl
-}) => {
-  const { noteTypePlural } = getNoteTypeDisplayNames({
-    wasteProcessingType: registration.application.wasteProcessingType
-  })
-  const recordsPath = linkedAccreditation
-    ? `${registrationPath}/accreditations/${linkedAccreditation.id}`
-    : registrationPath
-
-  /** @type {RecordLink[]} */
-  const links = []
-
-  if (linkedAccreditation?.isLive) {
-    links.push({
-      href: localiseUrl(`${recordsPath}/packaging-recycling-notes`),
-      text: localise('registrations:notes.manageReadOnly', { noteTypePlural })
-    })
-  }
-
-  links.push({
-    href: localiseUrl(`${registrationPath}/reports`),
-    text: localise('registrations:manageReportsReadOnly')
-  })
-
-  if (hasLedgerReadScope(credentials)) {
-    links.push({
-      href: localiseUrl(`${recordsPath}/waste-balance-ledger`),
-      text: localise('registrations:wasteBalanceLedger')
-    })
-  }
-
-  return links
-}
-
-/**
  * An organisation trading under another name is known by it, so that is the
  * name the regulator is shown.
  * @param {Organisation} organisation
@@ -232,8 +152,6 @@ const organisationName = ({ companyDetails }) =>
  *   organisation: Organisation,
  *   registration: RegistrationResource,
  *   accreditations: AccreditationResource[],
- *   linkedAccreditation: LinkedAccreditation | null,
- *   credentials: ScopeBearingCredentials,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
@@ -243,8 +161,6 @@ export const buildViewModel = ({
   organisation,
   registration,
   accreditations,
-  linkedAccreditation,
-  credentials,
   localise,
   localiseUrl
 }) => {
@@ -276,14 +192,6 @@ export const buildViewModel = ({
     pageTitle: registration.registrationNumber
       ? `${registration.registrationNumber}: ${heading}`
       : heading,
-    recordLinks: toRecordLinks({
-      registration,
-      registrationPath,
-      linkedAccreditation,
-      credentials,
-      localise,
-      localiseUrl
-    }),
     summaryRows: toSummaryRows(registration, localise)
   }
 }

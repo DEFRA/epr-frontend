@@ -1,0 +1,52 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-m govuk-!-margin-bottom-4">{{ caption }}</span>
+          {{ heading }}
+          {% if period %}
+            <span class="govuk-!-display-block govuk-!-font-size-36">{{ period }}</span>
+          {% endif %}
+        </h1>
+
+        {% set summaryListRows = [] %}
+        {% for row in summaryRows %}
+          {% if row.status %}
+            {% set value = { html: govukTag({ text: row.status.text, classes: row.status.classes }) } %}
+          {% else %}
+            {% set value = { text: row.value } %}
+          {% endif %}
+          {% set summaryListRows = summaryListRows.concat([{ key: { text: row.key }, value: value }]) %}
+        {% endfor %}
+
+        {{ govukSummaryList({ rows: summaryListRows }) }}
+
+        <h2 class="govuk-heading-m">{{ localise("registrations:details:accreditation:reports:heading") }}</h2>
+
+        {% if reports.rows | length > 0 %}
+          {{ govukTable({
+            attributes: { "data-testid": "reports-table" },
+            firstCellIsHeader: true,
+            head: reports.head,
+            rows: reports.rows
+          }) }}
+        {% else %}
+          <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise("registrations:details:accreditation:reports:none") }}</p>
+        {% endif %}
+
+        {% if ledger %}
+          <h2 class="govuk-heading-m">{{ localise("waste-balance-ledger:heading") }}</h2>
+          {% set ledgerRows = ledger.rows %}
+          {% include "partials/waste-balance-ledger/table.njk" %}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
