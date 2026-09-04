@@ -17,6 +17,9 @@ import { buildCreatePrnViewData } from './view-data.js'
 
 const MIN_TONNAGE = 1
 
+const CREATE_VIEW = 'prns/create'
+const ERROR_SUMMARY_TITLE_KEY = 'prns:errorSummaryTitle'
+
 const ERROR_KEYS = Object.freeze({
   notesTooLong: 'notesTooLong',
   recipientInvalid: 'recipientInvalid',
@@ -114,10 +117,59 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
   return {
     errors,
     errorSummary: {
-      title: localise('prns:errorSummaryTitle'),
+      title: localise(ERROR_SUMMARY_TITLE_KEY),
       list: errorList
     }
   }
+}
+
+/**
+ * Re-render the create form when the entered tonnage exceeds the
+ * available waste balance fetched at submission time.
+ * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
+ * @param {ResponseToolkit} h
+ * @param {Array<WasteOrganisation>} organisations
+ * @param {WasteBalance} wasteBalance
+ */
+async function handleInsufficientBalance(
+  request,
+  h,
+  organisations,
+  wasteBalance
+) {
+  const { organisationId, registrationId, accreditationId } = request.params
+  const session = request.auth.credentials
+  const { t: localise } = request
+
+  const message = localise('prns:insufficientBalanceError')
+
+  const errors = { tonnage: { text: message } }
+  const errorSummary = {
+    title: localise(ERROR_SUMMARY_TITLE_KEY),
+    list: [{ text: message, href: '#tonnage' }]
+  }
+
+  const { registration } = await getRequiredRegistrationWithAccreditation({
+    organisationId,
+    registrationId,
+    backendToken: session.backendToken,
+    accreditationId
+  })
+
+  const viewData = buildCreatePrnViewData(request, {
+    organisationId,
+    recipients: mapToSelectOptions(organisations),
+    registration,
+    registrationId,
+    wasteBalance
+  })
+
+  return h.view(CREATE_VIEW, {
+    ...viewData,
+    errors,
+    errorSummary,
+    formValues: request.payload
+  })
 }
 
 /**
@@ -146,8 +198,9 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
  * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
  * @param {ResponseToolkit} h
  * @param {Array<WasteOrganisation>} organisations
+ * @param {WasteBalance | null} wasteBalance - reused from the handler's submission-time fetch
  */
-async function handleInvalidRecipient(request, h, organisations) {
+async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
   const { organisationId, registrationId, accreditationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
@@ -159,24 +212,16 @@ async function handleInvalidRecipient(request, h, organisations) {
 
   const errors = { recipient: { text: message } }
   const errorSummary = {
-    title: localise('prns:errorSummaryTitle'),
+    title: localise(ERROR_SUMMARY_TITLE_KEY),
     list: [{ text: message, href: '#recipient' }]
   }
 
-  const [{ registration }, wasteBalance] = await Promise.all([
-    getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      backendToken: session.backendToken,
-      accreditationId
-    }),
-    getWasteBalance(
-      organisationId,
-      accreditationId,
-      session.backendToken,
-      request.logger
-    )
-  ])
+  const { registration } = await getRequiredRegistrationWithAccreditation({
+    organisationId,
+    registrationId,
+    backendToken: session.backendToken,
+    accreditationId
+  })
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
@@ -186,7 +231,7 @@ async function handleInvalidRecipient(request, h, organisations) {
     wasteBalance
   })
 
-  return h.view('prns/create', {
+  return h.view(CREATE_VIEW, {
     ...viewData,
     errors,
     errorSummary,
@@ -243,7 +288,7 @@ export const postController = {
         })
 
         return h
-          .view('prns/create', {
+          .view(CREATE_VIEW, {
             ...viewData,
             errors,
             errorSummary,
@@ -262,13 +307,30 @@ export const postController = {
     const session = request.auth.credentials
     const { tonnage, recipient, notes } = request.payload
 
-    const { organisations } =
-      await request.wasteOrganisationsService.getOrganisations()
+    const [{ organisations }, wasteBalance] = await Promise.all([
+      request.wasteOrganisationsService.getOrganisations(),
+      getWasteBalance(
+        organisationId,
+        accreditationId,
+        session.backendToken,
+        request.logger
+      )
+    ])
 
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      return handleInvalidRecipient(request, h, organisations)
+      return handleInvalidRecipient(request, h, organisations, wasteBalance)
+    }
+
+    // Pre-check tonnage against the available balance fetched at submission
+    // time. Fail open when the lookup is unavailable (wasteBalance is null);
+    // the confirm-time re-check remains as a later guard.
+    if (
+      wasteBalance &&
+      Number.parseInt(tonnage, 10) > wasteBalance.availableAmount
+    ) {
+      return handleInsufficientBalance(request, h, organisations, wasteBalance)
     }
 
     const issuedToOrganisation = {
@@ -327,6 +389,7 @@ export const postController = {
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { CreatePrnResponse } from './helpers/create-prn.js'
  * @import { PrnListParams } from './helpers/session-types.js'
  */
