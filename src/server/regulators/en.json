@@ -33,7 +33,7 @@
       "regulator": "Regulator",
       "status": "Organisation status",
       "actions": "Actions",
-      "view": "View organisation"
+      "view": "View"
     }
   },
   "serviceName": "Check reprocessed or exported packaging waste"

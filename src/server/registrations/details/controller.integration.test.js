@@ -285,13 +285,13 @@ describe('the registration details page a regulator reads', () => {
         'A26ER5001180114PL',
         '1 July 2026 to Current',
         'Approved',
-        'View accreditation A26ER5001180114PL'
+        'View A26ER5001180114PL'
       ],
       [
         'A26ER5001180097PL',
         '15 February to 31 March 2026',
         'Cancelled',
-        'View accreditation A26ER5001180097PL'
+        'View A26ER5001180097PL'
       ]
     ])
   })
@@ -323,7 +323,7 @@ describe('the registration details page a regulator reads', () => {
 
     expect(
       getByRole(body, 'link', {
-        name: /^View accreditation\s*A26ER5001180114PL$/
+        name: /^View\s*A26ER5001180114PL$/
       }).getAttribute('href')
     ).toBe(`${path}/accreditations/acc-002`)
   })

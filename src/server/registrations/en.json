@@ -11,7 +11,7 @@
       "none": "This registration holds no accreditation.",
       "number": "Accreditation number",
       "status": "Accreditation status",
-      "view": "View accreditation"
+      "view": "View"
     },
     "accreditation": {
       "breadcrumb": "Accreditation details",
