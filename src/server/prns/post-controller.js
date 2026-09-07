@@ -20,6 +20,13 @@ const MIN_TONNAGE = 1
 const CREATE_VIEW = 'prns/create'
 const ERROR_SUMMARY_TITLE_KEY = 'prns:errorSummaryTitle'
 
+// Contract shared with the backend: the create-draft route returns this code
+// in the 409 body when the requested tonnage exceeds the available balance.
+// The backend owns the rule; the frontend only renders its verdict. Until the
+// backend emits this code the branch is inert, so behaviour degrades to the
+// existing confirm-time check.
+const INSUFFICIENT_BALANCE_CODE = 'INSUFFICIENT_AVAILABLE_BALANCE'
+
 const ERROR_KEYS = Object.freeze({
   notesTooLong: 'notesTooLong',
   recipientInvalid: 'recipientInvalid',
@@ -124,12 +131,13 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
 }
 
 /**
- * Re-render the create form when the entered tonnage exceeds the
- * available waste balance fetched at submission time.
+ * Re-render the create form when the backend rejects draft creation because
+ * the entered tonnage exceeds the available waste balance. The balance passed
+ * in is used only to render the hint; the rejection decision is the backend's.
  * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
  * @param {ResponseToolkit} h
  * @param {Array<WasteOrganisation>} organisations
- * @param {WasteBalance} wasteBalance
+ * @param {WasteBalance | null} wasteBalance
  */
 async function handleInsufficientBalance(
   request,
@@ -323,16 +331,6 @@ export const postController = {
       return handleInvalidRecipient(request, h, organisations, wasteBalance)
     }
 
-    // Pre-check tonnage against the available balance fetched at submission
-    // time. Fail open when the lookup is unavailable (wasteBalance is null);
-    // the confirm-time re-check remains as a later guard.
-    if (
-      wasteBalance &&
-      Number.parseInt(tonnage, 10) > wasteBalance.availableAmount
-    ) {
-      return handleInsufficientBalance(request, h, organisations, wasteBalance)
-    }
-
     const issuedToOrganisation = {
       id: organisation.id,
       name: organisation.name,
@@ -367,6 +365,15 @@ export const postController = {
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${result.id}/view`
       )
     } catch (error) {
+      if (error.output?.payload?.code === INSUFFICIENT_BALANCE_CODE) {
+        return handleInsufficientBalance(
+          request,
+          h,
+          organisations,
+          wasteBalance
+        )
+      }
+
       if (error.isBoom) {
         throw error
       }
