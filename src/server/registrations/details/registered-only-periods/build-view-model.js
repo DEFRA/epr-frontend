@@ -23,10 +23,8 @@ import { registeredOnlyStretches } from '../helpers/registered-only.js'
  */
 
 /**
- * The ledger's own rows come from the shared builder, so this page states only
- * that it has a table to render. Declared here rather than imported from the
- * accreditation page beside it, whose copy is module-private: two pages
- * happening to render one partial is not a reason to couple them.
+ * `LedgerTable` is declared here rather than imported: the accreditation page's
+ * copy is module-private.
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
  * @typedef {TableCell[]} TableRow
  * @typedef {{ head: TableRow, rows: TableRow[] }} ReportsTable
@@ -202,16 +200,8 @@ const toReportRows = ({
   })
 
 /**
- * The year's own ledger, or no ledger at all where the session may not read
- * one. An empty ledger is still a ledger: the section says nothing has moved
- * the balance yet, which is a different answer from showing no section.
- *
- * The address carries no accreditation, which is what makes this the
- * registration's registered-only partition. That is also what leaves every
- * row's action cell empty, a registered-only ledger having no note to open.
- *
- * The registration cannot hold a balance while it is only registered, so the
- * rows say so rather than stating a running zero.
+ * The year's own ledger, or null where the session may not read one. An empty
+ * ledger is still a ledger - the section says nothing has moved it yet.
  * @param {{
  *   ledgerEvents: LedgerEvent[] | null | undefined,
  *   localise: Localise,
@@ -234,9 +224,8 @@ const toLedger = ({
     return null
   }
 
-  // This page reads a registration resource, which files the processing type
-  // under the application it came from rather than at the top level the domain
-  // model puts it.
+  // The resource files the processing type under its application, not at the
+  // top level the domain model uses.
   const { noteType } = getNoteTypeDisplayNames({
     wasteProcessingType: registration.application.wasteProcessingType
   })

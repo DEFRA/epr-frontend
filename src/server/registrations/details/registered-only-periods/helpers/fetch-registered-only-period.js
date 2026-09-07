@@ -66,12 +66,8 @@ const fetchCalendar = async ({
 }
 
 /**
- * The ledger the registration keeps before it is accredited, or null for a
- * session the backend granted no ledger scope: the backend would refuse the
- * read, and the page shows no ledger section to such a session anyway.
- *
- * Read from the address that names no accreditation, which is what makes it
- * the registered-only partition rather than an accreditation's own.
+ * The registered-only ledger, read from the address naming no accreditation,
+ * or null for a session the backend would refuse anyway.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
@@ -96,14 +92,10 @@ const fetchLedger = ({
     : Promise.resolve(null)
 
 /**
- * The organisation, registration and accreditations the page names, plus the
- * reporting calendar and the waste balance ledger. All three reads go out
- * together: neither the calendar nor the ledger depends on what the
- * registration says.
+ * The registration, the reporting calendar and the ledger, read together.
  *
- * The ledger is not caught the way the calendar is. A calendar this page could
- * not read costs it a table; a ledger it could not read costs it the record a
- * regulator opened the page for, so that failure fails the page.
+ * Unlike the calendar, a failed ledger read is not caught: it is the record the
+ * page exists to show.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,

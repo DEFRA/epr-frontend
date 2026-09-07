@@ -116,8 +116,6 @@ describe(fetchRegisteredOnlyPeriod, () => {
   })
 
   describe('the waste balance ledger', () => {
-    // The registered-only partition is the registration's own, so it is read
-    // from the address that names no accreditation.
     it('reads the ledger the registration keeps before it is accredited', async () => {
       await fetchRegisteredOnlyPeriod(params)
 
@@ -145,8 +143,6 @@ describe(fetchRegisteredOnlyPeriod, () => {
       expect(fetchLedgerEvents).not.toHaveBeenCalled()
     })
 
-    // Unlike the calendar beside it, the ledger is what a regulator opens this
-    // page for, so a page without it would be missing its point.
     it('fails the page for a ledger it could not read', async () => {
       const err = new Error('ledger unavailable')
       vi.mocked(fetchLedgerEvents).mockRejectedValue(err)

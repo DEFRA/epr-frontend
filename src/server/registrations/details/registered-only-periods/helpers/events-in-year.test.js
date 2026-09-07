@@ -7,9 +7,7 @@ import { describe, expect, it } from 'vitest'
 import { eventsInYear } from './events-in-year.js'
 
 /**
- * A registered-only ledger holds submissions and nothing else, so every event
- * a test here builds is one. The backend writes each zero-delta, which is the
- * shape the page reads them in.
+ * A registered-only submission, which the backend writes zero-delta.
  * @param {string} createdAt
  * @returns {LedgerEvent}
  */

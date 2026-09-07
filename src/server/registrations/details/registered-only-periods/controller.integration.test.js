@@ -50,8 +50,7 @@ const regulator = buildMockAuth({
   ...sessionIdentity(IDENTITIES.regulator)
 })
 
-// Every regulator holds the ledger scope today, so a session without it is
-// only reachable here - which is why the page's refusal is proved here.
+// Every regulator holds the ledger scope, so this case is only reachable here.
 const regulatorWithoutLedgerScope = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-2', email: 'no.ledger@example.gov.uk' },
@@ -97,8 +96,7 @@ const aSubmittedFirstQuarter = /** @type {ReportingPeriod} */ (
 )
 
 /**
- * One submission, as a registered-only ledger records it: zero-delta, because
- * a registration holds no balance until it is accredited.
+ * A registered-only submission, which the backend writes zero-delta.
  * @param {string} [createdAt]
  * @returns {LedgerEvent}
  */
@@ -418,8 +416,7 @@ describe('the registered-only period page', () => {
 
   describe('the waste balance ledger', () => {
     /**
-     * The ledger read follows the session: the helper is asked to read it only
-     * where the session may, and answers none where it was not asked.
+     * Answers a ledger only where the session may read one.
      */
     const detailsForTheSession = () =>
       vi
@@ -430,8 +427,6 @@ describe('the registered-only period page', () => {
           })
         )
 
-    // The period holds no waste balance, so its ledger is named for what it
-    // does record and carries no balance column.
     it('lists the ledger beneath the reports, under its four headings', async ({
       server
     }) => {
@@ -452,9 +447,6 @@ describe('the registered-only period page', () => {
       ).toStrictEqual(['Date', 'Event', 'Who', 'Actions'])
     })
 
-    // A registration holds no balance while it is only registered, so the row
-    // carries neither balance figure, and offers no action for want of an
-    // accreditation to hang a note on.
     it('states who submitted what, and nothing of a balance', async ({
       server
     }) => {
@@ -498,8 +490,6 @@ describe('the registered-only period page', () => {
       ).not.toBeNull()
     })
 
-    // The whole page is "this period holds no data", and a ledger beneath that
-    // would contradict it.
     it('shows no ledger at all where the year holds no registered-only time', async ({
       server
     }) => {

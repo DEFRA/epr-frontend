@@ -362,10 +362,7 @@ describe(buildLedgerRows, () => {
 
   describe('a ledger that holds no balance', () => {
     /**
-     * What a registered-only submission looks like on the wire. The backend
-     * writes one zero-delta: it credits nothing, and leaves the balance where
-     * it found it, because a registration has no balance until it is
-     * accredited.
+     * A registered-only submission, which the backend writes zero-delta.
      * @returns {SummaryLogEvent}
      */
     const buildRegisteredOnlyEvent = () =>
@@ -378,8 +375,7 @@ describe(buildLedgerRows, () => {
       })
 
     /**
-     * The registered-only partition is addressed without an accreditation, so
-     * that is how its rows are built.
+     * Rows as the registered-only partition builds them: no accreditation.
      * @param {Partial<Parameters<typeof buildLedgerRows>[0]>} [overrides]
      * @returns {TableCell[][]}
      */

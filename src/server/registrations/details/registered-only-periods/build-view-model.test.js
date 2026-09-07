@@ -91,8 +91,7 @@ const anAccreditation = (validFrom, validTo = null) =>
   })
 
 /**
- * One submission, as a registered-only ledger records it: zero-delta, because
- * a registration holds no balance until it is accredited.
+ * A registered-only submission, which the backend writes zero-delta.
  * @param {string} [createdAt]
  * @returns {LedgerEvent}
  */
@@ -360,10 +359,6 @@ describe(buildViewModel, () => {
       ])
     })
 
-    // A registration holds no balance until it is accredited, so the row
-    // carries neither balance column - the tonnage column being the movement
-    // in that balance rather than what the log reported. Its action cell is
-    // empty for want of an accreditation to hang a note on.
     it('carries no balance columns and no action for a registered-only row', () => {
       const ledger = build({ ledgerEvents: [aLedgerEvent()] }).ledger
 

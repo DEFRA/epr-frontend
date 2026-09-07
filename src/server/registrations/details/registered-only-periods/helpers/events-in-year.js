@@ -3,21 +3,11 @@
  */
 
 /**
- * The events a registered-only ledger recorded during one year.
+ * The events a registered-only ledger recorded during one UTC year. The
+ * backend answers the partition whole, and this page is one page per year.
  *
- * A ledger is partitioned by accreditation and not by year, so the backend
- * answers the registered-only partition whole. This page is one page per
- * calendar year, so the narrowing is done here.
- *
- * The year is read in UTC, matching every other year this page takes off a
- * stored value. `createdAt` is a full ISO datetime rather than a bare date, so
- * it is parsed rather than compared as a string — unlike the day bounds in
- * `registered-only.js`, which are dates and sort as text.
- *
- * It narrows by when the submission was made, which is the only date a ledger
- * event carries. That is not the period the submission reports on: a log for
- * the last quarter of one year, sent in January, belongs to the year it was
- * sent in as far as this page is concerned.
+ * Narrows on when the submission was made - the only date an event carries -
+ * not the period it reports on.
  * @param {{ events: LedgerEvent[], year: number }} params
  * @returns {LedgerEvent[]}
  */
