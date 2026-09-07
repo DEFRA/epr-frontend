@@ -31,11 +31,13 @@
     }) }}
     {% endif %}
 
-    {{ appSatisfactionSurvey(satisfactionSurvey.summaryLog) }}
-
     <p class="govuk-body">
       <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
     </p>
   </div>
 </div>
+{% endblock %}
+
+{% block footerStart %}
+{{ appSatisfactionSurvey(satisfactionSurvey.summaryLog) }}
 {% endblock %}

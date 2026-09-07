@@ -1,0 +1,11 @@
+@use 'govuk-frontend' as govuk;
+
+// The feedback component is designed to sit against the footer, but our footer
+// opens with a solid brand-colour border, so the two bands meet with no gap.
+.app-satisfaction-survey {
+  margin-bottom: govuk.govuk-spacing(6);
+
+  .govuk-feedback__body p {
+    margin-bottom: 0;
+  }
+}

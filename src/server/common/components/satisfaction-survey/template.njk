@@ -1,5 +1,10 @@
+{% from "govuk/components/feedback/macro.njk" import govukFeedback %}
+
 {% if params.href %}
-<p class="govuk-body">
-  <a class="govuk-link" href="{{ params.href }}" target="_blank" rel="noopener noreferrer">{{ params.text }}</a>
-</p>
+{{ govukFeedback({
+  classes: 'app-satisfaction-survey',
+  titleText: params.title,
+  html: '<p class="govuk-body">' + params.body + '</p>' +
+        '<p class="govuk-body"><a class="govuk-link" href="' + params.href + '" target="_blank" rel="noopener noreferrer">' + params.linkText + '</a></p>'
+}) }}
 {% endif %}

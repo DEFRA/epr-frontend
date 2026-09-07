@@ -3,12 +3,13 @@ import { config } from '#config/config.js'
 import { satisfactionSurveyLinks } from '#server/common/satisfaction-survey/links.js'
 
 describe('#satisfactionSurveyLinks', () => {
-  const localise = (key) =>
-    key === 'common:satisfactionSurvey:link'
-      ? 'What do you think of this service? (opens in a new tab)'
-      : key
+  const localise = (key) => key
 
-  const linkText = 'What do you think of this service? (opens in a new tab)'
+  const copy = {
+    title: 'common:satisfactionSurvey:title',
+    body: 'common:satisfactionSurvey:body',
+    linkText: 'common:satisfactionSurvey:link'
+  }
 
   afterEach(() => {
     config.reset('satisfactionSurvey.isEnabled')
@@ -21,9 +22,9 @@ describe('#satisfactionSurveyLinks', () => {
     config.set('satisfactionSurvey.prnUrl', 'https://survey.example/prn')
 
     expect(satisfactionSurveyLinks(localise)).toStrictEqual({
-      prn: { href: '', text: linkText },
-      report: { href: '', text: linkText },
-      summaryLog: { href: '', text: linkText }
+      prn: { href: '', ...copy },
+      report: { href: '', ...copy },
+      summaryLog: { href: '', ...copy }
     })
   })
 
@@ -37,12 +38,9 @@ describe('#satisfactionSurveyLinks', () => {
     )
 
     expect(satisfactionSurveyLinks(localise)).toStrictEqual({
-      prn: { href: 'https://survey.example/prn', text: linkText },
-      report: { href: 'https://survey.example/report', text: linkText },
-      summaryLog: {
-        href: 'https://survey.example/summary-log',
-        text: linkText
-      }
+      prn: { href: 'https://survey.example/prn', ...copy },
+      report: { href: 'https://survey.example/report', ...copy },
+      summaryLog: { href: 'https://survey.example/summary-log', ...copy }
     })
   })
 
@@ -51,9 +49,9 @@ describe('#satisfactionSurveyLinks', () => {
     config.set('satisfactionSurvey.reportUrl', 'https://survey.example/report')
 
     expect(satisfactionSurveyLinks(localise)).toStrictEqual({
-      prn: { href: '', text: linkText },
-      report: { href: 'https://survey.example/report', text: linkText },
-      summaryLog: { href: '', text: linkText }
+      prn: { href: '', ...copy },
+      report: { href: 'https://survey.example/report', ...copy },
+      summaryLog: { href: '', ...copy }
     })
   })
 })

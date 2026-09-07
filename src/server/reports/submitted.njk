@@ -31,15 +31,13 @@
       </a>
     </p>
 
-    {% if satisfactionSurvey.report.href %}
-    <h2 class="govuk-heading-m">{{ nextStepsHeading }}</h2>
-
-    {{ appSatisfactionSurvey(satisfactionSurvey.report) }}
-    {% endif %}
-
     <p class="govuk-body">
       <a href="{{ returnToReportsLink.href }}" class="govuk-link">{{ returnToReportsLink.text }}</a>
     </p>
   </div>
 </div>
+{% endblock %}
+
+{% block footerStart %}
+{{ appSatisfactionSurvey(satisfactionSurvey.report) }}
 {% endblock %}

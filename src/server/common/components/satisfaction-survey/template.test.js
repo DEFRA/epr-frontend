@@ -3,18 +3,62 @@ import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import { renderComponentDom } from '#server/common/test-helpers/component-helpers.js'
 
 describe('satisfaction survey component', () => {
-  const linkText = 'What do you think of this service? (opens in a new tab)'
+  const title = 'Help us improve this service'
+  const body = 'Tell us about your experience using this service.'
+  const linkText = 'Give us your feedback (opens in a new tab)'
 
   /**
    * @param {string} href
    */
   const render = (href) =>
-    renderComponentDom('satisfaction-survey', { href, text: linkText })
+    renderComponentDom('satisfaction-survey', { href, title, body, linkText })
 
-  it('should ask the user what they think, and say the survey opens a new tab', () => {
-    const body = render('https://survey.example/report')
+  it('should invite the user to help improve the service', () => {
+    const dom = render('https://survey.example/report')
 
-    expect(getByText(body, linkText)).toBeDefined()
+    expect(getByRole(dom, 'heading', { level: 2, name: title })).toBeDefined()
+  })
+
+  it('should say what the feedback is for alongside the link', () => {
+    const dom = render('https://survey.example/report')
+
+    expect(getByText(dom, /Tell us about your experience/)).toBeDefined()
+  })
+
+  it('should set the body as govuk body text, which the html param does not do for us', () => {
+    const dom = render('https://survey.example/report')
+    const paragraph = getByText(dom, /Tell us about your experience/)
+
+    expect({
+      tag: paragraph.tagName,
+      className: paragraph.className
+    }).toStrictEqual({ tag: 'P', className: 'govuk-body' })
+  })
+
+  it('should put the link on its own line, so it cannot wrap mid-sentence', () => {
+    const dom = render('https://survey.example/report')
+    const bodyParagraph = getByText(dom, /Tell us about your experience/)
+    const linkParagraph = getByRole(dom, 'link', {
+      name: linkText
+    }).parentElement
+
+    expect({
+      linkIsInItsOwnParagraph: linkParagraph !== bodyParagraph,
+      linkParagraphClass: linkParagraph.className,
+      bodyParagraphHoldsNoLink: bodyParagraph.querySelector('a') === null
+    }).toStrictEqual({
+      linkIsInItsOwnParagraph: true,
+      linkParagraphClass: 'govuk-body',
+      bodyParagraphHoldsNoLink: true
+    })
+  })
+
+  it('should carry the service class that spaces it off the footer', () => {
+    const dom = render('https://survey.example/report')
+    const panel = getByRole(dom, 'heading', { level: 2, name: title })
+      .parentElement.parentElement.parentElement
+
+    expect(panel.classList.contains('app-satisfaction-survey')).toBe(true)
   })
 
   it('should send the user to the survey in a new tab without handing it the referrer', () => {
@@ -34,6 +78,6 @@ describe('satisfaction survey component', () => {
   })
 
   it('should ask nothing when there is no survey to send the user to', () => {
-    expect(queryByText(render(''), linkText)).toBeNull()
+    expect(queryByText(render(''), title)).toBeNull()
   })
 })
