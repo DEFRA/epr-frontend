@@ -34,6 +34,10 @@ vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+// The create endpoint (used here only to seed a draft) runs a submission-time
+// balance pre-check via getWasteBalance. Auto-mock it so that check fails open
+// during seeding; confirm-step balance is driven by fetchWasteBalances.
+vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))

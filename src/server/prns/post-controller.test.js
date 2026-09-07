@@ -611,6 +611,116 @@ describe('#postCreatePrnController', () => {
       })
     })
 
+    describe('consume backend insufficient-balance verdict', () => {
+      const insufficientBalanceMessage =
+        'The tonnage you entered exceeds your available waste balance'
+
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+      })
+
+      it('re-renders the create form when the backend rejects with INSUFFICIENT_AVAILABLE_BALANCE', async ({
+        server
+      }) => {
+        const boom = Boom.conflict('Insufficient available waste balance')
+        boom.output.payload.code = 'INSUFFICIENT_AVAILABLE_BALANCE'
+        vi.mocked(createPrn).mockRejectedValue(boom)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '600', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(createPrn).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          accreditationId,
+          expect.objectContaining({ tonnage: 600 }),
+          'mock-backend-token'
+        )
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(
+          getByText(errorSummary, insufficientBalanceMessage)
+        ).toBeDefined()
+
+        const inlineError = body.querySelector('#tonnage-error')
+        expect(inlineError.textContent).toContain(insufficientBalanceMessage)
+      })
+
+      it('preserves entered values and shows the balance hint when the backend rejects', async ({
+        server
+      }) => {
+        const boom = Boom.conflict('Insufficient available waste balance')
+        boom.output.payload.code = 'INSUFFICIENT_AVAILABLE_BALANCE'
+        vi.mocked(createPrn).mockRejectedValue(boom)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '600', crumb }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(body.querySelector('#tonnage').value).toBe('600')
+        const notesField = getByRole(main, 'textbox', { name: /notes/i })
+        expect(notesField.value).toBe('Test notes')
+        const selectedOption = body.querySelector('#recipient option[selected]')
+        expect(selectedOption.value).toBe(validPayload.recipient)
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText.textContent).toContain('500.00')
+      })
+
+      it('re-throws a conflict without the balance code, degrading to the confirm-time check', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockRejectedValue(
+          Boom.conflict('Some other conflict')
+        )
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '600', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.conflict)
+      })
+    })
+
     describe('when API call fails', () => {
       it('throws error when createPrn fails', async ({ server }) => {
         vi.mocked(createPrn).mockRejectedValue(new Error('API error'))
