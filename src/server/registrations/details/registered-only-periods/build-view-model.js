@@ -232,7 +232,6 @@ const toLedger = ({
 
   return {
     rows: buildLedgerRows({
-      accreditationId: undefined,
       events: eventsInYear({ events: ledgerEvents, year }),
       holdsABalance: false,
       localise,

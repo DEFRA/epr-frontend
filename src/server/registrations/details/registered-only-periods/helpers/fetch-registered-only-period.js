@@ -83,12 +83,7 @@ const fetchLedger = ({
   backendToken
 }) =>
   canReadLedger
-    ? fetchLedgerEvents({
-        organisationId,
-        registrationId,
-        accreditationId: undefined,
-        backendToken
-      })
+    ? fetchLedgerEvents({ organisationId, registrationId, backendToken })
     : Promise.resolve(null)
 
 /**

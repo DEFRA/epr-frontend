@@ -123,7 +123,7 @@ const notesCancelledBeforeIssue = (events) =>
  * none - when the event happened, that being the only other thing on the row
  * that tells it apart.
  * @param {{
- *   accreditationId: string | undefined,
+ *   accreditationId?: string,
  *   cancelledBeforeIssue: Set<string>,
  *   event: LedgerEvent,
  *   localise: Localise,
@@ -243,7 +243,7 @@ const actorName = ({ createdBy, localise }) => {
  * `holdsABalance` false drops both balance columns. The template's headings
  * follow the same flag, so a caller passing it must set it there too.
  * @param {{
- *   accreditationId: string | undefined,
+ *   accreditationId?: string,
  *   events: LedgerEvent[],
  *   holdsABalance?: boolean,
  *   localise: Localise,
