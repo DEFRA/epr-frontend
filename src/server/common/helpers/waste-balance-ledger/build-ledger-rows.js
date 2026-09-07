@@ -187,19 +187,28 @@ const movementOf = ({ balance, localise }) => {
 }
 
 /**
- * The running balance cell, for a ledger that has a balance to run.
+ * The two balance cells: what the event moved, and what it left behind.
  *
- * A registration keeps a ledger of its own before it is accredited, and that
+ * Both are facts about a balance — the tonnage column states the movement in
+ * the available amount, not the tonnage the summary log itself reported. A
+ * registration keeps a ledger of its own before it is accredited, and that
  * ledger has no balance at all: the backend writes each of its submissions
- * zero-delta. Such a ledger states no balance rather than stating one of
- * nothing, so the column is absent from it rather than empty in it — which is
- * why this answers a list of cells rather than a cell.
- * @param {{ balance: LedgerEvent['balance'], holdsABalance: boolean }} params
+ * zero-delta. So such a ledger states neither figure, and the columns are
+ * absent from it rather than empty in it — which is why this answers a list of
+ * cells rather than cells.
+ * @param {{
+ *   balance: LedgerEvent['balance'],
+ *   holdsABalance: boolean,
+ *   localise: Localise
+ * }} params
  * @returns {TableCell[]}
  */
-const availableCells = ({ balance, holdsABalance }) =>
+const balanceCells = ({ balance, holdsABalance, localise }) =>
   holdsABalance
-    ? [{ text: formatTonnage(balance.closing.available), format: 'numeric' }]
+    ? [
+        { text: movementOf({ balance, localise }), format: 'numeric' },
+        { text: formatTonnage(balance.closing.available), format: 'numeric' }
+      ]
     : []
 
 /**
@@ -240,9 +249,9 @@ const actorName = ({ createdBy, localise }) => {
  *
  * `holdsABalance` says whether the account is of a balance at all. A
  * registered-only ledger records what was submitted without ever holding one,
- * so it drops the balance column rather than filling it with a running zero,
- * and its rows are one cell shorter. The table's headings follow the same
- * flag, so a caller passing it must tell the template too. It defaults to
+ * so it drops both balance columns rather than filling them with a running
+ * zero, and its rows are two cells shorter. The table's headings follow the
+ * same flag, so a caller passing it must tell the template too. It defaults to
  * true: a ledger that has a balance is the ordinary case, and only the caller
  * that knows otherwise has to say so.
  * @param {{
@@ -272,11 +281,7 @@ export const buildLedgerRows = ({
   return [...events].reverse().map((event) => [
     { text: formatLedgerTimestamp(event.createdAt) },
     eventCell({ event, localise, noteType }),
-    {
-      text: movementOf({ balance: event.balance, localise }),
-      format: 'numeric'
-    },
-    ...availableCells({ balance: event.balance, holdsABalance }),
+    ...balanceCells({ balance: event.balance, holdsABalance, localise }),
     { text: actorName({ createdBy: event.createdBy, localise }) },
     actionCell({
       accreditationId,

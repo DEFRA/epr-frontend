@@ -432,7 +432,7 @@ describe('the registered-only period page', () => {
 
     // The period holds no waste balance, so its ledger is named for what it
     // does record and carries no balance column.
-    it('lists the tonnage ledger beneath the reports, under its five headings', async ({
+    it('lists the ledger beneath the reports, under its four headings', async ({
       server
     }) => {
       const { body } = await visit(server, regulator)
@@ -442,24 +442,20 @@ describe('the registered-only period page', () => {
         body.indexOf('data-testid="waste-balance-ledger-table"')
       )
       expect(
-        getByRole(document, 'heading', {
-          level: 2,
-          name: 'Waste tonnage ledger'
-        })
+        getByRole(document, 'heading', { level: 2, name: 'Ledger' })
       ).toBeDefined()
       expect(
         getAllByRole(
           getByTestId(document, 'waste-balance-ledger-table'),
           'columnheader'
         ).map((cell) => cell.textContent?.trim())
-      ).toStrictEqual(['Date', 'Event', 'Tonnage', 'Who', 'Actions'])
+      ).toStrictEqual(['Date', 'Event', 'Who', 'Actions'])
     })
 
     // A registration holds no balance while it is only registered, so the row
-    // says so rather than stating a running zero. Its movement reads the same
-    // way, the submission being written zero-delta, and it offers no action
-    // for want of an accreditation to hang a note on.
-    it('states no movement and no action for a submission', async ({
+    // carries neither balance figure, and offers no action for want of an
+    // accreditation to hang a note on.
+    it('states who submitted what, and nothing of a balance', async ({
       server
     }) => {
       const { body } = await visit(server, regulator)
@@ -472,7 +468,6 @@ describe('the registered-only period page', () => {
         getAllByRole(firstRow, 'cell').map((cell) => cell.textContent?.trim())
       ).toStrictEqual([
         'Summary log submitted',
-        'N/A',
         'Ada Lovelace (ada@example.com)',
         ''
       ])

@@ -28,10 +28,11 @@
           {% endif %}
 
           {% if ledger %}
-            {# A registered-only period holds no waste balance, so its ledger
-               is of tonnage alone - named for what it records, and without the
-               balance column the accreditation's ledger carries. #}
-            <h2 class="govuk-heading-m">{{ localise("waste-balance-ledger:tonnageHeading") }}</h2>
+            {# A registered-only period holds no waste balance, so this section
+               is named for the record itself rather than for a balance, and
+               carries neither of the balance columns the accreditation's
+               ledger does. #}
+            <h2 class="govuk-heading-m">{{ localise("waste-balance-ledger:registeredOnlyHeading") }}</h2>
             {% set ledgerRows = ledger.rows %}
             {% set ledgerHoldsABalance = false %}
             {% include "partials/waste-balance-ledger/table.njk" %}

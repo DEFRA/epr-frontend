@@ -14,6 +14,7 @@
   "noEvents": "Nothing has changed this waste balance yet.",
   "pageTitle": "Waste balance ledger",
   "registeredOnlyCaption": "Registered-only",
+  "registeredOnlyHeading": "Ledger",
   "systemActor": "System",
   "table": {
     "actions": "Actions",
@@ -23,6 +24,5 @@
     "noMovement": "N/A",
     "tonnage": "Tonnage",
     "who": "Who"
-  },
-  "tonnageHeading": "Waste tonnage ledger"
+  }
 }

@@ -1,20 +1,21 @@
 {% from "govuk/components/table/macro.njk" import govukTable %}
 
 {#
-  A ledger that holds no balance drops the balance column rather than filling
-  it with a running zero, so its headings are built the way its rows are - the
-  column is absent, not empty. `ledgerHoldsABalance` is unset for every caller
-  but the registered-only period page, which is why the test is against false
-  rather than for true.
+  A ledger that holds no balance drops both balance columns rather than filling
+  them with a running zero, so its headings are built the way its rows are -
+  the columns are absent, not empty. Tonnage is one of the two: it states the
+  movement in the available amount, not what the summary log reported.
+  `ledgerHoldsABalance` is unset for every caller but the registered-only
+  period page, which is why the test is against false rather than for true.
 #}
 {% set ledgerBalanceHead = [] if ledgerHoldsABalance == false else [
+  { text: localise("waste-balance-ledger:table.tonnage"), format: "numeric" },
   { text: localise("waste-balance-ledger:table.available"), format: "numeric" }
 ] %}
 
 {% set ledgerHead = [
   { text: localise("waste-balance-ledger:table.date") },
-  { text: localise("waste-balance-ledger:table.event") },
-  { text: localise("waste-balance-ledger:table.tonnage"), format: "numeric" }
+  { text: localise("waste-balance-ledger:table.event") }
 ].concat(ledgerBalanceHead).concat([
   { text: localise("waste-balance-ledger:table.who") },
   {
