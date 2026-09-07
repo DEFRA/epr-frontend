@@ -17,6 +17,16 @@ import { buildCreatePrnViewData } from './view-data.js'
 
 const MIN_TONNAGE = 1
 
+const CREATE_VIEW = 'prns/create'
+const ERROR_SUMMARY_TITLE_KEY = 'prns:errorSummaryTitle'
+
+// Contract shared with the backend: the create-draft route returns this code
+// in the 409 body when the requested tonnage exceeds the available balance.
+// The backend owns the rule; the frontend only renders its verdict. Until the
+// backend emits this code the branch is inert, so behaviour degrades to the
+// existing confirm-time check.
+const INSUFFICIENT_BALANCE_CODE = 'INSUFFICIENT_AVAILABLE_BALANCE'
+
 const ERROR_KEYS = Object.freeze({
   notesTooLong: 'notesTooLong',
   recipientInvalid: 'recipientInvalid',
@@ -114,10 +124,60 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
   return {
     errors,
     errorSummary: {
-      title: localise('prns:errorSummaryTitle'),
+      title: localise(ERROR_SUMMARY_TITLE_KEY),
       list: errorList
     }
   }
+}
+
+/**
+ * Re-render the create form when the backend rejects draft creation because
+ * the entered tonnage exceeds the available waste balance. The balance passed
+ * in is used only to render the hint; the rejection decision is the backend's.
+ * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
+ * @param {ResponseToolkit} h
+ * @param {Array<WasteOrganisation>} organisations
+ * @param {WasteBalance | null} wasteBalance
+ */
+async function handleInsufficientBalance(
+  request,
+  h,
+  organisations,
+  wasteBalance
+) {
+  const { organisationId, registrationId, accreditationId } = request.params
+  const session = request.auth.credentials
+  const { t: localise } = request
+
+  const message = localise('prns:insufficientBalanceError')
+
+  const errors = { tonnage: { text: message } }
+  const errorSummary = {
+    title: localise(ERROR_SUMMARY_TITLE_KEY),
+    list: [{ text: message, href: '#tonnage' }]
+  }
+
+  const { registration } = await getRequiredRegistrationWithAccreditation({
+    organisationId,
+    registrationId,
+    backendToken: session.backendToken,
+    accreditationId
+  })
+
+  const viewData = buildCreatePrnViewData(request, {
+    organisationId,
+    recipients: mapToSelectOptions(organisations),
+    registration,
+    registrationId,
+    wasteBalance
+  })
+
+  return h.view(CREATE_VIEW, {
+    ...viewData,
+    errors,
+    errorSummary,
+    formValues: request.payload
+  })
 }
 
 /**
@@ -146,8 +206,9 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
  * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
  * @param {ResponseToolkit} h
  * @param {Array<WasteOrganisation>} organisations
+ * @param {WasteBalance | null} wasteBalance - reused from the handler's submission-time fetch
  */
-async function handleInvalidRecipient(request, h, organisations) {
+async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
   const { organisationId, registrationId, accreditationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
@@ -159,24 +220,16 @@ async function handleInvalidRecipient(request, h, organisations) {
 
   const errors = { recipient: { text: message } }
   const errorSummary = {
-    title: localise('prns:errorSummaryTitle'),
+    title: localise(ERROR_SUMMARY_TITLE_KEY),
     list: [{ text: message, href: '#recipient' }]
   }
 
-  const [{ registration }, wasteBalance] = await Promise.all([
-    getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      backendToken: session.backendToken,
-      accreditationId
-    }),
-    getWasteBalance(
-      organisationId,
-      accreditationId,
-      session.backendToken,
-      request.logger
-    )
-  ])
+  const { registration } = await getRequiredRegistrationWithAccreditation({
+    organisationId,
+    registrationId,
+    backendToken: session.backendToken,
+    accreditationId
+  })
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
@@ -186,7 +239,7 @@ async function handleInvalidRecipient(request, h, organisations) {
     wasteBalance
   })
 
-  return h.view('prns/create', {
+  return h.view(CREATE_VIEW, {
     ...viewData,
     errors,
     errorSummary,
@@ -243,7 +296,7 @@ export const postController = {
         })
 
         return h
-          .view('prns/create', {
+          .view(CREATE_VIEW, {
             ...viewData,
             errors,
             errorSummary,
@@ -262,13 +315,20 @@ export const postController = {
     const session = request.auth.credentials
     const { tonnage, recipient, notes } = request.payload
 
-    const { organisations } =
-      await request.wasteOrganisationsService.getOrganisations()
+    const [{ organisations }, wasteBalance] = await Promise.all([
+      request.wasteOrganisationsService.getOrganisations(),
+      getWasteBalance(
+        organisationId,
+        accreditationId,
+        session.backendToken,
+        request.logger
+      )
+    ])
 
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      return handleInvalidRecipient(request, h, organisations)
+      return handleInvalidRecipient(request, h, organisations, wasteBalance)
     }
 
     const issuedToOrganisation = {
@@ -305,6 +365,15 @@ export const postController = {
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${result.id}/view`
       )
     } catch (error) {
+      if (error.output?.payload?.code === INSUFFICIENT_BALANCE_CODE) {
+        return handleInsufficientBalance(
+          request,
+          h,
+          organisations,
+          wasteBalance
+        )
+      }
+
       if (error.isBoom) {
         throw error
       }
@@ -327,6 +396,7 @@ export const postController = {
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { CreatePrnResponse } from './helpers/create-prn.js'
  * @import { PrnListParams } from './helpers/session-types.js'
  */
