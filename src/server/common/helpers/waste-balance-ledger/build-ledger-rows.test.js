@@ -359,4 +359,61 @@ describe(buildLedgerRows, () => {
   it('returns no rows for a ledger that holds no events', () => {
     expect(buildRows({ events: [] })).toStrictEqual([])
   })
+
+  describe('a ledger that holds no balance', () => {
+    /**
+     * What a registered-only submission looks like on the wire. The backend
+     * writes one zero-delta: it credits nothing, and leaves the balance where
+     * it found it, because a registration has no balance until it is
+     * accredited.
+     * @returns {SummaryLogEvent}
+     */
+    const buildRegisteredOnlyEvent = () =>
+      buildSummaryLogEvent({
+        summaryLog: { creditTotal: 0 },
+        balance: {
+          opening: { total: 0, available: 0 },
+          closing: { total: 0, available: 0 }
+        }
+      })
+
+    /**
+     * The registered-only partition is addressed without an accreditation, so
+     * that is how its rows are built.
+     * @param {Partial<Parameters<typeof buildLedgerRows>[0]>} [overrides]
+     * @returns {TableCell[][]}
+     */
+    const buildBalanceFreeRows = (overrides = {}) =>
+      buildRows({
+        accreditationId: undefined,
+        events: [buildRegisteredOnlyEvent()],
+        holdsABalance: false,
+        ...overrides
+      })
+
+    it('says the available balance is not applicable rather than nothing', () => {
+      const [row] = buildBalanceFreeRows()
+
+      expect(cellsOf(row).at(3)).toBe('waste-balance-ledger:table.noBalance')
+    })
+
+    it('leaves every other cell as it reads for any other ledger', () => {
+      const [row] = buildBalanceFreeRows()
+
+      expect(cellsOf(row)).toStrictEqual([
+        '4 January 2026, 9:00am',
+        'waste-balance-ledger:events.summary-log-submitted({"noteType":"PRN"})',
+        'waste-balance-ledger:table.noMovement',
+        'waste-balance-ledger:table.noBalance',
+        'Ada Lovelace (ada@example.com)',
+        ''
+      ])
+    })
+
+    it('still states a balance it holds one of, so no caller loses its numbers', () => {
+      const [row] = buildRows({ events: [buildEvent()] })
+
+      expect(cellsOf(row).at(3)).toBe('87.50')
+    })
+  })
 })

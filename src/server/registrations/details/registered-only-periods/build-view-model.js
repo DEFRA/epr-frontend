@@ -1,5 +1,7 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
 import { paths } from '#server/paths.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
@@ -8,10 +10,12 @@ import { buildStatusTagHtml } from '#server/reports/helpers/build-status-tag-htm
 import { formatPeriodLabelWithComma } from '#server/reports/helpers/format-period-label.js'
 import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitted-date-time.js'
 
+import { eventsInYear } from './helpers/events-in-year.js'
 import { registeredOnlyStretches } from '../helpers/registered-only.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource, Localise } from '../helpers/types.js'
@@ -19,15 +23,21 @@ import { registeredOnlyStretches } from '../helpers/registered-only.js'
  */
 
 /**
+ * The ledger's own rows come from the shared builder, so this page states only
+ * that it has a table to render. Declared here rather than imported from the
+ * accreditation page beside it, whose copy is module-private: two pages
+ * happening to render one partial is not a reason to couple them.
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
  * @typedef {TableCell[]} TableRow
  * @typedef {{ head: TableRow, rows: TableRow[] }} ReportsTable
+ * @typedef {{ rows: TableRow[] }} LedgerTable
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{
  *   breadcrumbs: Crumb[],
  *   caption: string,
  *   hasData: boolean,
  *   heading: string,
+ *   ledger: LedgerTable | null,
  *   pageTitle: string,
  *   reports: ReportsTable
  * }} RegisteredOnlyPeriodViewModel
@@ -192,12 +202,67 @@ const toReportRows = ({
   })
 
 /**
+ * The year's own ledger, or no ledger at all where the session may not read
+ * one. An empty ledger is still a ledger: the section says nothing has moved
+ * the balance yet, which is a different answer from showing no section.
+ *
+ * The address carries no accreditation, which is what makes this the
+ * registration's registered-only partition. That is also what leaves every
+ * row's action cell empty, a registered-only ledger having no note to open.
+ *
+ * The registration cannot hold a balance while it is only registered, so the
+ * rows say so rather than stating a running zero.
+ * @param {{
+ *   ledgerEvents: LedgerEvent[] | null | undefined,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   organisationId: string,
+ *   registration: RegistrationResource,
+ *   year: number
+ * }} params
+ * @returns {LedgerTable | null}
+ */
+const toLedger = ({
+  ledgerEvents,
+  localise,
+  localiseUrl,
+  organisationId,
+  registration,
+  year
+}) => {
+  if (!ledgerEvents) {
+    return null
+  }
+
+  // This page reads a registration resource, which files the processing type
+  // under the application it came from rather than at the top level the domain
+  // model puts it.
+  const { noteType } = getNoteTypeDisplayNames({
+    wasteProcessingType: registration.application.wasteProcessingType
+  })
+
+  return {
+    rows: buildLedgerRows({
+      accreditationId: undefined,
+      events: eventsInYear({ events: ledgerEvents, year }),
+      holdsABalance: false,
+      localise,
+      localiseUrl,
+      noteType,
+      organisationId,
+      registrationId: registration.id
+    })
+  }
+}
+
+/**
  * @param {{
  *   organisation: Organisation,
  *   registration: RegistrationResource,
  *   accreditations: AccreditationResource[],
  *   cadence: CadenceValue | null,
  *   reportingPeriods: ReportingPeriod[],
+ *   ledgerEvents: LedgerEvent[] | null | undefined,
  *   year: number,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
@@ -210,6 +275,7 @@ export const buildViewModel = ({
   accreditations,
   cadence,
   reportingPeriods,
+  ledgerEvents,
   year,
   localise,
   localiseUrl
@@ -257,6 +323,14 @@ export const buildViewModel = ({
     // the answer is carried rather than the stretches that produced it.
     hasData: stretches.length > 0,
     heading,
+    ledger: toLedger({
+      ledgerEvents,
+      localise,
+      localiseUrl,
+      organisationId: organisation.id,
+      registration,
+      year
+    }),
     // The year already identifies this page, so unlike its two siblings it
     // does not prefix a record number - that would put two identifiers in
     // front of a two-word noun.

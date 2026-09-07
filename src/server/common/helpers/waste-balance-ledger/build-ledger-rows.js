@@ -187,6 +187,30 @@ const movementOf = ({ balance, localise }) => {
 }
 
 /**
+ * The balance the event left behind, or the copy for a ledger that has no
+ * balance to leave.
+ *
+ * A registration keeps a ledger of its own before it is accredited, and that
+ * ledger carries no balance: the backend writes each of its submissions
+ * zero-delta. Formatting that as a number would read as a balance of nothing,
+ * which is a different claim from having none.
+ *
+ * It keeps its own copy key rather than borrowing `table.noMovement` beside
+ * it, which today reads the same: one says this event moved nothing, the other
+ * says this ledger never had anything to move.
+ * @param {{
+ *   balance: LedgerEvent['balance'],
+ *   holdsABalance: boolean,
+ *   localise: Localise
+ * }} params
+ * @returns {string}
+ */
+const availableOf = ({ balance, holdsABalance, localise }) =>
+  holdsABalance
+    ? formatTonnage(balance.closing.available)
+    : localise('waste-balance-ledger:table.noBalance')
+
+/**
  * A regulator sees every actor in full. The backfill writes as a machine, so
  * the page names the system rather than the job that ran.
  *
@@ -221,9 +245,16 @@ const actorName = ({ createdBy, localise }) => {
  * out to the note behind it and a note lives under an accreditation. The
  * registered-only partition is addressed without one, so it has nothing to
  * link at.
+ *
+ * `holdsABalance` says whether the account is of a balance at all. A
+ * registered-only ledger records what was submitted without ever holding a
+ * balance, so its rows state that rather than a running zero. It defaults to
+ * true: a ledger that has a balance is the ordinary case, and only the caller
+ * that knows otherwise has to say so.
  * @param {{
  *   accreditationId: string | undefined,
  *   events: LedgerEvent[],
+ *   holdsABalance?: boolean,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   noteType: 'PRN' | 'PERN',
@@ -235,6 +266,7 @@ const actorName = ({ createdBy, localise }) => {
 export const buildLedgerRows = ({
   accreditationId,
   events,
+  holdsABalance = true,
   localise,
   localiseUrl,
   noteType,
@@ -251,7 +283,11 @@ export const buildLedgerRows = ({
       format: 'numeric'
     },
     {
-      text: formatTonnage(event.balance.closing.available),
+      text: availableOf({
+        balance: event.balance,
+        holdsABalance,
+        localise
+      }),
       format: 'numeric'
     },
     { text: actorName({ createdBy: event.createdBy, localise }) },

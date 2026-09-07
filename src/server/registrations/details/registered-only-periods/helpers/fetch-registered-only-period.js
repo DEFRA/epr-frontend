@@ -1,9 +1,11 @@
+import { fetchLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
 import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 import { fetchRegistrationDetails } from '../../helpers/fetch-registration-details.js'
 
 /**
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { RegistrationDetails } from '../../helpers/fetch-registration-details.js'
@@ -17,7 +19,9 @@ import { fetchRegistrationDetails } from '../../helpers/fetch-registration-detai
  */
 
 /**
- * @typedef {RegistrationDetails & ReportingCalendar} RegisteredOnlyPeriodDetails
+ * @typedef {RegistrationDetails & ReportingCalendar & {
+ *   ledgerEvents: LedgerEvent[] | null
+ * }} RegisteredOnlyPeriodDetails
  */
 
 /**
@@ -62,22 +66,59 @@ const fetchCalendar = async ({
 }
 
 /**
- * The organisation, registration and accreditations the page names, plus the
- * reporting calendar. Both reads go out together: the calendar does not depend
- * on what the registration says.
+ * The ledger the registration keeps before it is accredited, or null for a
+ * session the backend granted no ledger scope: the backend would refuse the
+ * read, and the page shows no ledger section to such a session anyway.
+ *
+ * Read from the address that names no accreditation, which is what makes it
+ * the registered-only partition rather than an accreditation's own.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
  *   backendToken: string,
+ *   canReadLedger: boolean
+ * }} params
+ * @returns {Promise<LedgerEvent[] | null>}
+ */
+const fetchLedger = ({
+  canReadLedger,
+  organisationId,
+  registrationId,
+  backendToken
+}) =>
+  canReadLedger
+    ? fetchLedgerEvents({
+        organisationId,
+        registrationId,
+        accreditationId: undefined,
+        backendToken
+      })
+    : Promise.resolve(null)
+
+/**
+ * The organisation, registration and accreditations the page names, plus the
+ * reporting calendar and the waste balance ledger. All three reads go out
+ * together: neither the calendar nor the ledger depends on what the
+ * registration says.
+ *
+ * The ledger is not caught the way the calendar is. A calendar this page could
+ * not read costs it a table; a ledger it could not read costs it the record a
+ * regulator opened the page for, so that failure fails the page.
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   backendToken: string,
+ *   canReadLedger: boolean,
  *   logger: TypedLogger
  * }} params
  * @returns {Promise<RegisteredOnlyPeriodDetails>}
  */
 export const fetchRegisteredOnlyPeriod = async (params) => {
-  const [details, calendar] = await Promise.all([
+  const [details, calendar, ledgerEvents] = await Promise.all([
     fetchRegistrationDetails(params),
-    fetchCalendar(params)
+    fetchCalendar(params),
+    fetchLedger(params)
   ])
 
-  return { ...details, ...calendar }
+  return { ...details, ...calendar, ledgerEvents }
 }

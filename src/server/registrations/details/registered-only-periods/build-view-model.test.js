@@ -6,9 +6,11 @@ import { buildViewModel } from './build-view-model.js'
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { AccreditationResource } from '../helpers/types.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
+ * @import { TableRow } from './build-view-model.js'
  */
 
 const localise = createMockLocalise({
@@ -89,12 +91,30 @@ const anAccreditation = (validFrom, validTo = null) =>
   })
 
 /**
+ * One submission, as a registered-only ledger records it: zero-delta, because
+ * a registration holds no balance until it is accredited.
+ * @param {string} [createdAt]
+ * @returns {LedgerEvent}
+ */
+const aLedgerEvent = (createdAt = '2026-05-04T09:00:00.000Z') => ({
+  kind: 'summary-log-submitted',
+  createdAt,
+  summaryLog: { creditTotal: 0 },
+  balance: {
+    opening: { total: 0, available: 0 },
+    closing: { total: 0, available: 0 }
+  },
+  createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' }
+})
+
+/**
  * @param {{
  *   organisation?: Organisation,
  *   registration?: RegistrationResource,
  *   accreditations?: AccreditationResource[],
  *   cadence?: CadenceValue | null,
  *   reportingPeriods?: ReportingPeriod[],
+ *   ledgerEvents?: LedgerEvent[] | null,
  *   year?: number
  * }} [overrides]
  */
@@ -104,6 +124,7 @@ const build = ({
   accreditations,
   cadence = 'quarterly',
   reportingPeriods,
+  ledgerEvents = null,
   year
 } = {}) =>
   buildViewModel({
@@ -112,10 +133,24 @@ const build = ({
     accreditations: accreditations ?? [],
     cadence,
     reportingPeriods: reportingPeriods ?? [],
+    ledgerEvents,
     year: year ?? 2026,
     localise,
     localiseUrl: (path) => path
   })
+
+/**
+ * What each cell of one row holds, whether it holds it as text or as markup.
+ * @param {TableRow | undefined} row
+ * @returns {string[]}
+ */
+const cellsOf = (row) => {
+  if (!row) {
+    throw new Error('expected a row')
+  }
+
+  return row.map((cell) => ('text' in cell ? cell.text : cell.html))
+}
 
 describe(buildViewModel, () => {
   // The page runs a year up to today, so the clock decides whether it holds
@@ -282,6 +317,64 @@ describe(buildViewModel, () => {
 
     it('shows no rows where the calendar answered none', () => {
       expect(build().reports.rows).toStrictEqual([])
+    })
+  })
+
+  describe('the waste balance ledger', () => {
+    it('offers no ledger where none was read', () => {
+      expect(build({ ledgerEvents: null }).ledger).toBeNull()
+    })
+
+    // The page's own tests stub the fetch helper, so a caller that names no
+    // ledger at all reads the same as one that may not see it.
+    it('offers no ledger where none was named', () => {
+      expect(build({ ledgerEvents: undefined }).ledger).toBeNull()
+    })
+
+    // An empty ledger is still a ledger: the section says nothing has moved
+    // the balance yet, which is not the same as showing no section.
+    it('offers an empty ledger where nothing has moved the balance yet', () => {
+      expect(build({ ledgerEvents: [] }).ledger).toStrictEqual({ rows: [] })
+    })
+
+    it('leaves out the events of every other year', () => {
+      const ledger = build({
+        ledgerEvents: [aLedgerEvent('2025-05-04T09:00:00.000Z')],
+        year: 2026
+      }).ledger
+
+      expect(ledger).toStrictEqual({ rows: [] })
+    })
+
+    it('reads the newest event of the year first', () => {
+      const ledger = build({
+        ledgerEvents: [
+          aLedgerEvent('2026-02-01T09:00:00.000Z'),
+          aLedgerEvent('2026-05-04T09:00:00.000Z')
+        ]
+      }).ledger
+
+      expect(ledger?.rows.map((row) => cellsOf(row).at(0))).toStrictEqual([
+        '4 May 2026, 10:00am',
+        '1 February 2026, 9:00am'
+      ])
+    })
+
+    // A registration holds no balance until it is accredited, so the row says
+    // so rather than stating a running zero. Its movement reads the same way
+    // without this page asking, the submission being written zero-delta, and
+    // its action cell is empty for want of an accreditation to hang a note on.
+    it('states no balance, no movement and no action for a registered-only row', () => {
+      const ledger = build({ ledgerEvents: [aLedgerEvent()] }).ledger
+
+      expect(cellsOf(ledger?.rows.at(0))).toStrictEqual([
+        '4 May 2026, 10:00am',
+        'waste-balance-ledger:events.summary-log-submitted',
+        'waste-balance-ledger:table.noMovement',
+        'waste-balance-ledger:table.noBalance',
+        'Ada Lovelace (ada@example.com)',
+        ''
+      ])
     })
   })
 })
