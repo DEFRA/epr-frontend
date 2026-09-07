@@ -1,5 +1,7 @@
 import { config } from '#config/config.js'
 
+const TITLE_KEY = 'common:satisfactionSurvey:title'
+const BODY_KEY = 'common:satisfactionSurvey:body'
 const LINK_TEXT_KEY = 'common:satisfactionSurvey:link'
 
 /**
@@ -28,15 +30,24 @@ const href = (key) =>
  * }}
  */
 export const satisfactionSurveyLinks = (localise) => {
-  const text = localise(LINK_TEXT_KEY)
+  const copy = {
+    title: localise(TITLE_KEY),
+    body: localise(BODY_KEY),
+    linkText: localise(LINK_TEXT_KEY)
+  }
 
   return {
-    prn: { href: href('satisfactionSurvey.prnUrl'), text },
-    report: { href: href('satisfactionSurvey.reportUrl'), text },
-    summaryLog: { href: href('satisfactionSurvey.summaryLogUrl'), text }
+    prn: { href: href('satisfactionSurvey.prnUrl'), ...copy },
+    report: { href: href('satisfactionSurvey.reportUrl'), ...copy },
+    summaryLog: { href: href('satisfactionSurvey.summaryLogUrl'), ...copy }
   }
 }
 
 /**
- * @typedef {{ href: string, text: string }} SatisfactionSurveyLink
+ * @typedef {{
+ *   body: string,
+ *   href: string,
+ *   linkText: string,
+ *   title: string
+ * }} SatisfactionSurveyLink
  */

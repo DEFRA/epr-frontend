@@ -46,12 +46,16 @@ function mockRequest(options) {
 }
 
 // mockRequest carries no i18n, so localise passes the key straight through
-const surveyLinkText = 'common:satisfactionSurvey:link'
+const surveyCopy = {
+  title: 'common:satisfactionSurvey:title',
+  body: 'common:satisfactionSurvey:body',
+  linkText: 'common:satisfactionSurvey:link'
+}
 
 const noSurveys = () => ({
-  prn: { href: '', text: surveyLinkText },
-  report: { href: '', text: surveyLinkText },
-  summaryLog: { href: '', text: surveyLinkText }
+  prn: { href: '', ...surveyCopy },
+  report: { href: '', ...surveyCopy },
+  summaryLog: { href: '', ...surveyCopy }
 })
 
 describe('#context', () => {
