@@ -20,9 +20,9 @@
     "available": "Waste balance available (tonnes)",
     "date": "Date",
     "event": "Event",
-    "noBalance": "N/A",
     "noMovement": "N/A",
     "tonnage": "Tonnage",
     "who": "Who"
-  }
+  },
+  "tonnageHeading": "Waste tonnage ledger"
 }

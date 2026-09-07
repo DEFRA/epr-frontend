@@ -360,18 +360,17 @@ describe(buildViewModel, () => {
       ])
     })
 
-    // A registration holds no balance until it is accredited, so the row says
-    // so rather than stating a running zero. Its movement reads the same way
-    // without this page asking, the submission being written zero-delta, and
-    // its action cell is empty for want of an accreditation to hang a note on.
-    it('states no balance, no movement and no action for a registered-only row', () => {
+    // A registration holds no balance until it is accredited, so the row
+    // carries no balance column at all. Its movement reads as nothing without
+    // this page asking, the submission being written zero-delta, and its
+    // action cell is empty for want of an accreditation to hang a note on.
+    it('carries no balance column, no movement and no action for a registered-only row', () => {
       const ledger = build({ ledgerEvents: [aLedgerEvent()] }).ledger
 
       expect(cellsOf(ledger?.rows.at(0))).toStrictEqual([
         '4 May 2026, 10:00am',
         'waste-balance-ledger:events.summary-log-submitted',
         'waste-balance-ledger:table.noMovement',
-        'waste-balance-ledger:table.noBalance',
         'Ada Lovelace (ada@example.com)',
         ''
       ])

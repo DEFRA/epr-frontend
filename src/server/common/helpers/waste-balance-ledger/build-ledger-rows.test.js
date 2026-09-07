@@ -391,29 +391,31 @@ describe(buildLedgerRows, () => {
         ...overrides
       })
 
-    it('says the available balance is not applicable rather than nothing', () => {
-      const [row] = buildBalanceFreeRows()
-
-      expect(cellsOf(row).at(3)).toBe('waste-balance-ledger:table.noBalance')
-    })
-
-    it('leaves every other cell as it reads for any other ledger', () => {
+    it('drops the balance column rather than stating a running zero', () => {
       const [row] = buildBalanceFreeRows()
 
       expect(cellsOf(row)).toStrictEqual([
         '4 January 2026, 9:00am',
         'waste-balance-ledger:events.summary-log-submitted({"noteType":"PRN"})',
         'waste-balance-ledger:table.noMovement',
-        'waste-balance-ledger:table.noBalance',
         'Ada Lovelace (ada@example.com)',
         ''
       ])
+    })
+
+    it('marks the one number column numeric, and only that', () => {
+      const [row] = buildBalanceFreeRows()
+
+      expect(
+        row?.map((cell) => ('format' in cell ? cell.format : undefined))
+      ).toStrictEqual([undefined, undefined, 'numeric', undefined, undefined])
     })
 
     it('still states a balance it holds one of, so no caller loses its numbers', () => {
       const [row] = buildRows({ events: [buildEvent()] })
 
       expect(cellsOf(row).at(3)).toBe('87.50')
+      expect(cellsOf(row)).toHaveLength(6)
     })
   })
 })

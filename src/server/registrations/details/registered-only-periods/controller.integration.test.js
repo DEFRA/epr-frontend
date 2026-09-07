@@ -430,7 +430,9 @@ describe('the registered-only period page', () => {
           })
         )
 
-    it('lists the ledger beneath the reports, under its six headings', async ({
+    // The period holds no waste balance, so its ledger is named for what it
+    // does record and carries no balance column.
+    it('lists the tonnage ledger beneath the reports, under its five headings', async ({
       server
     }) => {
       const { body } = await visit(server, regulator)
@@ -442,7 +444,7 @@ describe('the registered-only period page', () => {
       expect(
         getByRole(document, 'heading', {
           level: 2,
-          name: 'Waste balance ledger'
+          name: 'Waste tonnage ledger'
         })
       ).toBeDefined()
       expect(
@@ -450,21 +452,14 @@ describe('the registered-only period page', () => {
           getByTestId(document, 'waste-balance-ledger-table'),
           'columnheader'
         ).map((cell) => cell.textContent?.trim())
-      ).toStrictEqual([
-        'Date',
-        'Event',
-        'Tonnage',
-        'Waste balance available (tonnes)',
-        'Who',
-        'Actions'
-      ])
+      ).toStrictEqual(['Date', 'Event', 'Tonnage', 'Who', 'Actions'])
     })
 
     // A registration holds no balance while it is only registered, so the row
     // says so rather than stating a running zero. Its movement reads the same
     // way, the submission being written zero-delta, and it offers no action
     // for want of an accreditation to hang a note on.
-    it('states no balance, no movement and no action for a submission', async ({
+    it('states no movement and no action for a submission', async ({
       server
     }) => {
       const { body } = await visit(server, regulator)
@@ -478,10 +473,16 @@ describe('the registered-only period page', () => {
       ).toStrictEqual([
         'Summary log submitted',
         'N/A',
-        'N/A',
         'Ada Lovelace (ada@example.com)',
         ''
       ])
+    })
+
+    it('names no waste balance anywhere on the page', async ({ server }) => {
+      const { body } = await visit(server, regulator)
+
+      expect(body).not.toContain('Waste balance available')
+      expect(body).not.toContain('Waste balance ledger')
     })
 
     it('says nothing has moved the balance where the ledger holds no events', async ({

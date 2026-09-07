@@ -187,28 +187,20 @@ const movementOf = ({ balance, localise }) => {
 }
 
 /**
- * The balance the event left behind, or the copy for a ledger that has no
- * balance to leave.
+ * The running balance cell, for a ledger that has a balance to run.
  *
  * A registration keeps a ledger of its own before it is accredited, and that
- * ledger carries no balance: the backend writes each of its submissions
- * zero-delta. Formatting that as a number would read as a balance of nothing,
- * which is a different claim from having none.
- *
- * It keeps its own copy key rather than borrowing `table.noMovement` beside
- * it, which today reads the same: one says this event moved nothing, the other
- * says this ledger never had anything to move.
- * @param {{
- *   balance: LedgerEvent['balance'],
- *   holdsABalance: boolean,
- *   localise: Localise
- * }} params
- * @returns {string}
+ * ledger has no balance at all: the backend writes each of its submissions
+ * zero-delta. Such a ledger states no balance rather than stating one of
+ * nothing, so the column is absent from it rather than empty in it — which is
+ * why this answers a list of cells rather than a cell.
+ * @param {{ balance: LedgerEvent['balance'], holdsABalance: boolean }} params
+ * @returns {TableCell[]}
  */
-const availableOf = ({ balance, holdsABalance, localise }) =>
+const availableCells = ({ balance, holdsABalance }) =>
   holdsABalance
-    ? formatTonnage(balance.closing.available)
-    : localise('waste-balance-ledger:table.noBalance')
+    ? [{ text: formatTonnage(balance.closing.available), format: 'numeric' }]
+    : []
 
 /**
  * A regulator sees every actor in full. The backfill writes as a machine, so
@@ -247,8 +239,10 @@ const actorName = ({ createdBy, localise }) => {
  * link at.
  *
  * `holdsABalance` says whether the account is of a balance at all. A
- * registered-only ledger records what was submitted without ever holding a
- * balance, so its rows state that rather than a running zero. It defaults to
+ * registered-only ledger records what was submitted without ever holding one,
+ * so it drops the balance column rather than filling it with a running zero,
+ * and its rows are one cell shorter. The table's headings follow the same
+ * flag, so a caller passing it must tell the template too. It defaults to
  * true: a ledger that has a balance is the ordinary case, and only the caller
  * that knows otherwise has to say so.
  * @param {{
@@ -282,14 +276,7 @@ export const buildLedgerRows = ({
       text: movementOf({ balance: event.balance, localise }),
       format: 'numeric'
     },
-    {
-      text: availableOf({
-        balance: event.balance,
-        holdsABalance,
-        localise
-      }),
-      format: 'numeric'
-    },
+    ...availableCells({ balance: event.balance, holdsABalance }),
     { text: actorName({ createdBy: event.createdBy, localise }) },
     actionCell({
       accreditationId,
