@@ -1,6 +1,5 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
-import { fetchDecemberPrnEligibility } from '#server/common/helpers/december-waste/fetch-december-prn-eligibility.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
@@ -11,6 +10,8 @@ import {
 import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { showDecemberWasteQuestion } from './helpers/show-december-waste-question.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
@@ -134,6 +135,43 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
 }
 
 /**
+ * Fetches everything `buildCreatePrnViewData` needs to re-render the create
+ * form, shared by the three re-render paths (insufficient balance, invalid
+ * recipient, validation failAction) so they can't drift on which calls they
+ * make.
+ * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
+ * @param {string} backendToken
+ * @returns {Promise<{ registration: object, isDecWastePrnEligible: boolean }>}
+ */
+async function fetchCreatePrnViewDataInputs(
+  { organisationId, registrationId, accreditationId },
+  backendToken
+) {
+  const [{ registration }, decemberPrnEligibility] = await Promise.all([
+    getRequiredRegistrationWithAccreditation({
+      organisationId,
+      registrationId,
+      backendToken,
+      accreditationId
+    }),
+    fetchDecemberPrnEligibility(
+      organisationId,
+      registrationId,
+      accreditationId,
+      backendToken
+    )
+  ])
+
+  return {
+    registration,
+    isDecWastePrnEligible: showDecemberWasteQuestion(
+      registration,
+      decemberPrnEligibility
+    )
+  }
+}
+
+/**
  * Re-render the create form when the backend rejects draft creation because
  * the entered tonnage exceeds the available waste balance. The balance passed
  * in is used only to render the hint; the rejection decision is the backend's.
@@ -148,7 +186,7 @@ async function handleInsufficientBalance(
   organisations,
   wasteBalance
 ) {
-  const { organisationId, registrationId, accreditationId } = request.params
+  const { organisationId, registrationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
 
@@ -160,20 +198,8 @@ async function handleInsufficientBalance(
     list: [{ text: message, href: '#tonnage' }]
   }
 
-  const [{ registration }, decemberPrnEligibility] = await Promise.all([
-    getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      backendToken: session.backendToken,
-      accreditationId
-    }),
-    fetchDecemberPrnEligibility(
-      organisationId,
-      registrationId,
-      accreditationId,
-      session.backendToken
-    )
-  ])
+  const { registration, isDecWastePrnEligible } =
+    await fetchCreatePrnViewDataInputs(request.params, session.backendToken)
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
@@ -181,7 +207,7 @@ async function handleInsufficientBalance(
     registration,
     registrationId,
     wasteBalance,
-    decemberPrnEligibility
+    isDecWastePrnEligible
   })
 
   return h.view(CREATE_VIEW, {
@@ -221,7 +247,7 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
  * @param {WasteBalance | null} wasteBalance - reused from the handler's submission-time fetch
  */
 async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
-  const { organisationId, registrationId, accreditationId } = request.params
+  const { organisationId, registrationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
 
@@ -236,20 +262,8 @@ async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
     list: [{ text: message, href: '#recipient' }]
   }
 
-  const [{ registration }, decemberPrnEligibility] = await Promise.all([
-    getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      backendToken: session.backendToken,
-      accreditationId
-    }),
-    fetchDecemberPrnEligibility(
-      organisationId,
-      registrationId,
-      accreditationId,
-      session.backendToken
-    )
-  ])
+  const { registration, isDecWastePrnEligible } =
+    await fetchCreatePrnViewDataInputs(request.params, session.backendToken)
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
@@ -257,7 +271,7 @@ async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
     registration,
     registrationId,
     wasteBalance,
-    decemberPrnEligibility
+    isDecWastePrnEligible
   })
 
   return h.view(CREATE_VIEW, {
@@ -324,7 +338,10 @@ export const postController = {
           registration,
           registrationId,
           wasteBalance,
-          decemberPrnEligibility
+          isDecWastePrnEligible: showDecemberWasteQuestion(
+            registration,
+            decemberPrnEligibility
+          )
         })
 
         return h

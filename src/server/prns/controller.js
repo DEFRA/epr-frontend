@@ -1,9 +1,10 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
-import { fetchDecemberPrnEligibility } from '#server/common/helpers/december-waste/fetch-december-prn-eligibility.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { showDecemberWasteQuestion } from './helpers/show-december-waste-question.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
@@ -62,7 +63,10 @@ export const controller = {
       registration,
       registrationId,
       wasteBalance,
-      decemberPrnEligibility
+      isDecWastePrnEligible: showDecemberWasteQuestion(
+        registration,
+        decemberPrnEligibility
+      )
     })
 
     await journeyMetrics.start(request, JOURNEY.createPrn, accreditationId)

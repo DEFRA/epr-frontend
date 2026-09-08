@@ -2,7 +2,7 @@ import { REPROCESSING_TYPE } from '#domain/organisations/model.js'
 
 /**
  * @import { Registration } from '#domain/organisations/registration.js'
- * @import { DecemberPrnEligibility } from '#server/common/helpers/december-waste/fetch-december-prn-eligibility.js'
+ * @import { DecemberPrnEligibility } from './fetch-december-prn-eligibility.js'
  */
 
 /**

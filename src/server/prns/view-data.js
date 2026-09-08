@@ -1,8 +1,7 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { showDecemberWasteQuestion } from '#server/common/helpers/december-waste/show-december-waste-question.js'
-import { NOTES_MAX_LENGTH } from './constants.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { NOTES_MAX_LENGTH } from './constants.js'
 
 /**
  * Build view data for the create PRN/PERN page
@@ -13,7 +12,7 @@ import { getRegistrationMaterialDisplayName } from '#server/common/helpers/mater
  * @param {Registration & { nation?: string }} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
  * @param {{availableAmount: number} | null} [options.wasteBalance]
- * @param {DecemberPrnEligibility} options.decemberPrnEligibility
+ * @param {boolean} options.isDecWastePrnEligible
  * @returns {object}
  */
 export function buildCreatePrnViewData(
@@ -24,7 +23,7 @@ export function buildCreatePrnViewData(
     registration,
     registrationId,
     wasteBalance,
-    decemberPrnEligibility
+    isDecWastePrnEligible
   }
 ) {
   const { t: localise } = request
@@ -40,10 +39,7 @@ export function buildCreatePrnViewData(
       })
     : null
 
-  const decemberWaste = showDecemberWasteQuestion(
-    registration,
-    decemberPrnEligibility
-  )
+  const decemberWaste = isDecWastePrnEligible
     ? {
         legend: localise('prns:create:decemberWasteLegend'),
         items: [
@@ -98,5 +94,4 @@ export function buildCreatePrnViewData(
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { Registration } from '#domain/organisations/registration.js'
- * @import { DecemberPrnEligibility } from '#server/common/helpers/december-waste/fetch-december-prn-eligibility.js'
  */
