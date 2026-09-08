@@ -63,6 +63,17 @@ const isAllowedDownloadUrl = (url) =>
   ALLOWED_URL_PATTERNS.some((pattern) => pattern.test(url))
 
 /**
+ * The name the backend signed the URL to be served under. Read from the URL
+ * rather than from the response because storage need not honour the override -
+ * the emulator the journey tests run against does not - and the name should
+ * not depend on which storage answered.
+ * @param {string} url
+ * @returns {string | null}
+ */
+const signedDisposition = (url) =>
+  new URL(url).searchParams.get('response-content-disposition')
+
+/**
  * @param {string} reason
  * @returns {never}
  */
@@ -133,13 +144,12 @@ export const summaryLogDownloadController = {
       )
     }
 
-    // The backend names the file when it signs, so the disposition is passed
-    // through rather than composed here.
     const response = h
       .response(Buffer.from(await file.arrayBuffer()))
       .type(file.headers.get('content-type') ?? DEFAULT_CONTENT_TYPE)
 
-    const disposition = file.headers.get('content-disposition')
+    const disposition =
+      signedDisposition(downloadUrl) ?? file.headers.get('content-disposition')
 
     return disposition
       ? response.header('Content-Disposition', disposition)

@@ -18,10 +18,12 @@ const registrationId = 'reg-001'
 const fileId = 'file-001'
 const path = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}/download`
 
-const signedUrl =
-  'https://re-ex-summary-logs.s3.eu-west-2.amazonaws.com/uploads/f.xlsx'
 const disposition =
   'attachment; filename="R26ER5000000002PA-2026-09-08-091530.xlsx"'
+
+const storageUrl =
+  'https://re-ex-summary-logs.s3.eu-west-2.amazonaws.com/uploads/f.xlsx'
+const signedUrl = `${storageUrl}?response-content-disposition=${encodeURIComponent(disposition)}`
 
 const operator = buildMockAuth()
 
@@ -91,17 +93,30 @@ describe('the summary log download', () => {
     expect(response.rawPayload.toString()).toBe('xlsx-bytes')
   })
 
-  // The backend names the file when it signs the URL, so composing a header
-  // here would throw that name away.
-  it('passes the storage disposition through untouched', async ({ server }) => {
+  // Storage need not honour the override the backend signed, and the emulator
+  // the journey tests run against does not.
+  it('names the file as the signed URL says, whatever storage answered', async ({
+    server
+  }) => {
+    storageAnswers({ contentDisposition: null })
+
     const response = await visit(server, regulator)
 
     expect(response.headers['content-disposition']).toBe(disposition)
   })
 
-  it('still serves the file where storage named no disposition', async ({
+  it('falls back to the storage disposition where the URL named none', async ({
     server
   }) => {
+    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(storageUrl)
+
+    const response = await visit(server, regulator)
+
+    expect(response.headers['content-disposition']).toBe(disposition)
+  })
+
+  it('still serves the file where neither named one', async ({ server }) => {
+    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(storageUrl)
     storageAnswers({ contentDisposition: null })
 
     const response = await visit(server, regulator)
