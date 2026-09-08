@@ -3,8 +3,9 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-xl">{{ localise('regulators:serviceName') }}</h1>
-      <p class="govuk-body">{{ localise('regulators:start:subheading') }}</p>
+      <h1 class="govuk-heading-xl">{{ localise('regulators:start:heading') }}</h1>
+      <p class="govuk-body">{{ localise('regulators:start:bodyOne') }}</p>
+      <p class="govuk-body">{{ localise('regulators:start:bodyTwo') }}</p>
       {{ govukButton({
         href: startNowHref,
         text: localise('regulators:start:startNow'),

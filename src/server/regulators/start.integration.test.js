@@ -8,7 +8,7 @@ import {
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole } from '@testing-library/dom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
@@ -56,14 +56,34 @@ describe('/regulators/start - GET integration', () => {
   ]
 
   it.for(sessions)(
-    'names the regulator service when $held',
+    'heads the page with what the regulator gets access to when $held',
     async ({ auth }, { server }) => {
       const { statusCode, body } = await open(server, '/regulators/start', auth)
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(getByRole(body, 'heading', { level: 1 }).textContent?.trim()).toBe(
-        'Check reprocessed or exported packaging waste'
+        'Access reprocessed or exported packaging waste data'
       )
+    }
+  )
+
+  it.for(sessions)(
+    'says who the service is for and what it holds when $held',
+    async ({ auth }, { server }) => {
+      const { body } = await open(server, '/regulators/start', auth)
+
+      expect(
+        getByText(
+          body,
+          'This service gives regulators from across the four nations access to UK packaging waste regulations operator data.'
+        )
+      ).toBeDefined()
+      expect(
+        getByText(
+          body,
+          'The service provides access to summary log, report, PRN and PERN data.'
+        )
+      ).toBeDefined()
     }
   )
 
