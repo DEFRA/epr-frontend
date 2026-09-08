@@ -10,9 +10,16 @@
  * backend grants it to an operator for its own organisation and to nobody
  * else. The per-request `organisation.write` is decided on each backend call
  * and never reaches a session.
+ *
+ * `organisationRead` reaches the organisation a request is about. The backend
+ * also grants it to an operator, per request, for their own active
+ * organisation — but that grant is decided from the request's organisation and
+ * `/v1/me` names none, so it never reaches a session. A session carrying it is
+ * a regulator's or an admin's.
  */
 export const SCOPES = Object.freeze({
   organisationLinkedWrite: 'organisation.linked.write',
+  organisationRead: 'organisation.read',
   organisationSearch: 'organisation.search',
   wasteBalanceLedgerRead: 'waste-balance.ledger.read'
 })
@@ -48,3 +55,13 @@ export const hasWriteScope = (credentials) =>
  */
 export const hasLedgerReadScope = (credentials) =>
   credentials?.scope?.includes(SCOPES.wasteBalanceLedgerRead) === true
+
+/**
+ * The single answer to "may this session read an organisation it does not
+ * belong to?". The backend gates the records such a page reads on this same
+ * scope, so a session without it would be refused there anyway.
+ * @param {ScopeBearingCredentials} [credentials]
+ * @returns {boolean}
+ */
+export const hasOrganisationReadScope = (credentials) =>
+  credentials?.scope?.includes(SCOPES.organisationRead) === true
