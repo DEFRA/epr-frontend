@@ -1,0 +1,72 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+
+{% macro notesTable(table) %}
+  {% if table.rows | length > 0 %}
+    <h3 class="govuk-heading-s">{{ table.heading }}</h3>
+    {{ govukTable({
+      attributes: { "data-testid": table.testId },
+      head: table.head,
+      rows: table.rows
+    }) }}
+  {% else %}
+    <p class="govuk-body app-colour-secondary" data-testid="{{ table.testId }}-none">{{ noneText }}</p>
+  {% endif %}
+{% endmacro %}
+
+{# `super()` keeps the phase banner and the breadcrumbs the layout draws; this
+   block only adds the back link beneath them. Overriding it outright would
+   silently drop both. #}
+{% block beforeContent %}
+  {{ super() }}
+  {{ govukBackLink({ text: localise("common:back"), href: backUrl }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="prns-detailed-view">
+
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-m govuk-!-margin-bottom-4">{{ caption }}</span>
+          {{ heading }}
+        </h1>
+
+        {% if isEmpty %}
+          <p class="govuk-body app-colour-secondary" data-testid="no-prns">{{ noneText }}</p>
+        {% else %}
+          <div class="govuk-tabs" data-module="govuk-tabs">
+            <h2 class="govuk-tabs__title">Contents</h2>
+            <ul class="govuk-tabs__list">
+              <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+                <a class="govuk-tabs__tab" href="#awaiting-action">{{ tabs.awaitingAction }}</a>
+              </li>
+              <li class="govuk-tabs__list-item">
+                <a class="govuk-tabs__tab" href="#issued">{{ tabs.issued }}</a>
+              </li>
+              <li class="govuk-tabs__list-item">
+                <a class="govuk-tabs__tab" href="#cancelled">{{ tabs.cancelled }}</a>
+              </li>
+            </ul>
+
+            <div class="govuk-tabs__panel" id="awaiting-action">
+              {% for table in awaitingAction %}
+                {{ notesTable(table) }}
+              {% endfor %}
+            </div>
+
+            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="issued">
+              {{ notesTable(issued) }}
+            </div>
+
+            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="cancelled">
+              {{ notesTable(cancelled) }}
+            </div>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

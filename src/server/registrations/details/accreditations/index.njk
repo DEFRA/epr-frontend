@@ -40,6 +40,22 @@
           <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise("registrations:details:accreditation:reports:none") }}</p>
         {% endif %}
 
+        <div class="epr-heading-with-action">
+          <h2 class="govuk-heading-m govuk-!-margin-bottom-0">{{ prns.heading }}</h2>
+          <a href="{{ prns.href }}" class="govuk-link" data-testid="prns-detailed-view-link">{{ localise("registrations:details:accreditation:prns:detailedView") }}</a>
+        </div>
+
+        {% if prns.rows | length > 0 %}
+          <h3 class="govuk-heading-s">{{ localise("registrations:details:accreditation:prns:mostRecent", { count: prns.count }) }}</h3>
+          {{ govukTable({
+            attributes: { "data-testid": "prns-table" },
+            head: prns.head,
+            rows: prns.rows
+          }) }}
+        {% else %}
+          <p class="govuk-body app-colour-secondary" data-testid="no-prns-summary">{{ prns.noneText }}</p>
+        {% endif %}
+
         {% if ledger %}
           <h2 class="govuk-heading-m">{{ localise("waste-balance-ledger:heading") }}</h2>
           {% set ledgerRows = ledger.rows %}

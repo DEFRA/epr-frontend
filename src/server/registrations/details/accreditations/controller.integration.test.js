@@ -90,6 +90,36 @@ const ledgerEvents = [
   }
 ]
 
+/** @type {AccreditationDetails['packagingRecyclingNotes']} */
+const packagingRecyclingNotes = [
+  {
+    id: 'prn-issued',
+    prnNumber: '240000123',
+    issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+    tonnage: 20,
+    material: 'plastic',
+    status: 'accepted',
+    createdAt: '2026-01-27T09:00:00.000Z',
+    issuedAt: '2026-01-28T09:00:00.000Z',
+    wasteProcessingType: 'reprocessor',
+    processToBeUsed: '',
+    isDecemberWaste: false
+  },
+  {
+    id: 'prn-draft',
+    prnNumber: null,
+    issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+    tonnage: 5,
+    material: 'plastic',
+    status: 'draft',
+    createdAt: '2026-02-02T09:00:00.000Z',
+    issuedAt: null,
+    wasteProcessingType: 'reprocessor',
+    processToBeUsed: '',
+    isDecemberWaste: false
+  }
+]
+
 /** @type {AccreditationDetails} */
 const accreditationDetails = {
   organisation: asOrganisation({
@@ -143,7 +173,8 @@ const accreditationDetails = {
       })
     )
   ],
-  ledgerEvents
+  ledgerEvents,
+  packagingRecyclingNotes
 }
 
 /**
@@ -424,6 +455,68 @@ describe('the accreditation details page', () => {
     const main = documentOf(body).querySelector('#main-content')
 
     expect(main?.querySelectorAll('button, form')).toHaveLength(0)
+  })
+
+  describe('the PRNs section', () => {
+    it('lists the notes the accreditation has issued, above the ledger', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      const table = getByTestId(documentOf(body), 'prns-table')
+
+      expect(textOf(getAllByRole(table, 'columnheader'))).toStrictEqual([
+        'Producer or compliance scheme',
+        'Status',
+        'Date',
+        'Tonnage',
+        'Actions'
+      ])
+
+      expect(body.indexOf('data-testid="prns-table"')).toBeLessThan(
+        body.indexOf('data-testid="waste-balance-ledger-table"')
+      )
+    })
+
+    it('shows a regulator no draft note among them', async ({ server }) => {
+      const { body } = await visit(server, regulator)
+
+      const rows = getAllByRole(
+        getByTestId(documentOf(body), 'prns-table'),
+        'row'
+      )
+
+      // One heading row and the one note a regulator may see.
+      expect(rows).toHaveLength(2)
+      expect(rows.at(1)?.textContent).toContain('Radar Compliance PLC')
+    })
+
+    it('opens the full list through a link rather than a button', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      const link = getByTestId(documentOf(body), 'prns-detailed-view-link')
+
+      expect(link.tagName).toBe('A')
+      expect(link.getAttribute('href')).toBe(
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+      )
+    })
+
+    it('says so where the accreditation has issued none', async ({
+      server
+    }) => {
+      vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+        ...accreditationDetails,
+        packagingRecyclingNotes: []
+      })
+
+      const { body } = await visit(server, regulator)
+
+      expect(body).toContain('data-testid="no-prns-summary"')
+      expect(body).not.toContain('data-testid="prns-table"')
+    })
   })
 
   it('offers a way back to the registration', async ({ server }) => {

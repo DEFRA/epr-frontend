@@ -1,3 +1,6 @@
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { controller as regulatorListController } from '#server/registrations/details/accreditations/packaging-recycling-notes/controller.js'
+
 import { actionController } from './action-controller.js'
 import {
   cancelGetController,
@@ -23,13 +26,41 @@ import { viewController, viewPostController } from './view-controller.js'
 const basePath =
   '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/packaging-recycling-notes'
 
+/**
+ * One address, two audiences. The address names an accreditation's notes, and
+ * who is reading does not change what it names — so a regulator gets a page
+ * written for them here rather than at an address of its own.
+ *
+ * Only this route forks. Create, view, delete, discard, cancel and issue are
+ * untouched, so a regulator reaching one of those lands where they land today.
+ * With `featureFlags.regulatorAccess` off, `readsAsARegulator` is false for
+ * everyone and every session gets the operator's list, which is what keeps the
+ * operator journey unchanged.
+ *
+ * It is also what makes the note page's back link right for a regulator with no
+ * change to `view-controller.js`: that link points here, and here is now their
+ * page.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const listRoute = {
+  /**
+   * @param {HapiRequest & { params: PrnListParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    return readsAsARegulator(request.auth.credentials)
+      ? regulatorListController.handler(request, h)
+      : listController.handler(request, h)
+  }
+}
+
 export const prns = {
   plugin: {
     name: 'prns',
     register(server) {
       server.route([
         {
-          ...listController,
+          ...listRoute,
           method: 'GET',
           path: basePath
         },
@@ -114,5 +145,7 @@ export const prns = {
 }
 
 /**
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { PrnListParams } from './helpers/session-types.js'
  */

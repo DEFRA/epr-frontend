@@ -11,6 +11,7 @@ import { buildViewModel } from './build-view-model.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod, ReportListItem } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+ * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
  * @import { AccreditationResource } from '../helpers/types.js'
  * @import { TableRow } from './build-view-model.js'
  */
@@ -24,6 +25,18 @@ const localise = createMockLocalise({
   'registrations:details:accreditation:reports:status': 'Status',
   'registrations:details:accreditation:reports:submissionDate':
     'Submission date',
+  'registrations:details:accreditation:prns:actions': 'Actions',
+  'registrations:details:accreditation:prns:date': 'Date',
+  'registrations:details:accreditation:prns:recipient':
+    'Producer or compliance scheme',
+  'registrations:details:accreditation:prns:status': 'Status',
+  'registrations:details:accreditation:prns:tonnage': 'Tonnage',
+  'registrations:details:accreditation:prns:view': 'View',
+  'registrations:details:accreditation:prns:heading': '{{noteTypePlural}}',
+  'registrations:details:accreditation:prns:none':
+    'This accreditation has issued no {{noteTypePlural}}.',
+  'prns:list:status:accepted': 'Accepted',
+  'prns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
   'registrations:details:accreditation:summary:number': 'Accreditation number',
   'registrations:details:accreditation:summary:status': 'Accreditation status',
   'registrations:details:accreditation:summary:wasteBalanceAvailable':
@@ -147,13 +160,15 @@ const summaryLogSubmitted = {
  * @param {WasteBalance | null} [wasteBalance]
  * @param {{ cadence: CadenceValue | null, reportingPeriods: ReportingPeriod[] }} [calendar]
  * @param {LedgerEvent[] | null} [ledgerEvents]
+ * @param {PackagingRecyclingNote[]} [packagingRecyclingNotes]
  */
 const build = (
   accreditationOverrides,
   registrationOverrides,
   wasteBalance = aWasteBalance,
   calendar = noCalendar,
-  ledgerEvents = null
+  ledgerEvents = null,
+  packagingRecyclingNotes = []
 ) =>
   buildViewModel({
     organisation,
@@ -163,9 +178,34 @@ const build = (
     reportingPeriods: calendar.reportingPeriods,
     cadence: calendar.cadence,
     ledgerEvents,
+    packagingRecyclingNotes,
     localise,
     localiseUrl
   })
+
+/**
+ * @param {Partial<PackagingRecyclingNote> & { status: string }} note
+ * @returns {PackagingRecyclingNote}
+ */
+const aNote = (note) => ({
+  id: 'prn-001',
+  prnNumber: null,
+  issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+  tonnage: 20,
+  material: 'plastic',
+  createdAt: '2026-01-26T09:00:00.000Z',
+  issuedAt: null,
+  wasteProcessingType: 'reprocessor',
+  processToBeUsed: '',
+  isDecemberWaste: false,
+  ...note
+})
+
+/**
+ * @param {PackagingRecyclingNote[]} notes
+ */
+const prnsOf = (notes) =>
+  build(undefined, undefined, aWasteBalance, noCalendar, null, notes).prns
 
 /**
  * @param {LedgerEvent[] | null} ledgerEvents
@@ -219,6 +259,7 @@ describe('the accreditation details view model', () => {
       reportingPeriods: [],
       cadence: CADENCE.MONTHLY,
       ledgerEvents: null,
+      packagingRecyclingNotes: [],
       localise,
       localiseUrl
     })
@@ -447,6 +488,133 @@ describe('the waste balance ledger on the accreditation details view model', () 
 
     expect(rows?.at(0)?.at(1)).toStrictEqual({
       html: 'PERN issued<br>\n240000123'
+    })
+  })
+
+  describe('the PRNs section', () => {
+    const notesPath = `/organisations/${organisationId}/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes`
+
+    it('points its detailed view at the notes the accreditation has issued', () => {
+      expect(prnsOf([]).href).toBe(notesPath)
+    })
+
+    it('names the recipient, the status, the date, the tonnage and a way in', () => {
+      const rows = prnsOf([
+        aNote({
+          id: 'prn-9',
+          prnNumber: '240000123',
+          status: 'accepted',
+          issuedAt: '2026-01-28T09:00:00.000Z',
+          tonnage: 20
+        })
+      ]).rows
+
+      expect(rows).toStrictEqual([
+        [
+          { text: 'Radar Compliance PLC' },
+          {
+            html: '<strong class="govuk-tag govuk-tag--green epr-tag--no-max-width">Accepted</strong>'
+          },
+          { text: '28 Jan 2026' },
+          { text: '20.00' },
+          {
+            html: `<a href="${notesPath}/prn-9/view" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
+            classes: 'govuk-!-text-align-right'
+          }
+        ]
+      ])
+    })
+
+    it('dates a note awaiting issue by when it was created, not by a gap', () => {
+      const rows = prnsOf([
+        aNote({
+          status: 'awaiting_authorisation',
+          createdAt: '2026-01-26T09:00:00.000Z',
+          issuedAt: null
+        })
+      ]).rows
+
+      expect(rows.at(0)?.at(2)).toStrictEqual({ text: '26 Jan 2026' })
+    })
+
+    it('names an unnumbered note by its date, so identical links stay apart', () => {
+      const rows = prnsOf([
+        aNote({ status: 'awaiting_authorisation', prnNumber: null })
+      ]).rows
+
+      expect(rows.at(0)?.at(4)).toStrictEqual({
+        html: `<a href="${notesPath}/prn-001/view" class="govuk-link">View <span class="govuk-visually-hidden">26 Jan 2026</span></a>`,
+        classes: 'govuk-!-text-align-right'
+      })
+    })
+
+    it('shows no more than three, newest first, and counts what it shows', () => {
+      const issuedOn = (/** @type {string} */ day) =>
+        aNote({
+          id: `prn-${day}`,
+          status: 'accepted',
+          issuedAt: `2026-01-${day}T09:00:00.000Z`
+        })
+
+      const prns = prnsOf([
+        issuedOn('10'),
+        issuedOn('20'),
+        issuedOn('30'),
+        issuedOn('05')
+      ])
+
+      expect(prns.count).toBe(3)
+      expect(prns.rows.map((row) => row.at(2))).toStrictEqual([
+        { text: '30 Jan 2026' },
+        { text: '20 Jan 2026' },
+        { text: '10 Jan 2026' }
+      ])
+    })
+
+    it('counts what there is where the accreditation has issued fewer', () => {
+      expect(prnsOf([aNote({ status: 'accepted' })]).count).toBe(1)
+    })
+
+    it('shows a regulator no draft and no discarded note', () => {
+      const prns = prnsOf([
+        aNote({ id: 'a', status: 'draft' }),
+        aNote({ id: 'b', status: 'discarded' })
+      ])
+
+      expect(prns.rows).toStrictEqual([])
+      expect(prns.count).toBe(0)
+    })
+
+    it('heads the five columns the design names, with the action right-aligned', () => {
+      expect(prnsOf([]).head).toStrictEqual([
+        { text: 'Producer or compliance scheme' },
+        { text: 'Status' },
+        { text: 'Date' },
+        { text: 'Tonnage' },
+        { text: 'Actions', classes: 'govuk-!-text-align-right' }
+      ])
+    })
+
+    it("names an exporter's notes PERNs, as the page it links to does", () => {
+      const prns = build(
+        undefined,
+        { wasteProcessingType: 'exporter' },
+        aWasteBalance,
+        noCalendar,
+        null,
+        []
+      ).prns
+
+      expect(prns.heading).toBe('PERNs')
+      expect(prns.noneText).toContain('PERNs')
+    })
+
+    it('carries no material column, which would repeat one value on every row', () => {
+      const headings = prnsOf([]).head.map((cell) =>
+        'text' in cell ? cell.text : ''
+      )
+
+      expect(headings).not.toContain('Material')
     })
   })
 })
