@@ -15,6 +15,7 @@ import { buildPrnStatusTagHtml } from '../helpers/prn-status-tag-html.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
  * @import { AccreditationResource, Localise } from '../../helpers/types.js'
+ * @import { PrnGroups } from '../helpers/prn-groups.js'
  */
 
 /**
@@ -64,12 +65,18 @@ const toHead = ({ localise, numbered }) => [
 ]
 
 /**
+ * The recipient and the date, which every table draws ahead of the tonnage.
+ */
+const COLUMNS_BEFORE_TONNAGE = 2
+
+/**
  * Where the tonnage sits, which is one further along in the two tables that
  * lead with a note's number.
  * @param {boolean} numbered
  * @returns {number}
  */
-const tonnageColumnOf = (numbered) => (numbered ? 3 : 2)
+const tonnageColumnOf = (numbered) =>
+  numbered ? COLUMNS_BEFORE_TONNAGE + 1 : COLUMNS_BEFORE_TONNAGE
 
 /**
  * The total row every table with rows ends on: the tonnage of the notes in
@@ -189,6 +196,82 @@ const toNamedTable = ({ context, key, notes, numbered, testId }) =>
   })
 
 /**
+ * The awaiting-action tab holds two tables rather than one: a note awaiting
+ * authorisation and one awaiting cancellation are both waiting on somebody,
+ * but on different people for different things.
+ * @param {{ context: TableContext, groups: PrnGroups }} params
+ * @returns {NotesTable[]}
+ */
+const toAwaitingAction = ({ context, groups }) => [
+  toNamedTable({
+    context,
+    notes: groups.awaitingAuthorisation,
+    key: `${KEY}:awaitingAuthorisationHeading`,
+    numbered: false,
+    testId: 'prns-awaiting-authorisation-table'
+  }),
+  toNamedTable({
+    context,
+    notes: groups.awaitingCancellation,
+    key: `${KEY}:awaitingCancellationHeading`,
+    numbered: false,
+    testId: 'prns-awaiting-cancellation-table'
+  })
+]
+
+/**
+ * @param {Localise} localise
+ * @returns {{ awaitingAction: string, issued: string, cancelled: string }}
+ */
+const toTabs = (localise) => ({
+  awaitingAction: localise(`${KEY}:tabs:awaitingAction`),
+  cancelled: localise(`${KEY}:tabs:cancelled`),
+  issued: localise(`${KEY}:tabs:issued`)
+})
+
+/**
+ * The trail continuing the accreditation page's, which starts at All
+ * organisations and carries no Home crumb. This page is the last crumb, so it
+ * names itself without linking at itself.
+ * @param {{
+ *   accreditationPath: string,
+ *   heading: string,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   name: string,
+ *   organisation: Organisation,
+ *   registration: Registration
+ * }} params
+ * @returns {Crumb[]}
+ */
+const toBreadcrumbs = ({
+  accreditationPath,
+  heading,
+  localise,
+  localiseUrl,
+  name,
+  organisation,
+  registration
+}) => [
+  {
+    text: localise('registrations:details:allOrganisations'),
+    href: localiseUrl(paths.regulators.home)
+  },
+  { text: name, href: localiseUrl(`/organisations/${organisation.id}`) },
+  {
+    text: localise('registrations:details:heading'),
+    href: localiseUrl(
+      `/organisations/${organisation.id}/registrations/${registration.id}`
+    )
+  },
+  {
+    text: localise('registrations:details:accreditation:breadcrumb'),
+    href: localiseUrl(accreditationPath)
+  },
+  { text: heading }
+]
+
+/**
  * The notes an accreditation has issued, under the three tabs the design
  * draws, read-only.
  *
@@ -224,41 +307,17 @@ export const buildViewModel = ({
   const context = { localise, localiseUrl, noteTypePlural, notesPath }
 
   return {
-    awaitingAction: [
-      toNamedTable({
-        context,
-        notes: groups.awaitingAuthorisation,
-        key: `${KEY}:awaitingAuthorisationHeading`,
-        numbered: false,
-        testId: 'prns-awaiting-authorisation-table'
-      }),
-      toNamedTable({
-        context,
-        notes: groups.awaitingCancellation,
-        key: `${KEY}:awaitingCancellationHeading`,
-        numbered: false,
-        testId: 'prns-awaiting-cancellation-table'
-      })
-    ],
+    awaitingAction: toAwaitingAction({ context, groups }),
     backUrl: localiseUrl(accreditationPath),
-    breadcrumbs: [
-      {
-        text: localise('registrations:details:allOrganisations'),
-        href: localiseUrl(paths.regulators.home)
-      },
-      { text: name, href: localiseUrl(`/organisations/${organisation.id}`) },
-      {
-        text: localise('registrations:details:heading'),
-        href: localiseUrl(
-          `/organisations/${organisation.id}/registrations/${registration.id}`
-        )
-      },
-      {
-        text: localise('registrations:details:accreditation:breadcrumb'),
-        href: localiseUrl(accreditationPath)
-      },
-      { text: heading }
-    ],
+    breadcrumbs: toBreadcrumbs({
+      accreditationPath,
+      heading,
+      localise,
+      localiseUrl,
+      name,
+      organisation,
+      registration
+    }),
     cancelled: toNamedTable({
       context,
       notes: groups.cancelled,
@@ -284,10 +343,6 @@ export const buildViewModel = ({
     pageTitle: accreditation.accreditationNumber
       ? `${accreditation.accreditationNumber}: ${heading}`
       : heading,
-    tabs: {
-      awaitingAction: localise(`${KEY}:tabs:awaitingAction`),
-      cancelled: localise(`${KEY}:tabs:cancelled`),
-      issued: localise(`${KEY}:tabs:issued`)
-    }
+    tabs: toTabs(localise)
   }
 }

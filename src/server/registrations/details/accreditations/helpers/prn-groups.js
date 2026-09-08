@@ -43,6 +43,14 @@ const GROUP_BY_STATUS = {
 const at = (timestamp) => new Date(timestamp).getTime()
 
 /**
+ * A note is issued once it has a date of issue. Named rather than negated
+ * inline, so the comparison below reads as the question it asks.
+ * @param {PackagingRecyclingNote} note
+ * @returns {boolean}
+ */
+const isIssued = (note) => Boolean(note.issuedAt)
+
+/**
  * Newest first, with everything still awaiting issue above everything already
  * issued.
  *
@@ -57,8 +65,8 @@ const at = (timestamp) => new Date(timestamp).getTime()
  * @returns {number}
  */
 const newestFirst = (note, other) => {
-  if (!note.issuedAt !== !other.issuedAt) {
-    return note.issuedAt ? 1 : -1
+  if (isIssued(note) !== isIssued(other)) {
+    return isIssued(note) ? 1 : -1
   }
 
   return note.issuedAt && other.issuedAt
