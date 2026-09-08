@@ -504,6 +504,18 @@ describe('the accreditation details page', () => {
       )
     })
 
+    it('names how many rows it shows rather than a fixed three', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      // The seed holds one note a regulator may see, so the section names one
+      // - the number is what is shown, not what was asked for.
+      expect(
+        getByTestId(documentOf(body), 'prns-most-recent').textContent
+      ).toContain('(1 items)')
+    })
+
     it('says so where the accreditation has issued none', async ({
       server
     }) => {

@@ -46,7 +46,7 @@
         </div>
 
         {% if prns.rows | length > 0 %}
-          <h3 class="govuk-heading-s">{{ localise("registrations:details:accreditation:prns:mostRecent", { count: prns.count }) }}</h3>
+          <h3 class="govuk-heading-s" data-testid="prns-most-recent">{{ localise("registrations:details:accreditation:prns:mostRecent", { count: prns.count }) }}</h3>
           {{ govukTable({
             attributes: { "data-testid": "prns-table" },
             head: prns.head,
