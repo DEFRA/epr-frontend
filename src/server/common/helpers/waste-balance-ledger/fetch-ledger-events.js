@@ -27,8 +27,9 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * total the period stands at once this submission is counted, not the amount
  * the balance moved: a resubmission states a new total and moves the balance
  * by the difference against the last one.
+ * `summaryLog.id` is the id of the uploaded file, not of the log holding it.
  * @typedef {LedgerEventCommon & {
- *   summaryLog: { creditTotal: number },
+ *   summaryLog: { id: string, creditTotal: number },
  *   prn?: never
  * }} SummaryLogEvent
  */

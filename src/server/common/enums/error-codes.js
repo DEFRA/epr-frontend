@@ -6,6 +6,7 @@ export const errorCodes = {
   accreditationIdMismatch: 'accreditation_id_mismatch',
   accreditationNotFound: 'accreditation_not_found',
   externalFetchFailed: 'external_fetch_failed',
+  externalRedirectInvalid: 'external_redirect_invalid',
   glassRecyclingProcessMissing: 'glass_recycling_process_missing',
   glassRecyclingProcessUnknown: 'glass_recycling_process_unknown',
   invalidPrnField: 'invalid_prn_field',
@@ -17,5 +18,6 @@ export const errorCodes = {
   prnDeleteFailed: 'prn_delete_failed',
   prnDiscardFailed: 'prn_discard_failed',
   registrationNotFound: 'registration_not_found',
+  summaryLogNotFound: 'summary_log_not_found',
   unknownMaterial: 'unknown_material'
 }

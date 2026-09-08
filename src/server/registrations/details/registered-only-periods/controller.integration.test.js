@@ -103,7 +103,7 @@ const aSubmittedFirstQuarter = /** @type {ReportingPeriod} */ (
 const aLedgerEvent = (createdAt = `${YEAR}-05-04T09:00:00.000Z`) => ({
   kind: 'summary-log-submitted',
   createdAt,
-  summaryLog: { creditTotal: 0 },
+  summaryLog: { id: 'log-1', creditTotal: 0 },
   balance: {
     opening: { total: 0, available: 0 },
     closing: { total: 0, available: 0 }
@@ -461,8 +461,22 @@ describe('the registered-only period page', () => {
       ).toStrictEqual([
         'Summary log submitted',
         'Ada Lovelace (ada@example.com)',
-        ''
+        'Download 4 May 2026, 10:00am'
       ])
+    })
+
+    it('offers the submission itself, at its own address', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      expect(
+        getByRole(documentOf(body), 'link', {
+          name: 'Download 4 May 2026, 10:00am'
+        }).getAttribute('href')
+      ).toBe(
+        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download`
+      )
     })
 
     it('names no waste balance anywhere on the page', async ({ server }) => {

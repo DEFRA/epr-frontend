@@ -1,3 +1,4 @@
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
@@ -71,6 +72,8 @@ export const controller = {
         localise,
         localiseUrl: request.localiseUrl,
         noteType,
+        // An operator reaches this page too, and may not fetch the file.
+        offersDownloads: readsAsARegulator(session),
         organisationId,
         registrationId
       })
