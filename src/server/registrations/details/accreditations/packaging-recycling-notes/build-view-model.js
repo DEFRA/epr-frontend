@@ -23,6 +23,12 @@ import { buildPrnStatusTagHtml } from '../helpers/prn-status-tag-html.js'
  * @typedef {TableCell[]} TableRow
  * @typedef {{ head: TableRow, rows: TableRow[], heading: string, testId: string }} NotesTable
  * @typedef {{
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   noteTypePlural: string,
+ *   notesPath: string
+ * }} TableContext
+ * @typedef {{
  *   backUrl: string,
  *   breadcrumbs: Crumb[],
  *   caption: string,
@@ -58,26 +64,37 @@ const toHead = ({ localise, numbered }) => [
 ]
 
 /**
+ * Where the tonnage sits, which is one further along in the two tables that
+ * lead with a note's number.
+ * @param {boolean} numbered
+ * @returns {number}
+ */
+const tonnageColumnOf = (numbered) => (numbered ? 3 : 2)
+
+/**
  * The total row every table with rows ends on: the tonnage of the notes in
  * that table alone, bold, with every other cell empty. A table holding no
  * notes has no total to draw and shows its empty line instead.
- * @param {{ localise: Localise, notes: PackagingRecyclingNote[], width: number }} params
+ * @param {{
+ *   localise: Localise,
+ *   notes: PackagingRecyclingNote[],
+ *   numbered: boolean,
+ *   width: number
+ * }} params
  * @returns {TableRow}
  */
-const toTotalRow = ({ localise, notes, width }) => {
+const toTotalRow = ({ localise, notes, numbered, width }) => {
   const total = notes.reduce((sum, note) => sum + note.tonnage, 0)
-  const tonnageColumn = width - 3
+  const bold = cssClasses.fontWeight.bold
+  const tonnageColumn = tonnageColumnOf(numbered)
 
   return Array.from({ length: width }, (_, column) => {
     if (column === 0) {
-      return {
-        text: localise(`${KEY}:total`),
-        classes: cssClasses.fontWeight.bold
-      }
+      return { text: localise(`${KEY}:total`), classes: bold }
     }
 
     return column === tonnageColumn
-      ? { text: formatTonnage(total), classes: cssClasses.fontWeight.bold }
+      ? { text: formatTonnage(total), classes: bold }
       : { text: '' }
   })
 }
@@ -138,9 +155,38 @@ const toTable = ({
     rows:
       rows.length === 0
         ? []
-        : [...rows, toTotalRow({ localise, notes, width: head.length })]
+        : [
+            ...rows,
+            toTotalRow({ localise, notes, numbered, width: head.length })
+          ]
   }
 }
+
+/**
+ * One of the four tables, named by the copy key its heading reads and the
+ * testid the journey tests address it by. Everything the four have in common
+ * travels as one `context` rather than being threaded through four calls.
+ * @param {{
+ *   context: TableContext,
+ *   key: string,
+ *   notes: PackagingRecyclingNote[],
+ *   numbered: boolean,
+ *   testId: string
+ * }} params
+ * @returns {NotesTable}
+ */
+const toNamedTable = ({ context, key, notes, numbered, testId }) =>
+  toTable({
+    heading: context.localise(key, {
+      noteTypePlural: context.noteTypePlural
+    }),
+    localise: context.localise,
+    localiseUrl: context.localiseUrl,
+    notes,
+    notesPath: context.notesPath,
+    numbered,
+    testId
+  })
 
 /**
  * The notes an accreditation has issued, under the three tabs the design
@@ -174,33 +220,20 @@ export const buildViewModel = ({
   const notesPath = `${accreditationPath}/packaging-recycling-notes`
   const heading = localise(`${KEY}:listHeading`, { noteTypePlural })
 
-  const table = (
-    /** @type {{ notes: PackagingRecyclingNote[], key: string, numbered: boolean, testId: string }} */ {
-      notes,
-      key,
-      numbered,
-      testId
-    }
-  ) =>
-    toTable({
-      heading: localise(key, { noteTypePlural }),
-      localise,
-      localiseUrl,
-      notes,
-      notesPath,
-      numbered,
-      testId
-    })
+  /** @type {TableContext} */
+  const context = { localise, localiseUrl, noteTypePlural, notesPath }
 
   return {
     awaitingAction: [
-      table({
+      toNamedTable({
+        context,
         notes: groups.awaitingAuthorisation,
         key: `${KEY}:awaitingAuthorisationHeading`,
         numbered: false,
         testId: 'prns-awaiting-authorisation-table'
       }),
-      table({
+      toNamedTable({
+        context,
         notes: groups.awaitingCancellation,
         key: `${KEY}:awaitingCancellationHeading`,
         numbered: false,
@@ -226,7 +259,8 @@ export const buildViewModel = ({
       },
       { text: heading }
     ],
-    cancelled: table({
+    cancelled: toNamedTable({
+      context,
       notes: groups.cancelled,
       key: `${KEY}:cancelledHeading`,
       numbered: true,
@@ -239,7 +273,8 @@ export const buildViewModel = ({
     ]),
     heading,
     isEmpty: groups.isEmpty,
-    issued: table({
+    issued: toNamedTable({
+      context,
       notes: groups.issued,
       key: `${KEY}:issuedHeading`,
       numbered: true,
