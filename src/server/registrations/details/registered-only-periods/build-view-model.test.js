@@ -366,7 +366,7 @@ describe(buildViewModel, () => {
         '4 May 2026, 10:00am',
         'waste-balance-ledger:events.summary-log-submitted',
         'Ada Lovelace (ada@example.com)',
-        `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a>`
+        `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a>`
       ])
     })
   })

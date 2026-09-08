@@ -36,6 +36,7 @@ const buildRows = (overrides = {}) =>
     localise,
     localiseUrl,
     noteType: 'PRN',
+    offersDownloads: true,
     organisationId: 'org-1',
     registrationId: 'reg-1',
     ...overrides
@@ -311,7 +312,7 @@ describe(buildLedgerRows, () => {
     const [row] = buildRows({ events: [buildSummaryLogEvent()] })
 
     expect(cellsOf(row).at(5)).toBe(
-      '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
+      '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
     )
   })
 
@@ -396,7 +397,7 @@ describe(buildLedgerRows, () => {
         '4 January 2026, 9:00am',
         'waste-balance-ledger:events.summary-log-submitted({"noteType":"PRN"})',
         'Ada Lovelace (ada@example.com)',
-        '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/log-2/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
+        '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
       ])
     })
 
@@ -406,7 +407,7 @@ describe(buildLedgerRows, () => {
       const [row] = buildBalanceFreeRows()
 
       expect(cellsOf(row).at(3)).toContain(
-        '/organisations/org-1/registrations/reg-1/summary-logs/log-2/download'
+        '/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download'
       )
     })
 

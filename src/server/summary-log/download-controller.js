@@ -12,22 +12,23 @@ import {
  */
 
 export const summaryLogDownloadPath =
-  '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/{summaryLogId}/download'
+  '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/files/{fileId}/download'
 
 /**
- * The address of one summary log's download. Every segment is an id, and the
- * path goes straight into an href, so each is encoded.
+ * The address of one summary log's download, addressed by its file - which is
+ * what the ledger records. Segments go straight into an href, so each is
+ * encoded.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
- *   summaryLogId: string
+ *   fileId: string
  * }} ids
  * @returns {string}
  */
 export const buildSummaryLogDownloadPath = ({
   organisationId,
   registrationId,
-  summaryLogId
+  fileId
 }) =>
   [
     'organisations',
@@ -35,7 +36,8 @@ export const buildSummaryLogDownloadPath = ({
     'registrations',
     registrationId,
     'summary-logs',
-    summaryLogId,
+    'files',
+    fileId,
     'download'
   ]
     .map((segment) => `/${encodeURIComponent(segment)}`)
@@ -85,23 +87,21 @@ export const summaryLogDownloadController = {
    *   params: {
    *     organisationId: string,
    *     registrationId: string,
-   *     summaryLogId: string
+   *     fileId: string
    *   }
    * }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, summaryLogId } = request.params
+    const { organisationId, registrationId, fileId } = request.params
     const { backendToken } = request.auth.credentials
 
     if (!readsAsARegulator(request.auth.credentials)) {
-      noSuchDownload(
-        `caller does not read as a regulator summaryLogId=${summaryLogId}`
-      )
+      noSuchDownload(`caller does not read as a regulator fileId=${fileId}`)
     }
 
     const downloadUrl = await fetchRedirectFromBackend(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/file`,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}`,
       { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
     )
 
@@ -133,8 +133,8 @@ export const summaryLogDownloadController = {
       )
     }
 
-    // The backend signs the URL with the operator's own filename, so the
-    // disposition is passed through rather than composed here.
+    // The backend names the file when it signs, so the disposition is passed
+    // through rather than composed here.
     const response = h
       .response(Buffer.from(await file.arrayBuffer()))
       .type(file.headers.get('content-type') ?? DEFAULT_CONTENT_TYPE)

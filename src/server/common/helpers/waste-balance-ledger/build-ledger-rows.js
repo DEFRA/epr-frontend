@@ -129,6 +129,7 @@ const notesCancelledBeforeIssue = (events) =>
  *   event: LedgerEvent,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
+ *   offersDownloads: boolean,
  *   organisationId: string,
  *   registrationId: string
  * }} params
@@ -140,14 +141,14 @@ const actionCell = ({
   event,
   localise,
   localiseUrl,
+  offersDownloads,
   organisationId,
   registrationId
 }) => {
   const empty = { text: '', classes: cssClasses.textAlign.right }
 
-  // A submission offers its own file, and does so without an accreditation -
-  // so it is answered before the note rules below.
-  if (event.summaryLog) {
+  // Answered before the note rules: a submission has no accreditation.
+  if (offersDownloads && event.summaryLog) {
     return {
       html: buildActionLinkHtml(
         localise('waste-balance-ledger:actionDownload'),
@@ -155,7 +156,7 @@ const actionCell = ({
           buildSummaryLogDownloadPath({
             organisationId,
             registrationId,
-            summaryLogId: event.summaryLog.id
+            fileId: event.summaryLog.id
           })
         ),
         formatLedgerTimestamp(event.createdAt)
@@ -262,6 +263,9 @@ const actorName = ({ createdBy, localise }) => {
  *
  * `holdsABalance` false drops both balance columns. The template's headings
  * follow the same flag, so a caller passing it must set it there too.
+ *
+ * `offersDownloads` is for the regulator pages: only a regulator may fetch a
+ * summary log, so only their rows offer one.
  * @param {{
  *   accreditationId?: string,
  *   events: LedgerEvent[],
@@ -269,6 +273,7 @@ const actorName = ({ createdBy, localise }) => {
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   noteType: 'PRN' | 'PERN',
+ *   offersDownloads?: boolean,
  *   organisationId: string,
  *   registrationId: string
  * }} params
@@ -281,6 +286,7 @@ export const buildLedgerRows = ({
   localise,
   localiseUrl,
   noteType,
+  offersDownloads = false,
   organisationId,
   registrationId
 }) => {
@@ -297,6 +303,7 @@ export const buildLedgerRows = ({
       event,
       localise,
       localiseUrl,
+      offersDownloads,
       organisationId,
       registrationId
     })

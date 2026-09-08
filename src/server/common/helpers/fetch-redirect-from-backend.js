@@ -2,7 +2,12 @@ import { withTraceId } from '@defra/hapi-tracing'
 
 import { config } from '#config/config.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { badGateway, classifierTail, internal } from './logging/cdp-boom.js'
+import {
+  badGateway,
+  classifierTail,
+  internal,
+  upstreamStatus
+} from './logging/cdp-boom.js'
 import { getTracingHeaderName } from './request-tracing.js'
 
 /**
@@ -25,6 +30,20 @@ export const fetchRedirectFromBackend = async (path, options) => {
     })
 
     const location = response.headers.get('location')
+
+    if (!location && !response.ok) {
+      throw upstreamStatus(
+        `Backend refused: ${url}`,
+        response.status,
+        errorCodes.externalFetchFailed,
+        {
+          event: {
+            action: 'external_redirect',
+            reason: `backend_responded_${response.status}`
+          }
+        }
+      )
+    }
 
     if (!location) {
       throw badGateway(

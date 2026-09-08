@@ -15,8 +15,8 @@ vi.mock(import('#server/common/helpers/fetch-redirect-from-backend.js'))
 
 const organisationId = '6507f1f77bcf86cd79943901'
 const registrationId = 'reg-001'
-const summaryLogId = 'log-001'
-const path = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/download`
+const fileId = 'file-001'
+const path = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}/download`
 
 const signedUrl =
   'https://re-ex-summary-logs.s3.eu-west-2.amazonaws.com/uploads/f.xlsx'
@@ -91,8 +91,8 @@ describe('the summary log download', () => {
     expect(response.rawPayload.toString()).toBe('xlsx-bytes')
   })
 
-  // The backend signs the URL with the operator's own filename, so composing a
-  // header here would throw that name away.
+  // The backend names the file when it signs the URL, so composing a header
+  // here would throw that name away.
   it('passes the storage disposition through untouched', async ({ server }) => {
     const response = await visit(server, regulator)
 
@@ -136,7 +136,7 @@ describe('the summary log download', () => {
     await visit(server, regulator)
 
     expect(fetchRedirectFromBackend).toHaveBeenCalledWith(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/file`,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}`,
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: expect.stringContaining('Bearer ')

@@ -57,6 +57,17 @@ export const badGateway = (message, code, enrichment) =>
   enrich(Boom.badGateway(message), code, enrichment)
 
 /**
+ * Builds a Boom of the status an upstream answered with, so its refusal
+ * reaches the caller as itself rather than as a gateway fault.
+ * @param {string} message
+ * @param {number} statusCode
+ * @param {string} code
+ * @param {CdpBoomEnrichment} enrichment
+ */
+export const upstreamStatus = (message, statusCode, code, enrichment) =>
+  enrich(new Boom.Boom(message, { statusCode }), code, enrichment)
+
+/**
  * Builds a 500 Boom enriched with CDP-indexed `code` and `event` fields.
  * @param {string} message
  * @param {string} code

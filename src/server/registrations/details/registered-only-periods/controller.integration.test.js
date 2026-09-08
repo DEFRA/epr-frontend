@@ -475,7 +475,7 @@ describe('the registered-only period page', () => {
           name: 'Download 4 May 2026, 10:00am'
         }).getAttribute('href')
       ).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/log-1/download`
+        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download`
       )
     })
 

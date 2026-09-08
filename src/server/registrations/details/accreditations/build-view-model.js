@@ -278,6 +278,7 @@ const toLedger = ({
       localise,
       localiseUrl,
       noteType,
+      offersDownloads: true,
       organisationId,
       registrationId: registration.id
     })

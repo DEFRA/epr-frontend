@@ -16,6 +16,7 @@ const backendAnswers = ({
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({
+      ok: status < 400,
       status,
       headers: { get: (name) => (name === 'location' ? location : null) }
     })
@@ -58,8 +59,8 @@ describe(fetchRedirectFromBackend, () => {
     )
   })
 
-  // A backend that answers without a Location is not something this can
-  // recover from, and it is upstream's fault rather than the caller's.
+  // A backend that answers 2xx without a Location is upstream's fault, not
+  // the caller's, and nothing here can recover from it.
   it('fails with a 502 where the backend named no location', async () => {
     backendAnswers({ location: null })
 
@@ -71,6 +72,24 @@ describe(fetchRedirectFromBackend, () => {
       }
     )
   })
+
+  // A refusal reaching the caller as 502 says the gateway broke, which sends
+  // whoever reads the logs after the wrong thing.
+  it.each([404, 403])(
+    'answers %s with that status rather than a gateway fault',
+    async (status) => {
+      backendAnswers({ status, location: null })
+
+      await expect(
+        fetchRedirectFromBackend(path, options)
+      ).rejects.toMatchObject({
+        isBoom: true,
+        output: { statusCode: status },
+        code: 'external_fetch_failed',
+        event: { reason: `backend_responded_${status}` }
+      })
+    }
+  )
 
   it('fails with a 500 where the fetch itself threw', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('boom')))
