@@ -1,20 +1,28 @@
 {% from "govuk/components/table/macro.njk" import govukTable %}
 
+{# Unset for every caller but the registered-only period page, hence the test
+   against false rather than for true. #}
+{% set ledgerBalanceHead = [] if ledgerHoldsABalance == false else [
+  { text: localise("waste-balance-ledger:table.tonnage"), format: "numeric" },
+  { text: localise("waste-balance-ledger:table.available"), format: "numeric" }
+] %}
+
+{% set ledgerHead = [
+  { text: localise("waste-balance-ledger:table.date") },
+  { text: localise("waste-balance-ledger:table.event") }
+].concat(ledgerBalanceHead).concat([
+  { text: localise("waste-balance-ledger:table.who") },
+  {
+    text: localise("waste-balance-ledger:table.actions"),
+    classes: "govuk-!-text-align-right"
+  }
+]) %}
+
 {% if ledgerRows | length > 0 %}
   {{ govukTable({
     attributes: { "data-testid": "waste-balance-ledger-table" },
     firstCellIsHeader: true,
-    head: [
-      { text: localise("waste-balance-ledger:table.date") },
-      { text: localise("waste-balance-ledger:table.event") },
-      { text: localise("waste-balance-ledger:table.tonnage"), format: "numeric" },
-      { text: localise("waste-balance-ledger:table.available"), format: "numeric" },
-      { text: localise("waste-balance-ledger:table.who") },
-      {
-        text: localise("waste-balance-ledger:table.actions"),
-        classes: "govuk-!-text-align-right"
-      }
-    ],
+    head: ledgerHead,
     rows: ledgerRows
   }) }}
 {% else %}

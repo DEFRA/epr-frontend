@@ -1,6 +1,7 @@
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   buildMockAuth,
@@ -10,7 +11,12 @@ import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole, queryByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByTestId,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -18,6 +24,7 @@ import { fetchRegisteredOnlyPeriod } from './helpers/fetch-registered-only-perio
 
 /**
  * @import { RegisteredOnlyPeriodDetails } from './helpers/fetch-registered-only-period.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource } from '../helpers/types.js'
@@ -41,6 +48,14 @@ const regulator = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
   ...sessionIdentity(IDENTITIES.regulator)
+})
+
+// Every regulator holds the ledger scope, so this case is only reachable here.
+const regulatorWithoutLedgerScope = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-2', email: 'no.ledger@example.gov.uk' },
+  role: IDENTITIES.regulator.role,
+  scope: [SCOPES.organisationSearch]
 })
 
 /**
@@ -81,9 +96,26 @@ const aSubmittedFirstQuarter = /** @type {ReportingPeriod} */ (
 )
 
 /**
+ * A registered-only submission, which the backend writes zero-delta.
+ * @param {string} [createdAt]
+ * @returns {LedgerEvent}
+ */
+const aLedgerEvent = (createdAt = `${YEAR}-05-04T09:00:00.000Z`) => ({
+  kind: 'summary-log-submitted',
+  createdAt,
+  summaryLog: { creditTotal: 0 },
+  balance: {
+    opening: { total: 0, available: 0 },
+    closing: { total: 0, available: 0 }
+  },
+  createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' }
+})
+
+/**
  * @param {{
  *   accreditations?: AccreditationResource[],
  *   cadence?: CadenceValue | null,
+ *   ledgerEvents?: LedgerEvent[] | null,
  *   registrationNumber?: string | null,
  *   reportingPeriods?: ReportingPeriod[],
  *   validFrom?: string | null
@@ -93,12 +125,14 @@ const aSubmittedFirstQuarter = /** @type {ReportingPeriod} */ (
 const registrationDetails = ({
   accreditations = [],
   cadence = 'quarterly',
+  ledgerEvents = [aLedgerEvent()],
   registrationNumber = 'R26ER5001180041PL',
   reportingPeriods = [],
   validFrom = '2026-01-01'
 } = {}) => ({
   cadence,
   reportingPeriods,
+  ledgerEvents,
   organisation: asOrganisation({
     id: organisationId,
     companyDetails: { name: 'Kirkby Plastics Ltd' }
@@ -378,5 +412,119 @@ describe('the registered-only period page', () => {
     config.set('featureFlags.regulatorAccess', true)
 
     expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  describe('the waste balance ledger', () => {
+    /**
+     * Answers a ledger only where the session may read one.
+     */
+    const detailsForTheSession = () =>
+      vi
+        .mocked(fetchRegisteredOnlyPeriod)
+        .mockImplementation(async ({ canReadLedger }) =>
+          registrationDetails({
+            ledgerEvents: canReadLedger ? [aLedgerEvent()] : null
+          })
+        )
+
+    it('lists the ledger beneath the reports, under its four headings', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+      const document = documentOf(body)
+
+      expect(body.indexOf('data-testid="reports-table"')).toBeLessThan(
+        body.indexOf('data-testid="waste-balance-ledger-table"')
+      )
+      expect(
+        getByRole(document, 'heading', { level: 2, name: 'Ledger' })
+      ).toBeDefined()
+      expect(
+        getAllByRole(
+          getByTestId(document, 'waste-balance-ledger-table'),
+          'columnheader'
+        ).map((cell) => cell.textContent?.trim())
+      ).toStrictEqual(['Date', 'Event', 'Who', 'Actions'])
+    })
+
+    it('states who submitted what, and nothing of a balance', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+      const [, firstRow] = getAllByRole(
+        getByTestId(documentOf(body), 'waste-balance-ledger-table'),
+        'row'
+      )
+
+      expect(
+        getAllByRole(firstRow, 'cell').map((cell) => cell.textContent?.trim())
+      ).toStrictEqual([
+        'Summary log submitted',
+        'Ada Lovelace (ada@example.com)',
+        ''
+      ])
+    })
+
+    it('names no waste balance anywhere on the page', async ({ server }) => {
+      const { body } = await visit(server, regulator)
+
+      expect(body).not.toContain('Waste balance available')
+      expect(body).not.toContain('Waste balance ledger')
+    })
+
+    it('says nothing has moved the balance where the ledger holds no events', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
+        registrationDetails({ ledgerEvents: [] })
+      )
+
+      const { body } = await visit(server, regulator)
+
+      expect(body).not.toContain('data-testid="waste-balance-ledger-table"')
+      expect(
+        queryByText(
+          documentOf(body),
+          'Nothing has changed this waste balance yet.'
+        )
+      ).not.toBeNull()
+    })
+
+    it('shows no ledger at all where the year holds no registered-only time', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
+        registrationDetails({
+          accreditations: [anAccreditation('2026-01-01')]
+        })
+      )
+
+      const { body } = await visit(server, regulator)
+
+      expect(body).not.toContain('Waste balance ledger')
+      expect(body).not.toContain('data-testid="waste-balance-ledger-table"')
+      expect(body).not.toContain('data-testid="no-events"')
+    })
+
+    it('reads no ledger, and shows none, for a regulator granted no ledger scope', async ({
+      server
+    }) => {
+      detailsForTheSession()
+
+      const { body } = await visit(server, regulatorWithoutLedgerScope)
+
+      expect(body).not.toContain('Waste balance ledger')
+      expect(body).not.toContain('data-testid="waste-balance-ledger-table"')
+    })
+
+    it('reads the ledger for a regulator holding the ledger scope', async ({
+      server
+    }) => {
+      detailsForTheSession()
+
+      const { body } = await visit(server, regulator)
+
+      expect(body).toContain('data-testid="waste-balance-ledger-table"')
+    })
   })
 })

@@ -63,7 +63,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
- *   accreditationId: string | undefined,
+ *   accreditationId?: string,
  *   backendToken: string
  * }} params
  * @returns {Promise<LedgerEvent[]>}

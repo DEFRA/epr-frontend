@@ -359,4 +359,59 @@ describe(buildLedgerRows, () => {
   it('returns no rows for a ledger that holds no events', () => {
     expect(buildRows({ events: [] })).toStrictEqual([])
   })
+
+  describe('a ledger that holds no balance', () => {
+    /**
+     * A registered-only submission, which the backend writes zero-delta.
+     * @returns {SummaryLogEvent}
+     */
+    const buildRegisteredOnlyEvent = () =>
+      buildSummaryLogEvent({
+        summaryLog: { creditTotal: 0 },
+        balance: {
+          opening: { total: 0, available: 0 },
+          closing: { total: 0, available: 0 }
+        }
+      })
+
+    /**
+     * Rows as the registered-only partition builds them: no accreditation.
+     * @param {Partial<Parameters<typeof buildLedgerRows>[0]>} [overrides]
+     * @returns {TableCell[][]}
+     */
+    const buildBalanceFreeRows = (overrides = {}) =>
+      buildRows({
+        accreditationId: undefined,
+        events: [buildRegisteredOnlyEvent()],
+        holdsABalance: false,
+        ...overrides
+      })
+
+    it('drops both balance columns rather than stating a running zero', () => {
+      const [row] = buildBalanceFreeRows()
+
+      expect(cellsOf(row)).toStrictEqual([
+        '4 January 2026, 9:00am',
+        'waste-balance-ledger:events.summary-log-submitted({"noteType":"PRN"})',
+        'Ada Lovelace (ada@example.com)',
+        ''
+      ])
+    })
+
+    it('marks no column numeric, there being no number left to state', () => {
+      const [row] = buildBalanceFreeRows()
+
+      expect(
+        row?.map((cell) => ('format' in cell ? cell.format : undefined))
+      ).toStrictEqual([undefined, undefined, undefined, undefined])
+    })
+
+    it('still states both figures for a ledger that holds a balance', () => {
+      const [row] = buildRows({ events: [buildEvent()] })
+
+      expect(cellsOf(row).at(2)).toBe('waste-balance-ledger:table.noMovement')
+      expect(cellsOf(row).at(3)).toBe('87.50')
+      expect(cellsOf(row)).toHaveLength(6)
+    })
+  })
 })

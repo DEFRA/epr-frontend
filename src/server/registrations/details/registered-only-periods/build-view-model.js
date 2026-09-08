@@ -1,5 +1,7 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
 import { paths } from '#server/paths.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
@@ -8,10 +10,12 @@ import { buildStatusTagHtml } from '#server/reports/helpers/build-status-tag-htm
 import { formatPeriodLabelWithComma } from '#server/reports/helpers/format-period-label.js'
 import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitted-date-time.js'
 
+import { eventsInYear } from './helpers/events-in-year.js'
 import { registeredOnlyStretches } from '../helpers/registered-only.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource, Localise } from '../helpers/types.js'
@@ -19,15 +23,19 @@ import { registeredOnlyStretches } from '../helpers/registered-only.js'
  */
 
 /**
+ * `LedgerTable` is declared here rather than imported: the accreditation page's
+ * copy is module-private.
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
  * @typedef {TableCell[]} TableRow
  * @typedef {{ head: TableRow, rows: TableRow[] }} ReportsTable
+ * @typedef {{ rows: TableRow[] }} LedgerTable
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{
  *   breadcrumbs: Crumb[],
  *   caption: string,
  *   hasData: boolean,
  *   heading: string,
+ *   ledger: LedgerTable | null,
  *   pageTitle: string,
  *   reports: ReportsTable
  * }} RegisteredOnlyPeriodViewModel
@@ -192,12 +200,57 @@ const toReportRows = ({
   })
 
 /**
+ * The year's own ledger, or null where the session may not read one. An empty
+ * ledger is still a ledger - the section says nothing has moved it yet.
+ * @param {{
+ *   ledgerEvents: LedgerEvent[] | null | undefined,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   organisationId: string,
+ *   registration: RegistrationResource,
+ *   year: number
+ * }} params
+ * @returns {LedgerTable | null}
+ */
+const toLedger = ({
+  ledgerEvents,
+  localise,
+  localiseUrl,
+  organisationId,
+  registration,
+  year
+}) => {
+  if (!ledgerEvents) {
+    return null
+  }
+
+  // The resource files the processing type under its application, not at the
+  // top level the domain model uses.
+  const { noteType } = getNoteTypeDisplayNames({
+    wasteProcessingType: registration.application.wasteProcessingType
+  })
+
+  return {
+    rows: buildLedgerRows({
+      events: eventsInYear({ events: ledgerEvents, year }),
+      holdsABalance: false,
+      localise,
+      localiseUrl,
+      noteType,
+      organisationId,
+      registrationId: registration.id
+    })
+  }
+}
+
+/**
  * @param {{
  *   organisation: Organisation,
  *   registration: RegistrationResource,
  *   accreditations: AccreditationResource[],
  *   cadence: CadenceValue | null,
  *   reportingPeriods: ReportingPeriod[],
+ *   ledgerEvents: LedgerEvent[] | null | undefined,
  *   year: number,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
@@ -210,6 +263,7 @@ export const buildViewModel = ({
   accreditations,
   cadence,
   reportingPeriods,
+  ledgerEvents,
   year,
   localise,
   localiseUrl
@@ -257,6 +311,14 @@ export const buildViewModel = ({
     // the answer is carried rather than the stretches that produced it.
     hasData: stretches.length > 0,
     heading,
+    ledger: toLedger({
+      ledgerEvents,
+      localise,
+      localiseUrl,
+      organisationId: organisation.id,
+      registration,
+      year
+    }),
     // The year already identifies this page, so unlike its two siblings it
     // does not prefix a record number - that would put two identifiers in
     // front of a two-word noun.

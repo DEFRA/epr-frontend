@@ -1,5 +1,7 @@
 import Joi from 'joi'
 
+import { hasLedgerReadScope } from '#server/auth/scopes.js'
+
 import { buildViewModel } from './build-view-model.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
@@ -74,11 +76,13 @@ export const controller = {
       registration,
       accreditations,
       cadence,
-      reportingPeriods
+      reportingPeriods,
+      ledgerEvents
     } = await fetchRegisteredOnlyPeriod({
       organisationId,
       registrationId,
       backendToken,
+      canReadLedger: hasLedgerReadScope(request.auth.credentials),
       logger: request.logger
     })
 
@@ -100,6 +104,7 @@ export const controller = {
         accreditations,
         cadence,
         reportingPeriods,
+        ledgerEvents,
         year,
         localise: request.t,
         localiseUrl: request.localiseUrl

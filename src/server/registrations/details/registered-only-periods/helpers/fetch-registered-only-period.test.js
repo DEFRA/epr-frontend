@@ -1,3 +1,4 @@
+import { fetchLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
 import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -6,12 +7,16 @@ import { fetchRegistrationDetails } from '../../helpers/fetch-registration-detai
 
 /**
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { RegistrationDetails } from '../../helpers/fetch-registration-details.js'
  */
 
 vi.mock(import('../../helpers/fetch-registration-details.js'))
 vi.mock(import('#server/reports/helpers/fetch-reporting-periods.js'))
+vi.mock(
+  import('#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js')
+)
 
 const organisationId = '6507f1f77bcf86cd79943901'
 const registrationId = 'reg-001'
@@ -32,10 +37,15 @@ const firstQuarter = /** @type {ReportingPeriod} */ (
   /** @type {unknown} */ ({ year: 2026, period: 1 })
 )
 
+const ledgerEvents = /** @type {LedgerEvent[]} */ (
+  /** @type {unknown} */ ([{ kind: 'summary-log-submitted' }])
+)
+
 const params = {
   organisationId,
   registrationId,
   backendToken,
+  canReadLedger: true,
   logger
 }
 
@@ -46,6 +56,7 @@ describe(fetchRegisteredOnlyPeriod, () => {
       cadence: 'quarterly',
       reportingPeriods: [firstQuarter]
     })
+    vi.mocked(fetchLedgerEvents).mockResolvedValue(ledgerEvents)
     error.mockClear()
   })
 
@@ -53,7 +64,8 @@ describe(fetchRegisteredOnlyPeriod, () => {
     await expect(fetchRegisteredOnlyPeriod(params)).resolves.toStrictEqual({
       ...details,
       cadence: 'quarterly',
-      reportingPeriods: [firstQuarter]
+      reportingPeriods: [firstQuarter],
+      ledgerEvents
     })
   })
 
@@ -76,7 +88,8 @@ describe(fetchRegisteredOnlyPeriod, () => {
     await expect(fetchRegisteredOnlyPeriod(params)).resolves.toStrictEqual({
       ...details,
       cadence: null,
-      reportingPeriods: []
+      reportingPeriods: [],
+      ledgerEvents
     })
   })
 
@@ -100,5 +113,41 @@ describe(fetchRegisteredOnlyPeriod, () => {
     )
 
     await expect(fetchRegisteredOnlyPeriod(params)).rejects.toThrow('not found')
+  })
+
+  describe('the waste balance ledger', () => {
+    it('reads the ledger the registration keeps before it is accredited', async () => {
+      await fetchRegisteredOnlyPeriod(params)
+
+      expect(fetchLedgerEvents).toHaveBeenCalledWith({
+        organisationId,
+        registrationId,
+        accreditationId: undefined,
+        backendToken
+      })
+    })
+
+    it('answers the events in the order the backend appended them', async () => {
+      const result = await fetchRegisteredOnlyPeriod(params)
+
+      expect(result.ledgerEvents).toStrictEqual(ledgerEvents)
+    })
+
+    it('asks for no ledger, and answers none, for a session that may not read one', async () => {
+      const result = await fetchRegisteredOnlyPeriod({
+        ...params,
+        canReadLedger: false
+      })
+
+      expect(result.ledgerEvents).toBeNull()
+      expect(fetchLedgerEvents).not.toHaveBeenCalled()
+    })
+
+    it('fails the page for a ledger it could not read', async () => {
+      const err = new Error('ledger unavailable')
+      vi.mocked(fetchLedgerEvents).mockRejectedValue(err)
+
+      await expect(fetchRegisteredOnlyPeriod(params)).rejects.toBe(err)
+    })
   })
 })

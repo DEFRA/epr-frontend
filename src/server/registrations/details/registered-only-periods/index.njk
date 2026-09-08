@@ -26,6 +26,15 @@
           {% else %}
             <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise('registrations:details:registeredOnlyPeriod:reports:none') }}</p>
           {% endif %}
+
+          {% if ledger %}
+            {# No waste balance here, so no balance columns and no balance in
+               the title. #}
+            <h2 class="govuk-heading-m">{{ localise("waste-balance-ledger:registeredOnlyHeading") }}</h2>
+            {% set ledgerRows = ledger.rows %}
+            {% set ledgerHoldsABalance = false %}
+            {% include "partials/waste-balance-ledger/table.njk" %}
+          {% endif %}
         {% endif %}
 
       </div>

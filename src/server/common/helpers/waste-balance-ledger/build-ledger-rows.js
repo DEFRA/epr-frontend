@@ -123,7 +123,7 @@ const notesCancelledBeforeIssue = (events) =>
  * none - when the event happened, that being the only other thing on the row
  * that tells it apart.
  * @param {{
- *   accreditationId: string | undefined,
+ *   accreditationId?: string,
  *   cancelledBeforeIssue: Set<string>,
  *   event: LedgerEvent,
  *   localise: Localise,
@@ -187,6 +187,24 @@ const movementOf = ({ balance, localise }) => {
 }
 
 /**
+ * The movement and the closing balance, or no cells at all for a ledger that
+ * holds no balance - the columns are absent from it, not empty.
+ * @param {{
+ *   balance: LedgerEvent['balance'],
+ *   holdsABalance: boolean,
+ *   localise: Localise
+ * }} params
+ * @returns {TableCell[]}
+ */
+const balanceCells = ({ balance, holdsABalance, localise }) =>
+  holdsABalance
+    ? [
+        { text: movementOf({ balance, localise }), format: 'numeric' },
+        { text: formatTonnage(balance.closing.available), format: 'numeric' }
+      ]
+    : []
+
+/**
  * A regulator sees every actor in full. The backfill writes as a machine, so
  * the page names the system rather than the job that ran.
  *
@@ -221,9 +239,13 @@ const actorName = ({ createdBy, localise }) => {
  * out to the note behind it and a note lives under an accreditation. The
  * registered-only partition is addressed without one, so it has nothing to
  * link at.
+ *
+ * `holdsABalance` false drops both balance columns. The template's headings
+ * follow the same flag, so a caller passing it must set it there too.
  * @param {{
- *   accreditationId: string | undefined,
+ *   accreditationId?: string,
  *   events: LedgerEvent[],
+ *   holdsABalance?: boolean,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   noteType: 'PRN' | 'PERN',
@@ -235,6 +257,7 @@ const actorName = ({ createdBy, localise }) => {
 export const buildLedgerRows = ({
   accreditationId,
   events,
+  holdsABalance = true,
   localise,
   localiseUrl,
   noteType,
@@ -246,14 +269,7 @@ export const buildLedgerRows = ({
   return [...events].reverse().map((event) => [
     { text: formatLedgerTimestamp(event.createdAt) },
     eventCell({ event, localise, noteType }),
-    {
-      text: movementOf({ balance: event.balance, localise }),
-      format: 'numeric'
-    },
-    {
-      text: formatTonnage(event.balance.closing.available),
-      format: 'numeric'
-    },
+    ...balanceCells({ balance: event.balance, holdsABalance, localise }),
     { text: actorName({ createdBy: event.createdBy, localise }) },
     actionCell({
       accreditationId,
