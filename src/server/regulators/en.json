@@ -36,5 +36,10 @@
       "view": "View"
     }
   },
-  "serviceName": "Check reprocessed or exported packaging waste"
+  "serviceName": "Check reprocessed or exported packaging waste",
+  "start": {
+    "pageTitle": "Start",
+    "subheading": "Use this service to check what reprocessors and exporters have recorded about UK packaging waste.",
+    "startNow": "Start now"
+  }
 }

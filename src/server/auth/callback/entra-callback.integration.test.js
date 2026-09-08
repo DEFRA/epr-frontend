@@ -324,6 +324,14 @@ describe('/auth/callback/entra - GET integration', async () => {
         description: 'Welsh logged-out page'
       },
       {
+        referrer: '/regulators/start',
+        description: 'regulator start page'
+      },
+      {
+        referrer: '/cy/regulators/start',
+        description: 'Welsh regulator start page'
+      },
+      {
         referrer: '/auth/callback',
         description: 'Defra ID auth callback page'
       },

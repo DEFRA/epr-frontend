@@ -126,6 +126,7 @@ function referrerIfPresentElseDefault(request, defaultPath) {
     ...withWelsh(paths.start),
     ...withWelsh(paths.loggedOut),
     ...withWelsh(paths.regulators.loggedOut),
+    ...withWelsh(paths.regulators.start),
     paths.auth.defraId.callback,
     paths.auth.entraId.callback
   ]
