@@ -20,7 +20,8 @@ const path = `/organisations/${organisationId}/registrations/${registrationId}/s
 
 const signedUrl =
   'https://re-ex-summary-logs.s3.eu-west-2.amazonaws.com/uploads/f.xlsx'
-const disposition = 'attachment; filename="Q3 2026 paper.xlsx"'
+const disposition =
+  'attachment; filename="R26ER5000000002PA-2026-09-08-091530.xlsx"'
 
 const operator = buildMockAuth()
 
