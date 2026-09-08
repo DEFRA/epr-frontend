@@ -1,5 +1,6 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { showDecemberWasteQuestion } from '#server/common/helpers/december-waste/show-december-waste-question.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
@@ -9,14 +10,22 @@ import { getRegistrationMaterialDisplayName } from '#server/common/helpers/mater
  * @param {object} options
  * @param {string} options.organisationId
  * @param {string} options.registrationId
- * @param {{wasteProcessingType: string, material: AppliedForMaterial, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[]}} options.registration
+ * @param {Registration & { nation?: string }} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
  * @param {{availableAmount: number} | null} [options.wasteBalance]
+ * @param {DecemberPrnEligibility} options.decemberPrnEligibility
  * @returns {object}
  */
 export function buildCreatePrnViewData(
   request,
-  { organisationId, recipients, registration, registrationId, wasteBalance }
+  {
+    organisationId,
+    recipients,
+    registration,
+    registrationId,
+    wasteBalance,
+    decemberPrnEligibility
+  }
 ) {
   const { t: localise } = request
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
@@ -31,10 +40,24 @@ export function buildCreatePrnViewData(
       })
     : null
 
+  const decemberWaste = showDecemberWasteQuestion(
+    registration,
+    decemberPrnEligibility
+  )
+    ? {
+        legend: localise('prns:create:decemberWasteLegend'),
+        items: [
+          { value: 'false', text: localise('prns:decemberWasteNo') },
+          { value: 'true', text: localise('prns:decemberWasteYes') }
+        ]
+      }
+    : null
+
   return {
     pageTitle,
     heading: pageTitle,
     wasteBalanceText,
+    decemberWaste,
     backUrl: `/organisations/${organisationId}/registrations/${registrationId}`,
     material: {
       label: localise('prns:materialLabel'),
@@ -74,5 +97,6 @@ export function buildCreatePrnViewData(
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { AppliedForMaterial, GlassRecyclingProcess } from '#domain/organisations/model.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { DecemberPrnEligibility } from '#server/common/helpers/december-waste/fetch-december-prn-eligibility.js'
  */

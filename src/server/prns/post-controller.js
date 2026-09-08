@@ -1,5 +1,6 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { fetchDecemberPrnEligibility } from '#server/common/helpers/december-waste/fetch-december-prn-eligibility.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
@@ -54,7 +55,8 @@ const payloadSchema = Joi.object({
       'string.max': `Notes must be ${NOTES_MAX_LENGTH} characters or fewer`
     }),
   nation: Joi.string().required(),
-  wasteProcessingType: Joi.string().required()
+  wasteProcessingType: Joi.string().required(),
+  isDecemberWaste: Joi.boolean().default(false)
 })
 
 /**
@@ -67,7 +69,8 @@ const payloadSchema = Joi.object({
  *   recipient: string,
  *   notes?: string,
  *   nation: string,
- *   wasteProcessingType: string
+ *   wasteProcessingType: string,
+ *   isDecemberWaste?: boolean
  * }} CreatePrnPayload
  */
 
@@ -157,19 +160,28 @@ async function handleInsufficientBalance(
     list: [{ text: message, href: '#tonnage' }]
   }
 
-  const { registration } = await getRequiredRegistrationWithAccreditation({
-    organisationId,
-    registrationId,
-    backendToken: session.backendToken,
-    accreditationId
-  })
+  const [{ registration }, decemberPrnEligibility] = await Promise.all([
+    getRequiredRegistrationWithAccreditation({
+      organisationId,
+      registrationId,
+      backendToken: session.backendToken,
+      accreditationId
+    }),
+    fetchDecemberPrnEligibility(
+      organisationId,
+      registrationId,
+      accreditationId,
+      session.backendToken
+    )
+  ])
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
     recipients: mapToSelectOptions(organisations),
     registration,
     registrationId,
-    wasteBalance
+    wasteBalance,
+    decemberPrnEligibility
   })
 
   return h.view(CREATE_VIEW, {
@@ -224,19 +236,28 @@ async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
     list: [{ text: message, href: '#recipient' }]
   }
 
-  const { registration } = await getRequiredRegistrationWithAccreditation({
-    organisationId,
-    registrationId,
-    backendToken: session.backendToken,
-    accreditationId
-  })
+  const [{ registration }, decemberPrnEligibility] = await Promise.all([
+    getRequiredRegistrationWithAccreditation({
+      organisationId,
+      registrationId,
+      backendToken: session.backendToken,
+      accreditationId
+    }),
+    fetchDecemberPrnEligibility(
+      organisationId,
+      registrationId,
+      accreditationId,
+      session.backendToken
+    )
+  ])
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
     recipients: mapToSelectOptions(organisations),
     registration,
     registrationId,
-    wasteBalance
+    wasteBalance,
+    decemberPrnEligibility
   })
 
   return h.view(CREATE_VIEW, {
@@ -270,29 +291,40 @@ export const postController = {
           request.payload.wasteProcessingType
         )
 
-        const [{ registration }, { organisations }, wasteBalance] =
-          await Promise.all([
-            getRequiredRegistrationWithAccreditation({
-              organisationId,
-              registrationId,
-              backendToken: session.backendToken,
-              accreditationId
-            }),
-            request.wasteOrganisationsService.getOrganisations(),
-            getWasteBalance(
-              organisationId,
-              accreditationId,
-              session.backendToken,
-              request.logger
-            )
-          ])
+        const [
+          { registration },
+          { organisations },
+          wasteBalance,
+          decemberPrnEligibility
+        ] = await Promise.all([
+          getRequiredRegistrationWithAccreditation({
+            organisationId,
+            registrationId,
+            backendToken: session.backendToken,
+            accreditationId
+          }),
+          request.wasteOrganisationsService.getOrganisations(),
+          getWasteBalance(
+            organisationId,
+            accreditationId,
+            session.backendToken,
+            request.logger
+          ),
+          fetchDecemberPrnEligibility(
+            organisationId,
+            registrationId,
+            accreditationId,
+            session.backendToken
+          )
+        ])
 
         const viewData = buildCreatePrnViewData(request, {
           organisationId,
           recipients: mapToSelectOptions(organisations),
           registration,
           registrationId,
-          wasteBalance
+          wasteBalance,
+          decemberPrnEligibility
         })
 
         return h
@@ -313,7 +345,7 @@ export const postController = {
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
-    const { tonnage, recipient, notes } = request.payload
+    const { tonnage, recipient, notes, isDecemberWaste } = request.payload
 
     const [{ organisations }, wasteBalance] = await Promise.all([
       request.wasteOrganisationsService.getOrganisations(),
@@ -350,7 +382,8 @@ export const postController = {
         {
           issuedToOrganisation,
           tonnage: Number.parseInt(tonnage, 10),
-          notes: notes || undefined
+          notes: notes || undefined,
+          isDecemberWaste
         },
         session.backendToken
       )

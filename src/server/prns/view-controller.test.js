@@ -1582,7 +1582,7 @@ describe('#viewController', () => {
           'Tonnage',
           'Tonnage in words',
           'Process to be used',
-          'December waste',
+          'December waste?',
           'Issuer',
           'Issued date',
           'Issued by',

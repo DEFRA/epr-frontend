@@ -1,6 +1,7 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { fetchDecemberPrnEligibility } from '#server/common/helpers/december-waste/fetch-december-prn-eligibility.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { buildCreatePrnViewData } from './view-data.js'
@@ -38,22 +39,30 @@ export const controller = {
       accreditationId
     })
 
-    const [{ organisations }, wasteBalance] = await Promise.all([
-      request.wasteOrganisationsService.getOrganisations(),
-      getWasteBalance(
-        organisationId,
-        accreditationId,
-        session.backendToken,
-        request.logger
-      )
-    ])
+    const [{ organisations }, wasteBalance, decemberPrnEligibility] =
+      await Promise.all([
+        request.wasteOrganisationsService.getOrganisations(),
+        getWasteBalance(
+          organisationId,
+          accreditationId,
+          session.backendToken,
+          request.logger
+        ),
+        fetchDecemberPrnEligibility(
+          organisationId,
+          registrationId,
+          accreditationId,
+          session.backendToken
+        )
+      ])
 
     const viewData = buildCreatePrnViewData(request, {
       organisationId,
       recipients: mapToSelectOptions(organisations),
       registration,
       registrationId,
-      wasteBalance
+      wasteBalance,
+      decemberPrnEligibility
     })
 
     await journeyMetrics.start(request, JOURNEY.createPrn, accreditationId)

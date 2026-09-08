@@ -3,11 +3,7 @@ import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
- * @import { AppliedForMaterial, GlassRecyclingProcess } from '#domain/organisations/model.js'
- */
-
-/**
- * @typedef {{ wasteProcessingType: string, material: AppliedForMaterial, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[] }} ViewDataRegistration
+ * @import { Registration } from '#domain/organisations/registration.js'
  */
 
 const createMockRequest = () =>
@@ -43,27 +39,74 @@ const stubRecipients = [
   { value: 'org-3', text: 'Green Waste Solutions' }
 ]
 
-const reprocessorRegistration = /** @type {ViewDataRegistration} */ ({
+const notEligible = { eligible: false }
+
+const reprocessorRegistration = /** @type {Registration} */ ({
   id: 'reg-001',
   wasteProcessingType: 'reprocessor-input', // PRN
   material: 'glass',
   glassRecyclingProcess: ['glass_re_melt']
 })
 
-const exporterRegistration = /** @type {ViewDataRegistration} */ ({
+const exporterRegistration = /** @type {Registration} */ ({
   id: 'reg-002',
   wasteProcessingType: 'exporter', // PERN
   material: 'plastic'
 })
 
 describe('#buildCreatePrnViewData', () => {
+  describe('decemberWaste', () => {
+    it('is null when not eligible', () => {
+      const result = buildCreatePrnViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        registration: /** @type {Registration} */ ({
+          ...reprocessorRegistration,
+          reprocessingType: 'output'
+        }),
+        recipients: stubRecipients,
+        decemberPrnEligibility: { eligible: false }
+      })
+
+      expect(result.decemberWaste).toBeNull()
+    })
+
+    it('is present when eligible and the registration is a reprocessor on output', () => {
+      const result = buildCreatePrnViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        registration: /** @type {Registration} */ ({
+          ...reprocessorRegistration,
+          reprocessingType: 'output'
+        }),
+        recipients: stubRecipients,
+        decemberPrnEligibility: { eligible: true }
+      })
+
+      expect(result.decemberWaste).not.toBeNull()
+    })
+
+    it('is null when eligible but the registration is not a reprocessor on output', () => {
+      const result = buildCreatePrnViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        registration: reprocessorRegistration,
+        recipients: stubRecipients,
+        decemberPrnEligibility: { eligible: true }
+      })
+
+      expect(result.decemberWaste).toBeNull()
+    })
+  })
+
   describe('for reprocessor (PRN)', () => {
     it('should return page title and heading with PRN text', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        decemberPrnEligibility: notEligible
       })
 
       expect(result.pageTitle).toBe('Create a PRN')
@@ -75,7 +118,8 @@ describe('#buildCreatePrnViewData', () => {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        decemberPrnEligibility: notEligible
       })
 
       expect(result.material.label).toBe('Material')
@@ -87,7 +131,8 @@ describe('#buildCreatePrnViewData', () => {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        decemberPrnEligibility: notEligible
       })
 
       expect(result.tonnage.label).toBe('Enter PRN tonnage')
@@ -104,7 +149,8 @@ describe('#buildCreatePrnViewData', () => {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        decemberPrnEligibility: notEligible
       })
 
       expect(result.backUrl).toBe(
@@ -117,7 +163,8 @@ describe('#buildCreatePrnViewData', () => {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        decemberPrnEligibility: notEligible
       })
 
       expect(result.recipient.items).toHaveLength(4) // placeholder + 3 options
@@ -138,7 +185,8 @@ describe('#buildCreatePrnViewData', () => {
         organisationId: 'org-456',
         registrationId: 'reg-002',
         registration: exporterRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        decemberPrnEligibility: notEligible
       })
 
       expect(result.pageTitle).toBe('Create a PERN')
@@ -150,7 +198,8 @@ describe('#buildCreatePrnViewData', () => {
         organisationId: 'org-456',
         registrationId: 'reg-002',
         registration: exporterRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        decemberPrnEligibility: notEligible
       })
 
       expect(result.material.label).toBe('Material')
@@ -162,7 +211,8 @@ describe('#buildCreatePrnViewData', () => {
         organisationId: 'org-456',
         registrationId: 'reg-002',
         registration: exporterRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        decemberPrnEligibility: notEligible
       })
 
       expect(result.tonnage.label).toBe('Enter PERN tonnage')
@@ -189,7 +239,8 @@ describe('#buildCreatePrnViewData', () => {
             ...reprocessorRegistration,
             wasteProcessingType: type
           },
-          recipients: stubRecipients
+          recipients: stubRecipients,
+          decemberPrnEligibility: notEligible
         })
 
         const isPern = result.pageTitle.includes('PERN')

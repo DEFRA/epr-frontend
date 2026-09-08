@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { fetchDecemberPrnEligibility } from '#server/common/helpers/december-waste/fetch-december-prn-eligibility.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -19,6 +20,9 @@ vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+vi.mock(
+  import('#server/common/helpers/december-waste/fetch-december-prn-eligibility.js')
+)
 vi.mock(import('./helpers/create-prn.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
@@ -77,6 +81,9 @@ describe('#postCreatePrnController', () => {
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      eligible: false
+    })
   })
 
   describe('request handling', () => {
@@ -170,7 +177,8 @@ describe('#postCreatePrnController', () => {
               registrationType: 'LARGE_PRODUCER'
             },
             tonnage: 100,
-            notes: 'Test notes'
+            notes: 'Test notes',
+            isDecemberWaste: false
           },
           'mock-backend-token'
         )
