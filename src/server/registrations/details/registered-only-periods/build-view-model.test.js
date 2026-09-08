@@ -98,7 +98,7 @@ const anAccreditation = (validFrom, validTo = null) =>
 const aLedgerEvent = (createdAt = '2026-05-04T09:00:00.000Z') => ({
   kind: 'summary-log-submitted',
   createdAt,
-  summaryLog: { creditTotal: 0 },
+  summaryLog: { id: 'log-1', creditTotal: 0 },
   balance: {
     opening: { total: 0, available: 0 },
     closing: { total: 0, available: 0 }
@@ -359,14 +359,14 @@ describe(buildViewModel, () => {
       ])
     })
 
-    it('carries no balance columns and no action for a registered-only row', () => {
+    it('carries no balance columns, and offers the submission itself', () => {
       const ledger = build({ ledgerEvents: [aLedgerEvent()] }).ledger
 
       expect(cellsOf(ledger?.rows.at(0))).toStrictEqual([
         '4 May 2026, 10:00am',
         'waste-balance-ledger:events.summary-log-submitted',
         'Ada Lovelace (ada@example.com)',
-        ''
+        `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a>`
       ])
     })
   })

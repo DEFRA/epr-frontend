@@ -47,6 +47,16 @@ export const notFound = (message, code, enrichment) =>
   enrich(Boom.notFound(message), code, enrichment)
 
 /**
+ * Builds a 502 Boom enriched with CDP-indexed `code` and `event` fields, for an
+ * upstream that answered in a shape we cannot use.
+ * @param {string} message
+ * @param {string} code
+ * @param {CdpBoomEnrichment} enrichment
+ */
+export const badGateway = (message, code, enrichment) =>
+  enrich(Boom.badGateway(message), code, enrichment)
+
+/**
  * Builds a 500 Boom enriched with CDP-indexed `code` and `event` fields.
  * @param {string} message
  * @param {string} code

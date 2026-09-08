@@ -95,7 +95,7 @@ const buildNoteCreatedEvent = (overrides = {}) =>
 const buildSummaryLogEvent = (overrides = {}) => ({
   kind: 'summary-log-submitted',
   createdAt: '2026-01-04T09:00:00.000Z',
-  summaryLog: { creditTotal: 40 },
+  summaryLog: { id: 'log-1', creditTotal: 40 },
   balance: {
     opening: { total: 60, available: 47.5 },
     closing: { total: 100, available: 87.5 }
@@ -307,10 +307,12 @@ describe(buildLedgerRows, () => {
     )
   })
 
-  it('offers nothing to open on a summary log, which is not a note', () => {
+  it('offers a summary log its own file rather than a note to open', () => {
     const [row] = buildRows({ events: [buildSummaryLogEvent()] })
 
-    expect(cellsOf(row).at(5)).toBe('')
+    expect(cellsOf(row).at(5)).toBe(
+      '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
+    )
   })
 
   it('offers nothing to open on a ledger read without an accreditation', () => {
@@ -367,7 +369,7 @@ describe(buildLedgerRows, () => {
      */
     const buildRegisteredOnlyEvent = () =>
       buildSummaryLogEvent({
-        summaryLog: { creditTotal: 0 },
+        summaryLog: { id: 'log-2', creditTotal: 0 },
         balance: {
           opening: { total: 0, available: 0 },
           closing: { total: 0, available: 0 }
@@ -394,8 +396,18 @@ describe(buildLedgerRows, () => {
         '4 January 2026, 9:00am',
         'waste-balance-ledger:events.summary-log-submitted({"noteType":"PRN"})',
         'Ada Lovelace (ada@example.com)',
-        ''
+        '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/log-2/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
       ])
+    })
+
+    // A submission offers its file without an accreditation, which is what a
+    // registered-only ledger has none of.
+    it('offers the download even though the ledger names no accreditation', () => {
+      const [row] = buildBalanceFreeRows()
+
+      expect(cellsOf(row).at(3)).toContain(
+        '/organisations/org-1/registrations/reg-1/summary-logs/log-2/download'
+      )
     })
 
     it('marks no column numeric, there being no number left to state', () => {

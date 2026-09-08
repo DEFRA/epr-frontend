@@ -54,7 +54,7 @@ const ledgerEvents = [
     kind: 'summary-log-submitted',
     createdAt: '2026-01-04T09:00:00.000Z',
     createdBy: { id: 'system' },
-    summaryLog: { creditTotal: 100 },
+    summaryLog: { id: 'log-1', creditTotal: 100 },
     balance: {
       opening: { total: 0, available: 0 },
       closing: { total: 100, available: 100 }

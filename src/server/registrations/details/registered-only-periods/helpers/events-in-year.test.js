@@ -14,7 +14,7 @@ import { eventsInYear } from './events-in-year.js'
 const buildEvent = (createdAt) => ({
   kind: 'summary-log-submitted',
   createdAt,
-  summaryLog: { creditTotal: 0 },
+  summaryLog: { id: 'log-1', creditTotal: 0 },
   balance: {
     opening: { total: 0, available: 0 },
     closing: { total: 0, available: 0 }

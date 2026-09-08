@@ -5,6 +5,7 @@ import {
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
+import { buildSummaryLogDownloadPath } from '#server/summary-log/download-controller.js'
 
 import { LEDGER_EVENT_KIND, SYSTEM_ACTOR_ID } from './ledger-event-kinds.js'
 import { formatLedgerTimestamp } from './format-ledger-timestamp.js'
@@ -143,6 +144,25 @@ const actionCell = ({
   registrationId
 }) => {
   const empty = { text: '', classes: cssClasses.textAlign.right }
+
+  // A submission offers its own file, and does so without an accreditation -
+  // so it is answered before the note rules below.
+  if (event.summaryLog) {
+    return {
+      html: buildActionLinkHtml(
+        localise('waste-balance-ledger:actionDownload'),
+        localiseUrl(
+          buildSummaryLogDownloadPath({
+            organisationId,
+            registrationId,
+            summaryLogId: event.summaryLog.id
+          })
+        ),
+        formatLedgerTimestamp(event.createdAt)
+      ),
+      classes: cssClasses.textAlign.right
+    }
+  }
 
   if (
     !event.prn ||

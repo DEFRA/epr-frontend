@@ -28,7 +28,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * the balance moved: a resubmission states a new total and moves the balance
  * by the difference against the last one.
  * @typedef {LedgerEventCommon & {
- *   summaryLog: { creditTotal: number },
+ *   summaryLog: { id: string, creditTotal: number },
  *   prn?: never
  * }} SummaryLogEvent
  */

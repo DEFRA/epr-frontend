@@ -134,7 +134,7 @@ const summaryLogSubmitted = {
   kind: 'summary-log-submitted',
   createdAt: '2026-01-04T09:00:00.000Z',
   createdBy: { id: 'system' },
-  summaryLog: { creditTotal: 100 },
+  summaryLog: { id: 'log-1', creditTotal: 100 },
   balance: {
     opening: { total: 0, available: 0 },
     closing: { total: 100, available: 100 }
@@ -432,7 +432,10 @@ describe('the waste balance ledger on the accreditation details view model', () 
         { text: '+100.00', format: 'numeric' },
         { text: '100.00', format: 'numeric' },
         { text: 'System' },
-        { text: '', classes: 'govuk-!-text-align-right' }
+        {
+          html: `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
+          classes: 'govuk-!-text-align-right'
+        }
       ]
     ])
   })
