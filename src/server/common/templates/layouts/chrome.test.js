@@ -83,7 +83,7 @@ describe('the chrome around an organisation page', () => {
       const body = await renderOrganisationPage(server, regulatorAuth)
 
       expect(serviceLink(body)).toHaveTextContent(
-        'Check reprocessed or exported packaging waste'
+        'Access reprocessed or exported packaging waste data'
       )
     })
 
@@ -130,7 +130,7 @@ describe('the chrome around an organisation page', () => {
       })
 
       expect(new JSDOM(asHtml(result)).window.document.title).toMatch(
-        /\| Check reprocessed or exported packaging waste$/
+        /\| Access reprocessed or exported packaging waste data$/
       )
     })
   })

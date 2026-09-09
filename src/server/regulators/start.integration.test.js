@@ -56,7 +56,7 @@ describe('/regulators/start - GET integration', () => {
   ]
 
   it.for(sessions)(
-    'heads the page with what the regulator gets access to when $held',
+    'names the regulator service in its heading when $held',
     async ({ auth }, { server }) => {
       const { statusCode, body } = await open(server, '/regulators/start', auth)
 
@@ -119,7 +119,7 @@ describe('/regulators/start - GET integration', () => {
 
       expect(
         getByRole(body, 'link', {
-          name: 'Check reprocessed or exported packaging waste'
+          name: 'Access reprocessed or exported packaging waste data'
         }).getAttribute('href')
       ).toBe('/regulators/start')
     }
