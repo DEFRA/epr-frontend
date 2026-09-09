@@ -18,7 +18,7 @@ vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 const mockAuth = buildMockAuth()
 
-async function loadPage({ server, registrationAndAccreditation }) {
+async function loadPage({ server, registrationAndAccreditation, query = '' }) {
   vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
     registrationAndAccreditation
   )
@@ -26,15 +26,20 @@ async function loadPage({ server, registrationAndAccreditation }) {
   const registrationId = registrationAndAccreditation.registration?.id
   return await server.inject({
     method: 'GET',
-    url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/view`,
+    url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/view${query}`,
     auth: mockAuth
   })
 }
 
-async function loadPageBody({ server, registrationAndAccreditation }) {
+async function loadPageBody({
+  server,
+  registrationAndAccreditation,
+  query = ''
+}) {
   const { result } = await loadPage({
     server,
-    registrationAndAccreditation
+    registrationAndAccreditation,
+    query
   })
 
   const dom = new JSDOM(result)
@@ -46,6 +51,7 @@ describe('#viewController', () => {
     organisationData: { id: 'org-123' },
     registration: {
       id: 'reg-001',
+      accreditationId: 'acc-001',
       material: 'plastic',
       wasteProcessingType: 'reprocessor',
       registrationNumber: 'REG001234',
@@ -451,6 +457,34 @@ describe('#viewController', () => {
       expect(backLink).not.toBeNull()
       expect(backLink?.getAttribute('href')).toBe(
         `/organisations/${mockAccreditedReprocessor.organisationData.id}/registrations/${mockAccreditedReprocessor.registration.id}/reports`
+      )
+    })
+
+    it('returns to the accreditation the report was opened from', async ({
+      server
+    }) => {
+      const body = await loadPageBody({
+        server,
+        registrationAndAccreditation: mockAccreditedReprocessor,
+        query: '?from=accreditation'
+      })
+
+      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/accreditations/acc-001'
+      )
+    })
+
+    it('returns to the registered-only period the report was opened from', async ({
+      server
+    }) => {
+      const body = await loadPageBody({
+        server,
+        registrationAndAccreditation: mockAccreditedReprocessor,
+        query: '?from=registered-only'
+      })
+
+      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/registered-only-periods/2026'
       )
     })
 

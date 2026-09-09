@@ -18,6 +18,7 @@ import {
   isReprocessorRegistration
 } from '#server/common/helpers/prns/registration-helpers.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportReturnPath } from './helpers/report-return-path.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
 /** @import { SubmissionStatusValue } from './constants.js' */
@@ -340,7 +341,15 @@ export const viewGetController = {
     }
 
     const reportsPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-    const backUrl = request.localiseUrl(reportsPath)
+    const backUrl = request.localiseUrl(
+      reportReturnPath({
+        organisationId,
+        registrationId,
+        year,
+        from: request.query?.from,
+        accreditationId: registration.accreditationId
+      })
+    )
     const reportsUrl = request.localiseUrl(reportsPath)
     const periodPath = `${reportsPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
     const makeChangesUrl = request.localiseUrl(`${periodPath}/make-changes`)

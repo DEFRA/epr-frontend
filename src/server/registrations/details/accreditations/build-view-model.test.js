@@ -368,7 +368,7 @@ describe('the reports table on the accreditation details view model', () => {
           html: '<strong class="govuk-tag govuk-tag--green">Submitted</strong>'
         },
         {
-          html: `<a href="${viewPath}/2026/monthly/8/submissions/1/view" class="govuk-link">View <span class="govuk-visually-hidden">August, 2026</span></a>`,
+          html: `<a href="${viewPath}/2026/monthly/8/submissions/1/view?from=accreditation" class="govuk-link">View <span class="govuk-visually-hidden">August, 2026</span></a>`,
           classes: 'govuk-!-text-align-right'
         }
       ]
