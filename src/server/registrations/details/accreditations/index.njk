@@ -40,9 +40,13 @@
           <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise("registrations:details:accreditation:reports:none") }}</p>
         {% endif %}
 
+        {# The link opens a page that would say the same as the empty state
+           beneath it, so it is offered only where there is something to see. #}
         <div class="epr-heading-with-action">
           <h2 class="govuk-heading-m govuk-!-margin-bottom-0">{{ prns.heading }}</h2>
-          <a href="{{ prns.href }}" class="govuk-link" data-testid="prns-detailed-view-link">{{ localise("registrations:details:accreditation:prns:viewAll") }}</a>
+          {% if prns.rows | length > 0 %}
+            <a href="{{ prns.href }}" class="govuk-link" data-testid="prns-detailed-view-link">{{ localise("registrations:details:accreditation:prns:viewAll") }}</a>
+          {% endif %}
         </div>
 
         {% if prns.rows | length > 0 %}

@@ -529,6 +529,9 @@ describe('the accreditation details page', () => {
 
       expect(body).toContain('data-testid="no-prns-summary"')
       expect(body).not.toContain('data-testid="prns-table"')
+
+      // The full list would only repeat the line above it.
+      expect(body).not.toContain('data-testid="prns-detailed-view-link"')
     })
   })
 
