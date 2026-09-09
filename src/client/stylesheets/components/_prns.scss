@@ -27,13 +27,18 @@
   }
 }
 
-// The operator's list pushes its action to the far edge, away from a heading
-// that spans the page. The regulator's sections carry a short heading, so the
-// action sits immediately beside it, as the design draws it.
-.epr-heading-with-action--adjacent {
-  justify-content: flex-start;
+// A section heading with its action beside it, as the design draws it. This is
+// not the operator's `epr-heading-with-action`, which pushes its action to the
+// far edge of a heading that spans the page.
+.epr-section-heading {
+  display: flex;
   align-items: center;
   gap: govuk-spacing(3);
+  margin-bottom: govuk-spacing(6);
+
+  .govuk-button {
+    margin-bottom: 0;
+  }
 }
 
 .epr-tag--no-max-width {
