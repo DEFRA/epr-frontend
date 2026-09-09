@@ -28,7 +28,6 @@
       "prns": {
         "actions": "Actions",
         "date": "Date",
-        "detailedView": "Detailed view",
         "heading": "{{noteTypePlural}}",
         "listHeading": "{{noteTypePlural}}",
         "mostRecent": "Most recent ({{count}} items)",
@@ -37,7 +36,8 @@
         "recipient": "Producer or compliance scheme",
         "status": "Status",
         "tonnage": "Tonnage",
-        "view": "View"
+        "view": "View",
+        "viewAll": "View all"
       },
       "summary": {
         "number": "Accreditation number",

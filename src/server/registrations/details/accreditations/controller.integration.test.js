@@ -499,6 +499,7 @@ describe('the accreditation details page', () => {
       const link = getByTestId(documentOf(body), 'prns-detailed-view-link')
 
       expect(link.tagName).toBe('A')
+      expect(link.textContent?.trim()).toBe('View all')
       expect(link.getAttribute('href')).toBe(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
       )
