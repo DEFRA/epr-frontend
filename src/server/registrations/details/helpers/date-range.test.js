@@ -15,7 +15,7 @@ describe(toDateRange, () => {
     ).toBe('1 July to 31 December 2026')
   })
 
-  it('names both years where the period crosses one', () => {
+  it('names both years when the period crosses one', () => {
     expect(
       toDateRange({ validFrom: '2025-07-01', validTo: '2026-06-30' }, localise)
     ).toBe('1 July 2025 to 30 June 2026')
