@@ -41,19 +41,10 @@ const fetchAccreditation = ({
   )
 
 /**
- * What the notes page reads, and no more.
- *
- * `fetchAccreditationDetails`, which serves the page above this one, would
- * answer all of this — and the waste balance, the reporting calendar and the
- * whole ledger with it, none of which this page draws. Its sibling
- * `getRequiredRegistrationWithAccreditation`, which the operator's own notes
- * list uses, answers no organisation, and the caption names one. So this reads
- * the three things the page shows and stops there.
- *
- * A failed read fails the page: unlike the summary section on the
- * accreditation page, the notes are the whole of this page's content.
- *
- * `fetchPackagingRecyclingNotes` takes its arguments positionally.
+ * The three things the notes page shows, and no more —
+ * `fetchAccreditationDetails` also reads the balance, calendar and ledger, and
+ * `getRequiredRegistrationWithAccreditation` answers no organisation. A failed
+ * read fails the page, the notes being all of its content.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,

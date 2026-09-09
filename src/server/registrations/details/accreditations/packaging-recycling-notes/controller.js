@@ -15,11 +15,8 @@ import { fetchPrnListDetails } from './helpers/fetch-prn-list-details.js'
  */
 
 /**
- * The notes an accreditation has issued, read-only.
- *
- * This handler is not routed from here. It is reached through the fork in
- * `src/server/prns/index.js`, which serves one address to two audiences: the
- * operator keeps their own list, and a regulator gets this page.
+ * The notes an accreditation has issued, read-only. Routed from the fork in
+ * `src/server/prns/index.js`, not from here.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const controller = {

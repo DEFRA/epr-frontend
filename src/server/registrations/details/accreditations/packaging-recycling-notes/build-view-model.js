@@ -47,8 +47,7 @@ import { buildPrnStatusTagHtml } from '../helpers/prn-status-tag-html.js'
 const KEY = 'registrations:details:accreditation:prns'
 
 /**
- * A note awaiting action carries neither a number nor an issue date, so its
- * tables carry neither column. The other two tables carry both.
+ * A note awaiting action has neither a number nor an issue date.
  * @param {{ localise: Localise, numbered: boolean }} params
  * @returns {TableRow}
  */
@@ -64,14 +63,10 @@ const toHead = ({ localise, numbered }) => [
   }
 ]
 
-/**
- * The recipient and the date, which every table draws ahead of the tonnage.
- */
+/** The recipient and the date, drawn ahead of the tonnage in every table. */
 const COLUMNS_BEFORE_TONNAGE = 2
 
 /**
- * Where the tonnage sits, which is one further along in the two tables that
- * lead with a note's number.
  * @param {boolean} numbered
  * @returns {number}
  */
@@ -79,9 +74,7 @@ const tonnageColumnOf = (numbered) =>
   numbered ? COLUMNS_BEFORE_TONNAGE + 1 : COLUMNS_BEFORE_TONNAGE
 
 /**
- * The total row every table with rows ends on: the tonnage of the notes in
- * that table alone, bold, with every other cell empty. A table holding no
- * notes has no total to draw and shows its empty line instead.
+ * The bold total row a table with rows ends on, summing that table alone.
  * @param {{
  *   localise: Localise,
  *   notes: PackagingRecyclingNote[],
@@ -107,10 +100,8 @@ const toTotalRow = ({ localise, notes, numbered, width }) => {
 }
 
 /**
- * One table of notes. Every row's action opens the note read-only, whatever
- * its status — a regulator has no other action to take on one. Each link
- * carries the note's number, or its date where it has none, so a column of
- * identical links stays distinguishable.
+ * One table of notes. Every row opens its note read-only, named by its number
+ * or, where it has none, its date.
  * @param {{
  *   heading: string,
  *   localise: Localise,
@@ -170,9 +161,7 @@ const toTable = ({
 }
 
 /**
- * One of the four tables, named by the copy key its heading reads and the
- * testid the journey tests address it by. Everything the four have in common
- * travels as one `context` rather than being threaded through four calls.
+ * One of the four tables, by heading copy key and testid.
  * @param {{
  *   context: TableContext,
  *   key: string,
@@ -196,9 +185,7 @@ const toNamedTable = ({ context, key, notes, numbered, testId }) =>
   })
 
 /**
- * The awaiting-action tab holds two tables rather than one: a note awaiting
- * authorisation and one awaiting cancellation are both waiting on somebody,
- * but on different people for different things.
+ * The awaiting-action tab holds two tables: authorisation, then cancellation.
  * @param {{ context: TableContext, groups: PrnGroups }} params
  * @returns {NotesTable[]}
  */
@@ -230,9 +217,7 @@ const toTabs = (localise) => ({
 })
 
 /**
- * The trail continuing the accreditation page's, which starts at All
- * organisations and carries no Home crumb. This page is the last crumb, so it
- * names itself without linking at itself.
+ * Continues the accreditation page's trail, ending on this page unlinked.
  * @param {{
  *   accreditationPath: string,
  *   heading: string,
@@ -272,12 +257,8 @@ const toBreadcrumbs = ({
 ]
 
 /**
- * The notes an accreditation has issued, under the three tabs the design
- * draws, read-only.
- *
- * An accreditation that has issued nothing a regulator may see renders no tabs
- * at all — a page of three empty tabs says less than one sentence does. A tab
- * that is empty while another is not keeps its place and says so itself.
+ * An accreditation's notes under three read-only tabs. `isEmpty` drops the
+ * tabs entirely; a single empty tab keeps its place and says so.
  * @param {{
  *   organisation: Organisation,
  *   registration: Registration,

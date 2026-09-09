@@ -2,12 +2,8 @@ import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
 
 /**
- * A note's status as a GDS tag.
- *
- * The labels come from `getStatusConfig`, which reads them out of the `prns`
- * namespace. These pages live under `registrations`, so this crosses a
- * namespace deliberately: a note's status should read the same wherever it
- * appears, and a second set of keys saying the same five things would drift.
+ * A note's status as a GDS tag. Labels come from the `prns` namespace, so a
+ * status reads the same on these pages as on the operator's.
  * @param {string} status
  * @param {Localise} localise
  * @returns {string}

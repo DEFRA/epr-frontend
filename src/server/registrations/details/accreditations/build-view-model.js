@@ -258,13 +258,8 @@ const toPrnsHead = (localise) => [
 ]
 
 /**
- * The three most recent notes, and where to read the rest.
- *
- * A note awaiting issue has no issue date, so its row shows the date it was
- * created rather than an empty cell — the column is headed neutrally for that
- * reason. Every row's action opens the note read-only, whatever its status;
- * the link carries the note's number, or its date where it has no number yet,
- * so a column of identical links stays distinguishable.
+ * The three most recent notes, and where to read the rest. An unissued note's
+ * row falls back to its created date, so the column is headed neutrally.
  * @param {{
  *   accreditationId: string,
  *   localise: Localise,

@@ -15,9 +15,7 @@
   {% endif %}
 {% endmacro %}
 
-{# `super()` keeps the phase banner and the breadcrumbs the layout draws; this
-   block only adds the back link beneath them. Overriding it outright would
-   silently drop both. #}
+{# `super()` keeps the layout's phase banner and breadcrumbs. #}
 {% block beforeContent %}
   {{ super() }}
   {{ govukBackLink({ text: localise("common:back"), href: backUrl }) }}

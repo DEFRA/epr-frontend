@@ -27,19 +27,8 @@ const basePath =
   '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/packaging-recycling-notes'
 
 /**
- * One address, two audiences. The address names an accreditation's notes, and
- * who is reading does not change what it names — so a regulator gets a page
- * written for them here rather than at an address of its own.
- *
- * Only this route forks. Create, view, delete, discard, cancel and issue are
- * untouched, so a regulator reaching one of those lands where they land today.
- * With `featureFlags.regulatorAccess` off, `readsAsARegulator` is false for
- * everyone and every session gets the operator's list, which is what keeps the
- * operator journey unchanged.
- *
- * It is also what makes the note page's back link right for a regulator with no
- * change to `view-controller.js`: that link points here, and here is now their
- * page.
+ * One address, two audiences (PAE-1930). Only this route forks; with
+ * `featureFlags.regulatorAccess` off every session gets the operator's list.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const listRoute = {

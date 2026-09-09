@@ -3,8 +3,7 @@
  */
 
 /**
- * An organisation trading under another name is known by it, so that is the
- * name a regulator is shown.
+ * The trading name where there is one, otherwise the registered name.
  * @param {Organisation} organisation
  * @returns {string}
  */
@@ -12,12 +11,7 @@ export const organisationName = ({ companyDetails }) =>
   companyDetails.tradingName?.trim() || companyDetails.name
 
 /**
- * The records a page sits under, in the order its breadcrumbs walk them. A
- * record holding no number has nothing to name it by, so it is left out rather
- * than shown as an empty gap between two dashes.
- *
- * Shared by every regulator page beneath a registration, so a caption reads
- * the same wherever it appears.
+ * The records a page sits under, dropping any that has no number.
  * @param {(string | null | undefined)[]} parts
  * @returns {string}
  */

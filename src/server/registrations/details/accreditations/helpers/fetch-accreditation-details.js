@@ -143,14 +143,9 @@ const fetchLedger = ({
     : Promise.resolve(null)
 
 /**
- * The notes this accreditation has issued, or none where they could not be
- * read. It degrades like the reporting calendar rather than failing the page
- * as the ledger does: the notes are one section of four, and a page missing
- * its ledger is missing the record a regulator opened it for, while a page
- * missing its notes still answers everything else it was asked.
- *
- * `fetchPackagingRecyclingNotes` takes its arguments positionally, unlike
- * every other read here.
+ * The accreditation's notes, or none where they could not be read — one
+ * section of four, so it degrades like the calendar rather than failing the
+ * page as the ledger does.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
