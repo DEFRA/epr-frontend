@@ -1,4 +1,5 @@
 import Boom from '@hapi/boom'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
@@ -346,7 +347,8 @@ export const viewGetController = {
         organisationId,
         registrationId,
         year,
-        from: request.query?.from,
+        cadence,
+        isRegulator: readsAsARegulator(session),
         accreditationId: registration.accreditationId
       })
     )

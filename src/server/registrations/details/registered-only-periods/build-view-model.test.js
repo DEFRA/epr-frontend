@@ -296,7 +296,7 @@ describe(buildViewModel, () => {
       const action = row?.[4]
 
       expect(action && 'html' in action ? action.html : '').toContain(
-        `/organisations/${organisationId}/registrations/reg-001/reports/2026/quarterly/1/submissions/1/view?from=registered-only`
+        `/organisations/${organisationId}/registrations/reg-001/reports/2026/quarterly/1/submissions/1/view`
       )
     })
 

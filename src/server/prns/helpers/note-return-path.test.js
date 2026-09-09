@@ -9,7 +9,8 @@ import {
 const ids = {
   organisationId: 'org-1',
   registrationId: 'reg-1',
-  accreditationId: 'acc-1'
+  accreditationId: 'acc-1',
+  isRegulator: true
 }
 
 const accreditation =
@@ -34,6 +35,15 @@ describe(noteReturn, () => {
       path: `${accreditation}/waste-balance-ledger`,
       textKey: 'prns:view:returnLinkLedger'
     })
+  })
+
+  it('sends an operator to their own list, whatever a shared link says', () => {
+    for (const from of [RETURN_TO_ACCREDITATION, RETURN_TO_LEDGER]) {
+      expect(noteReturn({ ...ids, isRegulator: false, from })).toStrictEqual({
+        path: `${accreditation}/packaging-recycling-notes`,
+        textKey: 'prns:view:returnLink'
+      })
+    }
   })
 
   it('falls back to the note list for a value it does not know', () => {

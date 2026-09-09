@@ -307,7 +307,7 @@ describe('the registered-only period page', () => {
         name: /^View\s*Quarter 1, 2026$/
       }).getAttribute('href')
     ).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/view?from=registered-only`
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/view`
     )
   })
 

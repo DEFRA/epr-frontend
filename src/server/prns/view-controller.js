@@ -1,4 +1,5 @@
 import { isNil } from '#server/common/helpers/is-nil.js'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
   badImplementation,
@@ -326,6 +327,7 @@ async function handleExistingView(
     organisationId,
     registrationId,
     accreditationId,
+    isRegulator: readsAsARegulator(session),
     from: request.query?.from
   })
 

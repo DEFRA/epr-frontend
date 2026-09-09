@@ -312,7 +312,7 @@ describe('the accreditation details page', () => {
       'View August, 2026'
     ])
     expect(body).toContain(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/8/submissions/1/view?from=accreditation`
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/8/submissions/1/view`
     )
   })
 

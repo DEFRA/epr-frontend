@@ -9,7 +9,6 @@ import { buildPeriodPath } from '#server/reports/helpers/build-period-path.js'
 import { buildStatusTagHtml } from '#server/reports/helpers/build-status-tag-html.js'
 import { formatPeriodLabelWithComma } from '#server/reports/helpers/format-period-label.js'
 import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitted-date-time.js'
-import { RETURN_TO_REGISTERED_ONLY } from '#server/reports/helpers/report-return-path.js'
 
 import { eventsInYear } from './helpers/events-in-year.js'
 import { organisationName, toCaption } from '../helpers/caption.js'
@@ -115,7 +114,7 @@ const toActionCell = ({
   }
 
   const url = localiseUrl(
-    `${buildPeriodPath({ organisationId, registrationId, period, cadence: CADENCE.QUARTERLY })}/view?from=${RETURN_TO_REGISTERED_ONLY}`
+    `${buildPeriodPath({ organisationId, registrationId, period, cadence: CADENCE.QUARTERLY })}/view`
   )
 
   return {

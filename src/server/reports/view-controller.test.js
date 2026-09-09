@@ -1,6 +1,12 @@
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
@@ -18,7 +24,18 @@ vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 const mockAuth = buildMockAuth()
 
-async function loadPage({ server, registrationAndAccreditation, query = '' }) {
+const regulatorAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
+  ...sessionIdentity(IDENTITIES.regulator)
+})
+
+async function loadPage({
+  server,
+  registrationAndAccreditation,
+  auth = mockAuth,
+  cadence = 'monthly'
+}) {
   vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
     registrationAndAccreditation
   )
@@ -26,20 +43,22 @@ async function loadPage({ server, registrationAndAccreditation, query = '' }) {
   const registrationId = registrationAndAccreditation.registration?.id
   return await server.inject({
     method: 'GET',
-    url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/view${query}`,
-    auth: mockAuth
+    url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/1/submissions/1/view`,
+    auth
   })
 }
 
 async function loadPageBody({
   server,
   registrationAndAccreditation,
-  query = ''
+  auth = mockAuth,
+  cadence = 'monthly'
 }) {
   const { result } = await loadPage({
     server,
     registrationAndAccreditation,
-    query
+    auth,
+    cadence
   })
 
   const dom = new JSDOM(result)
@@ -460,32 +479,61 @@ describe('#viewController', () => {
       )
     })
 
-    it('returns to the accreditation the report was opened from', async ({
-      server
-    }) => {
-      const body = await loadPageBody({
-        server,
-        registrationAndAccreditation: mockAccreditedReprocessor,
-        query: '?from=accreditation'
+    describe('for a regulator, who has no report list of their own', () => {
+      beforeAll(() => {
+        config.set('featureFlags.regulatorAccess', true)
       })
 
-      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/accreditations/acc-001'
-      )
-    })
-
-    it('returns to the registered-only period the report was opened from', async ({
-      server
-    }) => {
-      const body = await loadPageBody({
-        server,
-        registrationAndAccreditation: mockAccreditedReprocessor,
-        query: '?from=registered-only'
+      afterAll(() => {
+        config.set('featureFlags.regulatorAccess', false)
       })
 
-      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/registered-only-periods/2026'
-      )
+      it('sends a monthly report back to the accreditation', async ({
+        server
+      }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockAccreditedReprocessor,
+          auth: regulatorAuth
+        })
+
+        expect(
+          body.querySelector('.govuk-back-link')?.getAttribute('href')
+        ).toBe(
+          '/organisations/org-123/registrations/reg-001/accreditations/acc-001'
+        )
+      })
+
+      it('sends a quarterly report back to the registered-only year', async ({
+        server
+      }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockAccreditedReprocessor,
+          auth: regulatorAuth,
+          cadence: 'quarterly'
+        })
+
+        expect(
+          body.querySelector('.govuk-back-link')?.getAttribute('href')
+        ).toBe(
+          '/organisations/org-123/registrations/reg-001/registered-only-periods/2026'
+        )
+      })
+
+      it('sends a report back to the registration where there is no accreditation', async ({
+        server
+      }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockRegisteredOnlyReprocessor,
+          auth: regulatorAuth
+        })
+
+        expect(
+          body.querySelector('.govuk-back-link')?.getAttribute('href')
+        ).toBe('/organisations/org-123/registrations/reg-001')
+      })
     })
 
     describe('submission-details section', () => {

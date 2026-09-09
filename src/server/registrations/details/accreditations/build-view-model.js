@@ -11,7 +11,6 @@ import { buildPeriodPath } from '#server/reports/helpers/build-period-path.js'
 import { buildStatusTagHtml } from '#server/reports/helpers/build-status-tag-html.js'
 import { formatPeriodLabelWithComma } from '#server/reports/helpers/format-period-label.js'
 import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitted-date-time.js'
-import { RETURN_TO_ACCREDITATION as REPORT_RETURN_TO_ACCREDITATION } from '#server/reports/helpers/report-return-path.js'
 
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 
@@ -172,7 +171,7 @@ const toActionCell = ({
   }
 
   const url = localiseUrl(
-    `${buildPeriodPath({ organisationId, registrationId, period, cadence })}/view?from=${REPORT_RETURN_TO_ACCREDITATION}`
+    `${buildPeriodPath({ organisationId, registrationId, period, cadence })}/view`
   )
 
   return {

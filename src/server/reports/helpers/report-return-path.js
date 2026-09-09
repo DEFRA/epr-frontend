@@ -1,38 +1,23 @@
+import { CADENCE } from '../constants.js'
+
+/**
+ * @import { CadenceValue } from '../constants.js'
+ */
+
 /**
  * Where the report view's back link goes.
  *
- * A submitted report is reachable from the operator's report list, from a
- * regulator's accreditation page and from a registered-only period, so the
- * page that opened it names itself in a `from` parameter. The parameter
- * selects a destination rather than supplying one — no part of it reaches the
- * path — and an accreditation the registration does not have falls back to
- * the report list.
- */
-export const RETURN_TO_ACCREDITATION = 'accreditation'
-export const RETURN_TO_REGISTERED_ONLY = 'registered-only'
-
-/**
- * @param {{ from?: unknown, accreditationId?: string, year: number | string }} params
- * @returns {string}
- */
-const suffix = ({ from, accreditationId, year }) => {
-  if (from === RETURN_TO_ACCREDITATION && accreditationId) {
-    return `/accreditations/${accreditationId}`
-  }
-
-  if (from === RETURN_TO_REGISTERED_ONLY) {
-    return `/registered-only-periods/${year}`
-  }
-
-  return '/reports'
-}
-
-/**
+ * An operator reads a report from their own list. A regulator reads it from
+ * whichever page lists periods of that cadence: monthly ones sit on the
+ * accreditation, quarterly ones on the registered-only year. Both are answered
+ * by the reader and the report rather than by the address, so a link shared
+ * between the two reads correctly for whoever opens it.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
  *   year: number | string,
- *   from?: unknown,
+ *   cadence: CadenceValue,
+ *   isRegulator: boolean,
  *   accreditationId?: string
  * }} params
  * @returns {string} unlocalised path
@@ -41,7 +26,21 @@ export const reportReturnPath = ({
   organisationId,
   registrationId,
   year,
-  from,
+  cadence,
+  isRegulator,
   accreditationId
-}) =>
-  `/organisations/${organisationId}/registrations/${registrationId}${suffix({ from, accreditationId, year })}`
+}) => {
+  const registrationPath = `/organisations/${organisationId}/registrations/${registrationId}`
+
+  if (!isRegulator) {
+    return `${registrationPath}/reports`
+  }
+
+  if (cadence === CADENCE.QUARTERLY) {
+    return `${registrationPath}/registered-only-periods/${year}`
+  }
+
+  return accreditationId
+    ? `${registrationPath}/accreditations/${accreditationId}`
+    : registrationPath
+}
