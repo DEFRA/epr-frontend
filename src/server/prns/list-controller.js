@@ -1,31 +1,8 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
+import { toNoteRows } from './helpers/note-rows.js'
 import { buildListViewData } from './list-view-data.js'
-
-const filterPrnsByStatus = (prns, status) =>
-  prns
-    .filter((prn) => prn.status === status)
-    .map((prn) => ({
-      id: prn.id,
-      recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
-      createdAt: prn.createdAt,
-      tonnage: prn.tonnage,
-      status: prn.status
-    }))
-
-const filterPrnsByStatuses = (prns, statuses) =>
-  prns
-    .filter((prn) => statuses.includes(prn.status))
-    .map((prn) => ({
-      id: prn.id,
-      prnNumber: prn.prnNumber,
-      recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
-      issuedAt: prn.issuedAt,
-      tonnage: prn.tonnage,
-      status: prn.status
-    }))
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const listController = {
@@ -61,21 +38,12 @@ export const listController = {
       )
     ])
 
-    const hasCreatedPrns = prns.some((prn) => prn.status !== 'draft')
-
     const viewData = buildListViewData(request, {
       organisationId,
       registrationId,
       accreditationId,
       registration,
-      prns: filterPrnsByStatus(prns, 'awaiting_authorisation'),
-      cancellationPrns: filterPrnsByStatus(prns, 'awaiting_cancellation'),
-      issuedPrns: filterPrnsByStatuses(prns, [
-        'awaiting_acceptance',
-        'accepted'
-      ]),
-      cancelledPrns: filterPrnsByStatuses(prns, ['cancelled']),
-      hasCreatedPrns,
+      ...toNoteRows(prns),
       wasteBalance
     })
 

@@ -2,6 +2,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { fetchLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
 import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
@@ -10,6 +11,7 @@ import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-p
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+ * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource } from '../../helpers/types.js'
@@ -30,7 +32,8 @@ import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-p
  *   wasteBalance: WasteBalance | null,
  *   reportingPeriods: ReportingPeriod[],
  *   cadence: CadenceValue | null,
- *   ledgerEvents: LedgerEvent[] | null
+ *   ledgerEvents: LedgerEvent[] | null,
+ *   packagingRecyclingNotes: PackagingRecyclingNote[]
  * }} AccreditationDetails
  */
 
@@ -140,6 +143,43 @@ const fetchLedger = ({
     : Promise.resolve(null)
 
 /**
+ * The accreditation's notes, or none where they could not be read — one
+ * section of four, so it degrades like the calendar rather than failing the
+ * page as the ledger does.
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   accreditationId: string,
+ *   backendToken: string,
+ *   logger: TypedLogger
+ * }} params
+ * @returns {Promise<PackagingRecyclingNote[]>}
+ */
+const fetchNotes = async ({
+  organisationId,
+  registrationId,
+  accreditationId,
+  backendToken,
+  logger
+}) => {
+  try {
+    return await fetchPackagingRecyclingNotes(
+      organisationId,
+      registrationId,
+      accreditationId,
+      backendToken
+    )
+  } catch (error) {
+    logger.error({
+      message: `Failed to fetch packaging recycling notes for organisation ${organisationId} accreditation ${accreditationId}`,
+      err: error
+    })
+
+    return []
+  }
+}
+
+/**
  * The page names the organisation, the registration and the accreditation
  * together in its caption, so all three are read. The registration comes off
  * the organisation document rather than its own address: the only thing the
@@ -151,7 +191,8 @@ const fetchLedger = ({
  * balance rows rather than the whole page. The reporting calendar is a fifth,
  * degrading the same way. The ledger is a sixth, and it fails the page as the
  * accreditation read does: the ledger is the record a regulator opens this
- * page for, so a page without it would be missing its point.
+ * page for, so a page without it would be missing its point. The notes are a
+ * seventh, degrading like the calendar rather than failing like the ledger.
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
@@ -163,23 +204,30 @@ const fetchLedger = ({
  * @returns {Promise<AccreditationDetails>}
  */
 export const fetchAccreditationDetails = async (params) => {
-  const [linked, accreditation, wasteBalance, calendar, ledgerEvents] =
-    await Promise.all([
-      fetchRegistrationAndAccreditation(
-        params.organisationId,
-        params.registrationId,
-        params.backendToken
-      ),
-      fetchAccreditation(params),
-      getWasteBalance(
-        params.organisationId,
-        params.accreditationId,
-        params.backendToken,
-        params.logger
-      ),
-      fetchReportingCalendar(params),
-      fetchLedger(params)
-    ])
+  const [
+    linked,
+    accreditation,
+    wasteBalance,
+    calendar,
+    ledgerEvents,
+    packagingRecyclingNotes
+  ] = await Promise.all([
+    fetchRegistrationAndAccreditation(
+      params.organisationId,
+      params.registrationId,
+      params.backendToken
+    ),
+    fetchAccreditation(params),
+    getWasteBalance(
+      params.organisationId,
+      params.accreditationId,
+      params.backendToken,
+      params.logger
+    ),
+    fetchReportingCalendar(params),
+    fetchLedger(params),
+    fetchNotes(params)
+  ])
 
   return {
     organisation: linked.organisationData,
@@ -188,6 +236,7 @@ export const fetchAccreditationDetails = async (params) => {
     wasteBalance,
     reportingPeriods: calendar.reportingPeriods,
     cadence: calendar.cadence,
-    ledgerEvents
+    ledgerEvents,
+    packagingRecyclingNotes
   }
 }

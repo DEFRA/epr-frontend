@@ -25,6 +25,20 @@
         "status": "Status",
         "submissionDate": "Submission date"
       },
+      "prns": {
+        "action": "Action",
+        "date": "Date",
+        "heading": "{{noteTypePlural}}",
+        "listHeading": "{{noteTypePlural}}",
+        "mostRecent": "Most recent ({{count}} items)",
+        "none": "This accreditation has issued no {{noteTypePlural}}.",
+        "noneCancelled": "No {{noteTypePlural}} have been cancelled.",
+        "recipient": "Producer or compliance scheme",
+        "status": "Status",
+        "tonnage": "Tonnage",
+        "view": "View",
+        "viewAll": "View all"
+      },
       "summary": {
         "number": "Accreditation number",
         "status": "Accreditation status",

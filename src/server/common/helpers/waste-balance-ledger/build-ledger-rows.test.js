@@ -144,7 +144,7 @@ describe(buildLedgerRows, () => {
       'waste-balance-ledger:table.noMovement',
       '87.50',
       'Ada Lovelace (ada@example.com)',
-      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:actionView <span class="govuk-visually-hidden">15 February 2026, 3:09pm</span></a>'
+      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view?from=ledger" class="govuk-link">waste-balance-ledger:actionView <span class="govuk-visually-hidden">15 February 2026, 3:09pm</span></a>'
     ])
   })
 
@@ -254,7 +254,7 @@ describe(buildLedgerRows, () => {
     const [row] = buildRows({ events: [buildNumberedEvent()] })
 
     expect(cellsOf(row).at(5)).toBe(
-      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:actionView <span class="govuk-visually-hidden">240000123</span></a>'
+      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view?from=ledger" class="govuk-link">waste-balance-ledger:actionView <span class="govuk-visually-hidden">240000123</span></a>'
     )
   })
 
@@ -285,7 +285,7 @@ describe(buildLedgerRows, () => {
     })
 
     expect(cellsOf(rows.at(1)).at(5)).toContain(
-      '/packaging-recycling-notes/prn-1/view'
+      '/packaging-recycling-notes/prn-1/view?from=ledger'
     )
   })
 
