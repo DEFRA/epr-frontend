@@ -1,6 +1,6 @@
 {
   "accreditationCaption": "Accreditation {{ accreditationNumber }}",
-  "actionDownload": "Download",
+  "actionDownload": "Download xlsx",
   "actionView": "View",
   "events": {
     "prn-accepted": "{{ noteType }} accepted",

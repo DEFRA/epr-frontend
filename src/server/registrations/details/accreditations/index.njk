@@ -1,5 +1,6 @@
 {% extends 'layouts/page.njk' %}
 
+{% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block content %}
@@ -27,7 +28,7 @@
 
         {{ govukSummaryList({ rows: summaryListRows }) }}
 
-        <h2 class="govuk-heading-m">{{ localise("registrations:details:accreditation:reports:heading") }}</h2>
+        <h2 class="govuk-heading-m govuk-!-margin-top-6">{{ localise("registrations:details:accreditation:reports:heading") }}</h2>
 
         {% if reports.rows | length > 0 %}
           {{ govukTable({
@@ -40,12 +41,19 @@
           <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise("registrations:details:accreditation:reports:none") }}</p>
         {% endif %}
 
-        {# The link opens a page that would say the same as the empty state
-           beneath it, so it is offered only where there is something to see. #}
-        <div class="epr-heading-with-action">
+        {# The button opens a page that would say the same as the empty state
+           beneath it, so it is offered only where there is something to see.
+           `govukButton` with an href renders an anchor, so it stays a link to
+           anyone counting the page's change controls. #}
+        <div class="epr-heading-with-action epr-heading-with-action--adjacent govuk-!-margin-top-6">
           <h2 class="govuk-heading-m govuk-!-margin-bottom-0">{{ prns.heading }}</h2>
           {% if prns.rows | length > 0 %}
-            <a href="{{ prns.href }}" class="govuk-link" data-testid="prns-detailed-view-link">{{ localise("registrations:details:accreditation:prns:viewAll") }}</a>
+            {{ govukButton({
+              text: localise("registrations:details:accreditation:prns:viewAll"),
+              href: prns.href,
+              classes: "govuk-button--secondary",
+              attributes: { "data-testid": "prns-detailed-view-link" }
+            }) }}
           {% endif %}
         </div>
 
@@ -61,7 +69,7 @@
         {% endif %}
 
         {% if ledger %}
-          <h2 class="govuk-heading-m">{{ localise("waste-balance-ledger:heading") }}</h2>
+          <h2 class="govuk-heading-m govuk-!-margin-top-6">{{ localise("waste-balance-ledger:heading") }}</h2>
           {% set ledgerRows = ledger.rows %}
           {% include "partials/waste-balance-ledger/table.njk" %}
         {% endif %}

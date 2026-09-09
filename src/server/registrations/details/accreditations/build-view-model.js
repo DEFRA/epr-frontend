@@ -1,9 +1,6 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import {
-  formatDate,
-  formatDateShort
-} from '#server/common/helpers/format-date.js'
+import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
@@ -64,7 +61,6 @@ import { toDateRange } from '../helpers/date-range.js'
  * }} AccreditationDetailsViewModel
  */
 
-/**
 /**
  * The balance not already committed to a note. `availableAmount` falls when a
  * PRN is created rather than when it is issued, so tonnage a note has been
@@ -257,7 +253,7 @@ const toPrnsHead = (localise) => [
   { text: localise('registrations:details:accreditation:prns:date') },
   { text: localise('registrations:details:accreditation:prns:tonnage') },
   {
-    text: localise('registrations:details:accreditation:prns:actions'),
+    text: localise('registrations:details:accreditation:prns:action'),
     classes: cssClasses.textAlign.right
   }
 ]
@@ -299,7 +295,7 @@ const toPrns = ({
       noteTypePlural
     }),
     rows: mostRecent.map((note) => {
-      const date = formatDate(note.issuedAt ?? note.createdAt)
+      const date = formatDateShort(note.issuedAt ?? note.createdAt)
 
       return [
         { text: getIssuedToOrgDisplayName(note.issuedToOrganisation) },

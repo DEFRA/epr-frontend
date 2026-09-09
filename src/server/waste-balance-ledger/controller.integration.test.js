@@ -183,7 +183,7 @@ describe('the waste balance ledger page', () => {
           '+100.00',
           '100.00',
           'System',
-          'Download 4 January 2026, 9:00am'
+          'Download xlsx 4 January 2026, 9:00am'
         ]
       ])
     })

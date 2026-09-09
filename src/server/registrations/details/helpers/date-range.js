@@ -5,14 +5,6 @@ import { formatDate } from '#server/common/helpers/format-date.js'
  */
 
 /**
- * @param {string} from
- * @param {string} to
- * @returns {boolean}
- */
-const inSameYear = (from, to) =>
-  new Date(from).getUTCFullYear() === new Date(to).getUTCFullYear()
-
-/**
  * The period a record is valid over, as a reader sees it. A record that has
  * not started names no period at all; one that has started and has no end is
  * current. A period that starts and ends in one year names that year once, at
@@ -34,10 +26,9 @@ export const toDateRange = ({ validFrom, validTo }, localise) => {
     })
   }
 
+  // The year is named once, at the end, whether or not the period crosses one.
   return localise('registrations:details:period', {
-    from: formatDate(validFrom, {
-      includeYear: !inSameYear(validFrom, validTo)
-    }),
+    from: formatDate(validFrom, { includeYear: false }),
     to: formatDate(validTo)
   })
 }

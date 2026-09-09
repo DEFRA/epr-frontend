@@ -28,32 +28,19 @@ const GROUP_BY_STATUS = {
 }
 
 /**
- * @param {string} timestamp
+ * The date a note is read by: when it was issued, or where it has not been,
+ * when it was made. The summary table shows this one, so it orders by it.
+ * @param {PackagingRecyclingNote} note
  * @returns {number}
  */
-const at = (timestamp) => new Date(timestamp).getTime()
+const shownDate = (note) => new Date(note.issuedAt ?? note.createdAt).getTime()
 
 /**
- * @param {PackagingRecyclingNote} note
- * @returns {boolean}
- */
-const isIssued = (note) => Boolean(note.issuedAt)
-
-/**
- * Newest first by the date its table shows, unissued notes above issued ones.
  * @param {PackagingRecyclingNote} note
  * @param {PackagingRecyclingNote} other
  * @returns {number}
  */
-const newestFirst = (note, other) => {
-  if (isIssued(note) !== isIssued(other)) {
-    return isIssued(note) ? 1 : -1
-  }
-
-  return note.issuedAt && other.issuedAt
-    ? at(other.issuedAt) - at(note.issuedAt)
-    : at(other.createdAt) - at(note.createdAt)
-}
+const newestFirst = (note, other) => shownDate(other) - shownDate(note)
 
 /**
  * Groups and orders an accreditation's notes for the two regulator pages.

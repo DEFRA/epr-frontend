@@ -27,6 +27,14 @@
   }
 }
 
+// The operator's list pushes its action to the far edge, away from a heading
+// that spans the page. The regulator's sections carry a short heading, so the
+// action sits beside it rather than across the page from it.
+.epr-heading-with-action--adjacent {
+  justify-content: flex-start;
+  align-items: baseline;
+}
+
 .epr-tag--no-max-width {
   max-width: none;
 }

@@ -26,7 +26,7 @@
         "submissionDate": "Submission date"
       },
       "prns": {
-        "actions": "Actions",
+        "action": "Action",
         "date": "Date",
         "heading": "{{noteTypePlural}}",
         "listHeading": "{{noteTypePlural}}",

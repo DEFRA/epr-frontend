@@ -99,24 +99,26 @@ describe(toPrnGroups, () => {
       expect(ids(groups.mostRecent)).toStrictEqual(['newer', 'older'])
     })
 
-    it('puts a note awaiting issue above every note already issued', () => {
+    it('orders by the date shown, whether or not a note has been issued', () => {
       const groups = toPrnGroups([
         aNote({
-          id: 'issued-today',
+          id: 'issued-last-year',
           status: 'accepted',
-          issuedAt: '2026-02-01T09:00:00.000Z'
+          issuedAt: '2025-02-01T09:00:00.000Z'
         }),
         aNote({
-          id: 'awaiting-issue',
+          id: 'made-today',
           status: 'awaiting_acceptance',
-          createdAt: '2020-01-01T09:00:00.000Z',
+          createdAt: '2026-01-01T09:00:00.000Z',
           issuedAt: null
         })
       ])
 
+      // An unissued note is read by the date it was made, which is the date
+      // its row shows, so it sorts among the issued ones rather than above.
       expect(ids(groups.mostRecent)).toStrictEqual([
-        'awaiting-issue',
-        'issued-today'
+        'made-today',
+        'issued-last-year'
       ])
     })
 
@@ -164,9 +166,9 @@ describe(toPrnGroups, () => {
       ])
 
       expect(ids(groups.mostRecent)).toStrictEqual([
-        'awaiting',
         'newest-issued',
-        'middle-issued'
+        'middle-issued',
+        'oldest-issued'
       ])
     })
 

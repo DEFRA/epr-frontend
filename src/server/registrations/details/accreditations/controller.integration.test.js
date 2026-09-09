@@ -471,7 +471,7 @@ describe('the accreditation details page', () => {
         'Status',
         'Date',
         'Tonnage',
-        'Actions'
+        'Action'
       ])
 
       expect(body.indexOf('data-testid="prns-table"')).toBeLessThan(

@@ -461,7 +461,7 @@ describe('the registered-only period page', () => {
       ).toStrictEqual([
         'Summary log submitted',
         'Ada Lovelace (ada@example.com)',
-        'Download 4 May 2026, 10:00am'
+        'Download xlsx 4 May 2026, 10:00am'
       ])
     })
 
@@ -472,7 +472,7 @@ describe('the registered-only period page', () => {
 
       expect(
         getByRole(documentOf(body), 'link', {
-          name: 'Download 4 May 2026, 10:00am'
+          name: 'Download xlsx 4 May 2026, 10:00am'
         }).getAttribute('href')
       ).toBe(
         `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download`
