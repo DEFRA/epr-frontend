@@ -502,11 +502,9 @@ describe('the accreditation details page', () => {
       expect(link.tagName).toBe('A')
       expect(link.textContent?.trim()).toBe('View all')
 
-      // It sits beside the heading rather than across the page from it, so it
-      // must not pick up the operator's far-edge layout.
-      expect(link.parentElement?.className).toContain('epr-section-heading')
-      expect(link.parentElement?.className).not.toContain(
-        'epr-heading-with-action'
+      // It sits beside the heading rather than beneath it.
+      expect(link.parentElement?.querySelector('h2')?.className).toContain(
+        'govuk-!-display-inline-block'
       )
       expect(link.getAttribute('href')).toBe(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`

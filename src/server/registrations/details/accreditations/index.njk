@@ -41,17 +41,14 @@
           <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise("registrations:details:accreditation:reports:none") }}</p>
         {% endif %}
 
-        {# The button opens a page that would say the same as the empty state
-           beneath it, so it is offered only where there is something to see.
-           `govukButton` with an href renders an anchor, so it stays a link to
-           anyone counting the page's change controls. #}
-        <div class="epr-section-heading govuk-!-margin-top-9">
-          <h2 class="govuk-heading-m govuk-!-margin-bottom-0">{{ prns.heading }}</h2>
+        {# No button where the full list would only repeat the empty state. #}
+        <div class="govuk-!-margin-top-9 govuk-!-margin-bottom-6">
+          <h2 class="govuk-heading-m govuk-!-display-inline-block govuk-!-margin-bottom-0">{{ prns.heading }}</h2>
           {% if prns.rows | length > 0 %}
             {{ govukButton({
               text: localise("registrations:details:accreditation:prns:viewAll"),
               href: prns.href,
-              classes: "govuk-button--secondary",
+              classes: "govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-margin-left-3",
               attributes: { "data-testid": "prns-detailed-view-link" }
             }) }}
           {% endif %}
