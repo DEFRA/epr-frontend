@@ -73,7 +73,7 @@
     "aws-embedded-metrics": "4.2.1",
     "blankie": "5.0.0",
     "convict": "6.2.5",
-    "cssnano": "8.0.2",
+    "cssnano": "9.0.2",
     "cssnano-preset-default": "8.0.2",
     "date-fns": "4.4.0",
     "decimal.js": "10.6.0",
