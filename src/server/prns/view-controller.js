@@ -20,7 +20,7 @@ import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { buildPrnBasePath } from './helpers/fetch-prn-context.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
-import { noteReturnPath } from './helpers/note-return-path.js'
+import { noteReturn } from './helpers/note-return-path.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
@@ -322,14 +322,14 @@ async function handleExistingView(
   const { isExporter, noteType, noteTypeFull, wasteAction } =
     getNoteTypeDisplayNames(registration)
 
-  const returnUrl = noteReturnPath({
+  const back = noteReturn({
     organisationId,
     registrationId,
     accreditationId,
     from: request.query?.from
   })
 
-  const backUrl = request.localiseUrl(returnUrl)
+  const backUrl = request.localiseUrl(back.path)
 
   const displayMaterial = getRegistrationMaterialDisplayName(registration)
 
@@ -363,7 +363,7 @@ async function handleExistingView(
     prnDetailRows,
     accreditationRows,
     backUrl,
-    returnUrl,
+    back,
     localise,
     request
   })
@@ -382,7 +382,7 @@ async function handleExistingView(
  *   prnDetailRows: Array<object>,
  *   accreditationRows: Array<object>,
  *   backUrl: string,
- *   returnUrl: string,
+ *   back: { path: string, textKey: string },
  *   localise: TFunction,
  *   request: HapiRequest
  * }} params
@@ -397,7 +397,7 @@ function buildExistingPrnViewData({
   prnDetailRows,
   accreditationRows,
   backUrl,
-  returnUrl,
+  back,
   localise,
   request
 }) {
@@ -419,10 +419,8 @@ function buildExistingPrnViewData({
     accreditationRows,
     backUrl,
     returnLink: {
-      href: request.localiseUrl(returnUrl),
-      text: returnUrl.endsWith('/packaging-recycling-notes')
-        ? localise('prns:view:returnLink', { noteType })
-        : localise('prns:view:returnLinkAccreditation')
+      href: request.localiseUrl(back.path),
+      text: localise(back.textKey, { noteType })
     }
   }
 }

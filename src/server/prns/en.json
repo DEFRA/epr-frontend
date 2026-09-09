@@ -189,6 +189,7 @@
     "dateCreated": "Date created",
     "complianceYearText": "This {{noteType}} relates to waste accepted for {{wasteAction}} in {{- year}} and can count towards {{- year}} obligations.",
     "returnLink": "Return to {{noteType}} list",
-    "returnLinkAccreditation": "Return to accreditation"
+    "returnLinkAccreditation": "Return to accreditation",
+    "returnLinkLedger": "Return to waste balance ledger"
   }
 }

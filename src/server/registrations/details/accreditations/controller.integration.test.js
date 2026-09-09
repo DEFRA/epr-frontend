@@ -384,7 +384,8 @@ describe('the accreditation details page', () => {
       within(firstRow)
         .getByRole('link', { name: 'View 240000123' })
         .getAttribute('href')
-    ).toBe(`${path}/packaging-recycling-notes/prn-001/view`)
+      // The ledger is a section of this page, so the note comes back to it.
+    ).toBe(`${path}/packaging-recycling-notes/prn-001/view?from=accreditation`)
   })
 
   it('states what each event moved the available balance by', async ({

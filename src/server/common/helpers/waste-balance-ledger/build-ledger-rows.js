@@ -4,6 +4,7 @@ import {
 } from '#config/nunjucks/filters/format-tonnage.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
+import { RETURN_TO_LEDGER } from '#server/prns/helpers/note-return-path.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
 import { buildSummaryLogDownloadPath } from '#server/summary-log/download-controller.js'
 
@@ -131,7 +132,8 @@ const notesCancelledBeforeIssue = (events) =>
  *   localiseUrl: (path: string) => string,
  *   offersDownloads: boolean,
  *   organisationId: string,
- *   registrationId: string
+ *   registrationId: string,
+ *   returnTo: string
  * }} params
  * @returns {TableCell}
  */
@@ -143,7 +145,8 @@ const actionCell = ({
   localiseUrl,
   offersDownloads,
   organisationId,
-  registrationId
+  registrationId,
+  returnTo
 }) => {
   const empty = { text: '', classes: cssClasses.textAlign.right }
 
@@ -174,12 +177,12 @@ const actionCell = ({
   }
 
   const url = localiseUrl(
-    notePath({
+    `${notePath({
       organisationId,
       registrationId,
       accreditationId,
       prnId: event.prn.id
-    })
+    })}?from=${returnTo}`
   )
 
   return {
@@ -266,6 +269,9 @@ const actorName = ({ createdBy, localise }) => {
  *
  * `offersDownloads` is for the regulator pages: only a regulator may fetch a
  * summary log, so only their rows offer one.
+ *
+ * `returnTo` names the page the ledger is drawn on, so a note opened from a row
+ * comes back to it rather than to the note list.
  * @param {{
  *   accreditationId?: string,
  *   events: LedgerEvent[],
@@ -275,7 +281,8 @@ const actorName = ({ createdBy, localise }) => {
  *   noteType: 'PRN' | 'PERN',
  *   offersDownloads?: boolean,
  *   organisationId: string,
- *   registrationId: string
+ *   registrationId: string,
+ *   returnTo?: string
  * }} params
  * @returns {TableCell[][]}
  */
@@ -288,7 +295,8 @@ export const buildLedgerRows = ({
   noteType,
   offersDownloads = false,
   organisationId,
-  registrationId
+  registrationId,
+  returnTo = RETURN_TO_LEDGER
 }) => {
   const cancelledBeforeIssue = notesCancelledBeforeIssue(events)
 
@@ -305,7 +313,8 @@ export const buildLedgerRows = ({
       localiseUrl,
       offersDownloads,
       organisationId,
-      registrationId
+      registrationId,
+      returnTo
     })
   ])
 }

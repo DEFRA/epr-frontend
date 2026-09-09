@@ -360,7 +360,10 @@ const toLedger = ({
       noteType,
       offersDownloads: true,
       organisationId,
-      registrationId: registration.id
+      registrationId: registration.id,
+      // This ledger is a section of the accreditation page, so a note opened
+      // from it comes back here rather than to the standalone ledger.
+      returnTo: RETURN_TO_ACCREDITATION
     })
   }
 }
