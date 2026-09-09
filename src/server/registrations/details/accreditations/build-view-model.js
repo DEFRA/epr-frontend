@@ -1,6 +1,9 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import { formatDateShort } from '#server/common/helpers/format-date.js'
+import {
+  formatDate,
+  formatDateShort
+} from '#server/common/helpers/format-date.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
@@ -14,10 +17,11 @@ import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitte
 
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 
+import { toPrnGroups } from '#server/prns/helpers/prn-groups.js'
+import { buildStatusTagHtml as buildPrnStatusTagHtml } from '#server/prns/list-view-data.js'
+
 import { organisationName, toCaption } from '../helpers/caption.js'
 import { toDateRange } from '../helpers/date-range.js'
-import { toPrnGroups } from './helpers/prn-groups.js'
-import { buildPrnStatusTagHtml } from './helpers/prn-status-tag-html.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
@@ -34,7 +38,7 @@ import { buildPrnStatusTagHtml } from './helpers/prn-status-tag-html.js'
 /**
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{ key: string, value: string } | { key: string, status: StatusTag }} SummaryRow
- * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
+ * @typedef {{ text: string | number, classes?: string } | { html: string, classes?: string }} TableCell
  * @typedef {TableCell[]} TableRow
  * @typedef {{ head: TableRow, rows: TableRow[] }} ReportsTable
  * @typedef {{ rows: TableRow[] }} LedgerTable
@@ -294,13 +298,13 @@ const toPrns = ({
       noteTypePlural
     }),
     rows: mostRecent.map((note) => {
-      const date = formatDateShort(note.issuedAt ?? note.createdAt)
+      const date = formatDate(note.issuedAt ?? note.createdAt)
 
       return [
         { text: getIssuedToOrgDisplayName(note.issuedToOrganisation) },
         { html: buildPrnStatusTagHtml(note.status, localise) },
         { text: date },
-        { text: formatTonnage(note.tonnage) },
+        { text: note.tonnage },
         {
           html: buildActionLinkHtml(
             localise('registrations:details:accreditation:prns:view'),

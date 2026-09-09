@@ -515,8 +515,8 @@ describe('the waste balance ledger on the accreditation details view model', () 
           {
             html: '<strong class="govuk-tag govuk-tag--green epr-tag--no-max-width">Accepted</strong>'
           },
-          { text: '28 Jan 2026' },
-          { text: '20.00' },
+          { text: '28 January 2026' },
+          { text: 20 },
           {
             html: `<a href="${notesPath}/prn-9/view" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
             classes: 'govuk-!-text-align-right'
@@ -534,7 +534,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
         })
       ]).rows
 
-      expect(rows.at(0)?.at(2)).toStrictEqual({ text: '26 Jan 2026' })
+      expect(rows.at(0)?.at(2)).toStrictEqual({ text: '26 January 2026' })
     })
 
     it('names an unnumbered note by its date, so identical links stay apart', () => {
@@ -543,7 +543,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
       ]).rows
 
       expect(rows.at(0)?.at(4)).toStrictEqual({
-        html: `<a href="${notesPath}/prn-001/view" class="govuk-link">View <span class="govuk-visually-hidden">26 Jan 2026</span></a>`,
+        html: `<a href="${notesPath}/prn-001/view" class="govuk-link">View <span class="govuk-visually-hidden">26 January 2026</span></a>`,
         classes: 'govuk-!-text-align-right'
       })
     })
@@ -565,9 +565,9 @@ describe('the waste balance ledger on the accreditation details view model', () 
 
       expect(prns.count).toBe(3)
       expect(prns.rows.map((row) => row.at(2))).toStrictEqual([
-        { text: '30 Jan 2026' },
-        { text: '20 Jan 2026' },
-        { text: '10 Jan 2026' }
+        { text: '30 January 2026' },
+        { text: '20 January 2026' },
+        { text: '10 January 2026' }
       ])
     })
 

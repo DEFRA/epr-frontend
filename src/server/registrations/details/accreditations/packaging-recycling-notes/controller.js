@@ -37,11 +37,7 @@ export const controller = {
 
     return h.view(
       'registrations/details/accreditations/packaging-recycling-notes/index',
-      buildViewModel({
-        ...details,
-        localise: request.t,
-        localiseUrl: request.localiseUrl
-      })
+      buildViewModel({ ...details, request })
     )
   }
 }

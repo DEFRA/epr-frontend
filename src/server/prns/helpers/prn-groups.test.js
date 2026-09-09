@@ -214,5 +214,5 @@ describe(toPrnGroups, () => {
 })
 
 /**
- * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
+ * @import { PackagingRecyclingNote } from './fetch-packaging-recycling-notes.js'
  */

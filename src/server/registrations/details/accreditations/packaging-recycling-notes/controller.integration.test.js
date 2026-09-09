@@ -10,7 +10,7 @@ import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
-import { getAllByRole, getByRole, getByTestId } from '@testing-library/dom'
+import { getAllByRole, getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -110,6 +110,15 @@ const documentOf = (body) => new JSDOM(body).window.document.body
 /** @param {ReturnType<typeof getAllByRole>} cells */
 const textOf = (cells) => cells.map((cell) => cell.textContent?.trim())
 
+/**
+ * @param {string} body
+ * @param {string} panelId
+ */
+const panel = (body, panelId) =>
+  /** @type {Parameters<typeof getAllByRole>[0]} */ (
+    documentOf(body).querySelector(`#${panelId}`)
+  )
+
 describe('the regulator PRNs detailed view', () => {
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
@@ -123,20 +132,33 @@ describe('the regulator PRNs detailed view', () => {
     config.set('featureFlags.regulatorAccess', false)
   })
 
-  it('files each note under the table that draws it', async ({ server }) => {
+  it('draws the same tabs and tables the operator is shown', async ({
+    server
+  }) => {
     const { statusCode, body } = await visit(server, regulator)
-    const document = documentOf(body)
 
     expect(statusCode).toBe(statusCodes.ok)
 
-    for (const testId of [
-      'prns-awaiting-authorisation-table',
-      'prns-awaiting-cancellation-table',
-      'prns-issued-table',
-      'prns-cancelled-table'
-    ]) {
-      expect(getAllByRole(getByTestId(document, testId), 'row')).toHaveLength(3)
-    }
+    // Two tables in the awaiting-action tab, one in each of the others.
+    expect(getAllByRole(panel(body, 'awaiting-action'), 'table')).toHaveLength(
+      2
+    )
+    expect(getAllByRole(panel(body, 'issued'), 'table')).toHaveLength(1)
+    expect(getAllByRole(panel(body, 'cancelled'), 'table')).toHaveLength(1)
+  })
+
+  it('heads the issued table as the operator does', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+    const table = getByRole(panel(body, 'issued'), 'table')
+
+    expect(textOf(getAllByRole(table, 'columnheader'))).toStrictEqual([
+      'PRN number',
+      'Producer or compliance scheme',
+      'Date issued',
+      'Tonnage',
+      'Status',
+      'View in new tab'
+    ])
   })
 
   it('shows a regulator neither a draft note nor a discarded one', async ({
@@ -148,86 +170,48 @@ describe('the regulator PRNs detailed view', () => {
     expect(body).not.toContain('note-discarded')
   })
 
-  it('numbers the issued and cancelled tables and dates them by issue', async ({
-    server
-  }) => {
-    const { body } = await visit(server, regulator)
-    const table = getByTestId(documentOf(body), 'prns-issued-table')
-
-    expect(textOf(getAllByRole(table, 'columnheader'))).toStrictEqual([
-      'Number',
-      'Producer or compliance scheme',
-      'Date issued',
-      'Tonnage',
-      'Status',
-      'Actions'
-    ])
-  })
-
-  it('gives the awaiting tables no number column, and dates them by creation', async ({
-    server
-  }) => {
-    const { body } = await visit(server, regulator)
-    const table = getByTestId(
-      documentOf(body),
-      'prns-awaiting-authorisation-table'
-    )
-
-    expect(textOf(getAllByRole(table, 'columnheader'))).toStrictEqual([
-      'Producer or compliance scheme',
-      'Date created',
-      'Tonnage',
-      'Status',
-      'Actions'
-    ])
-  })
-
-  it('carries no material column on any table', async ({ server }) => {
-    const { body } = await visit(server, regulator)
-
-    expect(body).not.toContain('Material')
-  })
-
-  it('totals the tonnage of each table it draws', async ({ server }) => {
-    const { body } = await visit(server, regulator)
-    const rows = getAllByRole(
-      getByTestId(documentOf(body), 'prns-issued-table'),
-      'row'
-    )
-
-    expect(textOf(getAllByRole(rows[2], 'cell'))).toStrictEqual([
-      'Total',
-      '',
-      '',
-      '20.00',
-      '',
-      ''
-    ])
-  })
-
-  it('leaves the number and the issue date blank on a note the backend gave neither', async ({
+  it('says so in a tab that holds nothing while another holds notes', async ({
     server
   }) => {
     vi.mocked(fetchPrnListDetails).mockResolvedValue({
       ...details,
-      packagingRecyclingNotes: [
-        aNote({ status: 'accepted', prnNumber: null, issuedAt: null })
-      ]
+      packagingRecyclingNotes: [aNote({ status: 'awaiting_authorisation' })]
     })
 
     const { body } = await visit(server, regulator)
-    const rows = getAllByRole(
-      getByTestId(documentOf(body), 'prns-issued-table'),
-      'row'
-    )
 
-    // The number cell is empty rather than absent, so the row keeps the shape
-    // of the table around it; the date falls back to when the note was made.
-    expect(textOf(getAllByRole(rows[1], 'cell')).slice(0, 3)).toStrictEqual([
-      '',
-      'Radar Compliance PLC',
-      '26 Jan 2026'
-    ])
+    expect(getAllByRole(panel(body, 'awaiting-action'), 'table')).toHaveLength(
+      1
+    )
+    expect(panel(body, 'issued').textContent).toContain('have been issued')
+    expect(panel(body, 'cancelled').textContent).toContain('cancelled')
+  })
+
+  it('drops the tabs entirely where the accreditation has issued nothing', async ({
+    server
+  }) => {
+    vi.mocked(fetchPrnListDetails).mockResolvedValue({
+      ...details,
+      packagingRecyclingNotes: []
+    })
+
+    const { body } = await visit(server, regulator)
+
+    expect(body).not.toContain('govuk-tabs__list')
+    expect(documentOf(body).textContent).toContain(
+      'This accreditation has issued no PRNs'
+    )
+  })
+
+  it('names the organisation, the registration and the accreditation', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(
+      documentOf(body).querySelector('h1 [class^="govuk-caption-"]')
+        ?.textContent
+    ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL - A26ER5001180114PL')
   })
 
   it('titles the page by the heading alone where the accreditation has no number', async ({
@@ -244,46 +228,7 @@ describe('the regulator PRNs detailed view', () => {
     const { body } = await visit(server, regulator)
 
     expect(documentOf(body).ownerDocument.title).toContain('PRNs')
-  })
-
-  it('says so in a tab that holds nothing while another holds notes', async ({
-    server
-  }) => {
-    vi.mocked(fetchPrnListDetails).mockResolvedValue({
-      ...details,
-      packagingRecyclingNotes: [aNote({ status: 'awaiting_authorisation' })]
-    })
-
-    const { body } = await visit(server, regulator)
-
-    expect(body).toContain('data-testid="prns-issued-table-none"')
-    expect(body).toContain('data-testid="prns-cancelled-table-none"')
-    expect(body).toContain('data-testid="prns-awaiting-authorisation-table"')
-  })
-
-  it('drops the tabs entirely where the accreditation has issued nothing', async ({
-    server
-  }) => {
-    vi.mocked(fetchPrnListDetails).mockResolvedValue({
-      ...details,
-      packagingRecyclingNotes: [aNote({ status: 'draft' })]
-    })
-
-    const { body } = await visit(server, regulator)
-
-    expect(body).toContain('data-testid="no-prns"')
-    expect(body).not.toContain('govuk-tabs__list')
-  })
-
-  it('names the organisation, the registration and the accreditation', async ({
-    server
-  }) => {
-    const { body } = await visit(server, regulator)
-
-    expect(
-      documentOf(body).querySelector('h1 [class^="govuk-caption-"]')
-        ?.textContent
-    ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL - A26ER5001180114PL')
+    expect(documentOf(body).ownerDocument.title).not.toContain('A26ER')
   })
 
   it("names an exporter's notes PERNs", async ({ server }) => {
@@ -321,13 +266,14 @@ describe('the regulator PRNs detailed view', () => {
     ])
   })
 
-  it('offers no way to change anything on the page', async ({ server }) => {
+  it('offers none of the operator furniture', async ({ server }) => {
     const { body } = await visit(server, regulator)
-
     const main = documentOf(body).querySelector('#main-content')
 
     expect(main?.querySelectorAll('button, form')).toHaveLength(0)
     expect(main?.textContent).not.toContain('available waste balance')
+    expect(main?.textContent).not.toContain('Create a')
+    expect(main?.textContent).not.toContain('You have not')
   })
 
   describe('the fork with the operator list', () => {

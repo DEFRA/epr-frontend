@@ -718,8 +718,16 @@ describe('#listPrnsController', () => {
         const viewLinks = cancelledTable.querySelectorAll('a[target="_blank"]')
 
         expect(viewLinks).toHaveLength(2)
-        expect(viewLinks[0].getAttribute('href')).toContain(
-          'prn-cancelled-001/view'
+
+        // Rows are ordered newest first, so both notes are asserted rather
+        // than one at a fixed position.
+        expect(
+          [...viewLinks].map((link) => link.getAttribute('href'))
+        ).toStrictEqual(
+          expect.arrayContaining([
+            expect.stringContaining('prn-cancelled-001/view'),
+            expect.stringContaining('prn-cancelled-002/view')
+          ])
         )
       })
 

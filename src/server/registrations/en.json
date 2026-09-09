@@ -27,28 +27,16 @@
       },
       "prns": {
         "actions": "Actions",
-        "awaitingAuthorisationHeading": "{{noteTypePlural}} awaiting authorisation",
-        "awaitingCancellationHeading": "{{noteTypePlural}} awaiting cancellation",
-        "cancelledHeading": "Cancelled {{noteTypePlural}}",
         "date": "Date",
-        "dateCreated": "Date created",
-        "dateIssued": "Date issued",
         "detailedView": "Detailed view",
         "heading": "{{noteTypePlural}}",
-        "issuedHeading": "Issued {{noteTypePlural}}",
         "listHeading": "{{noteTypePlural}}",
         "mostRecent": "Most recent ({{count}} items)",
-        "noteNumber": "Number",
         "none": "This accreditation has issued no {{noteTypePlural}}.",
+        "noneCancelled": "No {{noteTypePlural}} have been cancelled.",
         "recipient": "Producer or compliance scheme",
         "status": "Status",
-        "tabs": {
-          "awaitingAction": "Awaiting action",
-          "cancelled": "Cancelled",
-          "issued": "Issued"
-        },
         "tonnage": "Tonnage",
-        "total": "Total",
         "view": "View"
       },
       "summary": {
