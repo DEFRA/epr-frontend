@@ -29,10 +29,11 @@
 
 // The operator's list pushes its action to the far edge, away from a heading
 // that spans the page. The regulator's sections carry a short heading, so the
-// action sits beside it rather than across the page from it.
+// action sits immediately beside it, as the design draws it.
 .epr-heading-with-action--adjacent {
   justify-content: flex-start;
-  align-items: baseline;
+  align-items: center;
+  gap: govuk-spacing(3);
 }
 
 .epr-tag--no-max-width {
