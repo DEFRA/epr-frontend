@@ -7,9 +7,9 @@ import { formatDate } from '#server/common/helpers/format-date.js'
 /**
  * The period a record is valid over, as a reader sees it. A record that has
  * not started names no period at all; one that has started and has no end is
- * current. A period that starts and ends in one year names that year once, at
- * the end. Shared by the registration and accreditation pages so a period
- * reads the same wherever it appears.
+ * current. A period inside one year names that year once, at the end; one that
+ * crosses a year names both. Shared by the registration and accreditation
+ * pages so a period reads the same wherever it appears.
  * @param {DateRange} dateRange
  * @param {Localise} localise
  * @returns {string}
@@ -26,9 +26,11 @@ export const toDateRange = ({ validFrom, validTo }, localise) => {
     })
   }
 
-  // The year is named once, at the end, whether or not the period crosses one.
+  const crossesAYear =
+    new Date(validFrom).getUTCFullYear() !== new Date(validTo).getUTCFullYear()
+
   return localise('registrations:details:period', {
-    from: formatDate(validFrom, { includeYear: false }),
+    from: formatDate(validFrom, { includeYear: crossesAYear }),
     to: formatDate(validTo)
   })
 }
