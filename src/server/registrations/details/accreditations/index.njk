@@ -1,5 +1,6 @@
 {% extends 'layouts/page.njk' %}
 
+{% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block content %}
@@ -27,7 +28,7 @@
 
         {{ govukSummaryList({ rows: summaryListRows }) }}
 
-        <h2 class="govuk-heading-m">{{ localise("registrations:details:accreditation:reports:heading") }}</h2>
+        <h2 class="govuk-heading-m govuk-!-margin-top-9">{{ localise("registrations:details:accreditation:reports:heading") }}</h2>
 
         {% if reports.rows | length > 0 %}
           {{ govukTable({
@@ -40,8 +41,32 @@
           <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise("registrations:details:accreditation:reports:none") }}</p>
         {% endif %}
 
+        {# No button where the full list would only repeat the empty state. #}
+        <div class="govuk-!-margin-top-9 govuk-!-margin-bottom-6">
+          <h2 class="govuk-heading-m govuk-!-display-inline-block govuk-!-margin-bottom-0">{{ prns.heading }}</h2>
+          {% if prns.rows | length > 0 %}
+            {{ govukButton({
+              text: localise("registrations:details:accreditation:prns:viewAll"),
+              href: prns.href,
+              classes: "govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-margin-left-3",
+              attributes: { "data-testid": "prns-detailed-view-link" }
+            }) }}
+          {% endif %}
+        </div>
+
+        {% if prns.rows | length > 0 %}
+          <h3 class="govuk-heading-s" data-testid="prns-most-recent">{{ localise("registrations:details:accreditation:prns:mostRecent", { count: prns.count }) }}</h3>
+          {{ govukTable({
+            attributes: { "data-testid": "prns-table" },
+            head: prns.head,
+            rows: prns.rows
+          }) }}
+        {% else %}
+          <p class="govuk-body app-colour-secondary" data-testid="no-prns-summary">{{ prns.noneText }}</p>
+        {% endif %}
+
         {% if ledger %}
-          <h2 class="govuk-heading-m">{{ localise("waste-balance-ledger:heading") }}</h2>
+          <h2 class="govuk-heading-m govuk-!-margin-top-9">{{ localise("waste-balance-ledger:heading") }}</h2>
           {% set ledgerRows = ledger.rows %}
           {% include "partials/waste-balance-ledger/table.njk" %}
         {% endif %}

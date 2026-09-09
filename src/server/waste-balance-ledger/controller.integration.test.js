@@ -183,9 +183,32 @@ describe('the waste balance ledger page', () => {
           '+100.00',
           '100.00',
           'System',
-          'Download 4 January 2026, 9:00am'
+          'Download XLSX 4 January 2026, 9:00am'
         ]
       ])
+    })
+
+    it('returns a note opened from a row to this page', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([prnIssued]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      // This ledger is a page of its own, not the section on the
+      // accreditation, so the note comes back here.
+      expect(asHtml(result)).toContain(
+        `/packaging-recycling-notes/${prnIssued.prn.id}/view?from=ledger`
+      )
     })
 
     it('heads the six columns, and offers neither a sequence number nor a payload', async ({

@@ -258,7 +258,7 @@ function buildDetailTable(
  * @param {(key: string) => string} localise
  * @returns {string}
  */
-function buildStatusTagHtml(status, localise) {
+export function buildStatusTagHtml(status, localise) {
   const statusConfig = getStatusConfig(status, localise)
   return `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
 }

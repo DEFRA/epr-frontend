@@ -12,6 +12,13 @@ import { buildStatusTagHtml } from '#server/reports/helpers/build-status-tag-htm
 import { formatPeriodLabelWithComma } from '#server/reports/helpers/format-period-label.js'
 import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitted-date-time.js'
 
+import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
+
+import { RETURN_TO_ACCREDITATION } from '#server/prns/helpers/note-return-path.js'
+import { toPrnGroups } from '#server/prns/helpers/prn-groups.js'
+import { buildStatusTagHtml as buildPrnStatusTagHtml } from '#server/prns/list-view-data.js'
+
+import { organisationName, toCaption } from '../helpers/caption.js'
 import { toDateRange } from '../helpers/date-range.js'
 
 /**
@@ -20,6 +27,7 @@ import { toDateRange } from '../helpers/date-range.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+ * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationResource, Localise } from '../helpers/types.js'
@@ -28,10 +36,18 @@ import { toDateRange } from '../helpers/date-range.js'
 /**
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{ key: string, value: string } | { key: string, status: StatusTag }} SummaryRow
- * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
+ * @typedef {{ text: string | number, classes?: string } | { html: string, classes?: string }} TableCell
  * @typedef {TableCell[]} TableRow
  * @typedef {{ head: TableRow, rows: TableRow[] }} ReportsTable
  * @typedef {{ rows: TableRow[] }} LedgerTable
+ * @typedef {{
+ *   count: number,
+ *   head: TableRow,
+ *   heading: string,
+ *   href: string,
+ *   noneText: string,
+ *   rows: TableRow[]
+ * }} PrnsTable
  * @typedef {{
  *   breadcrumbs: Crumb[],
  *   caption: string,
@@ -39,28 +55,11 @@ import { toDateRange } from '../helpers/date-range.js'
  *   ledger: LedgerTable | null,
  *   period: string,
  *   pageTitle: string,
+ *   prns: PrnsTable,
  *   reports: ReportsTable,
  *   summaryRows: SummaryRow[]
  * }} AccreditationDetailsViewModel
  */
-
-/**
- * An organisation trading under another name is known by it, so that is the
- * name the regulator is shown. Matches the registration page above.
- * @param {Organisation} organisation
- * @returns {string}
- */
-const organisationName = ({ companyDetails }) =>
-  companyDetails.tradingName?.trim() || companyDetails.name
-
-/**
- * The three records the page sits under, in the order the breadcrumbs walk
- * them. A record that holds no number has nothing to name it by, so it is left
- * out rather than shown as an empty gap between two dashes.
- * @param {(string | null | undefined)[]} parts
- * @returns {string}
- */
-const toCaption = (parts) => parts.filter(Boolean).join(' - ')
 
 /**
  * The balance not already committed to a note. `availableAmount` falls when a
@@ -244,6 +243,83 @@ const toReportRows = ({
 }
 
 /**
+ * The PRNs section's column headings, in the design's order.
+ * @param {Localise} localise
+ * @returns {TableRow}
+ */
+const toPrnsHead = (localise) => [
+  { text: localise('registrations:details:accreditation:prns:recipient') },
+  { text: localise('registrations:details:accreditation:prns:status') },
+  { text: localise('registrations:details:accreditation:prns:date') },
+  { text: localise('registrations:details:accreditation:prns:tonnage') },
+  {
+    text: localise('registrations:details:accreditation:prns:action'),
+    classes: cssClasses.textAlign.right
+  }
+]
+
+/**
+ * The three most recent notes, and where to read the rest. An unissued note's
+ * row falls back to its created date, so the column is headed neutrally.
+ * @param {{
+ *   accreditationId: string,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   noteTypePlural: string,
+ *   notes: PackagingRecyclingNote[],
+ *   organisationId: string,
+ *   registrationId: string
+ * }} params
+ * @returns {PrnsTable}
+ */
+const toPrns = ({
+  accreditationId,
+  localise,
+  localiseUrl,
+  noteTypePlural,
+  notes,
+  organisationId,
+  registrationId
+}) => {
+  const { mostRecent } = toPrnGroups(notes)
+  const notesPath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+
+  return {
+    count: mostRecent.length,
+    head: toPrnsHead(localise),
+    heading: localise('registrations:details:accreditation:prns:heading', {
+      noteTypePlural
+    }),
+    href: localiseUrl(notesPath),
+    noneText: localise('registrations:details:accreditation:prns:none', {
+      noteTypePlural
+    }),
+    rows: mostRecent.map((note) => {
+      const date = formatDateShort(note.issuedAt ?? note.createdAt)
+
+      return [
+        { text: getIssuedToOrgDisplayName(note.issuedToOrganisation) },
+        { html: buildPrnStatusTagHtml(note.status, localise) },
+        { text: date },
+        { text: note.tonnage },
+        {
+          // A note is reachable from here and from the full list, and its back
+          // link returns to whichever opened it.
+          html: buildActionLinkHtml(
+            localise('registrations:details:accreditation:prns:view'),
+            localiseUrl(
+              `${notesPath}/${note.id}/view?from=${RETURN_TO_ACCREDITATION}`
+            ),
+            note.prnNumber ?? date
+          ),
+          classes: cssClasses.textAlign.right
+        }
+      ]
+    })
+  }
+}
+
+/**
  * The whole of the accreditation's own ledger, newest event first, or no
  * ledger at all where the session may not read one. An empty ledger is still
  * a ledger: the section says nothing has moved the balance yet.
@@ -280,7 +356,10 @@ const toLedger = ({
       noteType,
       offersDownloads: true,
       organisationId,
-      registrationId: registration.id
+      registrationId: registration.id,
+      // This ledger is a section of the accreditation page, so a note opened
+      // from it comes back here rather than to the standalone ledger.
+      returnTo: RETURN_TO_ACCREDITATION
     })
   }
 }
@@ -294,6 +373,7 @@ const toLedger = ({
  *   reportingPeriods: ReportingPeriod[],
  *   cadence: CadenceValue | null,
  *   ledgerEvents: LedgerEvent[] | null,
+ *   packagingRecyclingNotes: PackagingRecyclingNote[],
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
@@ -307,6 +387,7 @@ export const buildViewModel = ({
   reportingPeriods,
   cadence,
   ledgerEvents,
+  packagingRecyclingNotes,
   localise,
   localiseUrl
 }) => {
@@ -345,6 +426,15 @@ export const buildViewModel = ({
     pageTitle: accreditation.accreditationNumber
       ? `${accreditation.accreditationNumber}: ${pageName}`
       : pageName,
+    prns: toPrns({
+      accreditationId: accreditation.id,
+      localise,
+      localiseUrl,
+      noteTypePlural: getNoteTypeDisplayNames(registration).noteTypePlural,
+      notes: packagingRecyclingNotes,
+      organisationId: organisation.id,
+      registrationId: registration.id
+    }),
     reports: {
       head: toReportsHead(localise),
       rows: toReportRows({
