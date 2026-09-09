@@ -20,6 +20,7 @@ import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { buildPrnBasePath } from './helpers/fetch-prn-context.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
+import { noteReturnPath } from './helpers/note-return-path.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
@@ -321,9 +322,14 @@ async function handleExistingView(
   const { isExporter, noteType, noteTypeFull, wasteAction } =
     getNoteTypeDisplayNames(registration)
 
-  const backUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-  )
+  const returnUrl = noteReturnPath({
+    organisationId,
+    registrationId,
+    accreditationId,
+    from: request.query?.from
+  })
+
+  const backUrl = request.localiseUrl(returnUrl)
 
   const displayMaterial = getRegistrationMaterialDisplayName(registration)
 
@@ -357,11 +363,9 @@ async function handleExistingView(
     prnDetailRows,
     accreditationRows,
     backUrl,
+    returnUrl,
     localise,
-    request,
-    organisationId,
-    registrationId,
-    accreditationId
+    request
   })
 
   return h.view('prns/view', viewData)
@@ -378,11 +382,9 @@ async function handleExistingView(
  *   prnDetailRows: Array<object>,
  *   accreditationRows: Array<object>,
  *   backUrl: string,
+ *   returnUrl: string,
  *   localise: TFunction,
- *   request: HapiRequest,
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string
+ *   request: HapiRequest
  * }} params
  * @returns {object} View data object
  */
@@ -395,14 +397,10 @@ function buildExistingPrnViewData({
   prnDetailRows,
   accreditationRows,
   backUrl,
+  returnUrl,
   localise,
-  request,
-  organisationId,
-  registrationId,
-  accreditationId
+  request
 }) {
-  const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-
   return {
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
     heading: noteTypeFull,
@@ -422,7 +420,9 @@ function buildExistingPrnViewData({
     backUrl,
     returnLink: {
       href: request.localiseUrl(returnUrl),
-      text: localise('prns:view:returnLink', { noteType })
+      text: returnUrl.endsWith('/packaging-recycling-notes')
+        ? localise('prns:view:returnLink', { noteType })
+        : localise('prns:view:returnLinkAccreditation')
     }
   }
 }

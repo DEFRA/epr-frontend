@@ -17,6 +17,7 @@ import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitte
 
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 
+import { RETURN_TO_ACCREDITATION } from '#server/prns/helpers/note-return-path.js'
 import { toPrnGroups } from '#server/prns/helpers/prn-groups.js'
 import { buildStatusTagHtml as buildPrnStatusTagHtml } from '#server/prns/list-view-data.js'
 
@@ -306,9 +307,13 @@ const toPrns = ({
         { text: date },
         { text: note.tonnage },
         {
+          // A note is reachable from here and from the full list, and its back
+          // link returns to whichever opened it.
           html: buildActionLinkHtml(
             localise('registrations:details:accreditation:prns:view'),
-            localiseUrl(`${notesPath}/${note.id}/view`),
+            localiseUrl(
+              `${notesPath}/${note.id}/view?from=${RETURN_TO_ACCREDITATION}`
+            ),
             note.prnNumber ?? date
           ),
           classes: cssClasses.textAlign.right

@@ -588,6 +588,48 @@ describe('#viewController', () => {
         expect(returnLink.getAttribute('href')).toBe(listUrl)
       })
 
+      it('sends a note opened from the accreditation back to it', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `${viewUrl}?from=accreditation`,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const accreditationUrl = listUrl.replace(
+          '/packaging-recycling-notes',
+          ''
+        )
+
+        expect(
+          body.querySelector('.govuk-back-link')?.getAttribute('href')
+        ).toBe(accreditationUrl)
+
+        const returnLink = getByText(
+          getByRole(body, 'main'),
+          /Return to accreditation/i
+        )
+        expect(returnLink.getAttribute('href')).toBe(accreditationUrl)
+      })
+
+      it('ignores a return it does not know', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `${viewUrl}?from=https://example.com`,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          body.querySelector('.govuk-back-link')?.getAttribute('href')
+        ).toBe(listUrl)
+      })
+
       it('displays PERN details for exporter registration', async ({
         server
       }) => {
