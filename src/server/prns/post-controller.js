@@ -11,7 +11,7 @@ import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
-import { showDecemberWasteQuestion } from './helpers/show-december-waste-question.js'
+import { resolveCanDeclareDecemberWasteManually } from './helpers/can-declare-december-waste-manually.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
@@ -141,7 +141,7 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
  * make.
  * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
  * @param {string} backendToken
- * @returns {Promise<{ registration: object, isDecWastePrnEligible: boolean }>}
+ * @returns {Promise<{ registration: object, canDeclareDecemberWasteManually: boolean }>}
  */
 async function fetchCreatePrnViewDataInputs(
   { organisationId, registrationId, accreditationId },
@@ -164,8 +164,7 @@ async function fetchCreatePrnViewDataInputs(
 
   return {
     registration,
-    isDecWastePrnEligible: showDecemberWasteQuestion(
-      registration,
+    canDeclareDecemberWasteManually: resolveCanDeclareDecemberWasteManually(
       decemberPrnEligibility
     )
   }
@@ -198,7 +197,7 @@ async function handleInsufficientBalance(
     list: [{ text: message, href: '#tonnage' }]
   }
 
-  const { registration, isDecWastePrnEligible } =
+  const { registration, canDeclareDecemberWasteManually } =
     await fetchCreatePrnViewDataInputs(request.params, session.backendToken)
 
   const viewData = buildCreatePrnViewData(request, {
@@ -207,15 +206,30 @@ async function handleInsufficientBalance(
     registration,
     registrationId,
     wasteBalance,
-    isDecWastePrnEligible
+    canDeclareDecemberWasteManually
   })
 
   return h.view(CREATE_VIEW, {
     ...viewData,
     errors,
     errorSummary,
-    formValues: request.payload
+    formValues: reRenderFormValues(request.payload)
   })
+}
+
+/**
+ * `request.payload` here has already been through Joi, so `isDecemberWaste`
+ * is a boolean while the radio items' values are the strings `'true'`/`'false'`
+ * (see view-data.js). The govukRadios macro checks `item.value == params.value`,
+ * and in Nunjucks `"true" == true` is false, so without this the previously
+ * selected radio would never come back checked on re-render.
+ * @param {CreatePrnPayload} payload
+ */
+function reRenderFormValues(payload) {
+  return {
+    ...payload,
+    isDecemberWaste: String(payload.isDecemberWaste)
+  }
 }
 
 /**
@@ -262,7 +276,7 @@ async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
     list: [{ text: message, href: '#recipient' }]
   }
 
-  const { registration, isDecWastePrnEligible } =
+  const { registration, canDeclareDecemberWasteManually } =
     await fetchCreatePrnViewDataInputs(request.params, session.backendToken)
 
   const viewData = buildCreatePrnViewData(request, {
@@ -271,14 +285,14 @@ async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
     registration,
     registrationId,
     wasteBalance,
-    isDecWastePrnEligible
+    canDeclareDecemberWasteManually
   })
 
   return h.view(CREATE_VIEW, {
     ...viewData,
     errors,
     errorSummary,
-    formValues: request.payload
+    formValues: reRenderFormValues(request.payload)
   })
 }
 
@@ -338,10 +352,8 @@ export const postController = {
           registration,
           registrationId,
           wasteBalance,
-          isDecWastePrnEligible: showDecemberWasteQuestion(
-            registration,
-            decemberPrnEligibility
-          )
+          canDeclareDecemberWasteManually:
+            resolveCanDeclareDecemberWasteManually(decemberPrnEligibility)
         })
 
         return h

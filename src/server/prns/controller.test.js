@@ -72,7 +72,8 @@ describe('#createPrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
-      eligible: false
+      declaresDecemberWasteManually: false,
+      windowOpen: false
     })
   })
 

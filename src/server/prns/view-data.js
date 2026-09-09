@@ -12,7 +12,7 @@ import { NOTES_MAX_LENGTH } from './constants.js'
  * @param {Registration & { nation?: string }} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
  * @param {{availableAmount: number} | null} [options.wasteBalance]
- * @param {boolean} options.isDecWastePrnEligible
+ * @param {boolean} options.canDeclareDecemberWasteManually
  * @returns {object}
  */
 export function buildCreatePrnViewData(
@@ -23,7 +23,7 @@ export function buildCreatePrnViewData(
     registration,
     registrationId,
     wasteBalance,
-    isDecWastePrnEligible
+    canDeclareDecemberWasteManually
   }
 ) {
   const { t: localise } = request
@@ -39,7 +39,7 @@ export function buildCreatePrnViewData(
       })
     : null
 
-  const decemberWaste = isDecWastePrnEligible
+  const decemberWaste = canDeclareDecemberWasteManually
     ? {
         legend: localise('prns:create:decemberWasteLegend'),
         items: [

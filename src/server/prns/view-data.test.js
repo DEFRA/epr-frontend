@@ -56,25 +56,25 @@ const exporterRegistration = /** @type {Registration} */ ({
 
 describe('#buildCreatePrnViewData', () => {
   describe('decemberWaste', () => {
-    it('is null when isDecWastePrnEligible is false', () => {
+    it('is null when canDeclareDecemberWasteManually is false', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        isDecWastePrnEligible: false
+        canDeclareDecemberWasteManually: false
       })
 
       expect(result.decemberWaste).toBeNull()
     })
 
-    it('is present when isDecWastePrnEligible is true', () => {
+    it('is present when canDeclareDecemberWasteManually is true', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        isDecWastePrnEligible: true
+        canDeclareDecemberWasteManually: true
       })
 
       expect(result.decemberWaste).not.toBeNull()
@@ -88,7 +88,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        isDecWastePrnEligible: notEligible
+        canDeclareDecemberWasteManually: notEligible
       })
 
       expect(result.pageTitle).toBe('Create a PRN')
@@ -101,7 +101,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        isDecWastePrnEligible: notEligible
+        canDeclareDecemberWasteManually: notEligible
       })
 
       expect(result.material.label).toBe('Material')
@@ -114,7 +114,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        isDecWastePrnEligible: notEligible
+        canDeclareDecemberWasteManually: notEligible
       })
 
       expect(result.tonnage.label).toBe('Enter PRN tonnage')
@@ -132,7 +132,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        isDecWastePrnEligible: notEligible
+        canDeclareDecemberWasteManually: notEligible
       })
 
       expect(result.backUrl).toBe(
@@ -146,7 +146,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        isDecWastePrnEligible: notEligible
+        canDeclareDecemberWasteManually: notEligible
       })
 
       expect(result.recipient.items).toHaveLength(4) // placeholder + 3 options
@@ -168,7 +168,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-002',
         registration: exporterRegistration,
         recipients: stubRecipients,
-        isDecWastePrnEligible: notEligible
+        canDeclareDecemberWasteManually: notEligible
       })
 
       expect(result.pageTitle).toBe('Create a PERN')
@@ -181,7 +181,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-002',
         registration: exporterRegistration,
         recipients: stubRecipients,
-        isDecWastePrnEligible: notEligible
+        canDeclareDecemberWasteManually: notEligible
       })
 
       expect(result.material.label).toBe('Material')
@@ -194,7 +194,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-002',
         registration: exporterRegistration,
         recipients: stubRecipients,
-        isDecWastePrnEligible: notEligible
+        canDeclareDecemberWasteManually: notEligible
       })
 
       expect(result.tonnage.label).toBe('Enter PERN tonnage')
@@ -222,7 +222,7 @@ describe('#buildCreatePrnViewData', () => {
             wasteProcessingType: type
           },
           recipients: stubRecipients,
-          isDecWastePrnEligible: notEligible
+          canDeclareDecemberWasteManually: notEligible
         })
 
         const isPern = result.pageTitle.includes('PERN')

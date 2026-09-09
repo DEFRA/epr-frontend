@@ -4,7 +4,7 @@ import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/m
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
-import { showDecemberWasteQuestion } from './helpers/show-december-waste-question.js'
+import { resolveCanDeclareDecemberWasteManually } from './helpers/can-declare-december-waste-manually.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
@@ -63,8 +63,7 @@ export const controller = {
       registration,
       registrationId,
       wasteBalance,
-      isDecWastePrnEligible: showDecemberWasteQuestion(
-        registration,
+      canDeclareDecemberWasteManually: resolveCanDeclareDecemberWasteManually(
         decemberPrnEligibility
       )
     })

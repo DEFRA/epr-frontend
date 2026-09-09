@@ -20,7 +20,10 @@ describe(fetchDecemberPrnEligibility, () => {
   })
 
   it('calls fetchJsonFromBackend with correct path and options', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({ eligible: true })
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+      declaresDecemberWasteManually: true,
+      windowOpen: true
+    })
 
     await fetchDecemberPrnEligibility(
       organisationId,
@@ -40,7 +43,10 @@ describe(fetchDecemberPrnEligibility, () => {
   })
 
   it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({ eligible: false })
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+      declaresDecemberWasteManually: false,
+      windowOpen: false
+    })
 
     await fetchDecemberPrnEligibility(
       'org/123',
@@ -56,7 +62,11 @@ describe(fetchDecemberPrnEligibility, () => {
   })
 
   it('returns the response from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({ eligible: true })
+    const eligibility = {
+      declaresDecemberWasteManually: true,
+      windowOpen: true
+    }
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(eligibility)
 
     const result = await fetchDecemberPrnEligibility(
       organisationId,
@@ -65,7 +75,7 @@ describe(fetchDecemberPrnEligibility, () => {
       backendToken
     )
 
-    expect(result).toStrictEqual({ eligible: true })
+    expect(result).toStrictEqual(eligibility)
   })
 
   it('propagates errors from fetchJsonFromBackend', async () => {
