@@ -63,7 +63,7 @@ describe(toPrnGroups, () => {
   })
 
   describe('the ordering', () => {
-    it('orders issued notes newest date issued first', () => {
+    it('keeps a group in the order the backend answered in', () => {
       const groups = toPrnGroups([
         aNote({
           id: 'older',
@@ -77,7 +77,26 @@ describe(toPrnGroups, () => {
         })
       ])
 
-      expect(ids(groups.issued)).toStrictEqual(['newer', 'older'])
+      // The tables are read whole, and reordering them would reorder the
+      // operator's list too.
+      expect(ids(groups.issued)).toStrictEqual(['older', 'newer'])
+    })
+
+    it('orders the most recent by date issued, newest first', () => {
+      const groups = toPrnGroups([
+        aNote({
+          id: 'older',
+          status: 'accepted',
+          issuedAt: '2026-01-10T09:00:00.000Z'
+        }),
+        aNote({
+          id: 'newer',
+          status: 'accepted',
+          issuedAt: '2026-01-20T09:00:00.000Z'
+        })
+      ])
+
+      expect(ids(groups.mostRecent)).toStrictEqual(['newer', 'older'])
     })
 
     it('puts a note awaiting issue above every note already issued', () => {
@@ -95,7 +114,7 @@ describe(toPrnGroups, () => {
         })
       ])
 
-      expect(ids(groups.issued)).toStrictEqual([
+      expect(ids(groups.mostRecent)).toStrictEqual([
         'awaiting-issue',
         'issued-today'
       ])
@@ -115,27 +134,7 @@ describe(toPrnGroups, () => {
         })
       ])
 
-      expect(ids(groups.awaitingAuthorisation)).toStrictEqual([
-        'newer',
-        'older'
-      ])
-    })
-
-    it('orders rather than trusting the order the backend answered in', () => {
-      const groups = toPrnGroups([
-        aNote({
-          id: 'second',
-          status: 'cancelled',
-          issuedAt: '2026-01-01T09:00:00.000Z'
-        }),
-        aNote({
-          id: 'first',
-          status: 'cancelled',
-          issuedAt: '2026-03-01T09:00:00.000Z'
-        })
-      ])
-
-      expect(ids(groups.cancelled)).toStrictEqual(['first', 'second'])
+      expect(ids(groups.mostRecent)).toStrictEqual(['newer', 'older'])
     })
   })
 

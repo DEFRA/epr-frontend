@@ -80,10 +80,9 @@ export const toPrnGroups = (notes) => {
     return Boolean(group)
   })
 
-  for (const group of Object.values(groups)) {
-    group.sort(newestFirst)
-  }
-
+  // The groups keep the order the backend answered in — the tables are read
+  // whole, and reordering them would change the operator's list too. Only the
+  // summary section, which shows three of them, needs an order of its own.
   return {
     ...groups,
     mostRecent: [...shown].sort(newestFirst).slice(0, MOST_RECENT_COUNT),
