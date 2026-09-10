@@ -5,10 +5,16 @@ import { describe, expect } from 'vitest'
 
 import { fetchWasteBalance } from './fetch-waste-balance.js'
 
+/**
+ * @import { WasteBalanceAggregate } from './fetch-waste-balance.js'
+ * @import { WasteBalanceFigure } from './to-waste-balance-table.js'
+ */
+
 const backendUrl = config.get('eprBackendUrl')
 const wasteBalanceUrl = `${backendUrl}/v1/market-insights/waste-balance`
 const backendToken = 'test-backend-token'
 
+/** @type {WasteBalanceFigure} */
 const glassInJanuary = {
   material: 'Glass Re-melt',
   accreditationType: 'reprocessor',
@@ -19,12 +25,18 @@ const glassInJanuary = {
   netCredit: 90
 }
 
+/**
+ * @param {WasteBalanceFigure[]} figures
+ * @returns {WasteBalanceAggregate}
+ */
+const aggregateOf = (figures) => ({
+  meta: { generatedAt: '2026-09-10T09:00:00.000Z', reportingYear: 2026 },
+  data: figures
+})
+
 describe(fetchWasteBalance, () => {
   test('returns the aggregate the backend answers with', async ({ msw }) => {
-    const aggregate = {
-      meta: { generatedAt: '2026-09-10T09:00:00.000Z', reportingYear: 2026 },
-      data: [glassInJanuary]
-    }
+    const aggregate = aggregateOf([glassInJanuary])
 
     msw.use(http.get(wasteBalanceUrl, () => HttpResponse.json(aggregate)))
 
@@ -40,7 +52,7 @@ describe(fetchWasteBalance, () => {
     msw.use(
       http.get(wasteBalanceUrl, ({ request }) => {
         captured = new URL(request.url)
-        return HttpResponse.json({ meta: {}, data: [] })
+        return HttpResponse.json(aggregateOf([]))
       })
     )
 
@@ -58,7 +70,7 @@ describe(fetchWasteBalance, () => {
     msw.use(
       http.get(wasteBalanceUrl, ({ request }) => {
         captured = request
-        return HttpResponse.json({ meta: {}, data: [] })
+        return HttpResponse.json(aggregateOf([]))
       })
     )
 

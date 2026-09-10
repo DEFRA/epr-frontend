@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest'
 
 import { toWasteBalanceTable } from './to-waste-balance-table.js'
 
+/** @import { WasteBalanceFigure } from './to-waste-balance-table.js' */
+
 /** @param {string} key */
 const asKey = (key) => `translated:${key}`
 
+/** @type {WasteBalanceFigure} */
 const glassReprocessedInJanuary = {
   material: 'Glass Re-melt',
-  accreditationType: /** @type {const} */ ('reprocessor'),
+  accreditationType: 'reprocessor',
   month: '2026-01',
   totalCredited: 120,
   eligibleForWasteBalance: 100,
@@ -15,15 +18,17 @@ const glassReprocessedInJanuary = {
   netCredit: 90
 }
 
+/** @type {WasteBalanceFigure} */
 const glassReprocessedInFebruary = {
   ...glassReprocessedInJanuary,
   month: '2026-02',
   netCredit: 42.5
 }
 
+/** @type {WasteBalanceFigure} */
 const aluminiumExportedInFebruary = {
   material: 'Aluminium',
-  accreditationType: /** @type {const} */ ('exporter'),
+  accreditationType: 'exporter',
   month: '2026-02',
   totalCredited: 8,
   eligibleForWasteBalance: 8,
@@ -59,9 +64,10 @@ describe(toWasteBalanceTable, () => {
   })
 
   it('separates the accreditation types of one material', () => {
+    /** @type {WasteBalanceFigure} */
     const glassExportedInJanuary = {
       ...glassReprocessedInJanuary,
-      accreditationType: /** @type {const} */ ('exporter'),
+      accreditationType: 'exporter',
       netCredit: 5
     }
 

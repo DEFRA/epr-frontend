@@ -20,6 +20,11 @@ import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
+/**
+ * @import { WasteBalanceAggregate } from './helpers/fetch-waste-balance.js'
+ * @import { WasteBalanceFigure } from './helpers/to-waste-balance-table.js'
+ */
+
 const backendUrl = config.get('eprBackendUrl')
 const wasteBalanceUrl = `${backendUrl}/v1/market-insights/waste-balance`
 
@@ -39,6 +44,7 @@ const regulatorWithoutMarketScope = buildMockAuth({
   scope: [SCOPES.organisationSearch]
 })
 
+/** @type {WasteBalanceFigure} */
 const glassReprocessedInJanuary = {
   material: 'Glass Re-melt',
   accreditationType: 'reprocessor',
@@ -49,12 +55,14 @@ const glassReprocessedInJanuary = {
   netCredit: 90
 }
 
+/** @type {WasteBalanceFigure} */
 const glassReprocessedInFebruary = {
   ...glassReprocessedInJanuary,
   month: '2026-02',
   netCredit: 42.5
 }
 
+/** @type {WasteBalanceFigure} */
 const aluminiumExportedInFebruary = {
   material: 'Aluminium',
   accreditationType: 'exporter',
@@ -82,7 +90,8 @@ const anEmptyPageOfOrganisations = http.get(
 )
 
 /**
- * @param {unknown[]} figures
+ * @param {WasteBalanceFigure[]} figures
+ * @returns {WasteBalanceAggregate}
  */
 const aggregateOf = (figures) => ({
   meta: { generatedAt: '2026-09-10T09:00:00.000Z', reportingYear: 2026 },

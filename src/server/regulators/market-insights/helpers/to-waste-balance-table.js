@@ -28,6 +28,16 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
  * @typedef {{ months: string[], rows: WasteBalanceRow[] }} WasteBalanceTable
  */
 
+/**
+ * The figures of one material and accreditation type, gathered by the month
+ * they were credited in, on the way to becoming a row.
+ * @typedef {{
+ *   material: string,
+ *   accreditationType: WasteBalanceFigure['accreditationType'],
+ *   netCredits: Map<string, number>
+ * }} WasteBalancePartition
+ */
+
 const monthName = new Intl.DateTimeFormat('en-GB', {
   month: 'long',
   timeZone: 'UTC'
@@ -56,17 +66,12 @@ const nameOf = (month) => monthName.format(new Date(`${month}-01T00:00:00Z`))
 export const toWasteBalanceTable = (figures, localise) => {
   const months = [...new Set(figures.map(({ month }) => month))].sort()
 
-  /**
-   * @type {Map<string, {
-   *   material: string,
-   *   accreditationType: WasteBalanceFigure['accreditationType'],
-   *   netCredits: Map<string, number>
-   * }>}
-   */
+  /** @type {Map<string, WasteBalancePartition>} */
   const partitions = new Map()
 
   for (const { material, accreditationType, month, netCredit } of figures) {
     const key = JSON.stringify([material, accreditationType])
+    /** @type {WasteBalancePartition} */
     const partition = partitions.get(key) ?? {
       material,
       accreditationType,
