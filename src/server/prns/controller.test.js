@@ -5,6 +5,7 @@ import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getByLabelText,
@@ -20,6 +21,7 @@ vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
 vi.mock(
   import('#server/common/helpers/metrics/index.js'),
@@ -69,6 +71,10 @@ const exporterUrl =
 describe('#createPrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      declaresDecemberWasteManually: false,
+      windowOpen: false
+    })
   })
 
   describe('request handling', () => {

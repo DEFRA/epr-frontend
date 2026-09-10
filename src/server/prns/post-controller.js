@@ -10,6 +10,8 @@ import {
 import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { resolveCanDeclareDecemberWasteManually } from './helpers/can-declare-december-waste-manually.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
@@ -54,7 +56,8 @@ const payloadSchema = Joi.object({
       'string.max': `Notes must be ${NOTES_MAX_LENGTH} characters or fewer`
     }),
   nation: Joi.string().required(),
-  wasteProcessingType: Joi.string().required()
+  wasteProcessingType: Joi.string().required(),
+  isDecemberWaste: Joi.boolean().default(false)
 })
 
 /**
@@ -67,7 +70,8 @@ const payloadSchema = Joi.object({
  *   recipient: string,
  *   notes?: string,
  *   nation: string,
- *   wasteProcessingType: string
+ *   wasteProcessingType: string,
+ *   isDecemberWaste?: boolean
  * }} CreatePrnPayload
  */
 
@@ -131,6 +135,42 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
 }
 
 /**
+ * Fetches everything `buildCreatePrnViewData` needs to re-render the create
+ * form, shared by the three re-render paths (insufficient balance, invalid
+ * recipient, validation failAction) so they can't drift on which calls they
+ * make.
+ * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
+ * @param {string} backendToken
+ * @returns {Promise<{ registration: object, canDeclareDecemberWasteManually: boolean }>}
+ */
+async function fetchCreatePrnViewDataInputs(
+  { organisationId, registrationId, accreditationId },
+  backendToken
+) {
+  const [{ registration }, decemberPrnEligibility] = await Promise.all([
+    getRequiredRegistrationWithAccreditation({
+      organisationId,
+      registrationId,
+      backendToken,
+      accreditationId
+    }),
+    fetchDecemberPrnEligibility(
+      organisationId,
+      registrationId,
+      accreditationId,
+      backendToken
+    )
+  ])
+
+  return {
+    registration,
+    canDeclareDecemberWasteManually: resolveCanDeclareDecemberWasteManually(
+      decemberPrnEligibility
+    )
+  }
+}
+
+/**
  * Re-render the create form when the backend rejects draft creation because
  * the entered tonnage exceeds the available waste balance. The balance passed
  * in is used only to render the hint; the rejection decision is the backend's.
@@ -145,7 +185,7 @@ async function handleInsufficientBalance(
   organisations,
   wasteBalance
 ) {
-  const { organisationId, registrationId, accreditationId } = request.params
+  const { organisationId, registrationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
 
@@ -157,27 +197,39 @@ async function handleInsufficientBalance(
     list: [{ text: message, href: '#tonnage' }]
   }
 
-  const { registration } = await getRequiredRegistrationWithAccreditation({
-    organisationId,
-    registrationId,
-    backendToken: session.backendToken,
-    accreditationId
-  })
+  const { registration, canDeclareDecemberWasteManually } =
+    await fetchCreatePrnViewDataInputs(request.params, session.backendToken)
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
     recipients: mapToSelectOptions(organisations),
     registration,
     registrationId,
-    wasteBalance
+    wasteBalance,
+    canDeclareDecemberWasteManually
   })
 
   return h.view(CREATE_VIEW, {
     ...viewData,
     errors,
     errorSummary,
-    formValues: request.payload
+    formValues: reRenderFormValues(request.payload)
   })
+}
+
+/**
+ * `request.payload` here has already been through Joi, so `isDecemberWaste`
+ * is a boolean while the radio items' values are the strings `'true'`/`'false'`
+ * (see view-data.js). The govukRadios macro checks `item.value == params.value`,
+ * and in Nunjucks `"true" == true` is false, so without this the previously
+ * selected radio would never come back checked on re-render.
+ * @param {CreatePrnPayload} payload
+ */
+function reRenderFormValues(payload) {
+  return {
+    ...payload,
+    isDecemberWaste: String(payload.isDecemberWaste)
+  }
 }
 
 /**
@@ -209,7 +261,7 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
  * @param {WasteBalance | null} wasteBalance - reused from the handler's submission-time fetch
  */
 async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
-  const { organisationId, registrationId, accreditationId } = request.params
+  const { organisationId, registrationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
 
@@ -224,26 +276,23 @@ async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
     list: [{ text: message, href: '#recipient' }]
   }
 
-  const { registration } = await getRequiredRegistrationWithAccreditation({
-    organisationId,
-    registrationId,
-    backendToken: session.backendToken,
-    accreditationId
-  })
+  const { registration, canDeclareDecemberWasteManually } =
+    await fetchCreatePrnViewDataInputs(request.params, session.backendToken)
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
     recipients: mapToSelectOptions(organisations),
     registration,
     registrationId,
-    wasteBalance
+    wasteBalance,
+    canDeclareDecemberWasteManually
   })
 
   return h.view(CREATE_VIEW, {
     ...viewData,
     errors,
     errorSummary,
-    formValues: request.payload
+    formValues: reRenderFormValues(request.payload)
   })
 }
 
@@ -270,29 +319,41 @@ export const postController = {
           request.payload.wasteProcessingType
         )
 
-        const [{ registration }, { organisations }, wasteBalance] =
-          await Promise.all([
-            getRequiredRegistrationWithAccreditation({
-              organisationId,
-              registrationId,
-              backendToken: session.backendToken,
-              accreditationId
-            }),
-            request.wasteOrganisationsService.getOrganisations(),
-            getWasteBalance(
-              organisationId,
-              accreditationId,
-              session.backendToken,
-              request.logger
-            )
-          ])
+        const [
+          { registration },
+          { organisations },
+          wasteBalance,
+          decemberPrnEligibility
+        ] = await Promise.all([
+          getRequiredRegistrationWithAccreditation({
+            organisationId,
+            registrationId,
+            backendToken: session.backendToken,
+            accreditationId
+          }),
+          request.wasteOrganisationsService.getOrganisations(),
+          getWasteBalance(
+            organisationId,
+            accreditationId,
+            session.backendToken,
+            request.logger
+          ),
+          fetchDecemberPrnEligibility(
+            organisationId,
+            registrationId,
+            accreditationId,
+            session.backendToken
+          )
+        ])
 
         const viewData = buildCreatePrnViewData(request, {
           organisationId,
           recipients: mapToSelectOptions(organisations),
           registration,
           registrationId,
-          wasteBalance
+          wasteBalance,
+          canDeclareDecemberWasteManually:
+            resolveCanDeclareDecemberWasteManually(decemberPrnEligibility)
         })
 
         return h
@@ -313,7 +374,7 @@ export const postController = {
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
-    const { tonnage, recipient, notes } = request.payload
+    const { tonnage, recipient, notes, isDecemberWaste } = request.payload
 
     const [{ organisations }, wasteBalance] = await Promise.all([
       request.wasteOrganisationsService.getOrganisations(),
@@ -350,7 +411,8 @@ export const postController = {
         {
           issuedToOrganisation,
           tonnage: Number.parseInt(tonnage, 10),
-          notes: notes || undefined
+          notes: notes || undefined,
+          isDecemberWaste
         },
         session.backendToken
       )

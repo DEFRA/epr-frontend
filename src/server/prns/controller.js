@@ -3,6 +3,8 @@ import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { resolveCanDeclareDecemberWasteManually } from './helpers/can-declare-december-waste-manually.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
@@ -38,22 +40,32 @@ export const controller = {
       accreditationId
     })
 
-    const [{ organisations }, wasteBalance] = await Promise.all([
-      request.wasteOrganisationsService.getOrganisations(),
-      getWasteBalance(
-        organisationId,
-        accreditationId,
-        session.backendToken,
-        request.logger
-      )
-    ])
+    const [{ organisations }, wasteBalance, decemberPrnEligibility] =
+      await Promise.all([
+        request.wasteOrganisationsService.getOrganisations(),
+        getWasteBalance(
+          organisationId,
+          accreditationId,
+          session.backendToken,
+          request.logger
+        ),
+        fetchDecemberPrnEligibility(
+          organisationId,
+          registrationId,
+          accreditationId,
+          session.backendToken
+        )
+      ])
 
     const viewData = buildCreatePrnViewData(request, {
       organisationId,
       recipients: mapToSelectOptions(organisations),
       registration,
       registrationId,
-      wasteBalance
+      wasteBalance,
+      canDeclareDecemberWasteManually: resolveCanDeclareDecemberWasteManually(
+        decemberPrnEligibility
+      )
     })
 
     await journeyMetrics.start(request, JOURNEY.createPrn, accreditationId)

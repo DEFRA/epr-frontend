@@ -38,7 +38,8 @@ export const controller = {
       wasteBalance,
       reportingPeriods,
       cadence,
-      ledgerEvents
+      ledgerEvents,
+      packagingRecyclingNotes
     } = await fetchAccreditationDetails({
       organisationId,
       registrationId,
@@ -58,6 +59,7 @@ export const controller = {
         reportingPeriods,
         cadence,
         ledgerEvents,
+        packagingRecyclingNotes,
         localise: request.t,
         localiseUrl: request.localiseUrl
       })

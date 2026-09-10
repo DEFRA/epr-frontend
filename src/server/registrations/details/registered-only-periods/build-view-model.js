@@ -11,6 +11,7 @@ import { formatPeriodLabelWithComma } from '#server/reports/helpers/format-perio
 import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitted-date-time.js'
 
 import { eventsInYear } from './helpers/events-in-year.js'
+import { organisationName, toCaption } from '../helpers/caption.js'
 import { registeredOnlyStretches } from '../helpers/registered-only.js'
 
 /**
@@ -40,24 +41,6 @@ import { registeredOnlyStretches } from '../helpers/registered-only.js'
  *   reports: ReportsTable
  * }} RegisteredOnlyPeriodViewModel
  */
-
-/**
- * An organisation trading under another name is known by it, so that is the
- * name the regulator is shown. Matches the two pages above.
- * @param {Organisation} organisation
- * @returns {string}
- */
-const organisationName = ({ companyDetails }) =>
-  companyDetails.tradingName?.trim() || companyDetails.name
-
-/**
- * The records the page sits under, in the order the breadcrumbs walk them. A
- * record holding no number has nothing to name it by, so it is left out rather
- * than shown as an empty gap between two dashes.
- * @param {(string | null | undefined)[]} parts
- * @returns {string}
- */
-const toCaption = (parts) => parts.filter(Boolean).join(' - ')
 
 /**
  * The reports table's column headings, in the design's order and matching the

@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
@@ -586,6 +587,77 @@ describe('#viewController', () => {
         const returnLink = getByText(main, /Return to PRN list/i)
         expect(returnLink).toBeDefined()
         expect(returnLink.getAttribute('href')).toBe(listUrl)
+      })
+
+      it('sends a note opened from the accreditation back to it', async ({
+        server
+      }) => {
+        config.set('featureFlags.regulatorAccess', true)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `${viewUrl}?from=accreditation`,
+          auth: buildMockAuth({
+            provider: OIDC_ENTRA_ID,
+            ...sessionIdentity(IDENTITIES.regulator)
+          })
+        })
+
+        config.set('featureFlags.regulatorAccess', false)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const accreditationUrl = listUrl.replace(
+          '/packaging-recycling-notes',
+          ''
+        )
+
+        expect(
+          body.querySelector('.govuk-back-link')?.getAttribute('href')
+        ).toBe(accreditationUrl)
+
+        const returnLink = getByText(
+          getByRole(body, 'main'),
+          /Return to accreditation/i
+        )
+        expect(returnLink.getAttribute('href')).toBe(accreditationUrl)
+      })
+
+      it('sends an operator to their own list, whatever a shared link says', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `${viewUrl}?from=accreditation`,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+
+        expect(
+          body.querySelector('.govuk-back-link')?.getAttribute('href')
+        ).toBe(listUrl)
+        expect(
+          getByText(
+            getByRole(body, 'main'),
+            /Return to PRN list/i
+          ).getAttribute('href')
+        ).toBe(listUrl)
+      })
+
+      it('ignores a return it does not know', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `${viewUrl}?from=https://example.com`,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          body.querySelector('.govuk-back-link')?.getAttribute('href')
+        ).toBe(listUrl)
       })
 
       it('displays PERN details for exporter registration', async ({
@@ -1510,7 +1582,7 @@ describe('#viewController', () => {
           'Tonnage',
           'Tonnage in words',
           'Process to be used',
-          'December waste',
+          'December waste?',
           'Issuer',
           'Issued date',
           'Issued by',
