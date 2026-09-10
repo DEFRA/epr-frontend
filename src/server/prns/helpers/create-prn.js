@@ -13,6 +13,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @property {IssuedToOrganisation} issuedToOrganisation - The recipient organisation
  * @property {number} tonnage - Tonnage amount (whole number)
  * @property {string} [notes] - Optional notes from issuer
+ * @property {boolean} [isDecemberWaste] - Whether this PRN relates to December waste
  */
 
 /**

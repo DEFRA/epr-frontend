@@ -20,8 +20,11 @@ vi.mock(
 )
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
+const { fetchDecemberPrnEligibility } =
+  await import('./helpers/fetch-december-prn-eligibility.js')
 
 const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
   /** @type {unknown} */ (buildMockAuth())
@@ -77,6 +80,10 @@ describe('#postCreatePrnController', () => {
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      declaresDecemberWasteManually: false,
+      windowOpen: false
+    })
   })
 
   describe('request handling', () => {
@@ -170,7 +177,8 @@ describe('#postCreatePrnController', () => {
               registrationType: 'LARGE_PRODUCER'
             },
             tonnage: 100,
-            notes: 'Test notes'
+            notes: 'Test notes',
+            isDecemberWaste: false
           },
           'mock-backend-token'
         )
@@ -718,6 +726,43 @@ describe('#postCreatePrnController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.conflict)
+      })
+
+      it('keeps the December waste answer selected on re-render, despite Joi having coerced it to a boolean', async ({
+        server
+      }) => {
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          declaresDecemberWasteManually: true,
+          windowOpen: true
+        })
+        const boom = Boom.conflict('Insufficient available waste balance')
+        boom.output.payload.code = 'INSUFFICIENT_AVAILABLE_BALANCE'
+        vi.mocked(createPrn).mockRejectedValue(boom)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: {
+            ...validPayload,
+            tonnage: '600',
+            isDecemberWaste: 'true',
+            crumb
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.querySelector('#is-december-waste-2').checked).toBe(true)
+        expect(body.querySelector('#is-december-waste').checked).toBe(false)
       })
     })
 

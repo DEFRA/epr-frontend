@@ -1,5 +1,5 @@
 /** @import {Accreditation} from '#domain/organisations/accreditation.js' */
-/** @import {AppliedForMaterial, GlassRecyclingProcess, User} from '#domain/organisations/model.js' */
+/** @import {AppliedForMaterial, GlassRecyclingProcess, ReprocessingType, User} from '#domain/organisations/model.js' */
 
 /**
  * @typedef {{
@@ -43,6 +43,7 @@
  *  submittedToRegulator: string;
  *  submitterContactDetails: User;
  *  wasteProcessingType: string;
+ *  reprocessingType?: ReprocessingType | null;
  *  overseasSites?: Record<string, {overseasSiteId: string}>;
  * }} RegistrationBase
  */

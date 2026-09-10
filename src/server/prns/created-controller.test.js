@@ -93,6 +93,15 @@ const mockPrnCreated = asCreatePrnResponse({
   wasteProcessingType: 'reprocessor-input'
 })
 
+const mockDecemberWastePrnCreated = asCreatePrnResponse({
+  id: 'prn-789',
+  tonnage: 100,
+  material: 'plastic',
+  status: 'draft',
+  wasteProcessingType: 'reprocessor-input',
+  isDecemberWaste: true
+})
+
 const mockPernCreated = asCreatePrnResponse({
   id: 'pern-123',
   tonnage: 50,
@@ -198,6 +207,29 @@ describe('#createdController', () => {
         const main = getByRole(body, 'main')
 
         expect(getByText(main, /PRN created/i)).toBeDefined()
+      })
+
+      it('displays "PRN created from December waste" heading when the flag is true', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(mockDecemberWastePrnCreated)
+
+        const { cookies } = await createPrnAndConfirm(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(
+          getByText(main, /PRN created from December waste/i)
+        ).toBeDefined()
       })
 
       it('displays status awaiting authorisation in panel', async ({
