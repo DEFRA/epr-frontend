@@ -11,6 +11,7 @@
         {{ heading }}
       </h1>
       <p class="govuk-body">{{ description }}</p>
+      <p class="govuk-body-s">{{ dataTakenAt }}</p>
 
       <div class="govuk-body" data-testid="app-page-body">
         {% if wasteBalance.rows.length %}
@@ -35,7 +36,7 @@
 
           {{ govukTable({
             caption: localise('regulators:marketInsights:table:caption'),
-            captionClasses: "govuk-visually-hidden",
+            captionClasses: "govuk-table__caption--m",
             firstCellIsHeader: true,
             head: tableHead,
             rows: tableRows

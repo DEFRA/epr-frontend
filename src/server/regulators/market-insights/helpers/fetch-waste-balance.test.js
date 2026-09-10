@@ -30,7 +30,7 @@ const glassInJanuary = {
  * @returns {WasteBalanceAggregate}
  */
 const aggregateOf = (figures) => ({
-  meta: { generatedAt: '2026-09-10T09:00:00.000Z', reportingYear: 2026 },
+  meta: { generatedAt: '2026-04-10T09:00:00.000Z', reportingYear: 2026 },
   data: figures
 })
 

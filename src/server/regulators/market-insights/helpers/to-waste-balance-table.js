@@ -1,5 +1,7 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 
+import { nameOf } from './reporting-period.js'
+
 /**
  * One aggregated figure as the backend serves it: the net credit for a
  * material and accreditation type in a reporting month, alongside the
@@ -33,24 +35,10 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
  * they were credited in, on the way to becoming a row.
  * @typedef {{
  *   material: string,
- *   accreditationType: WasteBalanceFigure['accreditationType'],
+ *   accreditationType: string,
  *   netCredits: Map<string, number>
  * }} WasteBalancePartition
  */
-
-const monthName = new Intl.DateTimeFormat('en-GB', {
-  month: 'long',
-  timeZone: 'UTC'
-})
-
-/**
- * Names the month a `YYYY-MM` key stands for. The key carries no day, so it is
- * read at the start of the month in UTC and the zone is stated rather than
- * left to the host, which would name the month before it west of Greenwich.
- * @param {string} month
- * @returns {string}
- */
-const nameOf = (month) => monthName.format(new Date(`${month}-01T00:00:00Z`))
 
 /**
  * Lays the served figures out the way the published Waste Balance tab is: one
@@ -59,26 +47,42 @@ const nameOf = (month) => monthName.format(new Date(`${month}-01T00:00:00Z`))
  *
  * The pivot is presentation. Every figure in a cell is the one the service
  * served for that month, and the only sum is the row total across them.
+ *
+ * The months are given rather than read off the figures, so the columns run
+ * unbroken across the reporting period and a month nothing was credited in
+ * still gets one.
  * @param {WasteBalanceFigure[]} figures
+ * @param {string[]} months
  * @param {(key: string) => string} localise
  * @returns {WasteBalanceTable}
  */
-export const toWasteBalanceTable = (figures, localise) => {
-  const months = [...new Set(figures.map(({ month }) => month))].sort()
+export const toWasteBalanceTable = (figures, months, localise) => {
+  const withinPeriod = new Set(months)
 
   /** @type {Map<string, WasteBalancePartition>} */
   const partitions = new Map()
 
-  for (const { material, accreditationType, month, netCredit } of figures) {
-    const key = JSON.stringify([material, accreditationType])
+  const credited = figures.filter(({ month }) => withinPeriod.has(month))
+
+  for (const { material, accreditationType, month, netCredit } of credited) {
+    // An unnamed material is one the backend could not resolve. Naming it here
+    // keeps it from rendering as a blank row header with tonnage beside it.
+    const named =
+      material || localise('regulators:marketInsights:unknownMaterial')
+    const key = JSON.stringify([named, accreditationType])
     /** @type {WasteBalancePartition} */
     const partition = partitions.get(key) ?? {
-      material,
-      accreditationType,
+      material: named,
+      accreditationType: localise(
+        `regulators:marketInsights:accreditationTypes:${accreditationType}`
+      ),
       netCredits: new Map()
     }
 
-    partition.netCredits.set(month, netCredit)
+    partition.netCredits.set(
+      month,
+      (partition.netCredits.get(month) ?? 0) + netCredit
+    )
     partitions.set(key, partition)
   }
 
@@ -90,9 +94,7 @@ export const toWasteBalanceTable = (figures, localise) => {
     )
     .map(({ material, accreditationType, netCredits }) => ({
       material,
-      accreditationType: localise(
-        `regulators:marketInsights:accreditationTypes:${accreditationType}`
-      ),
+      accreditationType,
       // The published tab holds its approved layout by printing a zero in every
       // month a row reported nothing, so a month missing from the aggregate
       // reads the same here as it does there.

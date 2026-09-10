@@ -10,18 +10,24 @@
       "exporter": "Exporter",
       "reprocessor": "Reprocessor"
     },
-    "caption": "Reporting year {{ year }}",
-    "description": "Net credited tonnage by material and accreditation type, as it will be published in the monthly market insights workbook.",
-    "heading": "Waste balance",
+    "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
+    "description": "Net credited tonnage by material and accreditation type. These are the figures the monthly market insights workbook is built from.",
+    "heading": "Market insights",
     "linkText": "Market insights",
-    "noFigures": "No waste balance figures have been reported for this year yet.",
+    "noFigures": "No waste balance figures have been reported for this period yet.",
     "pageTitle": "Market insights",
+    "period": {
+      "month": "{{ month }} {{ year }}",
+      "months": "{{ from }} to {{ to }} {{ year }}",
+      "year": "Reporting year {{ year }}"
+    },
     "table": {
       "accreditationType": "Accreditation type",
-      "caption": "Net credited tonnage by material, accreditation type and month",
+      "caption": "Waste balance",
       "material": "Material",
       "total": "Total"
-    }
+    },
+    "unknownMaterial": "Not recorded"
   },
   "notAuthorised": {
     "pageTitle": "You do not have access to this service",

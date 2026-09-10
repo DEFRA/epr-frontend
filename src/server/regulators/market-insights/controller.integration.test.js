@@ -74,6 +74,18 @@ const aluminiumExportedInFebruary = {
 }
 
 /**
+ * The backend serves the month still running, and April is that month once the
+ * clock below is pinned, so this figure is what proves the page stops at the
+ * last complete month rather than printing a part month beside whole ones.
+ * @type {WasteBalanceFigure}
+ */
+const glassReprocessedInApril = {
+  ...glassReprocessedInJanuary,
+  month: '2026-04',
+  netCredit: 1000
+}
+
+/**
  * The regulator home page fetches its own list, and these tests are about the
  * link it offers rather than what that list holds.
  */
@@ -94,7 +106,7 @@ const anEmptyPageOfOrganisations = http.get(
  * @returns {WasteBalanceAggregate}
  */
 const aggregateOf = (figures) => ({
-  meta: { generatedAt: '2026-09-10T09:00:00.000Z', reportingYear: 2026 },
+  meta: { generatedAt: '2026-04-10T09:00:00.000Z', reportingYear: 2026 },
   data: figures
 })
 
@@ -128,7 +140,7 @@ describe('the market insights page', () => {
     // Only the clock, so the page reads a reporting year the test pins while
     // the server's own timers keep running.
     vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date('2026-09-10T09:00:00.000Z'))
+    vi.setSystemTime(new Date('2026-04-10T09:00:00.000Z'))
     config.set('featureFlags.regulatorAccess', true)
     config.set('featureFlags.marketInsights', true)
   })
@@ -150,7 +162,8 @@ describe('the market insights page', () => {
             aggregateOf([
               glassReprocessedInJanuary,
               glassReprocessedInFebruary,
-              aluminiumExportedInFebruary
+              aluminiumExportedInFebruary,
+              glassReprocessedInApril
             ])
           )
         )
@@ -171,15 +184,42 @@ describe('the market insights page', () => {
         'Accreditation type',
         'January',
         'February',
+        'March',
         'Total'
       ])
       expect(rowsOf(body)).toStrictEqual([
-        ['Aluminium', 'Exporter', '0.00', '8.00', '8.00'],
-        ['Glass Re-melt', 'Reprocessor', '90.00', '42.50', '132.50']
+        ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00'],
+        ['Glass Re-melt', 'Reprocessor', '90.00', '42.50', '0.00', '132.50']
       ])
     })
 
-    it('asks for the reporting year now in progress, and says which year it is showing', async ({
+    it('states the period the figures cover and when they were taken', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () =>
+          HttpResponse.json(aggregateOf([glassReprocessedInJanuary]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+
+      expect(getByText(body, 'January to March 2026')).not.toBeNull()
+      // The moment is served in UTC and read in UK time, which is an hour ahead
+      // in April, so a page showing 9am would be showing the wrong zone.
+      expect(
+        getByText(body, 'Data taken at 10:00am on 10 April 2026')
+      ).not.toBeNull()
+    })
+
+    it('asks for the reporting year now in progress', async ({
       msw,
       server
     }) => {
@@ -193,7 +233,7 @@ describe('the market insights page', () => {
         })
       )
 
-      const { result } = await server.inject({
+      await server.inject({
         method: 'GET',
         url: paths.regulators.marketInsights,
         auth: regulator
@@ -202,12 +242,9 @@ describe('the market insights page', () => {
       expect(/** @type {URL} */ (captured).searchParams.get('year')).toBe(
         '2026'
       )
-      expect(
-        getByText(documentOf(asHtml(result)), 'Reporting year 2026')
-      ).not.toBeNull()
     })
 
-    it('says the year has no figures yet rather than showing an empty table', async ({
+    it('says the period has no figures yet rather than showing an empty table', async ({
       msw,
       server
     }) => {
@@ -229,7 +266,7 @@ describe('the market insights page', () => {
       expect(
         queryByText(
           body,
-          'No waste balance figures have been reported for this year yet.'
+          'No waste balance figures have been reported for this period yet.'
         )
       ).not.toBeNull()
     })
