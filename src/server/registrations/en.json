@@ -89,6 +89,8 @@
     "heading": "Registration details",
     "summary": {
       "material": "Material",
+      "overseasSites": "Overseas reprocessing site",
+      "overseasSitesView": "View",
       "processingType": "Processing type",
       "site": "Site",
       "status": "Status"

@@ -17,6 +17,10 @@
         {% for row in summaryRows %}
           {% if row.status %}
             {% set value = { html: govukTag({ text: row.status.text, classes: row.status.classes }) } %}
+          {% elif row.link %}
+            {# The page holds several links reading "View", so this one names
+               the row it sits in for a reader who hears the links alone. #}
+            {% set value = { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (row.link.href | escape) ~ '">' ~ row.link.text ~ '<span class="govuk-visually-hidden"> ' ~ (row.key | escape) ~ '</span></a>' } %}
           {% else %}
             {% set value = { text: row.value } %}
           {% endif %}
