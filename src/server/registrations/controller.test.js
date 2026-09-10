@@ -4,6 +4,7 @@ import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { fetchDecemberPrnEligibility } from '#server/prns/helpers/fetch-december-prn-eligibility.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -35,6 +36,8 @@ vi.mock(
 
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 
+vi.mock(import('#server/prns/helpers/fetch-december-prn-eligibility.js'))
+
 const glassApproved = findRegistrationAndAccreditation(
   fixtureData,
   'reg-001-glass-approved'
@@ -54,6 +57,12 @@ describe('#accreditationDashboardController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({})
+    // Out of the December window by default, so every test not about the
+    // December panel sees the single balance exactly as before.
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      declaresDecemberWasteManually: false,
+      windowOpen: false
+    })
   })
 
   describe('happy path - reprocessor', () => {
@@ -728,6 +737,182 @@ describe('#accreditationDashboardController', () => {
           'tonnes'
         )
       })
+    })
+  })
+
+  describe('December available balance panel', () => {
+    const openDashboard = async (server) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      return { $: load(asHtml(result)), statusCode }
+    }
+
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        glassApproved
+      )
+      vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+        declaresDecemberWasteManually: false,
+        windowOpen: true
+      })
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-001-glass-approved': {
+          amount: 1500,
+          availableAmount: 500.5,
+          decemberAmount: 200,
+          decemberAvailableAmount: 120.25
+        }
+      })
+    })
+
+    it('breaks the balance into December, non-December and total for an eligible operator in window', async ({
+      server
+    }) => {
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-waste-balance"]').text()).toContain(
+        '120.25'
+      )
+      expect($('[data-testid="non-december-waste-balance"]').text()).toContain(
+        '380.25'
+      )
+      expect($('[data-testid="total-waste-balance"]').text()).toContain(
+        '500.50'
+      )
+    })
+
+    it('labels the three balances and keeps the panel heading', async ({
+      server
+    }) => {
+      const { $ } = await openDashboard(server)
+
+      const panel = $('[data-testid="december-balance-panel"]')
+
+      expect(panel.text()).toContain('Available waste balance')
+      expect(panel.text()).toContain('December waste balance')
+      expect(panel.text()).toContain('Non-December waste balance')
+      expect(panel.text()).toContain('Total tonnage')
+    })
+
+    it('tells a reprocessor it can create PRNs from either balance', async ({
+      server
+    }) => {
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-balance-panel"]').text()).toContain(
+        'You can create PRNs from either waste balance'
+      )
+    })
+
+    it('replaces the single-balance banner while the panel shows', async ({
+      server
+    }) => {
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="waste-balance-amount"]')).toHaveLength(0)
+    })
+
+    it('tells an exporter it can create PERNs from either balance', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        exporterPlasticApproved
+      )
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-export-001-plastic-approved': {
+          amount: 500,
+          availableAmount: 250.75,
+          decemberAmount: 100,
+          decemberAvailableAmount: 50.5
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(asHtml(result))
+
+      expect($('[data-testid="december-balance-panel"]').text()).toContain(
+        'You can create PERNs from either waste balance'
+      )
+    })
+
+    it('shows a 0.00 December balance when the backend holds no December portion', async ({
+      server
+    }) => {
+      // The backend omits the December fields entirely for an accreditation
+      // that has never accrued December tonnage, so an eligible operator's
+      // empty pool must still render as zero rather than dropping the panel.
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-001-glass-approved': { amount: 1500, availableAmount: 500.5 }
+      })
+
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-waste-balance"]').text()).toContain(
+        '0.00'
+      )
+      expect($('[data-testid="non-december-waste-balance"]').text()).toContain(
+        '500.50'
+      )
+      expect($('[data-testid="total-waste-balance"]').text()).toContain(
+        '500.50'
+      )
+    })
+
+    it('keeps the single balance for an operator that declares December waste manually', async ({
+      server
+    }) => {
+      vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+        declaresDecemberWasteManually: true,
+        windowOpen: true
+      })
+
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-balance-panel"]')).toHaveLength(0)
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        '500.50'
+      )
+    })
+
+    it('keeps the single balance outside the December window', async ({
+      server
+    }) => {
+      vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+        declaresDecemberWasteManually: false,
+        windowOpen: false
+      })
+
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-balance-panel"]')).toHaveLength(0)
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        '500.50'
+      )
+    })
+
+    it('keeps the single balance when the eligibility check fails', async ({
+      server
+    }) => {
+      vi.mocked(fetchDecemberPrnEligibility).mockRejectedValue(
+        new Error('Service unavailable')
+      )
+
+      const { $, statusCode } = await openDashboard(server)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect($('[data-testid="december-balance-panel"]')).toHaveLength(0)
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        '500.50'
+      )
     })
   })
 

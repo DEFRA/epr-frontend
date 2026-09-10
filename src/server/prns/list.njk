@@ -27,6 +27,9 @@
         {% endif %}
       </div>
 
+      {% if wasteBalance.breakdown %}
+      {% include "partials/waste-balance/december-balance-panel.njk" %}
+      {% else %}
       <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-bottom-6">
         <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
           <div>
@@ -44,6 +47,7 @@
           </p>
         </div>
       </div>
+      {% endif %}
 
       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
