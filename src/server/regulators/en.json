@@ -18,8 +18,7 @@
     "pageTitle": "Market insights",
     "period": {
       "month": "{{ month }} {{ year }}",
-      "months": "{{ from }} to {{ to }} {{ year }}",
-      "year": "Reporting year {{ year }}"
+      "months": "{{ from }} to {{ to }} {{ year }}"
     },
     "table": {
       "accreditationType": "Accreditation type",

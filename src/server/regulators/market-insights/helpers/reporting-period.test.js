@@ -35,7 +35,7 @@ describe(reportingPeriodNow, () => {
     vi.useRealTimers()
   })
 
-  it('runs from January to the last complete month of the year in progress', () => {
+  it('runs from January to the last complete month', () => {
     at('2026-09-10T09:00:00.000Z')
 
     expect(reportingPeriodNow()).toStrictEqual({
@@ -62,18 +62,36 @@ describe(reportingPeriodNow, () => {
     })
   })
 
-  it('has no complete month yet in January', () => {
+  // The year comes from the last complete month, not from today, so January
+  // shows the year that has just closed in full rather than an empty page.
+  it('shows the whole of the year just ended, through January', () => {
     at('2027-01-15T12:00:00.000Z')
 
-    expect(reportingPeriodNow()).toStrictEqual({ year: 2027, months: [] })
+    expect(reportingPeriodNow()).toStrictEqual({
+      year: 2026,
+      months: [
+        '2026-01',
+        '2026-02',
+        '2026-03',
+        '2026-04',
+        '2026-05',
+        '2026-06',
+        '2026-07',
+        '2026-08',
+        '2026-09',
+        '2026-10',
+        '2026-11',
+        '2026-12'
+      ]
+    })
   })
 
-  // The reporting year turns at UK midnight, so a moment that is still
-  // December here belongs to the year that is ending.
-  it('reads the year and month in UK time', () => {
-    at('2026-12-31T23:30:00.000Z')
+  // Half past midnight on 1 July in British Summer Time is still 30 June in
+  // UTC, so a host reading the month in UTC would stop the period a month short.
+  it('reads the month in UK time rather than UTC', () => {
+    at('2026-06-30T23:30:00.000Z')
 
-    expect(reportingPeriodNow().year).toBe(2026)
+    expect(reportingPeriodNow().months).toContain('2026-06')
   })
 })
 
@@ -94,12 +112,6 @@ describe(describeReportingPeriod, () => {
       describeReportingPeriod({ year: 2026, months: ['2026-01'] }, asKey)
     ).toBe(
       'translated:regulators:marketInsights:period:month:{"month":"January","year":2026}'
-    )
-  })
-
-  it('falls back to the year when no month of it has finished', () => {
-    expect(describeReportingPeriod({ year: 2027, months: [] }, asKey)).toBe(
-      'translated:regulators:marketInsights:period:year:{"year":2027}'
     )
   })
 })

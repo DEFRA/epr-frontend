@@ -28,12 +28,17 @@ export const nameOf = (month) =>
   monthName.format(new Date(`${month}-01T00:00:00Z`))
 
 /**
- * The reporting period the publication is currently accumulating: the calendar
- * year in progress, and the months of it that have finished.
+ * The reporting period the publication is currently accumulating: January to
+ * the last complete month, and the year that month belongs to.
  *
  * A month still running is left out. The published tab stops at the last
  * complete month, so a part-month column sitting unmarked beside whole ones
  * would read as a collapse in supply rather than as days still to come.
+ *
+ * The year comes from that last complete month rather than from today, which
+ * is what carries January. Reading the year off today would empty the page for
+ * the whole of January, which is when the analysts are publishing the closing
+ * months of the year that has just ended.
  * @returns {ReportingPeriod}
  */
 export const reportingPeriodNow = () => {
@@ -42,12 +47,14 @@ export const reportingPeriodNow = () => {
     .formatToParts(new Date())
     .reduce((acc, { type, value }) => ({ ...acc, [type]: value }), {})
 
-  const year = Number(parts.year)
+  const inJanuary = Number(parts.month) === 1
+  const year = inJanuary ? Number(parts.year) - 1 : Number(parts.year)
+  const lastCompleteMonth = inJanuary ? 12 : Number(parts.month) - 1
 
   return {
     year,
     months: Array.from(
-      { length: Number(parts.month) - 1 },
+      { length: lastCompleteMonth },
       (_, index) => `${year}-${String(index + 1).padStart(2, '0')}`
     )
   }
@@ -61,10 +68,6 @@ export const reportingPeriodNow = () => {
  * @returns {string}
  */
 export const describeReportingPeriod = ({ year, months }, localise) => {
-  if (months.length === 0) {
-    return localise('regulators:marketInsights:period:year', { year })
-  }
-
   if (months.length === 1) {
     return localise('regulators:marketInsights:period:month', {
       month: nameOf(months[0]),
