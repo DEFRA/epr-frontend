@@ -26,7 +26,7 @@
       "material": "Material",
       "total": "Total"
     },
-    "unknownMaterial": "Not recorded"
+    "unknownMaterial": "Not attributed"
   },
   "notAuthorised": {
     "pageTitle": "You do not have access to this service",

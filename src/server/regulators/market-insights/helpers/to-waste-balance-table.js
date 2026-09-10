@@ -65,8 +65,9 @@ export const toWasteBalanceTable = (figures, months, localise) => {
   const credited = figures.filter(({ month }) => withinPeriod.has(month))
 
   for (const { material, accreditationType, month, netCredit } of credited) {
-    // An unnamed material is one the backend could not resolve. Naming it here
-    // keeps it from rendering as a blank row header with tonnage beside it.
+    // The service could not resolve a material for these figures. The label
+    // says so of us rather than of the operator, who did report one, and
+    // heading the row with it keeps real tonnage from sitting beside a blank.
     const named =
       material || localise('regulators:marketInsights:unknownMaterial')
     const key = JSON.stringify([named, accreditationType])
