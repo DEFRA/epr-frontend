@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { hasLedgerReadScope, hasWriteScope, SCOPES } from './scopes.js'
+import {
+  hasLedgerReadScope,
+  hasOrganisationReadScope,
+  hasWriteScope,
+  SCOPES
+} from './scopes.js'
 
 /**
  * @param {string[]} [scope]
@@ -13,6 +18,10 @@ describe('the scopes the backend grants', () => {
 
   it('spells the waste balance ledger read scope as the backend grants it', () => {
     expect(SCOPES.wasteBalanceLedgerRead).toBe('waste-balance.ledger.read')
+  })
+
+  it('spells the organisation read scope as the backend grants it', () => {
+    expect(SCOPES.organisationRead).toBe('organisation.read')
   })
 })
 
@@ -95,5 +104,47 @@ describe(hasLedgerReadScope, () => {
 
   it('refuses an absent argument', () => {
     expect(hasLedgerReadScope()).toBe(false)
+  })
+})
+
+describe(hasOrganisationReadScope, () => {
+  it('admits a session the backend granted the organisation read scope', () => {
+    expect(
+      hasOrganisationReadScope(
+        credentials(['organisation.read', 'organisation.search'])
+      )
+    ).toBe(true)
+  })
+
+  // An operator reaches their own organisation under a different scope, and
+  // one that starts with the same word.
+  it('refuses an operator holding read of its own organisation', () => {
+    expect(
+      hasOrganisationReadScope(
+        credentials(['organisation.linked.read', 'organisation.linked.write'])
+      )
+    ).toBe(false)
+  })
+
+  it('does not take the search scope for the read scope', () => {
+    expect(hasOrganisationReadScope(credentials(['organisation.search']))).toBe(
+      false
+    )
+  })
+
+  it('refuses a session the backend granted nothing', () => {
+    expect(hasOrganisationReadScope(credentials([]))).toBe(false)
+  })
+
+  it('refuses a session carrying no scopes at all', () => {
+    expect(hasOrganisationReadScope(credentials(undefined))).toBe(false)
+  })
+
+  it('refuses a request with no session', () => {
+    expect(hasOrganisationReadScope(null)).toBe(false)
+  })
+
+  it('refuses an absent argument', () => {
+    expect(hasOrganisationReadScope()).toBe(false)
   })
 })

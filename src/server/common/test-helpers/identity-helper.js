@@ -12,10 +12,10 @@ import { http, HttpResponse } from 'msw'
  * The backend decides every scope here and this fixture restates the ones this
  * app names. A guard added later must add its scope here too, or an
  * integration test signs a user in with less than the real session carries.
- * The regulator's `organisation.search` guards the regulator's own page and
- * `waste-balance.ledger.read` guards the waste balance ledger, so a stale
- * fixture is caught on either. `organisation.read` gates no route here, so
- * nothing local pins it.
+ * The regulator's `organisation.search` guards the regulator's own page,
+ * `waste-balance.ledger.read` guards the waste balance ledger and
+ * `organisation.read` guards the overseas reprocessing sites, so a stale
+ * fixture is caught on any of the three.
  *
  * `operatorWithoutWrite` is the same operator after the backend stops granting
  * the write scope: a narrower answer that still names a role.
@@ -32,7 +32,7 @@ export const IDENTITIES = Object.freeze({
   regulator: {
     role: REGULATOR_ROLE,
     scopes: [
-      'organisation.read',
+      SCOPES.organisationRead,
       SCOPES.organisationSearch,
       SCOPES.wasteBalanceLedgerRead
     ]

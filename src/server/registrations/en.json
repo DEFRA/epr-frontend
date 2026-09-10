@@ -60,6 +60,22 @@
       },
       "returnToRegistration": "If you’d like to see the accreditation details please return to the registration details page."
     },
+    "overseasSites": {
+      "columns": {
+        "addressLine1": "Address line 1",
+        "addressLine2": "Address line 2",
+        "coordinates": "Coordinates",
+        "country": "Destination country",
+        "material": "Packaging waste category",
+        "name": "Overseas reprocessor name",
+        "orsId": "ORS ID",
+        "postcode": "Postcode or similar",
+        "stateOrRegion": "State, province or region",
+        "townOrCity": "City or town"
+      },
+      "heading": "Overseas reprocessing sites",
+      "none": "This registration holds no overseas reprocessing site."
+    },
     "registeredOnlyPeriods": {
       "actions": "Actions",
       "heading": "Registered-only",

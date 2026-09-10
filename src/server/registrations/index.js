@@ -1,7 +1,9 @@
 import { controller } from './controller.js'
 import { controller as accreditationController } from './details/accreditations/controller.js'
 import { controller as detailsController } from './details/controller.js'
+import { controller as overseasSitesController } from './details/overseas-sites/controller.js'
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
+import { readsAnyOrganisation } from '#server/auth/reads-any-organisation.js'
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
@@ -68,6 +70,44 @@ const accreditationRoute = {
 }
 
 /**
+ * Answers nothing to a session that may not read this organisation, and for
+ * the same reason as the accreditation above it: there is no operator page at
+ * this address to fall through to.
+ *
+ * The scope decides rather than the role that usually carries it, and it is
+ * read from the session, so the gate is narrower than the backend route it
+ * fronts and no operator reaches the page.
+ *
+ * A refusal is logged under its own action so it can be counted apart from a
+ * registration that genuinely is not there. Both answer 404 to the caller, and
+ * on the one address here that reaches another organisation's records, the
+ * difference between a probe and a stale link is worth being able to see.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const overseasSitesRoute = {
+  /**
+   * @param {HapiRequest & { params: RegistrationParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    if (!readsAnyOrganisation(request.auth.credentials)) {
+      throw notFound(
+        'Overseas sites not found',
+        errorCodes.registrationNotFound,
+        {
+          event: {
+            action: 'refuse_overseas_sites',
+            reason: 'caller may not read this organisation'
+          }
+        }
+      )
+    }
+
+    return overseasSitesController.handler(request, h)
+  }
+}
+
+/**
  * @typedef {{
  *   organisationId: string,
  *   registrationId: string,
@@ -122,6 +162,11 @@ export const registrations = {
           ...accreditationRoute,
           method: 'GET',
           path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}'
+        },
+        {
+          ...overseasSitesRoute,
+          method: 'GET',
+          path: '/organisations/{organisationId}/registrations/{registrationId}/overseas-sites'
         },
         {
           ...registeredOnlyPeriodRoute,
