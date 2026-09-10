@@ -755,6 +755,10 @@ describe('#accreditationDashboardController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         glassApproved
       )
+      // Which operator types see the breakdown is the backend's decision,
+      // carried by these two flags: declaresDecemberWasteManually is true
+      // only for an output reprocessor, so eligible here means an exporter
+      // or an input reprocessor, in window, regardless of amounts accrued.
       vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
         declaresDecemberWasteManually: false,
         windowOpen: true
@@ -896,7 +900,7 @@ describe('#accreditationDashboardController', () => {
       )
     })
 
-    it('keeps the single balance for an operator that declares December waste manually', async ({
+    it('keeps the single balance for an output reprocessor, which declares December waste manually', async ({
       server
     }) => {
       vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
