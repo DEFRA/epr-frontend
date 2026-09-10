@@ -871,7 +871,7 @@ describe('#accreditationDashboardController', () => {
       )
     })
 
-    it('renders a negative non-December balance unclamped, as ADR-0049 requires', async ({
+    it('renders a negative non-December balance unclamped, by design', async ({
       server
     }) => {
       // Any dimension can go transiently negative and there is deliberately
