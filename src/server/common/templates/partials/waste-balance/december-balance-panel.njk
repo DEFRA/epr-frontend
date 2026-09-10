@@ -2,41 +2,26 @@
    total breakdown shown to an eligible operator within the December to January
    window. Expects `wasteBalance.breakdown` and `wasteBalance.noteTypePlural`
    in context; out of window the caller renders its single-balance banner
-   instead. #}
+   instead. Per the Figma frames, the heading and the three rows share the
+   grey band and the hint sits alone on the strip below. #}
 <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-6"
      data-testid="december-balance-panel">
   <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
-    <h2 class="govuk-summary-card__title">
-      {{ localise("common:wasteBalance.decemberPanel.title") }}
-    </h2>
+    <div>
+      <h2 class="govuk-summary-card__title">
+        {{ localise("common:wasteBalance.decemberPanel.title") }}
+      </h2>
+      <dl class="epr-december-balance-rows">
+        <dt>{{ localise("common:wasteBalance.decemberPanel.december") }}</dt>
+        <dd data-testid="december-waste-balance">{{ wasteBalance.breakdown.december | formatTonnage }}</dd>
+        <dt>{{ localise("common:wasteBalance.decemberPanel.nonDecember") }}</dt>
+        <dd data-testid="non-december-waste-balance">{{ wasteBalance.breakdown.nonDecember | formatTonnage }}</dd>
+        <dt>{{ localise("common:wasteBalance.decemberPanel.total") }}</dt>
+        <dd data-testid="total-waste-balance">{{ wasteBalance.breakdown.total | formatTonnage }}</dd>
+      </dl>
+    </div>
   </div>
-  <div class="govuk-summary-card__content govuk-!-padding-6">
-    <dl class="govuk-summary-list">
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">
-          {{ localise("common:wasteBalance.decemberPanel.december") }}
-        </dt>
-        <dd class="govuk-summary-list__value" data-testid="december-waste-balance">
-          {{ wasteBalance.breakdown.december | formatTonnage }} {{ localise("common:wasteBalance.decemberPanel.units") }}
-        </dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">
-          {{ localise("common:wasteBalance.decemberPanel.nonDecember") }}
-        </dt>
-        <dd class="govuk-summary-list__value" data-testid="non-december-waste-balance">
-          {{ wasteBalance.breakdown.nonDecember | formatTonnage }} {{ localise("common:wasteBalance.decemberPanel.units") }}
-        </dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">
-          {{ localise("common:wasteBalance.decemberPanel.total") }}
-        </dt>
-        <dd class="govuk-summary-list__value" data-testid="total-waste-balance">
-          {{ wasteBalance.breakdown.total | formatTonnage }} {{ localise("common:wasteBalance.decemberPanel.units") }}
-        </dd>
-      </div>
-    </dl>
+  <div class="govuk-summary-card__content govuk-!-padding-4">
     <p class="govuk-body govuk-!-margin-bottom-0">
       {{ localise("common:wasteBalance.decemberPanel.hint", { noteTypePlural: wasteBalance.noteTypePlural }) }}
     </p>

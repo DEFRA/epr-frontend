@@ -41,3 +41,23 @@
     background: govuk-colour("black", $variant: "tint-95");
   }
 }
+
+// The December / non-December / total rows share the banner's grey band with
+// the heading (see the December 2026 Figma frames): compact blue lines with
+// the values right-aligned as a column.
+.epr-december-balance-rows {
+  display: grid;
+  grid-template-columns: max-content minmax(4em, max-content);
+  margin: 0;
+  color: govuk-colour("blue");
+  @include govuk-font($size: 19);
+
+  dt,
+  dd {
+    margin: 0;
+  }
+
+  dd {
+    text-align: right;
+  }
+}
