@@ -22,7 +22,7 @@ import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
  *   issuedPrns?: object[],
  *   cancelledPrns?: object[],
  *   hasCreatedPrns?: boolean,
- *   wasteBalance?: WasteBalance | null,
+ *   wasteBalance?: Partial<WasteBalance> | null,
  *   showsDecember?: boolean
  * }} options
  */
