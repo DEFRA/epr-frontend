@@ -1,5 +1,7 @@
 import { paths } from '#server/paths.js'
 
+import { regulatorServiceHeader } from '../service-header.js'
+
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
@@ -21,15 +23,9 @@ const controller = {
       return h.redirect(request.localiseUrl(paths.regulators.home))
     }
 
-    const { t: localise } = request
-
-    // The header names the service from the session, and this page renders
-    // without one. Naming it here is what stops a regulator reading the
-    // operator service name on their way out, so both lines are load bearing.
     return h.view('regulators/logged-out/index', {
-      pageTitle: localise('regulators:loggedOut:pageTitle'),
-      serviceName: localise('regulators:serviceName'),
-      serviceUrl: paths.regulators.home,
+      pageTitle: request.t('regulators:loggedOut:pageTitle'),
+      ...regulatorServiceHeader(request, paths.regulators.home),
       signInAgainHref: request.localiseUrl(paths.auth.entraId.login)
     })
   }

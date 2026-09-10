@@ -195,7 +195,8 @@ const confirmDraft = async (
     tonnage: result.tonnage,
     material: result.material,
     status: result.status,
-    wasteProcessingType: prnDraft.wasteProcessingType
+    wasteProcessingType: prnDraft.wasteProcessingType,
+    isDecemberWaste: prnDraft.isDecemberWaste
   })
 
   await journeyMetrics.end(request, JOURNEY.createPrn, accreditationId)

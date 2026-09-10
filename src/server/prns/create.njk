@@ -6,6 +6,7 @@
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% from "govuk/components/select/macro.njk" import govukSelect %}
 
 {% block beforeContent %}
@@ -47,6 +48,23 @@
 
         <input type="hidden" name="nation" value="{{ hiddenFields.nation }}">
         <input type="hidden" name="wasteProcessingType" value="{{ hiddenFields.wasteProcessingType }}">
+
+        {% if decemberWaste %}
+          {{ govukRadios({
+            name: "isDecemberWaste",
+            idPrefix: "is-december-waste",
+            fieldset: {
+              legend: {
+                text: decemberWaste.legend,
+                isPageHeading: false,
+                classes: "govuk-fieldset__legend--m"
+              }
+            },
+            items: decemberWaste.items,
+            value: formValues.isDecemberWaste if formValues else "false",
+            errorMessage: errors.isDecemberWaste if errors else null
+          }) }}
+        {% endif %}
 
         {{ govukInput({
           label: {

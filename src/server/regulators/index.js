@@ -3,6 +3,7 @@ import { paths } from '#server/paths.js'
 
 import { controller as loggedOutController } from './logged-out/controller.js'
 import { controller } from './organisations/controller.js'
+import { controller as startController } from './start/controller.js'
 
 /**
  * Regulators plugin
@@ -28,6 +29,14 @@ export const regulators = {
           ...loggedOutController,
           method: 'GET',
           path: paths.regulators.loggedOut,
+          options: {
+            auth: { mode: 'try' }
+          }
+        },
+        {
+          ...startController,
+          method: 'GET',
+          path: paths.regulators.start,
           options: {
             auth: { mode: 'try' }
           }
