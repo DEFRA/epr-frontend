@@ -30,6 +30,9 @@ const createMockRequest = (scope = [SCOPES.organisationLinkedWrite]) => ({
       'prns:list:table:selectText': 'Select',
       'prns:list:table:viewText': 'View',
       'prns:list:table:totalLabel': 'Total',
+      'prns:decemberWasteLabel': 'December waste?',
+      'prns:decemberWasteYes': 'Yes',
+      'prns:decemberWasteNo': 'No',
       'prns:list:noPrnsCreated': `You have not created any ${params.noteTypePlural}.`,
       'prns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
       'prns:list:status:awaitingAcceptance': 'Awaiting acceptance',
@@ -66,14 +69,16 @@ const stubPrns = [
     recipient: 'Acme Packaging Ltd',
     createdAt: '2026-01-15',
     tonnage: 50,
-    status: 'awaiting_authorisation'
+    status: 'awaiting_authorisation',
+    isDecemberWaste: true
   },
   {
     id: 'prn-002',
     recipient: 'BigCo Waste Solutions',
     createdAt: '2026-01-18',
     tonnage: 120,
-    status: 'awaiting_authorisation'
+    status: 'awaiting_authorisation',
+    isDecemberWaste: false
   }
 ]
 
@@ -83,14 +88,16 @@ const stubCancellationPrns = [
     recipient: 'TFR Facilities',
     createdAt: '2025-08-13',
     tonnage: 5,
-    status: 'awaiting_cancellation'
+    status: 'awaiting_cancellation',
+    isDecemberWaste: true
   },
   {
     id: 'prn-cancel-002',
     recipient: 'Linton Construction',
     createdAt: '2025-08-07',
     tonnage: 25,
-    status: 'awaiting_cancellation'
+    status: 'awaiting_cancellation',
+    isDecemberWaste: false
   }
 ]
 
@@ -100,14 +107,16 @@ const stubIssuedPrns = [
     prnNumber: 'ER2612345',
     recipient: 'Radar',
     issuedAt: '2026-01-29',
-    status: 'awaiting_acceptance'
+    status: 'awaiting_acceptance',
+    isDecemberWaste: true
   },
   {
     id: 'prn-004',
     prnNumber: 'ER2654321',
     recipient: 'Renewable Products',
     issuedAt: '2026-01-26',
-    status: 'awaiting_acceptance'
+    status: 'awaiting_acceptance',
+    isDecemberWaste: false
   }
 ]
 
@@ -118,7 +127,8 @@ const stubCancelledPrns = [
     recipient: 'Cancelled Corp',
     issuedAt: '2026-01-10',
     tonnage: 40,
-    status: 'cancelled'
+    status: 'cancelled',
+    isDecemberWaste: true
   },
   {
     id: 'prn-006',
@@ -126,7 +136,8 @@ const stubCancelledPrns = [
     recipient: 'Revoked Ltd',
     issuedAt: '2026-01-12',
     tonnage: 20,
-    status: 'cancelled'
+    status: 'cancelled',
+    isDecemberWaste: false
   }
 ]
 
@@ -276,9 +287,10 @@ describe('#buildListViewData', () => {
 
       // 2 data rows + 1 total row
       expect(result.table.rows).toHaveLength(3)
-      expect(result.table.rows[0]).toHaveLength(5)
+      expect(result.table.rows[0]).toHaveLength(6)
       expect(result.table.rows[0][0]).toStrictEqual({
-        text: 'Acme Packaging Ltd'
+        text: 'Acme Packaging Ltd',
+        classes: 'epr-break-word'
       })
       expect(result.table.rows[0][1]).toStrictEqual({ text: '15 January 2026' })
       expect(result.table.rows[0][2]).toStrictEqual({ text: 50 })
@@ -299,6 +311,7 @@ describe('#buildListViewData', () => {
       expect(totalRow[0].classes).toBe(cssClasses.fontWeight.bold)
       expect(totalRow[2].text).toBe(170) // 50 + 120
       expect(totalRow[2].classes).toBe(cssClasses.fontWeight.bold)
+      expect(totalRow).toHaveLength(6)
     })
 
     it('should treat undefined tonnage as zero in total row', () => {
@@ -330,8 +343,8 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][3].html).toContain('govuk-tag--blue')
-      expect(result.table.rows[0][3].html).toContain('Awaiting authorisation')
+      expect(result.table.rows[0][4].html).toContain('govuk-tag--blue')
+      expect(result.table.rows[0][4].html).toContain('Awaiting authorisation')
     })
 
     it('should return select link pointing to action page', () => {
@@ -344,11 +357,11 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][4].html).toContain('govuk-link')
-      expect(result.table.rows[0][4].html).toContain(
+      expect(result.table.rows[0][5].html).toContain('govuk-link')
+      expect(result.table.rows[0][5].html).toContain(
         '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-001'
       )
-      expect(result.table.rows[0][4].html).not.toContain('prn-001/view')
+      expect(result.table.rows[0][5].html).not.toContain('prn-001/view')
     })
 
     it("sends a session holding no write scope to the note's read page, because Select issues or cancels it", () => {
@@ -364,10 +377,10 @@ describe('#buildListViewData', () => {
         }
       )
 
-      expect(result.table.rows[0][4].html).toContain(
+      expect(result.table.rows[0][5].html).toContain(
         '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-001/view'
       )
-      expect(result.table.rows[0][4].html).toContain('>View<')
+      expect(result.table.rows[0][5].html).toContain('>View<')
     })
 
     it('keeps the view link on an issued note for a session holding no write scope, because it only reads', () => {
@@ -384,7 +397,7 @@ describe('#buildListViewData', () => {
         }
       )
 
-      expect(result.issuedTable.rows[0][5].html).toContain('prn-003/view')
+      expect(result.issuedTable.rows[0][6].html).toContain('prn-003/view')
     })
 
     it('should return table headings', () => {
@@ -402,6 +415,7 @@ describe('#buildListViewData', () => {
       )
       expect(result.table.headings.createdAt).toBe('Date created')
       expect(result.table.headings.tonnage).toBe('Tonnage')
+      expect(result.table.headings.decemberWaste).toBe('December waste?')
       expect(result.table.headings.status).toBe('Status')
     })
   })
@@ -556,7 +570,8 @@ describe('#buildListViewData', () => {
         text: 'ER2612345'
       })
       expect(result.issuedTable.rows[0][1]).toStrictEqual({
-        text: 'Radar'
+        text: 'Radar',
+        classes: 'epr-break-word'
       })
       expect(result.issuedTable.rows[0][2]).toStrictEqual({
         text: '29 January 2026'
@@ -576,10 +591,10 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows[0][4].html).toContain(
+      expect(result.issuedTable.rows[0][5].html).toContain(
         'Awaiting acceptance'
       )
-      expect(result.issuedTable.rows[0][4].html).toContain('govuk-tag')
+      expect(result.issuedTable.rows[0][5].html).toContain('govuk-tag')
     })
 
     it('should return issued table headings for PRNs', () => {
@@ -600,6 +615,7 @@ describe('#buildListViewData', () => {
         recipient: 'Producer or compliance scheme',
         dateIssued: 'Date issued',
         tonnage: 'Tonnage',
+        decemberWaste: 'December waste?',
         status: 'Status',
         action: 'View in new tab'
       })
@@ -623,6 +639,7 @@ describe('#buildListViewData', () => {
         recipient: 'Producer or compliance scheme',
         dateIssued: 'Date issued',
         tonnage: 'Tonnage',
+        decemberWaste: 'December waste?',
         status: 'Status',
         action: 'View in new tab'
       })
@@ -641,11 +658,11 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows[0][5].html).toContain('govuk-link')
-      expect(result.issuedTable.rows[0][5].html).toContain(
+      expect(result.issuedTable.rows[0][6].html).toContain('govuk-link')
+      expect(result.issuedTable.rows[0][6].html).toContain(
         '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-003/view'
       )
-      expect(result.issuedTable.rows[0][5].html).toContain('target="_blank"')
+      expect(result.issuedTable.rows[0][6].html).toContain('target="_blank"')
     })
 
     it('should return empty issued table rows when no issued PRNs', () => {
@@ -749,6 +766,9 @@ describe('#buildListViewData', () => {
       )
       expect(result.cancellationTable.headings.createdAt).toBe('Date created')
       expect(result.cancellationTable.headings.tonnage).toBe('Tonnage')
+      expect(result.cancellationTable.headings.decemberWaste).toBe(
+        'December waste?'
+      )
       expect(result.cancellationTable.headings.status).toBe('Status')
     })
 
@@ -769,7 +789,8 @@ describe('#buildListViewData', () => {
 
       // First data row
       expect(result.cancellationTable.rows[0][0]).toStrictEqual({
-        text: 'TFR Facilities'
+        text: 'TFR Facilities',
+        classes: 'epr-break-word'
       })
       expect(result.cancellationTable.rows[0][1]).toStrictEqual({
         text: '13 August 2025'
@@ -777,7 +798,7 @@ describe('#buildListViewData', () => {
       expect(result.cancellationTable.rows[0][2]).toStrictEqual({
         text: 5
       })
-      expect(result.cancellationTable.rows[0][3]).toStrictEqual({
+      expect(result.cancellationTable.rows[0][4]).toStrictEqual({
         html: '<strong class="govuk-tag govuk-tag--yellow epr-tag--no-max-width">Awaiting cancellation</strong>'
       })
     })
@@ -799,6 +820,7 @@ describe('#buildListViewData', () => {
       expect(totalRow[0].classes).toBe(cssClasses.fontWeight.bold)
       expect(totalRow[2].text).toBe(30) // 5 + 25
       expect(totalRow[2].classes).toBe(cssClasses.fontWeight.bold)
+      expect(totalRow).toHaveLength(6)
     })
 
     it('should return cancellation table with select links', () => {
@@ -813,8 +835,8 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.cancellationTable.rows[0][4].html).toContain('govuk-link')
-      expect(result.cancellationTable.rows[0][4].html).toContain(
+      expect(result.cancellationTable.rows[0][5].html).toContain('govuk-link')
+      expect(result.cancellationTable.rows[0][5].html).toContain(
         '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-cancel-001'
       )
     })
@@ -867,7 +889,8 @@ describe('#buildListViewData', () => {
         text: 'ER2611111'
       })
       expect(result.cancelledTable.rows[0][1]).toStrictEqual({
-        text: 'Cancelled Corp'
+        text: 'Cancelled Corp',
+        classes: 'epr-break-word'
       })
       expect(result.cancelledTable.rows[0][2]).toStrictEqual({
         text: '10 January 2026'
@@ -889,8 +912,8 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.cancelledTable.rows[0][4].html).toContain('Cancelled')
-      expect(result.cancelledTable.rows[0][4].html).toContain('govuk-tag--red')
+      expect(result.cancelledTable.rows[0][5].html).toContain('Cancelled')
+      expect(result.cancelledTable.rows[0][5].html).toContain('govuk-tag--red')
     })
 
     it('should return cancelled table headings for PRNs', () => {
@@ -910,6 +933,7 @@ describe('#buildListViewData', () => {
         recipient: 'Producer or compliance scheme',
         dateIssued: 'Date issued',
         tonnage: 'Tonnage',
+        decemberWaste: 'December waste?',
         status: 'Status',
         action: 'View in new tab'
       })
@@ -942,11 +966,11 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.cancelledTable.rows[0][5].html).toContain('govuk-link')
-      expect(result.cancelledTable.rows[0][5].html).toContain(
+      expect(result.cancelledTable.rows[0][6].html).toContain('govuk-link')
+      expect(result.cancelledTable.rows[0][6].html).toContain(
         '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-005/view'
       )
-      expect(result.cancelledTable.rows[0][5].html).toContain('target="_blank"')
+      expect(result.cancelledTable.rows[0][6].html).toContain('target="_blank"')
     })
 
     it('should return empty cancelled table rows when no cancelled PRNs', () => {
@@ -1085,8 +1109,8 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][3].html).toContain('govuk-tag--purple')
-      expect(result.table.rows[0][3].html).toContain('Awaiting acceptance')
+      expect(result.table.rows[0][4].html).toContain('govuk-tag--purple')
+      expect(result.table.rows[0][4].html).toContain('Awaiting acceptance')
     })
 
     it('should return unknown status as-is in tag', () => {
@@ -1109,7 +1133,69 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][3].html).toContain('unknown_status')
+      expect(result.table.rows[0][4].html).toContain('unknown_status')
+    })
+  })
+
+  describe('December waste column', () => {
+    const decemberWasteColumnIndex = {
+      table: 3,
+      cancellationTable: 3,
+      issuedTable: 4,
+      cancelledTable: 4
+    }
+
+    it.each([
+      ['awaiting-action table', 'table', { prns: stubPrns }],
+      [
+        'awaiting-cancellation table',
+        'cancellationTable',
+        { prns: stubPrns, cancellationPrns: stubCancellationPrns }
+      ],
+      [
+        'issued table',
+        'issuedTable',
+        { prns: stubPrns, issuedPrns: stubIssuedPrns }
+      ],
+      [
+        'cancelled table',
+        'cancelledTable',
+        { prns: stubPrns, cancelledPrns: stubCancelledPrns }
+      ]
+    ])(
+      'lets an operator tell a December Waste note apart from a general one at a glance in the %s',
+      (_name, tableKey, listArgs) => {
+        const result = buildListViewData(createMockRequest(), {
+          organisationId: 'org-123',
+          registrationId: 'reg-001',
+          accreditationId: 'acc-001',
+          registration: reprocessorRegistration,
+          wasteBalance: mockWasteBalance,
+          ...listArgs
+        })
+
+        const table = result[tableKey]
+        const columnIndex = decemberWasteColumnIndex[tableKey]
+
+        expect(table.headings.decemberWaste).toBe('December waste?')
+        expect(table.rows[0][columnIndex]).toStrictEqual({ text: 'Yes' })
+        expect(table.rows[1][columnIndex]).toStrictEqual({ text: 'No' })
+      }
+    )
+
+    it("never leaves a general note's December waste cell blank, even when the flag is missing from older data", () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        // isDecemberWaste is required on every PRN created since PAE-1913,
+        // but a note persisted before that change predates the field.
+        prns: [{ ...stubPrns[0], isDecemberWaste: undefined }],
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.table.rows[0][3]).toStrictEqual({ text: 'No' })
     })
   })
 })

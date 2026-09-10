@@ -18,5 +18,8 @@ export const cssClasses = {
   },
   width: {
     oneQuarter: 'govuk-!-width-one-quarter'
+  },
+  wrap: {
+    breakWord: 'epr-break-word'
   }
 }
