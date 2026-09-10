@@ -36,5 +36,11 @@
       "view": "View"
     }
   },
-  "serviceName": "Check reprocessed or exported packaging waste"
+  "serviceName": "Access reprocessed or exported packaging waste data",
+  "start": {
+    "pageTitle": "Start",
+    "bodyOne": "This service gives regulators from across the four nations access to UK packaging waste regulations operator data.",
+    "bodyTwo": "The service provides access to summary log, report, PRN and PERN data.",
+    "startNow": "Start now"
+  }
 }
