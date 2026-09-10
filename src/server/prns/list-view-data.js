@@ -1,5 +1,7 @@
+/** @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'; */
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
+import { toDecemberBalanceBreakdown } from '#server/common/helpers/waste-balance/december-balance.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
@@ -20,7 +22,8 @@ import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
  *   issuedPrns?: object[],
  *   cancelledPrns?: object[],
  *   hasCreatedPrns?: boolean,
- *   wasteBalance?: { availableAmount?: number } | null
+ *   wasteBalance?: WasteBalance | null,
+ *   showsDecember?: boolean
  * }} options
  */
 export function buildListViewData(
@@ -35,7 +38,8 @@ export function buildListViewData(
     issuedPrns = [],
     cancelledPrns = [],
     hasCreatedPrns,
-    wasteBalance
+    wasteBalance,
+    showsDecember = false
   }
 ) {
   const { t: localise } = request
@@ -76,7 +80,9 @@ export function buildListViewData(
     wasteBalance: {
       amount: wasteBalance?.availableAmount ?? 0,
       label: localise('prns:list:availableWasteBalance'),
-      hint: localise('prns:list:balanceHint', { noteTypePlural })
+      hint: localise('prns:list:balanceHint', { noteTypePlural }),
+      noteTypePlural,
+      breakdown: showsDecember ? toDecemberBalanceBreakdown(wasteBalance) : null
     },
     hasCreatedPrns,
     table: buildAwaiting(prns),
