@@ -11,7 +11,11 @@ const localise = createMockLocalise({
   'registrations:details:period': '{{from}} to {{to}}',
   'registrations:details:heading': 'Registration details',
   'registrations:details:summary:material': 'Material',
-  'registrations:details:summary:site': 'Site'
+  'registrations:details:summary:overseasSites': 'Overseas reprocessing site',
+  'registrations:details:summary:overseasSitesView': 'View',
+  'registrations:details:summary:processingType': 'Processing type',
+  'registrations:details:summary:site': 'Site',
+  'registrations:details:summary:status': 'Status'
 })
 
 /**
@@ -120,6 +124,16 @@ const summaryValue = (viewModel, key) => {
   const row = viewModel.summaryRows.find((candidate) => candidate.key === key)
 
   return row && 'value' in row ? row.value : undefined
+}
+
+/**
+ * @param {ReturnType<typeof build>} viewModel
+ * @param {string} key
+ */
+const summaryLink = (viewModel, key) => {
+  const row = viewModel.summaryRows.find((candidate) => candidate.key === key)
+
+  return row && 'link' in row ? row.link : undefined
 }
 
 describe(buildViewModel, () => {
@@ -417,6 +431,55 @@ describe(buildViewModel, () => {
           status: toStatusTag('approved'),
           href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/accreditations/acc-001'
         }
+      ])
+    })
+  })
+
+  describe('the overseas reprocessing sites row', () => {
+    /** @returns {RegistrationResource} */
+    const anExporter = () => {
+      const registration = aRegistrationWithSite(null)
+
+      return {
+        ...registration,
+        application: {
+          ...registration.application,
+          wasteProcessingType: 'exporter'
+        }
+      }
+    }
+
+    it('opens the sites the exporter sends to', () => {
+      const viewModel = build({ registration: anExporter() })
+
+      expect(
+        summaryLink(viewModel, 'Overseas reprocessing site')
+      ).toStrictEqual({
+        href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/overseas-sites',
+        text: 'View'
+      })
+    })
+
+    // Only an exporter sends waste overseas, so a reprocessor is offered no
+    // page that would only ever be empty.
+    it('is absent for a reprocessor', () => {
+      const viewModel = build({
+        registration: aRegistrationWithSite({ line1: 'Unit 4' })
+      })
+
+      expect(
+        summaryLink(viewModel, 'Overseas reprocessing site')
+      ).toBeUndefined()
+    })
+
+    it('follows the rows the registration already showed', () => {
+      const viewModel = build({ registration: anExporter() })
+
+      expect(viewModel.summaryRows.map(({ key }) => key)).toStrictEqual([
+        'Status',
+        'Processing type',
+        'Material',
+        'Overseas reprocessing site'
       ])
     })
   })

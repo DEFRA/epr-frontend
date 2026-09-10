@@ -1,5 +1,6 @@
 import { capitalize } from 'lodash-es'
 
+import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
@@ -16,7 +17,8 @@ import { registrationYears } from './helpers/registered-only.js'
 
 /**
  * @typedef {{ text: string, href?: string }} Crumb
- * @typedef {{ key: string, value: string } | { key: string, status: StatusTag }} SummaryRow
+ * @typedef {{ href: string, text: string }} SummaryLink
+ * @typedef {{ key: string, value: string } | { key: string, status: StatusTag } | { key: string, link: SummaryLink }} SummaryRow
  * @typedef {{
  *   number: string,
  *   dateRange: string,
@@ -70,12 +72,22 @@ const toSiteLine = ({ line1, line2, town, county, postcode, fullAddress }) =>
 
 /**
  * An exporter reprocesses nowhere this service records, so a registration with
- * no site shows no site row rather than an empty one.
- * @param {RegistrationResource} registration
- * @param {Localise} localise
+ * no site shows no site row rather than an empty one. Only an exporter sends
+ * waste overseas, so only an exporter is offered the sites it sends to.
+ * @param {{
+ *   registration: RegistrationResource,
+ *   registrationPath: string,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string
+ * }} params
  * @returns {SummaryRow[]}
  */
-const toSummaryRows = (registration, localise) => {
+const toSummaryRows = ({
+  registration,
+  registrationPath,
+  localise,
+  localiseUrl
+}) => {
   const { application } = registration
 
   /** @type {SummaryRow[]} */
@@ -98,6 +110,16 @@ const toSummaryRows = (registration, localise) => {
     rows.push({
       key: localise('registrations:details:summary:site'),
       value: toSiteLine(application.site.address)
+    })
+  }
+
+  if (application.wasteProcessingType === WASTE_PROCESSING_TYPE.EXPORTER) {
+    rows.push({
+      key: localise('registrations:details:summary:overseasSites'),
+      link: {
+        href: localiseUrl(`${registrationPath}/overseas-sites`),
+        text: localise('registrations:details:summary:overseasSitesView')
+      }
     })
   }
 
@@ -227,6 +249,11 @@ export const buildViewModel = ({
       registrationPath,
       localiseUrl
     }),
-    summaryRows: toSummaryRows(registration, localise)
+    summaryRows: toSummaryRows({
+      registration,
+      registrationPath,
+      localise,
+      localiseUrl
+    })
   }
 }

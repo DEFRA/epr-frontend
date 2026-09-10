@@ -96,6 +96,20 @@ const anAccreditation = (overrides) => ({
 })
 
 /**
+ * An exporter reprocesses nowhere this service records, so it heads no site
+ * and is the only registration that sends waste overseas.
+ * @type {RegistrationResource}
+ */
+const exporterRegistration = {
+  ...registration,
+  application: {
+    ...registration.application,
+    wasteProcessingType: 'exporter',
+    site: null
+  }
+}
+
+/**
  * The registration names the accreditation it is on as a link summary, which
  * is what the page follows. The sub-resource lists them in full, and the two
  * are separate fixtures so a test can make them disagree.
@@ -522,6 +536,34 @@ describe('the registration details page a regulator reads', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('opens the overseas reprocessing sites an exporter sends to', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: exporterRegistration })
+
+    const { body } = await visit(server)
+
+    expect(
+      getByRole(body, 'link', {
+        name: /^View\s*Overseas reprocessing site$/
+      }).getAttribute('href')
+    ).toBe(`${path}/overseas-sites`)
+  })
+
+  // The page a reprocessor would reach could only ever be empty, so the row
+  // that opens it is absent rather than present and pointless.
+  it('offers a reprocessor no overseas reprocessing sites', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
+    const { body } = await visit(server)
+
+    expect(queryByText(body, 'Overseas reprocessing site')).toBeNull()
   })
 
   it('offers a regulator no control that changes the registration', async ({
