@@ -1,0 +1,49 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl">
+        <span class="govuk-caption-xl">{{ caption }}</span>
+        {{ heading }}
+      </h1>
+      <p class="govuk-body">{{ description }}</p>
+
+      <div class="govuk-body" data-testid="app-page-body">
+        {% if wasteBalance.rows.length %}
+          {% set tableHead = [
+            { text: localise('regulators:marketInsights:table:material') },
+            { text: localise('regulators:marketInsights:table:accreditationType') }
+          ] %}
+          {% for month in wasteBalance.months %}
+            {% set tableHead = tableHead.concat([{ text: month, format: "numeric" }]) %}
+          {% endfor %}
+          {% set tableHead = tableHead.concat([{ text: localise('regulators:marketInsights:table:total'), format: "numeric" }]) %}
+
+          {% set tableRows = [] %}
+          {% for row in wasteBalance.rows %}
+            {% set cells = [{ text: row.material }, { text: row.accreditationType }] %}
+            {% for netCredit in row.netCredits %}
+              {% set cells = cells.concat([{ text: netCredit, format: "numeric" }]) %}
+            {% endfor %}
+            {% set cells = cells.concat([{ text: row.total, format: "numeric" }]) %}
+            {% set tableRows = tableRows.concat([cells]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            caption: localise('regulators:marketInsights:table:caption'),
+            captionClasses: "govuk-visually-hidden",
+            firstCellIsHeader: true,
+            head: tableHead,
+            rows: tableRows
+          }) }}
+        {% else %}
+          {{ govukInsetText({ text: localise('regulators:marketInsights:noFigures') }) }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

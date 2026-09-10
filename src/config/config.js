@@ -420,6 +420,12 @@ export const config = convict({
     }
   },
   featureFlags: {
+    marketInsights: {
+      doc: 'Feature Flag: Show regulators the market insights preview page',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_MARKET_INSIGHTS'
+    },
     regulatorAccess: {
       doc: 'Feature Flag: Enable Entra ID login for regulators',
       format: Boolean,

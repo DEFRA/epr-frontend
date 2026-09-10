@@ -1,3 +1,5 @@
+import { config } from '#config/config.js'
+import { hasMarketDataReadScope } from '#server/auth/scopes.js'
 import { paths } from '#server/paths.js'
 
 import { fetchOrganisations } from './helpers/fetch-organisations.js'
@@ -28,7 +30,8 @@ export const controller = {
   },
   async handler(request, h) {
     const { page, search } = request.query
-    const { backendToken } = request.auth.credentials
+    const credentials = request.auth.credentials
+    const { backendToken } = credentials
 
     const results = await fetchOrganisations({ page, search, backendToken })
     const basePath = request.localiseUrl(paths.regulators.home)
@@ -46,6 +49,13 @@ export const controller = {
 
     return h.view('regulators/home', {
       pageTitle: request.t('regulators:organisations:pageTitle'),
+      // Offered only where the page exists and the session may read it, so a
+      // regulator is never sent to a page that would refuse them.
+      marketInsightsHref:
+        config.get('featureFlags.marketInsights') &&
+        hasMarketDataReadScope(credentials)
+          ? request.localiseUrl(paths.regulators.marketInsights)
+          : undefined,
       search,
       clearSearchHref: basePath,
       organisations: results.items.map((organisation) =>
