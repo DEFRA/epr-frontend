@@ -55,7 +55,7 @@ async function showsDecemberBalance({
  * The backend omits the December fields entirely for an accreditation that has
  * never accrued December tonnage, so an eligible operator's empty pool still
  * reads as zero here rather than dropping the breakdown.
- * @param {WasteBalance | null | undefined} wasteBalance
+ * @param {Partial<WasteBalance> | null | undefined} wasteBalance
  * @returns {DecemberBalanceBreakdown}
  */
 function toDecemberBalanceBreakdown(wasteBalance) {
