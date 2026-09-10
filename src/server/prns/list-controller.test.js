@@ -1,5 +1,6 @@
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import {
   asIssuedToOrganisation,
@@ -25,6 +26,7 @@ vi.mock(
 )
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-notes.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -151,6 +153,12 @@ describe('#listPrnsController', () => {
     vi.clearAllMocks()
     vi.mocked(getWasteBalance).mockResolvedValue(mockWasteBalance)
     vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+    // Out of the December window by default, so every test not about the
+    // December panel sees the single balance exactly as before.
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      declaresDecemberWasteManually: false,
+      windowOpen: false
+    })
   })
 
   describe('request handling', () => {
@@ -1436,6 +1444,228 @@ describe('#listPrnsController', () => {
           expect(getByText(main, /Create a PERN/i)).toBeDefined()
         })
       })
+    })
+  })
+
+  describe('December available balance panel', () => {
+    const openList = async (server, url = reprocessorListUrl) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+
+      return { body: dom.window.document.body, statusCode }
+    }
+
+    const byTestId = (body, testId) =>
+      body.querySelector(`[data-testid="${testId}"]`)
+
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+      // Which operator types see the breakdown is the backend's decision,
+      // carried by these two flags: declaresDecemberWasteManually is true
+      // only for an output reprocessor, so eligible here means an exporter
+      // or an input reprocessor, in window, regardless of amounts accrued.
+      vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+        declaresDecemberWasteManually: false,
+        windowOpen: true
+      })
+      vi.mocked(getWasteBalance).mockResolvedValue(
+        asWasteBalance({
+          amount: 300,
+          availableAmount: 150.5,
+          decemberAmount: 50,
+          decemberAvailableAmount: 30.25
+        })
+      )
+    })
+
+    it('breaks the balance into December, non-December and total for an eligible operator in window', async ({
+      server
+    }) => {
+      const { body } = await openList(server)
+
+      expect(byTestId(body, 'december-waste-balance')?.textContent).toContain(
+        '30.25'
+      )
+      expect(
+        byTestId(body, 'non-december-waste-balance')?.textContent
+      ).toContain('120.25')
+      expect(byTestId(body, 'total-waste-balance')?.textContent).toContain(
+        '150.50'
+      )
+    })
+
+    it('labels the three balances and tells a reprocessor it can create PRNs from either', async ({
+      server
+    }) => {
+      const { body } = await openList(server)
+
+      const panel = byTestId(body, 'december-balance-panel')
+
+      expect(panel?.textContent).toContain('Available waste balance')
+      expect(panel?.textContent).toContain('December waste balance')
+      expect(panel?.textContent).toContain('Non-December waste balance')
+      expect(panel?.textContent).toContain('Total tonnage')
+      expect(panel?.textContent).toContain(
+        'You can create PRNs from either waste balance'
+      )
+    })
+
+    it('replaces the single-balance banner while the panel shows', async ({
+      server
+    }) => {
+      const { body } = await openList(server)
+
+      expect(byTestId(body, 'waste-balance-amount')).toBeNull()
+    })
+
+    it('tells an exporter it can create PERNs from either balance', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        fixtureExporter
+      )
+
+      const { body } = await openList(server, exporterListUrl)
+
+      expect(byTestId(body, 'december-balance-panel')?.textContent).toContain(
+        'You can create PERNs from either waste balance'
+      )
+    })
+
+    it('asks the backend about the accreditation the list belongs to', async ({
+      server
+    }) => {
+      await openList(server)
+
+      expect(fetchDecemberPrnEligibility).toHaveBeenCalledWith(
+        'org-123',
+        'reg-001',
+        'acc-001',
+        mockCredentials.backendToken
+      )
+    })
+
+    it('shows a 0.00 December balance when the backend holds no December portion', async ({
+      server
+    }) => {
+      // The backend omits the December fields entirely for an accreditation
+      // that has never accrued December tonnage, so an eligible operator's
+      // empty pool must still render as zero rather than dropping the panel.
+      vi.mocked(getWasteBalance).mockResolvedValue(mockWasteBalance)
+
+      const { body } = await openList(server)
+
+      expect(byTestId(body, 'december-waste-balance')?.textContent).toContain(
+        '0.00'
+      )
+      expect(
+        byTestId(body, 'non-december-waste-balance')?.textContent
+      ).toContain('150.50')
+      expect(byTestId(body, 'total-waste-balance')?.textContent).toContain(
+        '150.50'
+      )
+    })
+
+    it('renders a negative non-December balance unclamped, by design', async ({
+      server
+    }) => {
+      // Any dimension can go transiently negative and there is deliberately
+      // no clamp (ADR-0049, "Negative balances"). The worked example: receive
+      // 300t in December then send 200t of it on, and the derived
+      // non-December portion is -200 while the December pool holds 300.
+      vi.mocked(getWasteBalance).mockResolvedValue(
+        asWasteBalance({
+          amount: 100,
+          availableAmount: 100,
+          decemberAmount: 300,
+          decemberAvailableAmount: 300
+        })
+      )
+
+      const { body } = await openList(server)
+
+      expect(byTestId(body, 'december-waste-balance')?.textContent).toContain(
+        '300.00'
+      )
+      expect(
+        byTestId(body, 'non-december-waste-balance')?.textContent
+      ).toContain('-200.00')
+      expect(byTestId(body, 'total-waste-balance')?.textContent).toContain(
+        '100.00'
+      )
+    })
+
+    it('shows zeroes when the balance could not be read at all', async ({
+      server
+    }) => {
+      vi.mocked(getWasteBalance).mockResolvedValue(null)
+
+      const { body } = await openList(server)
+
+      expect(byTestId(body, 'december-waste-balance')?.textContent).toContain(
+        '0.00'
+      )
+      expect(
+        byTestId(body, 'non-december-waste-balance')?.textContent
+      ).toContain('0.00')
+      expect(byTestId(body, 'total-waste-balance')?.textContent).toContain(
+        '0.00'
+      )
+    })
+
+    it('keeps the single balance for an output reprocessor, which declares December waste manually', async ({
+      server
+    }) => {
+      vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+        declaresDecemberWasteManually: true,
+        windowOpen: true
+      })
+
+      const { body } = await openList(server)
+
+      expect(byTestId(body, 'december-balance-panel')).toBeNull()
+      expect(byTestId(body, 'waste-balance-amount')?.textContent).toContain(
+        '150.50'
+      )
+    })
+
+    it('keeps the single balance outside the December window', async ({
+      server
+    }) => {
+      vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+        declaresDecemberWasteManually: false,
+        windowOpen: false
+      })
+
+      const { body } = await openList(server)
+
+      expect(byTestId(body, 'december-balance-panel')).toBeNull()
+      expect(byTestId(body, 'waste-balance-amount')?.textContent).toContain(
+        '150.50'
+      )
+    })
+
+    it('keeps the single balance when the eligibility check fails', async ({
+      server
+    }) => {
+      vi.mocked(fetchDecemberPrnEligibility).mockRejectedValue(
+        new Error('Service unavailable')
+      )
+
+      const { body, statusCode } = await openList(server)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(byTestId(body, 'december-balance-panel')).toBeNull()
+      expect(byTestId(body, 'waste-balance-amount')?.textContent).toContain(
+        '150.50'
+      )
     })
   })
 })

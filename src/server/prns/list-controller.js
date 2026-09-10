@@ -1,4 +1,5 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { showsDecemberBalance } from '#server/common/helpers/waste-balance/december-balance.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { toNoteRows } from './helpers/note-rows.js'
@@ -21,7 +22,7 @@ export const listController = {
       accreditationId
     })
 
-    const [wasteBalance, prns] = await Promise.all([
+    const [wasteBalance, prns, showsDecember] = await Promise.all([
       registration.accreditationId
         ? getWasteBalance(
             organisationId,
@@ -35,7 +36,16 @@ export const listController = {
         registrationId,
         accreditationId,
         session.backendToken
-      )
+      ),
+      registration.accreditationId
+        ? showsDecemberBalance({
+            organisationId,
+            registrationId,
+            accreditationId: registration.accreditationId,
+            backendToken: session.backendToken,
+            logger: request.logger
+          })
+        : false
     ])
 
     const viewData = buildListViewData(request, {
@@ -44,7 +54,8 @@ export const listController = {
       accreditationId,
       registration,
       ...toNoteRows(prns),
-      wasteBalance
+      wasteBalance,
+      showsDecember
     })
 
     return h.view('prns/list', viewData)
