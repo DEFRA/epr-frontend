@@ -867,6 +867,35 @@ describe('#accreditationDashboardController', () => {
       )
     })
 
+    it('renders a negative non-December balance unclamped, as ADR-0049 requires', async ({
+      server
+    }) => {
+      // Any dimension can go transiently negative and there is deliberately
+      // no clamp (ADR-0049, "Negative balances"). The worked example: receive
+      // 300t in December then send 200t of it on, and the derived
+      // non-December portion is -200 while the December pool holds 300.
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-001-glass-approved': {
+          amount: 100,
+          availableAmount: 100,
+          decemberAmount: 300,
+          decemberAvailableAmount: 300
+        }
+      })
+
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-waste-balance"]').text()).toContain(
+        '300.00'
+      )
+      expect($('[data-testid="non-december-waste-balance"]').text()).toContain(
+        '-200.00'
+      )
+      expect($('[data-testid="total-waste-balance"]').text()).toContain(
+        '100.00'
+      )
+    })
+
     it('keeps the single balance for an operator that declares December waste manually', async ({
       server
     }) => {

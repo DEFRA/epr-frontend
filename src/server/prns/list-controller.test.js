@@ -1569,6 +1569,35 @@ describe('#listPrnsController', () => {
       )
     })
 
+    it('renders a negative non-December balance unclamped, as ADR-0049 requires', async ({
+      server
+    }) => {
+      // Any dimension can go transiently negative and there is deliberately
+      // no clamp (ADR-0049, "Negative balances"). The worked example: receive
+      // 300t in December then send 200t of it on, and the derived
+      // non-December portion is -200 while the December pool holds 300.
+      vi.mocked(getWasteBalance).mockResolvedValue(
+        asWasteBalance({
+          amount: 100,
+          availableAmount: 100,
+          decemberAmount: 300,
+          decemberAvailableAmount: 300
+        })
+      )
+
+      const { body } = await openList(server)
+
+      expect(byTestId(body, 'december-waste-balance')?.textContent).toContain(
+        '300.00'
+      )
+      expect(
+        byTestId(body, 'non-december-waste-balance')?.textContent
+      ).toContain('-200.00')
+      expect(byTestId(body, 'total-waste-balance')?.textContent).toContain(
+        '100.00'
+      )
+    })
+
     it('shows zeroes when the balance could not be read at all', async ({
       server
     }) => {
