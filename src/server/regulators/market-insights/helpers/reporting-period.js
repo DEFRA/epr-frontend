@@ -17,6 +17,9 @@ const monthName = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'UTC'
 })
 
+/** The month a period ending in the year just closed runs through. */
+const DECEMBER = 12
+
 /**
  * Names the month a `YYYY-MM` key stands for. The key carries no day, so it is
  * read at the start of the month in UTC and the zone is stated rather than
@@ -49,7 +52,7 @@ export const reportingPeriodNow = () => {
 
   const inJanuary = Number(parts.month) === 1
   const year = inJanuary ? Number(parts.year) - 1 : Number(parts.year)
-  const lastCompleteMonth = inJanuary ? 12 : Number(parts.month) - 1
+  const lastCompleteMonth = inJanuary ? DECEMBER : Number(parts.month) - 1
 
   return {
     year,
@@ -68,16 +71,17 @@ export const reportingPeriodNow = () => {
  * @returns {string}
  */
 export const describeReportingPeriod = ({ year, months }, localise) => {
-  if (months.length === 1) {
-    return localise('regulators:marketInsights:period:month', {
-      month: nameOf(months[0]),
-      year
-    })
-  }
+  const [first, ...rest] = months
+  const last = rest.at(-1)
 
-  return localise('regulators:marketInsights:period:months', {
-    from: nameOf(months[0]),
-    to: nameOf(months[months.length - 1]),
-    year
-  })
+  return last === undefined
+    ? localise('regulators:marketInsights:period:month', {
+        month: nameOf(first),
+        year
+      })
+    : localise('regulators:marketInsights:period:months', {
+        from: nameOf(first),
+        to: nameOf(last),
+        year
+      })
 }
