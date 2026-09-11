@@ -36,7 +36,8 @@ describe(resolveDecemberWasteControl, () => {
           amount: 60,
           availableAmount: 60,
           decemberAmount: 50,
-          decemberAvailableAmount: 50
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 10
         }
       )
 
@@ -71,7 +72,12 @@ describe(resolveDecemberWasteControl, () => {
         },
         localise,
         'PRNs',
-        { amount: 80, availableAmount: 80, decemberAvailableAmount: 50 }
+        {
+          amount: 80,
+          availableAmount: 80,
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 30
+        }
       )
 
       expect(asPoolControl(result).items[1].text).toBe(

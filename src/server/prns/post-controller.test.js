@@ -779,7 +779,8 @@ describe('#postCreatePrnController', () => {
           amount: 60,
           availableAmount: 60,
           decemberAmount: 20,
-          decemberAvailableAmount: 20
+          decemberAvailableAmount: 20,
+          nonDecemberAvailableAmount: 40
         })
         const boom = Boom.conflict('Insufficient available waste balance')
         boom.output.payload.code = 'INSUFFICIENT_AVAILABLE_BALANCE'
@@ -825,7 +826,8 @@ describe('#postCreatePrnController', () => {
           amount: 60,
           availableAmount: 60,
           decemberAmount: 50,
-          decemberAvailableAmount: 50
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 10
         })
         const boom = Boom.conflict('Insufficient available waste balance')
         boom.output.payload.code = 'INSUFFICIENT_AVAILABLE_BALANCE'

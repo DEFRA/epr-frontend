@@ -541,7 +541,8 @@ describe('#createPrnController', () => {
           amount: 60,
           availableAmount: 60,
           decemberAmount: 50,
-          decemberAvailableAmount: 50
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 10
         })
       })
 

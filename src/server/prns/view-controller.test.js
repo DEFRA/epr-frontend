@@ -2013,7 +2013,8 @@ describe('#viewController', () => {
             amount: 1000,
             availableAmount: 1100,
             decemberAmount: 50,
-            decemberAvailableAmount: 50
+            decemberAvailableAmount: 50,
+            nonDecemberAvailableAmount: 1050
           }
         })
         vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
@@ -2066,7 +2067,8 @@ describe('#viewController', () => {
             amount: 1000,
             availableAmount: 130,
             decemberAmount: 50,
-            decemberAvailableAmount: 50
+            decemberAvailableAmount: 50,
+            nonDecemberAvailableAmount: 80
           }
         })
         vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
