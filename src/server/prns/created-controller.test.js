@@ -229,6 +229,11 @@ describe('#createdController', () => {
             decemberAvailableAmount: 500
           }
         })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          declaresDecemberWasteManually: false,
+          accruesDecemberWasteBalance: true,
+          windowOpen: true
+        })
 
         const { cookies } = await createPrnAndConfirm(server)
 

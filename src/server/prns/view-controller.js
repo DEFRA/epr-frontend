@@ -9,6 +9,7 @@ import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { availableForPool } from '#server/common/helpers/waste-balance/available-for-pool.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnCoreRows,
@@ -87,18 +88,26 @@ export const viewPostController = {
     }
 
     try {
-      const wasteBalanceMap = await fetchWasteBalances(
-        organisationId,
-        [accreditationId],
-        session.backendToken
-      )
+      const [wasteBalanceMap, eligibility] = await Promise.all([
+        fetchWasteBalances(
+          organisationId,
+          [accreditationId],
+          session.backendToken
+        ),
+        fetchDecemberPrnEligibility(
+          organisationId,
+          registrationId,
+          accreditationId,
+          session.backendToken
+        )
+      ])
       const balance = wasteBalanceMap[accreditationId] ?? {
         amount: 0,
         availableAmount: 0
       }
       const availableAmount = availableForPool(
         balance,
-        prnDraft.isDecemberWaste
+        prnDraft.isDecemberWaste && eligibility.accruesDecemberWasteBalance
       )
       const prnParams = {
         organisationId,

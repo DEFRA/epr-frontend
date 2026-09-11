@@ -42,6 +42,7 @@ vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
 vi.mock(
   import('#server/common/helpers/metrics/index.js'),
@@ -55,6 +56,8 @@ const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 const { fetchWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
+const { fetchDecemberPrnEligibility } =
+  await import('./helpers/fetch-december-prn-eligibility.js')
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -176,6 +179,11 @@ describe('#viewController', () => {
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
     vi.mocked(fetchWasteBalances).mockResolvedValue({
       'acc-001': { amount: 1000, availableAmount: 500 }
+    })
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      declaresDecemberWasteManually: false,
+      accruesDecemberWasteBalance: false,
+      windowOpen: false
     })
   })
 
@@ -1957,6 +1965,11 @@ describe('#viewController', () => {
             decemberAvailableAmount: 60
           }
         })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          declaresDecemberWasteManually: false,
+          accruesDecemberWasteBalance: true,
+          windowOpen: true
+        })
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,
@@ -2002,6 +2015,11 @@ describe('#viewController', () => {
             decemberAmount: 50,
             decemberAvailableAmount: 50
           }
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          declaresDecemberWasteManually: false,
+          accruesDecemberWasteBalance: true,
+          windowOpen: true
         })
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
@@ -2051,6 +2069,11 @@ describe('#viewController', () => {
             decemberAvailableAmount: 50
           }
         })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          declaresDecemberWasteManually: false,
+          accruesDecemberWasteBalance: true,
+          windowOpen: true
+        })
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,
@@ -2081,6 +2104,52 @@ describe('#viewController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toContain('error=insufficient_balance')
+      })
+
+      it('confirms a disclosure-only December draft against the total, when the accreditation has no separate December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: true })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 1000
+          }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createdUrl)
       })
 
       it('treats missing waste balance as zero available', async ({
