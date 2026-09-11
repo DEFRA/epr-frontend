@@ -26,10 +26,20 @@ const isMetricsEnabled = () => config.get('isMetricsEnabled')
  *   group, differs per environment, which makes a dashboard unpromotable.
  */
 async function metricsCounter(metricName, dimensions, options = {}) {
-  const value = 1
   if (!isMetricsEnabled()) {
     return
   }
+
+  return writeMetric(metricName, dimensions, options)
+}
+
+/**
+ * @param {string} metricName
+ * @param {Record<string, string>} dimensions
+ * @param {{ replaceDefaults?: boolean }} [options]
+ */
+async function writeMetric(metricName, dimensions, options = {}) {
+  const value = 1
 
   try {
     const metricsLogger = createMetricsLogger()
@@ -82,6 +92,17 @@ export const metrics = {
 const journeyKey = (journey, attempt) => `journey:${journey.start}:${attempt}`
 
 /**
+ * @param {string} metricName
+ * @param {string} journeyName
+ */
+const emitJourneyMetric = (metricName, journeyName) =>
+  void writeMetric(
+    metricName,
+    { journey: journeyName },
+    { replaceDefaults: true }
+  )
+
+/**
  * Journey start and end events feeding the mandatory GDS KPIs. Both phases share
  * one metric name so the totals read without knowing the journeys, and carry the
  * journey as a dimension so each one is its own series.
@@ -111,11 +132,7 @@ export const journeyMetrics = {
 
     request.yar.set(key, true)
 
-    void metricsCounter(
-      TRANSACTION_START,
-      { journey: journey.start },
-      { replaceDefaults: true }
-    )
+    emitJourneyMetric(TRANSACTION_START, journey.start)
   },
   /**
    * @param {HapiRequest} request
@@ -130,16 +147,10 @@ export const journeyMetrics = {
 
     const key = journeyKey(journey, attempt)
 
-    if (!request.yar.get(key)) {
+    if (!request.yar.get(key, true)) {
       return
     }
 
-    request.yar.clear(key)
-
-    void metricsCounter(
-      TRANSACTION_END,
-      { journey: journey.end },
-      { replaceDefaults: true }
-    )
+    emitJourneyMetric(TRANSACTION_END, journey.end)
   }
 }

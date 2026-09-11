@@ -7,6 +7,10 @@ import { journeyMetrics, metrics } from './index.js'
 import { config } from '#config/config.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
+/**
+ * @import { Yar } from '@hapi/yar'
+ */
+
 const mockPutMetric = vi.fn()
 const mockFlush = vi.fn()
 const mockPutDimensions = vi.fn()
@@ -79,11 +83,20 @@ describe('#metrics', () => {
   describe('journey events', () => {
     const attempt = 'note-1'
 
-    const createYar = (session = new Map()) => ({
-      get: vi.fn((key) => session.get(key)),
-      set: vi.fn((key, value) => session.set(key, value)),
-      clear: vi.fn((key) => session.delete(key))
-    })
+    const createYar = (session = new Map()) =>
+      /** @type {Pick<Yar, 'get' | 'set' | 'clear'>} */ (
+        /** @type {unknown} */ ({
+          get: vi.fn((key, clear) => {
+            const value = session.get(key)
+            if (clear) {
+              session.delete(key)
+            }
+            return value
+          }),
+          set: vi.fn((key, value) => session.set(key, value)),
+          clear: vi.fn((key) => session.delete(key))
+        })
+      )
 
     const createRequest = (yar = createYar()) =>
       /** @type {never} */ (/** @type {unknown} */ ({ yar }))
