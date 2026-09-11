@@ -6,7 +6,6 @@ import {
 
 import { config } from '#config/config.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
-import { TRANSACTION_END, TRANSACTION_START } from './constants.js'
 
 /**
  * @import { AuthMetricName, JourneyEntry, JourneyMetricName, MetricName } from './constants.js'
@@ -123,7 +122,7 @@ const enabledJourneyMetrics = {
 
     request.yar.set(key, true)
 
-    emitJourneyMetric(TRANSACTION_START, journey.start)
+    emitJourneyMetric('TransactionStart', journey.start)
   },
   /**
    * @param {HapiRequest} request
@@ -138,7 +137,7 @@ const enabledJourneyMetrics = {
       return
     }
 
-    emitJourneyMetric(TRANSACTION_END, journey.end)
+    emitJourneyMetric('TransactionEnd', journey.end)
   }
 }
 
