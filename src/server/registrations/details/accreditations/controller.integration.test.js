@@ -17,6 +17,7 @@ import {
   getByRole,
   getByTestId,
   getByText,
+  queryByRole,
   within
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -265,6 +266,36 @@ describe('the accreditation details page', () => {
     expect(body).toContain('Waste balance available (tonnes)')
     expect(body).toContain('987.25')
     expect(body).not.toContain('1,234.50')
+  })
+
+  it('offers the latest waste records at the foot of the summary', async ({
+    server
+  }) => {
+    config.set('featureFlags.wasteRecordsDownload', true)
+    const { body } = await visit(server, regulator)
+    config.set('featureFlags.wasteRecordsDownload', false)
+    const document = documentOf(body)
+
+    expect(getByText(document, 'Waste records')).toBeDefined()
+    expect(
+      getByRole(document, 'link', { name: 'Download latest' }).getAttribute(
+        'href'
+      )
+    ).toBe(
+      `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv`
+    )
+  })
+
+  it('names no waste records while the download is dark', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const document = documentOf(body)
+
+    expect(body).not.toContain('Waste records')
+    expect(
+      queryByRole(document, 'link', { name: 'Download latest' })
+    ).toBeNull()
   })
 
   it('lists the reporting periods below the summary, under their five headings', async ({

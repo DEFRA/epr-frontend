@@ -1,4 +1,4 @@
-import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchStreamFromBackend } from '#server/common/helpers/fetch-stream-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
@@ -69,14 +69,14 @@ export const summaryLogCsvDownloadController = {
     const { organisationId, registrationId, fileId } = request.params
     const { backendToken } = request.auth.credentials
 
-    if (!readsAsARegulator(request.auth.credentials)) {
+    if (!readsWasteRecordsDownloads(request.auth.credentials)) {
       throw notFound(
         'Summary log records not found',
         errorCodes.summaryLogNotFound,
         {
           event: {
             action: 'download_summary_log_csv',
-            reason: `caller does not read as a regulator fileId=${fileId}`
+            reason: `records not offered to this caller fileId=${fileId}`
           }
         }
       )

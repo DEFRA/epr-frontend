@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -320,6 +321,14 @@ describe(buildViewModel, () => {
   })
 
   describe('the waste balance ledger', () => {
+    beforeEach(() => {
+      config.set('featureFlags.wasteRecordsDownload', true)
+    })
+
+    afterEach(() => {
+      config.set('featureFlags.wasteRecordsDownload', false)
+    })
+
     it('offers no ledger where none was read', () => {
       expect(build({ ledgerEvents: null }).ledger).toBeNull()
     })
@@ -368,6 +377,16 @@ describe(buildViewModel, () => {
         'Ada Lovelace (ada@example.com)',
         `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a><br>\n<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a>`
       ])
+    })
+
+    it('offers the workbook alone while the records are dark', () => {
+      config.set('featureFlags.wasteRecordsDownload', false)
+
+      const ledger = build({ ledgerEvents: [aLedgerEvent()] }).ledger
+
+      expect(cellsOf(ledger?.rows.at(0)).at(3)).toBe(
+        `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a>`
+      )
     })
   })
 })

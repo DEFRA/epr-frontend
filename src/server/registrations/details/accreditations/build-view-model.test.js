@@ -1,6 +1,7 @@
+import { config } from '#config/config.js'
 import { CADENCE } from '#server/reports/constants.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { buildViewModel } from './build-view-model.js'
 
@@ -41,6 +42,9 @@ const localise = createMockLocalise({
   'registrations:details:accreditation:summary:status': 'Accreditation status',
   'registrations:details:accreditation:summary:wasteBalanceAvailable':
     'Waste balance available (tonnes)',
+  'registrations:details:accreditation:summary:wasteRecords': 'Waste records',
+  'registrations:details:accreditation:summary:downloadLatest':
+    'Download latest',
   'registrations:details:allOrganisations': 'All organisations',
   'registrations:details:current': 'Current',
   'registrations:details:heading': 'Registration details',
@@ -322,6 +326,41 @@ describe('the accreditation details view model', () => {
     })
   })
 
+  it('holds no waste records row while the download is dark', () => {
+    expect(build().summaryRows.map((row) => row.key)).not.toContain(
+      'Waste records'
+    )
+  })
+
+  describe('with the waste records download lit', () => {
+    beforeAll(() => {
+      config.set('featureFlags.wasteRecordsDownload', true)
+    })
+
+    afterAll(() => {
+      config.set('featureFlags.wasteRecordsDownload', false)
+    })
+
+    it('offers the latest waste records beneath the balance', () => {
+      expect(build().summaryRows.at(3)).toStrictEqual({
+        key: 'Waste records',
+        html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv" class="govuk-link">Download latest</a>`
+      })
+    })
+
+    it('leaves the three rows above it as they were', () => {
+      expect(
+        build()
+          .summaryRows.slice(0, 3)
+          .map((row) => row.key)
+      ).toStrictEqual([
+        'Accreditation status',
+        'Accreditation number',
+        'Waste balance available (tonnes)'
+      ])
+    })
+  })
+
   it('walks back to the registration and the organisation', () => {
     expect(build().breadcrumbs).toStrictEqual([
       { text: 'All organisations', href: '/regulators/home' },
@@ -446,6 +485,14 @@ describe('the reports table on the accreditation details view model', () => {
 })
 
 describe('the waste balance ledger on the accreditation details view model', () => {
+  beforeAll(() => {
+    config.set('featureFlags.wasteRecordsDownload', true)
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.wasteRecordsDownload', false)
+  })
+
   it('offers no ledger where none was read', () => {
     expect(ledgerOf(null)).toBeNull()
   })
@@ -479,6 +526,17 @@ describe('the waste balance ledger on the accreditation details view model', () 
         }
       ]
     ])
+  })
+
+  it('offers the workbook alone while the records are dark', () => {
+    config.set('featureFlags.wasteRecordsDownload', false)
+    const cell = ledgerOf([summaryLogSubmitted])?.rows.at(0)?.at(5)
+    config.set('featureFlags.wasteRecordsDownload', true)
+
+    expect(cell).toStrictEqual({
+      html: `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
+      classes: 'govuk-!-text-align-right'
+    })
   })
 
   it("names an exporter's notes PERNs", () => {

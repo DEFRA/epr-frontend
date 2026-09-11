@@ -131,6 +131,7 @@ const notesCancelledBeforeIssue = (events) =>
  *   event: LedgerEvent,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
+ *   offersCsvDownloads: boolean,
  *   offersDownloads: boolean,
  *   organisationId: string,
  *   registrationId: string,
@@ -144,6 +145,7 @@ const actionCell = ({
   event,
   localise,
   localiseUrl,
+  offersCsvDownloads,
   offersDownloads,
   organisationId,
   registrationId,
@@ -169,11 +171,15 @@ const actionCell = ({
           localiseUrl(buildSummaryLogDownloadPath(fileIds)),
           submittedAt
         ),
-        buildActionLinkHtml(
-          localise('waste-balance-ledger:actionDownloadCsv'),
-          localiseUrl(buildSummaryLogCsvDownloadPath(fileIds)),
-          submittedAt
-        )
+        ...(offersCsvDownloads
+          ? [
+              buildActionLinkHtml(
+                localise('waste-balance-ledger:actionDownloadCsv'),
+                localiseUrl(buildSummaryLogCsvDownloadPath(fileIds)),
+                submittedAt
+              )
+            ]
+          : [])
       ].join('<br>\n'),
       classes: cssClasses.textAlign.right
     }
@@ -279,7 +285,8 @@ const actorName = ({ createdBy, localise }) => {
  * follow the same flag, so a caller passing it must set it there too.
  *
  * `offersDownloads` is for the regulator pages: only a regulator may fetch a
- * summary log, so only their rows offer one.
+ * summary log, so only their rows offer one. `offersCsvDownloads` adds the
+ * records beside the workbook, and is off until its flag is lit.
  *
  * `returnTo` names the page the ledger is drawn on, so a note opened from a row
  * comes back to it rather than to the note list.
@@ -290,6 +297,7 @@ const actorName = ({ createdBy, localise }) => {
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   noteType: 'PRN' | 'PERN',
+ *   offersCsvDownloads?: boolean,
  *   offersDownloads?: boolean,
  *   organisationId: string,
  *   registrationId: string,
@@ -304,6 +312,7 @@ export const buildLedgerRows = ({
   localise,
   localiseUrl,
   noteType,
+  offersCsvDownloads = false,
   offersDownloads = false,
   organisationId,
   registrationId,
@@ -322,6 +331,7 @@ export const buildLedgerRows = ({
       event,
       localise,
       localiseUrl,
+      offersCsvDownloads,
       offersDownloads,
       organisationId,
       registrationId,

@@ -425,6 +425,12 @@ export const config = convict({
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_REGULATOR_ACCESS'
+    },
+    wasteRecordsDownload: {
+      doc: 'Feature Flag: Offer waste records as CSV to regulators',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_WASTE_RECORDS_DOWNLOAD'
     }
   },
   reapplyAccreditation: {

@@ -36,6 +36,7 @@ const buildRows = (overrides = {}) =>
     localise,
     localiseUrl,
     noteType: 'PRN',
+    offersCsvDownloads: true,
     offersDownloads: true,
     organisationId: 'org-1',
     registrationId: 'reg-1',
@@ -327,6 +328,17 @@ describe(buildLedgerRows, () => {
       '/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download',
       '/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download.csv'
     ])
+  })
+
+  it('offers the workbook alone while the records are not on offer', () => {
+    const [row] = buildRows({
+      events: [buildSummaryLogEvent()],
+      offersCsvDownloads: false
+    })
+
+    expect(cellsOf(row).at(5)).toBe(
+      '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
+    )
   })
 
   it('offers nothing to open on a ledger read without an accreditation', () => {

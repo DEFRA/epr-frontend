@@ -1,5 +1,7 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import { offersWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
+import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
@@ -18,6 +20,8 @@ import { RETURN_TO_ACCREDITATION } from '#server/prns/helpers/note-return-path.j
 import { toPrnGroups } from '#server/prns/helpers/prn-groups.js'
 import { buildStatusTagHtml as buildPrnStatusTagHtml } from '#server/prns/list-view-data.js'
 
+import { buildWasteRecordsCsvDownloadPath } from '#server/registrations/waste-records-csv-download-controller.js'
+
 import { organisationName, toCaption } from '../helpers/caption.js'
 import { toDateRange } from '../helpers/date-range.js'
 
@@ -35,7 +39,9 @@ import { toDateRange } from '../helpers/date-range.js'
 
 /**
  * @typedef {{ text: string, href?: string }} Crumb
- * @typedef {{ key: string, value: string } | { key: string, status: StatusTag }} SummaryRow
+ * @typedef {{ key: string, value: string }
+ *   | { key: string, status: StatusTag }
+ *   | { key: string, html: string }} SummaryRow
  * @typedef {{ text: string | number, classes?: string } | { html: string, classes?: string }} TableCell
  * @typedef {TableCell[]} TableRow
  * @typedef {{ head: TableRow, rows: TableRow[] }} ReportsTable
@@ -71,7 +77,7 @@ import { toDateRange } from '../helpers/date-range.js'
  *
  * A tonnage the page could not read is left blank rather than shown as zero,
  * which would read as a balance spent down to nothing. The row itself stays,
- * so the list holds the same three keys either way.
+ * so the list holds the same keys either way.
  * @param {number | undefined} amount
  * @returns {string}
  */
@@ -79,12 +85,50 @@ const toTonnage = (amount) =>
   amount === undefined ? '' : formatTonnage(amount)
 
 /**
- * @param {AccreditationResource} accreditation
- * @param {WasteBalance | null} wasteBalance
- * @param {Localise} localise
+ * The registration's waste records, offered as a file rather than stated. The
+ * records belong to the registration, not to the accreditation the page names,
+ * so the link carries only those two ids.
+ * @param {{
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   organisationId: string,
+ *   registrationId: string
+ * }} params
+ * @returns {SummaryRow}
+ */
+const toWasteRecordsRow = ({
+  localise,
+  localiseUrl,
+  organisationId,
+  registrationId
+}) => ({
+  key: localise('registrations:details:accreditation:summary:wasteRecords'),
+  html: `<a href="${localiseUrl(
+    buildWasteRecordsCsvDownloadPath({ organisationId, registrationId })
+  )}" class="govuk-link">${escapeHtml(
+    localise('registrations:details:accreditation:summary:downloadLatest')
+  )}</a>`
+})
+
+/**
+ * @param {{
+ *   accreditation: AccreditationResource,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   organisationId: string,
+ *   registrationId: string,
+ *   wasteBalance: WasteBalance | null
+ * }} params
  * @returns {SummaryRow[]}
  */
-const toSummaryRows = (accreditation, wasteBalance, localise) => [
+const toSummaryRows = ({
+  accreditation,
+  localise,
+  localiseUrl,
+  organisationId,
+  registrationId,
+  wasteBalance
+}) => [
   {
     key: localise('registrations:details:accreditation:summary:status'),
     status: toStatusTag(accreditation.status)
@@ -98,7 +142,18 @@ const toSummaryRows = (accreditation, wasteBalance, localise) => [
       'registrations:details:accreditation:summary:wasteBalanceAvailable'
     ),
     value: toTonnage(wasteBalance?.availableAmount)
-  }
+  },
+  // The page is regulator-only, so the flag is the whole question here.
+  ...(offersWasteRecordsDownloads()
+    ? [
+        toWasteRecordsRow({
+          localise,
+          localiseUrl,
+          organisationId,
+          registrationId
+        })
+      ]
+    : [])
 ]
 
 /**
@@ -354,6 +409,8 @@ const toLedger = ({
       localise,
       localiseUrl,
       noteType,
+      // The page is regulator-only, so the flag is the whole question here.
+      offersCsvDownloads: offersWasteRecordsDownloads(),
       offersDownloads: true,
       organisationId,
       registrationId: registration.id,
@@ -446,6 +503,13 @@ export const buildViewModel = ({
         reportingPeriods
       })
     },
-    summaryRows: toSummaryRows(accreditation, wasteBalance, localise)
+    summaryRows: toSummaryRows({
+      accreditation,
+      localise,
+      localiseUrl,
+      organisationId: organisation.id,
+      registrationId: registration.id,
+      wasteBalance
+    })
   }
 }
