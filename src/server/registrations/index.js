@@ -3,6 +3,10 @@ import { controller as accreditationController } from './details/accreditations/
 import { controller as detailsController } from './details/controller.js'
 import { controller as overseasSitesController } from './details/overseas-sites/controller.js'
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
+import {
+  wasteRecordsCsvDownloadController,
+  wasteRecordsCsvDownloadPath
+} from './waste-records-csv-download-controller.js'
 import { readsAnyOrganisation } from '#server/auth/reads-any-organisation.js'
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
@@ -172,6 +176,11 @@ export const registrations = {
           ...registeredOnlyPeriodRoute,
           method: 'GET',
           path: '/organisations/{organisationId}/registrations/{registrationId}/registered-only-periods/{year}'
+        },
+        {
+          ...wasteRecordsCsvDownloadController,
+          method: 'GET',
+          path: wasteRecordsCsvDownloadPath
         }
       ])
     }

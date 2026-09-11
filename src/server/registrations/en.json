@@ -40,9 +40,11 @@
         "viewAll": "View all"
       },
       "summary": {
+        "downloadLatest": "Download latest",
         "number": "Accreditation number",
         "status": "Accreditation status",
-        "wasteBalanceAvailable": "Waste balance available (tonnes)"
+        "wasteBalanceAvailable": "Waste balance available (tonnes)",
+        "wasteRecords": "Waste records"
       }
     },
     "registeredOnlyPeriod": {

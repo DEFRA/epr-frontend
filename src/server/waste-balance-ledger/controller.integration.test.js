@@ -128,6 +128,7 @@ const rowsOf = (body) =>
 describe('the waste balance ledger page', () => {
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
+    config.set('featureFlags.wasteRecordsDownload', true)
   })
 
   beforeEach(() => {
@@ -138,6 +139,7 @@ describe('the waste balance ledger page', () => {
 
   afterAll(() => {
     config.set('featureFlags.regulatorAccess', false)
+    config.set('featureFlags.wasteRecordsDownload', false)
   })
 
   describe('a regulator', () => {
@@ -183,9 +185,35 @@ describe('the waste balance ledger page', () => {
           '+100.00',
           '100.00',
           'System',
-          'Download XLSX 4 January 2026, 9:00am'
+          'Download XLSX 4 January 2026, 9:00am\nDownload CSV 4 January 2026, 9:00am'
         ]
       ])
+    })
+
+    it('offers the workbook alone while the records are dark', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([summaryLogSubmitted]))
+        )
+      )
+      config.set('featureFlags.wasteRecordsDownload', false)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      config.set('featureFlags.wasteRecordsDownload', true)
+
+      expect(
+        rowsOf(documentOf(asHtml(result)))
+          .at(0)
+          ?.at(5)
+      ).toBe('Download XLSX 4 January 2026, 9:00am')
     })
 
     it('returns a note opened from a row to this page', async ({

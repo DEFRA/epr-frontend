@@ -15,6 +15,7 @@ import {
   getAllByRole,
   getByRole,
   getByTestId,
+  queryByRole,
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -178,6 +179,7 @@ const documentOf = (body) => new JSDOM(body).window.document.body
 describe('the registered-only period page', () => {
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
+    config.set('featureFlags.wasteRecordsDownload', true)
   })
 
   beforeEach(() => {
@@ -188,6 +190,7 @@ describe('the registered-only period page', () => {
 
   afterAll(() => {
     config.set('featureFlags.regulatorAccess', false)
+    config.set('featureFlags.wasteRecordsDownload', false)
   })
 
   it('names the year it covers in the heading', async ({ server }) => {
@@ -461,7 +464,7 @@ describe('the registered-only period page', () => {
       ).toStrictEqual([
         'Summary log submitted',
         'Ada Lovelace (ada@example.com)',
-        'Download XLSX 4 May 2026, 10:00am'
+        'Download XLSX 4 May 2026, 10:00am\nDownload CSV 4 May 2026, 10:00am'
       ])
     })
 
@@ -477,6 +480,34 @@ describe('the registered-only period page', () => {
       ).toBe(
         `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download`
       )
+    })
+
+    it('offers the submission as records too, at its own address', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      expect(
+        getByRole(documentOf(body), 'link', {
+          name: 'Download CSV 4 May 2026, 10:00am'
+        }).getAttribute('href')
+      ).toBe(
+        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download.csv`
+      )
+    })
+
+    it('offers no records link while the download is dark', async ({
+      server
+    }) => {
+      config.set('featureFlags.wasteRecordsDownload', false)
+      const { body } = await visit(server, regulator)
+      config.set('featureFlags.wasteRecordsDownload', true)
+
+      expect(
+        queryByRole(documentOf(body), 'link', {
+          name: 'Download CSV 4 May 2026, 10:00am'
+        })
+      ).toBeNull()
     })
 
     it('names no waste balance anywhere on the page', async ({ server }) => {
