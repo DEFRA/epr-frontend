@@ -135,7 +135,7 @@ function buildListLabels(localise, { noteType, noteTypePlural }) {
  *     createdAt: string,
  *     tonnage?: number | null,
  *     status: string,
- *     isDecemberWaste?: boolean
+ *     isDecemberWaste: boolean
  *   }>,
  *   localise: (key: string, params?: object) => string,
  *   canWrite: boolean
@@ -260,7 +260,7 @@ function buildDetailTable(
 }
 
 /**
- * @param {boolean | undefined} isDecemberWaste
+ * @param {boolean} isDecemberWaste
  * @param {(key: string) => string} localise
  * @returns {string}
  */

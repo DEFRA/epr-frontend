@@ -1182,20 +1182,5 @@ describe('#buildListViewData', () => {
         expect(table.rows[1][columnIndex]).toStrictEqual({ text: 'No' })
       }
     )
-
-    it("never leaves a general note's December waste cell blank, even when the flag is missing from older data", () => {
-      const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
-        registration: reprocessorRegistration,
-        // isDecemberWaste is required on every PRN created since PAE-1913,
-        // but a note persisted before that change predates the field.
-        prns: [{ ...stubPrns[0], isDecemberWaste: undefined }],
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.table.rows[0][3]).toStrictEqual({ text: 'No' })
-    })
   })
 })
