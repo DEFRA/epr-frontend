@@ -163,18 +163,10 @@ describe('#metrics', () => {
           Unit.Count,
           StorageResolution.Standard
         )
-        expect(mockFlush).toHaveBeenCalledWith()
-      }
-    )
-
-    it.each(authMetrics)(
-      'attaches provider as a dimension - %s.%s',
-      async (group, method) => {
-        await metrics[group][method]('oidc-provider-name')
-
         expect(mockPutDimensions).toHaveBeenCalledWith({
           oidcProvider: 'oidc-provider-name'
         })
+        expect(mockFlush).toHaveBeenCalledWith()
       }
     )
   })
