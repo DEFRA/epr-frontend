@@ -7,6 +7,7 @@ import { JOURNEY } from './constants.js'
 
 /**
  * @import { Yar } from '@hapi/yar'
+ * @import { AuthMetricName } from './constants.js'
  * @import * as MetricsModule from './index.js'
  */
 
@@ -53,13 +54,14 @@ const loadMetrics = async (enabled) => {
   }
 }
 
-const metricsNames = /** @type {const} */ ([
+/** @type {readonly AuthMetricName[]} */
+const metricsNames = [
   'signInAttempted',
   'signInSuccess',
   'signInSuccessNonInitialUser',
   'signInFailure',
   'signOutSuccess'
-])
+]
 
 const createYar = (session = new Map()) =>
   /** @type {Pick<Yar, 'get' | 'set' | 'clear'>} */ (

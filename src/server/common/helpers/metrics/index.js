@@ -9,7 +9,7 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { TRANSACTION_END, TRANSACTION_START } from './constants.js'
 
 /**
- * @import { JourneyEntry } from './constants.js'
+ * @import { AuthMetricName, JourneyEntry, JourneyMetricName, MetricName } from './constants.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
@@ -17,7 +17,7 @@ const isMetricsEnabled = config.get('isMetricsEnabled')
 
 /**
  * Aws embedded metrics wrapper
- * @param {string} metricName
+ * @param {MetricName} metricName
  * @param {Record<string, string>} dimensions
  * @param {{ replaceDefaults?: boolean }} [options] replaceDefaults drops the
  *   LogGroup, ServiceName and ServiceType the library adds of its own accord.
@@ -64,20 +64,16 @@ const orNoop = (enabled) =>
         Object.fromEntries(Object.keys(enabled).map((name) => [name, noop]))
       )
 
+/** @type {Record<AuthMetricName, (oidcProvider: string) => Promise<void>>} */
 const enabledMetrics = {
-  /** @param {string} oidcProvider */
   signInAttempted: (oidcProvider) =>
     writeMetric('signInAttempted', { oidcProvider }),
-  /** @param {string} oidcProvider */
   signInSuccess: (oidcProvider) =>
     writeMetric('signInSuccess', { oidcProvider }),
-  /** @param {string} oidcProvider */
   signInSuccessNonInitialUser: (oidcProvider) =>
     writeMetric('signInSuccessNonInitialUser', { oidcProvider }),
-  /** @param {string} oidcProvider */
   signInFailure: (oidcProvider) =>
     writeMetric('signInFailure', { oidcProvider }),
-  /** @param {string} oidcProvider */
   signOutSuccess: (oidcProvider) =>
     writeMetric('signOutSuccess', { oidcProvider })
 }
@@ -91,7 +87,7 @@ export const metrics = orNoop(enabledMetrics)
 const journeyKey = (journey, attempt) => `journey:${journey.start}:${attempt}`
 
 /**
- * @param {string} metricName
+ * @param {JourneyMetricName} metricName
  * @param {string} journeyName
  */
 const emitJourneyMetric = (metricName, journeyName) =>

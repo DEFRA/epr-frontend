@@ -2,6 +2,16 @@ export const TRANSACTION_START = 'TransactionStart'
 export const TRANSACTION_END = 'TransactionEnd'
 
 /**
+ * @typedef {'signInAttempted'
+ *   | 'signInSuccess'
+ *   | 'signInSuccessNonInitialUser'
+ *   | 'signInFailure'
+ *   | 'signOutSuccess'} AuthMetricName
+ * @typedef {typeof TRANSACTION_START | typeof TRANSACTION_END} JourneyMetricName
+ * @typedef {AuthMetricName | JourneyMetricName} MetricName
+ */
+
+/**
  * @typedef {{ start: string, end: string }} JourneyEntry
  */
 
