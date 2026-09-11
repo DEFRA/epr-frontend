@@ -1,15 +1,17 @@
-export const TRANSACTION_START = 'TransactionStart'
-export const TRANSACTION_END = 'TransactionEnd'
-
 /**
- * @typedef {{ start: string, end: string }} JourneyEntry
+ * @typedef {'signInAttempted'
+ *   | 'signInSuccess'
+ *   | 'signInSuccessNonInitialUser'
+ *   | 'signInFailure'
+ *   | 'signOutSuccess'} AuthMetricName
+ * @typedef {'TransactionStart' | 'TransactionEnd'} JourneyMetricName
+ * @typedef {AuthMetricName | JourneyMetricName} MetricName
  */
 
 /**
  * Journeys feeding the mandatory GDS KPIs, one dimension value per start and
  * end. A journey with more than one ending gets its own entry rather than
  * sharing one with several end keys.
- * @type {Record<string, JourneyEntry>}
  */
 export const JOURNEY = Object.freeze({
   createPrn: Object.freeze({
@@ -49,3 +51,5 @@ export const JOURNEY = Object.freeze({
     end: 'DeleteReportEnd'
   })
 })
+
+/** @typedef {(typeof JOURNEY)[keyof typeof JOURNEY]} JourneyEntry */

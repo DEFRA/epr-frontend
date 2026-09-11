@@ -2,6 +2,7 @@ import * as jose from 'jose'
 import { config } from '#config/config.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { identityHandler } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -9,24 +10,12 @@ import { describe, expect, vi } from 'vitest'
 import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
 
 const mock = {
-  cdpAuditing: vi.fn(),
-  signInSuccessMetric: vi.fn(),
-  signInSuccessNonInitialUserMetric: vi.fn(),
-  signInFailureMetric: vi.fn()
+  cdpAuditing: vi.fn()
 }
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    metrics: {
-      ...(await importOriginal()).metrics,
-      signInFailure: (oidcProvider) => mock.signInFailureMetric(oidcProvider),
-      signInSuccess: (oidcProvider) => mock.signInSuccessMetric(oidcProvider),
-      signInSuccessNonInitialUser: (oidcProvider) =>
-        mock.signInSuccessNonInitialUserMetric(oidcProvider)
-    }
-  })
-)
+vi.spyOn(metrics.signIn, 'failure').mockResolvedValue()
+vi.spyOn(metrics.signIn, 'success').mockResolvedValue()
+vi.spyOn(metrics.signIn, 'successNonInitialUser').mockResolvedValue()
 
 vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mock.cdpAuditing(...args)
@@ -127,8 +116,8 @@ describe('/auth/callback - GET integration', async () => {
     it('records sign in success metric', async ({ server, msw }) => {
       await performSignInFlow(server, msw, idTokenAndPublicKey)
 
-      expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInSuccessMetric).toHaveBeenCalledWith('defra-id')
+      expect(metrics.signIn.success).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.success).toHaveBeenCalledWith('defra-id')
     })
 
     it('audits a successful sign in attempt', async ({ server, msw }) => {
@@ -214,8 +203,8 @@ describe('/auth/callback - GET integration', async () => {
     it('records sign in success metric', async ({ server, msw }) => {
       await performSignInFlow(server, msw, idTokenAndPublicKey)
 
-      expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInSuccessMetric).toHaveBeenCalledWith('defra-id')
+      expect(metrics.signIn.success).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.success).toHaveBeenCalledWith('defra-id')
     })
 
     it('audits a successful sign in attempt', async ({ server, msw }) => {
@@ -255,8 +244,8 @@ describe('/auth/callback - GET integration', async () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith('defra-id')
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledWith('defra-id')
     })
   })
 
@@ -276,8 +265,8 @@ describe('/auth/callback - GET integration', async () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith('defra-id')
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledWith('defra-id')
     })
   })
 
@@ -318,8 +307,8 @@ describe('/auth/callback - GET integration', async () => {
 
       await performSignInFlow(server, msw, invitedUserToken)
 
-      expect(mock.signInSuccessNonInitialUserMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInSuccessNonInitialUserMetric).toHaveBeenCalledWith(
+      expect(metrics.signIn.successNonInitialUser).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.successNonInitialUser).toHaveBeenCalledWith(
         'defra-id'
       )
     })
@@ -357,7 +346,7 @@ describe('/auth/callback - GET integration', async () => {
 
       await performSignInFlow(server, msw, linkerToken)
 
-      expect(mock.signInSuccessNonInitialUserMetric).not.toHaveBeenCalled()
+      expect(metrics.signIn.successNonInitialUser).not.toHaveBeenCalled()
     })
   })
 })

@@ -4,7 +4,7 @@ import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
@@ -23,13 +23,8 @@ vi.mock(
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -602,7 +597,7 @@ describe('#createPrnController', () => {
         auth: mockAuth
       })
 
-      expect(journeyMetrics.start).toHaveBeenCalledWith(
+      expect(metrics.journey.start).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.createPrn,
         'acc-001'

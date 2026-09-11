@@ -4,7 +4,7 @@ import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -24,13 +24,8 @@ vi.mock(
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/update-report-status.js'))
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
@@ -1787,7 +1782,7 @@ describe('#submitController', () => {
     }) => {
       await server.inject({ method: 'GET', url: baseUrl, auth: mockAuth })
 
-      expect(journeyMetrics.start).toHaveBeenCalledWith(
+      expect(metrics.journey.start).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.submitReport,
         attempt
@@ -1809,7 +1804,7 @@ describe('#submitController', () => {
 
       await server.inject({ method: 'GET', url: baseUrl, auth: mockAuth })
 
-      expect(journeyMetrics.start).not.toHaveBeenCalled()
+      expect(metrics.journey.start).not.toHaveBeenCalled()
     })
 
     it('should record the submit journey end once the report is submitted', async ({
@@ -1827,7 +1822,7 @@ describe('#submitController', () => {
         payload: { crumb, version: 1, submissionDeclaredBy: 'Test User' }
       })
 
-      expect(journeyMetrics.end).toHaveBeenCalledWith(
+      expect(metrics.journey.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.submitReport,
         attempt

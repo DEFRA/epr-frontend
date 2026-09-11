@@ -2,10 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 
-import { JOURNEY } from './constants.js'
-import { journeyMetrics, metrics } from './index.js'
-import { config } from '#config/config.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
+import { JOURNEY } from './constants.js'
+
+/**
+ * @import { Yar } from '@hapi/yar'
+ * @import { AuthMetricName } from './constants.js'
+ * @import * as MetricsModule from './index.js'
+ */
 
 const mockPutMetric = vi.fn()
 const mockFlush = vi.fn()
@@ -34,211 +38,273 @@ vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => mockLogger
 }))
 
+/**
+ * Enablement is read once when the module is evaluated, so a scenario has to
+ * choose it before the import rather than toggling config per call.
+ * @param {boolean} enabled
+ */
+const loadMetrics = async (enabled) => {
+  vi.resetModules()
+  process.env.ENABLE_METRICS = String(enabled)
+
+  try {
+    return await import('./index.js')
+  } finally {
+    delete process.env.ENABLE_METRICS
+  }
+}
+
+/**
+ * Group, method, and the name it emits -- the mapping is the CloudWatch
+ * contract, so it is spelled out here rather than derived from the source.
+ * @type {readonly ['signIn' | 'signOut', string, AuthMetricName][]}
+ */
+const authMetrics = [
+  ['signIn', 'attempted', 'signInAttempted'],
+  ['signIn', 'success', 'signInSuccess'],
+  ['signIn', 'successNonInitialUser', 'signInSuccessNonInitialUser'],
+  ['signIn', 'failure', 'signInFailure'],
+  ['signOut', 'success', 'signOutSuccess']
+]
+
+const createYar = (session = new Map()) =>
+  /** @type {Pick<Yar, 'get' | 'set' | 'clear'>} */ (
+    /** @type {unknown} */ ({
+      get: vi.fn((key, clear) => {
+        const value = session.get(key)
+        if (clear) {
+          session.delete(key)
+        }
+        return value
+      }),
+      set: vi.fn((key, value) => session.set(key, value)),
+      clear: vi.fn((key) => session.delete(key))
+    })
+  )
+
+const createRequest = (yar = createYar()) =>
+  /** @type {never} */ (/** @type {unknown} */ ({ yar }))
+
 describe('#metrics', () => {
-  const metricsNames = Object.keys(metrics)
+  /** @type {typeof MetricsModule.metrics} */
+  let metrics
 
   describe('when metrics is not enabled', () => {
-    it.each(metricsNames)('does not record metric - %s', async (name) => {
-      config.set('isMetricsEnabled', false)
-      await metrics[name]()
+    beforeEach(async () => {
+      vi.clearAllMocks()
+      ;({ metrics } = await loadMetrics(false))
+    })
 
-      expect(mockPutMetric).not.toHaveBeenCalled()
-      expect(mockFlush).not.toHaveBeenCalled()
+    describe('authentication', () => {
+      it.each(authMetrics)(
+        'does not record metric - %s.%s',
+        async (group, method) => {
+          await metrics[group][method]('oidc-provider-name')
+
+          expect(mockPutMetric).not.toHaveBeenCalled()
+          expect(mockFlush).not.toHaveBeenCalled()
+        }
+      )
+    })
+
+    describe('journey', () => {
+      it('does not touch the session for a journey start', async () => {
+        const yar = createYar()
+
+        await metrics.journey.start(
+          createRequest(yar),
+          JOURNEY.createReport,
+          'a-1'
+        )
+
+        expect(yar.get).not.toHaveBeenCalled()
+        expect(yar.set).not.toHaveBeenCalled()
+        expect(mockPutMetric).not.toHaveBeenCalled()
+      })
+
+      it('does not touch the session for a journey end', async () => {
+        const yar = createYar()
+
+        await metrics.journey.end(
+          createRequest(yar),
+          JOURNEY.createReport,
+          'a-1'
+        )
+
+        expect(yar.get).not.toHaveBeenCalled()
+        expect(yar.clear).not.toHaveBeenCalled()
+        expect(mockPutMetric).not.toHaveBeenCalled()
+      })
+    })
+
+    it('still exposes every metric name', () => {
+      expect(Object.keys(metrics)).toStrictEqual([
+        'signIn',
+        'signOut',
+        'journey'
+      ])
+      expect(Object.keys(metrics.signIn)).toStrictEqual([
+        'attempted',
+        'success',
+        'successNonInitialUser',
+        'failure'
+      ])
+      expect(Object.keys(metrics.signOut)).toStrictEqual(['success'])
+      expect(Object.keys(metrics.journey)).toStrictEqual(['start', 'end'])
     })
   })
 
   describe('when metrics is enabled', () => {
-    it.each(metricsNames)('record metric - %s', async (metricName) => {
-      config.set('isMetricsEnabled', true)
-
-      await metrics[metricName]('oidc-provider-name')
-
-      expect(mockPutMetric).toHaveBeenCalledWith(
-        metricName,
-        1,
-        Unit.Count,
-        StorageResolution.Standard
-      )
-      expect(mockFlush).toHaveBeenCalledWith()
-    })
-
-    it.each(metricsNames)(
-      'attaches provider as a dimension - %s',
-      async (metricName) => {
-        config.set('isMetricsEnabled', true)
-
-        await metrics[metricName]('oidc-provider-name')
-
-        expect(mockPutDimensions).toHaveBeenCalledWith({
-          oidcProvider: 'oidc-provider-name'
-        })
-      }
-    )
-  })
-
-  describe('journey events', () => {
     const attempt = 'note-1'
 
-    const createYar = (session = new Map()) => ({
-      get: vi.fn((key) => session.get(key)),
-      set: vi.fn((key, value) => session.set(key, value)),
-      clear: vi.fn((key) => session.delete(key))
-    })
-
-    const createRequest = (yar = createYar()) =>
-      /** @type {never} */ (/** @type {unknown} */ ({ yar }))
-
-    beforeEach(() => {
+    beforeEach(async () => {
       vi.clearAllMocks()
-      config.set('isMetricsEnabled', true)
+      ;({ metrics } = await loadMetrics(true))
     })
 
-    it('should record a start under a single metric name', async () => {
-      await journeyMetrics.start(
-        createRequest(),
-        JOURNEY.uploadSummaryLog,
-        attempt
-      )
+    describe('authentication', () => {
+      it.each(authMetrics)(
+        'record metric - %s.%s',
+        async (group, method, metricName) => {
+          await metrics[group][method]('oidc-provider-name')
 
-      expect(mockPutMetric).toHaveBeenCalledWith(
-        'TransactionStart',
-        1,
-        Unit.Count,
-        StorageResolution.Standard
-      )
-    })
-
-    it('should record an end under a single metric name', async () => {
-      const request = createRequest()
-      await journeyMetrics.start(request, JOURNEY.uploadSummaryLog, attempt)
-
-      await journeyMetrics.end(request, JOURNEY.uploadSummaryLog, attempt)
-
-      expect(mockPutMetric).toHaveBeenCalledWith(
-        'TransactionEnd',
-        1,
-        Unit.Count,
-        StorageResolution.Standard
+          expect(mockPutMetric).toHaveBeenCalledWith(
+            metricName,
+            1,
+            Unit.Count,
+            StorageResolution.Standard
+          )
+          expect(mockPutDimensions).toHaveBeenCalledWith({
+            oidcProvider: 'oidc-provider-name'
+          })
+          expect(mockFlush).toHaveBeenCalledWith()
+        }
       )
     })
 
-    it('should carry the start value as the journey dimension', async () => {
-      await journeyMetrics.start(createRequest(), JOURNEY.createPrn, attempt)
+    describe('journey', () => {
+      it('should record a start under a single metric name, carrying the journey as its only dimension', async () => {
+        await metrics.journey.start(createRequest(), JOURNEY.createPrn, attempt)
 
-      expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'SaveDraftPRNStart' },
-        false
-      )
-    })
+        expect(mockPutMetric).toHaveBeenCalledWith(
+          'TransactionStart',
+          1,
+          Unit.Count,
+          StorageResolution.Standard
+        )
+        expect(mockSetDimensions).toHaveBeenCalledWith(
+          { journey: 'SaveDraftPRNStart' },
+          false
+        )
+        expect(mockPutDimensions).not.toHaveBeenCalled()
+      })
 
-    it('should not carry the library default dimensions', async () => {
-      await journeyMetrics.start(createRequest(), JOURNEY.createPrn, attempt)
+      it('should record an end under a single metric name, carrying the journey as its only dimension', async () => {
+        const request = createRequest()
+        await metrics.journey.start(request, JOURNEY.issuePrn, attempt)
 
-      expect(mockPutDimensions).not.toHaveBeenCalled()
-    })
+        await metrics.journey.end(request, JOURNEY.issuePrn, attempt)
 
-    it('should carry the end value as the journey dimension', async () => {
-      const request = createRequest()
-      await journeyMetrics.start(request, JOURNEY.issuePrn, attempt)
+        expect(mockPutMetric).toHaveBeenCalledWith(
+          'TransactionEnd',
+          1,
+          Unit.Count,
+          StorageResolution.Standard
+        )
+        expect(mockSetDimensions).toHaveBeenCalledWith(
+          { journey: 'IssuePRNEnd' },
+          false
+        )
+        expect(mockPutDimensions).not.toHaveBeenCalled()
+      })
 
-      await journeyMetrics.end(request, JOURNEY.issuePrn, attempt)
+      it('should record a start only once per attempt', async () => {
+        const request = createRequest()
 
-      expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'IssuePRNEnd' },
-        false
-      )
-    })
+        await metrics.journey.start(request, JOURNEY.createReport, attempt)
+        await metrics.journey.start(request, JOURNEY.createReport, attempt)
 
-    it('should record a start only once per attempt', async () => {
-      const request = createRequest()
+        expect(mockPutMetric).toHaveBeenCalledTimes(1)
+      })
 
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
+      it('should count a fresh start once the journey has ended', async () => {
+        const request = createRequest()
 
-      expect(mockPutMetric).toHaveBeenCalledTimes(1)
-    })
+        await metrics.journey.start(request, JOURNEY.createReport, attempt)
+        await metrics.journey.end(request, JOURNEY.createReport, attempt)
+        await metrics.journey.start(request, JOURNEY.createReport, attempt)
 
-    it('should count a fresh start once the journey has ended', async () => {
-      const request = createRequest()
+        expect(mockPutMetric).toHaveBeenCalledTimes(3)
+      })
 
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.end(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
+      it('should track each journey separately', async () => {
+        const request = createRequest()
 
-      expect(mockPutMetric).toHaveBeenCalledTimes(3)
-    })
+        await metrics.journey.start(request, JOURNEY.createReport, attempt)
+        await metrics.journey.start(request, JOURNEY.uploadSummaryLog, attempt)
 
-    it('should track each journey separately', async () => {
-      const request = createRequest()
+        expect(mockPutMetric).toHaveBeenCalledTimes(2)
+      })
 
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.start(request, JOURNEY.uploadSummaryLog, attempt)
+      it('should record a start per attempt at the same journey', async () => {
+        const request = createRequest()
 
-      expect(mockPutMetric).toHaveBeenCalledTimes(2)
-    })
+        await metrics.journey.start(request, JOURNEY.deleteReport, 'report-1')
+        await metrics.journey.start(request, JOURNEY.deleteReport, 'report-2')
 
-    it('should record a start per attempt at the same journey', async () => {
-      const request = createRequest()
+        expect(mockPutMetric).toHaveBeenCalledTimes(2)
+      })
 
-      await journeyMetrics.start(request, JOURNEY.deleteReport, 'report-1')
-      await journeyMetrics.start(request, JOURNEY.deleteReport, 'report-2')
+      it('should not record an end for an attempt that never started', async () => {
+        await metrics.journey.end(
+          createRequest(),
+          JOURNEY.deleteReport,
+          attempt
+        )
 
-      expect(mockPutMetric).toHaveBeenCalledTimes(2)
-    })
+        expect(mockPutMetric).not.toHaveBeenCalled()
+      })
 
-    it('should not record an end for an attempt that never started', async () => {
-      await journeyMetrics.end(createRequest(), JOURNEY.deleteReport, attempt)
+      it('should not record an end for a different attempt at the same journey', async () => {
+        const request = createRequest()
 
-      expect(mockPutMetric).not.toHaveBeenCalled()
-    })
+        await metrics.journey.start(request, JOURNEY.cancelPrn, 'note-1')
+        await metrics.journey.end(request, JOURNEY.cancelPrn, 'note-2')
 
-    it('should not record an end for a different attempt at the same journey', async () => {
-      const request = createRequest()
+        expect(mockPutMetric).toHaveBeenCalledTimes(1)
+      })
 
-      await journeyMetrics.start(request, JOURNEY.cancelPrn, 'note-1')
-      await journeyMetrics.end(request, JOURNEY.cancelPrn, 'note-2')
+      it('should record only one end per start', async () => {
+        const request = createRequest()
 
-      expect(mockPutMetric).toHaveBeenCalledTimes(1)
-    })
+        await metrics.journey.start(request, JOURNEY.cancelPrn, attempt)
+        await metrics.journey.end(request, JOURNEY.cancelPrn, attempt)
+        await metrics.journey.end(request, JOURNEY.cancelPrn, attempt)
 
-    it('should record only one end per start', async () => {
-      const request = createRequest()
-
-      await journeyMetrics.start(request, JOURNEY.cancelPrn, attempt)
-      await journeyMetrics.end(request, JOURNEY.cancelPrn, attempt)
-      await journeyMetrics.end(request, JOURNEY.cancelPrn, attempt)
-
-      expect(mockPutMetric).toHaveBeenCalledTimes(2)
-    })
-
-    it('should not touch the session when metrics are disabled', async () => {
-      config.set('isMetricsEnabled', false)
-      const yar = createYar()
-      const request = createRequest(yar)
-
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.end(request, JOURNEY.createReport, attempt)
-
-      expect(mockFlush).not.toHaveBeenCalled()
-      expect(yar.get).not.toHaveBeenCalled()
-      expect(yar.set).not.toHaveBeenCalled()
-      expect(yar.clear).not.toHaveBeenCalled()
+        expect(mockPutMetric).toHaveBeenCalledTimes(2)
+      })
     })
   })
 
   describe('when metrics throws', () => {
-    it.each(metricsNames)('logs expected error - %s', async (metricName) => {
-      config.set('isMetricsEnabled', true)
-
-      const mockError = 'mock-metrics-put-error'
-      mockFlush.mockRejectedValue(new Error(mockError))
-
-      await metrics[metricName]()
-
-      expect(mockLogger.error).toHaveBeenCalledWith({
-        message: mockError,
-        err: Error(mockError)
-      })
+    beforeEach(async () => {
+      vi.clearAllMocks()
+      ;({ metrics } = await loadMetrics(true))
     })
+
+    it.each(authMetrics)(
+      'logs expected error - %s.%s',
+      async (group, method) => {
+        const mockError = 'mock-metrics-put-error'
+        mockFlush.mockRejectedValueOnce(new Error(mockError))
+
+        await metrics[group][method]('oidc-provider-name')
+
+        expect(mockLogger.error).toHaveBeenCalledWith({
+          message: mockError,
+          err: Error(mockError)
+        })
+      }
+    )
   })
 })

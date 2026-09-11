@@ -1,10 +1,10 @@
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
-import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
-import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { resolveCanDeclareDecemberWasteManually } from './helpers/can-declare-december-waste-manually.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
@@ -68,9 +68,10 @@ export const controller = {
       )
     })
 
-    await journeyMetrics.start(request, JOURNEY.createPrn, accreditationId)
+    await metrics.journey.start(request, JOURNEY.createPrn, accreditationId)
 
     // Check for insufficient balance error from redirect
+
     const { t: localise } = request
     const errorParam = request.query.error
 

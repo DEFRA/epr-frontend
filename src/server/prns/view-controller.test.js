@@ -19,7 +19,7 @@ import {
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getByRole,
@@ -43,13 +43,8 @@ vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
@@ -2020,7 +2015,7 @@ describe('#viewController', () => {
         payload: { crumb }
       })
 
-      expect(journeyMetrics.end).toHaveBeenCalledWith(
+      expect(metrics.journey.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.createPrn,
         accreditationId
