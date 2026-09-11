@@ -134,7 +134,8 @@ function buildListLabels(localise, { noteType, noteTypePlural }) {
  *     recipient: string,
  *     createdAt: string,
  *     tonnage?: number | null,
- *     status: string
+ *     status: string,
+ *     isDecemberWaste: boolean
  *   }>,
  *   localise: (key: string, params?: object) => string,
  *   canWrite: boolean
@@ -148,6 +149,7 @@ function buildAwaitingTable(
     recipient: localise('prns:list:table:recipientHeading'),
     createdAt: localise('prns:list:table:dateHeading'),
     tonnage: localise('prns:list:table:tonnageHeading'),
+    decemberWaste: localise('prns:decemberWasteLabel'),
     status: localise('prns:list:table:statusHeading'),
     action: localise('prns:list:table:actionHeading')
   }
@@ -160,9 +162,10 @@ function buildAwaitingTable(
     const actionUrl = request.localiseUrl(notePath)
     const viewUrl = request.localiseUrl(`${notePath}/view`)
     return [
-      { text: prn.recipient },
+      { text: prn.recipient, classes: cssClasses.wrap.breakWord },
       { text: formatDate(prn.createdAt) },
       { text: prn.tonnage },
+      { text: buildDecemberWasteText(prn.isDecemberWaste, localise) },
       { html: buildStatusTagHtml(prn.status, localise) },
       canWrite
         ? {
@@ -184,6 +187,7 @@ function buildAwaitingTable(
     },
     { text: '' },
     { text: totalTonnage, classes: cssClasses.fontWeight.bold },
+    { text: '' },
     { text: '' },
     { text: '' }
   ]
@@ -210,6 +214,7 @@ function buildDetailTable(
     recipient: localise(`prns:list:${i18nPrefix}:recipientHeading`),
     dateIssued: localise(`prns:list:${i18nPrefix}:dateIssuedHeading`),
     tonnage: localise(`prns:list:${i18nPrefix}:tonnageHeading`),
+    decemberWaste: localise('prns:decemberWasteLabel'),
     status: localise(`prns:list:${i18nPrefix}:statusHeading`),
     action: localise(`prns:list:${i18nPrefix}:actionHeading`)
   }
@@ -222,9 +227,10 @@ function buildDetailTable(
     )
     return [
       { text: prn.prnNumber },
-      { text: prn.recipient },
+      { text: prn.recipient, classes: cssClasses.wrap.breakWord },
       { text: formatDate(prn.issuedAt) },
       { text: prn.tonnage ?? 0 },
+      { text: buildDecemberWasteText(prn.isDecemberWaste, localise) },
       { html: buildStatusTagHtml(prn.status, localise) },
       {
         html: `<a href="${viewUrl}" class="govuk-link" target="_blank" rel="noopener noreferrer">${selectText}</a>`
@@ -246,10 +252,22 @@ function buildDetailTable(
     { text: '' },
     { text: totalTonnage, classes: cssClasses.fontWeight.bold },
     { text: '' },
+    { text: '' },
     { text: '' }
   ]
 
   return { headings, rows: [...rows, totalRow] }
+}
+
+/**
+ * @param {boolean} isDecemberWaste
+ * @param {(key: string) => string} localise
+ * @returns {string}
+ */
+function buildDecemberWasteText(isDecemberWaste, localise) {
+  return localise(
+    isDecemberWaste ? 'prns:decemberWasteYes' : 'prns:decemberWasteNo'
+  )
 }
 
 /**
