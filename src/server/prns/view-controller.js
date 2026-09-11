@@ -8,6 +8,8 @@ import {
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { availableForPool } from '#server/common/helpers/waste-balance/available-for-pool.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnCoreRows,
@@ -86,13 +88,27 @@ export const viewPostController = {
     }
 
     try {
-      const wasteBalanceMap = await fetchWasteBalances(
-        organisationId,
-        [accreditationId],
-        session.backendToken
+      const [wasteBalanceMap, eligibility] = await Promise.all([
+        fetchWasteBalances(
+          organisationId,
+          [accreditationId],
+          session.backendToken
+        ),
+        fetchDecemberPrnEligibility(
+          organisationId,
+          registrationId,
+          accreditationId,
+          session.backendToken
+        )
+      ])
+      const balance = wasteBalanceMap[accreditationId] ?? {
+        amount: 0,
+        availableAmount: 0
+      }
+      const availableAmount = availableForPool(
+        balance,
+        prnDraft.isDecemberWaste && eligibility.accruesDecemberWasteBalance
       )
-      const availableAmount =
-        wasteBalanceMap[accreditationId]?.availableAmount ?? 0
       const prnParams = {
         organisationId,
         registrationId,
@@ -164,8 +180,10 @@ const discardDraftOverBalance = async (
 
   request.yar.clear('prnDraft')
 
+  const poolParam = prnDraft.isDecemberWaste ? '&pool=december' : ''
+
   return h.redirect(
-    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance`
+    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance${poolParam}`
   )
 }
 

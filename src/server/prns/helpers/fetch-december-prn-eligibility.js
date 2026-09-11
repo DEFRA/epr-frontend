@@ -2,15 +2,17 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 
 /**
  * @typedef {object} DecemberPrnEligibility
- * @property {boolean} declaresDecemberWasteManually - Whether this accreditation's type declares December waste manually rather than deriving it from a balance
+ * @property {boolean} declaresDecemberWasteManually - Whether this accreditation's type declares December waste manually rather than drawing a balance
+ * @property {boolean} accruesDecemberWasteBalance - Whether this accreditation's type accrues a separate December balance to choose from
  * @property {boolean} windowOpen - Whether the December Waste declaration window is currently open for this accreditation
  */
 
 /**
- * Whether an accreditation's December Waste declaration control should be
- * shown (PAE-1913): both the operator-type and window-timing halves of the
- * rule, decided by the backend (see show-december-waste-question.js, which
- * composes the two flags this returns).
+ * Which December Waste control should be shown, and whether it may currently
+ * be submitted (PAE-1913, PAE-1922): the operator-type and window-timing
+ * halves of the rule, decided by the backend (see
+ * resolve-december-waste-choice.js, which composes the three flags this
+ * returns into the control to render).
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {string} accreditationId

@@ -22,11 +22,14 @@ vi.mock(
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 const { fetchWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
+const { fetchDecemberPrnEligibility } =
+  await import('./helpers/fetch-december-prn-eligibility.js')
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -184,6 +187,11 @@ describe('#createdController', () => {
     vi.mocked(fetchWasteBalances).mockResolvedValue({
       'acc-001': { amount: 1000, availableAmount: 500 }
     })
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      declaresDecemberWasteManually: false,
+      accruesDecemberWasteBalance: false,
+      windowOpen: false
+    })
   })
 
   describe('request handling', () => {
@@ -213,6 +221,19 @@ describe('#createdController', () => {
         server
       }) => {
         vi.mocked(createPrn).mockResolvedValue(mockDecemberWastePrnCreated)
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 500,
+            decemberAmount: 500,
+            decemberAvailableAmount: 500
+          }
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          declaresDecemberWasteManually: false,
+          accruesDecemberWasteBalance: true,
+          windowOpen: true
+        })
 
         const { cookies } = await createPrnAndConfirm(server)
 
