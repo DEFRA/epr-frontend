@@ -461,7 +461,7 @@ describe('the registered-only period page', () => {
       ).toStrictEqual([
         'Summary log submitted',
         'Ada Lovelace (ada@example.com)',
-        'Download XLSX 4 May 2026, 10:00am'
+        'Download XLSX 4 May 2026, 10:00am\nDownload CSV 4 May 2026, 10:00am'
       ])
     })
 
@@ -476,6 +476,20 @@ describe('the registered-only period page', () => {
         }).getAttribute('href')
       ).toBe(
         `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download`
+      )
+    })
+
+    it('offers the submission as records too, at its own address', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      expect(
+        getByRole(documentOf(body), 'link', {
+          name: 'Download CSV 4 May 2026, 10:00am'
+        }).getAttribute('href')
+      ).toBe(
+        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download.csv`
       )
     })
 

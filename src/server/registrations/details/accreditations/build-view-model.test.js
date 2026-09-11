@@ -474,7 +474,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
         { text: '100.00', format: 'numeric' },
         { text: 'System' },
         {
-          html: `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
+          html: `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a><br>\n<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
           classes: 'govuk-!-text-align-right'
         }
       ]

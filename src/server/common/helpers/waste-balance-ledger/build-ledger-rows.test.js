@@ -312,8 +312,21 @@ describe(buildLedgerRows, () => {
     const [row] = buildRows({ events: [buildSummaryLogEvent()] })
 
     expect(cellsOf(row).at(5)).toBe(
-      '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
+      '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a><br>\n<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
     )
+  })
+
+  // The journey tests read the cell's first anchor, so the workbook leading is
+  // an invariant rather than a preference.
+  it('offers the workbook before the records', () => {
+    const [row] = buildRows({ events: [buildSummaryLogEvent()] })
+
+    const hrefs = [...(cellsOf(row).at(5) ?? '').matchAll(/href="([^"]+)"/g)]
+
+    expect(hrefs.map(([, href]) => href)).toStrictEqual([
+      '/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download',
+      '/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download.csv'
+    ])
   })
 
   it('offers nothing to open on a ledger read without an accreditation', () => {
@@ -397,17 +410,22 @@ describe(buildLedgerRows, () => {
         '4 January 2026, 9:00am',
         'waste-balance-ledger:events.summary-log-submitted({"noteType":"PRN"})',
         'Ada Lovelace (ada@example.com)',
-        '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
+        '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a><br>\n<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
       ])
     })
 
     // A submission offers its file without an accreditation, which is what a
     // registered-only ledger has none of.
-    it('offers the download even though the ledger names no accreditation', () => {
+    it('offers both downloads even though the ledger names no accreditation', () => {
       const [row] = buildBalanceFreeRows()
 
-      expect(cellsOf(row).at(3)).toContain(
-        '/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download'
+      const cell = cellsOf(row).at(3)
+
+      expect(cell).toContain(
+        '/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download"'
+      )
+      expect(cell).toContain(
+        '/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download.csv'
       )
     })
 
