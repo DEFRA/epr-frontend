@@ -66,25 +66,20 @@ const orNoop = (enabled) =>
 
 const enabledMetrics = {
   /** @param {string} oidcProvider */
-  async signInAttempted(oidcProvider) {
-    return writeMetric('signInAttempted', { oidcProvider })
-  },
+  signInAttempted: (oidcProvider) =>
+    writeMetric('signInAttempted', { oidcProvider }),
   /** @param {string} oidcProvider */
-  async signInSuccess(oidcProvider) {
-    return writeMetric('signInSuccess', { oidcProvider })
-  },
+  signInSuccess: (oidcProvider) =>
+    writeMetric('signInSuccess', { oidcProvider }),
   /** @param {string} oidcProvider */
-  async signInSuccessNonInitialUser(oidcProvider) {
-    return writeMetric('signInSuccessNonInitialUser', { oidcProvider })
-  },
+  signInSuccessNonInitialUser: (oidcProvider) =>
+    writeMetric('signInSuccessNonInitialUser', { oidcProvider }),
   /** @param {string} oidcProvider */
-  async signInFailure(oidcProvider) {
-    return writeMetric('signInFailure', { oidcProvider })
-  },
+  signInFailure: (oidcProvider) =>
+    writeMetric('signInFailure', { oidcProvider }),
   /** @param {string} oidcProvider */
-  async signOutSuccess(oidcProvider) {
-    return writeMetric('signOutSuccess', { oidcProvider })
-  }
+  signOutSuccess: (oidcProvider) =>
+    writeMetric('signOutSuccess', { oidcProvider })
 }
 
 export const metrics = orNoop(enabledMetrics)
