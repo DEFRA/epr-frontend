@@ -40,10 +40,10 @@ describe('#authCallbackController', () => {
     vi.mocked(fetchIdentityModule.fetchIdentity).mockResolvedValue(
       IDENTITIES.operator
     )
-    vi.mocked(metricsModule.metrics.signInSuccess).mockResolvedValue(undefined)
-    vi.mocked(metricsModule.metrics.signInFailure).mockResolvedValue(undefined)
+    vi.mocked(metricsModule.metrics.signIn.success).mockResolvedValue(undefined)
+    vi.mocked(metricsModule.metrics.signIn.failure).mockResolvedValue(undefined)
     vi.mocked(
-      metricsModule.metrics.signInSuccessNonInitialUser
+      metricsModule.metrics.signIn.successNonInitialUser
     ).mockResolvedValue(undefined)
   })
 

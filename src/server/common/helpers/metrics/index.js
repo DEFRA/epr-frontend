@@ -8,7 +8,7 @@ import { config } from '#config/config.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 /**
- * @import { AuthMetricName, JourneyEntry, JourneyMetricName, MetricName } from './constants.js'
+ * @import { JourneyEntry, JourneyMetricName, MetricName } from './constants.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
@@ -63,18 +63,22 @@ const orNoop = (enabled) =>
         Object.fromEntries(Object.keys(enabled).map((name) => [name, noop]))
       )
 
-/** @type {Record<AuthMetricName, (oidcProvider: string) => Promise<void>>} */
-const enabledMetrics = {
-  signInAttempted: (oidcProvider) =>
-    writeMetric('signInAttempted', { oidcProvider }),
-  signInSuccess: (oidcProvider) =>
-    writeMetric('signInSuccess', { oidcProvider }),
-  signInSuccessNonInitialUser: (oidcProvider) =>
+/**
+ * Grouping is caller-side only -- the emitted names are a CloudWatch contract
+ * that dashboards query, so they stay flat and unchanged.
+ * @type {Record<string, (oidcProvider: string) => Promise<void>>}
+ */
+const signIn = {
+  attempted: (oidcProvider) => writeMetric('signInAttempted', { oidcProvider }),
+  success: (oidcProvider) => writeMetric('signInSuccess', { oidcProvider }),
+  successNonInitialUser: (oidcProvider) =>
     writeMetric('signInSuccessNonInitialUser', { oidcProvider }),
-  signInFailure: (oidcProvider) =>
-    writeMetric('signInFailure', { oidcProvider }),
-  signOutSuccess: (oidcProvider) =>
-    writeMetric('signOutSuccess', { oidcProvider })
+  failure: (oidcProvider) => writeMetric('signInFailure', { oidcProvider })
+}
+
+/** @type {Record<string, (oidcProvider: string) => Promise<void>>} */
+const signOut = {
+  success: (oidcProvider) => writeMetric('signOutSuccess', { oidcProvider })
 }
 
 /**
@@ -104,7 +108,7 @@ const emitJourneyMetric = (metricName, journeyName) =>
  * same session, so a lost marker under-reports rather than putting completion
  * rate above 100%.
  */
-const enabledJourneyMetrics = {
+const journeyMetrics = {
   /**
    * @param {HapiRequest} request
    * @param {JourneyEntry} journey
@@ -140,6 +144,7 @@ const enabledJourneyMetrics = {
 }
 
 export const metrics = {
-  ...orNoop(enabledMetrics),
-  journey: orNoop(enabledJourneyMetrics)
+  signIn: orNoop(signIn),
+  signOut: orNoop(signOut),
+  journey: orNoop(journeyMetrics)
 }

@@ -54,13 +54,17 @@ const loadMetrics = async (enabled) => {
   }
 }
 
-/** @type {readonly AuthMetricName[]} */
-const metricsNames = [
-  'signInAttempted',
-  'signInSuccess',
-  'signInSuccessNonInitialUser',
-  'signInFailure',
-  'signOutSuccess'
+/**
+ * Group, method, and the name it emits -- the mapping is the CloudWatch
+ * contract, so it is spelled out here rather than derived from the source.
+ * @type {readonly ['signIn' | 'signOut', string, AuthMetricName][]}
+ */
+const authMetrics = [
+  ['signIn', 'attempted', 'signInAttempted'],
+  ['signIn', 'success', 'signInSuccess'],
+  ['signIn', 'successNonInitialUser', 'signInSuccessNonInitialUser'],
+  ['signIn', 'failure', 'signInFailure'],
+  ['signOut', 'success', 'signOutSuccess']
 ]
 
 const createYar = (session = new Map()) =>
@@ -91,12 +95,15 @@ describe('#metrics', () => {
       ;({ metrics } = await loadMetrics(false))
     })
 
-    it.each(metricsNames)('does not record metric - %s', async (name) => {
-      await metrics[name]('oidc-provider-name')
+    it.each(authMetrics)(
+      'does not record metric - %s.%s',
+      async (group, method) => {
+        await metrics[group][method]('oidc-provider-name')
 
-      expect(mockPutMetric).not.toHaveBeenCalled()
-      expect(mockFlush).not.toHaveBeenCalled()
-    })
+        expect(mockPutMetric).not.toHaveBeenCalled()
+        expect(mockFlush).not.toHaveBeenCalled()
+      }
+    )
 
     it('does not touch the session for a journey start', async () => {
       const yar = createYar()
@@ -123,7 +130,18 @@ describe('#metrics', () => {
     })
 
     it('still exposes every metric name', () => {
-      expect(Object.keys(metrics)).toStrictEqual([...metricsNames, 'journey'])
+      expect(Object.keys(metrics)).toStrictEqual([
+        'signIn',
+        'signOut',
+        'journey'
+      ])
+      expect(Object.keys(metrics.signIn)).toStrictEqual([
+        'attempted',
+        'success',
+        'successNonInitialUser',
+        'failure'
+      ])
+      expect(Object.keys(metrics.signOut)).toStrictEqual(['success'])
       expect(Object.keys(metrics.journey)).toStrictEqual(['start', 'end'])
     })
   })
@@ -134,22 +152,25 @@ describe('#metrics', () => {
       ;({ metrics } = await loadMetrics(true))
     })
 
-    it.each(metricsNames)('record metric - %s', async (metricName) => {
-      await metrics[metricName]('oidc-provider-name')
+    it.each(authMetrics)(
+      'record metric - %s.%s',
+      async (group, method, metricName) => {
+        await metrics[group][method]('oidc-provider-name')
 
-      expect(mockPutMetric).toHaveBeenCalledWith(
-        metricName,
-        1,
-        Unit.Count,
-        StorageResolution.Standard
-      )
-      expect(mockFlush).toHaveBeenCalledWith()
-    })
+        expect(mockPutMetric).toHaveBeenCalledWith(
+          metricName,
+          1,
+          Unit.Count,
+          StorageResolution.Standard
+        )
+        expect(mockFlush).toHaveBeenCalledWith()
+      }
+    )
 
-    it.each(metricsNames)(
-      'attaches provider as a dimension - %s',
-      async (metricName) => {
-        await metrics[metricName]('oidc-provider-name')
+    it.each(authMetrics)(
+      'attaches provider as a dimension - %s.%s',
+      async (group, method) => {
+        await metrics[group][method]('oidc-provider-name')
 
         expect(mockPutDimensions).toHaveBeenCalledWith({
           oidcProvider: 'oidc-provider-name'
@@ -291,16 +312,19 @@ describe('#metrics', () => {
       ;({ metrics } = await loadMetrics(true))
     })
 
-    it.each(metricsNames)('logs expected error - %s', async (metricName) => {
-      const mockError = 'mock-metrics-put-error'
-      mockFlush.mockRejectedValueOnce(new Error(mockError))
+    it.each(authMetrics)(
+      'logs expected error - %s.%s',
+      async (group, method) => {
+        const mockError = 'mock-metrics-put-error'
+        mockFlush.mockRejectedValueOnce(new Error(mockError))
 
-      await metrics[metricName]('oidc-provider-name')
+        await metrics[group][method]('oidc-provider-name')
 
-      expect(mockLogger.error).toHaveBeenCalledWith({
-        message: mockError,
-        err: Error(mockError)
-      })
-    })
+        expect(mockLogger.error).toHaveBeenCalledWith({
+          message: mockError,
+          err: Error(mockError)
+        })
+      }
+    )
   })
 })
