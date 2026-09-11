@@ -36,14 +36,16 @@ export function buildCreatePrnViewData(
   const isPoolMode =
     decemberWasteControl.mode === DECEMBER_WASTE_CONTROL.selectPool
 
+  const wasteBalanceMessage = wasteBalance
+    ? localise('prns:create:wasteBalanceText', {
+        noteTypePlural,
+        balance: formatTonnage(wasteBalance.availableAmount)
+      })
+    : null
+
   const wasteBalanceText = isPoolMode
     ? decemberWasteControl.insetText
-    : wasteBalance
-      ? localise('prns:create:wasteBalanceText', {
-          noteTypePlural,
-          balance: formatTonnage(wasteBalance.availableAmount)
-        })
-      : null
+    : wasteBalanceMessage
 
   const decemberWaste =
     decemberWasteControl.mode === DECEMBER_WASTE_CONTROL.none
