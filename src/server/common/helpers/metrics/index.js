@@ -13,7 +13,7 @@ import { TRANSACTION_END, TRANSACTION_START } from './constants.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
-const isMetricsEnabled = () => config.get('isMetricsEnabled')
+const isMetricsEnabled = config.get('isMetricsEnabled')
 
 /**
  * Aws embedded metrics wrapper
@@ -24,19 +24,6 @@ const isMetricsEnabled = () => config.get('isMetricsEnabled')
  *   CloudWatch identifies a series by its whole dimension set, so carrying them
  *   means a query has to name all four to match -- and one of them, the log
  *   group, differs per environment, which makes a dashboard unpromotable.
- */
-async function metricsCounter(metricName, dimensions, options = {}) {
-  if (!isMetricsEnabled()) {
-    return
-  }
-
-  return writeMetric(metricName, dimensions, options)
-}
-
-/**
- * @param {string} metricName
- * @param {Record<string, string>} dimensions
- * @param {{ replaceDefaults?: boolean }} [options]
  */
 async function writeMetric(metricName, dimensions, options = {}) {
   const value = 1
@@ -62,28 +49,45 @@ async function writeMetric(metricName, dimensions, options = {}) {
   }
 }
 
-export const metrics = {
+/** @returns {Promise<void>} */
+const noop = async () => {}
+
+/**
+ * @template {Record<string, (...args: never[]) => Promise<void>>} T
+ * @param {T} enabled
+ * @returns {T}
+ */
+const orNoop = (enabled) =>
+  isMetricsEnabled
+    ? enabled
+    : /** @type {T} */ (
+        Object.fromEntries(Object.keys(enabled).map((name) => [name, noop]))
+      )
+
+const enabledMetrics = {
   /** @param {string} oidcProvider */
   async signInAttempted(oidcProvider) {
-    return metricsCounter('signInAttempted', { oidcProvider })
+    return writeMetric('signInAttempted', { oidcProvider })
   },
   /** @param {string} oidcProvider */
   async signInSuccess(oidcProvider) {
-    return metricsCounter('signInSuccess', { oidcProvider })
+    return writeMetric('signInSuccess', { oidcProvider })
   },
   /** @param {string} oidcProvider */
   async signInSuccessNonInitialUser(oidcProvider) {
-    return metricsCounter('signInSuccessNonInitialUser', { oidcProvider })
+    return writeMetric('signInSuccessNonInitialUser', { oidcProvider })
   },
   /** @param {string} oidcProvider */
   async signInFailure(oidcProvider) {
-    return metricsCounter('signInFailure', { oidcProvider })
+    return writeMetric('signInFailure', { oidcProvider })
   },
   /** @param {string} oidcProvider */
   async signOutSuccess(oidcProvider) {
-    return metricsCounter('signOutSuccess', { oidcProvider })
+    return writeMetric('signOutSuccess', { oidcProvider })
   }
 }
+
+export const metrics = orNoop(enabledMetrics)
 
 /**
  * @param {JourneyEntry} journey
@@ -112,7 +116,7 @@ const emitJourneyMetric = (metricName, journeyName) =>
  * same session, so a lost marker under-reports rather than putting completion
  * rate above 100%.
  */
-export const journeyMetrics = {
+const enabledJourneyMetrics = {
   /**
    * @param {HapiRequest} request
    * @param {JourneyEntry} journey
@@ -120,10 +124,6 @@ export const journeyMetrics = {
    * @returns {Promise<void>}
    */
   async start(request, journey, attempt) {
-    if (!isMetricsEnabled()) {
-      return
-    }
-
     const key = journeyKey(journey, attempt)
 
     if (request.yar.get(key)) {
@@ -141,10 +141,6 @@ export const journeyMetrics = {
    * @returns {Promise<void>}
    */
   async end(request, journey, attempt) {
-    if (!isMetricsEnabled()) {
-      return
-    }
-
     const key = journeyKey(journey, attempt)
 
     if (!request.yar.get(key, true)) {
@@ -154,3 +150,5 @@ export const journeyMetrics = {
     emitJourneyMetric(TRANSACTION_END, journey.end)
   }
 }
+
+export const journeyMetrics = orNoop(enabledJourneyMetrics)

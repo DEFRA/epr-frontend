@@ -2,13 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 
-import { JOURNEY } from './constants.js'
-import { journeyMetrics, metrics } from './index.js'
-import { config } from '#config/config.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
+import { JOURNEY } from './constants.js'
 
 /**
  * @import { Yar } from '@hapi/yar'
+ * @import * as MetricsModule from './index.js'
  */
 
 const mockPutMetric = vi.fn()
@@ -38,23 +37,103 @@ vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => mockLogger
 }))
 
+/**
+ * Enablement is read once when the module is evaluated, so a scenario has to
+ * choose it before the import rather than toggling config per call.
+ * @param {boolean} enabled
+ */
+const loadMetrics = async (enabled) => {
+  vi.resetModules()
+  process.env.ENABLE_METRICS = String(enabled)
+
+  try {
+    return await import('./index.js')
+  } finally {
+    delete process.env.ENABLE_METRICS
+  }
+}
+
+const metricsNames = /** @type {const} */ ([
+  'signInAttempted',
+  'signInSuccess',
+  'signInSuccessNonInitialUser',
+  'signInFailure',
+  'signOutSuccess'
+])
+
+const createYar = (session = new Map()) =>
+  /** @type {Pick<Yar, 'get' | 'set' | 'clear'>} */ (
+    /** @type {unknown} */ ({
+      get: vi.fn((key, clear) => {
+        const value = session.get(key)
+        if (clear) {
+          session.delete(key)
+        }
+        return value
+      }),
+      set: vi.fn((key, value) => session.set(key, value)),
+      clear: vi.fn((key) => session.delete(key))
+    })
+  )
+
+const createRequest = (yar = createYar()) =>
+  /** @type {never} */ (/** @type {unknown} */ ({ yar }))
+
 describe('#metrics', () => {
-  const metricsNames = Object.keys(metrics)
+  /** @type {typeof MetricsModule.metrics} */
+  let metrics
+  /** @type {typeof MetricsModule.journeyMetrics} */
+  let journeyMetrics
 
   describe('when metrics is not enabled', () => {
+    beforeEach(async () => {
+      vi.clearAllMocks()
+      ;({ metrics, journeyMetrics } = await loadMetrics(false))
+    })
+
     it.each(metricsNames)('does not record metric - %s', async (name) => {
-      config.set('isMetricsEnabled', false)
-      await metrics[name]()
+      await metrics[name]('oidc-provider-name')
 
       expect(mockPutMetric).not.toHaveBeenCalled()
       expect(mockFlush).not.toHaveBeenCalled()
     })
+
+    it('does not touch the session for a journey start', async () => {
+      const yar = createYar()
+
+      await journeyMetrics.start(
+        createRequest(yar),
+        JOURNEY.createReport,
+        'a-1'
+      )
+
+      expect(yar.get).not.toHaveBeenCalled()
+      expect(yar.set).not.toHaveBeenCalled()
+      expect(mockPutMetric).not.toHaveBeenCalled()
+    })
+
+    it('does not touch the session for a journey end', async () => {
+      const yar = createYar()
+
+      await journeyMetrics.end(createRequest(yar), JOURNEY.createReport, 'a-1')
+
+      expect(yar.get).not.toHaveBeenCalled()
+      expect(yar.clear).not.toHaveBeenCalled()
+      expect(mockPutMetric).not.toHaveBeenCalled()
+    })
+
+    it('still exposes every metric name', () => {
+      expect(Object.keys(metrics)).toStrictEqual([...metricsNames])
+    })
   })
 
   describe('when metrics is enabled', () => {
-    it.each(metricsNames)('record metric - %s', async (metricName) => {
-      config.set('isMetricsEnabled', true)
+    beforeEach(async () => {
+      vi.clearAllMocks()
+      ;({ metrics } = await loadMetrics(true))
+    })
 
+    it.each(metricsNames)('record metric - %s', async (metricName) => {
       await metrics[metricName]('oidc-provider-name')
 
       expect(mockPutMetric).toHaveBeenCalledWith(
@@ -69,8 +148,6 @@ describe('#metrics', () => {
     it.each(metricsNames)(
       'attaches provider as a dimension - %s',
       async (metricName) => {
-        config.set('isMetricsEnabled', true)
-
         await metrics[metricName]('oidc-provider-name')
 
         expect(mockPutDimensions).toHaveBeenCalledWith({
@@ -83,27 +160,9 @@ describe('#metrics', () => {
   describe('journey events', () => {
     const attempt = 'note-1'
 
-    const createYar = (session = new Map()) =>
-      /** @type {Pick<Yar, 'get' | 'set' | 'clear'>} */ (
-        /** @type {unknown} */ ({
-          get: vi.fn((key, clear) => {
-            const value = session.get(key)
-            if (clear) {
-              session.delete(key)
-            }
-            return value
-          }),
-          set: vi.fn((key, value) => session.set(key, value)),
-          clear: vi.fn((key) => session.delete(key))
-        })
-      )
-
-    const createRequest = (yar = createYar()) =>
-      /** @type {never} */ (/** @type {unknown} */ ({ yar }))
-
-    beforeEach(() => {
+    beforeEach(async () => {
       vi.clearAllMocks()
-      config.set('isMetricsEnabled', true)
+      ;({ journeyMetrics } = await loadMetrics(true))
     })
 
     it('should record a start under a single metric name', async () => {
@@ -223,30 +282,19 @@ describe('#metrics', () => {
 
       expect(mockPutMetric).toHaveBeenCalledTimes(2)
     })
-
-    it('should not touch the session when metrics are disabled', async () => {
-      config.set('isMetricsEnabled', false)
-      const yar = createYar()
-      const request = createRequest(yar)
-
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.end(request, JOURNEY.createReport, attempt)
-
-      expect(mockFlush).not.toHaveBeenCalled()
-      expect(yar.get).not.toHaveBeenCalled()
-      expect(yar.set).not.toHaveBeenCalled()
-      expect(yar.clear).not.toHaveBeenCalled()
-    })
   })
 
   describe('when metrics throws', () => {
+    beforeEach(async () => {
+      vi.clearAllMocks()
+      ;({ metrics } = await loadMetrics(true))
+    })
+
     it.each(metricsNames)('logs expected error - %s', async (metricName) => {
-      config.set('isMetricsEnabled', true)
-
       const mockError = 'mock-metrics-put-error'
-      mockFlush.mockRejectedValue(new Error(mockError))
+      mockFlush.mockRejectedValueOnce(new Error(mockError))
 
-      await metrics[metricName]()
+      await metrics[metricName]('oidc-provider-name')
 
       expect(mockLogger.error).toHaveBeenCalledWith({
         message: mockError,

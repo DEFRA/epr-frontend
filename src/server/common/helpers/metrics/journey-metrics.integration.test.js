@@ -1,7 +1,6 @@
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
-import { afterEach, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 
-import { config } from '#config/config.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
@@ -20,6 +19,13 @@ import { beforeEach, it } from '#vite/fixtures/server.js'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { ServerInjectResponse } from '@hapi/hapi'
  */
+
+// Enablement is read once as the metrics module is evaluated, which happens
+// somewhere in the server's import graph -- too early for a beforeEach to
+// influence. Hoisting puts it ahead of every import in this file.
+vi.hoisted(() => {
+  process.env.ENABLE_METRICS = 'true'
+})
 
 // Nothing else drives real requests through a real yar session to prove the
 // seam between journeyMetrics and the controllers -- every other metrics test
@@ -104,11 +110,6 @@ const nextSessionCookie = (cookie, response) => {
 describe('journey metrics emit-once, driven through a real session', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    config.set('isMetricsEnabled', true)
-  })
-
-  afterEach(() => {
-    config.reset('isMetricsEnabled')
   })
 
   describe('summary log upload journey (success page re-renders on every poll)', () => {
