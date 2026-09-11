@@ -27,13 +27,9 @@ vi.hoisted(() => {
   process.env.ENABLE_METRICS = 'true'
 })
 
-// Nothing else drives real requests through a real yar session to prove the
-// seam between journeyMetrics and the controllers -- every other metrics test
-// either fakes the session (metrics/index.test.js) or mocks journeyMetrics
-// away entirely (each *-controller.test.js). Both stay green even if yar
-// isn't persisting the start marker, or a route double-fires. Only the
-// aws-embedded-metrics sink is mocked here, so the assertion is on what would
-// reach CloudWatch.
+// The only test driving real requests through a real yar session, so the only
+// one that catches a lost start marker or a double-firing route. Mocks the
+// aws-embedded-metrics sink alone.
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')

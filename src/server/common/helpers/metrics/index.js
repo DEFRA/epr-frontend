@@ -77,8 +77,6 @@ const enabledMetrics = {
     writeMetric('signOutSuccess', { oidcProvider })
 }
 
-export const metrics = orNoop(enabledMetrics)
-
 /**
  * @param {JourneyEntry} journey
  * @param {string} attempt
@@ -141,4 +139,7 @@ const enabledJourneyMetrics = {
   }
 }
 
-export const journeyMetrics = orNoop(enabledJourneyMetrics)
+export const metrics = {
+  ...orNoop(enabledMetrics),
+  journey: orNoop(enabledJourneyMetrics)
+}

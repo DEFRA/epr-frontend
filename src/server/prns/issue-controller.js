@@ -1,6 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -32,7 +32,7 @@ export const issueController = {
         prnNumber: updatedPrn.prnNumber
       })
 
-      await journeyMetrics.end(request, JOURNEY.issuePrn, prnId)
+      await metrics.journey.end(request, JOURNEY.issuePrn, prnId)
 
       return h.redirect(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`

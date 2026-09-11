@@ -4,7 +4,7 @@ import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const summaryLogUploadController = {
@@ -62,7 +62,7 @@ export const summaryLogUploadController = {
         : {}
 
       if (canUpload) {
-        await journeyMetrics.start(
+        await metrics.journey.start(
           request,
           JOURNEY.uploadSummaryLog,
           registrationId

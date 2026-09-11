@@ -1,17 +1,17 @@
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import {
   asPackagingRecyclingNote,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
@@ -80,13 +80,8 @@ const mockPrnIssued = asPackagingRecyclingNote({
   status: 'awaiting_acceptance'
 })
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 describe('#cancelController', () => {
   beforeEach(() => {
@@ -378,7 +373,7 @@ describe('#cancelController', () => {
     }) => {
       await server.inject({ method: 'GET', url: cancelUrl, auth: mockAuth })
 
-      expect(journeyMetrics.start).toHaveBeenCalledWith(
+      expect(metrics.journey.start).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.cancelPrn,
         prnId
@@ -400,7 +395,7 @@ describe('#cancelController', () => {
         payload: { crumb }
       })
 
-      expect(journeyMetrics.end).toHaveBeenCalledWith(
+      expect(metrics.journey.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.cancelPrn,
         prnId

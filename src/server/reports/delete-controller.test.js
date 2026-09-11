@@ -7,7 +7,7 @@ import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
@@ -40,13 +40,8 @@ const registrationId = 'reg-001'
 const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/delete`
 const reportAttempt = `${registrationId}/2026/quarterly/1/1`
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 describe('#deleteController', () => {
   beforeEach(() => {
@@ -401,7 +396,7 @@ describe('#deleteController', () => {
     }) => {
       await server.inject({ method: 'GET', url: baseUrl, auth: mockAuth })
 
-      expect(journeyMetrics.start).toHaveBeenCalledWith(
+      expect(metrics.journey.start).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.deleteReport,
         reportAttempt
@@ -423,7 +418,7 @@ describe('#deleteController', () => {
         payload: { crumb }
       })
 
-      expect(journeyMetrics.end).toHaveBeenCalledWith(
+      expect(metrics.journey.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.deleteReport,
         reportAttempt

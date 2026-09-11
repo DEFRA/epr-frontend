@@ -84,13 +84,11 @@ const createRequest = (yar = createYar()) =>
 describe('#metrics', () => {
   /** @type {typeof MetricsModule.metrics} */
   let metrics
-  /** @type {typeof MetricsModule.journeyMetrics} */
-  let journeyMetrics
 
   describe('when metrics is not enabled', () => {
     beforeEach(async () => {
       vi.clearAllMocks()
-      ;({ metrics, journeyMetrics } = await loadMetrics(false))
+      ;({ metrics } = await loadMetrics(false))
     })
 
     it.each(metricsNames)('does not record metric - %s', async (name) => {
@@ -103,7 +101,7 @@ describe('#metrics', () => {
     it('does not touch the session for a journey start', async () => {
       const yar = createYar()
 
-      await journeyMetrics.start(
+      await metrics.journey.start(
         createRequest(yar),
         JOURNEY.createReport,
         'a-1'
@@ -117,7 +115,7 @@ describe('#metrics', () => {
     it('does not touch the session for a journey end', async () => {
       const yar = createYar()
 
-      await journeyMetrics.end(createRequest(yar), JOURNEY.createReport, 'a-1')
+      await metrics.journey.end(createRequest(yar), JOURNEY.createReport, 'a-1')
 
       expect(yar.get).not.toHaveBeenCalled()
       expect(yar.clear).not.toHaveBeenCalled()
@@ -125,7 +123,8 @@ describe('#metrics', () => {
     })
 
     it('still exposes every metric name', () => {
-      expect(Object.keys(metrics)).toStrictEqual([...metricsNames])
+      expect(Object.keys(metrics)).toStrictEqual([...metricsNames, 'journey'])
+      expect(Object.keys(metrics.journey)).toStrictEqual(['start', 'end'])
     })
   })
 
@@ -164,11 +163,11 @@ describe('#metrics', () => {
 
     beforeEach(async () => {
       vi.clearAllMocks()
-      ;({ journeyMetrics } = await loadMetrics(true))
+      ;({ metrics } = await loadMetrics(true))
     })
 
     it('should record a start under a single metric name', async () => {
-      await journeyMetrics.start(
+      await metrics.journey.start(
         createRequest(),
         JOURNEY.uploadSummaryLog,
         attempt
@@ -184,9 +183,9 @@ describe('#metrics', () => {
 
     it('should record an end under a single metric name', async () => {
       const request = createRequest()
-      await journeyMetrics.start(request, JOURNEY.uploadSummaryLog, attempt)
+      await metrics.journey.start(request, JOURNEY.uploadSummaryLog, attempt)
 
-      await journeyMetrics.end(request, JOURNEY.uploadSummaryLog, attempt)
+      await metrics.journey.end(request, JOURNEY.uploadSummaryLog, attempt)
 
       expect(mockPutMetric).toHaveBeenCalledWith(
         'TransactionEnd',
@@ -197,7 +196,7 @@ describe('#metrics', () => {
     })
 
     it('should carry the start value as the journey dimension', async () => {
-      await journeyMetrics.start(createRequest(), JOURNEY.createPrn, attempt)
+      await metrics.journey.start(createRequest(), JOURNEY.createPrn, attempt)
 
       expect(mockSetDimensions).toHaveBeenCalledWith(
         { journey: 'SaveDraftPRNStart' },
@@ -206,16 +205,16 @@ describe('#metrics', () => {
     })
 
     it('should not carry the library default dimensions', async () => {
-      await journeyMetrics.start(createRequest(), JOURNEY.createPrn, attempt)
+      await metrics.journey.start(createRequest(), JOURNEY.createPrn, attempt)
 
       expect(mockPutDimensions).not.toHaveBeenCalled()
     })
 
     it('should carry the end value as the journey dimension', async () => {
       const request = createRequest()
-      await journeyMetrics.start(request, JOURNEY.issuePrn, attempt)
+      await metrics.journey.start(request, JOURNEY.issuePrn, attempt)
 
-      await journeyMetrics.end(request, JOURNEY.issuePrn, attempt)
+      await metrics.journey.end(request, JOURNEY.issuePrn, attempt)
 
       expect(mockSetDimensions).toHaveBeenCalledWith(
         { journey: 'IssuePRNEnd' },
@@ -226,8 +225,8 @@ describe('#metrics', () => {
     it('should record a start only once per attempt', async () => {
       const request = createRequest()
 
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
+      await metrics.journey.start(request, JOURNEY.createReport, attempt)
+      await metrics.journey.start(request, JOURNEY.createReport, attempt)
 
       expect(mockPutMetric).toHaveBeenCalledTimes(1)
     })
@@ -235,9 +234,9 @@ describe('#metrics', () => {
     it('should count a fresh start once the journey has ended', async () => {
       const request = createRequest()
 
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.end(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
+      await metrics.journey.start(request, JOURNEY.createReport, attempt)
+      await metrics.journey.end(request, JOURNEY.createReport, attempt)
+      await metrics.journey.start(request, JOURNEY.createReport, attempt)
 
       expect(mockPutMetric).toHaveBeenCalledTimes(3)
     })
@@ -245,8 +244,8 @@ describe('#metrics', () => {
     it('should track each journey separately', async () => {
       const request = createRequest()
 
-      await journeyMetrics.start(request, JOURNEY.createReport, attempt)
-      await journeyMetrics.start(request, JOURNEY.uploadSummaryLog, attempt)
+      await metrics.journey.start(request, JOURNEY.createReport, attempt)
+      await metrics.journey.start(request, JOURNEY.uploadSummaryLog, attempt)
 
       expect(mockPutMetric).toHaveBeenCalledTimes(2)
     })
@@ -254,14 +253,14 @@ describe('#metrics', () => {
     it('should record a start per attempt at the same journey', async () => {
       const request = createRequest()
 
-      await journeyMetrics.start(request, JOURNEY.deleteReport, 'report-1')
-      await journeyMetrics.start(request, JOURNEY.deleteReport, 'report-2')
+      await metrics.journey.start(request, JOURNEY.deleteReport, 'report-1')
+      await metrics.journey.start(request, JOURNEY.deleteReport, 'report-2')
 
       expect(mockPutMetric).toHaveBeenCalledTimes(2)
     })
 
     it('should not record an end for an attempt that never started', async () => {
-      await journeyMetrics.end(createRequest(), JOURNEY.deleteReport, attempt)
+      await metrics.journey.end(createRequest(), JOURNEY.deleteReport, attempt)
 
       expect(mockPutMetric).not.toHaveBeenCalled()
     })
@@ -269,8 +268,8 @@ describe('#metrics', () => {
     it('should not record an end for a different attempt at the same journey', async () => {
       const request = createRequest()
 
-      await journeyMetrics.start(request, JOURNEY.cancelPrn, 'note-1')
-      await journeyMetrics.end(request, JOURNEY.cancelPrn, 'note-2')
+      await metrics.journey.start(request, JOURNEY.cancelPrn, 'note-1')
+      await metrics.journey.end(request, JOURNEY.cancelPrn, 'note-2')
 
       expect(mockPutMetric).toHaveBeenCalledTimes(1)
     })
@@ -278,9 +277,9 @@ describe('#metrics', () => {
     it('should record only one end per start', async () => {
       const request = createRequest()
 
-      await journeyMetrics.start(request, JOURNEY.cancelPrn, attempt)
-      await journeyMetrics.end(request, JOURNEY.cancelPrn, attempt)
-      await journeyMetrics.end(request, JOURNEY.cancelPrn, attempt)
+      await metrics.journey.start(request, JOURNEY.cancelPrn, attempt)
+      await metrics.journey.end(request, JOURNEY.cancelPrn, attempt)
+      await metrics.journey.end(request, JOURNEY.cancelPrn, attempt)
 
       expect(mockPutMetric).toHaveBeenCalledTimes(2)
     })

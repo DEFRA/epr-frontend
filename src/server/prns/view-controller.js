@@ -17,7 +17,7 @@ import {
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { buildPrnBasePath } from './helpers/fetch-prn-context.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
@@ -199,7 +199,7 @@ const confirmDraft = async (
     isDecemberWaste: prnDraft.isDecemberWaste
   })
 
-  await journeyMetrics.end(request, JOURNEY.createPrn, accreditationId)
+  await metrics.journey.end(request, JOURNEY.createPrn, accreditationId)
 
   return h.redirect(
     `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/${prnId}/created`

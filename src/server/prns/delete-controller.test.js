@@ -11,7 +11,7 @@ import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
@@ -79,13 +79,8 @@ const mockPrnIssued = asPackagingRecyclingNote({
   status: 'awaiting_acceptance'
 })
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 describe('#deleteController', () => {
   beforeEach(() => {
@@ -359,7 +354,7 @@ describe('#deleteController', () => {
     }) => {
       await server.inject({ method: 'GET', url: deleteUrl, auth: mockAuth })
 
-      expect(journeyMetrics.start).toHaveBeenCalledWith(
+      expect(metrics.journey.start).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.deletePrn,
         prnId
@@ -381,7 +376,7 @@ describe('#deleteController', () => {
         payload: { crumb }
       })
 
-      expect(journeyMetrics.end).toHaveBeenCalledWith(
+      expect(metrics.journey.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.deletePrn,
         prnId
