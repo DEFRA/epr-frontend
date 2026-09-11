@@ -2,6 +2,7 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
+import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 
 /**
  * Build view data for the create PRN/PERN page
@@ -11,8 +12,8 @@ import { NOTES_MAX_LENGTH } from './constants.js'
  * @param {string} options.registrationId
  * @param {Registration & { nation?: string }} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
- * @param {{availableAmount: number} | null} [options.wasteBalance]
- * @param {boolean} options.canDeclareDecemberWasteManually
+ * @param {WasteBalance | null} [options.wasteBalance]
+ * @param {DecemberWasteControl} options.decemberWasteControl
  * @returns {object}
  */
 export function buildCreatePrnViewData(
@@ -23,7 +24,7 @@ export function buildCreatePrnViewData(
     registration,
     registrationId,
     wasteBalance,
-    canDeclareDecemberWasteManually
+    decemberWasteControl
   }
 ) {
   const { t: localise } = request
@@ -32,22 +33,22 @@ export function buildCreatePrnViewData(
   const pageTitle = localise('prns:create:pageTitle', { noteType })
   const material = getRegistrationMaterialDisplayName(registration)
 
-  const wasteBalanceText = wasteBalance
-    ? localise('prns:create:wasteBalanceText', {
-        noteTypePlural,
-        balance: formatTonnage(wasteBalance.availableAmount)
-      })
-    : null
+  const isPoolMode =
+    decemberWasteControl.mode === DECEMBER_WASTE_CONTROL.selectPool
 
-  const decemberWaste = canDeclareDecemberWasteManually
-    ? {
-        legend: localise('prns:create:decemberWasteLegend'),
-        items: [
-          { value: 'false', text: localise('prns:decemberWasteNo') },
-          { value: 'true', text: localise('prns:decemberWasteYes') }
-        ]
-      }
-    : null
+  const wasteBalanceText = isPoolMode
+    ? decemberWasteControl.insetText
+    : wasteBalance
+      ? localise('prns:create:wasteBalanceText', {
+          noteTypePlural,
+          balance: formatTonnage(wasteBalance.availableAmount)
+        })
+      : null
+
+  const decemberWaste =
+    decemberWasteControl.mode === DECEMBER_WASTE_CONTROL.none
+      ? null
+      : decemberWasteControl
 
   return {
     pageTitle,
@@ -94,4 +95,6 @@ export function buildCreatePrnViewData(
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
+ * @import { DecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
  */

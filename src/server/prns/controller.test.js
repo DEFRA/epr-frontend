@@ -73,6 +73,7 @@ describe('#createPrnController', () => {
     vi.clearAllMocks()
     vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
       declaresDecemberWasteManually: false,
+      accruesDecemberWasteBalance: false,
       windowOpen: false
     })
   })
@@ -523,6 +524,75 @@ describe('#createPrnController', () => {
 
         const insetText = main.querySelector('.govuk-inset-text')
         expect(insetText).toBeNull()
+      })
+    })
+
+    describe('select waste balance pool', () => {
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          declaresDecemberWasteManually: false,
+          accruesDecemberWasteBalance: true,
+          windowOpen: true
+        })
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 60,
+          availableAmount: 60,
+          decemberAmount: 50,
+          decemberAvailableAmount: 50
+        })
+      })
+
+      it('renders both balance radios with their tonnages, and the either-balance inset text', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const decemberRadio = getByLabelText(
+          main,
+          /December waste balance \(50\.00 tonnes\)/i
+        )
+        expect(decemberRadio.getAttribute('type')).toBe('radio')
+
+        const generalRadio = getByLabelText(
+          main,
+          /Non-December waste balance \(10\.00 tonnes\)/i
+        )
+        expect(generalRadio.getAttribute('type')).toBe('radio')
+
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText.textContent).toContain(
+          'You can create PRNs from either waste balance.'
+        )
+      })
+
+      it('does not render the manual December Yes/No question', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Select which waste balance/i)).toBeDefined()
+        expect(main.textContent).not.toContain('Is this December waste?')
       })
     })
 

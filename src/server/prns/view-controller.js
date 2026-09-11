@@ -8,6 +8,7 @@ import {
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { availableForPool } from '#server/common/helpers/waste-balance/available-for-pool.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnCoreRows,
@@ -91,8 +92,14 @@ export const viewPostController = {
         [accreditationId],
         session.backendToken
       )
-      const availableAmount =
-        wasteBalanceMap[accreditationId]?.availableAmount ?? 0
+      const balance = wasteBalanceMap[accreditationId] ?? {
+        amount: 0,
+        availableAmount: 0
+      }
+      const availableAmount = availableForPool(
+        balance,
+        prnDraft.isDecemberWaste
+      )
       const prnParams = {
         organisationId,
         registrationId,
@@ -164,8 +171,10 @@ const discardDraftOverBalance = async (
 
   request.yar.clear('prnDraft')
 
+  const poolParam = prnDraft.isDecemberWaste ? '&pool=december' : ''
+
   return h.redirect(
-    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance`
+    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance${poolParam}`
   )
 }
 

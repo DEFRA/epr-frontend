@@ -1,5 +1,6 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
@@ -11,7 +12,8 @@ import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
-import { resolveCanDeclareDecemberWasteManually } from './helpers/can-declare-december-waste-manually.js'
+import { resolveDecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
+import { resolveInsufficientBalanceMessageKey } from './helpers/insufficient-balance-error.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
@@ -139,57 +141,79 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
  * form, shared by the three re-render paths (insufficient balance, invalid
  * recipient, validation failAction) so they can't drift on which calls they
  * make.
+ * @param {HapiRequest} request
  * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
  * @param {string} backendToken
- * @returns {Promise<{ registration: object, canDeclareDecemberWasteManually: boolean }>}
+ * @returns {Promise<{ registration: object, wasteBalance: WasteBalance | null, decemberWasteControl: DecemberWasteControl }>}
  */
 async function fetchCreatePrnViewDataInputs(
+  request,
   { organisationId, registrationId, accreditationId },
   backendToken
 ) {
-  const [{ registration }, decemberPrnEligibility] = await Promise.all([
-    getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      backendToken,
-      accreditationId
-    }),
-    fetchDecemberPrnEligibility(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
-    )
-  ])
+  const [{ registration }, wasteBalance, decemberPrnEligibility] =
+    await Promise.all([
+      getRequiredRegistrationWithAccreditation({
+        organisationId,
+        registrationId,
+        backendToken,
+        accreditationId
+      }),
+      getWasteBalance(
+        organisationId,
+        accreditationId,
+        backendToken,
+        request.logger
+      ),
+      fetchDecemberPrnEligibility(
+        organisationId,
+        registrationId,
+        accreditationId,
+        backendToken
+      )
+    ])
+
+  const { noteTypePlural } = getNoteTypeDisplayNames(registration)
 
   return {
     registration,
-    canDeclareDecemberWasteManually: resolveCanDeclareDecemberWasteManually(
-      decemberPrnEligibility
+    wasteBalance,
+    decemberWasteControl: resolveDecemberWasteControl(
+      decemberPrnEligibility,
+      request.t,
+      noteTypePlural,
+      wasteBalance
     )
   }
 }
 
 /**
  * Re-render the create form when the backend rejects draft creation because
- * the entered tonnage exceeds the available waste balance. The balance passed
- * in is used only to render the hint; the rejection decision is the backend's.
+ * the entered tonnage exceeds the available waste balance. The rejection
+ * decision is the backend's; the frontend picks the message wording from
+ * which pot the operator submitted, since the backend's 409 carries no pool
+ * discriminator by design (ADR-0049).
  * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
  * @param {ResponseToolkit} h
  * @param {Array<WasteOrganisation>} organisations
- * @param {WasteBalance | null} wasteBalance
  */
-async function handleInsufficientBalance(
-  request,
-  h,
-  organisations,
-  wasteBalance
-) {
+async function handleInsufficientBalance(request, h, organisations) {
   const { organisationId, registrationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
 
-  const message = localise('prns:insufficientBalanceError')
+  const { registration, wasteBalance, decemberWasteControl } =
+    await fetchCreatePrnViewDataInputs(
+      request,
+      request.params,
+      session.backendToken
+    )
+
+  const messageKey = resolveInsufficientBalanceMessageKey(
+    decemberWasteControl.mode,
+    request.payload.isDecemberWaste
+  )
+  const message = localise(messageKey)
 
   const errors = { tonnage: { text: message } }
   const errorSummary = {
@@ -197,16 +221,13 @@ async function handleInsufficientBalance(
     list: [{ text: message, href: '#tonnage' }]
   }
 
-  const { registration, canDeclareDecemberWasteManually } =
-    await fetchCreatePrnViewDataInputs(request.params, session.backendToken)
-
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
     recipients: mapToSelectOptions(organisations),
     registration,
     registrationId,
     wasteBalance,
-    canDeclareDecemberWasteManually
+    decemberWasteControl
   })
 
   return h.view(CREATE_VIEW, {
@@ -258,9 +279,8 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
  * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
  * @param {ResponseToolkit} h
  * @param {Array<WasteOrganisation>} organisations
- * @param {WasteBalance | null} wasteBalance - reused from the handler's submission-time fetch
  */
-async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
+async function handleInvalidRecipient(request, h, organisations) {
   const { organisationId, registrationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
@@ -276,8 +296,12 @@ async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
     list: [{ text: message, href: '#recipient' }]
   }
 
-  const { registration, canDeclareDecemberWasteManually } =
-    await fetchCreatePrnViewDataInputs(request.params, session.backendToken)
+  const { registration, wasteBalance, decemberWasteControl } =
+    await fetchCreatePrnViewDataInputs(
+      request,
+      request.params,
+      session.backendToken
+    )
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
@@ -285,7 +309,7 @@ async function handleInvalidRecipient(request, h, organisations, wasteBalance) {
     registration,
     registrationId,
     wasteBalance,
-    canDeclareDecemberWasteManually
+    decemberWasteControl
   })
 
   return h.view(CREATE_VIEW, {
@@ -308,8 +332,7 @@ export const postController = {
        *   payload validation configured this is always the Joi ValidationError.
        */
       failAction: async (request, h, error) => {
-        const { organisationId, registrationId, accreditationId } =
-          request.params
+        const { organisationId, registrationId } = request.params
         const session = request.auth.credentials
 
         const { t: localise } = request
@@ -320,28 +343,13 @@ export const postController = {
         )
 
         const [
-          { registration },
           { organisations },
-          wasteBalance,
-          decemberPrnEligibility
+          { registration, wasteBalance, decemberWasteControl }
         ] = await Promise.all([
-          getRequiredRegistrationWithAccreditation({
-            organisationId,
-            registrationId,
-            backendToken: session.backendToken,
-            accreditationId
-          }),
           request.wasteOrganisationsService.getOrganisations(),
-          getWasteBalance(
-            organisationId,
-            accreditationId,
-            session.backendToken,
-            request.logger
-          ),
-          fetchDecemberPrnEligibility(
-            organisationId,
-            registrationId,
-            accreditationId,
+          fetchCreatePrnViewDataInputs(
+            request,
+            request.params,
             session.backendToken
           )
         ])
@@ -352,8 +360,7 @@ export const postController = {
           registration,
           registrationId,
           wasteBalance,
-          canDeclareDecemberWasteManually:
-            resolveCanDeclareDecemberWasteManually(decemberPrnEligibility)
+          decemberWasteControl
         })
 
         return h
@@ -376,20 +383,13 @@ export const postController = {
     const session = request.auth.credentials
     const { tonnage, recipient, notes, isDecemberWaste } = request.payload
 
-    const [{ organisations }, wasteBalance] = await Promise.all([
-      request.wasteOrganisationsService.getOrganisations(),
-      getWasteBalance(
-        organisationId,
-        accreditationId,
-        session.backendToken,
-        request.logger
-      )
-    ])
+    const { organisations } =
+      await request.wasteOrganisationsService.getOrganisations()
 
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      return handleInvalidRecipient(request, h, organisations, wasteBalance)
+      return handleInvalidRecipient(request, h, organisations)
     }
 
     const issuedToOrganisation = {
@@ -428,12 +428,7 @@ export const postController = {
       )
     } catch (error) {
       if (error.output?.payload?.code === INSUFFICIENT_BALANCE_CODE) {
-        return handleInsufficientBalance(
-          request,
-          h,
-          organisations,
-          wasteBalance
-        )
+        return handleInsufficientBalance(request, h, organisations)
       }
 
       if (error.isBoom) {
@@ -461,4 +456,5 @@ export const postController = {
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { CreatePrnResponse } from './helpers/create-prn.js'
  * @import { PrnListParams } from './helpers/session-types.js'
+ * @import { DecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
  */

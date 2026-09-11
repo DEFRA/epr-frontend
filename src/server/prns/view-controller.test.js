@@ -1943,6 +1943,146 @@ describe('#viewController', () => {
         )
       })
 
+      it('discards a December draft whose tonnage fits the total but not the December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: true })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 1000,
+            decemberAmount: 60,
+            decemberAvailableAmount: 60
+          }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toContain('error=insufficient_balance')
+      })
+
+      it('confirms a general draft whose tonnage fits total minus the reserved December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: false })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 1100,
+            decemberAmount: 50,
+            decemberAvailableAmount: 50
+          }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createdUrl)
+      })
+
+      it('discards a general draft whose tonnage exceeds total minus the reserved December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: false })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 130,
+            decemberAmount: 50,
+            decemberAvailableAmount: 50
+          }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toContain('error=insufficient_balance')
+      })
+
       it('treats missing waste balance as zero available', async ({
         server
       }) => {

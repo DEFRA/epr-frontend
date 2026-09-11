@@ -30,6 +30,7 @@
   "create": {
     "caption": "Create {{noteType}}",
     "checkHeading": "Check before creating {{noteType}}",
+    "decemberBalanceOption": "December waste balance ({{balance}} tonnes)",
     "decemberWasteLegend": "Is this December waste?",
     "checkIntroText": "Check the following information is correct before creating this {{noteType}}.",
     "checkAuthorisationText": "When created, the {{noteType}} will need to be authorised and issued by a {{noteType}} signatory from your company.",
@@ -38,14 +39,17 @@
     "createButton": "Create {{noteType}}",
     "discardLink": "Discard and start again",
     "helpIntro": "{{noteTypePlural}} can only be issued to packaging producers and compliance schemes who have registered with regulators.",
+    "nonDecemberBalanceOption": "Non-December waste balance ({{balance}} tonnes)",
     "notesHint": "These notes will appear on the {{noteType}}",
     "pageTitle": "Create a {{noteType}}",
     "recipientLabel": "Enter who this {{noteType}} will be issued to",
+    "selectBalanceLegend": "Select which waste balance",
     "submitButton": "Continue",
     "successHeading": "{{noteType}} created",
     "successHeadingDecemberWaste": "{{noteType}} created from December waste",
     "successPageTitle": "{{noteType}} created",
     "tonnageLabel": "Enter {{noteType}} tonnage",
+    "wasteBalanceEitherText": "You can create {{noteTypePlural}} from either waste balance.",
     "wasteBalanceText": "Your waste balance available for creating {{noteTypePlural}} is {{balance}} tonnes."
   },
   "created": {
@@ -80,6 +84,8 @@
   },
   "errorSummaryTitle": "There is a problem",
   "errors": {
+    "insufficientDecemberBalance": "The tonnage you entered exceeds your available December waste balance",
+    "insufficientNonDecemberBalance": "The tonnage you entered exceeds your available non-December waste balance",
     "notesTooLong": "Enter a maximum of 200 characters",
     "recipientInvalid": "Select a valid packaging producer or compliance scheme",
     "recipientRequired": "Enter a packaging producer or compliance scheme",

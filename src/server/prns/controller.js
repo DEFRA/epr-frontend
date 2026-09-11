@@ -1,19 +1,34 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
-import { resolveCanDeclareDecemberWasteManually } from './helpers/can-declare-december-waste-manually.js'
+import { resolveDecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
+import { resolveInsufficientBalanceMessageKey } from './helpers/insufficient-balance-error.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
- * Build error data for insufficient balance redirect
+ * Build error data for insufficient balance redirect. `pool` is `'december'`
+ * when the discarded draft over-spent its December pool - see
+ * discardDraftOverBalance in view-controller.js, the only writer of the
+ * `pool` query param.
  * @param {(key: string) => string} localise
+ * @param {string} decemberWasteControlMode
+ * @param {string} [pool]
  * @returns {{errors: object, errorSummary: {title: string, list: Array}}}
  */
-function buildInsufficientBalanceError(localise) {
-  const message = localise('prns:insufficientBalanceError')
+function buildInsufficientBalanceError(
+  localise,
+  decemberWasteControlMode,
+  pool
+) {
+  const messageKey = resolveInsufficientBalanceMessageKey(
+    decemberWasteControlMode,
+    pool === 'december'
+  )
+  const message = localise(messageKey)
   return {
     errors: {},
     errorSummary: {
@@ -57,15 +72,21 @@ export const controller = {
         )
       ])
 
+    const { noteTypePlural } = getNoteTypeDisplayNames(registration)
+    const decemberWasteControl = resolveDecemberWasteControl(
+      decemberPrnEligibility,
+      request.t,
+      noteTypePlural,
+      wasteBalance
+    )
+
     const viewData = buildCreatePrnViewData(request, {
       organisationId,
       recipients: mapToSelectOptions(organisations),
       registration,
       registrationId,
       wasteBalance,
-      canDeclareDecemberWasteManually: resolveCanDeclareDecemberWasteManually(
-        decemberPrnEligibility
-      )
+      decemberWasteControl
     })
 
     await journeyMetrics.start(request, JOURNEY.createPrn, accreditationId)
@@ -75,7 +96,11 @@ export const controller = {
     const errorParam = request.query.error
 
     if (errorParam === 'insufficient_balance') {
-      const { errors, errorSummary } = buildInsufficientBalanceError(localise)
+      const { errors, errorSummary } = buildInsufficientBalanceError(
+        localise,
+        decemberWasteControl.mode,
+        /** @type {string | undefined} */ (request.query.pool)
+      )
       return h.view('prns/create', { ...viewData, errors, errorSummary })
     }
 
