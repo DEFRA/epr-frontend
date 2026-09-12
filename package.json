@@ -108,7 +108,7 @@
     "@types/nunjucks": "3.2.6",
     "@vitest/coverage-v8": "4.1.11",
     "@vitest/eslint-plugin": "1.6.27",
-    "@vitest/ui": "4.1.11",
+    "@vitest/ui": "5.0.0",
     "autoprefixer": "10.5.4",
     "babel-loader": "10.1.1",
     "cheerio": "1.2.0",
