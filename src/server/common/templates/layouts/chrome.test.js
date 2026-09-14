@@ -77,13 +77,11 @@ describe('the chrome around an organisation page', () => {
   })
 
   describe('for a regulator', () => {
-    it('calls the service by a name that says they read it', async ({
-      server
-    }) => {
+    it('calls the service by its regulator name', async ({ server }) => {
       const body = await renderOrganisationPage(server, regulatorAuth)
 
       expect(serviceLink(body)).toHaveTextContent(
-        'Access reprocessed or exported packaging waste data'
+        'Record reprocessed or exported packaging waste: regulators'
       )
     })
 
@@ -130,7 +128,7 @@ describe('the chrome around an organisation page', () => {
       })
 
       expect(new JSDOM(asHtml(result)).window.document.title).toMatch(
-        /\| Access reprocessed or exported packaging waste data$/
+        /\| Record reprocessed or exported packaging waste: regulators$/
       )
     })
   })

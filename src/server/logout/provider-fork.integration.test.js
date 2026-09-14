@@ -95,8 +95,8 @@ describe('which sign out page a provider sends a user to', () => {
         url: '/regulators/logged-out'
       })
 
-      expect(asHtml(result)).not.toContain(
-        'Record reprocessed or exported packaging waste'
+      expect(asHtml(result)).not.toMatch(
+        /Record reprocessed or exported packaging waste(?!: regulators)/
       )
     })
   })
