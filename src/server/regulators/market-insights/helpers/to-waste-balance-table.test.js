@@ -157,6 +157,30 @@ describe(toWasteBalanceTable, () => {
     ])
   })
 
+  it('totals the cells it shows, so a figure the columns do not cover is not counted', () => {
+    /** @type {WasteBalanceFigure} */
+    const glassReprocessedInMarch = {
+      ...glassReprocessedInJanuary,
+      month: '2026-03',
+      netCredit: 1000
+    }
+
+    expect(
+      toWasteBalanceTable(
+        [glassReprocessedInJanuary, glassReprocessedInMarch],
+        januaryAndFebruary,
+        asKey
+      ).rows
+    ).toStrictEqual([
+      {
+        material: 'Glass Re-melt',
+        accreditationType: reprocessor,
+        netCredits: ['90.00', '0.00'],
+        total: '90.00'
+      }
+    ])
+  })
+
   it('names a material the backend could not resolve, rather than heading the row with a blank', () => {
     expect(
       toWasteBalanceTable(

@@ -89,19 +89,19 @@ export const toWasteBalanceTable = (figures, months, localise) => {
         one.material.localeCompare(other.material) ||
         one.accreditationType.localeCompare(other.accreditationType)
     )
-    .map(({ material, accreditationType, netCredits }) => ({
-      material,
-      accreditationType,
+    .map(({ material, accreditationType, netCredits }) => {
       // The published tab holds its approved layout by printing a zero in every
       // month a row reported nothing, so a month missing from the aggregate
       // reads the same here as it does there.
-      netCredits: months.map((month) =>
-        formatTonnage(netCredits.get(month) ?? 0)
-      ),
-      total: formatTonnage(
-        [...netCredits.values()].reduce((sum, credit) => sum + credit, 0)
-      )
-    }))
+      const cells = months.map((month) => netCredits.get(month) ?? 0)
+
+      return {
+        material,
+        accreditationType,
+        netCredits: cells.map((credit) => formatTonnage(credit)),
+        total: formatTonnage(cells.reduce((sum, credit) => sum + credit, 0))
+      }
+    })
 
   return { months: months.map(nameOf), rows }
 }
