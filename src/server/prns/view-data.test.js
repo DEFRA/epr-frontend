@@ -10,12 +10,13 @@ const createMockRequest = () =>
   mockHapiRequest({
     t: vi.fn((key, params = {}) => {
       const translations = {
-        'prns:create:pageTitle': `Create a ${params.noteType}`,
+        'prns:create:caption': `Create ${params.noteType}`,
+        'prns:create:pageTitle': `Enter ${params.noteType} details`,
         'prns:materialLabel': 'Material',
         'prns:create:tonnageLabel': `Enter ${params.noteType} tonnage`,
         'prns:tonnageHint': 'Enter a whole number without decimal places',
         'prns:tonnageSuffix': 'tonnes',
-        'prns:create:recipientLabel': `Enter who this ${params.noteType} will be issued to`,
+        'prns:create:recipientLabel': `Who will this ${params.noteType} be issued to?`,
         'prns:recipientHint':
           'Start typing the name of the packaging producer or compliance scheme',
         'prns:selectOption': 'Select an option',
@@ -82,7 +83,7 @@ describe('#buildCreatePrnViewData', () => {
   })
 
   describe('for reprocessor (PRN)', () => {
-    it('should return page title and heading with PRN text', () => {
+    it('should return caption, page title and heading with PRN text', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
@@ -91,8 +92,9 @@ describe('#buildCreatePrnViewData', () => {
         canDeclareDecemberWasteManually: notEligible
       })
 
-      expect(result.pageTitle).toBe('Create a PRN')
-      expect(result.heading).toBe('Create a PRN')
+      expect(result.caption).toBe('Create PRN')
+      expect(result.pageTitle).toBe('Enter PRN details')
+      expect(result.heading).toBe('Enter PRN details')
     })
 
     it('should return material with display name', () => {
@@ -118,9 +120,7 @@ describe('#buildCreatePrnViewData', () => {
       })
 
       expect(result.tonnage.label).toBe('Enter PRN tonnage')
-      expect(result.recipient.label).toBe(
-        'Enter who this PRN will be issued to'
-      )
+      expect(result.recipient.label).toBe('Who will this PRN be issued to?')
       expect(result.notes.hint).toBe('These notes will appear on the PRN')
       expect(result.notes.maxLength).toBe(200)
       expect(result.help.intro).toContain('PRNs can only be issued')
@@ -162,7 +162,7 @@ describe('#buildCreatePrnViewData', () => {
   })
 
   describe('for exporter (PERN)', () => {
-    it('should return page title and heading with PERN text', () => {
+    it('should return caption, page title and heading with PERN text', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
         organisationId: 'org-456',
         registrationId: 'reg-002',
@@ -171,8 +171,9 @@ describe('#buildCreatePrnViewData', () => {
         canDeclareDecemberWasteManually: notEligible
       })
 
-      expect(result.pageTitle).toBe('Create a PERN')
-      expect(result.heading).toBe('Create a PERN')
+      expect(result.caption).toBe('Create PERN')
+      expect(result.pageTitle).toBe('Enter PERN details')
+      expect(result.heading).toBe('Enter PERN details')
     })
 
     it('should return material with display name for non-glass', () => {
@@ -198,9 +199,7 @@ describe('#buildCreatePrnViewData', () => {
       })
 
       expect(result.tonnage.label).toBe('Enter PERN tonnage')
-      expect(result.recipient.label).toBe(
-        'Enter who this PERN will be issued to'
-      )
+      expect(result.recipient.label).toBe('Who will this PERN be issued to?')
       expect(result.notes.hint).toBe('These notes will appear on the PERN')
       expect(result.help.intro).toContain('PERNs can only be issued')
     })
