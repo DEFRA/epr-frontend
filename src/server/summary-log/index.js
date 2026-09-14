@@ -1,5 +1,9 @@
 import { summaryLogUploadProgressController } from '#server/summary-log/controller.js'
 import {
+  summaryLogCsvDownloadController,
+  summaryLogCsvDownloadPath
+} from '#server/summary-log/csv-download-controller.js'
+import {
   summaryLogDownloadController,
   summaryLogDownloadPath
 } from '#server/summary-log/download-controller.js'
@@ -24,6 +28,11 @@ export const summaryLog = {
           ...summaryLogDownloadController,
           method: 'GET',
           path: summaryLogDownloadPath
+        },
+        {
+          ...summaryLogCsvDownloadController,
+          method: 'GET',
+          path: summaryLogCsvDownloadPath
         }
       ])
     }

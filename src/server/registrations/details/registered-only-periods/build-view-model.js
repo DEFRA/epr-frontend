@@ -1,3 +1,4 @@
+import { offersWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
@@ -220,6 +221,8 @@ const toLedger = ({
       localise,
       localiseUrl,
       noteType,
+      // The page is regulator-only, so the flag is the whole question here.
+      offersCsvDownloads: offersWasteRecordsDownloads(),
       offersDownloads: true,
       organisationId,
       registrationId: registration.id
