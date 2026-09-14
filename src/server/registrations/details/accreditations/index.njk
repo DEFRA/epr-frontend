@@ -20,6 +20,8 @@
         {% for row in summaryRows %}
           {% if row.status %}
             {% set value = { html: govukTag({ text: row.status.text, classes: row.status.classes }) } %}
+          {% elif row.html %}
+            {% set value = { html: row.html } %}
           {% else %}
             {% set value = { text: row.value } %}
           {% endif %}
