@@ -13,7 +13,7 @@ import { paths } from '#server/paths.js'
  */
 export const SIGN_IN_PROVIDER_COOKIE = 'signInProvider'
 
-const THIRTY_DAYS_IN_MILLISECONDS = 30 * 24 * 60 * 60 * 1000
+const THIRTY_DAYS_IN_MILLISECONDS = 2592000000
 
 /**
  * `Lax`, so the cookie is sent when the provider redirects back after sign out.
