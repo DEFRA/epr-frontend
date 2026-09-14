@@ -422,6 +422,40 @@ const toLedger = ({
 }
 
 /**
+ * The trail down to the accreditation, ending on this page unlinked.
+ * @param {{
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   name: string,
+ *   organisation: Organisation,
+ *   pageName: string,
+ *   registration: Registration
+ * }} params
+ * @returns {Crumb[]}
+ */
+const toBreadcrumbs = ({
+  localise,
+  localiseUrl,
+  name,
+  organisation,
+  pageName,
+  registration
+}) => [
+  {
+    text: localise('registrations:details:allOrganisations'),
+    href: localiseUrl(paths.regulators.home)
+  },
+  { text: name, href: localiseUrl(`/organisations/${organisation.id}`) },
+  {
+    text: localise('registrations:details:heading'),
+    href: localiseUrl(
+      `/organisations/${organisation.id}/registrations/${registration.id}`
+    )
+  },
+  { text: pageName }
+]
+
+/**
  * @param {{
  *   organisation: Organisation,
  *   registration: Registration,
@@ -449,22 +483,17 @@ export const buildViewModel = ({
   localiseUrl
 }) => {
   const name = organisationName(organisation)
-  const registrationPath = `/organisations/${organisation.id}/registrations/${registration.id}`
   const pageName = localise('registrations:details:accreditation:breadcrumb')
 
   return {
-    breadcrumbs: [
-      {
-        text: localise('registrations:details:allOrganisations'),
-        href: localiseUrl(paths.regulators.home)
-      },
-      { text: name, href: localiseUrl(`/organisations/${organisation.id}`) },
-      {
-        text: localise('registrations:details:heading'),
-        href: localiseUrl(registrationPath)
-      },
-      { text: pageName }
-    ],
+    breadcrumbs: toBreadcrumbs({
+      localise,
+      localiseUrl,
+      name,
+      organisation,
+      pageName,
+      registration
+    }),
     caption: toCaption([
       name,
       registration.registrationNumber,
