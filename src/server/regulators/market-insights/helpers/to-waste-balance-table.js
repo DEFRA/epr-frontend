@@ -57,14 +57,10 @@ import { nameOf } from './reporting-period.js'
  * @returns {WasteBalanceTable}
  */
 export const toWasteBalanceTable = (figures, months, localise) => {
-  const withinPeriod = new Set(months)
-
   /** @type {Map<string, WasteBalancePartition>} */
   const partitions = new Map()
 
-  const credited = figures.filter(({ month }) => withinPeriod.has(month))
-
-  for (const { material, accreditationType, month, netCredit } of credited) {
+  for (const { material, accreditationType, month, netCredit } of figures) {
     // The service could not resolve a material for these figures. The label
     // says so of us rather than of the operator, who did report one, and
     // heading the row with it keeps real tonnage from sitting beside a blank.

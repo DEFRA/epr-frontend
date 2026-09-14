@@ -157,32 +157,6 @@ describe(toWasteBalanceTable, () => {
     ])
   })
 
-  // The backend serves the month still running, and the total has to match the
-  // cells beside it, so a figure outside the period leaves neither behind.
-  it('leaves out a figure credited outside the reporting period', () => {
-    /** @type {WasteBalanceFigure} */
-    const glassReprocessedInMarch = {
-      ...glassReprocessedInJanuary,
-      month: '2026-03',
-      netCredit: 1000
-    }
-
-    expect(
-      toWasteBalanceTable(
-        [glassReprocessedInJanuary, glassReprocessedInMarch],
-        januaryAndFebruary,
-        asKey
-      ).rows
-    ).toStrictEqual([
-      {
-        material: 'Glass Re-melt',
-        accreditationType: reprocessor,
-        netCredits: ['90.00', '0.00'],
-        total: '90.00'
-      }
-    ])
-  })
-
   it('names a material the backend could not resolve, rather than heading the row with a blank', () => {
     expect(
       toWasteBalanceTable(

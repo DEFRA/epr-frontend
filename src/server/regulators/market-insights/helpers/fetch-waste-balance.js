@@ -3,24 +3,26 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 /** @import { WasteBalanceFigure } from './to-waste-balance-table.js' */
 
 /**
- * The UK waste balance aggregate for one reporting year, as the backend
+ * The UK waste balance aggregate for a reporting period, as the backend
  * returns it. Every figure is already summed by material, accreditation type
  * and month, so nothing here is recomputed on the way to the page.
  * @typedef {{
- *   meta: { generatedAt: string, reportingYear: number },
+ *   meta: { generatedAt: string },
  *   data: WasteBalanceFigure[]
  * }} WasteBalanceAggregate
  */
 
 /**
- * Fetches the waste balance figures a reporting year is published from.
- * @param {{ year: number, backendToken: string }} query
+ * Fetches the waste balance figures from January through a reporting month.
+ * The backend rejects a month that has not ended, so the page can only ask for
+ * complete ones.
+ * @param {{ year: number, month: number, backendToken: string }} period
  * @returns {Promise<WasteBalanceAggregate>}
  */
-export const fetchWasteBalance = async ({ year, backendToken }) =>
+export const fetchWasteBalance = async ({ year, month, backendToken }) =>
   /** @type {Promise<WasteBalanceAggregate>} */ (
     fetchJsonFromBackend(
-      `/v1/market-insights/waste-balance?year=${encodeURIComponent(year)}`,
+      `/v1/market-insights/${year}/monthly/${month}/waste-balance`,
       {
         method: 'GET',
         headers: {

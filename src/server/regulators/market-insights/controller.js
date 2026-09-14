@@ -34,6 +34,7 @@ export const controller = {
     const period = reportingPeriodNow()
     const { meta, data } = await fetchWasteBalance({
       year: period.year,
+      month: period.month,
       backendToken
     })
 
