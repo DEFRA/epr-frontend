@@ -114,6 +114,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -201,7 +202,10 @@ describe('#authCallbackController', () => {
         localiseUrl: vi.fn((url) => url)
       }
 
-      const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
+      const mockH = {
+        unstate: vi.fn(),
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
 
       await defraIdCallbackController.handler(
         mockHapiRequest(mockRequest),
@@ -256,7 +260,10 @@ describe('#authCallbackController', () => {
         localiseUrl: vi.fn((url) => url)
       }
 
-      const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
+      const mockH = {
+        unstate: vi.fn(),
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
 
       await defraIdCallbackController.handler(
         mockHapiRequest(mockRequest),
@@ -360,6 +367,7 @@ describe('#authCallbackController', () => {
         }
 
         const mockH = {
+          unstate: vi.fn(),
           redirect: vi.fn().mockReturnValue('redirect-response')
         }
 
@@ -440,6 +448,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -532,6 +541,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -613,6 +623,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-to-linking')
       }
 
@@ -651,6 +662,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -691,6 +703,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -761,6 +774,7 @@ describe('#authCallbackController', () => {
         }
 
         const mockH = {
+          unstate: vi.fn(),
           redirect: vi.fn().mockReturnValue('redirect-response')
         }
 
@@ -824,6 +838,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -923,6 +938,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -1001,6 +1017,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -1068,6 +1085,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 

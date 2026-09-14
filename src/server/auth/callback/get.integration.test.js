@@ -1,12 +1,19 @@
 import * as jose from 'jose'
 import { config } from '#config/config.js'
+import { SIGN_IN_PROVIDER_COOKIE } from '#server/auth/helpers/sign-in-provider.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { findSetCookie } from '#server/common/test-helpers/cookie-helper.js'
 import { identityHandler } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
 import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
+
+/**
+ * @import { ServerInjectResponse } from '@hapi/hapi'
+ */
 
 const mock = {
   cdpAuditing: vi.fn(),
@@ -32,7 +39,11 @@ vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mock.cdpAuditing(...args)
 }))
 
-const performSignInFlow = async (server, mswServer, { idToken, publicKey }) => {
+const performSignInFlow = async (
+  server,
+  mswServer,
+  { idToken, publicKey, cookie = '' }
+) => {
   const signInResponse = await server.inject({
     method: 'GET',
     url: '/login'
@@ -65,10 +76,18 @@ const performSignInFlow = async (server, mswServer, { idToken, publicKey }) => {
     method: 'GET',
     url: `/auth/callback?state=${stateParam}&code=${code}&refresh=1`,
     headers: {
-      cookie: `bell-defra-id=${bellCookie}`
+      cookie: [`bell-defra-id=${bellCookie}`, cookie].filter(Boolean).join('; ')
     }
   })
 }
+
+const regulatorBrowserCookie = `${SIGN_IN_PROVIDER_COOKIE}=${OIDC_ENTRA_ID}`
+
+/**
+ * @param {ServerInjectResponse} response
+ */
+const signInProviderCookieFrom = (response) =>
+  findSetCookie(response.headers['set-cookie'], SIGN_IN_PROVIDER_COOKIE)
 
 async function generateIdToken(/** @type {Record<string, unknown>} */ payload) {
   const { privateKey: privateKeyObject, publicKey: publicKeyObject } =
@@ -122,6 +141,18 @@ describe('/auth/callback - GET integration', async () => {
 
       expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers['location']).toBe('/account/linking')
+    })
+
+    it('forgets that this browser signed in as a regulator', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, {
+        ...idTokenAndPublicKey,
+        cookie: regulatorBrowserCookie
+      })
+
+      expect(signInProviderCookieFrom(response)).toContain('Max-Age=0')
     })
 
     it('records sign in success metric', async ({ server, msw }) => {
@@ -184,6 +215,18 @@ describe('/auth/callback - GET integration', async () => {
 
       expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers['location']).toBe('/organisations/linked-org-id')
+    })
+
+    it('forgets that this browser signed in as a regulator', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, {
+        ...idTokenAndPublicKey,
+        cookie: regulatorBrowserCookie
+      })
+
+      expect(signInProviderCookieFrom(response)).toContain('Max-Age=0')
     })
 
     it('calls add user to organisation API with the linked organisation id', async ({

@@ -83,7 +83,7 @@ describe('#cookiesController', () => {
         'Crumb',
         'Session',
         'userSession',
-        'signedOutProvider',
+        'signInProvider',
         'analyticsConsent'
       ])
     })
