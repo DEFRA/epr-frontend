@@ -28,7 +28,7 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { describe, expect, vi } from 'vitest'
+import { afterEach, describe, expect, vi } from 'vitest'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 vi.mock(
@@ -589,75 +589,53 @@ describe('#viewController', () => {
         expect(returnLink.getAttribute('href')).toBe(listUrl)
       })
 
-      it('sends a note opened from the accreditation back to it', async ({
-        server
-      }) => {
-        config.set('featureFlags.regulatorAccess', true)
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: `${viewUrl}?from=accreditation`,
-          auth: buildMockAuth({
-            provider: OIDC_ENTRA_ID,
-            ...sessionIdentity(IDENTITIES.regulator)
+      describe('for a regulator, who walks the trail back', () => {
+        const asRegulator = (server) =>
+          server.inject({
+            method: 'GET',
+            url: viewUrl,
+            auth: buildMockAuth({
+              provider: OIDC_ENTRA_ID,
+              ...sessionIdentity(IDENTITIES.regulator)
+            })
           })
+
+        beforeEach(() => {
+          config.set('featureFlags.regulatorAccess', true)
         })
 
-        config.set('featureFlags.regulatorAccess', false)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const accreditationUrl = listUrl.replace(
-          '/packaging-recycling-notes',
-          ''
-        )
-
-        expect(
-          body.querySelector('.govuk-back-link')?.getAttribute('href')
-        ).toBe(accreditationUrl)
-
-        const returnLink = getByText(
-          getByRole(body, 'main'),
-          /Return to accreditation/i
-        )
-        expect(returnLink.getAttribute('href')).toBe(accreditationUrl)
-      })
-
-      it('sends an operator to their own list, whatever a shared link says', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: `${viewUrl}?from=accreditation`,
-          auth: mockAuth
+        afterEach(() => {
+          config.set('featureFlags.regulatorAccess', false)
         })
 
-        const { body } = new JSDOM(result).window.document
+        it('walks from all organisations down to the note', async ({
+          server
+        }) => {
+          const { result } = await asRegulator(server)
+          const { body } = new JSDOM(result).window.document
 
-        expect(
-          body.querySelector('.govuk-back-link')?.getAttribute('href')
-        ).toBe(listUrl)
-        expect(
-          getByText(
-            getByRole(body, 'main'),
-            /Return to PRN list/i
-          ).getAttribute('href')
-        ).toBe(listUrl)
-      })
-
-      it('ignores a return it does not know', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: `${viewUrl}?from=https://example.com`,
-          auth: mockAuth
+          expect(
+            Array.from(body.querySelectorAll('.govuk-breadcrumbs__link')).map(
+              (link) => link.getAttribute('href')
+            )
+          ).toStrictEqual([
+            '/regulators/home',
+            `/organisations/${organisationId}`,
+            `/organisations/${organisationId}/registrations/${registrationId}`,
+            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`,
+            listUrl
+          ])
         })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+        it('offers neither the back link nor the return link', async ({
+          server
+        }) => {
+          const { result } = await asRegulator(server)
+          const { body } = new JSDOM(result).window.document
 
-        expect(
-          body.querySelector('.govuk-back-link')?.getAttribute('href')
-        ).toBe(listUrl)
+          expect(body.querySelector('.govuk-back-link')).toBeNull()
+          expect(queryByText(getByRole(body, 'main'), /Return to/i)).toBeNull()
+        })
       })
 
       it('displays PERN details for exporter registration', async ({

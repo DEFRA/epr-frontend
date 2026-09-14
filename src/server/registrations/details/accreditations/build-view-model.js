@@ -16,7 +16,6 @@ import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitte
 
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 
-import { RETURN_TO_ACCREDITATION } from '#server/prns/helpers/note-return-path.js'
 import { toPrnGroups } from '#server/prns/helpers/prn-groups.js'
 import { buildStatusTagHtml as buildPrnStatusTagHtml } from '#server/prns/list-view-data.js'
 
@@ -358,13 +357,9 @@ const toPrns = ({
         { text: date },
         { text: note.tonnage },
         {
-          // A note is reachable from here and from the full list, and its back
-          // link returns to whichever opened it.
           html: buildActionLinkHtml(
             localise('registrations:details:accreditation:prns:view'),
-            localiseUrl(
-              `${notesPath}/${note.id}/view?from=${RETURN_TO_ACCREDITATION}`
-            ),
+            localiseUrl(`${notesPath}/${note.id}/view`),
             note.prnNumber ?? date
           ),
           classes: cssClasses.textAlign.right
@@ -413,10 +408,7 @@ const toLedger = ({
       offersCsvDownloads: offersWasteRecordsDownloads(),
       offersDownloads: true,
       organisationId,
-      registrationId: registration.id,
-      // This ledger is a section of the accreditation page, so a note opened
-      // from it comes back here rather than to the standalone ledger.
-      returnTo: RETURN_TO_ACCREDITATION
+      registrationId: registration.id
     })
   }
 }

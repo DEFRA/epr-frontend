@@ -510,7 +510,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
         { text: '87.50', format: 'numeric' },
         { text: 'Ada Lovelace (ada@example.com)' },
         {
-          html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-001/view?from=accreditation" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
+          html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-001/view" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
           classes: 'govuk-!-text-align-right'
         }
       ],
@@ -576,7 +576,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
           { text: '28 Jan 2026' },
           { text: 20 },
           {
-            html: `<a href="${notesPath}/prn-9/view?from=accreditation" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
+            html: `<a href="${notesPath}/prn-9/view" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
             classes: 'govuk-!-text-align-right'
           }
         ]
@@ -601,7 +601,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
       ]).rows
 
       expect(rows.at(0)?.at(4)).toStrictEqual({
-        html: `<a href="${notesPath}/prn-001/view?from=accreditation" class="govuk-link">View <span class="govuk-visually-hidden">26 Jan 2026</span></a>`,
+        html: `<a href="${notesPath}/prn-001/view" class="govuk-link">View <span class="govuk-visually-hidden">26 Jan 2026</span></a>`,
         classes: 'govuk-!-text-align-right'
       })
     })
