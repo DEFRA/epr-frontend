@@ -140,7 +140,7 @@ describe('the chrome around an organisation page', () => {
       const body = await renderOrganisationPage(server, operatorAuth)
 
       expect(serviceLink(body)).toHaveTextContent(
-        'Record reprocessed or exported packaging waste'
+        /^Record reprocessed or exported packaging waste$/
       )
     })
 
