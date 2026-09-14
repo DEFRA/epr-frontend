@@ -15,7 +15,8 @@ const toAwaitingRow = (prn) => ({
   recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
   createdAt: prn.createdAt,
   tonnage: prn.tonnage,
-  status: prn.status
+  status: prn.status,
+  isDecemberWaste: prn.isDecemberWaste
 })
 
 /**
@@ -28,7 +29,8 @@ const toDetailRow = (prn) => ({
   recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
   issuedAt: prn.issuedAt,
   tonnage: prn.tonnage,
-  status: prn.status
+  status: prn.status,
+  isDecemberWaste: prn.isDecemberWaste
 })
 
 /**

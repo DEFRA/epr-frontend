@@ -33,9 +33,10 @@
         <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
         {{ govukTable({
           head: [
-            { text: table.headings.recipient },
+            { text: table.headings.recipient, classes: "epr-break-word" },
             { text: table.headings.createdAt },
             { text: table.headings.tonnage },
+            { text: table.headings.decemberWaste },
             { text: table.headings.status },
             { text: table.headings.action }
           ],
@@ -47,9 +48,10 @@
         <h2 class="govuk-heading-m">{{ awaitingCancellationHeading }}</h2>
         {{ govukTable({
           head: [
-            { text: cancellationTable.headings.recipient },
+            { text: cancellationTable.headings.recipient, classes: "epr-break-word" },
             { text: cancellationTable.headings.createdAt },
             { text: cancellationTable.headings.tonnage },
+            { text: cancellationTable.headings.decemberWaste },
             { text: cancellationTable.headings.status },
             { text: cancellationTable.headings.action }
           ],
@@ -68,9 +70,10 @@
         {{ govukTable({
           head: [
             { text: issuedTable.headings.prnNumber },
-            { text: issuedTable.headings.recipient },
+            { text: issuedTable.headings.recipient, classes: "epr-break-word" },
             { text: issuedTable.headings.dateIssued },
             { text: issuedTable.headings.tonnage },
+            { text: issuedTable.headings.decemberWaste },
             { text: issuedTable.headings.status },
             { text: issuedTable.headings.action }
           ],
@@ -87,9 +90,10 @@
         {{ govukTable({
           head: [
             { text: cancelledTable.headings.prnNumber },
-            { text: cancelledTable.headings.recipient },
+            { text: cancelledTable.headings.recipient, classes: "epr-break-word" },
             { text: cancelledTable.headings.dateIssued },
             { text: cancelledTable.headings.tonnage },
+            { text: cancelledTable.headings.decemberWaste },
             { text: cancelledTable.headings.status },
             { text: cancelledTable.headings.action }
           ],
