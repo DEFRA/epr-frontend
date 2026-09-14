@@ -156,7 +156,7 @@ describe('#listPrnsController', () => {
     // Out of the December window by default, so every test not about the
     // December panel sees the single balance exactly as before.
     vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
-      declaresDecemberWasteManually: false,
+      mode: 'pool',
       windowOpen: false
     })
   })
@@ -1468,11 +1468,11 @@ describe('#listPrnsController', () => {
         fixtureReprocessor
       )
       // Which operator types see the breakdown is the backend's decision,
-      // carried by these two flags: declaresDecemberWasteManually is true
-      // only for an output reprocessor, so eligible here means an exporter
-      // or an input reprocessor, in window, regardless of amounts accrued.
+      // carried by `mode`: 'manual' only for an output reprocessor, so
+      // 'pool' here means an exporter or an input reprocessor, in window,
+      // regardless of amounts accrued.
       vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
-        declaresDecemberWasteManually: false,
+        mode: 'pool',
         windowOpen: true
       })
       vi.mocked(getWasteBalance).mockResolvedValue(
@@ -1480,7 +1480,8 @@ describe('#listPrnsController', () => {
           amount: 300,
           availableAmount: 150.5,
           decemberAmount: 50,
-          decemberAvailableAmount: 30.25
+          decemberAvailableAmount: 30.25,
+          nonDecemberAvailableAmount: 120.25
         })
       )
     })
@@ -1573,13 +1574,37 @@ describe('#listPrnsController', () => {
       )
     })
 
+    it('reads the backend non-December figure directly, not availableAmount minus December', async ({
+      server
+    }) => {
+      // The backend serves nonDecemberAvailableAmount and owns the arithmetic;
+      // the panel renders that figure rather than recomputing it. Prove it by
+      // serving a value that does not equal availableAmount minus December.
+      vi.mocked(getWasteBalance).mockResolvedValue(
+        asWasteBalance({
+          amount: 300,
+          availableAmount: 500.5,
+          decemberAmount: 100,
+          decemberAvailableAmount: 120.25,
+          nonDecemberAvailableAmount: 380.2
+        })
+      )
+
+      const { body } = await openList(server)
+
+      expect(
+        byTestId(body, 'non-december-waste-balance')?.textContent
+      ).toContain('380.20')
+    })
+
     it('renders a negative non-December balance unclamped, by design', async ({
       server
     }) => {
       // Any dimension can go transiently negative and there is deliberately
       // no clamp (ADR-0049, "Negative balances"). The worked example: receive
-      // 300t in December then send 200t of it on, and the derived
-      // non-December portion is -200 while the December pool holds 300.
+      // 300t in December then send 200t of it on, and the non-December portion
+      // is -200 while the December pool holds 300. A response predating the
+      // served field falls back to the subtraction, which is exercised here.
       vi.mocked(getWasteBalance).mockResolvedValue(
         asWasteBalance({
           amount: 100,
@@ -1624,7 +1649,7 @@ describe('#listPrnsController', () => {
       server
     }) => {
       vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
-        declaresDecemberWasteManually: true,
+        mode: 'manual',
         windowOpen: true
       })
 
@@ -1640,7 +1665,7 @@ describe('#listPrnsController', () => {
       server
     }) => {
       vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
-        declaresDecemberWasteManually: false,
+        mode: 'pool',
         windowOpen: false
       })
 

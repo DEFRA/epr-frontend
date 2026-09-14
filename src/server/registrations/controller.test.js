@@ -60,7 +60,7 @@ describe('#accreditationDashboardController', () => {
     // Out of the December window by default, so every test not about the
     // December panel sees the single balance exactly as before.
     vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
-      declaresDecemberWasteManually: false,
+      mode: 'pool',
       windowOpen: false
     })
   })
@@ -756,11 +756,11 @@ describe('#accreditationDashboardController', () => {
         glassApproved
       )
       // Which operator types see the breakdown is the backend's decision,
-      // carried by these two flags: declaresDecemberWasteManually is true
-      // only for an output reprocessor, so eligible here means an exporter
-      // or an input reprocessor, in window, regardless of amounts accrued.
+      // carried by `mode`: 'manual' only for an output reprocessor, so
+      // 'pool' here means an exporter or an input reprocessor, in window,
+      // regardless of amounts accrued.
       vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
-        declaresDecemberWasteManually: false,
+        mode: 'pool',
         windowOpen: true
       })
       vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
@@ -768,7 +768,8 @@ describe('#accreditationDashboardController', () => {
           amount: 1500,
           availableAmount: 500.5,
           decemberAmount: 200,
-          decemberAvailableAmount: 120.25
+          decemberAvailableAmount: 120.25,
+          nonDecemberAvailableAmount: 380.25
         }
       })
     })
@@ -904,7 +905,7 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
-        declaresDecemberWasteManually: true,
+        mode: 'manual',
         windowOpen: true
       })
 
@@ -920,7 +921,7 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
-        declaresDecemberWasteManually: false,
+        mode: 'pool',
         windowOpen: false
       })
 
