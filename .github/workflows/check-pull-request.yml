@@ -132,7 +132,7 @@ jobs:
         run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Run journey tests on ${{ steps.journey-branch.outputs.ref }}
-        uses: DEFRA/epr-re-ex-journey-tests/run-journey-tests@main
+        uses: DEFRA/epr-re-ex-journey-tests/run-journey-tests@${{ steps.journey-branch.outputs.ref }}
         with:
           epr-frontend: ${{github.sha}}
           branch: ${{ steps.journey-branch.outputs.ref }}
