@@ -1,8 +1,8 @@
 /**
  * @typedef {'signInAttempted'
+ *   | 'signInFailure'
  *   | 'signInSuccess'
  *   | 'signInSuccessNonInitialUser'
- *   | 'signInFailure'
  *   | 'signOutSuccess'} AuthMetricName
  * @typedef {'TransactionStart' | 'TransactionEnd'} JourneyMetricName
  * @typedef {AuthMetricName | JourneyMetricName} MetricName
