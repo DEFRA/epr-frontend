@@ -102,7 +102,7 @@ describe('#createPrnController', () => {
         )
       })
 
-      it('should render page with correct title and heading', async ({
+      it('should render page with correct title, caption and heading', async ({
         server
       }) => {
         const { result, statusCode } = await server.inject({
@@ -116,12 +116,15 @@ describe('#createPrnController', () => {
         const dom = new JSDOM(result)
         const { body, title } = dom.window.document
 
-        expect(title).toMatch(/Create a PRN/i)
+        expect(title).toMatch(/Enter PRN details/i)
 
         const main = getByRole(body, 'main')
         const heading = getByRole(main, 'heading', { level: 1 })
 
-        expect(heading.textContent).toContain('Create a PRN')
+        expect(heading.textContent).toContain('Enter PRN details')
+        expect(main.querySelector('.govuk-caption-xl').textContent.trim()).toBe(
+          'Create PRN'
+        )
       })
 
       it('should render material type display', async ({ server }) => {
@@ -176,7 +179,7 @@ describe('#createPrnController', () => {
         const main = getByRole(body, 'main')
 
         expect(
-          getByText(main, /Enter who this PRN will be issued to/i)
+          getByText(main, /Who will this PRN be issued to\?/i)
         ).toBeDefined()
 
         expect(
@@ -187,7 +190,7 @@ describe('#createPrnController', () => {
         ).toBeDefined()
 
         const recipientSelect = getByRole(main, 'combobox', {
-          name: /Enter who this PRN will be issued to/i
+          name: /Who will this PRN be issued to\?/i
         })
 
         expect(recipientSelect.options.length).toBeGreaterThan(1)
@@ -347,7 +350,9 @@ describe('#createPrnController', () => {
           )
         })
 
-        it('should display PRN in title and heading', async ({ server }) => {
+        it('should display PRN in title, caption and heading', async ({
+          server
+        }) => {
           const { result } = await server.inject({
             method: 'GET',
             url: reprocessorUrl,
@@ -358,10 +363,13 @@ describe('#createPrnController', () => {
           const { body, title } = dom.window.document
           const main = getByRole(body, 'main')
 
-          expect(title).toContain('Create a PRN')
+          expect(title).toContain('Enter PRN details')
+          expect(main.querySelector('.govuk-caption-xl').textContent).toContain(
+            'Create PRN'
+          )
           expect(
             getByRole(main, 'heading', { level: 1 }).textContent
-          ).toContain('Create a PRN')
+          ).toContain('Enter PRN details')
         })
 
         it('should display PRN in form labels and help text', async ({
@@ -380,7 +388,7 @@ describe('#createPrnController', () => {
 
           expect(getByText(main, /Enter PRN tonnage/i)).toBeDefined()
           expect(
-            getByText(main, /Enter who this PRN will be issued to/i)
+            getByText(main, /Who will this PRN be issued to\?/i)
           ).toBeDefined()
           expect(
             getByText(main, /These notes will appear on the PRN/i)
@@ -398,7 +406,9 @@ describe('#createPrnController', () => {
           )
         })
 
-        it('should display PERN in title and heading', async ({ server }) => {
+        it('should display PERN in title, caption and heading', async ({
+          server
+        }) => {
           const { result } = await server.inject({
             method: 'GET',
             url: exporterUrl,
@@ -409,10 +419,13 @@ describe('#createPrnController', () => {
           const { body, title } = dom.window.document
           const main = getByRole(body, 'main')
 
-          expect(title).toContain('Create a PERN')
+          expect(title).toContain('Enter PERN details')
+          expect(main.querySelector('.govuk-caption-xl').textContent).toContain(
+            'Create PERN'
+          )
           expect(
             getByRole(main, 'heading', { level: 1 }).textContent
-          ).toContain('Create a PERN')
+          ).toContain('Enter PERN details')
         })
 
         it('should display PERN in form labels and help text', async ({
@@ -431,7 +444,7 @@ describe('#createPrnController', () => {
 
           expect(getByText(main, /Enter PERN tonnage/i)).toBeDefined()
           expect(
-            getByText(main, /Enter who this PERN will be issued to/i)
+            getByText(main, /Who will this PERN be issued to\?/i)
           ).toBeDefined()
           expect(
             getByText(main, /These notes will appear on the PERN/i)
