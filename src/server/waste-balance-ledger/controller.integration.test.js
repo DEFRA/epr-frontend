@@ -235,7 +235,7 @@ describe('the waste balance ledger page', () => {
       // This ledger is a page of its own, not the section on the
       // accreditation, so the note comes back here.
       expect(asHtml(result)).toContain(
-        `/packaging-recycling-notes/${prnIssued.prn.id}/view?from=ledger`
+        `/packaging-recycling-notes/${prnIssued.prn.id}/view`
       )
     })
 
