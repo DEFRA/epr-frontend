@@ -1602,15 +1602,15 @@ describe('#listPrnsController', () => {
     }) => {
       // Any dimension can go transiently negative and there is deliberately
       // no clamp (ADR-0049, "Negative balances"). The worked example: receive
-      // 300t in December then send 200t of it on, and the non-December portion
-      // is -200 while the December pool holds 300. A response predating the
-      // served field falls back to the subtraction, which is exercised here.
+      // 300t in December then send 200t of it on, and the backend serves a
+      // non-December portion of -200 while the December pool holds 300.
       vi.mocked(getWasteBalance).mockResolvedValue(
         asWasteBalance({
           amount: 100,
           availableAmount: 100,
           decemberAmount: 300,
-          decemberAvailableAmount: 300
+          decemberAvailableAmount: 300,
+          nonDecemberAvailableAmount: -200
         })
       )
 

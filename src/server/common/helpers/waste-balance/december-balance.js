@@ -52,21 +52,18 @@ async function showsDecemberBalance({
 }
 
 /**
- * The backend omits the December fields entirely for an accreditation that has
- * never accrued December tonnage, so an eligible operator's empty pool still
- * reads as zero here rather than dropping the breakdown.
- *
- * The non-December figure is served directly (`nonDecemberAvailableAmount`),
- * so the backend owns the arithmetic; the subtraction is only a fallback for a
- * response that predates that field.
+ * Both split figures are served by the backend, which owns the arithmetic.
+ * When an accreditation has never accrued December tonnage the backend omits
+ * the December fields entirely: there is no December portion, so December reads
+ * as zero and the whole available amount is non-December (the eligible-but-
+ * empty zero state, which still shows the breakdown rather than dropping it).
  * @param {Partial<WasteBalance> | null | undefined} wasteBalance
  * @returns {DecemberBalanceBreakdown}
  */
 function toDecemberBalanceBreakdown(wasteBalance) {
   const total = wasteBalance?.availableAmount ?? 0
   const december = wasteBalance?.decemberAvailableAmount ?? 0
-  const nonDecember =
-    wasteBalance?.nonDecemberAvailableAmount ?? total - december
+  const nonDecember = wasteBalance?.nonDecemberAvailableAmount ?? total
 
   return { december, nonDecember, total }
 }

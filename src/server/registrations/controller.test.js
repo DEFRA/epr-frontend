@@ -877,14 +877,15 @@ describe('#accreditationDashboardController', () => {
     }) => {
       // Any dimension can go transiently negative and there is deliberately
       // no clamp (ADR-0049, "Negative balances"). The worked example: receive
-      // 300t in December then send 200t of it on, and the derived
-      // non-December portion is -200 while the December pool holds 300.
+      // 300t in December then send 200t of it on, and the backend serves a
+      // non-December portion of -200 while the December pool holds 300.
       vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
         'acc-001-glass-approved': {
           amount: 100,
           availableAmount: 100,
           decemberAmount: 300,
-          decemberAvailableAmount: 300
+          decemberAvailableAmount: 300,
+          nonDecemberAvailableAmount: -200
         }
       })
 
