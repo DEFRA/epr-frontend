@@ -51,6 +51,7 @@ export function buildCreatePrnViewData(
 
   return {
     pageTitle,
+    caption: localise('prns:create:caption', { noteType }),
     heading: pageTitle,
     wasteBalanceText,
     decemberWaste,

@@ -62,7 +62,7 @@ describe('/regulators/start - GET integration', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(getByRole(body, 'heading', { level: 1 }).textContent?.trim()).toBe(
-        'Access reprocessed or exported packaging waste data'
+        'Record reprocessed or exported packaging waste: regulators'
       )
     }
   )
@@ -99,13 +99,16 @@ describe('/regulators/start - GET integration', () => {
   )
 
   // The service name reaches the title as well as the header, so this reads the
-  // whole document rather than the body alone.
+  // whole document rather than the body alone. The regulator name starts with
+  // the operator name, so only a bare occurrence counts as the operator's.
   it('does not name the operator service to a regulator', async ({
     server
   }) => {
     const { html } = await open(server, '/regulators/start')
 
-    expect(html).not.toContain('Record reprocessed or exported packaging waste')
+    expect(html).not.toMatch(
+      /Record reprocessed or exported packaging waste(?!: regulators)/
+    )
   })
 
   // The header's service link is the one place on this page that can take a
@@ -119,7 +122,7 @@ describe('/regulators/start - GET integration', () => {
 
       expect(
         getByRole(body, 'link', {
-          name: 'Access reprocessed or exported packaging waste data'
+          name: 'Record reprocessed or exported packaging waste: regulators'
         }).getAttribute('href')
       ).toBe('/regulators/start')
     }
