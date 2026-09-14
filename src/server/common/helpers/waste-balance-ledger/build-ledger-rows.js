@@ -4,7 +4,6 @@ import {
 } from '#config/nunjucks/filters/format-tonnage.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
-import { RETURN_TO_LEDGER } from '#server/prns/helpers/note-return-path.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
 import { buildSummaryLogCsvDownloadPath } from '#server/summary-log/csv-download-controller.js'
 import { buildSummaryLogDownloadPath } from '#server/summary-log/download-controller.js'
@@ -134,8 +133,7 @@ const notesCancelledBeforeIssue = (events) =>
  *   offersCsvDownloads: boolean,
  *   offersDownloads: boolean,
  *   organisationId: string,
- *   registrationId: string,
- *   returnTo: string
+ *   registrationId: string
  * }} params
  * @returns {TableCell}
  */
@@ -148,8 +146,7 @@ const actionCell = ({
   offersCsvDownloads,
   offersDownloads,
   organisationId,
-  registrationId,
-  returnTo
+  registrationId
 }) => {
   const empty = { text: '', classes: cssClasses.textAlign.right }
 
@@ -194,12 +191,12 @@ const actionCell = ({
   }
 
   const url = localiseUrl(
-    `${notePath({
+    notePath({
       organisationId,
       registrationId,
       accreditationId,
       prnId: event.prn.id
-    })}?from=${returnTo}`
+    })
   )
 
   return {
@@ -287,9 +284,6 @@ const actorName = ({ createdBy, localise }) => {
  * `offersDownloads` is for the regulator pages: only a regulator may fetch a
  * summary log, so only their rows offer one. `offersCsvDownloads` adds the
  * records beside the workbook, and is off until its flag is lit.
- *
- * `returnTo` names the page the ledger is drawn on, so a note opened from a row
- * comes back to it rather than to the note list.
  * @param {{
  *   accreditationId?: string,
  *   events: LedgerEvent[],
@@ -300,8 +294,7 @@ const actorName = ({ createdBy, localise }) => {
  *   offersCsvDownloads?: boolean,
  *   offersDownloads?: boolean,
  *   organisationId: string,
- *   registrationId: string,
- *   returnTo?: string
+ *   registrationId: string
  * }} params
  * @returns {TableCell[][]}
  */
@@ -315,8 +308,7 @@ export const buildLedgerRows = ({
   offersCsvDownloads = false,
   offersDownloads = false,
   organisationId,
-  registrationId,
-  returnTo = RETURN_TO_LEDGER
+  registrationId
 }) => {
   const cancelledBeforeIssue = notesCancelledBeforeIssue(events)
 
@@ -334,8 +326,7 @@ export const buildLedgerRows = ({
       offersCsvDownloads,
       offersDownloads,
       organisationId,
-      registrationId,
-      returnTo
+      registrationId
     })
   ])
 }
