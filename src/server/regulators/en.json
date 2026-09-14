@@ -59,7 +59,7 @@
       "view": "View"
     }
   },
-  "serviceName": "Access reprocessed or exported packaging waste data",
+  "serviceName": "Record reprocessed or exported packaging waste: regulators",
   "start": {
     "pageTitle": "Start",
     "bodyOne": "This service gives regulators from across the four nations access to UK packaging waste regulations operator data.",
