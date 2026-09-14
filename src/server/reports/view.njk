@@ -10,7 +10,11 @@
 {% from "report-section/macro.njk" import reportSection %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
+{# `super()` keeps the layout's phase banner and breadcrumbs. `backUrl` is
+   already absent on a draft, and is absent for a regulator too — they walk the
+   trail back instead. #}
 {% block beforeContent %}
+  {{ super() }}
   {% if backUrl %}
     {{ govukBackLink({
       text: localise("common:back"),

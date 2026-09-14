@@ -67,7 +67,10 @@ async function loadPageBody({
 
 describe('#viewController', () => {
   const mockAccreditedReprocessor = {
-    organisationData: { id: 'org-123' },
+    organisationData: {
+      id: 'org-123',
+      companyDetails: { name: 'Acme Recycling Ltd' }
+    },
     registration: {
       id: 'reg-001',
       accreditationId: 'acc-001',
@@ -86,7 +89,10 @@ describe('#viewController', () => {
   }
 
   const mockAccreditedExporter = {
-    organisationData: { id: 'org-123' },
+    organisationData: {
+      id: 'org-123',
+      companyDetails: { name: 'Acme Recycling Ltd' }
+    },
     registration: {
       id: 'reg-001',
       material: 'plastic',
@@ -97,7 +103,10 @@ describe('#viewController', () => {
   }
 
   const mockRegisteredOnlyReprocessor = {
-    organisationData: { id: 'org-123' },
+    organisationData: {
+      id: 'org-123',
+      companyDetails: { name: 'Acme Recycling Ltd' }
+    },
     registration: {
       id: 'reg-001',
       material: 'plastic',
@@ -115,7 +124,10 @@ describe('#viewController', () => {
   }
 
   const mockRegisteredOnlyExporter = {
-    organisationData: { id: 'org-123' },
+    organisationData: {
+      id: 'org-123',
+      companyDetails: { name: 'Acme Recycling Ltd' }
+    },
     registration: {
       id: 'reg-001',
       material: 'plastic',
@@ -480,6 +492,12 @@ describe('#viewController', () => {
     })
 
     describe('for a regulator, who has no report list of their own', () => {
+      /** The linked crumbs, in order. The page's own crumb carries no link. */
+      const trailHrefs = (body) =>
+        Array.from(body.querySelectorAll('.govuk-breadcrumbs__link')).map(
+          (link) => link.getAttribute('href')
+        )
+
       beforeAll(() => {
         config.set('featureFlags.regulatorAccess', true)
       })
@@ -488,7 +506,7 @@ describe('#viewController', () => {
         config.set('featureFlags.regulatorAccess', false)
       })
 
-      it('sends a monthly report back to the accreditation', async ({
+      it('offers no back link, the trail being the way back', async ({
         server
       }) => {
         const body = await loadPageBody({
@@ -497,14 +515,39 @@ describe('#viewController', () => {
           auth: regulatorAuth
         })
 
-        expect(
-          body.querySelector('.govuk-back-link')?.getAttribute('href')
-        ).toBe(
+        expect(body.querySelector('.govuk-back-link')).toBeNull()
+      })
+
+      it('walks the trail up from all organisations to the report', async ({
+        server
+      }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockAccreditedReprocessor,
+          auth: regulatorAuth
+        })
+
+        expect(trailHrefs(body)).toStrictEqual([
+          '/regulators/home',
+          '/organisations/org-123',
+          '/organisations/org-123/registrations/reg-001',
+          '/organisations/org-123/registrations/reg-001/accreditations/acc-001'
+        ])
+      })
+
+      it('hangs a monthly report off the accreditation', async ({ server }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockAccreditedReprocessor,
+          auth: regulatorAuth
+        })
+
+        expect(trailHrefs(body).at(-1)).toBe(
           '/organisations/org-123/registrations/reg-001/accreditations/acc-001'
         )
       })
 
-      it('sends a quarterly report back to the registered-only year', async ({
+      it('hangs a quarterly report off the registered-only year', async ({
         server
       }) => {
         const body = await loadPageBody({
@@ -514,14 +557,12 @@ describe('#viewController', () => {
           cadence: 'quarterly'
         })
 
-        expect(
-          body.querySelector('.govuk-back-link')?.getAttribute('href')
-        ).toBe(
+        expect(trailHrefs(body).at(-1)).toBe(
           '/organisations/org-123/registrations/reg-001/registered-only-periods/2026'
         )
       })
 
-      it('sends a report back to the registration where there is no accreditation', async ({
+      it('stops at the registration where there is no accreditation', async ({
         server
       }) => {
         const body = await loadPageBody({
@@ -530,9 +571,9 @@ describe('#viewController', () => {
           auth: regulatorAuth
         })
 
-        expect(
-          body.querySelector('.govuk-back-link')?.getAttribute('href')
-        ).toBe('/organisations/org-123/registrations/reg-001')
+        expect(trailHrefs(body).at(-1)).toBe(
+          '/organisations/org-123/registrations/reg-001'
+        )
       })
     })
 

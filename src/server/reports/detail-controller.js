@@ -1,4 +1,5 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -15,6 +16,7 @@ import {
   buildUnapprovedOverseasSiteDetailRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
+import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -204,7 +206,7 @@ export const detailController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { registration, accreditation } =
+    const { organisationData, registration, accreditation } =
       await fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
@@ -252,7 +254,20 @@ export const detailController = {
       request.localiseUrl.bind(request)
     )
 
-    return h.view('reports/detail', viewData)
+    return h.view('reports/detail', {
+      ...viewData,
+      breadcrumbs: readsAsARegulator(session)
+        ? buildReportBreadcrumbs({
+            organisation: organisationData,
+            registration,
+            pageName: viewData.heading,
+            year,
+            cadence,
+            localise,
+            localiseUrl: request.localiseUrl.bind(request)
+          })
+        : []
+    })
   }
 }
 

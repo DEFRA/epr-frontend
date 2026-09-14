@@ -1,6 +1,12 @@
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -12,7 +18,7 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 /**
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
@@ -28,8 +34,17 @@ vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 const mockAuth = buildMockAuth()
 
+const regulatorAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
+  ...sessionIdentity(IDENTITIES.regulator)
+})
+
 const reprocessorRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
+  organisationData: /** @type {Organisation} */ ({
+    id: 'org-123',
+    companyDetails: { name: 'Acme Recycling Ltd' }
+  }),
   registration: /** @type {Registration} */ ({
     id: 'reg-001',
     material: 'plastic',
@@ -139,7 +154,10 @@ const emptyReportDetail = {
 }
 
 const accreditedReprocessorRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
+  organisationData: /** @type {Organisation} */ ({
+    id: 'org-123',
+    companyDetails: { name: 'Acme Recycling Ltd' }
+  }),
   registration: /** @type {Registration} */ ({
     id: 'reg-001',
     material: 'plastic',
@@ -1934,6 +1952,77 @@ describe('#detailReportsController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
+    })
+  })
+
+  describe('the route back', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedReprocessorRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        accreditedReprocessorReportDetail
+      )
+    })
+
+    afterEach(() => {
+      config.set('featureFlags.regulatorAccess', false)
+    })
+
+    const loadBody = async (server, auth) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedDetailUrl,
+        auth
+      })
+
+      return new JSDOM(result).window.document.body
+    }
+
+    it('offers an operator a back link and no trail', async ({ server }) => {
+      const body = await loadBody(server, mockAuth)
+
+      expect(body.querySelector('.govuk-breadcrumbs')).toBeNull()
+      expect(body.querySelector('.govuk-back-link')).not.toBeNull()
+    })
+
+    it('walks a regulator back up through the accreditation', async ({
+      server
+    }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const body = await loadBody(server, regulatorAuth)
+
+      expect(
+        Array.from(body.querySelectorAll('.govuk-breadcrumbs__link')).map(
+          (link) => link.getAttribute('href')
+        )
+      ).toStrictEqual([
+        '/regulators/home',
+        '/organisations/org-123',
+        '/organisations/org-123/registrations/reg-001',
+        '/organisations/org-123/registrations/reg-001/accreditations/acc-001'
+      ])
+    })
+
+    it('takes the back link away from a regulator', async ({ server }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const body = await loadBody(server, regulatorAuth)
+
+      expect(body.querySelector('.govuk-back-link')).toBeNull()
+    })
+
+    it('keeps the cancel-and-return link for both audiences', async ({
+      server
+    }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const body = await loadBody(server, regulatorAuth)
+
+      expect(
+        getByRole(body, 'link', { name: /Cancel/ }).getAttribute('href')
+      ).toBe('/organisations/org-123/registrations/reg-001/reports')
     })
   })
 })
