@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { SELECT_ACCOUNT_QUERY } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 
 /**
  * @import { HapiServer } from '#server/common/hapi-types.js'
@@ -8,17 +9,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
-const mockSignInAttemptedMetric = vi.fn()
-
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    metrics: {
-      ...(await importOriginal()).metrics,
-      signInAttempted: (oidcProvider) => mockSignInAttemptedMetric(oidcProvider)
-    }
-  })
-)
+vi.spyOn(metrics.signIn, 'attempted').mockResolvedValue()
 
 describe('#regulatorsLoginController - integration', () => {
   beforeAll(() => {
@@ -62,8 +53,8 @@ describe('#regulatorsLoginController - integration', () => {
           url
         })
 
-        expect(mockSignInAttemptedMetric).toHaveBeenCalledTimes(1)
-        expect(mockSignInAttemptedMetric).toHaveBeenCalledWith('entra-id')
+        expect(metrics.signIn.attempted).toHaveBeenCalledTimes(1)
+        expect(metrics.signIn.attempted).toHaveBeenCalledWith('entra-id')
       }
     )
   })

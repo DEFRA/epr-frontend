@@ -2,7 +2,7 @@ import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summ
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 
 const UPLOAD_CONFLICT_VIEW = 'summary-log/upload-conflict'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
@@ -45,7 +45,7 @@ export const submitSummaryLogController = {
         }
       })
 
-      await journeyMetrics.end(
+      await metrics.journey.end(
         request,
         JOURNEY.uploadSummaryLog,
         registrationId

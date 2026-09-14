@@ -2,6 +2,7 @@ import * as jose from 'jose'
 import { config } from '#config/config.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import {
   assertUserSession,
   sessionIdentity
@@ -28,21 +29,11 @@ import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
  */
 
 const mock = {
-  cdpAuditing: vi.fn(),
-  signInSuccessMetric: vi.fn(),
-  signInFailureMetric: vi.fn()
+  cdpAuditing: vi.fn()
 }
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    metrics: {
-      ...(await importOriginal()).metrics,
-      signInFailure: (oidcProvider) => mock.signInFailureMetric(oidcProvider),
-      signInSuccess: (oidcProvider) => mock.signInSuccessMetric(oidcProvider)
-    }
-  })
-)
+vi.spyOn(metrics.signIn, 'failure').mockResolvedValue()
+vi.spyOn(metrics.signIn, 'success').mockResolvedValue()
 
 vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mock.cdpAuditing(...args)
@@ -178,8 +169,8 @@ describe('/auth/callback/entra - GET integration', async () => {
     it('records sign in success metric', async ({ server, msw }) => {
       await performSignInFlow(server, msw, regulatorToken)
 
-      expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInSuccessMetric).toHaveBeenCalledWith('entra-id')
+      expect(metrics.signIn.success).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.success).toHaveBeenCalledWith('entra-id')
     })
 
     it('audits a successful sign in attempt', async ({ server, msw }) => {
@@ -484,9 +475,9 @@ describe('/auth/callback/entra - GET integration', async () => {
     it('records sign in failure metric', async ({ server, msw }) => {
       await performSignInFlow(server, msw, regulatorToken)
 
-      expect(mock.signInSuccessMetric).not.toHaveBeenCalled()
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
+      expect(metrics.signIn.success).not.toHaveBeenCalled()
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledWith('entra-id')
     })
 
     it('does not audit a sign in', async ({ server, msw }) => {
@@ -513,8 +504,8 @@ describe('/auth/callback/entra - GET integration', async () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledWith('entra-id')
     })
   })
 
@@ -534,8 +525,8 @@ describe('/auth/callback/entra - GET integration', async () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledWith('entra-id')
     })
   })
 
@@ -555,8 +546,8 @@ describe('/auth/callback/entra - GET integration', async () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledWith('entra-id')
     })
   })
 
