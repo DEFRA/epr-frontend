@@ -40,6 +40,7 @@ describe(reportingPeriodNow, () => {
 
     expect(reportingPeriodNow()).toStrictEqual({
       year: 2026,
+      month: 8,
       months: [
         '2026-01',
         '2026-02',
@@ -58,6 +59,7 @@ describe(reportingPeriodNow, () => {
 
     expect(reportingPeriodNow()).toStrictEqual({
       year: 2026,
+      month: 1,
       months: ['2026-01']
     })
   })
@@ -69,6 +71,7 @@ describe(reportingPeriodNow, () => {
 
     expect(reportingPeriodNow()).toStrictEqual({
       year: 2026,
+      month: 12,
       months: [
         '2026-01',
         '2026-02',
@@ -99,7 +102,7 @@ describe(describeReportingPeriod, () => {
   it('names the first and last month of a period spanning several', () => {
     expect(
       describeReportingPeriod(
-        { year: 2026, months: ['2026-01', '2026-02', '2026-03'] },
+        { year: 2026, month: 3, months: ['2026-01', '2026-02', '2026-03'] },
         asKey
       )
     ).toBe(
@@ -109,7 +112,10 @@ describe(describeReportingPeriod, () => {
 
   it('names the single month a period of one covers', () => {
     expect(
-      describeReportingPeriod({ year: 2026, months: ['2026-01'] }, asKey)
+      describeReportingPeriod(
+        { year: 2026, month: 1, months: ['2026-01'] },
+        asKey
+      )
     ).toBe(
       'translated:regulators:marketInsights:period:month:{"month":"January","year":2026}'
     )

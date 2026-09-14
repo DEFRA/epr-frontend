@@ -1,9 +1,10 @@
 import { UK_TIME_ZONE } from '#server/common/helpers/format-time.js'
 
 /**
- * The span of reporting months a page shows: the year it belongs to, and every
- * month of that year that has finished, as `YYYY-MM` keys in calendar order.
- * @typedef {{ year: number, months: string[] }} ReportingPeriod
+ * The span of reporting months a page shows: the year it belongs to, the last
+ * month of the span as its number, and every month from January to it as
+ * `YYYY-MM` keys in calendar order.
+ * @typedef {{ year: number, month: number, months: string[] }} ReportingPeriod
  */
 
 const ukYearMonth = new Intl.DateTimeFormat('en-GB', {
@@ -56,6 +57,7 @@ export const reportingPeriodNow = () => {
 
   return {
     year,
+    month: lastCompleteMonth,
     months: Array.from(
       { length: lastCompleteMonth },
       (_, index) => `${year}-${String(index + 1).padStart(2, '0')}`
