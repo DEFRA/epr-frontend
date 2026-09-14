@@ -87,6 +87,19 @@ describe('which sign out page a provider sends a user to', () => {
       expect(headers.location).toBe('/regulators/home')
     })
 
+    it('names the regulator service on the way out', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/regulators/logged-out'
+      })
+
+      const $ = load(asHtml(result))
+
+      expect($('main').text()).toContain(
+        "You have signed out of the 'Record reprocessed or exported packaging waste: regulators' service."
+      )
+    })
+
     it('does not name the operator service on the way out', async ({
       server
     }) => {
@@ -95,8 +108,8 @@ describe('which sign out page a provider sends a user to', () => {
         url: '/regulators/logged-out'
       })
 
-      expect(asHtml(result)).not.toContain(
-        'Record reprocessed or exported packaging waste'
+      expect(asHtml(result)).not.toMatch(
+        /Record reprocessed or exported packaging waste(?!: regulators)/
       )
     })
   })
