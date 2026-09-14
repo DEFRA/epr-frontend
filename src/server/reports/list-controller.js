@@ -1,3 +1,4 @@
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
@@ -6,6 +7,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { SUBMISSION_STATUS } from './constants.js'
 import { buildActionLinkHtml } from './helpers/build-action-link-html.js'
 import { buildPeriodPath } from './helpers/build-period-path.js'
+import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
 import { buildStatusTagHtml } from './helpers/build-status-tag-html.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
@@ -219,19 +221,21 @@ export const listController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration, accreditation }, { cadence, reportingPeriods }] =
-      await Promise.all([
-        fetchRegistrationAndAccreditation(
-          organisationId,
-          registrationId,
-          session.backendToken
-        ),
-        fetchReportingPeriods(
-          organisationId,
-          registrationId,
-          session.backendToken
-        )
-      ])
+    const [
+      { organisationData, registration, accreditation },
+      { cadence, reportingPeriods }
+    ] = await Promise.all([
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.backendToken
+      ),
+      fetchReportingPeriods(
+        organisationId,
+        registrationId,
+        session.backendToken
+      )
+    ])
 
     const material = getRegistrationMaterialDisplayName(registration)
 
@@ -263,6 +267,15 @@ export const listController = {
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}`
       ),
+      breadcrumbs: readsAsARegulator(session)
+        ? buildReportBreadcrumbs({
+            organisation: organisationData,
+            registration,
+            pageName: localise('reports:heading'),
+            localise,
+            localiseUrl: (url) => request.localiseUrl(url)
+          })
+        : [],
       heading: localise('reports:heading'),
       material,
       pageTitle: localise('reports:pageTitle', { material }),

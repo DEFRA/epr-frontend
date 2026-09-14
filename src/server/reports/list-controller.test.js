@@ -1,4 +1,10 @@
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -8,7 +14,7 @@ import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
@@ -47,9 +53,18 @@ const readOnlyAuth = /** @type {ServerInjectOptions['auth']} */ (
   })
 )
 
+const regulatorAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
+  ...sessionIdentity(IDENTITIES.regulator)
+})
+
 const accreditedRegistration = /** @type {RegistrationWithAccreditation} */ (
   /** @type {unknown} */ ({
-    organisationData: { id: 'org-123' },
+    organisationData: {
+      id: 'org-123',
+      companyDetails: { name: 'Acme Recycling Ltd' }
+    },
     registration: {
       id: 'reg-001',
       material: 'glass',
@@ -1679,6 +1694,66 @@ describe('#listReportsController', () => {
         ],
         ['March, 2026', 'Due', '20 Apr 2026', 'Create draft March, 2026']
       ])
+    })
+  })
+
+  describe('the route back', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(monthlyResponse)
+    })
+
+    afterEach(() => {
+      config.set('featureFlags.regulatorAccess', false)
+    })
+
+    it('offers an operator a back link and no trail', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(body.querySelector('.govuk-breadcrumbs')).toBeNull()
+      expect(body.querySelector('.govuk-back-link')).not.toBeNull()
+    })
+
+    it('walks a regulator back up to all organisations', async ({ server }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: regulatorAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(
+        Array.from(body.querySelectorAll('.govuk-breadcrumbs__list-item')).map(
+          (item) => item.textContent?.trim()
+        )
+      ).toStrictEqual([
+        'All organisations',
+        'Acme Recycling Ltd',
+        'Registration details',
+        'Reports'
+      ])
+    })
+
+    it('takes the back link away from a regulator', async ({ server }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: regulatorAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(body.querySelector('.govuk-back-link')).toBeNull()
     })
   })
 })

@@ -7,11 +7,18 @@
 {% from "tonnage-breakdown/macro.njk" import tonnageBreakdown %}
 {% from "report-section/macro.njk" import reportSection %}
 
+{# `super()` keeps the layout's phase banner and breadcrumbs. A regulator walks
+   the trail back, so only an operator is offered the back link. `backUrl`
+   itself stays in the view data either way — the cancel-and-return link below
+   still uses it. #}
 {% block beforeContent %}
-  {{ govukBackLink({
-    text: localise("common:back"),
-    href: backUrl
-  }) }}
+  {{ super() }}
+  {% if breadcrumbs.length <= 1 %}
+    {{ govukBackLink({
+      text: localise("common:back"),
+      href: backUrl
+    }) }}
+  {% endif %}
 {% endblock %}
 
 {% block content %}

@@ -19,6 +19,7 @@ import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisat
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { buildPrnBasePath } from './helpers/fetch-prn-context.js'
+import { buildNoteBreadcrumbs } from './helpers/build-note-breadcrumbs.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { noteReturn } from './helpers/note-return-path.js'
@@ -321,18 +322,29 @@ async function handleExistingView(
     prn.issuedToOrganisation
   )
 
-  const { isExporter, noteType, noteTypeFull, wasteAction } =
+  const { isExporter, noteType, noteTypeFull, noteTypePlural, wasteAction } =
     getNoteTypeDisplayNames(registration)
 
-  const back = noteReturn({
-    organisationId,
-    registrationId,
-    accreditationId,
-    isRegulator: readsAsARegulator(session),
-    from: request.query?.from
-  })
+  const isRegulator = readsAsARegulator(session)
 
-  const backUrl = request.localiseUrl(back.path)
+  const back = noteReturn({ organisationId, registrationId, accreditationId })
+
+  // A regulator walks the trail back instead, so the page offers them neither
+  // the back link nor the return link. An operator reads a note from their own
+  // list and keeps both.
+  const backUrl = isRegulator ? null : request.localiseUrl(back.path)
+
+  const breadcrumbs = isRegulator
+    ? buildNoteBreadcrumbs({
+        organisation: organisationData,
+        registration,
+        accreditationId,
+        noteTypePlural,
+        prn,
+        localise,
+        localiseUrl: request.localiseUrl.bind(request)
+      })
+    : []
 
   const displayMaterial = getRegistrationMaterialDisplayName(registration)
 
@@ -367,11 +379,12 @@ async function handleExistingView(
     accreditationRows,
     backUrl,
     back,
+    isRegulator,
     localise,
     request
   })
 
-  return h.view('prns/view', viewData)
+  return h.view('prns/view', { ...viewData, breadcrumbs })
 }
 
 /**
@@ -384,8 +397,9 @@ async function handleExistingView(
  *   isNotDraft: boolean,
  *   prnDetailRows: Array<object>,
  *   accreditationRows: Array<object>,
- *   backUrl: string,
+ *   backUrl: string | null,
  *   back: { path: string, textKey: string },
+ *   isRegulator: boolean,
  *   localise: TFunction,
  *   request: HapiRequest
  * }} params
@@ -401,6 +415,7 @@ function buildExistingPrnViewData({
   accreditationRows,
   backUrl,
   back,
+  isRegulator,
   localise,
   request
 }) {
@@ -421,10 +436,12 @@ function buildExistingPrnViewData({
     accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl,
-    returnLink: {
-      href: request.localiseUrl(back.path),
-      text: localise(back.textKey, { noteType })
-    }
+    returnLink: isRegulator
+      ? null
+      : {
+          href: request.localiseUrl(back.path),
+          text: localise(back.textKey, { noteType })
+        }
   }
 }
 
