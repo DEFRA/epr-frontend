@@ -5,6 +5,29 @@
     "body": "You have signed out of the '{{ serviceName }}' service.",
     "signInAgain": "Sign in again"
   },
+  "marketInsights": {
+    "accreditationTypes": {
+      "exporter": "Exporter",
+      "reprocessor": "Reprocessor"
+    },
+    "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
+    "description": "Net credited tonnage by material and accreditation type. These are the figures the monthly market insights workbook is built from.",
+    "heading": "Market insights",
+    "linkText": "Market insights",
+    "noFigures": "No waste balance figures have been reported for this period yet.",
+    "pageTitle": "Market insights",
+    "period": {
+      "month": "{{ month }} {{ year }}",
+      "months": "{{ from }} to {{ to }} {{ year }}"
+    },
+    "table": {
+      "accreditationType": "Accreditation type",
+      "caption": "Waste balance",
+      "material": "Material",
+      "total": "Total"
+    },
+    "unknownMaterial": "Not attributed"
+  },
   "notAuthorised": {
     "pageTitle": "You do not have access to this service",
     "heading": "You do not have access to this service",

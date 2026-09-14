@@ -13,6 +13,12 @@
       <h1 class="govuk-heading-xl">{{ localise('regulators:organisations:heading') }}</h1>
       <p class="govuk-body">{{ localise('regulators:organisations:description') }}</p>
 
+      {% if marketInsightsHref %}
+        <p class="govuk-body">
+          <a class="govuk-link govuk-link--no-visited-state" href="{{ marketInsightsHref }}">{{ localise('regulators:marketInsights:linkText') }}</a>
+        </p>
+      {% endif %}
+
       <div class="epr-search-panel govuk-!-margin-bottom-8">
         <h2 class="govuk-heading-m">{{ localise('regulators:organisations:searchHeading') }}</h2>
 
