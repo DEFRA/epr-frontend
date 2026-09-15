@@ -226,6 +226,73 @@ describe('the market insights page', () => {
       ).not.toBeNull()
     })
 
+    it('says how the figures are calculated, before the table', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+      const heading = getByRole(body, 'heading', {
+        level: 2,
+        name: 'How the figures are calculated'
+      })
+
+      // The wording sits between its heading and the table, so a regulator
+      // reads it before the figures it explains.
+      /** @type {(string | string[])[]} */
+      const wording = []
+      let element = heading.nextElementSibling
+      while (element !== null && element.matches('p, ul')) {
+        wording.push(
+          element.matches('ul')
+            ? Array.from(element.querySelectorAll('li')).map((item) =>
+                item.textContent.trim()
+              )
+            : element.textContent.trim()
+        )
+        element = element.nextElementSibling
+      }
+
+      expect(element?.querySelector('table')).not.toBeNull()
+      expect(wording).toStrictEqual([
+        'Each figure is the tonnage credited to accredited operators’ waste balances for that material and accreditation type in that month, less the tonnage sent on.',
+        'The figures are calculated from the latest summary log each accreditation has submitted. A resubmission replaces the earlier one. Registered-only operators are not included.',
+        'A load is counted in the month:',
+        [
+          'a reprocessor received it for reprocessing',
+          'a recycled product left the reprocessing site',
+          'an overseas reprocessor received the exported waste'
+        ],
+        'A load is only counted if:',
+        [
+          'its waste balance fields are complete',
+          'the accreditation was valid, and not suspended or cancelled, on that date'
+        ],
+        'Waste received for reprocessing or exported is not counted if a PRN or PERN was reported as issued on it.',
+        'Exported waste is also not counted if:',
+        [
+          'it was stopped or refused',
+          'the overseas site was not approved for the exporter on the date of export',
+          'the accreditation was not valid on the date of export'
+        ],
+        'A recycled product is not counted unless its weight was added to the waste balance.',
+        'The accreditation’s status today makes no difference. A load with no usable date, or dated outside the months shown, is not counted.',
+        'Sent-on loads are deducted in the month they left the site. They are only deducted for a reprocessor credited on the tonnage it receives, and are deducted whether or not the accreditation was valid on that date.',
+        'PRNs and PERNs issued through the service are not deducted. The figures include tonnage on which notes have already been issued.',
+        'The figures are live. They are calculated from the reports held at the time shown above, not from a record of what was published, so a resubmission changes earlier months.',
+        'The columns run from January of the reporting year to the last complete month. Each column is that month’s own figure. The total adds the months together.'
+      ])
+    })
+
     it('asks for the reporting period through the last complete month', async ({
       msw,
       server

@@ -10,8 +10,37 @@
       "exporter": "Exporter",
       "reprocessor": "Reprocessor"
     },
+    "calculation": {
+      "accreditationStatus": "The accreditation’s status today makes no difference. A load with no usable date, or dated outside the months shown, is not counted.",
+      "columns": "The columns run from January of the reporting year to the last complete month. Each column is that month’s own figure. The total adds the months together.",
+      "countedIf": {
+        "accreditationValid": "the accreditation was valid, and not suspended or cancelled, on that date",
+        "fieldsComplete": "its waste balance fields are complete",
+        "leadIn": "A load is only counted if:"
+      },
+      "exportedNotCountedIf": {
+        "leadIn": "Exported waste is also not counted if:",
+        "notValidOnExportDate": "the accreditation was not valid on the date of export",
+        "siteNotApproved": "the overseas site was not approved for the exporter on the date of export",
+        "stoppedOrRefused": "it was stopped or refused"
+      },
+      "figure": "Each figure is the tonnage credited to accredited operators’ waste balances for that material and accreditation type in that month, less the tonnage sent on.",
+      "heading": "How the figures are calculated",
+      "live": "The figures are live. They are calculated from the reports held at the time shown above, not from a record of what was published, so a resubmission changes earlier months.",
+      "monthCounted": {
+        "exported": "an overseas reprocessor received the exported waste",
+        "leadIn": "A load is counted in the month:",
+        "product": "a recycled product left the reprocessing site",
+        "received": "a reprocessor received it for reprocessing"
+      },
+      "notesNotDeducted": "PRNs and PERNs issued through the service are not deducted. The figures include tonnage on which notes have already been issued.",
+      "prnIssued": "Waste received for reprocessing or exported is not counted if a PRN or PERN was reported as issued on it.",
+      "product": "A recycled product is not counted unless its weight was added to the waste balance.",
+      "sentOn": "Sent-on loads are deducted in the month they left the site. They are only deducted for a reprocessor credited on the tonnage it receives, and are deducted whether or not the accreditation was valid on that date.",
+      "submissions": "The figures are calculated from the latest summary log each accreditation has submitted. A resubmission replaces the earlier one. Registered-only operators are not included."
+    },
     "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
-    "description": "Net credited tonnage by material and accreditation type. These are the figures the monthly market insights workbook is built from.",
+    "description": "Tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. These are the figures the monthly market insights workbook is built from.",
     "heading": "Market insights",
     "linkText": "Market insights",
     "pageTitle": "Market insights",
