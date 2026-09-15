@@ -42,9 +42,9 @@ const localise = createMockLocalise({
   'registrations:details:accreditation:summary:status': 'Accreditation status',
   'registrations:details:accreditation:summary:wasteBalanceAvailable':
     'Waste balance available (tonnes)',
-  'registrations:details:accreditation:summary:wasteRecords': 'Waste records',
-  'registrations:details:accreditation:summary:downloadLatest':
-    'Download latest',
+  'registrations:details:accreditation:summary:wasteRecords':
+    'Latest waste record CSV',
+  'registrations:details:accreditation:summary:download': 'Download',
   'registrations:details:allOrganisations': 'All organisations',
   'registrations:details:current': 'Current',
   'registrations:details:heading': 'Registration details',
@@ -291,14 +291,18 @@ describe('the accreditation details view model', () => {
     ).toBe('')
   })
 
-  it('shows the status as a tag, then the number, then the available balance', () => {
+  it('shows the status as a tag, then the number, then the available balance, then the records CSV', () => {
     expect(build().summaryRows).toStrictEqual([
       {
         key: 'Accreditation status',
         status: { text: 'Approved', classes: 'govuk-tag--green' }
       },
       { key: 'Accreditation number', value: 'A26ER5001180114PL' },
-      { key: 'Waste balance available (tonnes)', value: '987.25' }
+      { key: 'Waste balance available (tonnes)', value: '987.25' },
+      {
+        key: 'Latest waste record CSV',
+        html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv" class="govuk-link">Download</a>`
+      }
     ])
   })
 
@@ -323,41 +327,6 @@ describe('the accreditation details view model', () => {
     expect(build(undefined, undefined, null).summaryRows[2]).toStrictEqual({
       key: 'Waste balance available (tonnes)',
       value: ''
-    })
-  })
-
-  it('holds no waste records row while the download is dark', () => {
-    expect(build().summaryRows.map((row) => row.key)).not.toContain(
-      'Waste records'
-    )
-  })
-
-  describe('with the waste records download lit', () => {
-    beforeAll(() => {
-      config.set('featureFlags.wasteRecordsDownload', true)
-    })
-
-    afterAll(() => {
-      config.set('featureFlags.wasteRecordsDownload', false)
-    })
-
-    it('offers the latest waste records beneath the balance', () => {
-      expect(build().summaryRows.at(3)).toStrictEqual({
-        key: 'Waste records',
-        html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv" class="govuk-link">Download latest</a>`
-      })
-    })
-
-    it('leaves the three rows above it as they were', () => {
-      expect(
-        build()
-          .summaryRows.slice(0, 3)
-          .map((row) => row.key)
-      ).toStrictEqual([
-        'Accreditation status',
-        'Accreditation number',
-        'Waste balance available (tonnes)'
-      ])
     })
   })
 

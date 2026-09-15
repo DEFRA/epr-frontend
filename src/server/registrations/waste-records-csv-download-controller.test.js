@@ -62,7 +62,6 @@ const visit = (server, auth) =>
 describe('the waste records CSV download', () => {
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
-    config.set('featureFlags.wasteRecordsDownload', true)
   })
 
   beforeEach(() => {
@@ -71,7 +70,6 @@ describe('the waste records CSV download', () => {
 
   afterAll(() => {
     config.set('featureFlags.regulatorAccess', false)
-    config.set('featureFlags.wasteRecordsDownload', false)
   })
 
   it('serves the records a regulator asked for', async ({ server }) => {
@@ -144,15 +142,18 @@ describe('the waste records CSV download', () => {
     expect(response.statusCode).toBe(statusCodes.notFound)
   })
 
-  it('does not exist while the records download is dark', async ({
+  // The CSV download flag gates the per-summary-log exports, not this one: a
+  // regulator reads a registration's latest records whatever it is set to.
+  it('serves the records while the CSV download flag is dark', async ({
     server
   }) => {
+    const lit = config.get('featureFlags.wasteRecordsDownload')
     config.set('featureFlags.wasteRecordsDownload', false)
     const response = await visit(server, regulator)
-    config.set('featureFlags.wasteRecordsDownload', true)
+    config.set('featureFlags.wasteRecordsDownload', lit)
 
-    expect(response.statusCode).toBe(statusCodes.notFound)
-    expect(fetchStreamFromBackend).not.toHaveBeenCalled()
+    expect(response.statusCode).toBe(statusCodes.ok)
+    expect(response.rawPayload.toString()).toBe(csv)
   })
 
   // A refusal reaching the caller as 502 says the gateway broke, which sends

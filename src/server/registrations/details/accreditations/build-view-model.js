@@ -105,7 +105,7 @@ const toWasteRecordsRow = ({
   html: `<a href="${localiseUrl(
     buildWasteRecordsCsvDownloadPath({ organisationId, registrationId })
   )}" class="govuk-link">${escapeHtml(
-    localise('registrations:details:accreditation:summary:downloadLatest')
+    localise('registrations:details:accreditation:summary:download')
   )}</a>`
 })
 
@@ -142,17 +142,12 @@ const toSummaryRows = ({
     ),
     value: toTonnage(wasteBalance?.availableAmount)
   },
-  // The page is regulator-only, so the flag is the whole question here.
-  ...(offersWasteRecordsDownloads()
-    ? [
-        toWasteRecordsRow({
-          localise,
-          localiseUrl,
-          organisationId,
-          registrationId
-        })
-      ]
-    : [])
+  toWasteRecordsRow({
+    localise,
+    localiseUrl,
+    organisationId,
+    registrationId
+  })
 ]
 
 /**
