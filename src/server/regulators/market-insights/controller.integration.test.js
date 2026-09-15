@@ -11,6 +11,7 @@ import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { paths } from '#server/paths.js'
 import { it } from '#vite/fixtures/server.js'
 import {
+  getAllByRole,
   getByRole,
   getByText,
   queryByRole,
@@ -99,6 +100,13 @@ const aggregateOf = (figures) => ({
 })
 
 /**
+ * @param {number} year
+ * @param {number} month
+ */
+const pageFor = (year, month) =>
+  `${paths.regulators.marketInsights}/${year}/${month}`
+
+/**
  * @param {string} html
  */
 const documentOf = (html) => new JSDOM(html).window.document.body
@@ -123,6 +131,20 @@ const headingsOf = (body) =>
     cell.textContent.trim()
   )
 
+/**
+ * The month links the page offers, each as its text and where it goes.
+ * @param {ReturnType<typeof documentOf>} body
+ * @returns {(string | null)[][]}
+ */
+const navigationOf = (body) =>
+  getAllByRole(
+    getByRole(body, 'navigation', { name: 'Pagination' }),
+    'link'
+  ).map((link) => [
+    link.textContent.replace(/\s+/g, ' ').trim(),
+    link.getAttribute('href')
+  ])
+
 describe('the market insights page', () => {
   beforeAll(() => {
     // Only the clock, so the page reads a reporting year the test pins while
@@ -140,6 +162,19 @@ describe('the market insights page', () => {
   })
 
   describe('a regulator', () => {
+    it('is sent from the bare path to the last complete month', async ({
+      server
+    }) => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(pageFor(2026, 3))
+    })
+
     it('reads the waste balance laid out the way the publication is, months across and net credit in the cells', async ({
       msw,
       server
@@ -158,7 +193,7 @@ describe('the market insights page', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: pageFor(2026, 3),
         auth: regulator
       })
 
@@ -192,7 +227,7 @@ describe('the market insights page', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: pageFor(2026, 3),
         auth: regulator
       })
 
@@ -206,7 +241,7 @@ describe('the market insights page', () => {
       ).not.toBeNull()
     })
 
-    it('asks for the reporting period through the last complete month', async ({
+    it('shows an earlier month they chose, through to that month only', async ({
       msw,
       server
     }) => {
@@ -216,19 +251,135 @@ describe('the market insights page', () => {
       msw.use(
         http.get(wasteBalanceUrl, ({ request }) => {
           captured = new URL(request.url)
-          return HttpResponse.json(aggregateOf([glassReprocessedInJanuary]))
+          return HttpResponse.json(
+            aggregateOf([glassReprocessedInJanuary, glassReprocessedInFebruary])
+          )
         })
       )
 
-      await server.inject({
+      const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: pageFor(2026, 2),
         auth: regulator
       })
 
+      expect(statusCode).toBe(statusCodes.ok)
       expect(/** @type {URL} */ (captured).pathname).toBe(
-        '/v1/market-insights/2026/monthly/3/waste-balance'
+        '/v1/market-insights/2026/monthly/2/waste-balance'
       )
+
+      const body = documentOf(asHtml(result))
+
+      expect(getByText(body, 'January to February 2026')).not.toBeNull()
+      expect(headingsOf(body)).toStrictEqual([
+        'Material',
+        'Accreditation type',
+        'January',
+        'February',
+        'Total'
+      ])
+      expect(rowsOf(body)).toStrictEqual([
+        ['Glass Re-melt', 'Reprocessor', '90.00', '42.50', '132.50']
+      ])
+    })
+
+    it('can step to the month either side', async ({ msw, server }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () =>
+          HttpResponse.json(aggregateOf([glassReprocessedInJanuary]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: pageFor(2026, 2),
+        auth: regulator
+      })
+
+      expect(navigationOf(documentOf(asHtml(result)))).toStrictEqual([
+        ['Previous page : January 2026', pageFor(2026, 1)],
+        ['Next page : March 2026', pageFor(2026, 3)]
+      ])
+    })
+
+    it('is offered nothing before January 2026', async ({ msw, server }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () =>
+          HttpResponse.json(aggregateOf([glassReprocessedInJanuary]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: pageFor(2026, 1),
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+
+      expect(getByText(body, 'January 2026')).not.toBeNull()
+      expect(navigationOf(body)).toStrictEqual([
+        ['Next page : February 2026', pageFor(2026, 2)]
+      ])
+    })
+
+    it('is offered nothing after the last complete month', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () =>
+          HttpResponse.json(aggregateOf([glassReprocessedInJanuary]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: pageFor(2026, 3),
+        auth: regulator
+      })
+
+      expect(navigationOf(documentOf(asHtml(result)))).toStrictEqual([
+        ['Previous page : February 2026', pageFor(2026, 2)]
+      ])
+    })
+
+    const outOfRange = [
+      { which: 'the month still running', url: pageFor(2026, 4) },
+      { which: 'a month before the publication began', url: pageFor(2025, 12) }
+    ]
+
+    it.for(outOfRange)(
+      'finds no page for $which, and asks the backend for nothing',
+      async ({ url }, { msw, server }) => {
+        const asked = vi.fn()
+
+        msw.use(
+          http.get(wasteBalanceUrl, () => {
+            asked()
+            return HttpResponse.json(aggregateOf([]))
+          })
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: regulator
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+        expect(asked).not.toHaveBeenCalled()
+      }
+    )
+
+    it('is refused a month that is not one', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: pageFor(2026, 13),
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
     })
 
     it('says the period has no figures yet rather than showing an empty table', async ({
@@ -241,7 +392,7 @@ describe('the market insights page', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: pageFor(2026, 3),
         auth: regulator
       })
 
@@ -291,7 +442,7 @@ describe('the market insights page', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: pageFor(2026, 3),
         auth: operator
       })
 

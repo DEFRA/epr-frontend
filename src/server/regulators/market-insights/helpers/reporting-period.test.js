@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  adjacentMonths,
+  describeMonth,
   describeReportingPeriod,
+  isNavigable,
+  lastCompleteMonth,
   nameOf,
-  reportingPeriodNow
+  reportingPeriod
 } from './reporting-period.js'
 
 /** @param {string} iso */
@@ -30,71 +34,132 @@ describe(nameOf, () => {
   })
 })
 
-describe(reportingPeriodNow, () => {
+describe(lastCompleteMonth, () => {
   afterEach(() => {
     vi.useRealTimers()
   })
 
-  it('runs from January to the last complete month', () => {
+  it('is the month before the one still running', () => {
     at('2026-09-10T09:00:00.000Z')
 
-    expect(reportingPeriodNow()).toStrictEqual({
+    expect(lastCompleteMonth()).toStrictEqual({ year: 2026, month: 8 })
+  })
+
+  it('is December of the year just ended, through January', () => {
+    at('2027-01-15T12:00:00.000Z')
+
+    expect(lastCompleteMonth()).toStrictEqual({ year: 2026, month: 12 })
+  })
+
+  // Half past midnight on 1 July in British Summer Time is still 30 June in
+  // UTC, so a host reading the month in UTC would stop a month short.
+  it('reads the month in UK time rather than UTC', () => {
+    at('2026-06-30T23:30:00.000Z')
+
+    expect(lastCompleteMonth()).toStrictEqual({ year: 2026, month: 6 })
+  })
+})
+
+describe(reportingPeriod, () => {
+  it('runs from January of the year to the month asked for', () => {
+    expect(reportingPeriod({ year: 2026, month: 3 })).toStrictEqual({
       year: 2026,
-      month: 8,
-      months: [
-        '2026-01',
-        '2026-02',
-        '2026-03',
-        '2026-04',
-        '2026-05',
-        '2026-06',
-        '2026-07',
-        '2026-08'
-      ]
+      month: 3,
+      months: ['2026-01', '2026-02', '2026-03']
     })
   })
 
-  it('leaves out the month still running', () => {
-    at('2026-02-28T23:59:00.000Z')
-
-    expect(reportingPeriodNow()).toStrictEqual({
+  it('is January alone when January is asked for', () => {
+    expect(reportingPeriod({ year: 2026, month: 1 })).toStrictEqual({
       year: 2026,
       month: 1,
       months: ['2026-01']
     })
   })
+})
 
-  // The year comes from the last complete month, not from today, so January
-  // shows the year that has just closed in full rather than an empty page.
-  it('shows the whole of the year just ended, through January', () => {
-    at('2027-01-15T12:00:00.000Z')
+describe(isNavigable, () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 
-    expect(reportingPeriodNow()).toStrictEqual({
-      year: 2026,
-      month: 12,
-      months: [
-        '2026-01',
-        '2026-02',
-        '2026-03',
-        '2026-04',
-        '2026-05',
-        '2026-06',
-        '2026-07',
-        '2026-08',
-        '2026-09',
-        '2026-10',
-        '2026-11',
-        '2026-12'
-      ]
+  it('accepts any month from January 2026 to the last complete one', () => {
+    at('2026-09-10T09:00:00.000Z')
+
+    expect(isNavigable({ year: 2026, month: 1 })).toBe(true)
+    expect(isNavigable({ year: 2026, month: 5 })).toBe(true)
+    expect(isNavigable({ year: 2026, month: 8 })).toBe(true)
+  })
+
+  it('refuses the month still running', () => {
+    at('2026-09-10T09:00:00.000Z')
+
+    expect(isNavigable({ year: 2026, month: 9 })).toBe(false)
+  })
+
+  it('refuses a month before the publication began', () => {
+    at('2026-09-10T09:00:00.000Z')
+
+    expect(isNavigable({ year: 2025, month: 12 })).toBe(false)
+  })
+
+  // A later year with an earlier month number is still after the ceiling.
+  it('refuses a month in a year that has not started', () => {
+    at('2026-09-10T09:00:00.000Z')
+
+    expect(isNavigable({ year: 2027, month: 1 })).toBe(false)
+  })
+})
+
+describe(adjacentMonths, () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('offers the month either side of one in the middle of the range', () => {
+    at('2026-09-10T09:00:00.000Z')
+
+    expect(adjacentMonths({ year: 2026, month: 5 })).toStrictEqual({
+      previous: { year: 2026, month: 4 },
+      next: { year: 2026, month: 6 }
     })
   })
 
-  // Half past midnight on 1 July in British Summer Time is still 30 June in
-  // UTC, so a host reading the month in UTC would stop the period a month short.
-  it('reads the month in UK time rather than UTC', () => {
-    at('2026-06-30T23:30:00.000Z')
+  it('offers nothing earlier than January 2026', () => {
+    at('2026-09-10T09:00:00.000Z')
 
-    expect(reportingPeriodNow().months).toContain('2026-06')
+    expect(adjacentMonths({ year: 2026, month: 1 })).toStrictEqual({
+      next: { year: 2026, month: 2 }
+    })
+  })
+
+  it('offers nothing later than the last complete month', () => {
+    at('2026-09-10T09:00:00.000Z')
+
+    expect(adjacentMonths({ year: 2026, month: 8 })).toStrictEqual({
+      previous: { year: 2026, month: 7 }
+    })
+  })
+
+  it('crosses the year boundary in both directions', () => {
+    at('2027-03-10T09:00:00.000Z')
+
+    expect(adjacentMonths({ year: 2026, month: 12 })).toStrictEqual({
+      previous: { year: 2026, month: 11 },
+      next: { year: 2027, month: 1 }
+    })
+    expect(adjacentMonths({ year: 2027, month: 1 })).toStrictEqual({
+      previous: { year: 2026, month: 12 },
+      next: { year: 2027, month: 2 }
+    })
+  })
+})
+
+describe(describeMonth, () => {
+  it('names a month with its year', () => {
+    expect(describeMonth({ year: 2026, month: 2 }, asKey)).toBe(
+      'translated:regulators:marketInsights:period:month:{"month":"February","year":2026}'
+    )
   })
 })
 

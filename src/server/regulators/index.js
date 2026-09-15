@@ -3,7 +3,10 @@ import { SCOPES } from '#server/auth/scopes.js'
 import { paths } from '#server/paths.js'
 
 import { controller as loggedOutController } from './logged-out/controller.js'
-import { controller as marketInsightsController } from './market-insights/controller.js'
+import {
+  latestPeriodController,
+  controller as marketInsightsController
+} from './market-insights/controller.js'
 import { controller } from './organisations/controller.js'
 import { controller as startController } from './start/controller.js'
 
@@ -50,10 +53,19 @@ export const regulators = {
         ...(config.get('featureFlags.marketInsights')
           ? [
               {
-                ...marketInsightsController,
+                ...latestPeriodController,
                 method: /** @type {const} */ ('GET'),
                 path: paths.regulators.marketInsights,
                 options: {
+                  auth: { scope: [SCOPES.marketDataRead] }
+                }
+              },
+              {
+                ...marketInsightsController,
+                method: /** @type {const} */ ('GET'),
+                path: `${paths.regulators.marketInsights}/{year}/{month}`,
+                options: {
+                  ...marketInsightsController.options,
                   auth: { scope: [SCOPES.marketDataRead] }
                 }
               }
