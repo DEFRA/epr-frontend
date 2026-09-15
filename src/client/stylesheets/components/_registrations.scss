@@ -52,9 +52,13 @@
   .govuk-summary-list {
     margin-bottom: 0;
 
+    // A 50% key column starts the figures on the same vertical line as the
+    // accreditation column of the details grid above: that grid splits the
+    // content width in half, and the card's padding is symmetric, so a
+    // half-and-half split here lands the values directly beneath it.
     @include govuk-media-query($from: tablet) {
-      .govuk-summary-list__value {
-        text-align: right;
+      .govuk-summary-list__key {
+        width: 50%;
       }
     }
   }
