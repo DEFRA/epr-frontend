@@ -10,19 +10,14 @@ import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { paths } from '#server/paths.js'
 import { it } from '#vite/fixtures/server.js'
-import {
-  getByRole,
-  getByText,
-  queryByRole,
-  queryByText
-} from '@testing-library/dom'
+import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 /**
  * @import { WasteBalanceAggregate } from './helpers/fetch-waste-balance.js'
- * @import { WasteBalanceFigure } from './helpers/to-waste-balance-table.js'
+ * @import { PublishedFigures, PublishedMonth } from './helpers/to-waste-balance-table.js'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -44,33 +39,53 @@ const regulatorWithoutMarketScope = buildMockAuth({
   scope: [SCOPES.organisationSearch]
 })
 
-/** @type {WasteBalanceFigure} */
-const glassReprocessedInJanuary = {
-  material: 'Glass Re-melt',
-  accreditationType: 'reprocessor',
-  month: '2026-01',
-  totalCredited: 120,
-  eligibleForWasteBalance: 100,
-  sentOnDeductions: 10,
-  netCredit: 90
-}
-
-/** @type {WasteBalanceFigure} */
-const glassReprocessedInFebruary = {
-  ...glassReprocessedInJanuary,
-  month: '2026-02',
-  netCredit: 42.5
-}
-
-/** @type {WasteBalanceFigure} */
-const aluminiumExportedInFebruary = {
-  material: 'Aluminium',
-  accreditationType: 'exporter',
-  month: '2026-02',
-  totalCredited: 8,
-  eligibleForWasteBalance: 8,
+/**
+ * @param {number} netCredit
+ * @returns {PublishedFigures}
+ */
+const figuresOf = (netCredit) => ({
+  totalCredited: netCredit,
+  eligibleForWasteBalance: netCredit,
   sentOnDeductions: 0,
-  netCredit: 8
+  netCredit
+})
+
+/**
+ * A month in which glass was reprocessed and aluminium exported, every other
+ * served figure at zero. The page shows whatever materials are served, so two
+ * are enough to see the rows laid out.
+ * @param {{ glass: number, aluminium: number }} netCredits
+ * @param {PublishedMonth['reports']} reports
+ * @returns {PublishedMonth}
+ */
+const monthOf = ({ glass, aluminium }, reports) => ({
+  reports,
+  figures: {
+    glass_re_melt: { reprocessor: figuresOf(glass), exporter: figuresOf(0) },
+    aluminium: { reprocessor: figuresOf(0), exporter: figuresOf(aluminium) }
+  }
+})
+
+/** @type {WasteBalanceAggregate} */
+const januaryToMarch = {
+  meta: { generatedAt: '2026-04-10T09:00:00.000Z' },
+  data: {
+    months: {
+      '2026-01': monthOf(
+        { glass: 90, aluminium: 0 },
+        { expected: 2, submitted: 1 }
+      ),
+      '2026-02': monthOf(
+        { glass: 42.5, aluminium: 8 },
+        { expected: 2, submitted: 2 }
+      ),
+      '2026-03': monthOf(
+        { glass: 0, aluminium: 0 },
+        { expected: 3, submitted: 0 }
+      )
+    },
+    period: { reports: { expected: 9, submitted: 4 } }
+  }
 }
 
 /**
@@ -88,15 +103,6 @@ const anEmptyPageOfOrganisations = http.get(
       totalPages: 0
     })
 )
-
-/**
- * @param {WasteBalanceFigure[]} figures
- * @returns {WasteBalanceAggregate}
- */
-const aggregateOf = (figures) => ({
-  meta: { generatedAt: '2026-04-10T09:00:00.000Z' },
-  data: figures
-})
 
 /**
  * @param {string} html
@@ -145,15 +151,7 @@ describe('the market insights page', () => {
       server
     }) => {
       msw.use(
-        http.get(wasteBalanceUrl, () =>
-          HttpResponse.json(
-            aggregateOf([
-              glassReprocessedInJanuary,
-              glassReprocessedInFebruary,
-              aluminiumExportedInFebruary
-            ])
-          )
-        )
+        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
       )
 
       const { statusCode, result } = await server.inject({
@@ -176,8 +174,41 @@ describe('the market insights page', () => {
       ])
       expect(rowsOf(body)).toStrictEqual([
         ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00'],
-        ['Glass Re-melt', 'Reprocessor', '90.00', '42.50', '0.00', '132.50']
+        ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00'],
+        ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
+        ['Glass remelt', 'Reprocessor', '90.00', '42.50', '0.00', '132.50'],
+        ['Monthly reports included', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
       ])
+    })
+
+    it('says under each month how many of the reports it expected the figures include, and the served count for the period', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+      const reportsRow = getByRole(body, 'rowheader', {
+        name: 'Monthly reports included'
+      }).closest('tr')
+
+      // The row names itself across the two columns that name every other
+      // row, so its counts sit under the months and the period's under the
+      // total, where a reader holding the columns finds them.
+      expect(reportsRow?.querySelector('th')?.getAttribute('colspan')).toBe('2')
+      expect(
+        Array.from(reportsRow?.querySelectorAll('td') ?? []).map((cell) =>
+          cell.textContent.trim()
+        )
+      ).toStrictEqual(['1 of 2', '2 of 2', '0 of 3', '4 of 9'])
     })
 
     it('states the period the figures cover and when they were taken', async ({
@@ -185,9 +216,7 @@ describe('the market insights page', () => {
       server
     }) => {
       msw.use(
-        http.get(wasteBalanceUrl, () =>
-          HttpResponse.json(aggregateOf([glassReprocessedInJanuary]))
-        )
+        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
       )
 
       const { result } = await server.inject({
@@ -216,7 +245,7 @@ describe('the market insights page', () => {
       msw.use(
         http.get(wasteBalanceUrl, ({ request }) => {
           captured = new URL(request.url)
-          return HttpResponse.json(aggregateOf([glassReprocessedInJanuary]))
+          return HttpResponse.json(januaryToMarch)
         })
       )
 
@@ -229,33 +258,6 @@ describe('the market insights page', () => {
       expect(/** @type {URL} */ (captured).pathname).toBe(
         '/v1/market-insights/2026/monthly/3/waste-balance'
       )
-    })
-
-    it('says the period has no figures yet rather than showing an empty table', async ({
-      msw,
-      server
-    }) => {
-      msw.use(
-        http.get(wasteBalanceUrl, () => HttpResponse.json(aggregateOf([])))
-      )
-
-      const { statusCode, result } = await server.inject({
-        method: 'GET',
-        url: paths.regulators.marketInsights,
-        auth: regulator
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const body = documentOf(asHtml(result))
-
-      expect(body.querySelector('table')).toBeNull()
-      expect(
-        queryByText(
-          body,
-          'No waste balance figures have been reported for this period yet.'
-        )
-      ).not.toBeNull()
     })
 
     it('reaches the page from the regulator area', async ({ msw, server }) => {
@@ -285,7 +287,7 @@ describe('the market insights page', () => {
       msw.use(
         http.get(wasteBalanceUrl, () => {
           asked()
-          return HttpResponse.json(aggregateOf([]))
+          return HttpResponse.json(januaryToMarch)
         })
       )
 

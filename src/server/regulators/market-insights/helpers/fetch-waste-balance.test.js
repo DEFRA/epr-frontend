@@ -5,44 +5,44 @@ import { describe, expect } from 'vitest'
 
 import { fetchWasteBalance } from './fetch-waste-balance.js'
 
-/**
- * @import { WasteBalanceAggregate } from './fetch-waste-balance.js'
- * @import { WasteBalanceFigure } from './to-waste-balance-table.js'
- */
+/** @import { WasteBalanceAggregate } from './fetch-waste-balance.js' */
 
 const backendUrl = config.get('eprBackendUrl')
 const wasteBalanceUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/waste-balance`
 const backendToken = 'test-backend-token'
 
-/** @type {WasteBalanceFigure} */
-const glassInJanuary = {
-  material: 'Glass Re-melt',
-  accreditationType: 'reprocessor',
-  month: '2026-01',
-  totalCredited: 120,
-  eligibleForWasteBalance: 100,
-  sentOnDeductions: 10,
-  netCredit: 90
-}
-
-/**
- * @param {WasteBalanceFigure[]} figures
- * @returns {WasteBalanceAggregate}
- */
-const aggregateOf = (figures) => ({
+/** @type {WasteBalanceAggregate} */
+const januaryAggregate = {
   meta: { generatedAt: '2026-04-10T09:00:00.000Z' },
-  data: figures
-})
+  data: {
+    months: {
+      '2026-01': {
+        reports: { expected: 2, submitted: 1 },
+        figures: {
+          glass_re_melt: {
+            reprocessor: {
+              totalCredited: 120,
+              eligibleForWasteBalance: 100,
+              sentOnDeductions: 10,
+              netCredit: 90
+            }
+          }
+        }
+      }
+    },
+    period: { reports: { expected: 2, submitted: 1 } }
+  }
+}
 
 describe(fetchWasteBalance, () => {
   test('returns the aggregate the backend answers with', async ({ msw }) => {
-    const aggregate = aggregateOf([glassInJanuary])
-
-    msw.use(http.get(wasteBalanceUrl, () => HttpResponse.json(aggregate)))
+    msw.use(
+      http.get(wasteBalanceUrl, () => HttpResponse.json(januaryAggregate))
+    )
 
     await expect(
       fetchWasteBalance({ year: 2026, month: 1, backendToken })
-    ).resolves.toStrictEqual(aggregate)
+    ).resolves.toStrictEqual(januaryAggregate)
   })
 
   test('asks for the monthly reporting period it was given', async ({
@@ -54,7 +54,7 @@ describe(fetchWasteBalance, () => {
     msw.use(
       http.get(wasteBalanceUrl, ({ request }) => {
         captured = new URL(request.url)
-        return HttpResponse.json(aggregateOf([]))
+        return HttpResponse.json(januaryAggregate)
       })
     )
 
@@ -74,7 +74,7 @@ describe(fetchWasteBalance, () => {
     msw.use(
       http.get(wasteBalanceUrl, ({ request }) => {
         captured = request
-        return HttpResponse.json(aggregateOf([]))
+        return HttpResponse.json(januaryAggregate)
       })
     )
 
