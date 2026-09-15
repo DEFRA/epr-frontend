@@ -177,7 +177,7 @@ describe('the market insights page', () => {
         ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00'],
         ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
         ['Glass remelt', 'Reprocessor', '90.00', '42.50', '0.00', '132.50'],
-        ['Monthly reports included', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
+        ['Monthly reports submitted', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
       ])
     })
 
@@ -197,7 +197,7 @@ describe('the market insights page', () => {
 
       expect(
         getByRole(documentOf(asHtml(result)), 'rowheader', {
-          name: 'Monthly reports included'
+          name: 'Monthly reports submitted'
         }).getAttribute('colspan')
       ).toBe('2')
     })
@@ -264,7 +264,7 @@ describe('the market insights page', () => {
 
       expect(element?.querySelector('table')).not.toBeNull()
       expect(wording).toStrictEqual([
-        'The figures come from the latest summary log each accreditation has submitted. The last row of the table shows how many monthly reports operators submitted for each month, and how many they owed.',
+        'The figures come from the latest summary log each accreditation has submitted. The last row shows how many monthly reports were due for each month and how many operators submitted. This is a guide to how complete the figures are. The figures do not come from the monthly reports.',
         'A load counts under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load counts.',
         'A load counts in the month:',
         [
