@@ -10,8 +10,21 @@
       "exporter": "Exporter",
       "reprocessor": "Reprocessor"
     },
+    "calculation": {
+      "counted": {
+        "exported": "an overseas reprocessor received the exported waste",
+        "leadIn": "A load counts in the month:",
+        "product": "a recycled product left the reprocessing site",
+        "received": "a reprocessor received it"
+      },
+      "deductions": "Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.",
+      "heading": "How the figures are calculated",
+      "live": "The figures are live. They come from the reports held at the time shown above, not from a record of what was published. If an operator resubmits a report, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.",
+      "rules": "A load counts under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load counts.",
+      "source": "The figures come from the latest monthly report each accreditation has submitted."
+    },
     "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
-    "description": "Net credited tonnage by material and accreditation type. These are the figures the monthly market insights workbook is built from.",
+    "description": "The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook uses these figures.",
     "heading": "Market insights",
     "linkText": "Market insights",
     "pageTitle": "Market insights",

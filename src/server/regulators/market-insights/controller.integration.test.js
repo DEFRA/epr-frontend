@@ -226,6 +226,57 @@ describe('the market insights page', () => {
       ).not.toBeNull()
     })
 
+    it('says how the figures are calculated, before the table', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+      const heading = getByRole(body, 'heading', {
+        level: 2,
+        name: 'How the figures are calculated'
+      })
+
+      // The wording sits between its heading and the table, so a regulator
+      // reads it before the figures it explains.
+      /** @type {(string | string[])[]} */
+      const wording = []
+      let element = heading.nextElementSibling
+      while (element !== null && element.matches('p, ul')) {
+        wording.push(
+          element.matches('ul')
+            ? Array.from(element.querySelectorAll('li')).map((item) =>
+                item.textContent.trim()
+              )
+            : element.textContent.trim()
+        )
+        element = element.nextElementSibling
+      }
+
+      expect(element?.querySelector('table')).not.toBeNull()
+      expect(wording).toStrictEqual([
+        'The figures come from the latest monthly report each accreditation has submitted.',
+        'A load counts under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load counts.',
+        'A load counts in the month:',
+        [
+          'a reprocessor received it',
+          'a recycled product left the reprocessing site',
+          'an overseas reprocessor received the exported waste'
+        ],
+        'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
+        'The figures are live. They come from the reports held at the time shown above, not from a record of what was published. If an operator resubmits a report, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.'
+      ])
+    })
+
     it('asks for the reporting period through the last complete month', async ({
       msw,
       server
