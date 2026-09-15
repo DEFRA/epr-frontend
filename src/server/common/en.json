@@ -47,9 +47,9 @@
   "wasteBalance": {
     "decemberPanel": {
       "title": "Available waste balance",
-      "december": "December waste balance:",
-      "nonDecember": "Non-December waste balance:",
-      "total": "Total tonnage:",
+      "december": "December waste balance",
+      "nonDecember": "Non-December waste balance",
+      "total": "Total tonnage",
       "hint": "You can create {{noteTypePlural}} from either waste balance."
     }
   }
