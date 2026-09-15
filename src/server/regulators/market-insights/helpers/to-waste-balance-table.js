@@ -1,20 +1,38 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
 import { nameOf } from './reporting-period.js'
 
 /**
- * One aggregated figure as the backend serves it: the net credit for a
- * material and accreditation type in a reporting month, alongside the
- * measures it was derived from.
+ * How many monthly reports were expected and how many the figures include.
+ * @typedef {{ expected: number, submitted: number }} ReportCount
+ */
+
+/**
+ * The net credit for a material and accreditation type in a reporting month,
+ * alongside the measures it was derived from.
  * @typedef {{
- *   material: string,
- *   accreditationType: 'reprocessor' | 'exporter',
- *   month: string,
  *   totalCredited: number,
  *   eligibleForWasteBalance: number,
  *   sentOnDeductions: number,
  *   netCredit: number
- * }} WasteBalanceFigure
+ * }} PublishedFigures
+ */
+
+/**
+ * One reporting month as the backend serves it: the figures keyed by material
+ * then accreditation type, and the reports the month was owed.
+ * @typedef {{
+ *   reports: ReportCount,
+ *   figures: Record<string, Record<string, PublishedFigures>>
+ * }} PublishedMonth
+ */
+
+/**
+ * @typedef {{
+ *   months: Record<string, PublishedMonth>,
+ *   period: { reports: ReportCount }
+ * }} WasteBalanceData
  */
 
 /**
@@ -27,81 +45,80 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
- * @typedef {{ months: string[], rows: WasteBalanceRow[] }} WasteBalanceTable
- */
-
-/**
- * The figures of one material and accreditation type, gathered by the month
- * they were credited in, on the way to becoming a row.
  * @typedef {{
- *   material: string,
- *   accreditationType: string,
- *   netCredits: Map<string, number>
- * }} WasteBalancePartition
+ *   months: string[],
+ *   rows: WasteBalanceRow[],
+ *   reports: { byMonth: string[], period: string }
+ * }} WasteBalanceTable
  */
 
 /**
  * Lays the served figures out the way the published Waste Balance tab is: one
  * row per material and accreditation type, the reporting months across as
- * columns, and the net credit in the cells.
+ * columns, and the net credit in the cells, with a row beneath saying how many
+ * of the reports each month expected the figures include.
  *
  * The pivot is presentation. Every figure in a cell is the one the service
- * served for that month, and the only sum is the row total across them.
+ * served for that month, and the only sum is the row total across them; the
+ * period's report count is served, not added up here.
  *
- * The months are given rather than read off the figures, so the columns run
- * unbroken across the reporting period and a month nothing was credited in
- * still gets one.
- * @param {WasteBalanceFigure[]} figures
+ * The months are the page's period, so the columns run over the span the
+ * caption states, and a served month outside it is not shown.
+ * @param {WasteBalanceData} data
  * @param {string[]} months
- * @param {(key: string) => string} localise
+ * @param {(key: string, values?: Record<string, string | number>) => string} localise
  * @returns {WasteBalanceTable}
  */
-export const toWasteBalanceTable = (figures, months, localise) => {
-  /** @type {Map<string, WasteBalancePartition>} */
+export const toWasteBalanceTable = (
+  { months: served, period },
+  months,
+  localise
+) => {
+  /** @type {Map<string, { material: string, accreditationType: string }>} */
   const partitions = new Map()
 
-  for (const { material, accreditationType, month, netCredit } of figures) {
-    // The service could not resolve a material for these figures. The label
-    // says so of us rather than of the operator, who did report one, and
-    // heading the row with it keeps real tonnage from sitting beside a blank.
-    const named =
-      material || localise('regulators:marketInsights:unknownMaterial')
-    const key = JSON.stringify([named, accreditationType])
-    /** @type {WasteBalancePartition} */
-    const partition = partitions.get(key) ?? {
-      material: named,
-      accreditationType: localise(
-        `regulators:marketInsights:accreditationTypes:${accreditationType}`
-      ),
-      netCredits: new Map()
+  for (const month of months) {
+    for (const [material, byType] of Object.entries(served[month].figures)) {
+      for (const accreditationType of Object.keys(byType)) {
+        partitions.set(`${material}::${accreditationType}`, {
+          material,
+          accreditationType
+        })
+      }
     }
-
-    partition.netCredits.set(
-      month,
-      (partition.netCredits.get(month) ?? 0) + netCredit
-    )
-    partitions.set(key, partition)
   }
 
   const rows = [...partitions.values()]
+    .map(({ material, accreditationType }) => ({
+      material: getMaterialDisplayName(material),
+      accreditationType: localise(
+        `regulators:marketInsights:accreditationTypes:${accreditationType}`
+      ),
+      netCredits: months.map(
+        (month) => served[month].figures[material][accreditationType].netCredit
+      )
+    }))
     .sort(
       (one, other) =>
         one.material.localeCompare(other.material) ||
         one.accreditationType.localeCompare(other.accreditationType)
     )
-    .map(({ material, accreditationType, netCredits }) => {
-      // The published tab holds its approved layout by printing a zero in every
-      // month a row reported nothing, so a month missing from the aggregate
-      // reads the same here as it does there.
-      const cells = months.map((month) => netCredits.get(month) ?? 0)
+    .map(({ netCredits, ...row }) => ({
+      ...row,
+      netCredits: netCredits.map((credit) => formatTonnage(credit)),
+      total: formatTonnage(netCredits.reduce((sum, credit) => sum + credit, 0))
+    }))
 
-      return {
-        material,
-        accreditationType,
-        netCredits: cells.map((credit) => formatTonnage(credit)),
-        total: formatTonnage(cells.reduce((sum, credit) => sum + credit, 0))
-      }
-    })
+  /** @param {ReportCount} count */
+  const stated = ({ expected, submitted }) =>
+    localise('regulators:marketInsights:reports:count', { submitted, expected })
 
-  return { months: months.map(nameOf), rows }
+  return {
+    months: months.map(nameOf),
+    rows,
+    reports: {
+      byMonth: months.map((month) => stated(served[month].reports)),
+      period: stated(period.reports)
+    }
+  }
 }

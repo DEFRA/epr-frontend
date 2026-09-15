@@ -2,10 +2,21 @@ import { describe, expect, it } from 'vitest'
 
 import { toWasteBalanceTable } from './to-waste-balance-table.js'
 
-/** @import { WasteBalanceFigure } from './to-waste-balance-table.js' */
+/**
+ * @import { PublishedFigures, PublishedMonth, WasteBalanceData } from './to-waste-balance-table.js'
+ */
 
-/** @param {string} key */
-const asKey = (key) => `translated:${key}`
+/**
+ * Renders a key and whatever values it was given, so a test can see both.
+ * @param {string} key
+ * @param {Record<string, string | number>} [values]
+ */
+const asKey = (key, values = {}) =>
+  [
+    'translated',
+    key,
+    ...Object.entries(values).map(([name, value]) => `${name}=${value}`)
+  ].join(':')
 
 const reprocessor =
   'translated:regulators:marketInsights:accreditationTypes:reprocessor'
@@ -14,76 +25,64 @@ const exporter =
 
 const januaryAndFebruary = ['2026-01', '2026-02']
 
-/** @type {WasteBalanceFigure} */
-const glassReprocessedInJanuary = {
-  material: 'Glass Re-melt',
-  accreditationType: 'reprocessor',
-  month: '2026-01',
-  totalCredited: 120,
-  eligibleForWasteBalance: 100,
-  sentOnDeductions: 10,
-  netCredit: 90
-}
-
-/** @type {WasteBalanceFigure} */
-const glassReprocessedInFebruary = {
-  ...glassReprocessedInJanuary,
-  month: '2026-02',
-  netCredit: 42.5
-}
-
-/** @type {WasteBalanceFigure} */
-const aluminiumExportedInFebruary = {
-  material: 'Aluminium',
-  accreditationType: 'exporter',
-  month: '2026-02',
-  totalCredited: 8,
-  eligibleForWasteBalance: 8,
+/**
+ * @param {number} netCredit
+ * @returns {PublishedFigures}
+ */
+const figuresOf = (netCredit) => ({
+  totalCredited: netCredit,
+  eligibleForWasteBalance: netCredit,
   sentOnDeductions: 0,
-  netCredit: 8
-}
+  netCredit
+})
+
+/**
+ * @param {PublishedMonth['figures']} figures
+ * @param {PublishedMonth['reports']} [reports]
+ * @returns {PublishedMonth}
+ */
+const monthOf = (figures, reports = { expected: 0, submitted: 0 }) => ({
+  reports,
+  figures
+})
+
+/**
+ * @param {Record<string, PublishedMonth>} months
+ * @param {WasteBalanceData['period']} [period]
+ * @returns {WasteBalanceData}
+ */
+const dataOf = (
+  months,
+  period = { reports: { expected: 0, submitted: 0 } }
+) => ({ months, period })
 
 describe(toWasteBalanceTable, () => {
   it('names the months it was given, in calendar order', () => {
     expect(
       toWasteBalanceTable(
-        [glassReprocessedInFebruary, glassReprocessedInJanuary],
+        dataOf({
+          '2026-01': monthOf({ plastic: { reprocessor: figuresOf(1) } }),
+          '2026-02': monthOf({ plastic: { reprocessor: figuresOf(2) } })
+        }),
         januaryAndFebruary,
         asKey
       ).months
     ).toStrictEqual(['January', 'February'])
   })
 
-  it('gives a month nothing was credited in a column of its own', () => {
+  it('gives a material and accreditation type one row, with its net credit under each month and the total across them', () => {
     expect(
       toWasteBalanceTable(
-        [glassReprocessedInJanuary],
-        ['2026-01', '2026-02', '2026-03'],
-        asKey
-      )
-    ).toStrictEqual({
-      months: ['January', 'February', 'March'],
-      rows: [
-        {
-          material: 'Glass Re-melt',
-          accreditationType: reprocessor,
-          netCredits: ['90.00', '0.00', '0.00'],
-          total: '90.00'
-        }
-      ]
-    })
-  })
-
-  it('gives a material and accreditation type one row, with its net credit under each month', () => {
-    expect(
-      toWasteBalanceTable(
-        [glassReprocessedInJanuary, glassReprocessedInFebruary],
+        dataOf({
+          '2026-01': monthOf({ plastic: { reprocessor: figuresOf(90) } }),
+          '2026-02': monthOf({ plastic: { reprocessor: figuresOf(42.5) } })
+        }),
         januaryAndFebruary,
         asKey
       ).rows
     ).toStrictEqual([
       {
-        material: 'Glass Re-melt',
+        material: 'Plastic',
         accreditationType: reprocessor,
         netCredits: ['90.00', '42.50'],
         total: '132.50'
@@ -91,134 +90,98 @@ describe(toWasteBalanceTable, () => {
     ])
   })
 
-  it('separates the accreditation types of one material', () => {
-    /** @type {WasteBalanceFigure} */
-    const glassExportedInJanuary = {
-      ...glassReprocessedInJanuary,
-      accreditationType: 'exporter',
-      netCredit: 5
-    }
-
+  it('shows only the months it was given, so a served month outside them is neither a column nor counted', () => {
     expect(
       toWasteBalanceTable(
-        [glassReprocessedInJanuary, glassExportedInJanuary],
+        dataOf({
+          '2026-01': monthOf({ plastic: { reprocessor: figuresOf(90) } }),
+          '2026-02': monthOf({ plastic: { reprocessor: figuresOf(1000) } })
+        }),
         ['2026-01'],
         asKey
-      ).rows
-    ).toStrictEqual([
-      {
-        material: 'Glass Re-melt',
-        accreditationType: exporter,
-        netCredits: ['5.00'],
-        total: '5.00'
-      },
-      {
-        material: 'Glass Re-melt',
-        accreditationType: reprocessor,
-        netCredits: ['90.00'],
-        total: '90.00'
+      )
+    ).toStrictEqual({
+      months: ['January'],
+      rows: [
+        {
+          material: 'Plastic',
+          accreditationType: reprocessor,
+          netCredits: ['90.00'],
+          total: '90.00'
+        }
+      ],
+      reports: {
+        byMonth: [
+          'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
+        ],
+        period:
+          'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
       }
-    ])
+    })
   })
 
-  it('orders the rows by material, so the page reads the way the publication is laid out', () => {
+  it('names a material the way the rest of the service does', () => {
     expect(
       toWasteBalanceTable(
-        [glassReprocessedInFebruary, aluminiumExportedInFebruary],
-        januaryAndFebruary,
+        dataOf({
+          '2026-01': monthOf({ glass_re_melt: { reprocessor: figuresOf(1) } })
+        }),
+        ['2026-01'],
         asKey
       ).rows.map(({ material }) => material)
-    ).toStrictEqual(['Aluminium', 'Glass Re-melt'])
+    ).toStrictEqual(['Glass remelt'])
   })
 
-  // The published tab prints a zero in every month a row reported nothing, to
-  // hold the approved layout, so a blank here would be a difference a reader
-  // holding the two side by side has to explain away.
-  it('reads a month the material reported nothing in as zero', () => {
+  it('orders the rows by material, then exporter before reprocessor, the way the publication is laid out', () => {
     expect(
       toWasteBalanceTable(
-        [glassReprocessedInJanuary, aluminiumExportedInFebruary],
-        januaryAndFebruary,
-        asKey
-      ).rows
-    ).toStrictEqual([
-      {
-        material: 'Aluminium',
-        accreditationType: exporter,
-        netCredits: ['0.00', '8.00'],
-        total: '8.00'
-      },
-      {
-        material: 'Glass Re-melt',
-        accreditationType: reprocessor,
-        netCredits: ['90.00', '0.00'],
-        total: '90.00'
-      }
-    ])
-  })
-
-  it('totals the cells it shows, so a figure the columns do not cover is not counted', () => {
-    /** @type {WasteBalanceFigure} */
-    const glassReprocessedInMarch = {
-      ...glassReprocessedInJanuary,
-      month: '2026-03',
-      netCredit: 1000
-    }
-
-    expect(
-      toWasteBalanceTable(
-        [glassReprocessedInJanuary, glassReprocessedInMarch],
-        januaryAndFebruary,
-        asKey
-      ).rows
-    ).toStrictEqual([
-      {
-        material: 'Glass Re-melt',
-        accreditationType: reprocessor,
-        netCredits: ['90.00', '0.00'],
-        total: '90.00'
-      }
-    ])
-  })
-
-  it('names a material the backend could not resolve, rather than heading the row with a blank', () => {
-    expect(
-      toWasteBalanceTable(
-        [{ ...glassReprocessedInJanuary, material: '' }],
+        dataOf({
+          '2026-01': monthOf({
+            plastic: { reprocessor: figuresOf(1), exporter: figuresOf(2) },
+            aluminium: { reprocessor: figuresOf(3), exporter: figuresOf(4) }
+          })
+        }),
         ['2026-01'],
         asKey
-      ).rows
+      ).rows.map(({ material, accreditationType, total }) => [
+        material,
+        accreditationType,
+        total
+      ])
     ).toStrictEqual([
-      {
-        material: 'translated:regulators:marketInsights:unknownMaterial',
-        accreditationType: reprocessor,
-        netCredits: ['90.00'],
-        total: '90.00'
-      }
+      ['Aluminium', exporter, '4.00'],
+      ['Aluminium', reprocessor, '3.00'],
+      ['Plastic', exporter, '2.00'],
+      ['Plastic', reprocessor, '1.00']
     ])
   })
 
-  it('adds up two figures credited to the same material, type and month', () => {
+  it('states how many of the reports each month expected the figures include, and the served pair for the period', () => {
     expect(
       toWasteBalanceTable(
-        [glassReprocessedInJanuary, glassReprocessedInJanuary],
-        ['2026-01'],
+        dataOf(
+          {
+            '2026-01': monthOf(
+              { plastic: { reprocessor: figuresOf(1) } },
+              { expected: 2, submitted: 1 }
+            ),
+            '2026-02': monthOf(
+              { plastic: { reprocessor: figuresOf(1) } },
+              { expected: 3, submitted: 0 }
+            )
+          },
+          { reports: { expected: 9, submitted: 4 } }
+        ),
+        januaryAndFebruary,
         asKey
-      ).rows
-    ).toStrictEqual([
-      {
-        material: 'Glass Re-melt',
-        accreditationType: reprocessor,
-        netCredits: ['180.00'],
-        total: '180.00'
-      }
-    ])
-  })
-
-  it('has no rows when the period reported nothing', () => {
-    expect(toWasteBalanceTable([], januaryAndFebruary, asKey)).toStrictEqual({
-      months: ['January', 'February'],
-      rows: []
+      ).reports
+    ).toStrictEqual({
+      byMonth: [
+        'translated:regulators:marketInsights:reports:count:submitted=1:expected=2',
+        'translated:regulators:marketInsights:reports:count:submitted=0:expected=3'
+      ],
+      period:
+        'translated:regulators:marketInsights:reports:count:submitted=4:expected=9'
     })
   })
 })

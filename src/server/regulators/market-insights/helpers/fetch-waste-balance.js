@@ -1,6 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
-/** @import { WasteBalanceFigure } from './to-waste-balance-table.js' */
+/** @import { WasteBalanceData } from './to-waste-balance-table.js' */
 
 /**
  * The UK waste balance aggregate for a reporting period, as the backend
@@ -8,7 +8,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * and month, so nothing here is recomputed on the way to the page.
  * @typedef {{
  *   meta: { generatedAt: string },
- *   data: WasteBalanceFigure[]
+ *   data: WasteBalanceData
  * }} WasteBalanceAggregate
  */
 
