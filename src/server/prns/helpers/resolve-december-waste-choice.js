@@ -1,6 +1,9 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { availableForPool } from '#server/common/helpers/waste-balance/available-for-pool.js'
-import { DECEMBER_WASTE_CONTROL } from './december-waste-control.js'
+import {
+  DECEMBER_WASTE_CONTROL,
+  showsDecemberPool
+} from './december-waste-control.js'
 
 /**
  * @typedef {(
@@ -31,7 +34,7 @@ export function resolveDecemberWasteControl(
 ) {
   const { mode, windowOpen } = eligibility
 
-  if (mode === DECEMBER_WASTE_CONTROL.selectPool && windowOpen) {
+  if (showsDecemberPool(eligibility)) {
     const balance = wasteBalance ?? { amount: 0, availableAmount: 0 }
     const decemberAvailable = availableForPool(balance, true)
     const generalAvailable = availableForPool(balance, false)
