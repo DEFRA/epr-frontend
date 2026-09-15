@@ -601,6 +601,32 @@ describe('#createPrnController', () => {
         expect(getByText(main, /Select which waste balance/i)).toBeDefined()
         expect(main.textContent).not.toContain('Is this December waste?')
       })
+
+      it('does not pre-select either waste balance radio', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const decemberRadio = getByLabelText(
+          main,
+          /December waste balance \(50\.00 tonnes\)/i
+        )
+        const generalRadio = getByLabelText(
+          main,
+          /Non-December waste balance \(10\.00 tonnes\)/i
+        )
+
+        expect(decemberRadio.checked).toBe(false)
+        expect(generalRadio.checked).toBe(false)
+      })
     })
 
     describe('insufficient balance error', () => {
