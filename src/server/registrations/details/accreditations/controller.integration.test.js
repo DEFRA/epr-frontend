@@ -17,6 +17,7 @@ import {
   getByRole,
   getByTestId,
   getByText,
+  queryByRole,
   within
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -270,7 +271,9 @@ describe('the accreditation details page', () => {
   it('offers the latest waste records at the foot of the summary', async ({
     server
   }) => {
+    config.set('featureFlags.wasteRecordsDownload', true)
     const { body } = await visit(server, regulator)
+    config.set('featureFlags.wasteRecordsDownload', false)
     const document = documentOf(body)
 
     expect(getByText(document, 'Latest waste record CSV')).toBeDefined()
@@ -279,6 +282,16 @@ describe('the accreditation details page', () => {
     ).toBe(
       `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv`
     )
+  })
+
+  it('names no waste records while the download is dark', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const document = documentOf(body)
+
+    expect(body).not.toContain('Latest waste record CSV')
+    expect(queryByRole(document, 'link', { name: 'Download' })).toBeNull()
   })
 
   it('lists the reporting periods below the summary, under their five headings', async ({

@@ -142,12 +142,17 @@ const toSummaryRows = ({
     ),
     value: toTonnage(wasteBalance?.availableAmount)
   },
-  toWasteRecordsRow({
-    localise,
-    localiseUrl,
-    organisationId,
-    registrationId
-  })
+  // The page is regulator-only, so the flag is the whole question here.
+  ...(offersWasteRecordsDownloads()
+    ? [
+        toWasteRecordsRow({
+          localise,
+          localiseUrl,
+          organisationId,
+          registrationId
+        })
+      ]
+    : [])
 ]
 
 /**

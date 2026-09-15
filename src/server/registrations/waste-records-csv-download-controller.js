@@ -1,4 +1,4 @@
-import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchStreamFromBackend } from '#server/common/helpers/fetch-stream-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
@@ -40,7 +40,7 @@ const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
  * be arbitrarily large.
  *
  * The registrations plugin is registered unconditionally, so this route guards
- * itself on the role rather than inheriting a gate.
+ * itself on both the flag and the role rather than inheriting a gate.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const wasteRecordsCsvDownloadController = {
@@ -54,7 +54,7 @@ export const wasteRecordsCsvDownloadController = {
     const { organisationId, registrationId } = request.params
     const { backendToken } = request.auth.credentials
 
-    if (!readsAsARegulator(request.auth.credentials)) {
+    if (!readsWasteRecordsDownloads(request.auth.credentials)) {
       throw notFound(
         'Waste records not found',
         errorCodes.registrationNotFound,
