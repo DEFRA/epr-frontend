@@ -62,8 +62,8 @@ import { nameOf } from './reporting-period.js'
  * served for that month, and the only sum is the row total across them; the
  * period's report count is served, not added up here.
  *
- * The months are given rather than read off the response, so the columns run
- * over the period the page states rather than whatever was served.
+ * The months are the page's period, so the columns run over the span the
+ * caption states, and a served month outside it is not shown.
  * @param {WasteBalanceData} data
  * @param {string[]} months
  * @param {(key: string, values?: Record<string, string | number>) => string} localise

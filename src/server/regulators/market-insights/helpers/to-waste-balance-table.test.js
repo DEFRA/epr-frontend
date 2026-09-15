@@ -12,7 +12,11 @@ import { toWasteBalanceTable } from './to-waste-balance-table.js'
  * @param {Record<string, string | number>} [values]
  */
 const asKey = (key, values = {}) =>
-  ['translated', key, ...Object.values(values)].join(':')
+  [
+    'translated',
+    key,
+    ...Object.entries(values).map(([name, value]) => `${name}=${value}`)
+  ].join(':')
 
 const reprocessor =
   'translated:regulators:marketInsights:accreditationTypes:reprocessor'
@@ -86,6 +90,36 @@ describe(toWasteBalanceTable, () => {
     ])
   })
 
+  it('shows only the months it was given, so a served month outside them is neither a column nor counted', () => {
+    expect(
+      toWasteBalanceTable(
+        dataOf({
+          '2026-01': monthOf({ plastic: { reprocessor: figuresOf(90) } }),
+          '2026-02': monthOf({ plastic: { reprocessor: figuresOf(1000) } })
+        }),
+        ['2026-01'],
+        asKey
+      )
+    ).toStrictEqual({
+      months: ['January'],
+      rows: [
+        {
+          material: 'Plastic',
+          accreditationType: reprocessor,
+          netCredits: ['90.00'],
+          total: '90.00'
+        }
+      ],
+      reports: {
+        byMonth: [
+          'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
+        ],
+        period:
+          'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
+      }
+    })
+  })
+
   it('names a material the way the rest of the service does', () => {
     expect(
       toWasteBalanceTable(
@@ -143,10 +177,11 @@ describe(toWasteBalanceTable, () => {
       ).reports
     ).toStrictEqual({
       byMonth: [
-        'translated:regulators:marketInsights:reports:count:1:2',
-        'translated:regulators:marketInsights:reports:count:0:3'
+        'translated:regulators:marketInsights:reports:count:submitted=1:expected=2',
+        'translated:regulators:marketInsights:reports:count:submitted=0:expected=3'
       ],
-      period: 'translated:regulators:marketInsights:reports:count:4:9'
+      period:
+        'translated:regulators:marketInsights:reports:count:submitted=4:expected=9'
     })
   })
 })
