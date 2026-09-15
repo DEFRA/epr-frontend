@@ -46,21 +46,24 @@
 // banner (see the updated December 2026 Figma frames): the blue heading sits on
 // the grey band, the December / non-December / total rows sit on the lighter
 // band below with GDS row dividers, and the hint returns to the grey band
-// beneath. The bands are full-bleed, so the content area drops its padding and
-// each child carries its own. The rows keep the default (near-black) text
-// colour rather than the heading's blue: blue on the tint falls below the WCAG
-// AA contrast ratio for normal-size text, and GDS reserves blue for links. A
-// standard (bordered) govuk-summary-list keeps the GDS responsive behaviour, so
-// each key stacks over its value below the tablet breakpoint and the panel
-// reflows without a horizontal scrollbar at 320px.
+// beneath. Each band is a full-bleed sibling of the card, carrying its own
+// padding so the heading, the rows and the hint all share one left edge. The
+// rows keep the default (near-black) text colour rather than the heading's
+// blue: blue on the tint falls below the WCAG AA contrast ratio for normal-size
+// text, and GDS reserves blue for links. A standard (bordered)
+// govuk-summary-list keeps the GDS responsive behaviour, so each key stacks
+// over its value below the tablet breakpoint and the panel reflows without a
+// horizontal scrollbar at 320px.
 .epr-waste-balance-banner--breakdown {
+  // The rows sit on the lighter content band. Padding on the content div (not
+  // the summary list, whose `display: table` box ignores it) insets the rows
+  // and their dividers so they line up with the heading and hint.
   .govuk-summary-card__content {
-    padding: 0;
+    padding: govuk-spacing(3) govuk-spacing(6);
   }
 
   .govuk-summary-list {
     margin-bottom: 0;
-    padding: govuk-spacing(3) govuk-spacing(6);
 
     // A 50% key column starts the figures on the same vertical line as the
     // accreditation column of the details grid above: that grid splits the
@@ -75,8 +78,7 @@
 
   // The hint returns to the heading's grey band, sandwiching the lighter rows.
   .epr-waste-balance-banner__hint {
-    margin-bottom: 0;
-    padding: govuk-spacing(3) govuk-spacing(6);
+    padding: govuk-spacing(4) govuk-spacing(6);
     background: #e5e6e7;
   }
 }

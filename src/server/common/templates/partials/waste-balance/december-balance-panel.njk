@@ -30,7 +30,9 @@
         <dd class="govuk-summary-list__value" data-testid="total-waste-balance">{{ wasteBalance.breakdown.total | formatTonnage }}</dd>
       </div>
     </dl>
-    <p class="govuk-body epr-waste-balance-banner__hint">
+  </div>
+  <div class="epr-waste-balance-banner__hint">
+    <p class="govuk-body govuk-!-margin-bottom-0">
       {{ localise("common:wasteBalance.decemberPanel.hint", { noteTypePlural: wasteBalance.noteTypePlural }) }}
     </p>
   </div>
