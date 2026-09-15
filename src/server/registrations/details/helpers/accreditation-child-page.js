@@ -11,7 +11,6 @@ import { organisationName, toCaption } from './caption.js'
 /**
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{
- *   backUrl: string,
  *   breadcrumbs: Crumb[],
  *   caption: string,
  *   heading: string,
@@ -83,7 +82,6 @@ export const toAccreditationChildPage = ({
   const accreditationPath = `/organisations/${organisation.id}/registrations/${registration.id}/accreditations/${accreditation.id}`
 
   return {
-    backUrl: localiseUrl(accreditationPath),
     breadcrumbs: toBreadcrumbs({
       accreditationPath,
       heading,

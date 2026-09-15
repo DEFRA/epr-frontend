@@ -230,13 +230,19 @@ describe('the regulator reports detailed view', () => {
     expect(crumbs.at(4)?.querySelector('a')).toBeNull()
   })
 
-  it('offers a way back to the accreditation', async ({ server }) => {
+  it('walks back by the breadcrumbs, with no back link', async ({ server }) => {
     const { body } = await visit(server, regulator)
     const document = documentOf(body)
+    const crumbs = [
+      ...document.querySelectorAll('.govuk-breadcrumbs__list-item')
+    ]
 
-    expect(
-      document.querySelector('.govuk-back-link')?.getAttribute('href')
-    ).toBe(accreditationPath)
+    expect(document.querySelector('.govuk-back-link')).toBeNull()
+    expect(crumbs.at(-2)?.querySelector('a')?.getAttribute('href')).toBe(
+      accreditationPath
+    )
+    expect(crumbs.at(-1)?.textContent?.trim()).toBe('Reports')
+    expect(crumbs.at(-1)?.querySelector('a')).toBeNull()
     expect(getByTestId(document, 'reports-detailed-view')).toBeDefined()
   })
 

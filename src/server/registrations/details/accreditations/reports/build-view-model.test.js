@@ -150,8 +150,15 @@ describe('the accreditation reports view model', () => {
     ])
   })
 
-  it('offers a way back to the accreditation', () => {
-    expect(build().backUrl).toBe(accreditationPath)
+  it('walks back by the breadcrumbs, with no back link', () => {
+    const model = build()
+
+    expect(model).not.toHaveProperty('backUrl')
+    expect(model.breadcrumbs.at(-2)).toStrictEqual({
+      text: 'Accreditation details',
+      href: accreditationPath
+    })
+    expect(model.breadcrumbs.at(-1)).toStrictEqual({ text: 'Reports' })
   })
 
   it('heads the five columns the accreditation page does', () => {

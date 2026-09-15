@@ -51,7 +51,8 @@ export const buildViewModel = ({
 
   return {
     ...list,
-    // After `list`, so the accreditation's back link replaces the operator's.
+    // Regulator pages walk back by breadcrumbs, so the operator's link goes.
+    backUrl: null,
     ...toAccreditationChildPage({
       accreditation,
       heading,
