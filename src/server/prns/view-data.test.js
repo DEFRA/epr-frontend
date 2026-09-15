@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 import { buildCreatePrnViewData } from './view-data.js'
+
+const noDecemberControl = { mode: DECEMBER_WASTE_CONTROL.none }
 
 /**
  * @import { Registration } from '#domain/organisations/registration.js'
@@ -40,8 +43,6 @@ const stubRecipients = [
   { value: 'org-3', text: 'Green Waste Solutions' }
 ]
 
-const notEligible = false
-
 const reprocessorRegistration = /** @type {Registration} */ ({
   id: 'reg-001',
   wasteProcessingType: 'reprocessor-input', // PRN
@@ -57,28 +58,70 @@ const exporterRegistration = /** @type {Registration} */ ({
 
 describe('#buildCreatePrnViewData', () => {
   describe('decemberWaste', () => {
-    it('is null when canDeclareDecemberWasteManually is false', () => {
+    it('is null in none mode', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        canDeclareDecemberWasteManually: false
+        decemberWasteControl: noDecemberControl
       })
 
       expect(result.decemberWaste).toBeNull()
     })
 
-    it('is present when canDeclareDecemberWasteManually is true', () => {
+    it('is present in manual mode', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        canDeclareDecemberWasteManually: true
+        decemberWasteControl: {
+          mode: DECEMBER_WASTE_CONTROL.declareManually,
+          legend: 'Is this December waste?',
+          items: [
+            { value: 'false', text: 'No' },
+            { value: 'true', text: 'Yes' }
+          ]
+        }
       })
 
       expect(result.decemberWaste).not.toBeNull()
+      expect(result.decemberWaste.items).toStrictEqual([
+        { value: 'false', text: 'No' },
+        { value: 'true', text: 'Yes' }
+      ])
+      expect(result.wasteBalanceText).toBeNull()
+    })
+
+    it('is present in pool mode, and the inset text switches to the either-balance wording', () => {
+      const result = buildCreatePrnViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        registration: reprocessorRegistration,
+        recipients: stubRecipients,
+        wasteBalance: { amount: 60, availableAmount: 60 },
+        decemberWasteControl: {
+          mode: DECEMBER_WASTE_CONTROL.selectPool,
+          legend: 'Select which waste balance',
+          items: [
+            { value: 'true', text: 'December waste balance (50.00 tonnes)' },
+            {
+              value: 'false',
+              text: 'Non-December waste balance (10.00 tonnes)'
+            }
+          ],
+          insetText: 'You can create PRNs from either waste balance.'
+        }
+      })
+
+      expect(result.decemberWaste.items).toStrictEqual([
+        { value: 'true', text: 'December waste balance (50.00 tonnes)' },
+        { value: 'false', text: 'Non-December waste balance (10.00 tonnes)' }
+      ])
+      expect(result.wasteBalanceText).toBe(
+        'You can create PRNs from either waste balance.'
+      )
     })
   })
 
@@ -89,7 +132,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        canDeclareDecemberWasteManually: notEligible
+        decemberWasteControl: noDecemberControl
       })
 
       expect(result.caption).toBe('Create PRN')
@@ -103,7 +146,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        canDeclareDecemberWasteManually: notEligible
+        decemberWasteControl: noDecemberControl
       })
 
       expect(result.material.label).toBe('Material')
@@ -116,7 +159,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        canDeclareDecemberWasteManually: notEligible
+        decemberWasteControl: noDecemberControl
       })
 
       expect(result.tonnage.label).toBe('Enter PRN tonnage')
@@ -132,7 +175,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        canDeclareDecemberWasteManually: notEligible
+        decemberWasteControl: noDecemberControl
       })
 
       expect(result.backUrl).toBe(
@@ -146,7 +189,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-001',
         registration: reprocessorRegistration,
         recipients: stubRecipients,
-        canDeclareDecemberWasteManually: notEligible
+        decemberWasteControl: noDecemberControl
       })
 
       expect(result.recipient.items).toHaveLength(4) // placeholder + 3 options
@@ -168,7 +211,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-002',
         registration: exporterRegistration,
         recipients: stubRecipients,
-        canDeclareDecemberWasteManually: notEligible
+        decemberWasteControl: noDecemberControl
       })
 
       expect(result.caption).toBe('Create PERN')
@@ -182,7 +225,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-002',
         registration: exporterRegistration,
         recipients: stubRecipients,
-        canDeclareDecemberWasteManually: notEligible
+        decemberWasteControl: noDecemberControl
       })
 
       expect(result.material.label).toBe('Material')
@@ -195,7 +238,7 @@ describe('#buildCreatePrnViewData', () => {
         registrationId: 'reg-002',
         registration: exporterRegistration,
         recipients: stubRecipients,
-        canDeclareDecemberWasteManually: notEligible
+        decemberWasteControl: noDecemberControl
       })
 
       expect(result.tonnage.label).toBe('Enter PERN tonnage')
@@ -221,7 +264,7 @@ describe('#buildCreatePrnViewData', () => {
             wasteProcessingType: type
           },
           recipients: stubRecipients,
-          canDeclareDecemberWasteManually: notEligible
+          decemberWasteControl: noDecemberControl
         })
 
         const isPern = result.pageTitle.includes('PERN')

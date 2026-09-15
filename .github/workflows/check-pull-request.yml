@@ -95,13 +95,19 @@ jobs:
       - uses: DEFRA/epr-re-ex-service/.github/actions/typecheck-burndown@main
 
   test-journey:
-    name: Run Journey Tests
+    name: Run Journey Tests (december-scope=${{ matrix.december-scope }})
     runs-on: ubuntu-latest
     needs: pr-prep
     timeout-minutes: 90
     permissions:
       contents: read
       pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - december-scope: exclude
+          - december-scope: only
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -125,12 +131,19 @@ jobs:
         id: test-timer
         run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - name: Run journey tests on ${{ steps.journey-branch.outputs.ref }}
-        uses: DEFRA/epr-re-ex-journey-tests/run-journey-tests@main
+      # TODO(PAE-1922): hardcoded to this PR's branch as a stopgap so CI can
+      # exercise december-scope/artifact-suffix before journey-tests PR #193
+      # merges - uses: resolves before any step runs, so it can't read
+      # journey-branch's output (that made CI fail outright when tried).
+      # Revert to @main once #193 merges to epr-re-ex-journey-tests.
+      - name: Run journey tests on PAE-1922-dec-balance-debit
+        uses: DEFRA/epr-re-ex-journey-tests/run-journey-tests@PAE-1922-dec-balance-debit
         with:
           epr-frontend: ${{github.sha}}
           branch: ${{ steps.journey-branch.outputs.ref }}
           test-scope: frontend
+          december-scope: ${{ matrix.december-scope }}
+          artifact-suffix: -${{ matrix.december-scope }}
 
       - name: Write journey test summary
         if: always()
@@ -138,3 +151,22 @@ jobs:
         with:
           build-start: ${{ steps.build-timer.outputs.start }}
           test-start: ${{ steps.test-timer.outputs.start }}
+
+  # Aggregate gate carrying the exact name the branch ruleset requires; matrix
+  # legs report as "Run Journey Tests (december-scope=<scope>)" and can't
+  # match it. `if: always()` so a failing leg fails the gate rather than
+  # skipping it (a skipped required check doesn't block).
+  journey-tests:
+    name: Run Journey Tests
+    runs-on: ubuntu-latest
+    needs: test-journey
+    if: always()
+    steps:
+      - name: Check journey test results
+        run: |
+          RESULT="${{ needs.test-journey.result }}"
+          if [ "$RESULT" = "failure" ] || [ "$RESULT" = "cancelled" ]; then
+            echo "Journey tests reported '$RESULT'"
+            exit 1
+          fi
+          echo "Journey tests reported '$RESULT'"

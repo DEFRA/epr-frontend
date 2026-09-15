@@ -21,7 +21,7 @@ describe(fetchDecemberPrnEligibility, () => {
 
   it('calls fetchJsonFromBackend with correct path and options', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue({
-      declaresDecemberWasteManually: true,
+      mode: 'manual',
       windowOpen: true
     })
 
@@ -44,7 +44,7 @@ describe(fetchDecemberPrnEligibility, () => {
 
   it('encodes URL path parameters with special characters', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue({
-      declaresDecemberWasteManually: false,
+      mode: 'none',
       windowOpen: false
     })
 
@@ -63,7 +63,7 @@ describe(fetchDecemberPrnEligibility, () => {
 
   it('returns the response from fetchJsonFromBackend', async () => {
     const eligibility = {
-      declaresDecemberWasteManually: true,
+      mode: 'manual',
       windowOpen: true
     }
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(eligibility)
