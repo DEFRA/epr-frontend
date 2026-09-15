@@ -264,7 +264,7 @@ describe('the market insights page', () => {
 
       expect(element?.querySelector('table')).not.toBeNull()
       expect(wording).toStrictEqual([
-        'The figures come from the latest monthly report each accreditation has submitted.',
+        'The figures come from the latest summary log each accreditation has submitted. The last row of the table shows how many monthly reports operators submitted for each month, and how many they owed.',
         'A load counts under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load counts.',
         'A load counts in the month:',
         [
@@ -272,8 +272,8 @@ describe('the market insights page', () => {
           'a recycled product left the reprocessing site',
           'an overseas reprocessor received the exported waste'
         ],
-        'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
-        'The figures are live. They come from the reports held at the time shown above, not from a record of what was published. If an operator resubmits a report, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.'
+        'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
+        'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.'
       ])
     })
 
