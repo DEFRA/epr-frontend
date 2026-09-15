@@ -1,9 +1,8 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { toNoteRows } from '#server/prns/helpers/note-rows.js'
 import { buildListViewData } from '#server/prns/list-view-data.js'
-import { paths } from '#server/paths.js'
 
-import { organisationName, toCaption } from '../../helpers/caption.js'
+import { toAccreditationChildPage } from '../../helpers/accreditation-child-page.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
@@ -13,51 +12,7 @@ import { organisationName, toCaption } from '../../helpers/caption.js'
  * @import { AccreditationResource } from '../../helpers/types.js'
  */
 
-/**
- * @typedef {{ text: string, href?: string }} Crumb
- */
-
 const KEY = 'registrations:details:accreditation:prns'
-
-/**
- * Continues the accreditation page's trail, ending on this page unlinked.
- * @param {{
- *   accreditationPath: string,
- *   heading: string,
- *   localise: (key: string, options?: object) => string,
- *   localiseUrl: (path: string) => string,
- *   name: string,
- *   organisation: Organisation,
- *   registration: Registration
- * }} params
- * @returns {Crumb[]}
- */
-const toBreadcrumbs = ({
-  accreditationPath,
-  heading,
-  localise,
-  localiseUrl,
-  name,
-  organisation,
-  registration
-}) => [
-  {
-    text: localise('registrations:details:allOrganisations'),
-    href: localiseUrl(paths.regulators.home)
-  },
-  { text: name, href: localiseUrl(`/organisations/${organisation.id}`) },
-  {
-    text: localise('registrations:details:heading'),
-    href: localiseUrl(
-      `/organisations/${organisation.id}/registrations/${registration.id}`
-    )
-  },
-  {
-    text: localise('registrations:details:accreditation:breadcrumb'),
-    href: localiseUrl(accreditationPath)
-  },
-  { text: heading }
-]
 
 /**
  * An accreditation's notes, read-only.
@@ -83,9 +38,7 @@ export const buildViewModel = ({
   packagingRecyclingNotes
 }) => {
   const { t: localise, localiseUrl } = request
-  const name = organisationName(organisation)
   const { noteTypePlural } = getNoteTypeDisplayNames(registration)
-  const accreditationPath = `/organisations/${organisation.id}/registrations/${registration.id}/accreditations/${accreditation.id}`
   const heading = localise(`${KEY}:listHeading`, { noteTypePlural })
 
   const list = buildListViewData(request, {
@@ -98,29 +51,19 @@ export const buildViewModel = ({
 
   return {
     ...list,
-    backUrl: localiseUrl(accreditationPath),
+    // After `list`, so the accreditation's back link replaces the operator's.
+    ...toAccreditationChildPage({
+      accreditation,
+      heading,
+      localise,
+      localiseUrl,
+      organisation,
+      registration
+    }),
     // Three strings in the operator's set address the person who created the
     // notes, so a regulator gets their own. Everything else is shared.
     cancelHint: null,
     noPrnsCreatedText: localise(`${KEY}:none`, { noteTypePlural }),
-    noCancelledText: localise(`${KEY}:noneCancelled`, { noteTypePlural }),
-    breadcrumbs: toBreadcrumbs({
-      accreditationPath,
-      heading,
-      localise,
-      localiseUrl,
-      name,
-      organisation,
-      registration
-    }),
-    caption: toCaption([
-      name,
-      registration.registrationNumber,
-      accreditation.accreditationNumber
-    ]),
-    heading,
-    pageTitle: accreditation.accreditationNumber
-      ? `${accreditation.accreditationNumber}: ${heading}`
-      : heading
+    noCancelledText: localise(`${KEY}:noneCancelled`, { noteTypePlural })
   }
 }

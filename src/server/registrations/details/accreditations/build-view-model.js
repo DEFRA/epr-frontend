@@ -233,6 +233,53 @@ const toPrns = ({
 }
 
 /**
+ * The three most recent reporting periods, and where to read the rest.
+ * @param {{
+ *   accreditationId: string,
+ *   cadence: CadenceValue | null,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   organisationId: string,
+ *   registrationId: string,
+ *   reportingPeriods: ReportingPeriod[]
+ * }} params
+ * @returns {ReportsSummary}
+ */
+const toReportsSummary = ({
+  accreditationId,
+  cadence,
+  localise,
+  localiseUrl,
+  organisationId,
+  registrationId,
+  reportingPeriods
+}) => {
+  // The calendar answers one cadence for the registration: quarterly periods
+  // belong to the registered-only page, and no cadence means an unread calendar.
+  const monthlyPeriods = cadence === CADENCE.MONTHLY ? reportingPeriods : []
+  const rows = toReportRows({
+    cadence: CADENCE.MONTHLY,
+    localise,
+    localiseUrl,
+    organisationId,
+    registrationId,
+    reportingPeriods: monthlyPeriods
+  }).slice(0, MOST_RECENT_REPORTS)
+
+  return {
+    count: rows.length,
+    head: toReportsHead({
+      localise,
+      namespace: 'registrations:details:accreditation:reports'
+    }),
+    href: localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reports`
+    ),
+    rows
+  }
+}
+
+/**
  * The whole of the accreditation's own ledger, newest event first, or no
  * ledger at all where the session may not read one. An empty ledger is still
  * a ledger: the section says nothing has moved the balance yet.
@@ -340,18 +387,6 @@ export const buildViewModel = ({
   const name = organisationName(organisation)
   const pageName = localise('registrations:details:accreditation:breadcrumb')
 
-  // The calendar answers one cadence for the registration: quarterly periods
-  // belong to the registered-only page, and no cadence means an unread calendar.
-  const monthlyPeriods = cadence === CADENCE.MONTHLY ? reportingPeriods : []
-  const reportRows = toReportRows({
-    cadence: CADENCE.MONTHLY,
-    localise,
-    localiseUrl,
-    organisationId: organisation.id,
-    registrationId: registration.id,
-    reportingPeriods: monthlyPeriods
-  }).slice(0, MOST_RECENT_REPORTS)
-
   return {
     breadcrumbs: toBreadcrumbs({
       localise,
@@ -388,17 +423,15 @@ export const buildViewModel = ({
       organisationId: organisation.id,
       registrationId: registration.id
     }),
-    reports: {
-      count: reportRows.length,
-      head: toReportsHead({
-        localise,
-        namespace: 'registrations:details:accreditation:reports'
-      }),
-      href: localiseUrl(
-        `/organisations/${organisation.id}/registrations/${registration.id}/accreditations/${accreditation.id}/reports`
-      ),
-      rows: reportRows
-    },
+    reports: toReportsSummary({
+      accreditationId: accreditation.id,
+      cadence,
+      localise,
+      localiseUrl,
+      organisationId: organisation.id,
+      registrationId: registration.id,
+      reportingPeriods
+    }),
     summaryRows: toSummaryRows({
       accreditation,
       localise,
