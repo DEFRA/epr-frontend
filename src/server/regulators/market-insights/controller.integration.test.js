@@ -177,7 +177,7 @@ describe('the market insights page', () => {
         ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00'],
         ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
         ['Glass remelt', 'Reprocessor', '90.00', '42.50', '0.00', '132.50'],
-        ['Monthly reports included', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
+        ['Monthly reports submitted', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
       ])
     })
 
@@ -197,7 +197,7 @@ describe('the market insights page', () => {
 
       expect(
         getByRole(documentOf(asHtml(result)), 'rowheader', {
-          name: 'Monthly reports included'
+          name: 'Monthly reports submitted'
         }).getAttribute('colspan')
       ).toBe('2')
     })
@@ -264,7 +264,7 @@ describe('the market insights page', () => {
 
       expect(element?.querySelector('table')).not.toBeNull()
       expect(wording).toStrictEqual([
-        'The figures come from the latest monthly report each accreditation has submitted.',
+        'The figures come from the latest summary log each accreditation has submitted. The last row shows how many monthly reports were due for each month and how many operators submitted. This is a guide to how complete the figures are. The figures do not come from the monthly reports.',
         'A load counts under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load counts.',
         'A load counts in the month:',
         [
@@ -272,8 +272,8 @@ describe('the market insights page', () => {
           'a recycled product left the reprocessing site',
           'an overseas reprocessor received the exported waste'
         ],
-        'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
-        'The figures are live. They come from the reports held at the time shown above, not from a record of what was published. If an operator resubmits a report, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.'
+        'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
+        'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.'
       ])
     })
 
