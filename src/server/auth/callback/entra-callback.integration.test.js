@@ -11,10 +11,15 @@ import {
   IDENTITIES,
   identityHandler
 } from '#server/common/test-helpers/identity-helper.js'
-import { SELECT_ACCOUNT_QUERY } from '#server/auth/plugins/entra-id.js'
+import { SIGN_IN_PROVIDER_COOKIE } from '#server/auth/helpers/sign-in-provider.js'
+import {
+  OIDC_ENTRA_ID,
+  SELECT_ACCOUNT_QUERY
+} from '#server/auth/plugins/entra-id.js'
 import { paths } from '#server/paths.js'
 import {
   extractCookieValues,
+  findSetCookie,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
 import { ENTRA_ID_BASE_URL, beforeEach, it } from '#vite/fixtures/server.js'
@@ -164,6 +169,23 @@ describe('/auth/callback/entra - GET integration', async () => {
         .join(';')
 
       expect(setCookieHeaders).toContain('userSession=')
+    })
+
+    it('remembers for 30 days that this browser signed in as a regulator', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      const providerCookie = findSetCookie(
+        response.headers['set-cookie'],
+        SIGN_IN_PROVIDER_COOKIE
+      )
+
+      expect(providerCookie).toContain(
+        `${SIGN_IN_PROVIDER_COOKIE}=${OIDC_ENTRA_ID};`
+      )
+      expect(providerCookie).toContain('Max-Age=2592000')
     })
 
     it('records sign in success metric', async ({ server, msw }) => {
@@ -444,6 +466,17 @@ describe('/auth/callback/entra - GET integration', async () => {
       ).not.toContain('userSession=')
     })
 
+    it('does not remember the refused user as a regulator', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      expect(
+        findSetCookie(response.headers['set-cookie'], SIGN_IN_PROVIDER_COOKIE)
+      ).toBeUndefined()
+    })
+
     it('offers a sign in that asks which account to use', async ({
       server,
       msw
@@ -484,6 +517,67 @@ describe('/auth/callback/entra - GET integration', async () => {
       await performSignInFlow(server, msw, regulatorToken)
 
       expect(mock.cdpAuditing).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('after a signed in regulator’s session lapses', () => {
+    /**
+     * The browser sends everything sign in left it except the session cookie,
+     * which expires long before the provider cookie does.
+     * @param {HapiServer} server
+     * @param {SetupServerApi} msw
+     */
+    const cookiesAfterLapse = async (server, msw) => {
+      const jar = {}
+
+      await performSignInFlow(server, msw, regulatorToken, jar)
+
+      return jar.cookie
+        .split('; ')
+        .filter((cookie) => !cookie.startsWith('userSession='))
+        .join('; ')
+    }
+
+    it('sends them from a page operators also use to the regulator signed-out page', async ({
+      server,
+      msw
+    }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url: `/organisations/${randomUUID()}`,
+        headers: { cookie: await cookiesAfterLapse(server, msw) }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/regulators/logged-out')
+    })
+
+    it('keeps them in Welsh on the way to the regulator signed-out page', async ({
+      server,
+      msw
+    }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url: `/cy/organisations/${randomUUID()}`,
+        headers: { cookie: await cookiesAfterLapse(server, msw) }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/cy/regulators/logged-out')
+    })
+
+    it('sends them to the regulator signed-out page when they then sign out', async ({
+      server,
+      msw
+    }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url: paths.logout,
+        headers: { cookie: await cookiesAfterLapse(server, msw) }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/regulators/logged-out')
     })
   })
 

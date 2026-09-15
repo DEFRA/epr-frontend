@@ -3,6 +3,10 @@ import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisa
 import { fetchIdentity } from '#server/auth/helpers/fetch-identity.js'
 import { hashUserId } from '#server/auth/helpers/hash-user-id.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
+import {
+  forgetSignInProvider,
+  rememberSignInProvider
+} from '#server/auth/helpers/sign-in-provider.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import {
   OIDC_ENTRA_ID,
@@ -60,6 +64,7 @@ const defraIdCallbackController = {
       await metrics.signIn.success(OIDC_DEFRA_ID)
 
       request.cookieAuth.set({ sessionId })
+      forgetSignInProvider(h)
 
       request.logger.info({
         message: 'User has been successfully authenticated',
@@ -200,6 +205,7 @@ const entraIdCallbackController = {
       await metrics.signIn.success(OIDC_ENTRA_ID)
 
       request.cookieAuth.set({ sessionId })
+      rememberSignInProvider(h, session.provider)
 
       request.logger.info({
         message: 'User has been successfully authenticated',

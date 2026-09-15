@@ -1,5 +1,8 @@
 import { getRedirectUrl } from '#server/auth/helpers/get-redirect-url.js'
-import { rememberSignedOutProvider } from '#server/auth/helpers/signed-out-provider.js'
+import {
+  rememberSignInProvider,
+  signedOutPage
+} from '#server/auth/helpers/sign-in-provider.js'
 import { paths } from '#server/paths.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
@@ -24,8 +27,7 @@ const logoutController = {
     const session = request.auth.credentials
 
     if (!session) {
-      const loggedOutUrl = request.localiseUrl(paths.loggedOut)
-      return h.redirect(loggedOutUrl)
+      return h.redirect(request.localiseUrl(signedOutPage(request)))
     }
 
     await removeUserSession(request)
@@ -33,7 +35,7 @@ const logoutController = {
     auditSignOut(session.provider, session.profile.id, session.profile.email)
     await metrics.signOut.success(session.provider)
 
-    rememberSignedOutProvider(h, session.provider)
+    rememberSignInProvider(h, session.provider)
 
     const oidcProviderLogoutUrl = new URL(session.urls.logout)
     oidcProviderLogoutUrl.searchParams.append('id_token_hint', session.idToken)

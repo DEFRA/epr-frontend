@@ -46,10 +46,10 @@
       "purpose": "Used to keep you signed in to the service.",
       "expires": "4 hours"
     },
-    "signedOutProvider": {
-      "name": "signedOutProvider",
-      "purpose": "Remembers how you signed in, so that after you sign out we can offer you the right way to sign in again.",
-      "expires": "10 minutes"
+    "signInProvider": {
+      "name": "signInProvider",
+      "purpose": "Remembers how you signed in, so that when you sign out or your session ends we can offer you the right way to sign in again.",
+      "expires": "30 days"
     },
     "analyticsConsent": {
       "name": "analyticsConsent",
