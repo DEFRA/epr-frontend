@@ -42,14 +42,15 @@
   }
 
   // The December / non-December / total rows share the heading's grey band
-  // (see the December 2026 Figma frames): compact blue lines. A borderless
-  // govuk-summary-list keeps the GDS responsive behaviour, so the values line
-  // up in a right-aligned column at tablet and above, and each key stacks over
-  // its value below that: the panel reflows without a horizontal scrollbar at
-  // 320px.
+  // (see the December 2026 Figma frames). A borderless govuk-summary-list keeps
+  // the GDS responsive behaviour, so the values line up in a right-aligned
+  // column at tablet and above, and each key stacks over its value below that:
+  // the panel reflows without a horizontal scrollbar at 320px. The rows keep
+  // the default (near-black) text colour rather than the heading's blue: blue
+  // on the grey band falls below the WCAG AA contrast ratio for normal-size
+  // text, and GDS reserves blue for links.
   .govuk-summary-list {
     margin-bottom: 0;
-    color: govuk-colour("blue");
 
     @include govuk-media-query($from: tablet) {
       .govuk-summary-list__value {
