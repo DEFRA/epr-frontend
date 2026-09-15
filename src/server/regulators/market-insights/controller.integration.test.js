@@ -26,7 +26,7 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
  */
 
 const backendUrl = config.get('eprBackendUrl')
-const wasteBalanceUrl = `${backendUrl}/v1/market-insights/waste-balance`
+const wasteBalanceUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/waste-balance`
 
 const regulator = buildMockAuth({
   provider: OIDC_ENTRA_ID,
@@ -74,18 +74,6 @@ const aluminiumExportedInFebruary = {
 }
 
 /**
- * The backend serves the month still running, and April is that month once the
- * clock below is pinned, so this figure is what proves the page stops at the
- * last complete month rather than printing a part month beside whole ones.
- * @type {WasteBalanceFigure}
- */
-const glassReprocessedInApril = {
-  ...glassReprocessedInJanuary,
-  month: '2026-04',
-  netCredit: 1000
-}
-
-/**
  * The regulator home page fetches its own list, and these tests are about the
  * link it offers rather than what that list holds.
  */
@@ -106,7 +94,7 @@ const anEmptyPageOfOrganisations = http.get(
  * @returns {WasteBalanceAggregate}
  */
 const aggregateOf = (figures) => ({
-  meta: { generatedAt: '2026-04-10T09:00:00.000Z', reportingYear: 2026 },
+  meta: { generatedAt: '2026-04-10T09:00:00.000Z' },
   data: figures
 })
 
@@ -162,8 +150,7 @@ describe('the market insights page', () => {
             aggregateOf([
               glassReprocessedInJanuary,
               glassReprocessedInFebruary,
-              aluminiumExportedInFebruary,
-              glassReprocessedInApril
+              aluminiumExportedInFebruary
             ])
           )
         )
@@ -219,7 +206,7 @@ describe('the market insights page', () => {
       ).not.toBeNull()
     })
 
-    it('asks for the reporting year now in progress', async ({
+    it('asks for the reporting period through the last complete month', async ({
       msw,
       server
     }) => {
@@ -239,8 +226,8 @@ describe('the market insights page', () => {
         auth: regulator
       })
 
-      expect(/** @type {URL} */ (captured).searchParams.get('year')).toBe(
-        '2026'
+      expect(/** @type {URL} */ (captured).pathname).toBe(
+        '/v1/market-insights/2026/monthly/3/waste-balance'
       )
     })
 

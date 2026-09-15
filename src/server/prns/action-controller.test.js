@@ -8,7 +8,7 @@ import {
   asPackagingRecyclingNote
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import Boom from '@hapi/boom'
@@ -20,13 +20,8 @@ vi.mock(
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -760,7 +755,7 @@ describe('#actionController', () => {
     }) => {
       await server.inject({ method: 'GET', url: actionUrl, auth: mockAuth })
 
-      expect(journeyMetrics.start).toHaveBeenCalledWith(
+      expect(metrics.journey.start).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.issuePrn,
         prnId
@@ -774,7 +769,7 @@ describe('#actionController', () => {
 
       await server.inject({ method: 'GET', url: actionUrl, auth: mockAuth })
 
-      expect(journeyMetrics.start).not.toHaveBeenCalled()
+      expect(metrics.journey.start).not.toHaveBeenCalled()
     })
   })
 })

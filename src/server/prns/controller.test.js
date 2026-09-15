@@ -4,7 +4,7 @@ import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
@@ -23,13 +23,8 @@ vi.mock(
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -72,7 +67,7 @@ describe('#createPrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
-      declaresDecemberWasteManually: false,
+      mode: 'none',
       windowOpen: false
     })
   })
@@ -539,6 +534,75 @@ describe('#createPrnController', () => {
       })
     })
 
+    describe('select waste balance pool', () => {
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 60,
+          availableAmount: 60,
+          decemberAmount: 50,
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 10
+        })
+      })
+
+      it('renders both balance radios with their tonnages, and the either-balance inset text', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const decemberRadio = getByLabelText(
+          main,
+          /December waste balance \(50\.00 tonnes\)/i
+        )
+        expect(decemberRadio.getAttribute('type')).toBe('radio')
+
+        const generalRadio = getByLabelText(
+          main,
+          /Non-December waste balance \(10\.00 tonnes\)/i
+        )
+        expect(generalRadio.getAttribute('type')).toBe('radio')
+
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText.textContent).toContain(
+          'You can create PRNs from either waste balance.'
+        )
+      })
+
+      it('does not render the manual December Yes/No question', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Select which waste balance/i)).toBeDefined()
+        expect(main.textContent).not.toContain('Is this December waste?')
+      })
+    })
+
     describe('insufficient balance error', () => {
       beforeEach(() => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
@@ -615,7 +679,7 @@ describe('#createPrnController', () => {
         auth: mockAuth
       })
 
-      expect(journeyMetrics.start).toHaveBeenCalledWith(
+      expect(metrics.journey.start).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.createPrn,
         'acc-001'

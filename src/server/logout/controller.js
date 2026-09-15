@@ -33,7 +33,7 @@ const logoutController = {
     await removeUserSession(request)
 
     auditSignOut(session.provider, session.profile.id, session.profile.email)
-    await metrics.signOutSuccess(session.provider)
+    await metrics.signOut.success(session.provider)
 
     rememberSignInProvider(h, session.provider)
 

@@ -157,9 +157,7 @@ describe(toWasteBalanceTable, () => {
     ])
   })
 
-  // The backend serves the month still running, and the total has to match the
-  // cells beside it, so a figure outside the period leaves neither behind.
-  it('leaves out a figure credited outside the reporting period', () => {
+  it('totals the cells it shows, so a figure the columns do not cover is not counted', () => {
     /** @type {WasteBalanceFigure} */
     const glassReprocessedInMarch = {
       ...glassReprocessedInJanuary,

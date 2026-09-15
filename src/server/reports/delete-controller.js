@@ -6,7 +6,7 @@ import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { reportAttempt } from './helpers/report-attempt.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { deleteReport } from './helpers/delete-report.js'
 
 const payloadSchema = Joi.object({
@@ -80,7 +80,7 @@ export const deleteGetController = {
       backUrl: resolveBackUrl(request)
     }
 
-    await journeyMetrics.start(
+    await metrics.journey.start(
       request,
       JOURNEY.deleteReport,
       reportAttempt(request.params)
@@ -123,7 +123,7 @@ export const deletePostController = {
       session.backendToken
     )
 
-    await journeyMetrics.end(
+    await metrics.journey.end(
       request,
       JOURNEY.deleteReport,
       reportAttempt(request.params)

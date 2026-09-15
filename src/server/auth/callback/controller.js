@@ -49,7 +49,7 @@ const defraIdCallbackController = {
    */
   handler: async (request, h) => {
     if (request.auth?.error) {
-      await metrics.signInFailure(OIDC_DEFRA_ID)
+      await metrics.signIn.failure(OIDC_DEFRA_ID)
     }
 
     if (request.auth.isAuthenticated) {
@@ -61,7 +61,7 @@ const defraIdCallbackController = {
       await request.server.app.cache.set(sessionId, session)
 
       auditSignIn(OIDC_DEFRA_ID, session.profile.id, session.profile.email)
-      await metrics.signInSuccess(OIDC_DEFRA_ID)
+      await metrics.signIn.success(OIDC_DEFRA_ID)
 
       request.cookieAuth.set({ sessionId })
       forgetSignInProvider(h)
@@ -85,7 +85,7 @@ const defraIdCallbackController = {
       const isInitialUser =
         organisations.linked.linkedBy?.id === session.profile.id
       if (!isInitialUser) {
-        await metrics.signInSuccessNonInitialUser(OIDC_DEFRA_ID)
+        await metrics.signIn.successNonInitialUser(OIDC_DEFRA_ID)
       }
 
       // Store linked organisation ID in session for navigation
@@ -152,7 +152,7 @@ function referrerIfPresentElseDefault(request, defaultPath) {
  * @param {UserSession} session
  */
 const refuseSignIn = async (request, h, session) => {
-  await metrics.signInFailure(OIDC_ENTRA_ID)
+  await metrics.signIn.failure(OIDC_ENTRA_ID)
 
   request.logger.info({
     message: 'User has no role on this service, so no session was created',
@@ -186,7 +186,7 @@ const entraIdCallbackController = {
    */
   handler: async (request, h) => {
     if (request.auth?.error) {
-      await metrics.signInFailure(OIDC_ENTRA_ID)
+      await metrics.signIn.failure(OIDC_ENTRA_ID)
     }
 
     if (request.auth.isAuthenticated) {
@@ -202,7 +202,7 @@ const entraIdCallbackController = {
       await request.server.app.cache.set(sessionId, session)
 
       auditSignIn(OIDC_ENTRA_ID, session.profile.id, session.profile.email)
-      await metrics.signInSuccess(OIDC_ENTRA_ID)
+      await metrics.signIn.success(OIDC_ENTRA_ID)
 
       request.cookieAuth.set({ sessionId })
       rememberSignInProvider(h, session.provider)

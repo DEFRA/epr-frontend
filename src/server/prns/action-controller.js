@@ -9,7 +9,7 @@ import {
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
@@ -62,7 +62,7 @@ export const actionController = {
     })
 
     if (viewData.issueButton) {
-      await journeyMetrics.start(request, JOURNEY.issuePrn, prnId)
+      await metrics.journey.start(request, JOURNEY.issuePrn, prnId)
     }
 
     return h.view('prns/action', viewData)

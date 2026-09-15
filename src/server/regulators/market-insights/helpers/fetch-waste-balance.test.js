@@ -11,7 +11,7 @@ import { fetchWasteBalance } from './fetch-waste-balance.js'
  */
 
 const backendUrl = config.get('eprBackendUrl')
-const wasteBalanceUrl = `${backendUrl}/v1/market-insights/waste-balance`
+const wasteBalanceUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/waste-balance`
 const backendToken = 'test-backend-token'
 
 /** @type {WasteBalanceFigure} */
@@ -30,7 +30,7 @@ const glassInJanuary = {
  * @returns {WasteBalanceAggregate}
  */
 const aggregateOf = (figures) => ({
-  meta: { generatedAt: '2026-04-10T09:00:00.000Z', reportingYear: 2026 },
+  meta: { generatedAt: '2026-04-10T09:00:00.000Z' },
   data: figures
 })
 
@@ -41,11 +41,13 @@ describe(fetchWasteBalance, () => {
     msw.use(http.get(wasteBalanceUrl, () => HttpResponse.json(aggregate)))
 
     await expect(
-      fetchWasteBalance({ year: 2026, backendToken })
+      fetchWasteBalance({ year: 2026, month: 1, backendToken })
     ).resolves.toStrictEqual(aggregate)
   })
 
-  test('asks for the reporting year it was given', async ({ msw }) => {
+  test('asks for the monthly reporting period it was given', async ({
+    msw
+  }) => {
     /** @type {URL | undefined} */
     let captured
 
@@ -56,9 +58,11 @@ describe(fetchWasteBalance, () => {
       })
     )
 
-    await fetchWasteBalance({ year: 2025, backendToken })
+    await fetchWasteBalance({ year: 2025, month: 3, backendToken })
 
-    expect(/** @type {URL} */ (captured).searchParams.get('year')).toBe('2025')
+    expect(/** @type {URL} */ (captured).pathname).toBe(
+      '/v1/market-insights/2025/monthly/3/waste-balance'
+    )
   })
 
   test('authorises the call with the session backend token', async ({
@@ -74,7 +78,7 @@ describe(fetchWasteBalance, () => {
       })
     )
 
-    await fetchWasteBalance({ year: 2026, backendToken })
+    await fetchWasteBalance({ year: 2026, month: 1, backendToken })
 
     expect(/** @type {Request} */ (captured).headers.get('authorization')).toBe(
       'Bearer test-backend-token'

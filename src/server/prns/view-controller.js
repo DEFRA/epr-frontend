@@ -8,6 +8,9 @@ import {
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { availableForPool } from '#server/common/helpers/waste-balance/available-for-pool.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnCoreRows,
@@ -17,7 +20,7 @@ import {
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { buildPrnBasePath } from './helpers/fetch-prn-context.js'
 import { buildNoteBreadcrumbs } from './helpers/build-note-breadcrumbs.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
@@ -87,13 +90,28 @@ export const viewPostController = {
     }
 
     try {
-      const wasteBalanceMap = await fetchWasteBalances(
-        organisationId,
-        [accreditationId],
-        session.backendToken
+      const [wasteBalanceMap, eligibility] = await Promise.all([
+        fetchWasteBalances(
+          organisationId,
+          [accreditationId],
+          session.backendToken
+        ),
+        fetchDecemberPrnEligibility(
+          organisationId,
+          registrationId,
+          accreditationId,
+          session.backendToken
+        )
+      ])
+      const balance = wasteBalanceMap[accreditationId] ?? {
+        amount: 0,
+        availableAmount: 0
+      }
+      const availableAmount = availableForPool(
+        balance,
+        prnDraft.isDecemberWaste &&
+          eligibility.mode === DECEMBER_WASTE_CONTROL.selectPool
       )
-      const availableAmount =
-        wasteBalanceMap[accreditationId]?.availableAmount ?? 0
       const prnParams = {
         organisationId,
         registrationId,
@@ -165,8 +183,10 @@ const discardDraftOverBalance = async (
 
   request.yar.clear('prnDraft')
 
+  const poolParam = prnDraft.isDecemberWaste ? '&pool=december' : ''
+
   return h.redirect(
-    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance`
+    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance${poolParam}`
   )
 }
 
@@ -200,7 +220,7 @@ const confirmDraft = async (
     isDecemberWaste: prnDraft.isDecemberWaste
   })
 
-  await journeyMetrics.end(request, JOURNEY.createPrn, accreditationId)
+  await metrics.journey.end(request, JOURNEY.createPrn, accreditationId)
 
   return h.redirect(
     `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/${prnId}/created`

@@ -6,18 +6,17 @@ import {
 
 import { config } from '#config/config.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
-import { TRANSACTION_END, TRANSACTION_START } from './constants.js'
 
 /**
- * @import { JourneyEntry } from './constants.js'
+ * @import { JourneyEntry, JourneyMetricName, MetricName } from './constants.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
-const isMetricsEnabled = () => config.get('isMetricsEnabled')
+const isMetricsEnabled = config.get('isMetricsEnabled')
 
 /**
  * Aws embedded metrics wrapper
- * @param {string} metricName
+ * @param {MetricName} metricName
  * @param {Record<string, string>} dimensions
  * @param {{ replaceDefaults?: boolean }} [options] replaceDefaults drops the
  *   LogGroup, ServiceName and ServiceType the library adds of its own accord.
@@ -25,11 +24,8 @@ const isMetricsEnabled = () => config.get('isMetricsEnabled')
  *   means a query has to name all four to match -- and one of them, the log
  *   group, differs per environment, which makes a dashboard unpromotable.
  */
-async function metricsCounter(metricName, dimensions, options = {}) {
+async function writeMetric(metricName, dimensions, options = {}) {
   const value = 1
-  if (!isMetricsEnabled()) {
-    return
-  }
 
   try {
     const metricsLogger = createMetricsLogger()
@@ -52,27 +48,37 @@ async function metricsCounter(metricName, dimensions, options = {}) {
   }
 }
 
-export const metrics = {
-  /** @param {string} oidcProvider */
-  async signInAttempted(oidcProvider) {
-    return metricsCounter('signInAttempted', { oidcProvider })
-  },
-  /** @param {string} oidcProvider */
-  async signInSuccess(oidcProvider) {
-    return metricsCounter('signInSuccess', { oidcProvider })
-  },
-  /** @param {string} oidcProvider */
-  async signInSuccessNonInitialUser(oidcProvider) {
-    return metricsCounter('signInSuccessNonInitialUser', { oidcProvider })
-  },
-  /** @param {string} oidcProvider */
-  async signInFailure(oidcProvider) {
-    return metricsCounter('signInFailure', { oidcProvider })
-  },
-  /** @param {string} oidcProvider */
-  async signOutSuccess(oidcProvider) {
-    return metricsCounter('signOutSuccess', { oidcProvider })
-  }
+/** @returns {Promise<void>} */
+const noop = async () => {}
+
+/**
+ * @template {Record<string, (...args: never[]) => Promise<void>>} T
+ * @param {T} enabled
+ * @returns {T}
+ */
+const orNoop = (enabled) =>
+  isMetricsEnabled
+    ? enabled
+    : /** @type {T} */ (
+        Object.fromEntries(Object.keys(enabled).map((name) => [name, noop]))
+      )
+
+/**
+ * Grouping is caller-side only -- the emitted names are a CloudWatch contract
+ * that dashboards query, so they stay flat and unchanged.
+ * @type {Record<string, (oidcProvider: string) => Promise<void>>}
+ */
+const signIn = {
+  attempted: (oidcProvider) => writeMetric('signInAttempted', { oidcProvider }),
+  success: (oidcProvider) => writeMetric('signInSuccess', { oidcProvider }),
+  successNonInitialUser: (oidcProvider) =>
+    writeMetric('signInSuccessNonInitialUser', { oidcProvider }),
+  failure: (oidcProvider) => writeMetric('signInFailure', { oidcProvider })
+}
+
+/** @type {Record<string, (oidcProvider: string) => Promise<void>>} */
+const signOut = {
+  success: (oidcProvider) => writeMetric('signOutSuccess', { oidcProvider })
 }
 
 /**
@@ -80,6 +86,17 @@ export const metrics = {
  * @param {string} attempt
  */
 const journeyKey = (journey, attempt) => `journey:${journey.start}:${attempt}`
+
+/**
+ * @param {JourneyMetricName} metricName
+ * @param {string} journeyName
+ */
+const emitJourneyMetric = (metricName, journeyName) =>
+  void writeMetric(
+    metricName,
+    { journey: journeyName },
+    { replaceDefaults: true }
+  )
 
 /**
  * Journey start and end events feeding the mandatory GDS KPIs. Both phases share
@@ -91,7 +108,7 @@ const journeyKey = (journey, attempt) => `journey:${journey.start}:${attempt}`
  * same session, so a lost marker under-reports rather than putting completion
  * rate above 100%.
  */
-export const journeyMetrics = {
+const journeyMetrics = {
   /**
    * @param {HapiRequest} request
    * @param {JourneyEntry} journey
@@ -99,10 +116,6 @@ export const journeyMetrics = {
    * @returns {Promise<void>}
    */
   async start(request, journey, attempt) {
-    if (!isMetricsEnabled()) {
-      return
-    }
-
     const key = journeyKey(journey, attempt)
 
     if (request.yar.get(key)) {
@@ -111,11 +124,7 @@ export const journeyMetrics = {
 
     request.yar.set(key, true)
 
-    void metricsCounter(
-      TRANSACTION_START,
-      { journey: journey.start },
-      { replaceDefaults: true }
-    )
+    emitJourneyMetric('TransactionStart', journey.start)
   },
   /**
    * @param {HapiRequest} request
@@ -124,22 +133,18 @@ export const journeyMetrics = {
    * @returns {Promise<void>}
    */
   async end(request, journey, attempt) {
-    if (!isMetricsEnabled()) {
-      return
-    }
-
     const key = journeyKey(journey, attempt)
 
-    if (!request.yar.get(key)) {
+    if (!request.yar.get(key, true)) {
       return
     }
 
-    request.yar.clear(key)
-
-    void metricsCounter(
-      TRANSACTION_END,
-      { journey: journey.end },
-      { replaceDefaults: true }
-    )
+    emitJourneyMetric('TransactionEnd', journey.end)
   }
+}
+
+export const metrics = {
+  signIn: orNoop(signIn),
+  signOut: orNoop(signOut),
+  journey: orNoop(journeyMetrics)
 }

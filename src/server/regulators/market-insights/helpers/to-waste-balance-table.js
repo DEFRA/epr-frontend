@@ -57,14 +57,10 @@ import { nameOf } from './reporting-period.js'
  * @returns {WasteBalanceTable}
  */
 export const toWasteBalanceTable = (figures, months, localise) => {
-  const withinPeriod = new Set(months)
-
   /** @type {Map<string, WasteBalancePartition>} */
   const partitions = new Map()
 
-  const credited = figures.filter(({ month }) => withinPeriod.has(month))
-
-  for (const { material, accreditationType, month, netCredit } of credited) {
+  for (const { material, accreditationType, month, netCredit } of figures) {
     // The service could not resolve a material for these figures. The label
     // says so of us rather than of the operator, who did report one, and
     // heading the row with it keeps real tonnage from sitting beside a blank.
@@ -93,19 +89,19 @@ export const toWasteBalanceTable = (figures, months, localise) => {
         one.material.localeCompare(other.material) ||
         one.accreditationType.localeCompare(other.accreditationType)
     )
-    .map(({ material, accreditationType, netCredits }) => ({
-      material,
-      accreditationType,
+    .map(({ material, accreditationType, netCredits }) => {
       // The published tab holds its approved layout by printing a zero in every
       // month a row reported nothing, so a month missing from the aggregate
       // reads the same here as it does there.
-      netCredits: months.map((month) =>
-        formatTonnage(netCredits.get(month) ?? 0)
-      ),
-      total: formatTonnage(
-        [...netCredits.values()].reduce((sum, credit) => sum + credit, 0)
-      )
-    }))
+      const cells = months.map((month) => netCredits.get(month) ?? 0)
+
+      return {
+        material,
+        accreditationType,
+        netCredits: cells.map((credit) => formatTonnage(credit)),
+        total: formatTonnage(cells.reduce((sum, credit) => sum + credit, 0))
+      }
+    })
 
   return { months: months.map(nameOf), rows }
 }
