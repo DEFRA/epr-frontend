@@ -1,4 +1,4 @@
-@use "govuk-frontend" as *;
+@use 'govuk-frontend' as *;
 
 .epr-task-cards {
   display: flex;
@@ -28,29 +28,39 @@
     background: #e5e6e7;
 
     .govuk-summary-card__title {
-      color: govuk-colour("blue");
+      color: govuk-colour('blue');
       @include govuk-font($size: 48, $weight: bold);
     }
 
     p {
-      color: govuk-colour("blue");
+      color: govuk-colour('blue');
     }
   }
 
   .govuk-summary-card__content {
-    background: govuk-colour("black", $variant: "tint-95");
+    background: govuk-colour('black', $variant: 'tint-95');
+  }
+}
+
+// The December breakdown panel (PAE-1921) is a three-band variant of the
+// banner (see the updated December 2026 Figma frames): the blue heading sits on
+// the grey band, the December / non-December / total rows sit on the lighter
+// band below with GDS row dividers, and the hint returns to the grey band
+// beneath. The bands are full-bleed, so the content area drops its padding and
+// each child carries its own. The rows keep the default (near-black) text
+// colour rather than the heading's blue: blue on the tint falls below the WCAG
+// AA contrast ratio for normal-size text, and GDS reserves blue for links. A
+// standard (bordered) govuk-summary-list keeps the GDS responsive behaviour, so
+// each key stacks over its value below the tablet breakpoint and the panel
+// reflows without a horizontal scrollbar at 320px.
+.epr-waste-balance-banner--breakdown {
+  .govuk-summary-card__content {
+    padding: 0;
   }
 
-  // The December / non-December / total rows share the heading's grey band
-  // (see the December 2026 Figma frames). A borderless govuk-summary-list keeps
-  // the GDS responsive behaviour, so the values line up in a right-aligned
-  // column at tablet and above, and each key stacks over its value below that:
-  // the panel reflows without a horizontal scrollbar at 320px. The rows keep
-  // the default (near-black) text colour rather than the heading's blue: blue
-  // on the grey band falls below the WCAG AA contrast ratio for normal-size
-  // text, and GDS reserves blue for links.
   .govuk-summary-list {
     margin-bottom: 0;
+    padding: govuk-spacing(3) govuk-spacing(6);
 
     // A 50% key column starts the figures on the same vertical line as the
     // accreditation column of the details grid above: that grid splits the
@@ -61,5 +71,12 @@
         width: 50%;
       }
     }
+  }
+
+  // The hint returns to the heading's grey band, sandwiching the lighter rows.
+  .epr-waste-balance-banner__hint {
+    margin-bottom: 0;
+    padding: govuk-spacing(3) govuk-spacing(6);
+    background: #e5e6e7;
   }
 }
