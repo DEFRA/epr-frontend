@@ -482,6 +482,67 @@ describe('the reports table on the accreditation details view model', () => {
   it('shows no rows for a calendar the page could not read', () => {
     expect(reportRows([], null)).toStrictEqual([])
   })
+
+  it('shows no more than the three most recent periods, and counts what it shows', () => {
+    const { reports } = build(undefined, undefined, aWasteBalance, {
+      cadence: CADENCE.MONTHLY,
+      reportingPeriods: [
+        aPeriod({ year: 2025, period: 7 }),
+        aPeriod({ period: 7 }),
+        aPeriod({ year: 2025, period: 12 }),
+        aPeriod({ period: 8 }),
+        aPeriod({ year: 2025, period: 8 })
+      ]
+    })
+
+    expect(reports.count).toBe(3)
+    expect(reports.rows.map((row) => row[0])).toStrictEqual([
+      { text: 'August, 2026' },
+      { text: 'July, 2026' },
+      { text: 'December, 2025' }
+    ])
+  })
+
+  it('counts what there is where fewer periods are owed', () => {
+    const { reports } = build(undefined, undefined, aWasteBalance, {
+      cadence: CADENCE.MONTHLY,
+      reportingPeriods: [aPeriod({ period: 7 }), aPeriod({ period: 8 })]
+    })
+
+    expect(reports.rows).toHaveLength(2)
+    expect(reports.count).toBe(2)
+  })
+
+  it.each([CADENCE.QUARTERLY, null])(
+    'counts nothing where the cadence is %s',
+    (cadence) => {
+      const { reports } = build(undefined, undefined, aWasteBalance, {
+        cadence,
+        reportingPeriods: [aPeriod({ period: 3 })]
+      })
+
+      expect(reports.count).toBe(0)
+    }
+  )
+
+  it("points its full list at the accreditation's reports, in the reader's language", () => {
+    const { reports } = buildViewModel({
+      organisation,
+      registration: aRegistration(),
+      accreditation: anAccreditation(),
+      wasteBalance: aWasteBalance,
+      reportingPeriods: [],
+      cadence: CADENCE.MONTHLY,
+      ledgerEvents: null,
+      packagingRecyclingNotes: [],
+      localise,
+      localiseUrl: (path) => `/cy${path}`
+    })
+
+    expect(reports.href).toBe(
+      `/cy/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reports`
+    )
+  })
 })
 
 describe('the waste balance ledger on the accreditation details view model', () => {
