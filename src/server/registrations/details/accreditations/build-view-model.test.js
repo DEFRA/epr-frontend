@@ -42,9 +42,9 @@ const localise = createMockLocalise({
   'registrations:details:accreditation:summary:status': 'Accreditation status',
   'registrations:details:accreditation:summary:wasteBalanceAvailable':
     'Waste balance available (tonnes)',
-  'registrations:details:accreditation:summary:wasteRecords': 'Waste records',
-  'registrations:details:accreditation:summary:downloadLatest':
-    'Download latest',
+  'registrations:details:accreditation:summary:wasteRecords':
+    'Latest waste record CSV',
+  'registrations:details:accreditation:summary:download': 'Download',
   'registrations:details:allOrganisations': 'All organisations',
   'registrations:details:current': 'Current',
   'registrations:details:heading': 'Registration details',
@@ -328,7 +328,7 @@ describe('the accreditation details view model', () => {
 
   it('holds no waste records row while the download is dark', () => {
     expect(build().summaryRows.map((row) => row.key)).not.toContain(
-      'Waste records'
+      'Latest waste record CSV'
     )
   })
 
@@ -343,8 +343,8 @@ describe('the accreditation details view model', () => {
 
     it('offers the latest waste records beneath the balance', () => {
       expect(build().summaryRows.at(3)).toStrictEqual({
-        key: 'Waste records',
-        html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv" class="govuk-link">Download latest</a>`
+        key: 'Latest waste record CSV',
+        html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv" class="govuk-link">Download</a>`
       })
     })
 

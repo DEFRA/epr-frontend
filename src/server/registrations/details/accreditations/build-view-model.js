@@ -105,7 +105,7 @@ const toWasteRecordsRow = ({
   html: `<a href="${localiseUrl(
     buildWasteRecordsCsvDownloadPath({ organisationId, registrationId })
   )}" class="govuk-link">${escapeHtml(
-    localise('registrations:details:accreditation:summary:downloadLatest')
+    localise('registrations:details:accreditation:summary:download')
   )}</a>`
 })
 
