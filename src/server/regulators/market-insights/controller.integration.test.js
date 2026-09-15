@@ -248,19 +248,32 @@ describe('the market insights page', () => {
 
       // The wording sits between its heading and the table, so a regulator
       // reads it before the figures it explains.
-      const paragraphs = []
+      /** @type {(string | string[])[]} */
+      const wording = []
       let element = heading.nextElementSibling
-      while (element !== null && element.matches('p')) {
-        paragraphs.push(element.textContent.trim())
+      while (element !== null && element.matches('p, ul')) {
+        wording.push(
+          element.matches('ul')
+            ? Array.from(element.querySelectorAll('li')).map((item) =>
+                item.textContent.trim()
+              )
+            : element.textContent.trim()
+        )
         element = element.nextElementSibling
       }
 
       expect(element?.querySelector('table')).not.toBeNull()
-      expect(paragraphs).toStrictEqual([
-        'Each figure is the tonnage credited to accredited operators’ waste balances for that material and accreditation type in that month, less the tonnage sent on. The figures are calculated from the latest summary log each accreditation has submitted.',
-        'A load is counted under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load is counted. It is counted in the month a reprocessor received it, a recycled product left the reprocessing site, or an overseas reprocessor received the exported waste.',
-        'Tonnage sent on by a reprocessor accredited on the tonnage it receives is deducted in the month the load left its site. PRNs and PERNs the operator issues from its waste balance are not deducted, so the figures include tonnage on which notes have already been issued.',
-        'The figures are live. They are calculated from the reports held at the time shown above, not from a record of what was published. A resubmission changes earlier months. The columns run from January of the reporting year to the last complete month, and the total adds the months together.'
+      expect(wording).toStrictEqual([
+        'The figures come from the latest monthly report each accreditation has submitted.',
+        'A load counts under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load counts.',
+        'A load counts in the month:',
+        [
+          'a reprocessor received it',
+          'a recycled product left the reprocessing site',
+          'an overseas reprocessor received the exported waste'
+        ],
+        'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
+        'The figures are live. They come from the reports held at the time shown above, not from a record of what was published. If an operator resubmits a report, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.'
       ])
     })
 
