@@ -14,31 +14,9 @@
 
       <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:calculation:heading') }}</h2>
       <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:figure') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:submissions') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:monthCounted:leadIn') }}</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>{{ localise('regulators:marketInsights:calculation:monthCounted:received') }}</li>
-        <li>{{ localise('regulators:marketInsights:calculation:monthCounted:product') }}</li>
-        <li>{{ localise('regulators:marketInsights:calculation:monthCounted:exported') }}</li>
-      </ul>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:countedIf:leadIn') }}</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>{{ localise('regulators:marketInsights:calculation:countedIf:fieldsComplete') }}</li>
-        <li>{{ localise('regulators:marketInsights:calculation:countedIf:accreditationValid') }}</li>
-      </ul>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:prnIssued') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:exportedNotCountedIf:leadIn') }}</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>{{ localise('regulators:marketInsights:calculation:exportedNotCountedIf:stoppedOrRefused') }}</li>
-        <li>{{ localise('regulators:marketInsights:calculation:exportedNotCountedIf:siteNotApproved') }}</li>
-        <li>{{ localise('regulators:marketInsights:calculation:exportedNotCountedIf:notValidOnExportDate') }}</li>
-      </ul>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:product') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:accreditationStatus') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:sentOn') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:notesNotDeducted') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:counted') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:deductions') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:live') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:columns') }}</p>
 
       <div class="govuk-body" data-testid="app-page-body">
         {% set tableHead = [
