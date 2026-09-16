@@ -1,11 +1,13 @@
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime, UK_TIME_ZONE } from '#server/common/helpers/format-time.js'
 
+import { fetchReprocessorExporterFigures } from './helpers/fetch-reprocessor-exporter-figures.js'
 import { fetchWasteBalance } from './helpers/fetch-waste-balance.js'
 import {
   describeReportingPeriod,
   reportingPeriodNow
 } from './helpers/reporting-period.js'
+import { toReprocessorExporterTables } from './helpers/to-reprocessor-exporter-tables.js'
 import { toWasteBalanceTable } from './helpers/to-waste-balance-table.js'
 
 /**
@@ -16,10 +18,12 @@ import { toWasteBalanceTable } from './helpers/to-waste-balance-table.js'
 /**
  * The market insights preview: the UK waste balance as the published tab lays
  * it out, one row per material and accreditation type with the reporting
- * months across as columns.
+ * months across as columns, then the UK reprocessor and exporter figures as
+ * theirs are, a table of each for every month.
  *
  * Every figure is served already summed. Grouping them into columns is
- * presentation, and the row total is the only arithmetic the page does.
+ * presentation, and the waste balance row total is the only arithmetic the
+ * page does.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const controller = {
@@ -32,24 +36,46 @@ export const controller = {
     const { t: localise } = request
 
     const period = reportingPeriodNow()
-    const { meta, data } = await fetchWasteBalance({
-      year: period.year,
-      month: period.month,
-      backendToken
-    })
+    const [wasteBalance, figures] = await Promise.all([
+      fetchWasteBalance({
+        year: period.year,
+        month: period.month,
+        backendToken
+      }),
+      fetchReprocessorExporterFigures({
+        year: period.year,
+        month: period.month,
+        backendToken
+      })
+    ])
+
+    /** @param {string} generatedAt */
+    const dataTakenAt = (generatedAt) =>
+      localise('regulators:marketInsights:dataTakenAt', {
+        date: formatDate(generatedAt, { timeZone: UK_TIME_ZONE }),
+        time: formatTime(generatedAt)
+      })
 
     return h.view('regulators/market-insights/index', {
       pageTitle: localise('regulators:marketInsights:pageTitle'),
       heading: localise('regulators:marketInsights:heading'),
       caption: describeReportingPeriod(period, localise),
       description: localise('regulators:marketInsights:description'),
-      // Stated beside the figures because the publication states it too, so a
-      // regulator comparing the two can tell whether they were cut together.
-      dataTakenAt: localise('regulators:marketInsights:dataTakenAt', {
-        date: formatDate(meta.generatedAt, { timeZone: UK_TIME_ZONE }),
-        time: formatTime(meta.generatedAt)
-      }),
-      wasteBalance: toWasteBalanceTable(data, period.months, localise)
+      // Stated beside each set of figures because the publication states it
+      // too, so a regulator comparing the two can tell whether they were cut
+      // together.
+      dataTakenAt: dataTakenAt(wasteBalance.meta.generatedAt),
+      wasteBalance: toWasteBalanceTable(
+        wasteBalance.data,
+        period.months,
+        localise
+      ),
+      figuresTakenAt: dataTakenAt(figures.meta.generatedAt),
+      figures: toReprocessorExporterTables(
+        figures.data,
+        period.months,
+        localise
+      )
     })
   }
 }

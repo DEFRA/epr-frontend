@@ -4,3 +4,11 @@
   background-color: govuk-colour("black", $variant: "tint-95");
   padding: govuk-spacing(6);
 }
+
+.epr-wide-table {
+  overflow-x: auto;
+}
+
+.epr-wide-table .govuk-table {
+  @include govuk-font($size: 16);
+}

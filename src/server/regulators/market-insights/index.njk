@@ -61,6 +61,51 @@
           rows: tableRows
         }) }}
       </div>
+
+      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:figures:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:description') }}</p>
+      <p class="govuk-body-s">{{ figuresTakenAt }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:provisional') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:anomalies') }}</p>
+
+      <h3 class="govuk-heading-m">{{ localise('regulators:marketInsights:figures:calculation:heading') }}</h3>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:source') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:accreditations') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:average') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:zero') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:live') }}</p>
+
+      {% macro figuresTable(table, caption) %}
+        {% set head = [{ text: localise('regulators:marketInsights:table:material') }] %}
+        {% for column in table.columns %}
+          {% set head = head.concat([{ text: column, format: "numeric" }]) %}
+        {% endfor %}
+
+        {% set rows = [] %}
+        {% for row in table.rows %}
+          {% set cells = [{ text: row.material }] %}
+          {% for figure in row.figures %}
+            {% set cells = cells.concat([{ text: figure, format: "numeric" }]) %}
+          {% endfor %}
+          {% set rows = rows.concat([cells]) %}
+        {% endfor %}
+
+        {{ govukTable({
+          caption: caption,
+          captionClasses: "govuk-table__caption--s",
+          firstCellIsHeader: true,
+          head: head,
+          rows: rows
+        }) }}
+      {% endmacro %}
+
+      {% for month in figures.months %}
+        <div class="govuk-body epr-wide-table">
+          <h3 class="govuk-heading-m">{{ month.name }}</h3>
+          {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor')) }}
+          {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter')) }}
+        </div>
+      {% endfor %}
     </div>
   </div>
 {% endblock %}
