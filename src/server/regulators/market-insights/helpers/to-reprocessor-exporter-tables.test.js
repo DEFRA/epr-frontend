@@ -1,3 +1,7 @@
+import {
+  exporterOf,
+  reprocessorOf
+} from '#server/common/test-helpers/market-insights-fixtures.js'
 import { describe, expect, it } from 'vitest'
 
 import { toReprocessorExporterTables } from './to-reprocessor-exporter-tables.js'
@@ -16,45 +20,6 @@ const asKey = (key, values = {}) =>
     key,
     ...Object.entries(values).map(([name, value]) => `${name}=${value}`)
   ].join(':')
-
-/**
- * @param {Partial<ReprocessorFigures>} figures
- * @returns {ReprocessorFigures}
- */
-const reprocessorOf = (figures = {}) => ({
-  tonnageReceived: 0,
-  tonnageRecycled: 0,
-  tonnageReceivedButNotRecycled: 0,
-  tonnageSentOnTotal: 0,
-  tonnageSentOnToReprocessor: 0,
-  tonnageSentOnToExporter: 0,
-  tonnageSentOnToOtherFacilities: 0,
-  revisedTonnageIssued: 0,
-  totalRevenue: 0,
-  averagePricePerTonne: 0,
-  ...figures
-})
-
-/**
- * @param {Partial<ExporterFigures>} figures
- * @returns {ExporterFigures}
- */
-const exporterOf = (figures = {}) => ({
-  tonnageReceived: 0,
-  tonnageExported: 0,
-  tonnageReceivedButNotExported: 0,
-  tonnageSentOnTotal: 0,
-  tonnageSentOnToReprocessor: 0,
-  tonnageSentOnToExporter: 0,
-  tonnageSentOnToOtherFacilities: 0,
-  tonnageStopped: 0,
-  tonnageRefused: 0,
-  tonnageRepatriated: 0,
-  revisedTonnageIssued: 0,
-  totalRevenue: 0,
-  averagePricePerTonne: 0,
-  ...figures
-})
 
 /**
  * @param {Record<string, { reprocessor: ReprocessorFigures, exporter: ExporterFigures }>} figures

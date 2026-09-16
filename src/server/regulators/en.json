@@ -6,10 +6,6 @@
     "signInAgain": "Sign in again"
   },
   "marketInsights": {
-    "accreditationTypes": {
-      "exporter": "Exporter",
-      "reprocessor": "Reprocessor"
-    },
     "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
     "description": "These pages show figures from the monthly market insights workbook. Each set of figures has its own page.",
     "figures": {
@@ -71,17 +67,14 @@
       "month": "{{ month }} {{ year }}",
       "months": "{{ from }} to {{ to }} {{ year }}"
     },
-    "reports": {
-      "count": "{{ submitted }} of {{ expected }}"
-    },
     "table": {
-      "accreditationType": "Accreditation type",
-      "caption": "Waste balance",
-      "material": "Material",
-      "reports": "Monthly reports submitted",
-      "total": "Total"
+      "material": "Material"
     },
     "wasteBalance": {
+      "accreditationTypes": {
+        "exporter": "Exporter",
+        "reprocessor": "Reprocessor"
+      },
       "calculation": {
         "counted": {
           "exported": "an overseas reprocessor received the exported waste",
@@ -98,7 +91,16 @@
       "description": "The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook uses these figures.",
       "heading": "UK waste balance",
       "linkText": "UK waste balance",
-      "pageTitle": "UK waste balance"
+      "pageTitle": "UK waste balance",
+      "reports": {
+        "count": "{{ submitted }} of {{ expected }}"
+      },
+      "table": {
+        "accreditationType": "Accreditation type",
+        "caption": "Waste balance",
+        "reports": "Monthly reports submitted",
+        "total": "Total"
+      }
     }
   },
   "notAuthorised": {

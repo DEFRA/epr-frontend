@@ -1,18 +1,17 @@
 import { config } from '#config/config.js'
-import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import {
-  buildMockAuth,
-  sessionIdentity
-} from '#server/common/test-helpers/auth-helper.js'
 import {
   asHtml,
   documentOf,
   headingsOf,
   rowsOf
 } from '#server/common/test-helpers/dom.js'
-import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
+import {
+  NOTICE,
+  operator,
+  regulator,
+  regulatorWithoutMarketScope
+} from '#server/common/test-helpers/market-insights-fixtures.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
@@ -26,22 +25,6 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 const backendUrl = config.get('eprBackendUrl')
 const wasteBalanceUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/waste-balance`
-
-const regulator = buildMockAuth({
-  provider: OIDC_ENTRA_ID,
-  profile: { id: 'entra-user-1', email: 'regulator@example.com' },
-  backendToken: 'regulator-backend-token',
-  ...sessionIdentity(IDENTITIES.regulator)
-})
-
-const operator = buildMockAuth()
-
-const regulatorWithoutMarketScope = buildMockAuth({
-  provider: OIDC_ENTRA_ID,
-  profile: { id: 'entra-user-2', email: 'no.market@example.com' },
-  role: IDENTITIES.regulator.role,
-  scope: [SCOPES.organisationSearch]
-})
 
 /**
  * @param {number} netCredit
@@ -95,9 +78,6 @@ const januaryToMarch = {
 const servesJanuaryToMarch = http.get(wasteBalanceUrl, () =>
   HttpResponse.json(januaryToMarch)
 )
-
-const NOTICE =
-  'This page is still being built. Some figures may be missing or wrong.'
 
 describe('the UK waste balance page', () => {
   beforeAll(() => {

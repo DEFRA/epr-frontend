@@ -92,7 +92,7 @@ export const toWasteBalanceTable = (
     .map(({ material, accreditationType }) => ({
       material: getMaterialDisplayName(material),
       accreditationType: localise(
-        `regulators:marketInsights:accreditationTypes:${accreditationType}`
+        `regulators:marketInsights:wasteBalance:accreditationTypes:${accreditationType}`
       ),
       netCredits: months.map(
         (month) => served[month].figures[material][accreditationType].netCredit
@@ -111,7 +111,10 @@ export const toWasteBalanceTable = (
 
   /** @param {ReportCount} count */
   const stated = ({ expected, submitted }) =>
-    localise('regulators:marketInsights:reports:count', { submitted, expected })
+    localise('regulators:marketInsights:wasteBalance:reports:count', {
+      submitted,
+      expected
+    })
 
   return {
     months: months.map(nameOf),

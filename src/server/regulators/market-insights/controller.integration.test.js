@@ -1,13 +1,12 @@
 import { config } from '#config/config.js'
-import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import {
-  buildMockAuth,
-  sessionIdentity
-} from '#server/common/test-helpers/auth-helper.js'
 import { asHtml, documentOf } from '#server/common/test-helpers/dom.js'
-import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
+import {
+  NOTICE,
+  operator,
+  regulator,
+  regulatorWithoutMarketScope
+} from '#server/common/test-helpers/market-insights-fixtures.js'
 import { paths } from '#server/paths.js'
 import { it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole, queryByRole } from '@testing-library/dom'
@@ -16,22 +15,6 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 const backendUrl = config.get('eprBackendUrl')
 const marketInsightsUrl = `${backendUrl}/v1/market-insights/*`
-
-const regulator = buildMockAuth({
-  provider: OIDC_ENTRA_ID,
-  profile: { id: 'entra-user-1', email: 'regulator@example.com' },
-  backendToken: 'regulator-backend-token',
-  ...sessionIdentity(IDENTITIES.regulator)
-})
-
-const operator = buildMockAuth()
-
-const regulatorWithoutMarketScope = buildMockAuth({
-  provider: OIDC_ENTRA_ID,
-  profile: { id: 'entra-user-2', email: 'no.market@example.com' },
-  role: IDENTITIES.regulator.role,
-  scope: [SCOPES.organisationSearch]
-})
 
 /**
  * The regulator home page fetches its own list, and these tests are about the
@@ -62,9 +45,6 @@ const figureSetLinksOf = (body) =>
       href: link.getAttribute('href')
     })
   )
-
-const NOTICE =
-  'This page is still being built. Some figures may be missing or wrong.'
 
 describe('the market insights page', () => {
   beforeAll(() => {
