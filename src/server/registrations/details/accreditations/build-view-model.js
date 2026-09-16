@@ -17,6 +17,7 @@ import { buildStatusTagHtml as buildPrnStatusTagHtml } from '#server/prns/list-v
 
 import { buildWasteRecordsCsvDownloadPath } from '#server/registrations/waste-records-csv-download-controller.js'
 
+import { toAccreditationPath } from '../helpers/accreditation-child-page.js'
 import { organisationName, toCaption } from '../helpers/caption.js'
 import { toDateRange } from '../helpers/date-range.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
@@ -46,14 +47,19 @@ import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
  *   href: string,
  *   rows: TableRow[]
  * }} ReportsSummary
- * @typedef {{ rows: TableRow[] }} LedgerTable
+ * @typedef {{
+ *   count: number,
+ *   href: string,
+ *   rows: TableRow[]
+ * }} LedgerTable
  * @typedef {{
  *   count: number,
  *   head: TableRow,
  *   heading: string,
  *   href: string,
  *   noneText: string,
- *   rows: TableRow[]
+ *   rows: TableRow[],
+ *   viewAllHiddenText: string
  * }} PrnsTable
  * @typedef {{
  *   breadcrumbs: Crumb[],
@@ -68,7 +74,7 @@ import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
  * }} AccreditationDetailsViewModel
  */
 
-const MOST_RECENT_REPORTS = 3
+const MOST_RECENT = 3
 
 /**
  * The balance not already committed to a note. `availableAmount` falls when a
@@ -199,7 +205,7 @@ const toPrns = ({
   registrationId
 }) => {
   const { mostRecent } = toPrnGroups(notes)
-  const notesPath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+  const notesPath = `${toAccreditationPath({ accreditationId, organisationId, registrationId })}/packaging-recycling-notes`
 
   return {
     count: mostRecent.length,
@@ -211,6 +217,10 @@ const toPrns = ({
     noneText: localise('registrations:details:accreditation:prns:none', {
       noteTypePlural
     }),
+    viewAllHiddenText: localise(
+      'registrations:details:accreditation:prns:viewAllHidden',
+      { noteTypePlural }
+    ),
     rows: mostRecent.map((note) => {
       const date = formatDateShort(note.issuedAt ?? note.createdAt)
 
@@ -264,7 +274,7 @@ const toReportsSummary = ({
     organisationId,
     registrationId,
     reportingPeriods: monthlyPeriods
-  }).slice(0, MOST_RECENT_REPORTS)
+  }).slice(0, MOST_RECENT)
 
   return {
     count: rows.length,
@@ -273,16 +283,16 @@ const toReportsSummary = ({
       namespace: 'registrations:details:accreditation:reports'
     }),
     href: localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reports`
+      `${toAccreditationPath({ accreditationId, organisationId, registrationId })}/reports`
     ),
     rows
   }
 }
 
 /**
- * The whole of the accreditation's own ledger, newest event first, or no
- * ledger at all where the session may not read one. An empty ledger is still
- * a ledger: the section says nothing has moved the balance yet.
+ * The most recent events of the accreditation's own ledger, and where to read
+ * the rest, or no ledger at all where the session may not read one. An empty
+ * ledger is still a ledger: the section says nothing has moved the balance yet.
  * @param {{
  *   accreditationId: string,
  *   ledgerEvents: LedgerEvent[] | null,
@@ -307,19 +317,26 @@ const toLedger = ({
 
   const { noteType } = getNoteTypeDisplayNames(registration)
 
+  // The rows are already newest first, so the slice keeps the newest.
+  const rows = buildLedgerRows({
+    accreditationId,
+    events: ledgerEvents,
+    localise,
+    localiseUrl,
+    noteType,
+    // The page is regulator-only, so the flag is the whole question here.
+    offersCsvDownloads: offersWasteRecordsDownloads(),
+    offersDownloads: true,
+    organisationId,
+    registrationId: registration.id
+  }).slice(0, MOST_RECENT)
+
   return {
-    rows: buildLedgerRows({
-      accreditationId,
-      events: ledgerEvents,
-      localise,
-      localiseUrl,
-      noteType,
-      // The page is regulator-only, so the flag is the whole question here.
-      offersCsvDownloads: offersWasteRecordsDownloads(),
-      offersDownloads: true,
-      organisationId,
-      registrationId: registration.id
-    })
+    count: rows.length,
+    href: localiseUrl(
+      `${toAccreditationPath({ accreditationId, organisationId, registrationId: registration.id })}/waste-balance-ledger`
+    ),
+    rows
   }
 }
 
