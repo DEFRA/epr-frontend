@@ -240,18 +240,13 @@ describe('the market insights page', () => {
         auth: regulator
       })
 
-      const body = documentOf(asHtml(result))
-      const heading = getByRole(body, 'heading', { level: 1 })
+      const heading = getByRole(documentOf(asHtml(result)), 'heading', {
+        level: 1
+      })
 
-      expect(
-        [
-          heading.nextElementSibling,
-          heading.nextElementSibling?.nextElementSibling
-        ].map((element) => element?.textContent.trim())
-      ).toStrictEqual([
-        'This page is still being built. Some figures may be missing or wrong.',
-        'The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook draws on the same data.'
-      ])
+      expect(heading.nextElementSibling?.textContent.trim()).toBe(
+        'This page is still being built. Some figures may be missing or wrong.'
+      )
     })
 
     it('says how the figures are calculated, before the table', async ({
