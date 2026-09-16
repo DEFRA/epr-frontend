@@ -17,6 +17,7 @@ import { buildStatusTagHtml as buildPrnStatusTagHtml } from '#server/prns/list-v
 
 import { buildWasteRecordsCsvDownloadPath } from '#server/registrations/waste-records-csv-download-controller.js'
 
+import { toAccreditationPath } from '../helpers/accreditation-child-page.js'
 import { organisationName, toCaption } from '../helpers/caption.js'
 import { toDateRange } from '../helpers/date-range.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
@@ -204,7 +205,7 @@ const toPrns = ({
   registrationId
 }) => {
   const { mostRecent } = toPrnGroups(notes)
-  const notesPath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+  const notesPath = `${toAccreditationPath({ accreditationId, organisationId, registrationId })}/packaging-recycling-notes`
 
   return {
     count: mostRecent.length,
@@ -282,7 +283,7 @@ const toReportsSummary = ({
       namespace: 'registrations:details:accreditation:reports'
     }),
     href: localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reports`
+      `${toAccreditationPath({ accreditationId, organisationId, registrationId })}/reports`
     ),
     rows
   }
@@ -333,7 +334,7 @@ const toLedger = ({
   return {
     count: rows.length,
     href: localiseUrl(
-      `/organisations/${organisationId}/registrations/${registration.id}/accreditations/${accreditationId}/waste-balance-ledger`
+      `${toAccreditationPath({ accreditationId, organisationId, registrationId: registration.id })}/waste-balance-ledger`
     ),
     rows
   }

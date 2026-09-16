@@ -79,6 +79,21 @@ const toBreadcrumbs = ({
 ]
 
 /**
+ * @param {{
+ *   accreditationId: string,
+ *   organisationId: string,
+ *   registrationId: string
+ * }} params
+ * @returns {string}
+ */
+export const toAccreditationPath = ({
+  accreditationId,
+  organisationId,
+  registrationId
+}) =>
+  `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
+
+/**
  * The furniture every page below an accreditation shares.
  * @param {{
  *   accreditation: { id: string, accreditationNumber?: string | null },
@@ -98,11 +113,13 @@ export const toAccreditationChildPage = ({
   organisation,
   registration
 }) => {
-  const accreditationPath = `/organisations/${organisation.id}/registrations/${registration.id}/accreditations/${accreditation.id}`
-
   return {
     breadcrumbs: toBreadcrumbs({
-      accreditationPath,
+      accreditationPath: toAccreditationPath({
+        accreditationId: accreditation.id,
+        organisationId: organisation.id,
+        registrationId: registration.id
+      }),
       heading,
       localise,
       localiseUrl,
