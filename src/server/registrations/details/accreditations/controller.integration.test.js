@@ -91,6 +91,22 @@ const ledgerEvents = [
   }
 ]
 
+/**
+ * More events than the section shows, so the cap is read without growing the
+ * fixture every other case relies on.
+ * @type {AccreditationDetails['ledgerEvents']}
+ */
+const fourLedgerEvents = [1, 2, 3, 4].map((day) => ({
+  kind: 'summary-log-submitted',
+  createdAt: `2026-03-0${day}T09:00:00.000Z`,
+  createdBy: { id: 'system' },
+  summaryLog: { id: `log-${day}`, creditTotal: 100 },
+  balance: {
+    opening: { total: 0, available: 0 },
+    closing: { total: 100, available: 100 }
+  }
+}))
+
 /** @type {AccreditationDetails['packagingRecyclingNotes']} */
 const packagingRecyclingNotes = [
   {
@@ -491,11 +507,17 @@ describe('the accreditation details page', () => {
     }) => {
       const { body } = await visit(server, regulator)
 
-      const link = getByTestId(documentOf(body), 'reports-detailed-view-link')
+      // Three sections carry this link, so each names its own list rather
+      // than reading "View all" three times over.
+      const link = getByRole(documentOf(body), 'button', {
+        name: 'View all reports'
+      })
       const heading = link.parentElement?.querySelector('h2')
 
       expect(link.tagName).toBe('A')
-      expect(link.textContent?.trim()).toBe('View all')
+      expect(
+        link.querySelector('.govuk-visually-hidden')?.textContent?.trim()
+      ).toBe('reports')
       expect(link.getAttribute('href')).toBe(`${path}/reports`)
 
       // It sits beside the heading rather than beneath it.
@@ -521,9 +543,19 @@ describe('the accreditation details page', () => {
 
       const { body } = await visit(server, regulator)
 
-      expect(body).toContain('data-testid="no-reports"')
-      expect(body).not.toContain('data-testid="reports-detailed-view-link"')
-      expect(body).not.toContain('data-testid="reports-most-recent"')
+      const document = documentOf(body)
+
+      expect(
+        getByText(document, /There are no reporting periods/)
+      ).toBeDefined()
+      expect(
+        queryByRole(document, 'button', { name: 'View all reports' })
+      ).toBeNull()
+
+      // The other two sections keep their own count lines.
+      expect(
+        getAllByRole(document, 'heading', { level: 3, name: /^Most recent/ })
+      ).toHaveLength(2)
     })
   })
 
@@ -566,10 +598,13 @@ describe('the accreditation details page', () => {
     }) => {
       const { body } = await visit(server, regulator)
 
-      const link = getByTestId(documentOf(body), 'prns-detailed-view-link')
+      // Three sections carry this link, so each names its own list rather
+      // than reading "View all" three times over.
+      const link = getByRole(documentOf(body), 'button', {
+        name: 'View all PRNs'
+      })
 
       expect(link.tagName).toBe('A')
-      expect(link.textContent?.trim()).toBe('View all')
 
       // It sits beside the heading rather than beneath it.
       expect(link.parentElement?.querySelector('h2')?.className).toContain(
@@ -602,11 +637,98 @@ describe('the accreditation details page', () => {
 
       const { body } = await visit(server, regulator)
 
-      expect(body).toContain('data-testid="no-prns-summary"')
-      expect(body).not.toContain('data-testid="prns-table"')
+      const document = documentOf(body)
+
+      expect(
+        getByText(document, /This accreditation has issued no PRNs/)
+      ).toBeDefined()
+      expect(
+        queryByRole(document, 'columnheader', {
+          name: 'Producer or compliance scheme'
+        })
+      ).toBeNull()
 
       // The full list would only repeat the line above it.
-      expect(body).not.toContain('data-testid="prns-detailed-view-link"')
+      expect(
+        queryByRole(document, 'button', { name: 'View all PRNs' })
+      ).toBeNull()
+    })
+  })
+
+  describe('the ledger section', () => {
+    it('opens the full ledger through a link rather than a button', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      // Three sections carry this link, so each names its own list rather
+      // than reading "View all" three times over.
+      const link = getByRole(documentOf(body), 'button', {
+        name: 'View all ledger events'
+      })
+
+      expect(link.tagName).toBe('A')
+      expect(link.getAttribute('href')).toBe(`${path}/waste-balance-ledger`)
+
+      // It sits beside the heading rather than beneath it.
+      expect(link.parentElement?.querySelector('h2')?.className).toContain(
+        'govuk-!-display-inline-block'
+      )
+    })
+
+    it('names how many events it shows', async ({ server }) => {
+      const { body } = await visit(server, regulator)
+
+      expect(
+        getByTestId(documentOf(body), 'ledger-most-recent').textContent?.trim()
+      ).toBe('Most recent (3 items)')
+    })
+
+    it('shows the three newest events where more have moved the balance', async ({
+      server
+    }) => {
+      vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+        ...accreditationDetails,
+        ledgerEvents: fourLedgerEvents
+      })
+
+      const { body } = await visit(server, regulator)
+      const [, ...rows] = getAllByRole(ledgerTable(documentOf(body)), 'row')
+
+      expect(
+        rows.map((row) =>
+          within(row).getByRole('rowheader').textContent?.trim()
+        )
+      ).toStrictEqual([
+        '4 March 2026, 9:00am',
+        '3 March 2026, 9:00am',
+        '2 March 2026, 9:00am'
+      ])
+    })
+
+    it('offers no full ledger and no count where nothing has moved the balance', async ({
+      server
+    }) => {
+      vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+        ...accreditationDetails,
+        ledgerEvents: []
+      })
+
+      const { body } = await visit(server, regulator)
+
+      const document = documentOf(body)
+
+      expect(
+        queryByRole(document, 'button', { name: 'View all ledger events' })
+      ).toBeNull()
+
+      // The reports and PRNs sections keep their own count lines.
+      expect(
+        getAllByRole(document, 'heading', { level: 3, name: /^Most recent/ })
+      ).toHaveLength(2)
+      expect(
+        getByText(document, /Nothing has changed this waste balance yet/)
+      ).toBeDefined()
     })
   })
 

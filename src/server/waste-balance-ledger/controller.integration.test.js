@@ -125,6 +125,18 @@ const rowsOf = (body) =>
     )
   )
 
+/**
+ * @param {ReturnType<typeof documentOf>} body
+ */
+const crumbsOf = (body) =>
+  Array.from(body.querySelectorAll('.govuk-breadcrumbs__list-item'))
+
+/**
+ * @param {ReturnType<typeof crumbsOf>} crumbs
+ * @returns {(string | undefined)[]}
+ */
+const textOf = (crumbs) => crumbs.map((crumb) => crumb.textContent?.trim())
+
 describe('the waste balance ledger page', () => {
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
@@ -272,7 +284,7 @@ describe('the waste balance ledger page', () => {
       expect(queryByText(body, 'Payload')).toBeNull()
     })
 
-    it('names the accreditation whose ledger it shows', async ({
+    it('names the records the ledger sits under, down to the accreditation', async ({
       msw,
       server
     }) => {
@@ -292,8 +304,122 @@ describe('the waste balance ledger page', () => {
         level: 1
       })
 
-      expect(heading.textContent).toContain('Accreditation ACC001234')
+      expect(heading.textContent).toContain('ACME ltd - REG001234 - ACC001234')
       expect(heading.textContent).toContain('Waste balance ledger')
+    })
+
+    it('titles the page by the accreditation number', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      expect(documentOf(asHtml(result)).ownerDocument.title).toContain(
+        'ACC001234: Waste balance ledger'
+      )
+    })
+
+    it('walks back through the accreditation by the breadcrumbs, with no back link', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+      const crumbs = crumbsOf(body)
+
+      expect(body.querySelector('.govuk-back-link')).toBeNull()
+      expect(textOf(crumbs)).toStrictEqual([
+        'All organisations',
+        'ACME ltd',
+        'Registration details',
+        'Accreditation details',
+        'Waste balance ledger'
+      ])
+      expect(crumbs.at(3)?.querySelector('a')?.getAttribute('href')).toBe(
+        `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}`
+      )
+      expect(crumbs.at(4)?.querySelector('a')).toBeNull()
+    })
+
+    it('carries the phase banner the layout offers every page', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      expect(
+        documentOf(asHtml(result)).querySelector('.govuk-phase-banner')
+      ).not.toBeNull()
+    })
+
+    it('walks the registered-only ledger back to the registration, with no back link', async ({
+      msw,
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        findRegistrationAndAccreditation(
+          fixtureData,
+          registeredOnlyRegistrationId
+        )
+      )
+      msw.use(
+        http.get(registeredOnlyLedgerUrl, () =>
+          HttpResponse.json(registeredOnlyLedgerOf([]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: registeredOnlyPath,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+      const crumbs = crumbsOf(body)
+
+      expect(body.querySelector('.govuk-back-link')).toBeNull()
+      expect(textOf(crumbs)).toStrictEqual([
+        'All organisations',
+        'ACME ltd',
+        'Registration details',
+        'Waste balance ledger'
+      ])
+      expect(crumbs.at(2)?.querySelector('a')?.getAttribute('href')).toBe(
+        `/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}`
+      )
+      expect(crumbs.at(3)?.querySelector('a')).toBeNull()
+      expect(body.ownerDocument.title).toContain('Waste balance ledger')
     })
 
     it('reads the registered-only ledger, and says the period carries no accreditation', async ({
