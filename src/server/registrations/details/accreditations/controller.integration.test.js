@@ -485,6 +485,48 @@ describe('the accreditation details page', () => {
     expect(main?.querySelectorAll('button, form')).toHaveLength(0)
   })
 
+  describe('the reports section', () => {
+    it('opens the full list through a link rather than a button', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      const link = getByTestId(documentOf(body), 'reports-detailed-view-link')
+      const heading = link.parentElement?.querySelector('h2')
+
+      expect(link.tagName).toBe('A')
+      expect(link.textContent?.trim()).toBe('View all')
+      expect(link.getAttribute('href')).toBe(`${path}/reports`)
+
+      // It sits beside the heading rather than beneath it.
+      expect(heading?.textContent?.trim()).toBe('Reports')
+      expect(heading?.className).toContain('govuk-!-display-inline-block')
+    })
+
+    it('names how many periods it shows', async ({ server }) => {
+      const { body } = await visit(server, regulator)
+
+      expect(
+        getByTestId(documentOf(body), 'reports-most-recent').textContent?.trim()
+      ).toBe('Most recent (2 items)')
+    })
+
+    it('offers no full list and no count where there are no periods', async ({
+      server
+    }) => {
+      vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+        ...accreditationDetails,
+        reportingPeriods: []
+      })
+
+      const { body } = await visit(server, regulator)
+
+      expect(body).toContain('data-testid="no-reports"')
+      expect(body).not.toContain('data-testid="reports-detailed-view-link"')
+      expect(body).not.toContain('data-testid="reports-most-recent"')
+    })
+  })
+
   describe('the PRNs section', () => {
     it('lists the notes the accreditation has issued, above the ledger', async ({
       server

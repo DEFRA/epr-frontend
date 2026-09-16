@@ -259,23 +259,26 @@ describe('the regulator PRNs detailed view', () => {
     ).toContain('PERNs')
   })
 
-  it('offers a way back to the accreditation', async ({ server }) => {
+  it('walks back by the breadcrumbs, with no back link', async ({ server }) => {
     const { body } = await visit(server, regulator)
     const document = documentOf(body)
+    const crumbs = [
+      ...document.querySelectorAll('.govuk-breadcrumbs__list-item')
+    ]
 
-    expect(
-      document.querySelector('.govuk-back-link')?.getAttribute('href')
-    ).toBe(accreditationPath)
+    expect(document.querySelector('.govuk-back-link')).toBeNull()
 
-    expect(
-      textOf([...document.querySelectorAll('.govuk-breadcrumbs__list-item')])
-    ).toStrictEqual([
+    expect(textOf(crumbs)).toStrictEqual([
       'All organisations',
       'Kirkby Plastics Ltd',
       'Registration details',
       'Accreditation details',
       'PRNs'
     ])
+    expect(crumbs.at(3)?.querySelector('a')?.getAttribute('href')).toBe(
+      accreditationPath
+    )
+    expect(crumbs.at(4)?.querySelector('a')).toBeNull()
   })
 
   it('offers none of the operator furniture', async ({ server }) => {

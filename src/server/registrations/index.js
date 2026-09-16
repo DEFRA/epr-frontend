@@ -1,5 +1,6 @@
 import { controller } from './controller.js'
 import { controller as accreditationController } from './details/accreditations/controller.js'
+import { controller as reportsController } from './details/accreditations/reports/controller.js'
 import { controller as detailsController } from './details/controller.js'
 import { controller as overseasSitesController } from './details/overseas-sites/controller.js'
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
@@ -70,6 +71,34 @@ const accreditationRoute = {
     }
 
     return accreditationController.handler(request, h)
+  }
+}
+
+/**
+ * Gated the same way as the accreditation above it: there is no operator page
+ * at this address to fall through to.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const reportsRoute = {
+  /**
+   * @param {HapiRequest & { params: AccreditationParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    if (!readsAsARegulator(request.auth.credentials)) {
+      throw notFound(
+        'Accreditation reports not found',
+        errorCodes.accreditationNotFound,
+        {
+          event: {
+            action: 'fetch_accreditation_reports',
+            reason: 'caller does not read as a regulator'
+          }
+        }
+      )
+    }
+
+    return reportsController.handler(request, h)
   }
 }
 
@@ -166,6 +195,11 @@ export const registrations = {
           ...accreditationRoute,
           method: 'GET',
           path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}'
+        },
+        {
+          ...reportsRoute,
+          method: 'GET',
+          path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/reports'
         },
         {
           ...overseasSitesRoute,
