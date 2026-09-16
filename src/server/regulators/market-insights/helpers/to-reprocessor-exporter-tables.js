@@ -49,20 +49,23 @@ import { nameOf } from './reporting-period.js'
 
 /** @typedef {{ months: Record<string, ReprocessorExporterMonth> }} ReprocessorExporterData */
 
+/** @typedef {{ material: string, figures: string[] }} FiguresRow */
+
 /**
  * A table as the page lays it out: the column headings after the material,
  * and one row per material with a formatted figure under each heading.
- * @typedef {{
- *   columns: string[],
- *   rows: { material: string, figures: string[] }[]
- * }} FiguresTable
+ * @typedef {{ columns: string[], rows: FiguresRow[] }} FiguresTable
  */
 
 /**
  * @typedef {{
- *   months: { name: string, reprocessor: FiguresTable, exporter: FiguresTable }[]
- * }} ReprocessorExporterTables
+ *   name: string,
+ *   reprocessor: FiguresTable,
+ *   exporter: FiguresTable
+ * }} FiguresMonth
  */
+
+/** @typedef {{ months: FiguresMonth[] }} ReprocessorExporterTables */
 
 /** @typedef {(key: string, values?: Record<string, string | number>) => string} Localise */
 
@@ -77,15 +80,20 @@ const NOTE_COLUMNS = [
   ['averagePricePerTonne', formatCurrency]
 ]
 
+/** @type {[keyof SharedFigures, (value: number) => string][]} */
+const SENT_ON_COLUMNS = [
+  ['tonnageSentOnTotal', formatTonnage],
+  ['tonnageSentOnToReprocessor', formatTonnage],
+  ['tonnageSentOnToExporter', formatTonnage],
+  ['tonnageSentOnToOtherFacilities', formatTonnage]
+]
+
 /** @type {[keyof ReprocessorFigures, (value: number) => string][]} */
 const REPROCESSOR_COLUMNS = [
   ['tonnageReceived', formatTonnage],
   ['tonnageRecycled', formatTonnage],
   ['tonnageReceivedButNotRecycled', formatTonnage],
-  ['tonnageSentOnTotal', formatTonnage],
-  ['tonnageSentOnToReprocessor', formatTonnage],
-  ['tonnageSentOnToExporter', formatTonnage],
-  ['tonnageSentOnToOtherFacilities', formatTonnage],
+  ...SENT_ON_COLUMNS,
   ...NOTE_COLUMNS
 ]
 
@@ -94,10 +102,7 @@ const EXPORTER_COLUMNS = [
   ['tonnageReceived', formatTonnage],
   ['tonnageExported', formatTonnage],
   ['tonnageReceivedButNotExported', formatTonnage],
-  ['tonnageSentOnTotal', formatTonnage],
-  ['tonnageSentOnToReprocessor', formatTonnage],
-  ['tonnageSentOnToExporter', formatTonnage],
-  ['tonnageSentOnToOtherFacilities', formatTonnage],
+  ...SENT_ON_COLUMNS,
   ['tonnageStopped', formatTonnage],
   ['tonnageRefused', formatTonnage],
   ['tonnageRepatriated', formatTonnage],
@@ -108,7 +113,7 @@ const EXPORTER_COLUMNS = [
  * @template {string} Measure
  * @param {Record<string, Record<Measure, number>>} byMaterial
  * @param {[Measure, (value: number) => string][]} columns
- * @param {string} accreditationType
+ * @param {'reprocessor' | 'exporter'} accreditationType
  * @param {Localise} localise
  * @returns {FiguresTable}
  */

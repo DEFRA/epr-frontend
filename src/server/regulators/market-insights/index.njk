@@ -100,8 +100,8 @@
       {% endmacro %}
 
       {% for month in figures.months %}
-        <div class="govuk-body epr-wide-table">
-          <h3 class="govuk-heading-m">{{ month.name }}</h3>
+        <div class="govuk-body epr-wide-table" role="region" aria-labelledby="figures-month-{{ loop.index }}" tabindex="0">
+          <h3 class="govuk-heading-m" id="figures-month-{{ loop.index }}">{{ month.name }}</h3>
           {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor')) }}
           {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter')) }}
         </div>

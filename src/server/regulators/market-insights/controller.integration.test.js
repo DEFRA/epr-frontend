@@ -152,7 +152,12 @@ const figuresMonthOf = ({ plastic, aluminium }) => ({
   }
 })
 
-/** @type {ReprocessorExporterAggregate} */
+/**
+ * The served totals and averages deliberately do not reconcile with the
+ * figures they would be derived from, so a page that recomputed any of them
+ * would fail rather than pass by coincidence.
+ * @type {ReprocessorExporterAggregate}
+ */
 const januaryToMarchFigures = {
   meta: { generatedAt: '2026-04-10T09:30:00.000Z' },
   data: {
@@ -161,22 +166,22 @@ const januaryToMarchFigures = {
         plastic: {
           tonnageReceived: 1250.5,
           tonnageRecycled: 1100,
-          tonnageReceivedButNotRecycled: 150.5,
-          tonnageSentOnTotal: 50.25,
+          tonnageReceivedButNotRecycled: 151,
+          tonnageSentOnTotal: 51,
           tonnageSentOnToReprocessor: 40,
           tonnageSentOnToOtherFacilities: 10.25,
           revisedTonnageIssued: 900,
           totalRevenue: 108000,
-          averagePricePerTonne: 120
+          averagePricePerTonne: 121
         },
         aluminium: {
           tonnageReceived: 300,
           tonnageExported: 280,
-          tonnageReceivedButNotExported: 20,
+          tonnageReceivedButNotExported: 21,
           tonnageStopped: 1.5,
           revisedTonnageIssued: 250,
           totalRevenue: 12345.68,
-          averagePricePerTonne: 49.38
+          averagePricePerTonne: 50
         }
       }),
       '2026-02': figuresMonthOf({ plastic: {}, aluminium: {} }),
@@ -455,6 +460,14 @@ describe('the market insights page', () => {
           .filter((name) => name.endsWith('2026'))
       ).toStrictEqual(['January 2026', 'February 2026', 'March 2026'])
 
+      // Wider than the page, so each month's tables scroll sideways in a
+      // region the keyboard can reach.
+      expect(
+        getByRole(body, 'region', { name: 'January 2026' }).getAttribute(
+          'tabindex'
+        )
+      ).toBe('0')
+
       const [januaryReprocessors] = getAllByRole(body, 'table', {
         name: 'Reprocessor data'
       })
@@ -489,14 +502,14 @@ describe('the market insights page', () => {
           'Plastic',
           '1,250.50',
           '1,100.00',
-          '150.50',
-          '50.25',
+          '151.00',
+          '51.00',
           '40.00',
           '0.00',
           '10.25',
           '900.00',
           '£108,000.00',
-          '£120.00'
+          '£121.00'
         ]
       ])
 
@@ -524,7 +537,7 @@ describe('the market insights page', () => {
           'Aluminium',
           '300.00',
           '280.00',
-          '20.00',
+          '21.00',
           '0.00',
           '0.00',
           '0.00',
@@ -534,7 +547,7 @@ describe('the market insights page', () => {
           '0.00',
           '250.00',
           '£12,345.68',
-          '£49.38'
+          '£50.00'
         ],
         [
           'Plastic',

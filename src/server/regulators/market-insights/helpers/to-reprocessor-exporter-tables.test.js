@@ -101,6 +101,9 @@ describe(toReprocessorExporterTables, () => {
     ).toHaveLength(1)
   })
 
+  // In this test and the next, the served totals and averages deliberately do
+  // not reconcile with the figures they would be derived from, so a helper
+  // that recomputed any of them would fail rather than pass by coincidence.
   it('lays the reprocessor figures out in the published column order, with the PRN columns after the tonnage', () => {
     const { reprocessor } = toReprocessorExporterTables(
       dataOf({
@@ -109,14 +112,14 @@ describe(toReprocessorExporterTables, () => {
             reprocessor: reprocessorOf({
               tonnageReceived: 1250.5,
               tonnageRecycled: 1100,
-              tonnageReceivedButNotRecycled: 150.5,
-              tonnageSentOnTotal: 50.25,
+              tonnageReceivedButNotRecycled: 151,
+              tonnageSentOnTotal: 51,
               tonnageSentOnToReprocessor: 40,
               tonnageSentOnToExporter: 0,
               tonnageSentOnToOtherFacilities: 10.25,
               revisedTonnageIssued: 900,
               totalRevenue: 108000,
-              averagePricePerTonne: 120
+              averagePricePerTonne: 121
             }),
             exporter: exporterOf()
           }
@@ -149,14 +152,14 @@ describe(toReprocessorExporterTables, () => {
         figures: [
           '1,250.50',
           '1,100.00',
-          '150.50',
-          '50.25',
+          '151.00',
+          '51.00',
           '40.00',
           '0.00',
           '10.25',
           '900.00',
           '£108,000.00',
-          '£120.00'
+          '£121.00'
         ]
       }
     ])
@@ -171,8 +174,8 @@ describe(toReprocessorExporterTables, () => {
             exporter: exporterOf({
               tonnageReceived: 300,
               tonnageExported: 280,
-              tonnageReceivedButNotExported: 20,
-              tonnageSentOnTotal: 7,
+              tonnageReceivedButNotExported: 21,
+              tonnageSentOnTotal: 8,
               tonnageSentOnToReprocessor: 1,
               tonnageSentOnToExporter: 2,
               tonnageSentOnToOtherFacilities: 4,
@@ -181,7 +184,7 @@ describe(toReprocessorExporterTables, () => {
               tonnageRepatriated: 0.125,
               revisedTonnageIssued: 250,
               totalRevenue: 12345.678,
-              averagePricePerTonne: 49.38
+              averagePricePerTonne: 50
             })
           }
         })
@@ -216,8 +219,8 @@ describe(toReprocessorExporterTables, () => {
         figures: [
           '300.00',
           '280.00',
-          '20.00',
-          '7.00',
+          '21.00',
+          '8.00',
           '1.00',
           '2.00',
           '4.00',
@@ -226,7 +229,7 @@ describe(toReprocessorExporterTables, () => {
           '0.13',
           '250.00',
           '£12,345.68',
-          '£49.38'
+          '£50.00'
         ]
       }
     ])
