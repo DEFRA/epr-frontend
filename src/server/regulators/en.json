@@ -28,16 +28,18 @@
     "figures": {
       "anomalies": "Reported PRN and PERN revenue submissions currently include some anomalies. They remain subject to correction by resubmission from operators.",
       "calculation": {
-        "accreditations": "A report counts if its accreditation is approved or suspended. If the accreditation has since been cancelled, none of its reports count, in any month. The regulators’ workbooks do the same.",
+        "accreditations": "A report counts if its accreditation is currently approved or suspended. If the accreditation has been cancelled, none of its reports count, in any month.",
         "average": "The tonnage PRNs or PERNs were issued for is the tonnage issued less the tonnage self-issued. The average price per tonne is the total revenue divided by that tonnage. Both totals are added up across all operators before dividing. It is not an average of each operator’s own price. Where no tonnage was issued, the average is 0.",
-        "heading": "How the reprocessor and exporter figures are calculated",
-        "live": "The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.",
-        "source": "The figures come from the monthly reports operators submit. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.",
-        "zero": "Every material and both accreditation types appear for every month. A row shows 0 where no operator reported activity."
+        "heading": "How these figures are calculated",
+        "live": "These figures are live. They come from the monthly reports held at the moment stamped at the top of this section, not from a record of what was published. If an operator resubmits a month, its figures change.",
+        "revenue": "Revenue is what operators reported receiving, or expecting to receive, for their notes, excluding VAT.",
+        "rounding": "Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.",
+        "source": "These figures come from the monthly reports operators submit, not from the summary logs the waste balance table uses. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.",
+        "zero": "Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, and also where operators reported but left that figure blank."
       },
       "columns": {
         "exporter": {
-          "averagePricePerTonne": "Average PERN price per tonne",
+          "averagePricePerTonne": "Average PERN price per tonne (£)",
           "revisedTonnageIssued": "Tonnage of PERNs issued",
           "tonnageExported": "Tonnage exported for recycling",
           "tonnageReceived": "Tonnage received for exporting",
@@ -49,10 +51,10 @@
           "tonnageSentOnToReprocessor": "Tonnage sent on to a reprocessor",
           "tonnageSentOnTotal": "Tonnage sent on, total",
           "tonnageStopped": "Tonnage exported that was stopped",
-          "totalRevenue": "PERN revenue"
+          "totalRevenue": "PERN revenue (£)"
         },
         "reprocessor": {
-          "averagePricePerTonne": "Average PRN price per tonne",
+          "averagePricePerTonne": "Average PRN price per tonne (£)",
           "revisedTonnageIssued": "Tonnage of PRNs issued",
           "tonnageReceived": "Tonnage received for recycling",
           "tonnageReceivedButNotRecycled": "Tonnage received but not recycled",
@@ -61,15 +63,15 @@
           "tonnageSentOnToOtherFacilities": "Tonnage sent on to other facilities",
           "tonnageSentOnToReprocessor": "Tonnage sent on to a reprocessor",
           "tonnageSentOnTotal": "Tonnage sent on, total",
-          "totalRevenue": "PRN revenue"
+          "totalRevenue": "PRN revenue (£)"
         }
       },
       "description": "The tables show, for each month, the tonnage accredited reprocessors and exporters reported receiving, recycling or exporting, and sending on, by material. They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price per tonne. The monthly market insights workbook uses these figures.",
       "heading": "Reprocessor and exporter figures",
       "provisional": "Figures are provisional and based on submissions received to date. Some data is still expected and will be included in future updates.",
       "table": {
-        "exporter": "Exporter data",
-        "reprocessor": "Reprocessor data"
+        "exporter": "Exporter data for {{ month }}",
+        "reprocessor": "Reprocessor data for {{ month }}"
       }
     },
     "heading": "Market insights",

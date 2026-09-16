@@ -72,6 +72,8 @@
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:source') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:accreditations') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:average') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:revenue') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:rounding') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:zero') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:live') }}</p>
 
@@ -102,8 +104,8 @@
       {% for month in figures.months %}
         <h3 class="govuk-heading-m" id="figures-month-{{ loop.index }}">{{ month.name }}</h3>
         <div class="govuk-body epr-wide-table" role="region" aria-labelledby="figures-month-{{ loop.index }}" tabindex="0">
-          {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor')) }}
-          {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter')) }}
+          {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor', { month: month.name })) }}
+          {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter', { month: month.name })) }}
         </div>
       {% endfor %}
     </div>

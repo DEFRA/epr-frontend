@@ -480,7 +480,7 @@ describe('the market insights page', () => {
       const body = documentOf(asHtml(result))
 
       const [januaryReprocessors] = getAllByRole(body, 'table', {
-        name: 'Reprocessor data'
+        name: 'Reprocessor data for January 2026'
       })
       expect(headingsOf(januaryReprocessors)).toStrictEqual([
         'Material',
@@ -492,8 +492,8 @@ describe('the market insights page', () => {
         'Tonnage sent on to an exporter',
         'Tonnage sent on to other facilities',
         'Tonnage of PRNs issued',
-        'PRN revenue',
-        'Average PRN price per tonne'
+        'PRN revenue (£)',
+        'Average PRN price per tonne (£)'
       ])
       expect(rowsOf(januaryReprocessors)).toStrictEqual([
         [
@@ -537,7 +537,7 @@ describe('the market insights page', () => {
       const body = documentOf(asHtml(result))
 
       const [januaryExporters] = getAllByRole(body, 'table', {
-        name: 'Exporter data'
+        name: 'Exporter data for January 2026'
       })
       expect(headingsOf(januaryExporters)).toStrictEqual([
         'Material',
@@ -552,8 +552,8 @@ describe('the market insights page', () => {
         'Tonnage exported that was refused',
         'Tonnage repatriated',
         'Tonnage of PERNs issued',
-        'PERN revenue',
-        'Average PERN price per tonne'
+        'PERN revenue (£)',
+        'Average PERN price per tonne (£)'
       ])
       expect(rowsOf(januaryExporters)).toStrictEqual([
         [
@@ -640,12 +640,14 @@ describe('the market insights page', () => {
         'Data taken at 10:30am on 10 April 2026',
         'Figures are provisional and based on submissions received to date. Some data is still expected and will be included in future updates.',
         'Reported PRN and PERN revenue submissions currently include some anomalies. They remain subject to correction by resubmission from operators.',
-        'How the reprocessor and exporter figures are calculated',
-        'The figures come from the monthly reports operators submit. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.',
-        'A report counts if its accreditation is approved or suspended. If the accreditation has since been cancelled, none of its reports count, in any month. The regulators’ workbooks do the same.',
+        'How these figures are calculated',
+        'These figures come from the monthly reports operators submit, not from the summary logs the waste balance table uses. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.',
+        'A report counts if its accreditation is currently approved or suspended. If the accreditation has been cancelled, none of its reports count, in any month.',
         'The tonnage PRNs or PERNs were issued for is the tonnage issued less the tonnage self-issued. The average price per tonne is the total revenue divided by that tonnage. Both totals are added up across all operators before dividing. It is not an average of each operator’s own price. Where no tonnage was issued, the average is 0.',
-        'Every material and both accreditation types appear for every month. A row shows 0 where no operator reported activity.',
-        'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
+        'Revenue is what operators reported receiving, or expecting to receive, for their notes, excluding VAT.',
+        'Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.',
+        'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, and also where operators reported but left that figure blank.',
+        'These figures are live. They come from the monthly reports held at the moment stamped at the top of this section, not from a record of what was published. If an operator resubmits a month, its figures change.',
         'January 2026'
       ])
     })
