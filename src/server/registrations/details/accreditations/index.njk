@@ -34,6 +34,7 @@
         {% set sectionHasRows = reports.rows | length > 0 %}
         {% set sectionTestId = "reports" %}
         {% set sectionViewAllText = localise("registrations:details:accreditation:reports:viewAll") %}
+        {% set sectionViewAllHiddenText = localise("registrations:details:accreditation:reports:viewAllHidden") %}
         {% set sectionMostRecentText = localise("registrations:details:accreditation:reports:mostRecent", { count: reports.count }) %}
         {% include "partials/accreditation-section/header.njk" %}
 
@@ -47,6 +48,7 @@
         {% set sectionHasRows = prns.rows | length > 0 %}
         {% set sectionTestId = "prns" %}
         {% set sectionViewAllText = localise("registrations:details:accreditation:prns:viewAll") %}
+        {% set sectionViewAllHiddenText = prns.viewAllHiddenText %}
         {% set sectionMostRecentText = localise("registrations:details:accreditation:prns:mostRecent", { count: prns.count }) %}
         {% include "partials/accreditation-section/header.njk" %}
 
@@ -66,6 +68,7 @@
           {% set sectionHasRows = ledger.rows | length > 0 %}
           {% set sectionTestId = "ledger" %}
           {% set sectionViewAllText = localise("registrations:details:accreditation:ledger:viewAll") %}
+          {% set sectionViewAllHiddenText = localise("registrations:details:accreditation:ledger:viewAllHidden") %}
           {% set sectionMostRecentText = localise("registrations:details:accreditation:ledger:mostRecent", { count: ledger.count }) %}
           {% include "partials/accreditation-section/header.njk" %}
 

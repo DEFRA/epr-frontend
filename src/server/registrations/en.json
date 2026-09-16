@@ -18,7 +18,8 @@
       "heading": "Accreditation",
       "ledger": {
         "mostRecent": "Most recent ({{count}} items)",
-        "viewAll": "View all"
+        "viewAll": "View all",
+        "viewAllHidden": "ledger events"
       },
       "reports": {
         "actions": "Actions",
@@ -29,7 +30,8 @@
         "period": "Period",
         "status": "Status",
         "submissionDate": "Submission date",
-        "viewAll": "View all"
+        "viewAll": "View all",
+        "viewAllHidden": "reports"
       },
       "prns": {
         "action": "Action",
@@ -43,7 +45,8 @@
         "status": "Status",
         "tonnage": "Tonnage",
         "view": "View",
-        "viewAll": "View all"
+        "viewAll": "View all",
+        "viewAllHidden": "{{noteTypePlural}}"
       },
       "summary": {
         "download": "Download",

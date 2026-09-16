@@ -511,7 +511,13 @@ describe('the accreditation details page', () => {
       const heading = link.parentElement?.querySelector('h2')
 
       expect(link.tagName).toBe('A')
-      expect(link.textContent?.trim()).toBe('View all')
+      // Three sections carry this link, so each names its own list.
+      expect(link.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'View all reports'
+      )
+      expect(
+        link.querySelector('.govuk-visually-hidden')?.textContent?.trim()
+      ).toBe('reports')
       expect(link.getAttribute('href')).toBe(`${path}/reports`)
 
       // It sits beside the heading rather than beneath it.
@@ -585,7 +591,10 @@ describe('the accreditation details page', () => {
       const link = getByTestId(documentOf(body), 'prns-detailed-view-link')
 
       expect(link.tagName).toBe('A')
-      expect(link.textContent?.trim()).toBe('View all')
+      // Three sections carry this link, so each names its own list.
+      expect(link.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'View all PRNs'
+      )
 
       // It sits beside the heading rather than beneath it.
       expect(link.parentElement?.querySelector('h2')?.className).toContain(
@@ -635,7 +644,10 @@ describe('the accreditation details page', () => {
       const link = getByTestId(documentOf(body), 'ledger-detailed-view-link')
 
       expect(link.tagName).toBe('A')
-      expect(link.textContent?.trim()).toBe('View all')
+      // Three sections carry this link, so each names its own list.
+      expect(link.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'View all ledger events'
+      )
       expect(link.getAttribute('href')).toBe(`${path}/waste-balance-ledger`)
 
       // It sits beside the heading rather than beneath it.

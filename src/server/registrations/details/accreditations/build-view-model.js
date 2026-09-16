@@ -57,7 +57,8 @@ import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
  *   heading: string,
  *   href: string,
  *   noneText: string,
- *   rows: TableRow[]
+ *   rows: TableRow[],
+ *   viewAllHiddenText: string
  * }} PrnsTable
  * @typedef {{
  *   breadcrumbs: Crumb[],
@@ -215,6 +216,10 @@ const toPrns = ({
     noneText: localise('registrations:details:accreditation:prns:none', {
       noteTypePlural
     }),
+    viewAllHiddenText: localise(
+      'registrations:details:accreditation:prns:viewAllHidden',
+      { noteTypePlural }
+    ),
     rows: mostRecent.map((note) => {
       const date = formatDateShort(note.issuedAt ?? note.createdAt)
 
