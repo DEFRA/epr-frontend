@@ -7,6 +7,7 @@ import {
   rowsOf
 } from '#server/common/test-helpers/dom.js'
 import {
+  bandsOf,
   NOTICE,
   operator,
   regulator,
@@ -19,25 +20,18 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 /** @import { OutstandingReturnsAggregate } from '../helpers/fetch-outstanding-returns.js' */
-/** @import { OutstandingReturnsMonth } from '../helpers/to-outstanding-returns-tables.js' */
+/**
+ * @import { OutstandingByBand, OutstandingReturnsMonth } from '../helpers/to-outstanding-returns-tables.js'
+ */
 
 const backendUrl = config.get('eprBackendUrl')
 const outstandingReturnsUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/outstanding-returns`
-
-/** @param {Partial<Record<string, number>>} counts */
-const bandsOf = (counts) => ({
-  up_to_500: 0,
-  up_to_5000: 0,
-  up_to_10000: 0,
-  over_10000: 0,
-  ...counts
-})
 
 /**
  * A month with plastic and glass remelt outstanding in a band apiece. The page
  * shows whatever materials are served, so two are enough to see the tables
  * laid out.
- * @param {{ plastic: Partial<Record<string, number>>, glass: Partial<Record<string, number>> }} counts
+ * @param {{ plastic: Partial<OutstandingByBand>, glass: Partial<OutstandingByBand> }} counts
  * @returns {OutstandingReturnsMonth}
  */
 const monthOf = ({ plastic, glass }) => ({

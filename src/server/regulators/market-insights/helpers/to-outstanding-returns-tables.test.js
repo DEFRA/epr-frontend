@@ -1,25 +1,19 @@
+import { bandsOf } from '#server/common/test-helpers/market-insights-fixtures.js'
 import { describe, expect, it } from 'vitest'
 
 import { toOutstandingReturnsTables } from './to-outstanding-returns-tables.js'
 
-/** @import { OutstandingReturnsData } from './to-outstanding-returns-tables.js' */
-
-/** @param {Partial<Record<string, number>>} counts */
-const bandsOf = (counts) => ({
-  up_to_500: 0,
-  up_to_5000: 0,
-  up_to_10000: 0,
-  over_10000: 0,
-  ...counts
-})
+/**
+ * @import { OutstandingByBand, OutstandingReturnsData } from './to-outstanding-returns-tables.js'
+ */
 
 /**
- * @param {Partial<Record<string, Partial<Record<string, number>>>>} materials
+ * @param {{ plastic?: Partial<OutstandingByBand>, aluminium?: Partial<OutstandingByBand> }} materials
  */
 const monthOf = (materials) => ({
   figures: {
-    plastic: bandsOf(materials.plastic ?? {}),
-    aluminium: bandsOf(materials.aluminium ?? {})
+    plastic: bandsOf(materials.plastic),
+    aluminium: bandsOf(materials.aluminium)
   }
 })
 

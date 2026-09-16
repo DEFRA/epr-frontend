@@ -3,10 +3,19 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 
 import { nameOf } from './reporting-period.js'
 
+/** @import { TonnageBand } from '#domain/organisations/model.js' */
+
 /**
- * One reporting month as the backend serves it: for every material, the
- * returns owed and not submitted in each tonnage band.
- * @typedef {{ figures: Record<string, Record<string, number>> }} OutstandingReturnsMonth
+ * The returns owed and not submitted in each tonnage band. Every band is
+ * served, at zero where nothing is outstanding.
+ * @typedef {Record<TonnageBand, number>} OutstandingByBand
+ */
+
+/**
+ * One reporting month as the backend serves it, keyed by material. A material
+ * this app does not know still shows, under its own name, as it does on the
+ * other market insights pages.
+ * @typedef {{ figures: Record<string, OutstandingByBand> }} OutstandingReturnsMonth
  */
 
 /** @typedef {{ months: Record<string, OutstandingReturnsMonth> }} OutstandingReturnsData */
