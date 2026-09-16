@@ -24,13 +24,17 @@
       "source": "The figures come from the latest summary log each accreditation has submitted. The last row shows how many monthly reports were due for each month and how many operators submitted. This is a guide to how complete the figures are. The figures do not come from the monthly reports."
     },
     "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
-    "description": "The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook uses these figures.",
+    "description": "The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook draws on the same figures.",
     "heading": "Market insights",
     "linkText": "Market insights",
-    "pageTitle": "Market insights",
+    "pageTitle": "Market insights preview",
     "period": {
       "month": "{{ month }} {{ year }}",
       "months": "{{ from }} to {{ to }} {{ year }}"
+    },
+    "preview": {
+      "notice": "This page is a preview. The figures are an early view of the monthly market insights, not the published ones. They may differ from the published workbook, and the page will change as it is built out. Check them against the workbook before you rely on them.",
+      "tag": "Preview"
     },
     "reports": {
       "count": "{{ submitted }} of {{ expected }}"

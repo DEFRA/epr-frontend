@@ -110,6 +110,11 @@ const anEmptyPageOfOrganisations = http.get(
 const documentOf = (html) => new JSDOM(html).window.document.body
 
 /**
+ * @param {string} html
+ */
+const titleOf = (html) => new JSDOM(html).window.document.title
+
+/**
  * @param {ReturnType<typeof documentOf>} body
  * @returns {string[][]}
  */
@@ -224,6 +229,40 @@ describe('the market insights page', () => {
       expect(
         getByText(body, 'Data taken at 10:00am on 10 April 2026')
       ).not.toBeNull()
+    })
+
+    it('marks the page a preview, in the heading, the title and a line above the description', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+      const heading = getByRole(body, 'heading', { level: 1 })
+
+      // The tag sits inside the heading, so the status is announced with it
+      // wherever the heading is read.
+      expect(getByText(heading, 'Preview')).not.toBeNull()
+      expect(titleOf(asHtml(result))).toBe(
+        'Market insights preview | Record reprocessed or exported packaging waste: regulators'
+      )
+      expect(
+        [
+          heading.nextElementSibling,
+          heading.nextElementSibling?.nextElementSibling
+        ].map((element) => element?.textContent.trim())
+      ).toStrictEqual([
+        'This page is a preview. The figures are an early view of the monthly market insights, not the published ones. They may differ from the published workbook, and the page will change as it is built out. Check them against the workbook before you rely on them.',
+        'The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook draws on the same figures.'
+      ])
     })
 
     it('says how the figures are calculated, before the table', async ({
