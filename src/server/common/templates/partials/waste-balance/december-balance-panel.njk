@@ -1,0 +1,39 @@
+{# The Available waste balance panel (PAE-1921): the December / non-December /
+   total breakdown shown to an eligible operator within the December to January
+   window. Expects `wasteBalance.breakdown` and `wasteBalance.noteTypePlural`
+   in context; out of window the caller renders its single-balance banner
+   instead. Per the updated December 2026 Figma frames this is a three-band
+   card: the blue heading sits on the grey band, the three rows sit on the
+   lighter band below with GDS row dividers, and the hint returns to the grey
+   band beneath. The rows use a standard (bordered) govuk-summary-list, which
+   keeps the GDS responsive behaviour: they stack rather than overflow on a
+   narrow viewport. #}
+<div class="govuk-summary-card epr-waste-balance-banner epr-waste-balance-banner--breakdown govuk-!-margin-top-6 govuk-!-margin-bottom-6"
+     data-testid="december-balance-panel">
+  <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
+    <h2 class="govuk-summary-card__title">
+      {{ localise("common:wasteBalance.decemberPanel.title") }}
+    </h2>
+  </div>
+  <div class="govuk-summary-card__content">
+    <dl class="govuk-summary-list">
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ localise("common:wasteBalance.decemberPanel.december") }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="december-waste-balance">{{ wasteBalance.breakdown.december | formatTonnage }}</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ localise("common:wasteBalance.decemberPanel.nonDecember") }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="non-december-waste-balance">{{ wasteBalance.breakdown.nonDecember | formatTonnage }}</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ localise("common:wasteBalance.decemberPanel.total") }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="total-waste-balance">{{ wasteBalance.breakdown.total | formatTonnage }}</dd>
+      </div>
+    </dl>
+  </div>
+  <div class="epr-waste-balance-banner__hint">
+    <p class="govuk-body govuk-!-margin-bottom-0">
+      {{ localise("common:wasteBalance.decemberPanel.hint", { noteTypePlural: wasteBalance.noteTypePlural }) }}
+    </p>
+  </div>
+</div>

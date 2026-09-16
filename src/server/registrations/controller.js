@@ -4,6 +4,10 @@ import { getRegistrationMaterialDisplayName } from '#server/common/helpers/mater
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
+import {
+  showsDecemberBalance,
+  toDecemberBalanceBreakdown
+} from '#server/common/helpers/waste-balance/december-balance.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { capitalize } from 'lodash-es'
@@ -30,14 +34,23 @@ export const controller = {
         session.backendToken
       )
 
-    const wasteBalance = registration.accreditationId
-      ? await getWasteBalance(
-          organisationId,
-          registration.accreditationId,
-          session.backendToken,
-          request.logger
-        )
-      : null
+    const [wasteBalance, showsDecember] = registration.accreditationId
+      ? await Promise.all([
+          getWasteBalance(
+            organisationId,
+            registration.accreditationId,
+            session.backendToken,
+            request.logger
+          ),
+          showsDecemberBalance({
+            organisationId,
+            registrationId,
+            accreditationId: registration.accreditationId,
+            backendToken: session.backendToken,
+            logger: request.logger
+          })
+        ])
+      : [null, false]
 
     const viewModel = buildViewModel({
       request,
@@ -45,7 +58,8 @@ export const controller = {
       accreditation,
       rawAccreditation,
       registration,
-      wasteBalance
+      wasteBalance,
+      showsDecember
     })
 
     return h.view('registrations/index', viewModel)
@@ -88,7 +102,11 @@ export const controller = {
  *   reports: { link: Link };
  *   siteName: string | null;
  *   uploadSummaryLogUrl: string;
- *   wasteBalance: { availableAmount: number | null; noteTypePlural: 'PRNs' | 'PERNs' };
+ *   wasteBalance: {
+ *     availableAmount: number | null;
+ *     noteTypePlural: 'PRNs' | 'PERNs';
+ *     breakdown: DecemberBalanceBreakdown | null;
+ *   };
  *   wasteBalanceLedgerUrl: string | null;
  * }} RegistrationViewModel
  */
@@ -127,6 +145,7 @@ const buildMaybeTaggedReference = ({ reference, status }) => {
  *   accreditation: Accreditation | undefined;
  *   rawAccreditation: Accreditation | undefined;
  *   wasteBalance: WasteBalance | null;
+ *   showsDecember: boolean;
  * }} params
  * @returns {RegistrationViewModel}
  */
@@ -136,7 +155,8 @@ function buildViewModel({
   accreditation,
   rawAccreditation,
   registration,
-  wasteBalance
+  wasteBalance,
+  showsDecember
 }) {
   const { t: localise } = request
 
@@ -194,7 +214,11 @@ function buildViewModel({
     }),
     siteName,
     uploadSummaryLogUrl,
-    wasteBalance: getWasteBalanceViewData(wasteBalance, noteTypePlural),
+    wasteBalance: getWasteBalanceViewData(
+      wasteBalance,
+      noteTypePlural,
+      showsDecember
+    ),
     wasteBalanceLedgerUrl: getWasteBalanceLedgerUrl(
       request,
       organisationId,
@@ -302,12 +326,14 @@ function getWasteBalanceLedgerUrl(request, organisationId, registration) {
 /**
  * @param {WasteBalance | null} wasteBalance
  * @param {'PRNs' | 'PERNs'} noteTypePlural
+ * @param {boolean} showsDecember
  */
-function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
+function getWasteBalanceViewData(wasteBalance, noteTypePlural, showsDecember) {
   return {
     availableAmount:
       wasteBalance === null ? null : wasteBalance.availableAmount,
-    noteTypePlural
+    noteTypePlural,
+    breakdown: showsDecember ? toDecemberBalanceBreakdown(wasteBalance) : null
   }
 }
 
@@ -317,5 +343,6 @@ function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { ReapplyLink } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
+ * @import { DecemberBalanceBreakdown } from '#server/common/helpers/waste-balance/december-balance.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */
