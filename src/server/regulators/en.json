@@ -27,6 +27,7 @@
     "description": "The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook uses these figures.",
     "heading": "Market insights",
     "linkText": "Market insights",
+    "notice": "This page is still being built. Some figures may be missing or wrong.",
     "pageTitle": "Market insights",
     "period": {
       "month": "{{ month }} {{ year }}",
