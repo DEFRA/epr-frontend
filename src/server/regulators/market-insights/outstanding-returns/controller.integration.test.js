@@ -223,12 +223,13 @@ describe('the outstanding monthly returns page', () => {
       expect(element?.querySelector('table')).not.toBeNull()
       expect(wording).toStrictEqual([
         'The figures count the monthly returns accredited operators owe and have not submitted. Quarterly returns do not count.',
-        'One monthly return is owed for each accredited registration, so an operator accredited at two sites owes two returns a month. An operator that is registered but not accredited owes none.',
-        'A return is owed for every month the accreditation was valid for any part of, so the month it started counts. A suspended accreditation still owes its returns. A cancelled one owes nothing for a month it stood cancelled throughout, and owes again from a month it was reinstated in.',
+        'One monthly return is owed for each accredited registration, so an operator accredited for two materials, or at two sites, owes two returns a month. An operator that is registered but not accredited owes none.',
+        'Glass is two materials here. An operator accredited for glass remelt and for glass other holds a registration for each, owes a return for each, and appears in both tables.',
+        "A return is owed for every month the accreditation's validity period covered any part of, so the month it started counts and so does the month it ended. A suspended accreditation still owes its returns. A cancelled one owes nothing for a month it stood cancelled throughout, and owes again from a month inside its validity period that it was reinstated in.",
         'A month counts as submitted once the operator has submitted it, whatever figures the return carries. A return the operator has started but not submitted does not count, and neither does one submitted for a month the accreditation does not owe.',
-        'A tonnage band is the volume of packaging waste, by material, that an operator is accredited to issue notes against. For a reprocessor it is the tonnage it can issue PRNs against at that reprocessing site. For an exporter it is the tonnage it can issue PERNs against for its exports. A return is counted under the band the accreditation holds now, not the band it held in the month the return was owed.',
-        'A cell shows 0 where every return owed for that month and band was submitted, and where no operator is accredited for that material and band. Every material and every band appears for every month either way.',
-        'The figures are live. They come from the monthly reports and the accreditations held at the time shown above, not from a record of what was published. If an operator submits a return late, its month stops being outstanding.'
+        'A tonnage band is the most packaging waste, by material, that an operator is accredited to issue notes against. For a reprocessor it is the tonnage it can issue PRNs against at that reprocessing site. For an exporter it is the tonnage it can issue PERNs against for its exports. A return is counted under the band the accreditation holds now, not the band it held in the month the return was owed.',
+        'A cell shows 0 where nothing is outstanding, whether every return owed was submitted or no return was owed at all. Every material and every band appears for every month either way.',
+        'The figures are live. They come from the monthly returns and the accreditations held at the time shown above, not from a record of what was published. If an operator submits a return late, its month stops being outstanding.'
       ])
     })
 
