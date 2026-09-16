@@ -443,7 +443,7 @@ describe('the market insights page', () => {
       )
     })
 
-    it('reads a reprocessor table and an exporter table for every month served, the figures laid out the way the publication is', async ({
+    it('gives every month served a heading, and a region the keyboard can scroll sideways', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -460,13 +460,24 @@ describe('the market insights page', () => {
           .filter((name) => name.endsWith('2026'))
       ).toStrictEqual(['January 2026', 'February 2026', 'March 2026'])
 
-      // Wider than the page, so each month's tables scroll sideways in a
-      // region the keyboard can reach.
+      // The tables are wider than the page, so they scroll sideways.
       expect(
         getByRole(body, 'region', { name: 'January 2026' }).getAttribute(
           'tabindex'
         )
       ).toBe('0')
+    })
+
+    it('reads a reprocessor table for a month, the figures laid out the way the publication is', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
 
       const [januaryReprocessors] = getAllByRole(body, 'table', {
         name: 'Reprocessor data'
@@ -480,7 +491,7 @@ describe('the market insights page', () => {
         'Tonnage sent on to a reprocessor',
         'Tonnage sent on to an exporter',
         'Tonnage sent on to other facilities',
-        'PRN tonnage issued',
+        'Tonnage of PRNs issued',
         'PRN revenue',
         'Average PRN price per tonne'
       ])
@@ -512,6 +523,18 @@ describe('the market insights page', () => {
           '£121.00'
         ]
       ])
+    })
+
+    it('reads an exporter table for a month, the figures laid out the way the publication is', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
 
       const [januaryExporters] = getAllByRole(body, 'table', {
         name: 'Exporter data'
@@ -528,7 +551,7 @@ describe('the market insights page', () => {
         'Tonnage exported that was stopped',
         'Tonnage exported that was refused',
         'Tonnage repatriated',
-        'PERN tonnage issued',
+        'Tonnage of PERNs issued',
         'PERN revenue',
         'Average PERN price per tonne'
       ])
@@ -601,8 +624,8 @@ describe('the market insights page', () => {
         name: 'Reprocessor and exporter figures'
       })
 
-      // The wording sits between the section heading and the first month's
-      // tables, so a regulator reads it before the figures it explains.
+      // The wording sits between the section heading and the first month,
+      // so a regulator reads it before the figures it explains.
       /** @type {string[]} */
       const wording = []
       let element = heading.nextElementSibling
@@ -617,12 +640,13 @@ describe('the market insights page', () => {
         'Data taken at 10:30am on 10 April 2026',
         'Figures are provisional and based on submissions received to date. Some data is still expected and will be included in future updates.',
         'Reported PRN and PERN revenue submissions currently include some anomalies. They remain subject to correction by resubmission from operators.',
-        'How the figures are calculated',
+        'How the reprocessor and exporter figures are calculated',
         'The figures come from the monthly reports operators submit. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.',
         'A report counts if its accreditation is approved or suspended. If the accreditation has since been cancelled, none of its reports count, in any month. The regulators’ workbooks do the same.',
         'The tonnage PRNs or PERNs were issued for is the tonnage issued less the tonnage self-issued. The average price per tonne is the total revenue divided by that tonnage. Both totals are added up across all operators before dividing. It is not an average of each operator’s own price. Where no tonnage was issued, the average is 0.',
         'Every material and both accreditation types appear for every month. A row shows 0 where no operator reported activity.',
-        'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.'
+        'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
+        'January 2026'
       ])
     })
 

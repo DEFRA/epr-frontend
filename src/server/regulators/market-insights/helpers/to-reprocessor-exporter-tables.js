@@ -70,8 +70,9 @@ import { nameOf } from './reporting-period.js'
 /** @typedef {(key: string, values?: Record<string, string | number>) => string} Localise */
 
 /**
- * The PRN and PERN columns, which both tables print last, after the tonnage
- * the published tab lays out.
+ * The PRN and PERN columns. The published tab gives these a table of their
+ * own per month; here each one is the tail of its accreditation type's table,
+ * so a month reads as two tables rather than four.
  * @type {[keyof SharedFigures, (value: number) => string][]}
  */
 const NOTE_COLUMNS = [
@@ -133,10 +134,9 @@ const toTable = (byMaterial, columns, accreditationType, localise) => ({
 
 /**
  * Lays the served figures out the way the published UK tab is: for each
- * month, a reprocessor table and an exporter table, one row per material,
- * with the PRN or PERN tonnage, revenue and average price after the tonnage
- * columns. Every figure is the one the service served; nothing is summed
- * here.
+ * month, a reprocessor table and an exporter table, one row per material, the
+ * tonnage columns in the tab's order. Every figure is the one the service
+ * served; nothing is summed here.
  *
  * The months are the page's period, so a served month outside it is not
  * shown.

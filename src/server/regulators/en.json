@@ -30,7 +30,7 @@
       "calculation": {
         "accreditations": "A report counts if its accreditation is approved or suspended. If the accreditation has since been cancelled, none of its reports count, in any month. The regulators’ workbooks do the same.",
         "average": "The tonnage PRNs or PERNs were issued for is the tonnage issued less the tonnage self-issued. The average price per tonne is the total revenue divided by that tonnage. Both totals are added up across all operators before dividing. It is not an average of each operator’s own price. Where no tonnage was issued, the average is 0.",
-        "heading": "How the figures are calculated",
+        "heading": "How the reprocessor and exporter figures are calculated",
         "live": "The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.",
         "source": "The figures come from the monthly reports operators submit. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.",
         "zero": "Every material and both accreditation types appear for every month. A row shows 0 where no operator reported activity."
@@ -38,7 +38,7 @@
       "columns": {
         "exporter": {
           "averagePricePerTonne": "Average PERN price per tonne",
-          "revisedTonnageIssued": "PERN tonnage issued",
+          "revisedTonnageIssued": "Tonnage of PERNs issued",
           "tonnageExported": "Tonnage exported for recycling",
           "tonnageReceived": "Tonnage received for exporting",
           "tonnageReceivedButNotExported": "Tonnage received but not exported",
@@ -53,7 +53,7 @@
         },
         "reprocessor": {
           "averagePricePerTonne": "Average PRN price per tonne",
-          "revisedTonnageIssued": "PRN tonnage issued",
+          "revisedTonnageIssued": "Tonnage of PRNs issued",
           "tonnageReceived": "Tonnage received for recycling",
           "tonnageReceivedButNotRecycled": "Tonnage received but not recycled",
           "tonnageRecycled": "Tonnage recycled",
