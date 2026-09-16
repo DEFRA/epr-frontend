@@ -12,9 +12,9 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
- * One reporting month as the backend serves it, keyed by material. A material
- * this app does not know still shows, under its own name, as it does on the
- * other market insights pages.
+ * One reporting month as the backend serves it, keyed by material. The route
+ * serves every material it monitors in every month, so the set of materials is
+ * the same month to month and reading it from one of them holds.
  * @typedef {{ figures: Record<string, OutstandingByBand> }} OutstandingReturnsMonth
  */
 
