@@ -255,8 +255,8 @@ describe('the market insights page', () => {
           heading.nextElementSibling?.nextElementSibling
         ].map((element) => element?.textContent.trim())
       ).toStrictEqual([
-        'This page is a preview. The figures are an early view of the monthly market insights, not the published ones. They may differ from the published workbook, and the page will change as it is built out. Check them against the workbook before you rely on them.',
-        'The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook draws on the same figures.'
+        'This page is a preview. The figures are an early view of the monthly market insights, not the published ones. They may differ from the published workbook, and the page will change as it is built out.',
+        'The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook draws on the same data.'
       ])
     })
 
