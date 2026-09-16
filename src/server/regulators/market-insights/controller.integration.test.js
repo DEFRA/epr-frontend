@@ -226,6 +226,29 @@ describe('the market insights page', () => {
       ).not.toBeNull()
     })
 
+    it('says the page is still being built, above the description', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      const heading = getByRole(documentOf(asHtml(result)), 'heading', {
+        level: 1
+      })
+
+      expect(heading.nextElementSibling?.textContent.trim()).toBe(
+        'This page is still being built. Some figures may be missing or wrong.'
+      )
+    })
+
     it('says how the figures are calculated, before the table', async ({
       msw,
       server
