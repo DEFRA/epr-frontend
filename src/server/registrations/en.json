@@ -20,10 +20,12 @@
         "actions": "Actions",
         "dueDate": "Due date",
         "heading": "Reports",
+        "mostRecent": "Most recent ({{count}} items)",
         "none": "There are no reporting periods for this accreditation yet. Periods appear once one has ended.",
         "period": "Period",
         "status": "Status",
-        "submissionDate": "Submission date"
+        "submissionDate": "Submission date",
+        "viewAll": "View all"
       },
       "prns": {
         "action": "Action",
