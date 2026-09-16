@@ -49,8 +49,8 @@ export const controller = {
 
     return h.view('regulators/home', {
       pageTitle: request.t('regulators:organisations:pageTitle'),
-      // Offered only where the page exists and the session may read it, so a
-      // regulator is never sent to a page that would refuse them.
+      // Offered only where the session may read the page, so a regulator is
+      // never sent to one that would refuse them.
       marketInsightsHref:
         config.get('featureFlags.marketInsights') &&
         hasMarketDataReadScope(credentials)
