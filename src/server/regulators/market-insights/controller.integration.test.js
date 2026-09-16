@@ -226,7 +226,7 @@ describe('the market insights page', () => {
       ).not.toBeNull()
     })
 
-    it('marks the page a preview, in the heading, the title and a line above the description', async ({
+    it('says the page is still being built, above the description', async ({
       msw,
       server
     }) => {
@@ -243,19 +243,13 @@ describe('the market insights page', () => {
       const body = documentOf(asHtml(result))
       const heading = getByRole(body, 'heading', { level: 1 })
 
-      // The tag sits inside the heading, so the status is announced with it
-      // wherever the heading is read.
-      expect(getByText(heading, 'Preview')).not.toBeNull()
-      expect(body.ownerDocument.title).toBe(
-        'Market insights preview | Record reprocessed or exported packaging waste: regulators'
-      )
       expect(
         [
           heading.nextElementSibling,
           heading.nextElementSibling?.nextElementSibling
         ].map((element) => element?.textContent.trim())
       ).toStrictEqual([
-        'This page is a preview. The figures are an early view of the monthly market insights, not the published ones. They may differ from the published workbook, and the page will change as it is built out.',
+        'This page is still being built. Some figures may be missing or wrong.',
         'The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook draws on the same data.'
       ])
     })
