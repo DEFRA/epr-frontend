@@ -74,7 +74,7 @@ export const exporterOf = (figures = {}) => ({
 })
 
 /**
- * The outstanding returns for one material in a month, with every band the
+ * The outstanding reports for one material in a month, with every band the
  * backend serves present, so a fixture names only the bands it cares about.
  * @param {Partial<OutstandingByBand>} counts
  * @returns {OutstandingByBand}

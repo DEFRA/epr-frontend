@@ -15,7 +15,7 @@ import { toOutstandingReturnsTables } from '../helpers/to-outstanding-returns-ta
  */
 
 /**
- * The count of monthly returns owed and not submitted, as the published tab
+ * The count of monthly reports owed and not submitted, as the published tab
  * lays it out: a table per material, tonnage bands down and months across.
  *
  * Every count is served already made, so laying them out in columns is all

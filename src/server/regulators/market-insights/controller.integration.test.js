@@ -78,7 +78,7 @@ describe('the market insights page', () => {
           href: paths.regulators.marketInsightsUk
         },
         {
-          name: 'Outstanding monthly returns: UK',
+          name: 'Outstanding monthly reports: UK',
           href: paths.regulators.marketInsightsOutstandingReturns
         }
       ])

@@ -93,7 +93,7 @@ describe('the outstanding monthly returns page', () => {
       expect(statusCode).toBe(statusCodes.ok)
 
       const table = getByRole(documentOf(asHtml(result)), 'table', {
-        name: 'Returns not submitted for Plastic'
+        name: 'Reports not submitted for Plastic'
       })
 
       expect(headingsOf(table)).toStrictEqual([
@@ -124,8 +124,8 @@ describe('the outstanding monthly returns page', () => {
           (table.querySelector('caption')?.textContent ?? '').trim()
         )
       ).toStrictEqual([
-        'Returns not submitted for Glass remelt',
-        'Returns not submitted for Plastic'
+        'Reports not submitted for Glass remelt',
+        'Reports not submitted for Plastic'
       ])
     })
 
@@ -181,7 +181,7 @@ describe('the outstanding monthly returns page', () => {
         getAllByRole(trail, 'listitem').map((crumb) =>
           (crumb.textContent ?? '').trim()
         )
-      ).toStrictEqual(['Market insights', 'Outstanding monthly returns: UK'])
+      ).toStrictEqual(['Market insights', 'Outstanding monthly reports: UK'])
       expect(
         getByRole(trail, 'link', { name: 'Market insights' }).getAttribute(
           'href'
@@ -216,14 +216,14 @@ describe('the outstanding monthly returns page', () => {
 
       expect(element?.querySelector('table')).not.toBeNull()
       expect(wording).toStrictEqual([
-        'The figures count the monthly returns accredited operators owe and have not submitted. Quarterly returns do not count.',
-        'One monthly return is owed for each accredited registration, so an operator accredited for two materials, or at two sites, owes two returns a month. An operator that is registered but not accredited owes none.',
-        'Glass is two materials here. An operator accredited for glass remelt and for glass other holds a registration for each, owes a return for each, and appears in both tables.',
-        "A return is owed for every month the accreditation's validity period covered any part of, so the month it started counts and so does the month it ended. A suspended accreditation still owes its returns. A cancelled one owes nothing for a month it stood cancelled throughout, and owes again from a month inside its validity period that it was reinstated in.",
-        'A month counts as submitted once the operator has submitted it, whatever figures the return carries. A return the operator has started but not submitted does not count, and neither does one submitted for a month the accreditation does not owe.',
-        'A tonnage band is the most packaging waste, by material, that an operator is accredited to issue notes against. For a reprocessor it is the tonnage it can issue PRNs against at that reprocessing site. For an exporter it is the tonnage it can issue PERNs against for its exports. A return is counted under the band the accreditation holds now, not the band it held in the month the return was owed.',
-        'A cell shows 0 where nothing is outstanding, whether every return owed was submitted or no return was owed at all. Every material and every band appears for every month either way.',
-        'The figures are live. They come from the monthly returns and the accreditations held at the time shown above, not from a record of what was published. If an operator submits a return late, its month stops being outstanding.'
+        'The figures count the monthly reports accredited operators owe and have not submitted. Quarterly reports do not count.',
+        'One monthly report is owed for each accredited registration, so an operator accredited for two materials, or at two sites, owes two reports a month. A registration with no accreditation owes none, and so does one whose accreditation was never approved, whatever validity dates it carries.',
+        'Glass is two materials here. An operator accredited for glass remelt and for glass other holds a registration for each, owes a report for each, and appears in both tables.',
+        'Once an accreditation has been approved, a report is owed for every month its validity period covered any part of, so the month it started counts and so does the month it ended. A suspended accreditation still owes its reports. A cancelled one owes nothing for a month it stood cancelled throughout, and owes again from a month inside its validity period that it was reinstated in.',
+        'A month counts as submitted once the operator has submitted it, whatever figures the report carries. A report the operator has started but not submitted does not count, and neither does one submitted for a month the accreditation does not owe. A report submitted and later unsubmitted still counts, because the submission is kept, so its month is not outstanding.',
+        'A report is counted under the tonnage band the accreditation holds now, not the band it held in the month the report was owed. A band change therefore moves all of that accreditation’s outstanding months to the new band.',
+        'A cell shows 0 where nothing is outstanding, whether every report owed was submitted or no report was owed at all. Every material and every band appears for every month either way.',
+        'The figures are live. They come from the monthly reports and the accreditations held at the time shown above, not from a record of what was published. If an operator submits a report late, its month stops being outstanding.'
       ])
     })
 
@@ -321,7 +321,7 @@ describe('the outstanding monthly returns page with the flag off', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(
       getByRole(documentOf(asHtml(result)), 'table', {
-        name: 'Returns not submitted for Plastic'
+        name: 'Reports not submitted for Plastic'
       })
     ).toBeDefined()
   })

@@ -6,7 +6,7 @@ import { nameOf } from './reporting-period.js'
 /** @import { TonnageBand } from '#domain/organisations/model.js' */
 
 /**
- * The returns owed and not submitted in each tonnage band. Every band is
+ * The reports owed and not submitted in each tonnage band. Every band is
  * served, at zero where nothing is outstanding.
  * @typedef {Record<TonnageBand, number>} OutstandingByBand
  */
@@ -40,9 +40,9 @@ import { nameOf } from './reporting-period.js'
 const BANDS = Object.values(TONNAGE_BAND)
 
 /**
- * Lays the served counts out the way the published outstanding returns tab is:
+ * Lays the served counts out the way the published outstanding reports tab is:
  * a table per material, the tonnage bands down the side and the reporting
- * months across, holding the number of returns owed and not submitted.
+ * months across, holding the number of reports owed and not submitted.
  *
  * The pivot is presentation. Every count in a cell is the one the service
  * served for that month, material and band, and nothing is summed here.

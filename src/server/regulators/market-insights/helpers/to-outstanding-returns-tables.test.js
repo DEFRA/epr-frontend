@@ -29,7 +29,7 @@ const januaryToMarch = {
 /** @param {string} key */
 const localise = (key) => key.split(':').at(-1) ?? key
 
-describe('the outstanding returns tables', () => {
+describe('the outstanding reports tables', () => {
   it('names the months across, in the order the period runs', () => {
     const { months } = toOutstandingReturnsTables(
       januaryToMarch,
