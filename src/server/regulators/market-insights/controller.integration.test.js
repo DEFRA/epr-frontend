@@ -110,11 +110,6 @@ const anEmptyPageOfOrganisations = http.get(
 const documentOf = (html) => new JSDOM(html).window.document.body
 
 /**
- * @param {string} html
- */
-const titleOf = (html) => new JSDOM(html).window.document.title
-
-/**
  * @param {ReturnType<typeof documentOf>} body
  * @returns {string[][]}
  */
@@ -251,7 +246,7 @@ describe('the market insights page', () => {
       // The tag sits inside the heading, so the status is announced with it
       // wherever the heading is read.
       expect(getByText(heading, 'Preview')).not.toBeNull()
-      expect(titleOf(asHtml(result))).toBe(
+      expect(body.ownerDocument.title).toBe(
         'Market insights preview | Record reprocessed or exported packaging waste: regulators'
       )
       expect(
