@@ -24,6 +24,12 @@ const regulatorAuth = buildMockAuth({
   ...sessionIdentity(IDENTITIES.regulator)
 })
 
+const supportAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-3', email: 'support.user@example.com' },
+  ...sessionIdentity(IDENTITIES.support)
+})
+
 const grantedNothingAuth = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-2', email: 'john.doe@example.com' },
@@ -94,6 +100,29 @@ describe('write guard', () => {
       method: 'POST',
       url: linkingUrl,
       auth: regulatorAuth,
+      headers: { cookie },
+      payload: { organisationId, crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.forbidden)
+    expect(headers.location).toBeUndefined()
+  })
+
+  it('refuses a support user posting to an operator route, in place', async ({
+    server
+  }) => {
+    const { cookie, crumb } = await getCsrfToken(
+      server,
+      paths.regulators.home,
+      {
+        auth: supportAuth
+      }
+    )
+
+    const { statusCode, headers } = await server.inject({
+      method: 'POST',
+      url: linkingUrl,
+      auth: supportAuth,
       headers: { cookie },
       payload: { organisationId, crumb }
     })

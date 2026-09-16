@@ -4,7 +4,7 @@ import { analyticsConsent } from '#server/common/analytics/consent.js'
 import { analyticsPagePath } from '#server/common/analytics/page-path.js'
 import { analyticsPageReferrer } from '#server/common/analytics/page-referrer.js'
 import { satisfactionSurveyLinks } from '#server/common/satisfaction-survey/links.js'
-import { isRegulator } from '#server/auth/roles.js'
+import { seesRegulatorView } from '#server/auth/roles.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { paths } from '#server/paths.js'
@@ -56,7 +56,7 @@ const getI18nContext = (request) => {
  * @returns {{ serviceNameKey: string, serviceUrl: string }}
  */
 const buildService = (request) => {
-  if (isRegulator(request?.auth?.credentials)) {
+  if (seesRegulatorView(request?.auth?.credentials)) {
     return {
       serviceNameKey: 'regulators:serviceName',
       serviceUrl: paths.regulators.home

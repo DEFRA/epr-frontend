@@ -20,6 +20,8 @@ import { http, HttpResponse } from 'msw'
  *
  * `operatorWithoutWrite` is the same operator after the backend stops granting
  * the write scope: a narrower answer that still names a role.
+ *
+ * `support` is the lowest admin tier: a regulator's reads and no writes.
  */
 export const IDENTITIES = Object.freeze({
   operator: {
@@ -36,6 +38,17 @@ export const IDENTITIES = Object.freeze({
       SCOPES.marketDataRead,
       SCOPES.organisationRead,
       SCOPES.organisationSearch,
+      SCOPES.wasteBalanceLedgerRead
+    ]
+  },
+  support: {
+    role: 'support',
+    scopes: [
+      'admin.read',
+      SCOPES.marketDataRead,
+      SCOPES.organisationRead,
+      SCOPES.organisationSearch,
+      'summary-log.read',
       SCOPES.wasteBalanceLedgerRead
     ]
   },
