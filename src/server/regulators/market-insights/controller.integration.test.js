@@ -1,92 +1,20 @@
 import { config } from '#config/config.js'
-import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { asHtml, documentOf } from '#server/common/test-helpers/dom.js'
 import {
-  buildMockAuth,
-  sessionIdentity
-} from '#server/common/test-helpers/auth-helper.js'
-import { asHtml } from '#server/common/test-helpers/dom.js'
-import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
+  NOTICE,
+  operator,
+  regulator,
+  regulatorWithoutMarketScope
+} from '#server/common/test-helpers/market-insights-fixtures.js'
 import { paths } from '#server/paths.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole, getByText, queryByRole } from '@testing-library/dom'
-import { JSDOM } from 'jsdom'
+import { getAllByRole, getByRole, queryByRole } from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
-/**
- * @import { WasteBalanceAggregate } from './helpers/fetch-waste-balance.js'
- * @import { PublishedFigures, PublishedMonth } from './helpers/to-waste-balance-table.js'
- */
-
 const backendUrl = config.get('eprBackendUrl')
-const wasteBalanceUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/waste-balance`
-
-const regulator = buildMockAuth({
-  provider: OIDC_ENTRA_ID,
-  profile: { id: 'entra-user-1', email: 'regulator@example.com' },
-  backendToken: 'regulator-backend-token',
-  ...sessionIdentity(IDENTITIES.regulator)
-})
-
-const operator = buildMockAuth()
-
-const regulatorWithoutMarketScope = buildMockAuth({
-  provider: OIDC_ENTRA_ID,
-  profile: { id: 'entra-user-2', email: 'no.market@example.com' },
-  role: IDENTITIES.regulator.role,
-  scope: [SCOPES.organisationSearch]
-})
-
-/**
- * @param {number} netCredit
- * @returns {PublishedFigures}
- */
-const figuresOf = (netCredit) => ({
-  totalCredited: netCredit,
-  eligibleForWasteBalance: netCredit,
-  sentOnDeductions: 0,
-  netCredit
-})
-
-/**
- * A month in which glass was reprocessed and aluminium exported, every other
- * served figure at zero. The page shows whatever materials are served, so two
- * are enough to see the rows laid out.
- * @param {{ glass: number, aluminium: number }} netCredits
- * @param {PublishedMonth['reports']} reports
- * @returns {PublishedMonth}
- */
-const monthOf = ({ glass, aluminium }, reports) => ({
-  reports,
-  figures: {
-    glass_re_melt: { reprocessor: figuresOf(glass), exporter: figuresOf(0) },
-    aluminium: { reprocessor: figuresOf(0), exporter: figuresOf(aluminium) }
-  }
-})
-
-/** @type {WasteBalanceAggregate} */
-const januaryToMarch = {
-  meta: { generatedAt: '2026-04-10T09:00:00.000Z' },
-  data: {
-    months: {
-      '2026-01': monthOf(
-        { glass: 90, aluminium: 0 },
-        { expected: 2, submitted: 1 }
-      ),
-      '2026-02': monthOf(
-        { glass: 42.5, aluminium: 8 },
-        { expected: 2, submitted: 2 }
-      ),
-      '2026-03': monthOf(
-        { glass: 0, aluminium: 0 },
-        { expected: 3, submitted: 0 }
-      )
-    },
-    period: { reports: { expected: 9, submitted: 4 } }
-  }
-}
+const marketInsightsUrl = `${backendUrl}/v1/market-insights/*`
 
 /**
  * The regulator home page fetches its own list, and these tests are about the
@@ -105,55 +33,34 @@ const anEmptyPageOfOrganisations = http.get(
 )
 
 /**
- * @param {string} html
- */
-const documentOf = (html) => new JSDOM(html).window.document.body
-
-/**
+ * The links the page offers, by the words a regulator reads and the address
+ * each one opens.
  * @param {ReturnType<typeof documentOf>} body
- * @returns {string[][]}
+ * @returns {{ name: string, href: string | null }[]}
  */
-const rowsOf = (body) =>
-  Array.from(body.querySelectorAll('tbody tr')).map((row) =>
-    Array.from(row.querySelectorAll('th, td')).map((cell) =>
-      cell.textContent.trim()
-    )
-  )
-
-/**
- * @param {ReturnType<typeof documentOf>} body
- * @returns {string[]}
- */
-const headingsOf = (body) =>
-  Array.from(body.querySelectorAll('thead th')).map((cell) =>
-    cell.textContent.trim()
+const figureSetLinksOf = (body) =>
+  getAllByRole(getByRole(getByRole(body, 'main'), 'list'), 'link').map(
+    (link) => ({
+      name: (link.textContent ?? '').trim(),
+      href: link.getAttribute('href')
+    })
   )
 
 describe('the market insights page', () => {
   beforeAll(() => {
-    // Only the clock, so the page reads a reporting year the test pins while
-    // the server's own timers keep running.
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date('2026-04-10T09:00:00.000Z'))
     config.set('featureFlags.regulatorAccess', true)
     config.set('featureFlags.marketInsights', true)
   })
 
   afterAll(() => {
-    vi.useRealTimers()
     config.set('featureFlags.regulatorAccess', false)
     config.set('featureFlags.marketInsights', false)
   })
 
   describe('a regulator', () => {
-    it('reads the waste balance laid out the way the publication is, months across and net credit in the cells', async ({
-      msw,
+    it('is offered a page for each set of figures the workbook publishes', async ({
       server
     }) => {
-      msw.use(
-        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
-      )
-
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: paths.regulators.marketInsights,
@@ -161,79 +68,43 @@ describe('the market insights page', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-
-      const body = documentOf(asHtml(result))
-
-      expect(headingsOf(body)).toStrictEqual([
-        'Material',
-        'Accreditation type',
-        'January',
-        'February',
-        'March',
-        'Total'
-      ])
-      expect(rowsOf(body)).toStrictEqual([
-        ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00'],
-        ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00'],
-        ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
-        ['Glass remelt', 'Reprocessor', '90.00', '42.50', '0.00', '132.50'],
-        ['Monthly reports submitted', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
+      expect(figureSetLinksOf(documentOf(asHtml(result)))).toStrictEqual([
+        {
+          name: 'UK waste balance',
+          href: paths.regulators.marketInsightsWasteBalance
+        },
+        {
+          name: 'Reprocessor and exporter figures: UK',
+          href: paths.regulators.marketInsightsUk
+        }
       ])
     })
 
-    it('heads the reports row across the two columns that name every other row, so its counts sit under the months', async ({
+    it('asks the backend for no figures, because it shows none', async ({
       msw,
       server
     }) => {
+      const asked = vi.fn()
+
       msw.use(
-        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
+        http.get(marketInsightsUrl, () => {
+          asked()
+          return HttpResponse.json({})
+        })
       )
 
-      const { result } = await server.inject({
+      await server.inject({
         method: 'GET',
         url: paths.regulators.marketInsights,
         auth: regulator
       })
 
-      expect(
-        getByRole(documentOf(asHtml(result)), 'rowheader', {
-          name: 'Monthly reports submitted'
-        }).getAttribute('colspan')
-      ).toBe('2')
-    })
-
-    it('states the period the figures cover and when they were taken', async ({
-      msw,
-      server
-    }) => {
-      msw.use(
-        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: paths.regulators.marketInsights,
-        auth: regulator
-      })
-
-      const body = documentOf(asHtml(result))
-
-      expect(getByText(body, 'January to March 2026')).not.toBeNull()
-      // The moment is served in UTC and read in UK time, which is an hour ahead
-      // in April, so a page showing 9am would be showing the wrong zone.
-      expect(
-        getByText(body, 'Data taken at 10:00am on 10 April 2026')
-      ).not.toBeNull()
+      expect(asked).not.toHaveBeenCalled()
     })
 
     it('says the page is still being built, above the description', async ({
-      msw,
       server
     }) => {
-      msw.use(
-        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
-      )
-
       const { result } = await server.inject({
         method: 'GET',
         url: paths.regulators.marketInsights,
@@ -244,85 +115,7 @@ describe('the market insights page', () => {
         level: 1
       })
 
-      expect(heading.nextElementSibling?.textContent.trim()).toBe(
-        'This page is still being built. Some figures may be missing or wrong.'
-      )
-    })
-
-    it('says how the figures are calculated, before the table', async ({
-      msw,
-      server
-    }) => {
-      msw.use(
-        http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch))
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: paths.regulators.marketInsights,
-        auth: regulator
-      })
-
-      const body = documentOf(asHtml(result))
-      const heading = getByRole(body, 'heading', {
-        level: 2,
-        name: 'How the figures are calculated'
-      })
-
-      // The wording sits between its heading and the table, so a regulator
-      // reads it before the figures it explains.
-      /** @type {(string | string[])[]} */
-      const wording = []
-      let element = heading.nextElementSibling
-      while (element !== null && element.matches('p, ul')) {
-        wording.push(
-          element.matches('ul')
-            ? Array.from(element.querySelectorAll('li')).map((item) =>
-                item.textContent.trim()
-              )
-            : element.textContent.trim()
-        )
-        element = element.nextElementSibling
-      }
-
-      expect(element?.querySelector('table')).not.toBeNull()
-      expect(wording).toStrictEqual([
-        'The figures come from the latest summary log each accreditation has submitted. The last row shows how many monthly reports were due for each month and how many operators submitted. This is a guide to how complete the figures are. The figures do not come from the monthly reports.',
-        'A load counts under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load counts.',
-        'A load counts in the month:',
-        [
-          'a reprocessor received it',
-          'a recycled product left the reprocessing site',
-          'an overseas reprocessor received the exported waste'
-        ],
-        'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
-        'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.'
-      ])
-    })
-
-    it('asks for the reporting period through the last complete month', async ({
-      msw,
-      server
-    }) => {
-      /** @type {URL | undefined} */
-      let captured
-
-      msw.use(
-        http.get(wasteBalanceUrl, ({ request }) => {
-          captured = new URL(request.url)
-          return HttpResponse.json(januaryToMarch)
-        })
-      )
-
-      await server.inject({
-        method: 'GET',
-        url: paths.regulators.marketInsights,
-        auth: regulator
-      })
-
-      expect(/** @type {URL} */ (captured).pathname).toBe(
-        '/v1/market-insights/2026/monthly/3/waste-balance'
-      )
+      expect(heading.nextElementSibling?.textContent.trim()).toBe(NOTICE)
     })
 
     it('reaches the page from the regulator area', async ({ msw, server }) => {
@@ -343,19 +136,7 @@ describe('the market insights page', () => {
   })
 
   describe('an operator', () => {
-    it('is refused the page, and asks the backend for nothing', async ({
-      msw,
-      server
-    }) => {
-      const asked = vi.fn()
-
-      msw.use(
-        http.get(wasteBalanceUrl, () => {
-          asked()
-          return HttpResponse.json(januaryToMarch)
-        })
-      )
-
+    it('is refused the page', async ({ server }) => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: paths.regulators.marketInsights,
@@ -368,7 +149,6 @@ describe('the market insights page', () => {
           level: 1
         }).textContent.trim()
       ).toBe('You do not have permission')
-      expect(asked).not.toHaveBeenCalled()
     })
   })
 
@@ -406,20 +186,15 @@ describe('the market insights page', () => {
 
 describe('the market insights page with the flag off', () => {
   beforeAll(() => {
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date('2026-04-10T09:00:00.000Z'))
     config.set('featureFlags.regulatorAccess', true)
     config.set('featureFlags.marketInsights', false)
   })
 
   afterAll(() => {
-    vi.useRealTimers()
     config.set('featureFlags.regulatorAccess', false)
   })
 
-  it('still answers a regulator who types the URL', async ({ msw, server }) => {
-    msw.use(http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch)))
-
+  it('still answers a regulator who types the URL', async ({ server }) => {
     const { statusCode, result } = await server.inject({
       method: 'GET',
       url: paths.regulators.marketInsights,
@@ -427,12 +202,7 @@ describe('the market insights page with the flag off', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(
-      getByRole(documentOf(asHtml(result)), 'heading', {
-        level: 2,
-        name: 'How the figures are calculated'
-      })
-    ).toBeDefined()
+    expect(figureSetLinksOf(documentOf(asHtml(result)))).toHaveLength(2)
   })
 
   it('still refuses a session without the market data scope', async ({

@@ -1,0 +1,61 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl">
+        <span class="govuk-caption-xl">{{ caption }}</span>
+        {{ heading }}
+      </h1>
+      {{ govukInsetText({ text: localise('regulators:marketInsights:notice') }) }}
+      <p class="govuk-body">{{ description }}</p>
+      <p class="govuk-body-s">{{ dataTakenAt }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:provisional') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:anomalies') }}</p>
+
+      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:figures:calculation:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:source') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:accreditations') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:average') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:revenue') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:rounding') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:zero') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:live') }}</p>
+
+      {% macro figuresTable(table, caption) %}
+        {% set head = [{ text: localise('regulators:marketInsights:table:material') }] %}
+        {% for column in table.columns %}
+          {% set head = head.concat([{ text: column, format: "numeric" }]) %}
+        {% endfor %}
+
+        {% set rows = [] %}
+        {% for row in table.rows %}
+          {% set cells = [{ text: row.material }] %}
+          {% for figure in row.figures %}
+            {% set cells = cells.concat([{ text: figure, format: "numeric" }]) %}
+          {% endfor %}
+          {% set rows = rows.concat([cells]) %}
+        {% endfor %}
+
+        {{ govukTable({
+          caption: caption,
+          captionClasses: "govuk-table__caption--m",
+          firstCellIsHeader: true,
+          head: head,
+          rows: rows
+        }) }}
+      {% endmacro %}
+
+      {% for month in figures.months %}
+        <h2 class="govuk-heading-l" id="figures-month-{{ loop.index }}">{{ month.name }}</h2>
+        <div class="govuk-body epr-wide-table" role="region" aria-labelledby="figures-month-{{ loop.index }}" tabindex="0">
+          {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor', { month: month.name })) }}
+          {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter', { month: month.name })) }}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

@@ -19,9 +19,9 @@ const asKey = (key, values = {}) =>
   ].join(':')
 
 const reprocessor =
-  'translated:regulators:marketInsights:accreditationTypes:reprocessor'
+  'translated:regulators:marketInsights:wasteBalance:accreditationTypes:reprocessor'
 const exporter =
-  'translated:regulators:marketInsights:accreditationTypes:exporter'
+  'translated:regulators:marketInsights:wasteBalance:accreditationTypes:exporter'
 
 const januaryAndFebruary = ['2026-01', '2026-02']
 
@@ -112,10 +112,10 @@ describe(toWasteBalanceTable, () => {
       ],
       reports: {
         byMonth: [
-          'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
+          'translated:regulators:marketInsights:wasteBalance:reports:count:submitted=0:expected=0'
         ],
         period:
-          'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
+          'translated:regulators:marketInsights:wasteBalance:reports:count:submitted=0:expected=0'
       }
     })
   })
@@ -177,11 +177,11 @@ describe(toWasteBalanceTable, () => {
       ).reports
     ).toStrictEqual({
       byMonth: [
-        'translated:regulators:marketInsights:reports:count:submitted=1:expected=2',
-        'translated:regulators:marketInsights:reports:count:submitted=0:expected=3'
+        'translated:regulators:marketInsights:wasteBalance:reports:count:submitted=1:expected=2',
+        'translated:regulators:marketInsights:wasteBalance:reports:count:submitted=0:expected=3'
       ],
       period:
-        'translated:regulators:marketInsights:reports:count:submitted=4:expected=9'
+        'translated:regulators:marketInsights:wasteBalance:reports:count:submitted=4:expected=9'
     })
   })
 })
