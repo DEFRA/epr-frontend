@@ -10,21 +10,8 @@
       "exporter": "Exporter",
       "reprocessor": "Reprocessor"
     },
-    "calculation": {
-      "counted": {
-        "exported": "an overseas reprocessor received the exported waste",
-        "leadIn": "A load counts in the month:",
-        "product": "a recycled product left the reprocessing site",
-        "received": "a reprocessor received it"
-      },
-      "deductions": "Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.",
-      "heading": "How the figures are calculated",
-      "live": "The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.",
-      "rules": "A load counts under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load counts.",
-      "source": "The figures come from the latest summary log each accreditation has submitted. The last row shows how many monthly reports were due for each month and how many operators submitted. This is a guide to how complete the figures are. The figures do not come from the monthly reports."
-    },
     "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
-    "description": "The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook uses these figures.",
+    "description": "These figures preview the monthly market insights workbook. Each set is shown on its own page.",
     "figures": {
       "anomalies": "Reported PRN and PERN revenue submissions currently include some anomalies. They remain subject to correction by resubmission from operators.",
       "calculation": {
@@ -67,7 +54,9 @@
         }
       },
       "description": "The tables show, for each month, the tonnage accredited reprocessors and exporters reported receiving, recycling or exporting, and sending on, by material. They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price per tonne. The monthly market insights workbook uses these figures.",
-      "heading": "Reprocessor and exporter figures",
+      "heading": "Reprocessor and exporter figures: UK",
+      "linkText": "Reprocessor and exporter figures: UK",
+      "pageTitle": "Reprocessor and exporter figures: UK",
       "provisional": "Figures are provisional and based on submissions received to date. Some data is still expected and will be included in future updates.",
       "table": {
         "exporter": "Exporter data for {{ month }}",
@@ -91,6 +80,25 @@
       "material": "Material",
       "reports": "Monthly reports submitted",
       "total": "Total"
+    },
+    "wasteBalance": {
+      "calculation": {
+        "counted": {
+          "exported": "an overseas reprocessor received the exported waste",
+          "leadIn": "A load counts in the month:",
+          "product": "a recycled product left the reprocessing site",
+          "received": "a reprocessor received it"
+        },
+        "deductions": "Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.",
+        "heading": "How the figures are calculated",
+        "live": "The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.",
+        "rules": "A load counts under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load counts.",
+        "source": "The figures come from the latest summary log each accreditation has submitted. The last row shows how many monthly reports were due for each month and how many operators submitted. This is a guide to how complete the figures are. The figures do not come from the monthly reports."
+      },
+      "description": "The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook uses these figures.",
+      "heading": "UK waste balance",
+      "linkText": "UK waste balance",
+      "pageTitle": "UK waste balance"
     }
   },
   "notAuthorised": {

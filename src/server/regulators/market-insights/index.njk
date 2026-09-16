@@ -1,113 +1,21 @@
 {% extends 'layouts/page.njk' %}
 
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
-{% from "govuk/components/table/macro.njk" import govukTable %}
 
 {% block content %}
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
-      <h1 class="govuk-heading-xl">
-        <span class="govuk-caption-xl">{{ caption }}</span>
-        {{ heading }}
-      </h1>
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
       {{ govukInsetText({ text: localise('regulators:marketInsights:notice') }) }}
       <p class="govuk-body">{{ description }}</p>
-      <p class="govuk-body-s">{{ dataTakenAt }}</p>
 
-      <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:calculation:heading') }}</h2>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:source') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:rules') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:counted:leadIn') }}</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>{{ localise('regulators:marketInsights:calculation:counted:received') }}</li>
-        <li>{{ localise('regulators:marketInsights:calculation:counted:product') }}</li>
-        <li>{{ localise('regulators:marketInsights:calculation:counted:exported') }}</li>
+      <ul class="govuk-list">
+        {% for figureSet in figureSets %}
+          <li>
+            <a class="govuk-link govuk-link--no-visited-state" href="{{ figureSet.href }}">{{ figureSet.text }}</a>
+          </li>
+        {% endfor %}
       </ul>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:deductions') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:calculation:live') }}</p>
-
-      <div class="govuk-body" data-testid="app-page-body">
-        {% set tableHead = [
-          { text: localise('regulators:marketInsights:table:material') },
-          { text: localise('regulators:marketInsights:table:accreditationType') }
-        ] %}
-        {% for month in wasteBalance.months %}
-          {% set tableHead = tableHead.concat([{ text: month, format: "numeric" }]) %}
-        {% endfor %}
-        {% set tableHead = tableHead.concat([{ text: localise('regulators:marketInsights:table:total'), format: "numeric" }]) %}
-
-        {% set tableRows = [] %}
-        {% for row in wasteBalance.rows %}
-          {% set cells = [{ text: row.material }, { text: row.accreditationType }] %}
-          {% for netCredit in row.netCredits %}
-            {% set cells = cells.concat([{ text: netCredit, format: "numeric" }]) %}
-          {% endfor %}
-          {% set cells = cells.concat([{ text: row.total, format: "numeric" }]) %}
-          {% set tableRows = tableRows.concat([cells]) %}
-        {% endfor %}
-
-        {% set reportCells = [{ text: localise('regulators:marketInsights:table:reports'), colspan: 2 }] %}
-        {% for count in wasteBalance.reports.byMonth %}
-          {% set reportCells = reportCells.concat([{ text: count, format: "numeric" }]) %}
-        {% endfor %}
-        {% set reportCells = reportCells.concat([{ text: wasteBalance.reports.period, format: "numeric" }]) %}
-        {% set tableRows = tableRows.concat([reportCells]) %}
-
-        {{ govukTable({
-          caption: localise('regulators:marketInsights:table:caption'),
-          captionClasses: "govuk-table__caption--m",
-          firstCellIsHeader: true,
-          head: tableHead,
-          rows: tableRows
-        }) }}
-      </div>
-
-      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:figures:heading') }}</h2>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:description') }}</p>
-      <p class="govuk-body-s">{{ figuresTakenAt }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:provisional') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:anomalies') }}</p>
-
-      <h3 class="govuk-heading-m">{{ localise('regulators:marketInsights:figures:calculation:heading') }}</h3>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:source') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:accreditations') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:average') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:revenue') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:rounding') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:zero') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:live') }}</p>
-
-      {% macro figuresTable(table, caption) %}
-        {% set head = [{ text: localise('regulators:marketInsights:table:material') }] %}
-        {% for column in table.columns %}
-          {% set head = head.concat([{ text: column, format: "numeric" }]) %}
-        {% endfor %}
-
-        {% set rows = [] %}
-        {% for row in table.rows %}
-          {% set cells = [{ text: row.material }] %}
-          {% for figure in row.figures %}
-            {% set cells = cells.concat([{ text: figure, format: "numeric" }]) %}
-          {% endfor %}
-          {% set rows = rows.concat([cells]) %}
-        {% endfor %}
-
-        {{ govukTable({
-          caption: caption,
-          captionClasses: "govuk-table__caption--s",
-          firstCellIsHeader: true,
-          head: head,
-          rows: rows
-        }) }}
-      {% endmacro %}
-
-      {% for month in figures.months %}
-        <h3 class="govuk-heading-m" id="figures-month-{{ loop.index }}">{{ month.name }}</h3>
-        <div class="govuk-body epr-wide-table" role="region" aria-labelledby="figures-month-{{ loop.index }}" tabindex="0">
-          {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor', { month: month.name })) }}
-          {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter', { month: month.name })) }}
-        </div>
-      {% endfor %}
     </div>
   </div>
 {% endblock %}
