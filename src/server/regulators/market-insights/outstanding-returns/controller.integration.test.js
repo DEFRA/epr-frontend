@@ -60,7 +60,7 @@ const servesJanuaryToMarch = http.get(outstandingReturnsUrl, () =>
   HttpResponse.json(januaryToMarch)
 )
 
-describe('the outstanding monthly returns page', () => {
+describe('the outstanding monthly reports page', () => {
   beforeAll(() => {
     // Only the clock, so the page reads a reporting year the test pins while
     // the server's own timers keep running.
@@ -296,7 +296,7 @@ describe('the outstanding monthly returns page', () => {
   })
 })
 
-describe('the outstanding monthly returns page with the flag off', () => {
+describe('the outstanding monthly reports page with the flag off', () => {
   beforeAll(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-04-10T09:00:00.000Z'))
