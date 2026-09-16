@@ -743,7 +743,7 @@ describe('the market insights page with the flag off', () => {
   })
 
   it('still answers a regulator who types the URL', async ({ msw, server }) => {
-    msw.use(http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch)))
+    msw.use(...servesJanuaryToMarch)
 
     const { statusCode, result } = await server.inject({
       method: 'GET',
