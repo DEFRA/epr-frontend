@@ -76,6 +76,10 @@ describe('the market insights page', () => {
         {
           name: 'Reprocessor and exporter figures: UK',
           href: paths.regulators.marketInsightsUk
+        },
+        {
+          name: 'Outstanding monthly returns: UK',
+          href: paths.regulators.marketInsightsOutstandingReturns
         }
       ])
     })
@@ -202,7 +206,7 @@ describe('the market insights page with the flag off', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(figureSetLinksOf(documentOf(asHtml(result)))).toHaveLength(2)
+    expect(figureSetLinksOf(documentOf(asHtml(result)))).toHaveLength(3)
   })
 
   it('still refuses a session without the market data scope', async ({

@@ -1,0 +1,53 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl">
+        <span class="govuk-caption-xl">{{ caption }}</span>
+        {{ heading }}
+      </h1>
+      {{ govukInsetText({ text: localise('regulators:marketInsights:notice') }) }}
+      <p class="govuk-body">{{ description }}</p>
+      <p class="govuk-body-s">{{ dataTakenAt }}</p>
+
+      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:outstandingReturns:calculation:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:outstandingReturns:calculation:source') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:outstandingReturns:calculation:owed') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:outstandingReturns:calculation:validity') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:outstandingReturns:calculation:submitted') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:outstandingReturns:calculation:bands') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:outstandingReturns:calculation:zero') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:outstandingReturns:calculation:live') }}</p>
+
+      {% set head = [{ text: localise('regulators:marketInsights:outstandingReturns:table:band') }] %}
+      {% for month in outstandingReturns.months %}
+        {% set head = head.concat([{ text: month, format: "numeric" }]) %}
+      {% endfor %}
+
+      {% for table in outstandingReturns.materials %}
+        {% set rows = [] %}
+        {% for row in table.rows %}
+          {% set cells = [{ text: row.band }] %}
+          {% for count in row.counts %}
+            {% set cells = cells.concat([{ text: count, format: "numeric" }]) %}
+          {% endfor %}
+          {% set rows = rows.concat([cells]) %}
+        {% endfor %}
+
+        <div class="govuk-body">
+          {{ govukTable({
+            caption: localise('regulators:marketInsights:outstandingReturns:table:caption', { material: table.material }),
+            captionClasses: "govuk-table__caption--m",
+            firstCellIsHeader: true,
+            head: head,
+            rows: rows
+          }) }}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

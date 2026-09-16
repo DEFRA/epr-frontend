@@ -62,6 +62,32 @@
     "heading": "Market insights",
     "linkText": "Market insights",
     "notice": "This page is still being built. Some figures may be missing or wrong.",
+    "outstandingReturns": {
+      "bands": {
+        "up_to_500": "Up to 500 tonnes",
+        "up_to_5000": "Up to 5,000 tonnes",
+        "up_to_10000": "Up to 10,000 tonnes",
+        "over_10000": "Over 10,000 tonnes"
+      },
+      "calculation": {
+        "bands": "A tonnage band is the volume of packaging waste, by material, that an operator is accredited to issue notes against. For a reprocessor it is the tonnage it can issue PRNs against at that reprocessing site. For an exporter it is the tonnage it can issue PERNs against for its exports. A return is counted under the band the accreditation holds now, not the band it held in the month the return was owed.",
+        "heading": "How the figures are calculated",
+        "live": "The figures are live. They come from the monthly reports and the accreditations held at the time shown above, not from a record of what was published. If an operator submits a return late, its month stops being outstanding.",
+        "owed": "One monthly return is owed for each accredited registration, so an operator accredited at two sites owes two returns a month. An operator that is registered but not accredited owes none.",
+        "source": "The figures count the monthly returns accredited operators owe and have not submitted. Quarterly returns do not count.",
+        "submitted": "A month counts as submitted once the operator has submitted it, whatever figures the return carries. A return the operator has started but not submitted does not count, and neither does one submitted for a month the accreditation does not owe.",
+        "validity": "A return is owed for every month the accreditation was valid for any part of, so the month it started counts. A suspended accreditation still owes its returns. A cancelled one owes nothing for a month it stood cancelled throughout, and owes again from a month it was reinstated in.",
+        "zero": "A cell shows 0 where every return owed for that month and band was submitted, and where no operator is accredited for that material and band. Every material and every band appears for every month either way."
+      },
+      "description": "The tables show how many monthly returns accredited operators have not submitted, by material and tonnage band. Reprocessors and exporters are counted together and no operator is named. The monthly market insights workbook uses these figures.",
+      "heading": "Outstanding monthly returns: UK",
+      "linkText": "Outstanding monthly returns: UK",
+      "pageTitle": "Outstanding monthly returns: UK",
+      "table": {
+        "band": "Tonnage band",
+        "caption": "Returns not submitted for {{ material }}"
+      }
+    },
     "pageTitle": "Market insights",
     "period": {
       "month": "{{ month }} {{ year }}",
