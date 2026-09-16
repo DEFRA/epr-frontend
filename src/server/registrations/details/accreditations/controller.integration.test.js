@@ -507,14 +507,14 @@ describe('the accreditation details page', () => {
     }) => {
       const { body } = await visit(server, regulator)
 
-      const link = getByTestId(documentOf(body), 'reports-detailed-view-link')
+      // Three sections carry this link, so each names its own list rather
+      // than reading "View all" three times over.
+      const link = getByRole(documentOf(body), 'button', {
+        name: 'View all reports'
+      })
       const heading = link.parentElement?.querySelector('h2')
 
       expect(link.tagName).toBe('A')
-      // Three sections carry this link, so each names its own list.
-      expect(link.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-        'View all reports'
-      )
       expect(
         link.querySelector('.govuk-visually-hidden')?.textContent?.trim()
       ).toBe('reports')
@@ -543,9 +543,19 @@ describe('the accreditation details page', () => {
 
       const { body } = await visit(server, regulator)
 
-      expect(body).toContain('data-testid="no-reports"')
-      expect(body).not.toContain('data-testid="reports-detailed-view-link"')
-      expect(body).not.toContain('data-testid="reports-most-recent"')
+      const document = documentOf(body)
+
+      expect(
+        getByText(document, /There are no reporting periods/)
+      ).toBeDefined()
+      expect(
+        queryByRole(document, 'button', { name: 'View all reports' })
+      ).toBeNull()
+
+      // The other two sections keep their own count lines.
+      expect(
+        getAllByRole(document, 'heading', { level: 3, name: /^Most recent/ })
+      ).toHaveLength(2)
     })
   })
 
@@ -588,13 +598,13 @@ describe('the accreditation details page', () => {
     }) => {
       const { body } = await visit(server, regulator)
 
-      const link = getByTestId(documentOf(body), 'prns-detailed-view-link')
+      // Three sections carry this link, so each names its own list rather
+      // than reading "View all" three times over.
+      const link = getByRole(documentOf(body), 'button', {
+        name: 'View all PRNs'
+      })
 
       expect(link.tagName).toBe('A')
-      // Three sections carry this link, so each names its own list.
-      expect(link.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-        'View all PRNs'
-      )
 
       // It sits beside the heading rather than beneath it.
       expect(link.parentElement?.querySelector('h2')?.className).toContain(
@@ -627,11 +637,21 @@ describe('the accreditation details page', () => {
 
       const { body } = await visit(server, regulator)
 
-      expect(body).toContain('data-testid="no-prns-summary"')
-      expect(body).not.toContain('data-testid="prns-table"')
+      const document = documentOf(body)
+
+      expect(
+        getByText(document, /This accreditation has issued no PRNs/)
+      ).toBeDefined()
+      expect(
+        queryByRole(document, 'columnheader', {
+          name: 'Producer or compliance scheme'
+        })
+      ).toBeNull()
 
       // The full list would only repeat the line above it.
-      expect(body).not.toContain('data-testid="prns-detailed-view-link"')
+      expect(
+        queryByRole(document, 'button', { name: 'View all PRNs' })
+      ).toBeNull()
     })
   })
 
@@ -641,13 +661,13 @@ describe('the accreditation details page', () => {
     }) => {
       const { body } = await visit(server, regulator)
 
-      const link = getByTestId(documentOf(body), 'ledger-detailed-view-link')
+      // Three sections carry this link, so each names its own list rather
+      // than reading "View all" three times over.
+      const link = getByRole(documentOf(body), 'button', {
+        name: 'View all ledger events'
+      })
 
       expect(link.tagName).toBe('A')
-      // Three sections carry this link, so each names its own list.
-      expect(link.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-        'View all ledger events'
-      )
       expect(link.getAttribute('href')).toBe(`${path}/waste-balance-ledger`)
 
       // It sits beside the heading rather than beneath it.
@@ -696,9 +716,19 @@ describe('the accreditation details page', () => {
 
       const { body } = await visit(server, regulator)
 
-      expect(body).not.toContain('data-testid="ledger-detailed-view-link"')
-      expect(body).not.toContain('data-testid="ledger-most-recent"')
-      expect(body).toContain('data-testid="no-events"')
+      const document = documentOf(body)
+
+      expect(
+        queryByRole(document, 'button', { name: 'View all ledger events' })
+      ).toBeNull()
+
+      // The reports and PRNs sections keep their own count lines.
+      expect(
+        getAllByRole(document, 'heading', { level: 3, name: /^Most recent/ })
+      ).toHaveLength(2)
+      expect(
+        getByText(document, /Nothing has changed this waste balance yet/)
+      ).toBeDefined()
     })
   })
 

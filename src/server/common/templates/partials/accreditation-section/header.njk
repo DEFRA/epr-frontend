@@ -8,10 +8,9 @@
   {# No button where the full list would only repeat the empty state. #}
   {% if sectionHasRows %}
     {{ govukButton({
-      html: sectionViewAllText + '<span class="govuk-visually-hidden"> ' + sectionViewAllHiddenText + '</span>',
+      html: sectionViewAllText + ' <span class="govuk-visually-hidden">' + sectionViewAllHiddenText + '</span>',
       href: sectionHref,
-      classes: "govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-margin-left-3",
-      attributes: { "data-testid": sectionTestId + "-detailed-view-link" }
+      classes: "govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-margin-left-3"
     }) }}
   {% endif %}
 </div>
