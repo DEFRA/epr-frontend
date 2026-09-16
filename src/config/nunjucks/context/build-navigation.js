@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
-import { isRegulator } from '#server/auth/roles.js'
+import { seesRegulatorView } from '#server/auth/roles.js'
 import { paths } from '#server/paths.js'
 
 /**
@@ -98,7 +98,7 @@ export function buildNavigation(request) {
   // Which shell a user gets is a question about who they are, so it reads the
   // role. What renders inside the shell is a question about what they may do,
   // and reads a scope.
-  if (isRegulator(session)) {
+  if (seesRegulatorView(session)) {
     return [...regulatorHome(request), ...signOut(request)]
   }
 

@@ -10,10 +10,25 @@
 export const REGULATOR_ROLE = 'regulator_standard'
 
 /**
+ * Admin tiers the backend resolves from its email lists. They read what a
+ * regulator reads.
+ */
+export const ADMIN_ROLES = Object.freeze([
+  'service_maintainer_write',
+  'service_maintainer',
+  'support'
+])
+
+const REGULATOR_VIEW_ROLES = Object.freeze([REGULATOR_ROLE, ...ADMIN_ROLES])
+
+/**
  * The single answer to "whose shell is this?". Where a user lands, which
  * navigation renders and what the header calls the service are questions about
  * identity, so they read the role. What the user may reach inside that shell
  * reads a scope instead — see `hasWriteScope` and `hasLedgerReadScope`.
+ *
+ * Chooses the view only. Never gate a write on it: admins share this view but
+ * must not share a regulator's writes, so a write reads a scope.
  *
  * A session holding any other role keeps the operator shell, so a role this
  * app renders nothing special for still gets a page.
@@ -23,7 +38,8 @@ export const REGULATOR_ROLE = 'regulator_standard'
  * @param {{ role?: string | null } | null} [credentials]
  * @returns {boolean}
  */
-export const isRegulator = (credentials) => credentials?.role === REGULATOR_ROLE
+export const seesRegulatorView = (credentials) =>
+  REGULATOR_VIEW_ROLES.includes(credentials?.role ?? '')
 
 /**
  * A session carries a positive identity or none at all. The backend answers

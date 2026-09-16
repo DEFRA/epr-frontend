@@ -153,6 +153,12 @@ describe('#context', () => {
       expect(contextResult.serviceUrl).toBe('/regulators/home')
     })
 
+    it('gives a support user the regulator shell', async () => {
+      contextResult = await contextFor({ role: 'support' })
+
+      expect(contextResult.serviceUrl).toBe('/regulators/home')
+    })
+
     it('calls the service by its operator name for an operator', async () => {
       contextResult = await contextFor({ role: 'operator' })
 

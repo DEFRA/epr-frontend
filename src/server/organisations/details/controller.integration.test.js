@@ -41,6 +41,12 @@ const regulator = buildMockAuth({
   ...sessionIdentity(IDENTITIES.regulator)
 })
 
+const support = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-3', email: 'support.user@example.gov.uk' },
+  ...sessionIdentity(IDENTITIES.support)
+})
+
 const unrecognised = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-2', email: 'nobody@example.gov.uk' },
@@ -325,6 +331,13 @@ describe('who the organisation page renders for', () => {
     expect(surfaceOn.statusCode).toBe(statusCodes.ok)
     expect(surfaceOff.statusCode).toBe(statusCodes.ok)
     expect(surfaceOff.body).toBe(surfaceOn.body)
+  })
+
+  it('gives a support user the regulator page', async ({ server }) => {
+    const { statusCode, body } = await visit(server, support)
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(headingOf(body)).toContain('Organisation homepage')
   })
 
   it('keeps a session the backend named nobody on the operator page', async ({
