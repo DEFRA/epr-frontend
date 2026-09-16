@@ -383,29 +383,48 @@ describe('the market insights page', () => {
 
 describe('the market insights page with the flag off', () => {
   beforeAll(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-04-10T09:00:00.000Z'))
     config.set('featureFlags.regulatorAccess', true)
+    config.set('featureFlags.marketInsights', false)
   })
 
   afterAll(() => {
+    vi.useRealTimers()
     config.set('featureFlags.regulatorAccess', false)
   })
 
-  it('is not there at all, so nothing is dark-launched behind a scope alone', async ({
-    server
-  }) => {
-    const { statusCode } = await server.inject({
+  it('still answers a regulator who types the URL', async ({ msw, server }) => {
+    msw.use(http.get(wasteBalanceUrl, () => HttpResponse.json(januaryToMarch)))
+
+    const { statusCode, result } = await server.inject({
       method: 'GET',
       url: paths.regulators.marketInsights,
       auth: regulator
     })
 
-    expect(statusCode).toBe(statusCodes.notFound)
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(
+      getByRole(documentOf(asHtml(result)), 'heading', {
+        level: 2,
+        name: 'How the figures are calculated'
+      })
+    ).toBeDefined()
   })
 
-  it('is not offered from the regulator area either', async ({
-    msw,
+  it('still refuses a session without the market data scope', async ({
     server
   }) => {
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: paths.regulators.marketInsights,
+      auth: regulatorWithoutMarketScope
+    })
+
+    expect(statusCode).toBe(statusCodes.forbidden)
+  })
+
+  it('is not offered from the regulator area', async ({ msw, server }) => {
     msw.use(anEmptyPageOfOrganisations)
 
     const { result } = await server.inject({
