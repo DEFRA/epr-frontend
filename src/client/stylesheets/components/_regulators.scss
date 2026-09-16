@@ -12,3 +12,10 @@
 .epr-wide-table .govuk-table {
   @include govuk-font($size: 16);
 }
+
+// A column heading that wraps to several lines otherwise leaves the shorter
+// headings floating above a band of white, because the row is as tall as the
+// longest of them.
+.epr-wide-table .govuk-table__header {
+  vertical-align: bottom;
+}
