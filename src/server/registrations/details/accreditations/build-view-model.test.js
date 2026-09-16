@@ -546,6 +546,20 @@ describe('the reports table on the accreditation details view model', () => {
 })
 
 describe('the waste balance ledger on the accreditation details view model', () => {
+  const ledgerPath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`
+
+  /**
+   * The backend answers a ledger in append order, so the last is the newest.
+   * @param {number} count
+   * @returns {LedgerEvent[]}
+   */
+  const summaryLogsOldestFirst = (count) =>
+    Array.from({ length: count }, (_, index) => ({
+      ...summaryLogSubmitted,
+      createdAt: `2026-01-0${index + 1}T09:00:00.000Z`,
+      summaryLog: { id: `log-${index + 1}`, creditTotal: 100 }
+    }))
+
   beforeAll(() => {
     config.set('featureFlags.wasteRecordsDownload', true)
   })
@@ -559,7 +573,46 @@ describe('the waste balance ledger on the accreditation details view model', () 
   })
 
   it('offers an empty ledger where nothing has moved the balance yet', () => {
-    expect(ledgerOf([])).toStrictEqual({ rows: [] })
+    expect(ledgerOf([])).toStrictEqual({
+      count: 0,
+      href: ledgerPath,
+      rows: []
+    })
+  })
+
+  it('shows no more than the three most recent events, and counts what it shows', () => {
+    const ledger = ledgerOf(summaryLogsOldestFirst(5))
+
+    expect(ledger?.count).toBe(3)
+    expect(ledger?.rows.map((row) => row.at(0))).toStrictEqual([
+      { text: '5 January 2026, 9:00am' },
+      { text: '4 January 2026, 9:00am' },
+      { text: '3 January 2026, 9:00am' }
+    ])
+  })
+
+  it('counts what there is where fewer events have moved the balance', () => {
+    const ledger = ledgerOf([summaryLogSubmitted, prnIssued])
+
+    expect(ledger?.rows).toHaveLength(2)
+    expect(ledger?.count).toBe(2)
+  })
+
+  it("points its full list at the accreditation's ledger, in the reader's language", () => {
+    const { ledger } = buildViewModel({
+      organisation,
+      registration: aRegistration(),
+      accreditation: anAccreditation(),
+      wasteBalance: aWasteBalance,
+      reportingPeriods: [],
+      cadence: CADENCE.MONTHLY,
+      ledgerEvents: [],
+      packagingRecyclingNotes: [],
+      localise,
+      localiseUrl: (path) => `/cy${path}`
+    })
+
+    expect(ledger?.href).toBe(`/cy${ledgerPath}`)
   })
 
   it('reads the events newest first, each with what it moved, the balance it left and its actor', () => {

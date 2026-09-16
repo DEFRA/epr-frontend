@@ -5,7 +5,7 @@ import { organisationName, toCaption } from './caption.js'
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
- * @import { AccreditationResource, Localise } from './types.js'
+ * @import { Localise } from './types.js'
  */
 
 /**
@@ -19,13 +19,44 @@ import { organisationName, toCaption } from './caption.js'
  */
 
 /**
+ * The trail down to the registration, which every page below it starts with.
+ * @param {{
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   organisation: Organisation,
+ *   registration: Registration
+ * }} params
+ * @returns {Crumb[]}
+ */
+export const toRegistrationTrail = ({
+  localise,
+  localiseUrl,
+  organisation,
+  registration
+}) => [
+  {
+    text: localise('registrations:details:allOrganisations'),
+    href: localiseUrl(paths.regulators.home)
+  },
+  {
+    text: organisationName(organisation),
+    href: localiseUrl(`/organisations/${organisation.id}`)
+  },
+  {
+    text: localise('registrations:details:heading'),
+    href: localiseUrl(
+      `/organisations/${organisation.id}/registrations/${registration.id}`
+    )
+  }
+]
+
+/**
  * Continues the accreditation page's trail, ending on this page unlinked.
  * @param {{
  *   accreditationPath: string,
  *   heading: string,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   name: string,
  *   organisation: Organisation,
  *   registration: Registration
  * }} params
@@ -36,21 +67,10 @@ const toBreadcrumbs = ({
   heading,
   localise,
   localiseUrl,
-  name,
   organisation,
   registration
 }) => [
-  {
-    text: localise('registrations:details:allOrganisations'),
-    href: localiseUrl(paths.regulators.home)
-  },
-  { text: name, href: localiseUrl(`/organisations/${organisation.id}`) },
-  {
-    text: localise('registrations:details:heading'),
-    href: localiseUrl(
-      `/organisations/${organisation.id}/registrations/${registration.id}`
-    )
-  },
+  ...toRegistrationTrail({ localise, localiseUrl, organisation, registration }),
   {
     text: localise('registrations:details:accreditation:breadcrumb'),
     href: localiseUrl(accreditationPath)
@@ -61,7 +81,7 @@ const toBreadcrumbs = ({
 /**
  * The furniture every page below an accreditation shares.
  * @param {{
- *   accreditation: AccreditationResource,
+ *   accreditation: { id: string, accreditationNumber?: string | null },
  *   heading: string,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
@@ -78,7 +98,6 @@ export const toAccreditationChildPage = ({
   organisation,
   registration
 }) => {
-  const name = organisationName(organisation)
   const accreditationPath = `/organisations/${organisation.id}/registrations/${registration.id}/accreditations/${accreditation.id}`
 
   return {
@@ -87,12 +106,11 @@ export const toAccreditationChildPage = ({
       heading,
       localise,
       localiseUrl,
-      name,
       organisation,
       registration
     }),
     caption: toCaption([
-      name,
+      organisationName(organisation),
       registration.registrationNumber,
       accreditation.accreditationNumber
     ]),

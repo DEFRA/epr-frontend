@@ -46,7 +46,11 @@ import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
  *   href: string,
  *   rows: TableRow[]
  * }} ReportsSummary
- * @typedef {{ rows: TableRow[] }} LedgerTable
+ * @typedef {{
+ *   count: number,
+ *   href: string,
+ *   rows: TableRow[]
+ * }} LedgerTable
  * @typedef {{
  *   count: number,
  *   head: TableRow,
@@ -68,7 +72,7 @@ import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
  * }} AccreditationDetailsViewModel
  */
 
-const MOST_RECENT_REPORTS = 3
+const MOST_RECENT = 3
 
 /**
  * The balance not already committed to a note. `availableAmount` falls when a
@@ -264,7 +268,7 @@ const toReportsSummary = ({
     organisationId,
     registrationId,
     reportingPeriods: monthlyPeriods
-  }).slice(0, MOST_RECENT_REPORTS)
+  }).slice(0, MOST_RECENT)
 
   return {
     count: rows.length,
@@ -280,9 +284,9 @@ const toReportsSummary = ({
 }
 
 /**
- * The whole of the accreditation's own ledger, newest event first, or no
- * ledger at all where the session may not read one. An empty ledger is still
- * a ledger: the section says nothing has moved the balance yet.
+ * The most recent events of the accreditation's own ledger, and where to read
+ * the rest, or no ledger at all where the session may not read one. An empty
+ * ledger is still a ledger: the section says nothing has moved the balance yet.
  * @param {{
  *   accreditationId: string,
  *   ledgerEvents: LedgerEvent[] | null,
@@ -307,19 +311,26 @@ const toLedger = ({
 
   const { noteType } = getNoteTypeDisplayNames(registration)
 
+  // The rows are already newest first, so the slice keeps the newest.
+  const rows = buildLedgerRows({
+    accreditationId,
+    events: ledgerEvents,
+    localise,
+    localiseUrl,
+    noteType,
+    // The page is regulator-only, so the flag is the whole question here.
+    offersCsvDownloads: offersWasteRecordsDownloads(),
+    offersDownloads: true,
+    organisationId,
+    registrationId: registration.id
+  }).slice(0, MOST_RECENT)
+
   return {
-    rows: buildLedgerRows({
-      accreditationId,
-      events: ledgerEvents,
-      localise,
-      localiseUrl,
-      noteType,
-      // The page is regulator-only, so the flag is the whole question here.
-      offersCsvDownloads: offersWasteRecordsDownloads(),
-      offersDownloads: true,
-      organisationId,
-      registrationId: registration.id
-    })
+    count: rows.length,
+    href: localiseUrl(
+      `/organisations/${organisationId}/registrations/${registration.id}/accreditations/${accreditationId}/waste-balance-ledger`
+    ),
+    rows
   }
 }
 

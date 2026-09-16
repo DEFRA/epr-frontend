@@ -16,6 +16,10 @@
     "accreditation": {
       "breadcrumb": "Accreditation details",
       "heading": "Accreditation",
+      "ledger": {
+        "mostRecent": "Most recent ({{count}} items)",
+        "viewAll": "View all"
+      },
       "reports": {
         "actions": "Actions",
         "dueDate": "Due date",
