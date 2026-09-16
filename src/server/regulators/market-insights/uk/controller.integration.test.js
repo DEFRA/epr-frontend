@@ -216,7 +216,7 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Tonnage sent on to a reprocessor',
         'Tonnage sent on to an exporter',
         'Tonnage sent on to other facilities',
-        'Tonnage of PRNs issued',
+        'Tonnage of PRNs issued, excluding those issued free of charge',
         'PRN revenue (£)',
         'Average PRN price per tonne (£)'
       ])
@@ -277,7 +277,7 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Tonnage exported that was stopped',
         'Tonnage exported that was refused',
         'Tonnage repatriated',
-        'Tonnage of PERNs issued',
+        'Tonnage of PERNs issued, excluding those issued free of charge',
         'PERN revenue (£)',
         'Average PERN price per tonne (£)'
       ])
@@ -403,18 +403,18 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       expect(element?.querySelector('table')).not.toBeNull()
       expect(wording).toStrictEqual([
-        'The tables show, for each month, the tonnage accredited reprocessors and exporters reported receiving, recycling or exporting, and sending on, by material. They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price per tonne. The monthly market insights workbook uses these figures.',
+        'For each month, the tables show what accredited reprocessors and exporters reported by material: tonnage received, recycled or exported, and sent on. They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price per tonne. The monthly market insights workbook uses these figures.',
         'Data taken at 10:30am on 10 April 2026',
         'Figures are provisional and based on submissions received to date. Some data is still expected and will be included in future updates.',
         'Reported PRN and PERN revenue submissions currently include some anomalies. They remain subject to correction by resubmission from operators.',
-        'How these figures are calculated',
-        'These figures come from the monthly reports operators submit, not from the summary logs the waste balance table uses. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.',
-        'A report counts if its accreditation is currently approved or suspended. If the accreditation has been cancelled, none of its reports count, in any month.',
-        'The tonnage PRNs or PERNs were issued for is the tonnage issued less the tonnage self-issued. The average price per tonne is the total revenue divided by that tonnage. Both totals are added up across all operators before dividing. It is not an average of each operator’s own price. Where no tonnage was issued, the average is 0.',
+        'How the figures are calculated',
+        'The figures come from the monthly reports operators submit, not from the summary logs the UK waste balance uses. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.',
+        'A report counts only if the accreditation it was submitted under is currently approved or suspended. An accreditation that has since been cancelled loses every month it reported.',
+        'The tonnage of PRNs and PERNs issued excludes those issued free of charge, which operators report separately. The average price per tonne is the total revenue divided by that tonnage. Both totals are added up across all operators before dividing. It is not an average of each operator’s own price. Where no tonnage was issued, the average is 0.',
         'Revenue is what operators reported receiving, or expecting to receive, for their notes, excluding VAT.',
         'Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.',
         'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, and also where operators reported but left that figure blank.',
-        'These figures are live. They come from the monthly reports held at the moment stamped at the top of this section, not from a record of what was published. If an operator resubmits a month, its figures change.',
+        'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
         'January 2026'
       ])
     })
