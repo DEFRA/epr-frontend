@@ -421,7 +421,7 @@ export const config = convict({
   },
   featureFlags: {
     marketInsights: {
-      doc: 'Feature Flag: Show regulators the market insights preview page',
+      doc: 'Feature Flag: Link regulators to the market insights page from their home page',
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_MARKET_INSIGHTS'
