@@ -37,6 +37,22 @@ export const controller = {
           href: request.localiseUrl(paths.regulators.marketInsightsEngland)
         },
         {
+          text: localise('regulators:marketInsights:figures:wales:linkText'),
+          href: request.localiseUrl(paths.regulators.marketInsightsWales)
+        },
+        {
+          text: localise('regulators:marketInsights:figures:scotland:linkText'),
+          href: request.localiseUrl(paths.regulators.marketInsightsScotland)
+        },
+        {
+          text: localise(
+            'regulators:marketInsights:figures:northern-ireland:linkText'
+          ),
+          href: request.localiseUrl(
+            paths.regulators.marketInsightsNorthernIreland
+          )
+        },
+        {
           text: localise(
             'regulators:marketInsights:outstandingReturns:linkText'
           ),

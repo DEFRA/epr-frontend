@@ -80,6 +80,32 @@ export const regulators = {
           }
         },
         {
+          ...reprocessorExporterFiguresController({ nation: 'wales' }),
+          method: 'GET',
+          path: paths.regulators.marketInsightsWales,
+          options: {
+            auth: { scope: [SCOPES.marketDataRead] }
+          }
+        },
+        {
+          ...reprocessorExporterFiguresController({ nation: 'scotland' }),
+          method: 'GET',
+          path: paths.regulators.marketInsightsScotland,
+          options: {
+            auth: { scope: [SCOPES.marketDataRead] }
+          }
+        },
+        {
+          ...reprocessorExporterFiguresController({
+            nation: 'northern-ireland'
+          }),
+          method: 'GET',
+          path: paths.regulators.marketInsightsNorthernIreland,
+          options: {
+            auth: { scope: [SCOPES.marketDataRead] }
+          }
+        },
+        {
           ...marketInsightsOutstandingReturnsController,
           method: 'GET',
           path: paths.regulators.marketInsightsOutstandingReturns,

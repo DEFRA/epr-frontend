@@ -32,7 +32,8 @@ const anEmptyPageOfOrganisations = http.get(
     })
 )
 
-// The sets of figures the page offers, in the order the workbook's tabs run.
+// The sets of figures the page offers, in the order the workbook's tabs run,
+// with the nations the workbook does not publish after England.
 const FIGURE_SETS = [
   {
     name: 'UK waste balance',
@@ -45,6 +46,18 @@ const FIGURE_SETS = [
   {
     name: 'Reprocessor and exporter figures: England',
     href: paths.regulators.marketInsightsEngland
+  },
+  {
+    name: 'Reprocessor and exporter figures: Wales',
+    href: paths.regulators.marketInsightsWales
+  },
+  {
+    name: 'Reprocessor and exporter figures: Scotland',
+    href: paths.regulators.marketInsightsScotland
+  },
+  {
+    name: 'Reprocessor and exporter figures: Northern Ireland',
+    href: paths.regulators.marketInsightsNorthernIreland
   },
   {
     name: 'Outstanding monthly reports: UK',
@@ -78,9 +91,7 @@ describe('the market insights page', () => {
   })
 
   describe('a regulator', () => {
-    it('is offered a page for each set of figures the workbook publishes', async ({
-      server
-    }) => {
+    it('is offered a page for each set of figures', async ({ server }) => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: paths.regulators.marketInsights,
