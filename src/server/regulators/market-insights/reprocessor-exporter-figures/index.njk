@@ -53,6 +53,7 @@
 
       {% for month in figures.months %}
         <h2 class="govuk-heading-l" id="figures-month-{{ loop.index }}">{{ month.name }}</h2>
+        <p class="govuk-body">{{ localise('regulators:marketInsights:figures:reports', { count: month.reports }) }}</p>
         <div class="govuk-body epr-wide-table" role="region" aria-labelledby="figures-month-{{ loop.index }}" tabindex="0">
           {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor', { month: month.name })) }}
           {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter', { month: month.name })) }}

@@ -111,7 +111,7 @@ export const toWasteBalanceTable = (
 
   /** @param {ReportCount} count */
   const stated = ({ expected, submitted }) =>
-    localise('regulators:marketInsights:wasteBalance:reports:count', {
+    localise('regulators:marketInsights:reports:count', {
       submitted,
       expected
     })

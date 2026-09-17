@@ -23,8 +23,12 @@ const asKey = (key, values = {}) =>
 
 /**
  * @param {Record<string, { reprocessor: ReprocessorFigures, exporter: ExporterFigures }>} figures
+ * @param {ReprocessorExporterData['months'][string]['reports']} [reports]
  */
-const monthOf = (figures) => ({ figures })
+const monthOf = (figures, reports = { expected: 0, submitted: 0 }) => ({
+  reports,
+  figures
+})
 
 /**
  * @param {ReprocessorExporterData['months']} months
@@ -50,6 +54,22 @@ describe(toReprocessorExporterTables, () => {
     ).toStrictEqual([
       'translated:regulators:marketInsights:period:month:month=January:year=2026',
       'translated:regulators:marketInsights:period:month:month=February:year=2026'
+    ])
+  })
+
+  it('states how many of the reports each month expected the figures include', () => {
+    expect(
+      toReprocessorExporterTables(
+        dataOf({
+          '2026-01': monthOf(onlyPlastic, { expected: 2, submitted: 1 }),
+          '2026-02': monthOf(onlyPlastic, { expected: 3, submitted: 0 })
+        }),
+        ['2026-01', '2026-02'],
+        asKey
+      ).months.map(({ reports }) => reports)
+    ).toStrictEqual([
+      'translated:regulators:marketInsights:reports:count:submitted=1:expected=2',
+      'translated:regulators:marketInsights:reports:count:submitted=0:expected=3'
     ])
   })
 
