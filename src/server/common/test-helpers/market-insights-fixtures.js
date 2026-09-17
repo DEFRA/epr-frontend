@@ -5,6 +5,7 @@ import { IDENTITIES } from './identity-helper.js'
 
 /**
  * @import { ExporterFigures, ReprocessorFigures } from '#server/regulators/market-insights/helpers/to-reprocessor-exporter-tables.js'
+ * @import { OutstandingByBand } from '#server/regulators/market-insights/helpers/to-outstanding-returns-tables.js'
  */
 
 /** A regulator, who reads every market insights page. */
@@ -70,4 +71,18 @@ export const exporterOf = (figures = {}) => ({
   totalRevenue: 0,
   averagePricePerTonne: 0,
   ...figures
+})
+
+/**
+ * The outstanding reports for one material in a month, with every band the
+ * backend serves present, so a fixture names only the bands it cares about.
+ * @param {Partial<OutstandingByBand>} counts
+ * @returns {OutstandingByBand}
+ */
+export const bandsOf = (counts = {}) => ({
+  up_to_500: 0,
+  up_to_5000: 0,
+  up_to_10000: 0,
+  over_10000: 0,
+  ...counts
 })

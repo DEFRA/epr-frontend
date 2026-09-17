@@ -31,6 +31,14 @@ export const controller = {
         {
           text: localise('regulators:marketInsights:figures:linkText'),
           href: request.localiseUrl(paths.regulators.marketInsightsUk)
+        },
+        {
+          text: localise(
+            'regulators:marketInsights:outstandingReturns:linkText'
+          ),
+          href: request.localiseUrl(
+            paths.regulators.marketInsightsOutstandingReturns
+          )
         }
       ]
     })

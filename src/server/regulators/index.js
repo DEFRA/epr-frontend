@@ -3,6 +3,7 @@ import { paths } from '#server/paths.js'
 
 import { controller as loggedOutController } from './logged-out/controller.js'
 import { controller as marketInsightsController } from './market-insights/controller.js'
+import { controller as marketInsightsOutstandingReturnsController } from './market-insights/outstanding-returns/controller.js'
 import { controller as marketInsightsUkController } from './market-insights/uk/controller.js'
 import { controller as marketInsightsWasteBalanceController } from './market-insights/waste-balance/controller.js'
 import { controller } from './organisations/controller.js'
@@ -66,6 +67,14 @@ export const regulators = {
           ...marketInsightsUkController,
           method: 'GET',
           path: paths.regulators.marketInsightsUk,
+          options: {
+            auth: { scope: [SCOPES.marketDataRead] }
+          }
+        },
+        {
+          ...marketInsightsOutstandingReturnsController,
+          method: 'GET',
+          path: paths.regulators.marketInsightsOutstandingReturns,
           options: {
             auth: { scope: [SCOPES.marketDataRead] }
           }
