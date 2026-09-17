@@ -119,6 +119,16 @@ describe('the England reprocessor and exporter figures page', () => {
         getByRole(body, 'heading', { level: 1 }).textContent.trim()
       ).toContain('Reprocessor and exporter figures: England')
 
+      // Nothing else on the page says which operators England's figures are
+      // narrowed to, so this sentence is what tells a reader what England
+      // means here.
+      expect(
+        getByText(
+          body,
+          'These figures cover operators registered with the Environment Agency, the regulator for England.'
+        )
+      ).not.toBeNull()
+
       const [januaryReprocessors] = getAllByRole(body, 'table', {
         name: 'Reprocessor data for January 2026'
       })

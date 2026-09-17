@@ -58,6 +58,9 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
           description: localise(
             'regulators:marketInsights:figures:description'
           ),
+          // The UK figures cover every operator, so only a nation has a scope
+          // to state.
+          scope: nation ? localise(`${tabNames}:scope`) : undefined,
           breadcrumbs: [
             {
               text: localise('regulators:marketInsights:heading'),

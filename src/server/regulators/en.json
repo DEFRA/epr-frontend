@@ -53,7 +53,8 @@
       "england": {
         "heading": "Reprocessor and exporter figures: England",
         "linkText": "Reprocessor and exporter figures: England",
-        "pageTitle": "Reprocessor and exporter figures: England"
+        "pageTitle": "Reprocessor and exporter figures: England",
+        "scope": "These figures cover operators registered with the Environment Agency, the regulator for England."
       },
       "table": {
         "exporter": "Exporter data for {{ month }}",
