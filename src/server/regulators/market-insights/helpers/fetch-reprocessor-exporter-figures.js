@@ -38,10 +38,12 @@ export const fetchReprocessorExporterFigures = async ({
   month,
   nation,
   backendToken
-}) =>
-  /** @type {Promise<ReprocessorExporterAggregate>} */ (
+}) => {
+  const narrowedTo = nation === undefined ? '' : `/${nation}`
+
+  return /** @type {Promise<ReprocessorExporterAggregate>} */ (
     fetchJsonFromBackend(
-      `/v1/market-insights/${year}/monthly/${month}/reprocessor-exporter-figures${nation === undefined ? '' : `/${nation}`}`,
+      `/v1/market-insights/${year}/monthly/${month}/reprocessor-exporter-figures${narrowedTo}`,
       {
         method: 'GET',
         headers: {
@@ -50,3 +52,4 @@ export const fetchReprocessorExporterFigures = async ({
       }
     )
   )
+}
