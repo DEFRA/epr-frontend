@@ -39,9 +39,9 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
- * One reporting month as the backend serves it: the reports the month was
- * owed, and every material with the figures its reprocessors and its
- * exporters reported.
+ * One reporting month as the backend serves it: how many monthly reports the
+ * month was owed and how many arrived, and every material with the figures
+ * its reprocessors and its exporters reported.
  * @typedef {{
  *   reports: ReportCount,
  *   figures: Record<string, {
@@ -140,7 +140,7 @@ const toTable = (byMaterial, columns, accreditationType, localise) => ({
 /**
  * Lays the served figures out the way the published UK tab is: for each
  * month, a reprocessor table and an exporter table, one row per material, the
- * tonnage columns in the tab's order, and beside them how many of the reports
+ * tonnage columns in the tab's order, and above them how many of the reports
  * the month expected the figures include. Every figure is the one the service
  * served; nothing is summed here.
  *
