@@ -20,8 +20,8 @@ createAll(Radios)
 createAll(SkipLink)
 createAll(Tabs)
 
-const autocompleteSelects = document.querySelectorAll(
-  'select[data-autocomplete]'
+const autocompleteSelects = /** @type {NodeListOf<HTMLSelectElement>} */ (
+  document.querySelectorAll('select[data-autocomplete]')
 )
 for (const select of autocompleteSelects) {
   accessibleAutocomplete.enhanceSelectElement({
