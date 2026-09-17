@@ -78,6 +78,10 @@ describe('the market insights page', () => {
           href: paths.regulators.marketInsightsUk
         },
         {
+          name: 'Reprocessor and exporter figures: England',
+          href: paths.regulators.marketInsightsEngland
+        },
+        {
           name: 'Outstanding monthly reports: UK',
           href: paths.regulators.marketInsightsOutstandingReturns
         }

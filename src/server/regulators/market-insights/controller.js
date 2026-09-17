@@ -29,8 +29,12 @@ export const controller = {
           href: request.localiseUrl(paths.regulators.marketInsightsWasteBalance)
         },
         {
-          text: localise('regulators:marketInsights:figures:linkText'),
+          text: localise('regulators:marketInsights:figures:uk:linkText'),
           href: request.localiseUrl(paths.regulators.marketInsightsUk)
+        },
+        {
+          text: localise('regulators:marketInsights:figures:england:linkText'),
+          href: request.localiseUrl(paths.regulators.marketInsightsEngland)
         },
         {
           text: localise(

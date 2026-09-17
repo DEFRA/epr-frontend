@@ -50,12 +50,19 @@
       },
       "completeness": "These figures are only as good as the reports operators have submitted. An operator that has not submitted a month adds nothing to it. The newest months are the least complete, because returns are still arriving.",
       "description": "For each month, the tables show what accredited reprocessors and exporters reported by material: tonnage received, recycled or exported, and sent on. They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price per tonne. The monthly market insights workbook uses these figures.",
-      "heading": "Reprocessor and exporter figures: UK",
-      "linkText": "Reprocessor and exporter figures: UK",
-      "pageTitle": "Reprocessor and exporter figures: UK",
+      "england": {
+        "heading": "Reprocessor and exporter figures: England",
+        "linkText": "Reprocessor and exporter figures: England",
+        "pageTitle": "Reprocessor and exporter figures: England"
+      },
       "table": {
         "exporter": "Exporter data for {{ month }}",
         "reprocessor": "Reprocessor data for {{ month }}"
+      },
+      "uk": {
+        "heading": "Reprocessor and exporter figures: UK",
+        "linkText": "Reprocessor and exporter figures: UK",
+        "pageTitle": "Reprocessor and exporter figures: UK"
       }
     },
     "heading": "Market insights",
