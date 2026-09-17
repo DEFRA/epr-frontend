@@ -12,6 +12,9 @@
       </h1>
       {{ govukInsetText({ text: localise('regulators:marketInsights:notice') }) }}
       <p class="govuk-body">{{ description }}</p>
+      {% if scope %}
+        <p class="govuk-body">{{ scope }}</p>
+      {% endif %}
       <p class="govuk-body-s">{{ dataTakenAt }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:completeness') }}</p>
 

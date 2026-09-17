@@ -32,6 +32,26 @@ const anEmptyPageOfOrganisations = http.get(
     })
 )
 
+// The sets of figures the page offers, in the order the workbook's tabs run.
+const FIGURE_SETS = [
+  {
+    name: 'UK waste balance',
+    href: paths.regulators.marketInsightsWasteBalance
+  },
+  {
+    name: 'Reprocessor and exporter figures: UK',
+    href: paths.regulators.marketInsightsUk
+  },
+  {
+    name: 'Reprocessor and exporter figures: England',
+    href: paths.regulators.marketInsightsEngland
+  },
+  {
+    name: 'Outstanding monthly reports: UK',
+    href: paths.regulators.marketInsightsOutstandingReturns
+  }
+]
+
 /**
  * The links the page offers, by the words a regulator reads and the address
  * each one opens.
@@ -68,20 +88,9 @@ describe('the market insights page', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(figureSetLinksOf(documentOf(asHtml(result)))).toStrictEqual([
-        {
-          name: 'UK waste balance',
-          href: paths.regulators.marketInsightsWasteBalance
-        },
-        {
-          name: 'Reprocessor and exporter figures: UK',
-          href: paths.regulators.marketInsightsUk
-        },
-        {
-          name: 'Outstanding monthly reports: UK',
-          href: paths.regulators.marketInsightsOutstandingReturns
-        }
-      ])
+      expect(figureSetLinksOf(documentOf(asHtml(result)))).toStrictEqual(
+        FIGURE_SETS
+      )
     })
 
     it('asks the backend for no figures, because it shows none', async ({
@@ -206,7 +215,12 @@ describe('the market insights page with the flag off', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(figureSetLinksOf(documentOf(asHtml(result)))).toHaveLength(3)
+
+    // The flag governs the way in from the regulator area, not what this page
+    // holds, so every set of figures is still offered.
+    expect(figureSetLinksOf(documentOf(asHtml(result)))).toStrictEqual(
+      FIGURE_SETS
+    )
   })
 
   it('still refuses a session without the market data scope', async ({

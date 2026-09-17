@@ -86,6 +86,29 @@ describe(fetchReprocessorExporterFigures, () => {
     )
   })
 
+  test('asks for a nation as a sibling of the UK figures', async ({ msw }) => {
+    /** @type {URL | undefined} */
+    let captured
+
+    msw.use(
+      http.get(`${figuresUrl}/:nation`, ({ request }) => {
+        captured = new URL(request.url)
+        return HttpResponse.json(januaryAggregate)
+      })
+    )
+
+    await fetchReprocessorExporterFigures({
+      year: 2026,
+      month: 3,
+      nation: 'northern-ireland',
+      backendToken
+    })
+
+    expect(/** @type {URL} */ (captured).pathname).toBe(
+      '/v1/market-insights/2026/monthly/3/reprocessor-exporter-figures/northern-ireland'
+    )
+  })
+
   test('authorises the call with the session backend token', async ({
     msw
   }) => {
