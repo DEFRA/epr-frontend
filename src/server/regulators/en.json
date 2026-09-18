@@ -8,6 +8,11 @@
   "marketInsights": {
     "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
     "description": "These pages show figures from the monthly market insights workbook. Each set of figures has its own page.",
+    "export": {
+      "description": "Download every figure behind these pages as a set of CSV files in one zip. Each file covers the whole reporting period, with a column for the month. The file takes up to a minute to prepare, so the page will wait after you select the link.",
+      "heading": "Download the figures",
+      "linkText": "Download all the figures (ZIP)"
+    },
     "figures": {
       "calculation": {
         "accreditations": "A report counts only if the accreditation it was submitted under is currently approved or suspended. An accreditation that has since been cancelled loses every month it reported.",

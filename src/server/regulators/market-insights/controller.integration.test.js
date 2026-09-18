@@ -126,6 +126,22 @@ describe('the market insights page', () => {
       expect(asked).not.toHaveBeenCalled()
     })
 
+    it('is offered every figure behind those pages as one download', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      expect(
+        getByRole(documentOf(asHtml(result)), 'link', {
+          name: 'Download all the figures (ZIP)'
+        }).getAttribute('href')
+      ).toBe(paths.regulators.marketInsightsExport)
+    })
+
     it('says the page is still being built, above the description', async ({
       server
     }) => {

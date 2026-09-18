@@ -60,7 +60,14 @@ export const controller = {
             paths.regulators.marketInsightsOutstandingReturns
           )
         }
-      ]
+      ],
+      // The only way to take the figures away. It sits here rather than on the
+      // seven pages because one export holds all of them.
+      exportDescription: localise(
+        'regulators:marketInsights:export:description'
+      ),
+      exportText: localise('regulators:marketInsights:export:linkText'),
+      exportHref: request.localiseUrl(paths.regulators.marketInsightsExport)
     })
   }
 }
