@@ -33,9 +33,14 @@ const figuresUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/repr
  * other served figure at zero. The page shows whatever materials are served,
  * so two are enough to see both tables laid out.
  * @param {{ plastic: Partial<ReprocessorFigures>, aluminium: Partial<ExporterFigures> }} figures
+ * @param {ReprocessorExporterAggregate['data']['months'][string]['reports']} [reports]
  * @returns {ReprocessorExporterAggregate['data']['months'][string]}
  */
-const figuresMonthOf = ({ plastic, aluminium }) => ({
+const figuresMonthOf = (
+  { plastic, aluminium },
+  reports = { expected: 0, submitted: 0 }
+) => ({
+  reports,
   figures: {
     plastic: { reprocessor: reprocessorOf(plastic), exporter: exporterOf() },
     aluminium: {
@@ -55,30 +60,39 @@ const januaryToMarchFigures = {
   meta: { generatedAt: '2026-04-10T09:30:00.000Z' },
   data: {
     months: {
-      '2026-01': figuresMonthOf({
-        plastic: {
-          tonnageReceived: 1250.5,
-          tonnageRecycled: 1100,
-          tonnageReceivedButNotRecycled: 151,
-          tonnageSentOnTotal: 51,
-          tonnageSentOnToReprocessor: 40,
-          tonnageSentOnToOtherFacilities: 10.25,
-          revisedTonnageIssued: 900,
-          totalRevenue: 108000,
-          averagePricePerTonne: 121
+      '2026-01': figuresMonthOf(
+        {
+          plastic: {
+            tonnageReceived: 1250.5,
+            tonnageRecycled: 1100,
+            tonnageReceivedButNotRecycled: 151,
+            tonnageSentOnTotal: 51,
+            tonnageSentOnToReprocessor: 40,
+            tonnageSentOnToOtherFacilities: 10.25,
+            revisedTonnageIssued: 900,
+            totalRevenue: 108000,
+            averagePricePerTonne: 121
+          },
+          aluminium: {
+            tonnageReceived: 300,
+            tonnageExported: 280,
+            tonnageReceivedButNotExported: 21,
+            tonnageStopped: 1.5,
+            revisedTonnageIssued: 250,
+            totalRevenue: 12345.68,
+            averagePricePerTonne: 50
+          }
         },
-        aluminium: {
-          tonnageReceived: 300,
-          tonnageExported: 280,
-          tonnageReceivedButNotExported: 21,
-          tonnageStopped: 1.5,
-          revisedTonnageIssued: 250,
-          totalRevenue: 12345.68,
-          averagePricePerTonne: 50
-        }
-      }),
-      '2026-02': figuresMonthOf({ plastic: {}, aluminium: {} }),
-      '2026-03': figuresMonthOf({ plastic: {}, aluminium: {} })
+        { expected: 2, submitted: 1 }
+      ),
+      '2026-02': figuresMonthOf(
+        { plastic: {}, aluminium: {} },
+        { expected: 2, submitted: 2 }
+      ),
+      '2026-03': figuresMonthOf(
+        { plastic: {}, aluminium: {} },
+        { expected: 3, submitted: 0 }
+      )
     }
   }
 }
@@ -133,6 +147,42 @@ describe('the UK reprocessor and exporter figures page', () => {
           'tabindex'
         )
       ).toBe('0')
+    })
+
+    it('says beneath each month how many of the monthly reports it was owed have been submitted, before its tables', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsightsUk,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+
+      // Whatever sits between a month's heading and the region holding its
+      // tables is what a regulator reads about that month before its figures.
+      expect(
+        getAllByRole(body, 'heading', { level: 2 })
+          .filter((heading) => (heading.textContent ?? '').endsWith('2026'))
+          .map((heading) => {
+            /** @type {string[]} */
+            const wording = []
+            let element = heading.nextElementSibling
+            while (
+              element !== null &&
+              element.getAttribute('role') !== 'region'
+            ) {
+              wording.push((element.textContent ?? '').trim())
+              element = element.nextElementSibling
+            }
+            return wording
+          })
+      ).toStrictEqual([
+        ['Monthly reports submitted: 1 of 2'],
+        ['Monthly reports submitted: 2 of 2'],
+        ['Monthly reports submitted: 0 of 3']
+      ])
     })
 
     it('reads a reprocessor table for a month, the figures laid out the way the publication is', async ({
@@ -348,7 +398,7 @@ describe('the UK reprocessor and exporter figures page', () => {
       expect(wording).toStrictEqual([
         'For each month, the tables show what accredited reprocessors and exporters reported by material: tonnage received, recycled or exported, and sent on. They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price per tonne. The monthly market insights workbook uses these figures.',
         'Data taken at 10:30am on 10 April 2026',
-        'These figures are only as good as the reports operators have submitted. An operator that has not submitted a month adds nothing to it. The newest months are the least complete, because returns are still arriving.',
+        'These figures are only as good as the reports operators have submitted. An operator that has not submitted a month adds nothing to it. The newest months are the least complete, because returns are still arriving. Each month says how many of the monthly reports it was owed have been submitted.',
         'How the figures are calculated',
         'The figures come from the monthly reports operators submit, not from the summary logs the UK waste balance uses. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.',
         'A report counts only if the accreditation it was submitted under is currently approved or suspended. An accreditation that has since been cancelled loses every month it reported.',
@@ -357,7 +407,8 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.',
         'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted.',
         'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
-        'January 2026'
+        'January 2026',
+        'Monthly reports submitted: 1 of 2'
       ])
     })
 

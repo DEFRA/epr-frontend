@@ -112,10 +112,10 @@ describe(toWasteBalanceTable, () => {
       ],
       reports: {
         byMonth: [
-          'translated:regulators:marketInsights:wasteBalance:reports:count:submitted=0:expected=0'
+          'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
         ],
         period:
-          'translated:regulators:marketInsights:wasteBalance:reports:count:submitted=0:expected=0'
+          'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
       }
     })
   })
@@ -177,11 +177,11 @@ describe(toWasteBalanceTable, () => {
       ).reports
     ).toStrictEqual({
       byMonth: [
-        'translated:regulators:marketInsights:wasteBalance:reports:count:submitted=1:expected=2',
-        'translated:regulators:marketInsights:wasteBalance:reports:count:submitted=0:expected=3'
+        'translated:regulators:marketInsights:reports:count:submitted=1:expected=2',
+        'translated:regulators:marketInsights:reports:count:submitted=0:expected=3'
       ],
       period:
-        'translated:regulators:marketInsights:wasteBalance:reports:count:submitted=4:expected=9'
+        'translated:regulators:marketInsights:reports:count:submitted=4:expected=9'
     })
   })
 })

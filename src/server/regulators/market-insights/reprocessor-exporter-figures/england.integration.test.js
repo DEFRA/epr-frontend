@@ -31,6 +31,7 @@ const englandFigures = {
   data: {
     months: {
       '2026-01': {
+        reports: { expected: 4, submitted: 3 },
         figures: {
           plastic: {
             reprocessor: reprocessorOf({ tonnageReceived: 640.25 }),
@@ -39,11 +40,13 @@ const englandFigures = {
         }
       },
       '2026-02': {
+        reports: { expected: 4, submitted: 1 },
         figures: {
           plastic: { reprocessor: reprocessorOf(), exporter: exporterOf() }
         }
       },
       '2026-03': {
+        reports: { expected: 5, submitted: 0 },
         figures: {
           plastic: { reprocessor: reprocessorOf(), exporter: exporterOf() }
         }
@@ -147,6 +150,28 @@ describe('the England reprocessor and exporter figures page', () => {
           '£0.00',
           '£0.00'
         ]
+      ])
+    })
+
+    it('says beneath each month how many of the monthly reports England was owed have been submitted', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsightsEngland,
+        auth: regulator
+      })
+
+      expect(
+        getAllByRole(documentOf(asHtml(result)), 'heading', { level: 2 })
+          .filter((heading) => (heading.textContent ?? '').endsWith('2026'))
+          .map((heading) =>
+            (heading.nextElementSibling?.textContent ?? '').trim()
+          )
+      ).toStrictEqual([
+        'Monthly reports submitted: 3 of 4',
+        'Monthly reports submitted: 1 of 4',
+        'Monthly reports submitted: 0 of 5'
       ])
     })
 

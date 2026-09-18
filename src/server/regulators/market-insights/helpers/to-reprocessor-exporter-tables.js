@@ -4,6 +4,8 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 
 import { nameOf } from './reporting-period.js'
 
+/** @import { ReportCount } from './to-waste-balance-table.js' */
+
 /**
  * The measures both published tables print: what came in, where it was sent
  * on, and the PRN or PERN tonnage, revenue and average price.
@@ -37,9 +39,11 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
- * One reporting month as the backend serves it: every material, each with
- * the figures its reprocessors and its exporters reported.
+ * One reporting month as the backend serves it: how many monthly reports the
+ * month was owed and how many arrived, and every material with the figures
+ * its reprocessors and its exporters reported.
  * @typedef {{
+ *   reports: ReportCount,
  *   figures: Record<string, {
  *     reprocessor: ReprocessorFigures,
  *     exporter: ExporterFigures
@@ -60,6 +64,7 @@ import { nameOf } from './reporting-period.js'
 /**
  * @typedef {{
  *   name: string,
+ *   reports: string,
  *   reprocessor: FiguresTable,
  *   exporter: FiguresTable
  * }} FiguresMonth
@@ -135,7 +140,8 @@ const toTable = (byMaterial, columns, accreditationType, localise) => ({
 /**
  * Lays the served figures out the way the published UK tab is: for each
  * month, a reprocessor table and an exporter table, one row per material, the
- * tonnage columns in the tab's order. Every figure is the one the service
+ * tonnage columns in the tab's order, and above them how many of the reports
+ * the month expected the figures include. Every figure is the one the service
  * served; nothing is summed here.
  *
  * The months are the page's period, so a served month outside it is not
@@ -151,12 +157,20 @@ export const toReprocessorExporterTables = (
   localise
 ) => ({
   months: months.map((month) => {
-    const byMaterial = Object.entries(served[month].figures)
+    const {
+      reports: { expected, submitted },
+      figures
+    } = served[month]
+    const byMaterial = Object.entries(figures)
 
     return {
       name: localise('regulators:marketInsights:period:month', {
         month: nameOf(month),
         year: Number(month.slice(0, 4))
+      }),
+      reports: localise('regulators:marketInsights:reports:count', {
+        submitted,
+        expected
       }),
       reprocessor: toTable(
         Object.fromEntries(

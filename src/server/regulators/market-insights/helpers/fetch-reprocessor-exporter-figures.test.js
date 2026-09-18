@@ -17,6 +17,7 @@ const januaryAggregate = {
   data: {
     months: {
       '2026-01': {
+        reports: { expected: 3, submitted: 2 },
         figures: {
           plastic: {
             reprocessor: {

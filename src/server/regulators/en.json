@@ -48,7 +48,7 @@
           "totalRevenue": "PRN revenue (£)"
         }
       },
-      "completeness": "These figures are only as good as the reports operators have submitted. An operator that has not submitted a month adds nothing to it. The newest months are the least complete, because returns are still arriving.",
+      "completeness": "These figures are only as good as the reports operators have submitted. An operator that has not submitted a month adds nothing to it. The newest months are the least complete, because returns are still arriving. Each month says how many of the monthly reports it was owed have been submitted.",
       "description": "For each month, the tables show what accredited reprocessors and exporters reported by material: tonnage received, recycled or exported, and sent on. They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price per tonne. The monthly market insights workbook uses these figures.",
       "england": {
         "heading": "Reprocessor and exporter figures: England",
@@ -62,6 +62,7 @@
         "pageTitle": "Reprocessor and exporter figures: Northern Ireland",
         "scope": "These figures cover operators registered with the Northern Ireland Environment Agency, the regulator for Northern Ireland."
       },
+      "reports": "Monthly reports submitted: {{ count }}",
       "scotland": {
         "heading": "Reprocessor and exporter figures: Scotland",
         "linkText": "Reprocessor and exporter figures: Scotland",
@@ -119,6 +120,9 @@
       "month": "{{ month }} {{ year }}",
       "months": "{{ from }} to {{ to }} {{ year }}"
     },
+    "reports": {
+      "count": "{{ submitted }} of {{ expected }}"
+    },
     "table": {
       "material": "Material"
     },
@@ -144,9 +148,6 @@
       "heading": "UK waste balance",
       "linkText": "UK waste balance",
       "pageTitle": "UK waste balance",
-      "reports": {
-        "count": "{{ submitted }} of {{ expected }}"
-      },
       "table": {
         "accreditationType": "Accreditation type",
         "caption": "Waste balance",
