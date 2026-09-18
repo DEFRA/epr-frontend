@@ -18,9 +18,13 @@ export const paths = Object.freeze({
     loggedOut: '/regulators/logged-out',
     marketInsights: '/regulators/market-insights',
     marketInsightsEngland: '/regulators/market-insights/england',
+    marketInsightsNorthernIreland:
+      '/regulators/market-insights/northern-ireland',
     marketInsightsOutstandingReturns:
       '/regulators/market-insights/outstanding-returns',
+    marketInsightsScotland: '/regulators/market-insights/scotland',
     marketInsightsUk: '/regulators/market-insights/uk',
+    marketInsightsWales: '/regulators/market-insights/wales',
     marketInsightsWasteBalance: '/regulators/market-insights/waste-balance',
     start: '/regulators/start'
   }),

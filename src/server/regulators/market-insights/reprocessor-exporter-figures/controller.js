@@ -12,6 +12,7 @@ import { toReprocessorExporterTables } from '../helpers/to-reprocessor-exporter-
 /**
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { Nation } from '../helpers/fetch-reprocessor-exporter-figures.js'
  */
 
 /** The figures that name no nation, and read every nation's. */
@@ -24,9 +25,7 @@ const UK = 'uk'
  * Every figure is served already summed, so laying them out in columns is all
  * this page does to them. A nation's tab is the same figures narrowed to its
  * regulator, so it is this page with a nation rather than a page of its own.
- * @param {{ nation?: 'england' }} [tab] the nation the figures are narrowed
- *   to. The backend serves all four, but England is the only one published:
- *   the other three would name figures for operators a reader could identify.
+ * @param {{ nation?: Nation }} [tab] the nation the figures are narrowed to
  * @returns {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const reprocessorExporterFiguresController = ({ nation } = {}) => {

@@ -56,6 +56,18 @@
         "pageTitle": "Reprocessor and exporter figures: England",
         "scope": "These figures cover operators registered with the Environment Agency, the regulator for England."
       },
+      "northern-ireland": {
+        "heading": "Reprocessor and exporter figures: Northern Ireland",
+        "linkText": "Reprocessor and exporter figures: Northern Ireland",
+        "pageTitle": "Reprocessor and exporter figures: Northern Ireland",
+        "scope": "These figures cover operators registered with the Northern Ireland Environment Agency, the regulator for Northern Ireland."
+      },
+      "scotland": {
+        "heading": "Reprocessor and exporter figures: Scotland",
+        "linkText": "Reprocessor and exporter figures: Scotland",
+        "pageTitle": "Reprocessor and exporter figures: Scotland",
+        "scope": "These figures cover operators registered with the Scottish Environment Protection Agency, the regulator for Scotland."
+      },
       "table": {
         "exporter": "Exporter data for {{ month }}",
         "reprocessor": "Reprocessor data for {{ month }}"
@@ -64,6 +76,12 @@
         "heading": "Reprocessor and exporter figures: UK",
         "linkText": "Reprocessor and exporter figures: UK",
         "pageTitle": "Reprocessor and exporter figures: UK"
+      },
+      "wales": {
+        "heading": "Reprocessor and exporter figures: Wales",
+        "linkText": "Reprocessor and exporter figures: Wales",
+        "pageTitle": "Reprocessor and exporter figures: Wales",
+        "scope": "These figures cover operators registered with Natural Resources Wales, the regulator for Wales."
       }
     },
     "heading": "Market insights",
