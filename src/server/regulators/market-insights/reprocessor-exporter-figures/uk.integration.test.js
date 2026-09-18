@@ -458,6 +458,7 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Operators report notes issued free of charge separately, and that tonnage is excluded. Revenue and tonnage are each added up across all operators, then total revenue is divided by total tonnage to give the average price per tonne. Where no tonnage was issued, the average is 0.',
         'Revenue is what operators reported receiving, or expecting to receive, for their notes, excluding VAT.',
         'Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.',
+        'Each table ends in a Grand Total row, which adds up every material. No average price is calculated for it, so that cell shows a dash.',
         'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted.',
         'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
         'January 2026',

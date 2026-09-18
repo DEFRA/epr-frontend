@@ -24,7 +24,8 @@ const nationFiguresUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:perio
 /**
  * A nation's own figures, told apart from the UK fixture's by their tonnage,
  * so a page reading the UK route would fail rather than pass on figures that
- * happen to match.
+ * happen to match. The Grand Total is not the sum of the materials, so a page
+ * that summed them would fail too.
  * @type {ReprocessorExporterAggregate}
  */
 const nationFigures = {
@@ -39,7 +40,7 @@ const nationFigures = {
             exporter: exporterOf()
           }
         },
-        totals: totalsOf()
+        totals: totalsOf({ reprocessor: { tonnageReceived: 350 } })
       },
       '2026-02': {
         reports: { expected: 2, submitted: 1 },
@@ -181,7 +182,7 @@ describe.each(NATIONS)(
           ],
           [
             'Grand Total',
-            '0.00',
+            '350.00',
             '0.00',
             '0.00',
             '0.00',
