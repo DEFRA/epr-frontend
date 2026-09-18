@@ -275,9 +275,19 @@ describe('the UK reprocessor and exporter figures page', () => {
           '11.00',
           '950.00',
           '£110,000.00',
-          '-'
+          '- No average price is calculated'
         ]
       ])
+
+      // The dash is what the workbook prints, and is all a sighted reader
+      // needs. A screen reader is told what the dash stands for instead.
+      const cells = getAllByRole(januaryReprocessors, 'cell')
+      const noAverage = cells[cells.length - 1]
+
+      expect(getByText(noAverage, '-').getAttribute('aria-hidden')).toBe('true')
+      expect(
+        getByText(noAverage, 'No average price is calculated').classList
+      ).toContain('govuk-visually-hidden')
     })
 
     it('reads an exporter table for a month, the figures laid out the way the publication is', async ({
@@ -358,7 +368,7 @@ describe('the UK reprocessor and exporter figures page', () => {
           '0.00',
           '260.00',
           '£12,500.00',
-          '-'
+          '- No average price is calculated'
         ]
       ])
     })

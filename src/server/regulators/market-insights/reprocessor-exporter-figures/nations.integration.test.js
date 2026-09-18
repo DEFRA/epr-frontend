@@ -191,7 +191,7 @@ describe.each(NATIONS)(
             '0.00',
             '0.00',
             '£0.00',
-            '-'
+            '- No average price is calculated'
           ]
         ])
       })

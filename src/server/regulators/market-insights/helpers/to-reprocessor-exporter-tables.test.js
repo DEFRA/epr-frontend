@@ -223,7 +223,7 @@ describe(toReprocessorExporterTables, () => {
     })
   })
 
-  it('ends each table in the served totals, with a dash for the average price the publication does not calculate for a grand total', () => {
+  it('gives each table the served totals as its Grand Total, with no average price, because the publication does not calculate one for a grand total', () => {
     const { reprocessor, exporter } = toReprocessorExporterTables(
       dataOf({
         '2026-01': monthOf(
@@ -267,7 +267,7 @@ describe(toReprocessorExporterTables, () => {
       asKey
     ).months[0]
 
-    expect(reprocessor.rows.at(-1)).toStrictEqual({
+    expect(reprocessor.total).toStrictEqual({
       label: 'translated:regulators:marketInsights:figures:total:label',
       figures: [
         '999.00',
@@ -278,11 +278,10 @@ describe(toReprocessorExporterTables, () => {
         '10.00',
         '10.00',
         '800.00',
-        '£96,000.00',
-        'translated:regulators:marketInsights:figures:total:noAverage'
+        '£96,000.00'
       ]
     })
-    expect(exporter.rows.at(-1)).toStrictEqual({
+    expect(exporter.total).toStrictEqual({
       label: 'translated:regulators:marketInsights:figures:total:label',
       figures: [
         '555.00',
@@ -296,13 +295,12 @@ describe(toReprocessorExporterTables, () => {
         '0.25',
         '0.13',
         '450.00',
-        '£22,500.50',
-        'translated:regulators:marketInsights:figures:total:noAverage'
+        '£22,500.50'
       ]
     })
   })
 
-  it('names the materials the way the rest of the service does, orders the rows by that name, and ends in the Grand Total', () => {
+  it('names the materials the way the rest of the service does, and orders the rows by that name', () => {
     const { reprocessor, exporter } = toReprocessorExporterTables(
       dataOf({
         '2026-01': monthOf({
@@ -323,15 +321,13 @@ describe(toReprocessorExporterTables, () => {
       'Aluminium',
       'Fibre-based composite',
       'Glass remelt',
-      'Plastic',
-      'translated:regulators:marketInsights:figures:total:label'
+      'Plastic'
     ])
     expect(exporter.rows.map(({ label }) => label)).toStrictEqual([
       'Aluminium',
       'Fibre-based composite',
       'Glass remelt',
-      'Plastic',
-      'translated:regulators:marketInsights:figures:total:label'
+      'Plastic'
     ])
   })
 })

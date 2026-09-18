@@ -69,8 +69,9 @@ import { nameOf } from './reporting-period.js'
 /**
  * A table as the page lays it out: the column headings after the material,
  * one row per material with a formatted figure under each heading, and the
- * Grand Total row last.
- * @typedef {{ columns: string[], rows: FiguresRow[] }} FiguresTable
+ * Grand Total, whose figures stop before the average price column because
+ * the served totals carry none.
+ * @typedef {{ columns: string[], rows: FiguresRow[], total: FiguresRow }} FiguresTable
  */
 
 /**
@@ -156,31 +157,27 @@ const toTable = (
         `regulators:marketInsights:figures:columns:${accreditationType}:${measure}`
       )
     ),
-    rows: [
-      ...Object.entries(byMaterial)
-        .map(([material, figures]) => ({
-          label: getMaterialDisplayName(material),
-          figures: columns.map(([measure, format]) => format(figures[measure]))
-        }))
-        .sort((one, other) => one.label.localeCompare(other.label)),
-      {
-        label: localise('regulators:marketInsights:figures:total:label'),
-        figures: [
-          ...totalledColumns.map(([measure, format]) =>
-            format(totals[measure])
-          ),
-          localise('regulators:marketInsights:figures:total:noAverage')
-        ]
-      }
-    ]
+    rows: Object.entries(byMaterial)
+      .map(([material, figures]) => ({
+        label: getMaterialDisplayName(material),
+        figures: columns.map(([measure, format]) => format(figures[measure]))
+      }))
+      .sort((one, other) => one.label.localeCompare(other.label)),
+    total: {
+      label: localise('regulators:marketInsights:figures:total:label'),
+      figures: totalledColumns.map(([measure, format]) =>
+        format(totals[measure])
+      )
+    }
   }
 }
 
 /**
  * Lays the served figures out the way the published UK tab is: for each
  * month, a reprocessor table and an exporter table, one row per material, the
- * tonnage columns in the tab's order, the served totals as the last row, and
- * above them how many of the reports the month expected the figures include.
+ * tonnage columns in the tab's order, the served totals as the Grand Total,
+ * and above them how many of the reports the month expected the figures
+ * include.
  * Every figure is the one the service served; nothing is summed here.
  *
  * The months are the page's period, so a served month outside it is not

@@ -75,8 +75,9 @@
         "reprocessor": "Reprocessor data for {{ month }}"
       },
       "total": {
+        "dash": "-",
         "label": "Grand Total",
-        "noAverage": "-"
+        "noAverage": "No average price is calculated"
       },
       "uk": {
         "heading": "Reprocessor and exporter figures: UK",

@@ -43,6 +43,16 @@
           {% set rows = rows.concat([cells]) %}
         {% endfor %}
 
+        {% set cells = [{ text: table.total.label }] %}
+        {% for figure in table.total.figures %}
+          {% set cells = cells.concat([{ text: figure, format: "numeric" }]) %}
+        {% endfor %}
+        {% set cells = cells.concat([{
+          html: '<span aria-hidden="true">' ~ localise('regulators:marketInsights:figures:total:dash') ~ '</span><span class="govuk-visually-hidden"> ' ~ localise('regulators:marketInsights:figures:total:noAverage') ~ '</span>',
+          format: "numeric"
+        }]) %}
+        {% set rows = rows.concat([cells]) %}
+
         {{ govukTable({
           caption: caption,
           captionClasses: "govuk-table__caption--m",
