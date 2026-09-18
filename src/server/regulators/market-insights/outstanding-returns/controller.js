@@ -32,6 +32,9 @@ export const controller = {
     const { backendToken } = request.auth.credentials
     const { t: localise } = request
 
+    const heading = localise(
+      'regulators:marketInsights:outstandingReturns:heading'
+    )
     const period = reportingPeriodNow()
     const outstandingReturns = await fetchOutstandingReturns({
       year: period.year,
@@ -43,7 +46,7 @@ export const controller = {
       pageTitle: localise(
         'regulators:marketInsights:outstandingReturns:pageTitle'
       ),
-      heading: localise('regulators:marketInsights:outstandingReturns:heading'),
+      heading,
       caption: describeReportingPeriod(period, localise),
       description: localise(
         'regulators:marketInsights:outstandingReturns:description'
@@ -53,9 +56,7 @@ export const controller = {
           text: localise('regulators:marketInsights:heading'),
           href: request.localiseUrl(paths.regulators.marketInsights)
         },
-        {
-          text: localise('regulators:marketInsights:outstandingReturns:heading')
-        }
+        { text: heading }
       ],
       // Stated beside the figures because the publication states it too, so a
       // regulator comparing the two can tell whether they were cut together.
