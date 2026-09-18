@@ -1,5 +1,8 @@
 import { paths } from '#server/paths.js'
 
+import { buildMarketInsightsExportPath } from './export/paths.js'
+import { reportingPeriodNow } from './helpers/reporting-period.js'
+
 /**
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -18,6 +21,7 @@ export const controller = {
    */
   handler(request, h) {
     const { t: localise } = request
+    const period = reportingPeriodNow()
 
     return h.view('regulators/market-insights/index', {
       pageTitle: localise('regulators:marketInsights:pageTitle'),
@@ -60,7 +64,21 @@ export const controller = {
             paths.regulators.marketInsightsOutstandingReturns
           )
         }
-      ]
+      ],
+      // The only way to take the figures away. It sits here rather than on the
+      // seven pages because one export holds all of them, and it names the
+      // same reporting period those pages show.
+      exportDescription: localise(
+        'regulators:marketInsights:export:description'
+      ),
+      exportText: localise('regulators:marketInsights:export:linkText'),
+      exportHref: request.localiseUrl(
+        buildMarketInsightsExportPath({
+          year: period.year,
+          cadence: 'monthly',
+          period: period.month
+        })
+      )
     })
   }
 }

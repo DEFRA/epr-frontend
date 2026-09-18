@@ -3,6 +3,12 @@ import { paths } from '#server/paths.js'
 
 import { controller as loggedOutController } from './logged-out/controller.js'
 import { controller as marketInsightsController } from './market-insights/controller.js'
+import { marketInsightsExportDownloadController } from './market-insights/export/download-controller.js'
+import {
+  marketInsightsExportDownloadPath,
+  marketInsightsExportPath
+} from './market-insights/export/paths.js'
+import { marketInsightsExportStatusController } from './market-insights/export/status-controller.js'
 import { controller as marketInsightsOutstandingReturnsController } from './market-insights/outstanding-returns/controller.js'
 import { reprocessorExporterFiguresController } from './market-insights/reprocessor-exporter-figures/controller.js'
 import { controller as marketInsightsWasteBalanceController } from './market-insights/waste-balance/controller.js'
@@ -110,6 +116,24 @@ export const regulators = {
           method: 'GET',
           path: paths.regulators.marketInsightsOutstandingReturns,
           options: {
+            auth: { scope: [SCOPES.marketDataRead] }
+          }
+        },
+        {
+          ...marketInsightsExportStatusController,
+          method: 'GET',
+          path: marketInsightsExportPath,
+          options: {
+            ...marketInsightsExportStatusController.options,
+            auth: { scope: [SCOPES.marketDataRead] }
+          }
+        },
+        {
+          ...marketInsightsExportDownloadController,
+          method: 'GET',
+          path: marketInsightsExportDownloadPath,
+          options: {
+            ...marketInsightsExportDownloadController.options,
             auth: { scope: [SCOPES.marketDataRead] }
           }
         }

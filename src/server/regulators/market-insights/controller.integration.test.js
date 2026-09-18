@@ -13,6 +13,8 @@ import { getAllByRole, getByRole, queryByRole } from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
+import { reportingPeriodNow } from './helpers/reporting-period.js'
+
 const backendUrl = config.get('eprBackendUrl')
 const marketInsightsUrl = `${backendUrl}/v1/market-insights/*`
 
@@ -124,6 +126,24 @@ describe('the market insights page', () => {
       })
 
       expect(asked).not.toHaveBeenCalled()
+    })
+
+    it('is offered every figure behind those pages as one download, for the period those pages show', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      const { year, month } = reportingPeriodNow()
+
+      expect(
+        getByRole(documentOf(asHtml(result)), 'link', {
+          name: 'Download all the figures (ZIP)'
+        }).getAttribute('href')
+      ).toBe(`/regulators/market-insights/exports/${year}/monthly/${month}`)
     })
 
     it('says the page is still being built, above the description', async ({

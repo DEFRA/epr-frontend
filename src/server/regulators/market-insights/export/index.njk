@@ -1,0 +1,29 @@
+{% extends 'layouts/page.njk' %}
+
+{% block head %}
+  {{ super() }}
+  {% if shouldPoll %}
+    <meta http-equiv="refresh" content="3; url={{ pollUrl }}">
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+      <p class="govuk-body">{{ message }}</p>
+
+      {% if reason %}
+        <p class="govuk-body">{{ localise('regulators:marketInsights:export:failed:reason', { reason: reason }) }}</p>
+      {% endif %}
+
+      {% if downloadUrl %}
+        {{ govukButton({ text: downloadText, href: downloadUrl }) }}
+      {% endif %}
+
+      {% if retryUrl %}
+        {{ govukButton({ text: retryText, href: retryUrl }) }}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

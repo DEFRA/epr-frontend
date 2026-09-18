@@ -10,6 +10,7 @@ export const errorCodes = {
   glassRecyclingProcessMissing: 'glass_recycling_process_missing',
   glassRecyclingProcessUnknown: 'glass_recycling_process_unknown',
   invalidPrnField: 'invalid_prn_field',
+  marketInsightsExportNotFound: 'market_insights_export_not_found',
   notAccredited: 'not_accredited',
   prnCancelFailed: 'prn_cancel_failed',
   prnConfirmFailed: 'prn_confirm_failed',

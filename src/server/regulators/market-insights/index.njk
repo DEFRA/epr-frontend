@@ -16,6 +16,12 @@
           </li>
         {% endfor %}
       </ul>
+
+      <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:export:heading') }}</h2>
+      <p class="govuk-body">{{ exportDescription }}</p>
+      <p class="govuk-body">
+        <a class="govuk-link govuk-link--no-visited-state" href="{{ exportHref }}">{{ exportText }}</a>
+      </p>
     </div>
   </div>
 {% endblock %}
