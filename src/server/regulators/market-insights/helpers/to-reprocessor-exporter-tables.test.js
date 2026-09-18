@@ -1,13 +1,14 @@
 import {
   exporterOf,
-  reprocessorOf
+  reprocessorOf,
+  totalsOf
 } from '#server/common/test-helpers/market-insights-fixtures.js'
 import { describe, expect, it } from 'vitest'
 
 import { toReprocessorExporterTables } from './to-reprocessor-exporter-tables.js'
 
 /**
- * @import { ExporterFigures, ReprocessorFigures, ReprocessorExporterData } from './to-reprocessor-exporter-tables.js'
+ * @import { ExporterFigures, ReprocessorFigures, ReprocessorExporterData, ReprocessorExporterTotals } from './to-reprocessor-exporter-tables.js'
  */
 
 /**
@@ -24,10 +25,16 @@ const asKey = (key, values = {}) =>
 /**
  * @param {Record<string, { reprocessor: ReprocessorFigures, exporter: ExporterFigures }>} figures
  * @param {ReprocessorExporterData['months'][string]['reports']} [reports]
+ * @param {ReprocessorExporterTotals} [totals]
  */
-const monthOf = (figures, reports = { expected: 0, submitted: 0 }) => ({
+const monthOf = (
+  figures,
+  reports = { expected: 0, submitted: 0 },
+  totals = totalsOf()
+) => ({
   reports,
-  figures
+  figures,
+  totals
 })
 
 /**
@@ -217,6 +224,79 @@ describe(toReprocessorExporterTables, () => {
           '£50.00'
         ]
       }
+    ])
+  })
+
+  it('ends each table in the served totals, with a dash for the average price the publication does not calculate for a grand total', () => {
+    const { reprocessor, exporter } = toReprocessorExporterTables(
+      dataOf({
+        '2026-01': monthOf(
+          {
+            plastic: {
+              reprocessor: reprocessorOf({ tonnageReceived: 1250.5 }),
+              exporter: exporterOf({ tonnageReceived: 300 })
+            }
+          },
+          { expected: 0, submitted: 0 },
+          totalsOf({
+            reprocessor: {
+              tonnageReceived: 999,
+              tonnageRecycled: 900,
+              tonnageReceivedButNotRecycled: 99,
+              tonnageSentOnTotal: 30,
+              tonnageSentOnToReprocessor: 10,
+              tonnageSentOnToExporter: 10,
+              tonnageSentOnToOtherFacilities: 10,
+              revisedTonnageIssued: 800,
+              totalRevenue: 96000
+            },
+            exporter: {
+              tonnageReceived: 555,
+              tonnageExported: 500,
+              tonnageReceivedButNotExported: 55,
+              tonnageSentOnTotal: 6,
+              tonnageSentOnToReprocessor: 1,
+              tonnageSentOnToExporter: 2,
+              tonnageSentOnToOtherFacilities: 3,
+              tonnageStopped: 0.5,
+              tonnageRefused: 0.25,
+              tonnageRepatriated: 0.125,
+              revisedTonnageIssued: 450,
+              totalRevenue: 22500.5
+            }
+          })
+        )
+      }),
+      ['2026-01'],
+      asKey
+    ).months[0]
+
+    expect(reprocessor.total).toStrictEqual([
+      '999.00',
+      '900.00',
+      '99.00',
+      '30.00',
+      '10.00',
+      '10.00',
+      '10.00',
+      '800.00',
+      '£96,000.00',
+      'translated:regulators:marketInsights:figures:total:noAverage'
+    ])
+    expect(exporter.total).toStrictEqual([
+      '555.00',
+      '500.00',
+      '55.00',
+      '6.00',
+      '1.00',
+      '2.00',
+      '3.00',
+      '0.50',
+      '0.25',
+      '0.13',
+      '450.00',
+      '£22,500.50',
+      'translated:regulators:marketInsights:figures:total:noAverage'
     ])
   })
 

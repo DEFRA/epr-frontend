@@ -73,6 +73,10 @@
         "exporter": "Exporter data for {{ month }}",
         "reprocessor": "Reprocessor data for {{ month }}"
       },
+      "total": {
+        "label": "Grand Total",
+        "noAverage": "-"
+      },
       "uk": {
         "heading": "Reprocessor and exporter figures: UK",
         "linkText": "Reprocessor and exporter figures: UK",

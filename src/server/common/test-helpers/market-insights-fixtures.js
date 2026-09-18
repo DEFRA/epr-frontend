@@ -4,7 +4,7 @@ import { buildMockAuth, sessionIdentity } from './auth-helper.js'
 import { IDENTITIES } from './identity-helper.js'
 
 /**
- * @import { ExporterFigures, ReprocessorFigures } from '#server/regulators/market-insights/helpers/to-reprocessor-exporter-tables.js'
+ * @import { ExporterFigures, ReprocessorExporterTotals, ReprocessorFigures } from '#server/regulators/market-insights/helpers/to-reprocessor-exporter-tables.js'
  * @import { OutstandingByBand } from '#server/regulators/market-insights/helpers/to-outstanding-returns-tables.js'
  */
 
@@ -72,6 +72,23 @@ export const exporterOf = (figures = {}) => ({
   averagePricePerTonne: 0,
   ...figures
 })
+
+/**
+ * A month's totals entry, which carries every figure but the average price.
+ * @param {{
+ *   reprocessor?: Partial<ReprocessorFigures>,
+ *   exporter?: Partial<ExporterFigures>
+ * }} [totals]
+ * @returns {ReprocessorExporterTotals}
+ */
+export const totalsOf = ({ reprocessor = {}, exporter = {} } = {}) => {
+  const { averagePricePerTonne: _reprocessorAverage, ...reprocessorTotals } =
+    reprocessorOf(reprocessor)
+  const { averagePricePerTonne: _exporterAverage, ...exporterTotals } =
+    exporterOf(exporter)
+
+  return { reprocessor: reprocessorTotals, exporter: exporterTotals }
+}
 
 /**
  * The outstanding reports for one material in a month, with every band the

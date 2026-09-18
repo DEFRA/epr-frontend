@@ -12,7 +12,8 @@ import {
   operator,
   regulator,
   regulatorWithoutMarketScope,
-  reprocessorOf
+  reprocessorOf,
+  totalsOf
 } from '#server/common/test-helpers/market-insights-fixtures.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -34,11 +35,13 @@ const figuresUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/repr
  * so two are enough to see both tables laid out.
  * @param {{ plastic: Partial<ReprocessorFigures>, aluminium: Partial<ExporterFigures> }} figures
  * @param {ReprocessorExporterAggregate['data']['months'][string]['reports']} [reports]
+ * @param {ReprocessorExporterAggregate['data']['months'][string]['totals']} [totals]
  * @returns {ReprocessorExporterAggregate['data']['months'][string]}
  */
 const figuresMonthOf = (
   { plastic, aluminium },
-  reports = { expected: 0, submitted: 0 }
+  reports = { expected: 0, submitted: 0 },
+  totals = totalsOf()
 ) => ({
   reports,
   figures: {
@@ -47,7 +50,8 @@ const figuresMonthOf = (
       reprocessor: reprocessorOf(),
       exporter: exporterOf(aluminium)
     }
-  }
+  },
+  totals
 })
 
 /**
@@ -83,7 +87,27 @@ const januaryToMarchFigures = {
             averagePricePerTonne: 50
           }
         },
-        { expected: 2, submitted: 1 }
+        { expected: 2, submitted: 1 },
+        totalsOf({
+          reprocessor: {
+            tonnageReceived: 1300,
+            tonnageRecycled: 1150,
+            tonnageReceivedButNotRecycled: 160,
+            tonnageSentOnTotal: 55,
+            tonnageSentOnToReprocessor: 42,
+            tonnageSentOnToOtherFacilities: 11,
+            revisedTonnageIssued: 950,
+            totalRevenue: 110000
+          },
+          exporter: {
+            tonnageReceived: 310,
+            tonnageExported: 290,
+            tonnageReceivedButNotExported: 22,
+            tonnageStopped: 2,
+            revisedTonnageIssued: 260,
+            totalRevenue: 12500
+          }
+        })
       ),
       '2026-02': figuresMonthOf(
         { plastic: {}, aluminium: {} },
@@ -239,6 +263,19 @@ describe('the UK reprocessor and exporter figures page', () => {
           '900.00',
           '£108,000.00',
           '£121.00'
+        ],
+        [
+          'Grand Total',
+          '1,300.00',
+          '1,150.00',
+          '160.00',
+          '55.00',
+          '42.00',
+          '0.00',
+          '11.00',
+          '950.00',
+          '£110,000.00',
+          '-'
         ]
       ])
     })
@@ -306,6 +343,22 @@ describe('the UK reprocessor and exporter figures page', () => {
           '0.00',
           '£0.00',
           '£0.00'
+        ],
+        [
+          'Grand Total',
+          '310.00',
+          '290.00',
+          '22.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '2.00',
+          '0.00',
+          '0.00',
+          '260.00',
+          '£12,500.00',
+          '-'
         ]
       ])
     })
