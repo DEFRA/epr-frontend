@@ -1,13 +1,14 @@
 import {
   exporterOf,
-  reprocessorOf
+  reprocessorOf,
+  totalsOf
 } from '#server/common/test-helpers/market-insights-fixtures.js'
 import { describe, expect, it } from 'vitest'
 
 import { toReprocessorExporterTables } from './to-reprocessor-exporter-tables.js'
 
 /**
- * @import { ExporterFigures, ReprocessorFigures, ReprocessorExporterData } from './to-reprocessor-exporter-tables.js'
+ * @import { ExporterFigures, ReprocessorFigures, ReprocessorExporterData, ReprocessorExporterTotals } from './to-reprocessor-exporter-tables.js'
  */
 
 /**
@@ -24,10 +25,16 @@ const asKey = (key, values = {}) =>
 /**
  * @param {Record<string, { reprocessor: ReprocessorFigures, exporter: ExporterFigures }>} figures
  * @param {ReprocessorExporterData['months'][string]['reports']} [reports]
+ * @param {ReprocessorExporterTotals} [totals]
  */
-const monthOf = (figures, reports = { expected: 0, submitted: 0 }) => ({
+const monthOf = (
+  figures,
+  reports = { expected: 0, submitted: 0 },
+  totals = totalsOf()
+) => ({
   reports,
-  figures
+  figures,
+  totals
 })
 
 /**
@@ -131,23 +138,21 @@ describe(toReprocessorExporterTables, () => {
           `translated:regulators:marketInsights:figures:columns:reprocessor:${measure}`
       )
     )
-    expect(reprocessor.rows).toStrictEqual([
-      {
-        material: 'Plastic',
-        figures: [
-          '1,250.50',
-          '1,100.00',
-          '151.00',
-          '51.00',
-          '40.00',
-          '0.00',
-          '10.25',
-          '900.00',
-          '£108,000.00',
-          '£121.00'
-        ]
-      }
-    ])
+    expect(reprocessor.rows[0]).toStrictEqual({
+      label: 'Plastic',
+      figures: [
+        '1,250.50',
+        '1,100.00',
+        '151.00',
+        '51.00',
+        '40.00',
+        '0.00',
+        '10.25',
+        '900.00',
+        '£108,000.00',
+        '£121.00'
+      ]
+    })
   })
 
   it('lays the exporter figures out in the published column order, with the PERN columns after the tonnage', () => {
@@ -198,29 +203,104 @@ describe(toReprocessorExporterTables, () => {
           `translated:regulators:marketInsights:figures:columns:exporter:${measure}`
       )
     )
-    expect(exporter.rows).toStrictEqual([
-      {
-        material: 'Plastic',
-        figures: [
-          '300.00',
-          '280.00',
-          '21.00',
-          '8.00',
-          '1.00',
-          '2.00',
-          '4.00',
-          '0.50',
-          '0.25',
-          '0.13',
-          '250.00',
-          '£12,345.68',
-          '£50.00'
-        ]
-      }
-    ])
+    expect(exporter.rows[0]).toStrictEqual({
+      label: 'Plastic',
+      figures: [
+        '300.00',
+        '280.00',
+        '21.00',
+        '8.00',
+        '1.00',
+        '2.00',
+        '4.00',
+        '0.50',
+        '0.25',
+        '0.13',
+        '250.00',
+        '£12,345.68',
+        '£50.00'
+      ]
+    })
   })
 
-  it('names the materials the way the rest of the service does and orders the rows by that name', () => {
+  it('gives each table the served totals as its Grand Total, with no average price, because the publication does not calculate one for a grand total', () => {
+    const { reprocessor, exporter } = toReprocessorExporterTables(
+      dataOf({
+        '2026-01': monthOf(
+          {
+            plastic: {
+              reprocessor: reprocessorOf({ tonnageReceived: 1250.5 }),
+              exporter: exporterOf({ tonnageReceived: 300 })
+            }
+          },
+          { expected: 0, submitted: 0 },
+          totalsOf({
+            reprocessor: {
+              tonnageReceived: 999,
+              tonnageRecycled: 900,
+              tonnageReceivedButNotRecycled: 99,
+              tonnageSentOnTotal: 30,
+              tonnageSentOnToReprocessor: 10,
+              tonnageSentOnToExporter: 10,
+              tonnageSentOnToOtherFacilities: 10,
+              revisedTonnageIssued: 800,
+              totalRevenue: 96000
+            },
+            exporter: {
+              tonnageReceived: 555,
+              tonnageExported: 500,
+              tonnageReceivedButNotExported: 55,
+              tonnageSentOnTotal: 6,
+              tonnageSentOnToReprocessor: 1,
+              tonnageSentOnToExporter: 2,
+              tonnageSentOnToOtherFacilities: 3,
+              tonnageStopped: 0.5,
+              tonnageRefused: 0.25,
+              tonnageRepatriated: 0.125,
+              revisedTonnageIssued: 450,
+              totalRevenue: 22500.5
+            }
+          })
+        )
+      }),
+      ['2026-01'],
+      asKey
+    ).months[0]
+
+    expect(reprocessor.total).toStrictEqual({
+      label: 'translated:regulators:marketInsights:figures:total:label',
+      figures: [
+        '999.00',
+        '900.00',
+        '99.00',
+        '30.00',
+        '10.00',
+        '10.00',
+        '10.00',
+        '800.00',
+        '£96,000.00'
+      ]
+    })
+    expect(exporter.total).toStrictEqual({
+      label: 'translated:regulators:marketInsights:figures:total:label',
+      figures: [
+        '555.00',
+        '500.00',
+        '55.00',
+        '6.00',
+        '1.00',
+        '2.00',
+        '3.00',
+        '0.50',
+        '0.25',
+        '0.13',
+        '450.00',
+        '£22,500.50'
+      ]
+    })
+  })
+
+  it('names the materials the way the rest of the service does, and orders the rows by that name', () => {
     const { reprocessor, exporter } = toReprocessorExporterTables(
       dataOf({
         '2026-01': monthOf({
@@ -237,13 +317,13 @@ describe(toReprocessorExporterTables, () => {
       asKey
     ).months[0]
 
-    expect(reprocessor.rows.map(({ material }) => material)).toStrictEqual([
+    expect(reprocessor.rows.map(({ label }) => label)).toStrictEqual([
       'Aluminium',
       'Fibre-based composite',
       'Glass remelt',
       'Plastic'
     ])
-    expect(exporter.rows.map(({ material }) => material)).toStrictEqual([
+    expect(exporter.rows.map(({ label }) => label)).toStrictEqual([
       'Aluminium',
       'Fibre-based composite',
       'Glass remelt',

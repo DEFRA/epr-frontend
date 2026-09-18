@@ -7,7 +7,8 @@ import {
   operator,
   regulator,
   regulatorWithoutMarketScope,
-  reprocessorOf
+  reprocessorOf,
+  totalsOf
 } from '#server/common/test-helpers/market-insights-fixtures.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -23,7 +24,8 @@ const nationFiguresUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:perio
 /**
  * England's own figures, told apart from the UK fixture's by their tonnage, so
  * a page reading the UK route would fail rather than pass on figures that
- * happen to match.
+ * happen to match. The Grand Total is not the sum of the materials, so a page
+ * that summed them would fail too.
  * @type {ReprocessorExporterAggregate}
  */
 const englandFigures = {
@@ -37,19 +39,22 @@ const englandFigures = {
             reprocessor: reprocessorOf({ tonnageReceived: 640.25 }),
             exporter: exporterOf()
           }
-        }
+        },
+        totals: totalsOf({ reprocessor: { tonnageReceived: 700 } })
       },
       '2026-02': {
         reports: { expected: 4, submitted: 1 },
         figures: {
           plastic: { reprocessor: reprocessorOf(), exporter: exporterOf() }
-        }
+        },
+        totals: totalsOf()
       },
       '2026-03': {
         reports: { expected: 5, submitted: 0 },
         figures: {
           plastic: { reprocessor: reprocessorOf(), exporter: exporterOf() }
-        }
+        },
+        totals: totalsOf()
       }
     }
   }
@@ -149,6 +154,19 @@ describe('the England reprocessor and exporter figures page', () => {
           '0.00',
           '£0.00',
           '£0.00'
+        ],
+        [
+          'Grand Total',
+          '700.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£0.00',
+          '- No average price is calculated'
         ]
       ])
     })

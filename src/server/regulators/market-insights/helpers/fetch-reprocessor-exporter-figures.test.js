@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { totalsOf } from '#server/common/test-helpers/market-insights-fixtures.js'
 import { test } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
@@ -48,7 +49,8 @@ const januaryAggregate = {
               averagePricePerTonne: 0
             }
           }
-        }
+        },
+        totals: totalsOf()
       }
     }
   }

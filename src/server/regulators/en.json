@@ -17,6 +17,7 @@
         "revenue": "Revenue is what operators reported receiving, or expecting to receive, for their notes, excluding VAT.",
         "rounding": "Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.",
         "source": "The figures come from the monthly reports operators submit, not from the summary logs the UK waste balance uses. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.",
+        "total": "Each table ends in a Grand Total row, which adds up every material. No average price is calculated for it, so that cell shows a dash.",
         "zero": "Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted."
       },
       "columns": {
@@ -72,6 +73,11 @@
       "table": {
         "exporter": "Exporter data for {{ month }}",
         "reprocessor": "Reprocessor data for {{ month }}"
+      },
+      "total": {
+        "dash": "-",
+        "label": "Grand Total",
+        "noAverage": "No average price is calculated"
       },
       "uk": {
         "heading": "Reprocessor and exporter figures: UK",
