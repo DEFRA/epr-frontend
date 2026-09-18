@@ -35,17 +35,12 @@
 
         {% set rows = [] %}
         {% for row in table.rows %}
-          {% set cells = [{ text: row.material }] %}
+          {% set cells = [{ text: row.label }] %}
           {% for figure in row.figures %}
             {% set cells = cells.concat([{ text: figure, format: "numeric" }]) %}
           {% endfor %}
           {% set rows = rows.concat([cells]) %}
         {% endfor %}
-        {% set cells = [{ text: localise('regulators:marketInsights:figures:total:label') }] %}
-        {% for figure in table.total %}
-          {% set cells = cells.concat([{ text: figure, format: "numeric" }]) %}
-        {% endfor %}
-        {% set rows = rows.concat([cells]) %}
 
         {{ govukTable({
           caption: caption,

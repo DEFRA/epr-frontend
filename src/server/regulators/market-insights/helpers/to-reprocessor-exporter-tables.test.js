@@ -138,23 +138,21 @@ describe(toReprocessorExporterTables, () => {
           `translated:regulators:marketInsights:figures:columns:reprocessor:${measure}`
       )
     )
-    expect(reprocessor.rows).toStrictEqual([
-      {
-        material: 'Plastic',
-        figures: [
-          '1,250.50',
-          '1,100.00',
-          '151.00',
-          '51.00',
-          '40.00',
-          '0.00',
-          '10.25',
-          '900.00',
-          '£108,000.00',
-          '£121.00'
-        ]
-      }
-    ])
+    expect(reprocessor.rows[0]).toStrictEqual({
+      label: 'Plastic',
+      figures: [
+        '1,250.50',
+        '1,100.00',
+        '151.00',
+        '51.00',
+        '40.00',
+        '0.00',
+        '10.25',
+        '900.00',
+        '£108,000.00',
+        '£121.00'
+      ]
+    })
   })
 
   it('lays the exporter figures out in the published column order, with the PERN columns after the tonnage', () => {
@@ -205,26 +203,24 @@ describe(toReprocessorExporterTables, () => {
           `translated:regulators:marketInsights:figures:columns:exporter:${measure}`
       )
     )
-    expect(exporter.rows).toStrictEqual([
-      {
-        material: 'Plastic',
-        figures: [
-          '300.00',
-          '280.00',
-          '21.00',
-          '8.00',
-          '1.00',
-          '2.00',
-          '4.00',
-          '0.50',
-          '0.25',
-          '0.13',
-          '250.00',
-          '£12,345.68',
-          '£50.00'
-        ]
-      }
-    ])
+    expect(exporter.rows[0]).toStrictEqual({
+      label: 'Plastic',
+      figures: [
+        '300.00',
+        '280.00',
+        '21.00',
+        '8.00',
+        '1.00',
+        '2.00',
+        '4.00',
+        '0.50',
+        '0.25',
+        '0.13',
+        '250.00',
+        '£12,345.68',
+        '£50.00'
+      ]
+    })
   })
 
   it('ends each table in the served totals, with a dash for the average price the publication does not calculate for a grand total', () => {
@@ -271,36 +267,42 @@ describe(toReprocessorExporterTables, () => {
       asKey
     ).months[0]
 
-    expect(reprocessor.total).toStrictEqual([
-      '999.00',
-      '900.00',
-      '99.00',
-      '30.00',
-      '10.00',
-      '10.00',
-      '10.00',
-      '800.00',
-      '£96,000.00',
-      'translated:regulators:marketInsights:figures:total:noAverage'
-    ])
-    expect(exporter.total).toStrictEqual([
-      '555.00',
-      '500.00',
-      '55.00',
-      '6.00',
-      '1.00',
-      '2.00',
-      '3.00',
-      '0.50',
-      '0.25',
-      '0.13',
-      '450.00',
-      '£22,500.50',
-      'translated:regulators:marketInsights:figures:total:noAverage'
-    ])
+    expect(reprocessor.rows.at(-1)).toStrictEqual({
+      label: 'translated:regulators:marketInsights:figures:total:label',
+      figures: [
+        '999.00',
+        '900.00',
+        '99.00',
+        '30.00',
+        '10.00',
+        '10.00',
+        '10.00',
+        '800.00',
+        '£96,000.00',
+        'translated:regulators:marketInsights:figures:total:noAverage'
+      ]
+    })
+    expect(exporter.rows.at(-1)).toStrictEqual({
+      label: 'translated:regulators:marketInsights:figures:total:label',
+      figures: [
+        '555.00',
+        '500.00',
+        '55.00',
+        '6.00',
+        '1.00',
+        '2.00',
+        '3.00',
+        '0.50',
+        '0.25',
+        '0.13',
+        '450.00',
+        '£22,500.50',
+        'translated:regulators:marketInsights:figures:total:noAverage'
+      ]
+    })
   })
 
-  it('names the materials the way the rest of the service does and orders the rows by that name', () => {
+  it('names the materials the way the rest of the service does, orders the rows by that name, and ends in the Grand Total', () => {
     const { reprocessor, exporter } = toReprocessorExporterTables(
       dataOf({
         '2026-01': monthOf({
@@ -317,17 +319,19 @@ describe(toReprocessorExporterTables, () => {
       asKey
     ).months[0]
 
-    expect(reprocessor.rows.map(({ material }) => material)).toStrictEqual([
+    expect(reprocessor.rows.map(({ label }) => label)).toStrictEqual([
       'Aluminium',
       'Fibre-based composite',
       'Glass remelt',
-      'Plastic'
+      'Plastic',
+      'translated:regulators:marketInsights:figures:total:label'
     ])
-    expect(exporter.rows.map(({ material }) => material)).toStrictEqual([
+    expect(exporter.rows.map(({ label }) => label)).toStrictEqual([
       'Aluminium',
       'Fibre-based composite',
       'Glass remelt',
-      'Plastic'
+      'Plastic',
+      'translated:regulators:marketInsights:figures:total:label'
     ])
   })
 })

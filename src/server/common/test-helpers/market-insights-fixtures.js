@@ -76,8 +76,8 @@ export const exporterOf = (figures = {}) => ({
 /**
  * A month's totals entry, which carries every figure but the average price.
  * @param {{
- *   reprocessor?: Partial<ReprocessorFigures>,
- *   exporter?: Partial<ExporterFigures>
+ *   reprocessor?: Partial<ReprocessorExporterTotals['reprocessor']>,
+ *   exporter?: Partial<ReprocessorExporterTotals['exporter']>
  * }} [totals]
  * @returns {ReprocessorExporterTotals}
  */

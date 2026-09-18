@@ -42,10 +42,10 @@ import { nameOf } from './reporting-period.js'
  * The Grand Total the published tables end in: each accreditation type's
  * materials summed. It carries no average price, because the publication
  * does not calculate one for a grand total.
- * @typedef {{
- *   reprocessor: Omit<ReprocessorFigures, 'averagePricePerTonne'>,
- *   exporter: Omit<ExporterFigures, 'averagePricePerTonne'>
- * }} ReprocessorExporterTotals
+ * @typedef {Omit<SharedFigures, 'averagePricePerTonne'>} SharedTotals
+ * @typedef {Omit<ReprocessorFigures, 'averagePricePerTonne'>} ReprocessorTotals
+ * @typedef {Omit<ExporterFigures, 'averagePricePerTonne'>} ExporterTotals
+ * @typedef {{ reprocessor: ReprocessorTotals, exporter: ExporterTotals }} ReprocessorExporterTotals
  */
 
 /**
@@ -64,13 +64,13 @@ import { nameOf } from './reporting-period.js'
 
 /** @typedef {{ months: Record<string, ReprocessorExporterMonth> }} ReprocessorExporterData */
 
-/** @typedef {{ material: string, figures: string[] }} FiguresRow */
+/** @typedef {{ label: string, figures: string[] }} FiguresRow */
 
 /**
  * A table as the page lays it out: the column headings after the material,
  * one row per material with a formatted figure under each heading, and the
- * Grand Total row's figures under the same headings.
- * @typedef {{ columns: string[], rows: FiguresRow[], total: string[] }} FiguresTable
+ * Grand Total row last.
+ * @typedef {{ columns: string[], rows: FiguresRow[] }} FiguresTable
  */
 
 /**
@@ -90,15 +90,20 @@ import { nameOf } from './reporting-period.js'
  * The PRN and PERN columns. The published tab gives these a table of their
  * own per month; here each one is the tail of its accreditation type's table,
  * so a month reads as two tables rather than four.
- * @type {[keyof SharedFigures, (value: number) => string][]}
+ * @type {[keyof SharedTotals, (value: number) => string][]}
  */
 const NOTE_COLUMNS = [
   ['revisedTonnageIssued', formatTonnage],
-  ['totalRevenue', formatCurrency],
-  ['averagePricePerTonne', formatCurrency]
+  ['totalRevenue', formatCurrency]
 ]
 
-/** @type {[keyof SharedFigures, (value: number) => string][]} */
+/**
+ * The last column of both tables, and the one the served totals do not carry.
+ * @type {['averagePricePerTonne', (value: number) => string]}
+ */
+const AVERAGE_PRICE_COLUMN = ['averagePricePerTonne', formatCurrency]
+
+/** @type {[keyof SharedTotals, (value: number) => string][]} */
 const SENT_ON_COLUMNS = [
   ['tonnageSentOnTotal', formatTonnage],
   ['tonnageSentOnToReprocessor', formatTonnage],
@@ -106,7 +111,7 @@ const SENT_ON_COLUMNS = [
   ['tonnageSentOnToOtherFacilities', formatTonnage]
 ]
 
-/** @type {[keyof ReprocessorFigures, (value: number) => string][]} */
+/** @type {[keyof ReprocessorTotals, (value: number) => string][]} */
 const REPROCESSOR_COLUMNS = [
   ['tonnageReceived', formatTonnage],
   ['tonnageRecycled', formatTonnage],
@@ -115,7 +120,7 @@ const REPROCESSOR_COLUMNS = [
   ...NOTE_COLUMNS
 ]
 
-/** @type {[keyof ExporterFigures, (value: number) => string][]} */
+/** @type {[keyof ExporterTotals, (value: number) => string][]} */
 const EXPORTER_COLUMNS = [
   ['tonnageReceived', formatTonnage],
   ['tonnageExported', formatTonnage],
@@ -128,37 +133,48 @@ const EXPORTER_COLUMNS = [
 ]
 
 /**
- * A total the served totals carry is formatted like the column it sits under;
- * one they do not carry, the average price, shows the dash the publication
- * prints there.
- * @template {string} Measure
- * @param {Record<string, Record<Measure, number>>} byMaterial
- * @param {Partial<Record<Measure, number>>} totals
- * @param {[Measure, (value: number) => string][]} columns
+ * @template {string} Totalled
+ * @param {Record<string, Record<Totalled | 'averagePricePerTonne', number>>} byMaterial
+ * @param {Record<Totalled, number>} totals
+ * @param {[Totalled, (value: number) => string][]} totalledColumns
  * @param {'reprocessor' | 'exporter'} accreditationType
  * @param {Localise} localise
  * @returns {FiguresTable}
  */
-const toTable = (byMaterial, totals, columns, accreditationType, localise) => ({
-  columns: columns.map(([measure]) =>
-    localise(
-      `regulators:marketInsights:figures:columns:${accreditationType}:${measure}`
-    )
-  ),
-  rows: Object.entries(byMaterial)
-    .map(([material, figures]) => ({
-      material: getMaterialDisplayName(material),
-      figures: columns.map(([measure, format]) => format(figures[measure]))
-    }))
-    .sort((one, other) => one.material.localeCompare(other.material)),
-  total: columns.map(([measure, format]) => {
-    const total = totals[measure]
+const toTable = (
+  byMaterial,
+  totals,
+  totalledColumns,
+  accreditationType,
+  localise
+) => {
+  const columns = [...totalledColumns, AVERAGE_PRICE_COLUMN]
 
-    return total === undefined
-      ? localise('regulators:marketInsights:figures:total:noAverage')
-      : format(total)
-  })
-})
+  return {
+    columns: columns.map(([measure]) =>
+      localise(
+        `regulators:marketInsights:figures:columns:${accreditationType}:${measure}`
+      )
+    ),
+    rows: [
+      ...Object.entries(byMaterial)
+        .map(([material, figures]) => ({
+          label: getMaterialDisplayName(material),
+          figures: columns.map(([measure, format]) => format(figures[measure]))
+        }))
+        .sort((one, other) => one.label.localeCompare(other.label)),
+      {
+        label: localise('regulators:marketInsights:figures:total:label'),
+        figures: [
+          ...totalledColumns.map(([measure, format]) =>
+            format(totals[measure])
+          ),
+          localise('regulators:marketInsights:figures:total:noAverage')
+        ]
+      }
+    ]
+  }
+}
 
 /**
  * Lays the served figures out the way the published UK tab is: for each
