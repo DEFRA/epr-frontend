@@ -9,25 +9,9 @@
     "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
     "description": "These pages show figures from the monthly market insights workbook. Each set of figures has its own page.",
     "export": {
-      "building": {
-        "heading": "Preparing your download",
-        "message": "We are gathering the figures from every page into one file. This page refreshes on its own. Do not close it."
-      },
-      "description": "Download every figure behind these pages as a set of CSV files in one zip. Each file covers the whole reporting period, with a column for the month.",
-      "failed": {
-        "heading": "We could not prepare your download",
-        "message": "Nothing was saved. You can ask for the figures again.",
-        "reason": "Reason: {{ reason }}",
-        "retryText": "Ask for the figures again"
-      },
+      "description": "Download every figure behind these pages as a set of CSV files in one zip. Each file covers the whole reporting period, with a column for the month. The file takes up to a minute to prepare, so the page will wait after you select the link.",
       "heading": "Download the figures",
-      "linkText": "Download all the figures (ZIP)",
-      "pageTitle": "Download the figures",
-      "ready": {
-        "downloadText": "Download the figures (ZIP)",
-        "heading": "Your download is ready",
-        "message": "The link is only good for a short while. Ask for the figures again if it stops working."
-      }
+      "linkText": "Download all the figures (ZIP)"
     },
     "figures": {
       "calculation": {
