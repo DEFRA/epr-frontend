@@ -40,6 +40,7 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
       const { backendToken } = request.auth.credentials
       const { t: localise } = request
 
+      const heading = localise(`${tabNames}:heading`)
       const period = reportingPeriodNow()
       const figures = await fetchReprocessorExporterFigures({
         year: period.year,
@@ -52,7 +53,7 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
         'regulators/market-insights/reprocessor-exporter-figures/index',
         {
           pageTitle: localise(`${tabNames}:pageTitle`),
-          heading: localise(`${tabNames}:heading`),
+          heading,
           caption: describeReportingPeriod(period, localise),
           description: localise(
             'regulators:marketInsights:figures:description'
@@ -65,7 +66,7 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
               text: localise('regulators:marketInsights:heading'),
               href: request.localiseUrl(paths.regulators.marketInsights)
             },
-            { text: localise(`${tabNames}:heading`) }
+            { text: heading }
           ],
           // Stated beside the figures because the publication states it too, so a
           // regulator comparing the two can tell whether they were cut together.

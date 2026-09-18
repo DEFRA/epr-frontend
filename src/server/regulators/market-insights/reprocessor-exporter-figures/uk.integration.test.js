@@ -12,7 +12,8 @@ import {
   operator,
   regulator,
   regulatorWithoutMarketScope,
-  reprocessorOf
+  reprocessorOf,
+  totalsOf
 } from '#server/common/test-helpers/market-insights-fixtures.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -34,11 +35,13 @@ const figuresUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/repr
  * so two are enough to see both tables laid out.
  * @param {{ plastic: Partial<ReprocessorFigures>, aluminium: Partial<ExporterFigures> }} figures
  * @param {ReprocessorExporterAggregate['data']['months'][string]['reports']} [reports]
+ * @param {ReprocessorExporterAggregate['data']['months'][string]['totals']} [totals]
  * @returns {ReprocessorExporterAggregate['data']['months'][string]}
  */
 const figuresMonthOf = (
   { plastic, aluminium },
-  reports = { expected: 0, submitted: 0 }
+  reports = { expected: 0, submitted: 0 },
+  totals = totalsOf()
 ) => ({
   reports,
   figures: {
@@ -47,7 +50,8 @@ const figuresMonthOf = (
       reprocessor: reprocessorOf(),
       exporter: exporterOf(aluminium)
     }
-  }
+  },
+  totals
 })
 
 /**
@@ -83,7 +87,27 @@ const januaryToMarchFigures = {
             averagePricePerTonne: 50
           }
         },
-        { expected: 2, submitted: 1 }
+        { expected: 2, submitted: 1 },
+        totalsOf({
+          reprocessor: {
+            tonnageReceived: 1300,
+            tonnageRecycled: 1150,
+            tonnageReceivedButNotRecycled: 160,
+            tonnageSentOnTotal: 55,
+            tonnageSentOnToReprocessor: 42,
+            tonnageSentOnToOtherFacilities: 11,
+            revisedTonnageIssued: 950,
+            totalRevenue: 110000
+          },
+          exporter: {
+            tonnageReceived: 310,
+            tonnageExported: 290,
+            tonnageReceivedButNotExported: 22,
+            tonnageStopped: 2,
+            revisedTonnageIssued: 260,
+            totalRevenue: 12500
+          }
+        })
       ),
       '2026-02': figuresMonthOf(
         { plastic: {}, aluminium: {} },
@@ -239,8 +263,31 @@ describe('the UK reprocessor and exporter figures page', () => {
           '900.00',
           '£108,000.00',
           '£121.00'
+        ],
+        [
+          'Grand Total',
+          '1,300.00',
+          '1,150.00',
+          '160.00',
+          '55.00',
+          '42.00',
+          '0.00',
+          '11.00',
+          '950.00',
+          '£110,000.00',
+          '- No average price is calculated'
         ]
       ])
+
+      // The dash is what the workbook prints, and is all a sighted reader
+      // needs. A screen reader is told what the dash stands for instead.
+      const cells = getAllByRole(januaryReprocessors, 'cell')
+      const noAverage = cells[cells.length - 1]
+
+      expect(getByText(noAverage, '-').getAttribute('aria-hidden')).toBe('true')
+      expect(
+        getByText(noAverage, 'No average price is calculated').classList
+      ).toContain('govuk-visually-hidden')
     })
 
     it('reads an exporter table for a month, the figures laid out the way the publication is', async ({
@@ -306,6 +353,22 @@ describe('the UK reprocessor and exporter figures page', () => {
           '0.00',
           '£0.00',
           '£0.00'
+        ],
+        [
+          'Grand Total',
+          '310.00',
+          '290.00',
+          '22.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '2.00',
+          '0.00',
+          '0.00',
+          '260.00',
+          '£12,500.00',
+          '- No average price is calculated'
         ]
       ])
     })
@@ -405,6 +468,7 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Operators report notes issued free of charge separately, and that tonnage is excluded. Revenue and tonnage are each added up across all operators, then total revenue is divided by total tonnage to give the average price per tonne. Where no tonnage was issued, the average is 0.',
         'Revenue is what operators reported receiving, or expecting to receive, for their notes, excluding VAT.',
         'Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.',
+        'Each table ends in a Grand Total row, which adds up every material. No average price is calculated for it, so that cell shows a dash.',
         'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted.',
         'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
         'January 2026',

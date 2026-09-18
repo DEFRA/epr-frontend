@@ -31,6 +31,7 @@ export const controller = {
     const { backendToken } = request.auth.credentials
     const { t: localise } = request
 
+    const heading = localise('regulators:marketInsights:wasteBalance:heading')
     const period = reportingPeriodNow()
     const wasteBalance = await fetchWasteBalance({
       year: period.year,
@@ -40,7 +41,7 @@ export const controller = {
 
     return h.view('regulators/market-insights/waste-balance/index', {
       pageTitle: localise('regulators:marketInsights:wasteBalance:pageTitle'),
-      heading: localise('regulators:marketInsights:wasteBalance:heading'),
+      heading,
       caption: describeReportingPeriod(period, localise),
       description: localise(
         'regulators:marketInsights:wasteBalance:description'
@@ -50,7 +51,7 @@ export const controller = {
           text: localise('regulators:marketInsights:heading'),
           href: request.localiseUrl(paths.regulators.marketInsights)
         },
-        { text: localise('regulators:marketInsights:wasteBalance:heading') }
+        { text: heading }
       ],
       // Stated beside the figures because the publication states it too, so a
       // regulator comparing the two can tell whether they were cut together.

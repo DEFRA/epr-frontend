@@ -39,26 +39,39 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
+ * The Grand Total the published tables end in: each accreditation type's
+ * materials summed. It carries no average price, because the publication
+ * does not calculate one for a grand total.
+ * @typedef {Omit<SharedFigures, 'averagePricePerTonne'>} SharedTotals
+ * @typedef {Omit<ReprocessorFigures, 'averagePricePerTonne'>} ReprocessorTotals
+ * @typedef {Omit<ExporterFigures, 'averagePricePerTonne'>} ExporterTotals
+ * @typedef {{ reprocessor: ReprocessorTotals, exporter: ExporterTotals }} ReprocessorExporterTotals
+ */
+
+/**
  * One reporting month as the backend serves it: how many monthly reports the
- * month was owed and how many arrived, and every material with the figures
- * its reprocessors and its exporters reported.
+ * month was owed and how many arrived, every material with the figures its
+ * reprocessors and its exporters reported, and the totals across them.
  * @typedef {{
  *   reports: ReportCount,
  *   figures: Record<string, {
  *     reprocessor: ReprocessorFigures,
  *     exporter: ExporterFigures
- *   }>
+ *   }>,
+ *   totals: ReprocessorExporterTotals
  * }} ReprocessorExporterMonth
  */
 
 /** @typedef {{ months: Record<string, ReprocessorExporterMonth> }} ReprocessorExporterData */
 
-/** @typedef {{ material: string, figures: string[] }} FiguresRow */
+/** @typedef {{ label: string, figures: string[] }} FiguresRow */
 
 /**
  * A table as the page lays it out: the column headings after the material,
- * and one row per material with a formatted figure under each heading.
- * @typedef {{ columns: string[], rows: FiguresRow[] }} FiguresTable
+ * one row per material with a formatted figure under each heading, and the
+ * Grand Total, whose figures stop before the average price column because
+ * the served totals carry none.
+ * @typedef {{ columns: string[], rows: FiguresRow[], total: FiguresRow }} FiguresTable
  */
 
 /**
@@ -78,15 +91,20 @@ import { nameOf } from './reporting-period.js'
  * The PRN and PERN columns. The published tab gives these a table of their
  * own per month; here each one is the tail of its accreditation type's table,
  * so a month reads as two tables rather than four.
- * @type {[keyof SharedFigures, (value: number) => string][]}
+ * @type {[keyof SharedTotals, (value: number) => string][]}
  */
 const NOTE_COLUMNS = [
   ['revisedTonnageIssued', formatTonnage],
-  ['totalRevenue', formatCurrency],
-  ['averagePricePerTonne', formatCurrency]
+  ['totalRevenue', formatCurrency]
 ]
 
-/** @type {[keyof SharedFigures, (value: number) => string][]} */
+/**
+ * The last column of both tables, and the one the served totals do not carry.
+ * @type {['averagePricePerTonne', (value: number) => string]}
+ */
+const AVERAGE_PRICE_COLUMN = ['averagePricePerTonne', formatCurrency]
+
+/** @type {[keyof SharedTotals, (value: number) => string][]} */
 const SENT_ON_COLUMNS = [
   ['tonnageSentOnTotal', formatTonnage],
   ['tonnageSentOnToReprocessor', formatTonnage],
@@ -94,7 +112,7 @@ const SENT_ON_COLUMNS = [
   ['tonnageSentOnToOtherFacilities', formatTonnage]
 ]
 
-/** @type {[keyof ReprocessorFigures, (value: number) => string][]} */
+/** @type {[keyof ReprocessorTotals, (value: number) => string][]} */
 const REPROCESSOR_COLUMNS = [
   ['tonnageReceived', formatTonnage],
   ['tonnageRecycled', formatTonnage],
@@ -103,7 +121,7 @@ const REPROCESSOR_COLUMNS = [
   ...NOTE_COLUMNS
 ]
 
-/** @type {[keyof ExporterFigures, (value: number) => string][]} */
+/** @type {[keyof ExporterTotals, (value: number) => string][]} */
 const EXPORTER_COLUMNS = [
   ['tonnageReceived', formatTonnage],
   ['tonnageExported', formatTonnage],
@@ -116,33 +134,51 @@ const EXPORTER_COLUMNS = [
 ]
 
 /**
- * @template {string} Measure
- * @param {Record<string, Record<Measure, number>>} byMaterial
- * @param {[Measure, (value: number) => string][]} columns
+ * @template {string} Totalled
+ * @param {Record<string, Record<Totalled | 'averagePricePerTonne', number>>} byMaterial
+ * @param {Record<Totalled, number>} totals
+ * @param {[Totalled, (value: number) => string][]} totalledColumns
  * @param {'reprocessor' | 'exporter'} accreditationType
  * @param {Localise} localise
  * @returns {FiguresTable}
  */
-const toTable = (byMaterial, columns, accreditationType, localise) => ({
-  columns: columns.map(([measure]) =>
-    localise(
-      `regulators:marketInsights:figures:columns:${accreditationType}:${measure}`
-    )
-  ),
-  rows: Object.entries(byMaterial)
-    .map(([material, figures]) => ({
-      material: getMaterialDisplayName(material),
-      figures: columns.map(([measure, format]) => format(figures[measure]))
-    }))
-    .sort((one, other) => one.material.localeCompare(other.material))
-})
+const toTable = (
+  byMaterial,
+  totals,
+  totalledColumns,
+  accreditationType,
+  localise
+) => {
+  const columns = [...totalledColumns, AVERAGE_PRICE_COLUMN]
+
+  return {
+    columns: columns.map(([measure]) =>
+      localise(
+        `regulators:marketInsights:figures:columns:${accreditationType}:${measure}`
+      )
+    ),
+    rows: Object.entries(byMaterial)
+      .map(([material, figures]) => ({
+        label: getMaterialDisplayName(material),
+        figures: columns.map(([measure, format]) => format(figures[measure]))
+      }))
+      .sort((one, other) => one.label.localeCompare(other.label)),
+    total: {
+      label: localise('regulators:marketInsights:figures:total:label'),
+      figures: totalledColumns.map(([measure, format]) =>
+        format(totals[measure])
+      )
+    }
+  }
+}
 
 /**
  * Lays the served figures out the way the published UK tab is: for each
  * month, a reprocessor table and an exporter table, one row per material, the
- * tonnage columns in the tab's order, and above them how many of the reports
- * the month expected the figures include. Every figure is the one the service
- * served; nothing is summed here.
+ * tonnage columns in the tab's order, the served totals as the Grand Total,
+ * and above them how many of the reports the month expected the figures
+ * include.
+ * Every figure is the one the service served; nothing is summed here.
  *
  * The months are the page's period, so a served month outside it is not
  * shown.
@@ -159,7 +195,8 @@ export const toReprocessorExporterTables = (
   months: months.map((month) => {
     const {
       reports: { expected, submitted },
-      figures
+      figures,
+      totals
     } = served[month]
     const byMaterial = Object.entries(figures)
 
@@ -179,6 +216,7 @@ export const toReprocessorExporterTables = (
             reprocessor
           ])
         ),
+        totals.reprocessor,
         REPROCESSOR_COLUMNS,
         'reprocessor',
         localise
@@ -187,6 +225,7 @@ export const toReprocessorExporterTables = (
         Object.fromEntries(
           byMaterial.map(([material, { exporter }]) => [material, exporter])
         ),
+        totals.exporter,
         EXPORTER_COLUMNS,
         'exporter',
         localise
