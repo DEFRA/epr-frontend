@@ -31,6 +31,7 @@ const nationFigures = {
   data: {
     months: {
       '2026-01': {
+        reports: { expected: 2, submitted: 2 },
         figures: {
           plastic: {
             reprocessor: reprocessorOf({ tonnageReceived: 320.5 }),
@@ -39,11 +40,13 @@ const nationFigures = {
         }
       },
       '2026-02': {
+        reports: { expected: 2, submitted: 1 },
         figures: {
           plastic: { reprocessor: reprocessorOf(), exporter: exporterOf() }
         }
       },
       '2026-03': {
+        reports: { expected: 3, submitted: 0 },
         figures: {
           plastic: { reprocessor: reprocessorOf(), exporter: exporterOf() }
         }
@@ -172,6 +175,28 @@ describe.each(NATIONS)(
             '£0.00',
             '£0.00'
           ]
+        ])
+      })
+
+      it('says beneath each month how many of the monthly reports the nation was owed have been submitted', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: path,
+          auth: regulator
+        })
+
+        expect(
+          getAllByRole(documentOf(asHtml(result)), 'heading', { level: 2 })
+            .filter((heading) => (heading.textContent ?? '').endsWith('2026'))
+            .map((heading) =>
+              (heading.nextElementSibling?.textContent ?? '').trim()
+            )
+        ).toStrictEqual([
+          'Monthly reports submitted: 2 of 2',
+          'Monthly reports submitted: 1 of 2',
+          'Monthly reports submitted: 0 of 3'
         ])
       })
 
