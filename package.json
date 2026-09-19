@@ -95,9 +95,9 @@
     "undici": "8.10.0"
   },
   "devDependencies": {
-    "@babel/cli": "8.0.4",
-    "@babel/core": "8.0.1",
-    "@babel/preset-env": "8.0.2",
+    "@babel/cli": "8.0.5",
+    "@babel/core": "8.0.5",
+    "@babel/preset-env": "8.0.5",
     "@eslint/js": "10.0.1",
     "@hapi/iron": "7.0.1",
     "@testing-library/dom": "10.4.1",
