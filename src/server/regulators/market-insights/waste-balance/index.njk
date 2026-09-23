@@ -2,7 +2,7 @@
 
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
-{% from "few-operators/macro.njk" import fewOperators %}
+{% from "few-operators/macro.njk" import withFewOperators %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -44,28 +44,20 @@
         {% endfor %}
         {% set tableHead = tableHead.concat([{ text: localise('regulators:marketInsights:wasteBalance:table:total'), format: "numeric" }]) %}
 
+        {% set fewOperatorsTag = localise('regulators:marketInsights:fewOperators:tag') %}
         {% set tableRows = [] %}
         {% for row in wasteBalance.rows %}
           {% set cells = [{ text: row.material }, { text: row.accreditationType }] %}
           {% for netCredit in row.netCredits %}
-            {% set fewOperatorCounts = row.fewOperators[loop.index0] %}
-            {% if fewOperatorCounts %}
-              {% set cells = cells.concat([{
-                html: netCredit ~ fewOperators(localise('regulators:marketInsights:fewOperators:tag'), fewOperatorCounts),
-                format: "numeric"
-              }]) %}
-            {% else %}
-              {% set cells = cells.concat([{ text: netCredit, format: "numeric" }]) %}
-            {% endif %}
-          {% endfor %}
-          {% if row.totalFewOperators %}
             {% set cells = cells.concat([{
-              html: row.total ~ fewOperators(localise('regulators:marketInsights:fewOperators:tag'), row.totalFewOperators),
+              html: withFewOperators(netCredit, row.fewOperators[loop.index0], fewOperatorsTag),
               format: "numeric"
             }]) %}
-          {% else %}
-            {% set cells = cells.concat([{ text: row.total, format: "numeric" }]) %}
-          {% endif %}
+          {% endfor %}
+          {% set cells = cells.concat([{
+            html: withFewOperators(row.total, row.totalFewOperators, fewOperatorsTag),
+            format: "numeric"
+          }]) %}
           {% set tableRows = tableRows.concat([cells]) %}
         {% endfor %}
 

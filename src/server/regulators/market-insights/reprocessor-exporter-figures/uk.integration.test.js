@@ -476,7 +476,7 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted.',
         'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
         'Figures from few operators',
-        'A figure is marked ‘Few operators’ when one or two operators could have contributed to it, or when one or two operators did. The mark gives both counts. A figure no operator contributed to is not marked.',
+        'A figure is marked ‘Few operators’ when one or two operators could have contributed to it, or when one or two operators did. The mark gives both counts. A figure no operator could have contributed to is not marked.',
         'The operators who could have contributed to a figure are every operator owed a monthly report for that month, whether or not it submitted one, and any other operator whose report the figure includes. A suspended operator counts. An operator whose accreditation stood cancelled for the whole month does not, unless the figure includes a report from it all the same. An operator the figures leave out does not count either.',
         'The operators who did contribute are those whose reports the figure includes.',
         'An operator is a business. It counts once however many sites it has, so an operator with sites in two nations counts once in each nation’s figures and once in the UK’s.',

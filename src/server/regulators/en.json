@@ -179,7 +179,7 @@
       "business": "An operator is a business. It counts once however many sites it has, so an operator with sites in two nations counts once in each nation’s figures and once in the UK’s.",
       "counts": "{{ operators }} could have contributed, {{ submitting }} did",
       "heading": "Figures from few operators",
-      "marked": "A figure is marked ‘Few operators’ when one or two operators could have contributed to it, or when one or two operators did. The mark gives both counts. A figure no operator contributed to is not marked.",
+      "marked": "A figure is marked ‘Few operators’ when one or two operators could have contributed to it, or when one or two operators did. The mark gives both counts. A figure no operator could have contributed to is not marked.",
       "tag": "Few operators"
     }
   },
