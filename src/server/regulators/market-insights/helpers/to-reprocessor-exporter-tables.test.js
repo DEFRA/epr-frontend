@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { toReprocessorExporterTables } from './to-reprocessor-exporter-tables.js'
 
 /**
- * @import { ExporterFigures, ReprocessorFigures, ReprocessorExporterData, ReprocessorExporterTotals } from './to-reprocessor-exporter-tables.js'
+ * @import { ReprocessorExporterData, ReprocessorExporterTotals } from './to-reprocessor-exporter-tables.js'
  */
 
 /**
@@ -23,7 +23,7 @@ const asKey = (key, values = {}) =>
   ].join(':')
 
 /**
- * @param {Record<string, { reprocessor: ReprocessorFigures, exporter: ExporterFigures }>} figures
+ * @param {ReprocessorExporterData['months'][string]['figures']} figures
  * @param {ReprocessorExporterData['months'][string]['reports']} [reports]
  * @param {ReprocessorExporterTotals} [totals]
  */
@@ -151,7 +151,8 @@ describe(toReprocessorExporterTables, () => {
         '900.00',
         '£108,000.00',
         '£121.00'
-      ]
+      ],
+      fewOperators: undefined
     })
   })
 
@@ -219,7 +220,8 @@ describe(toReprocessorExporterTables, () => {
         '250.00',
         '£12,345.68',
         '£50.00'
-      ]
+      ],
+      fewOperators: undefined
     })
   })
 
@@ -279,7 +281,8 @@ describe(toReprocessorExporterTables, () => {
         '10.00',
         '800.00',
         '£96,000.00'
-      ]
+      ],
+      fewOperators: undefined
     })
     expect(exporter.total).toStrictEqual({
       label: 'translated:regulators:marketInsights:figures:total:label',
@@ -296,7 +299,8 @@ describe(toReprocessorExporterTables, () => {
         '0.13',
         '450.00',
         '£22,500.50'
-      ]
+      ],
+      fewOperators: undefined
     })
   })
 

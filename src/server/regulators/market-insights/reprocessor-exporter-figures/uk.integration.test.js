@@ -24,6 +24,7 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 /**
  * @import { ReprocessorExporterAggregate } from '../helpers/fetch-reprocessor-exporter-figures.js'
  * @import { ExporterFigures, ReprocessorFigures } from '../helpers/to-reprocessor-exporter-tables.js'
+ * @import { OperatorCounts } from '../helpers/few-operators.js'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -33,7 +34,10 @@ const figuresUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/repr
  * A month in which plastic was reprocessed and aluminium exported, every
  * other served figure at zero. The page shows whatever materials are served,
  * so two are enough to see both tables laid out.
- * @param {{ plastic: Partial<ReprocessorFigures>, aluminium: Partial<ExporterFigures> }} figures
+ * @param {{
+ *   plastic: Partial<ReprocessorFigures & OperatorCounts>,
+ *   aluminium: Partial<ExporterFigures & OperatorCounts>
+ * }} figures
  * @param {ReprocessorExporterAggregate['data']['months'][string]['reports']} [reports]
  * @param {ReprocessorExporterAggregate['data']['months'][string]['totals']} [totals]
  * @returns {ReprocessorExporterAggregate['data']['months'][string]}
