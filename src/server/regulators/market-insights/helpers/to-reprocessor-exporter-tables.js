@@ -2,13 +2,9 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
-import { fewOperatorsOf } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
-/**
- * @import { ReportCount } from './to-waste-balance-table.js'
- * @import { Localise, OperatorCounts } from './few-operators.js'
- */
+/** @import { ReportCount } from './to-waste-balance-table.js' */
 
 /**
  * The measures both published tables print: what came in, where it was sent
@@ -49,10 +45,7 @@ import { nameOf } from './reporting-period.js'
  * @typedef {Omit<SharedFigures, 'averagePricePerTonne'>} SharedTotals
  * @typedef {Omit<ReprocessorFigures, 'averagePricePerTonne'>} ReprocessorTotals
  * @typedef {Omit<ExporterFigures, 'averagePricePerTonne'>} ExporterTotals
- * @typedef {{
- *   reprocessor: ReprocessorTotals & OperatorCounts,
- *   exporter: ExporterTotals & OperatorCounts
- * }} ReprocessorExporterTotals
+ * @typedef {{ reprocessor: ReprocessorTotals, exporter: ExporterTotals }} ReprocessorExporterTotals
  */
 
 /**
@@ -62,8 +55,8 @@ import { nameOf } from './reporting-period.js'
  * @typedef {{
  *   reports: ReportCount,
  *   figures: Record<string, {
- *     reprocessor: ReprocessorFigures & OperatorCounts,
- *     exporter: ExporterFigures & OperatorCounts
+ *     reprocessor: ReprocessorFigures,
+ *     exporter: ExporterFigures
  *   }>,
  *   totals: ReprocessorExporterTotals
  * }} ReprocessorExporterMonth
@@ -71,15 +64,7 @@ import { nameOf } from './reporting-period.js'
 
 /** @typedef {{ months: Record<string, ReprocessorExporterMonth> }} ReprocessorExporterData */
 
-/**
- * A row of figures under its label, and the operator counts where few
- * operators contributed to it.
- * @typedef {{
- *   label: string,
- *   figures: string[],
- *   fewOperators: string | undefined
- * }} FiguresRow
- */
+/** @typedef {{ label: string, figures: string[] }} FiguresRow */
 
 /**
  * A table as the page lays it out: the column headings after the material,
@@ -99,6 +84,8 @@ import { nameOf } from './reporting-period.js'
  */
 
 /** @typedef {{ months: FiguresMonth[] }} ReprocessorExporterTables */
+
+/** @typedef {(key: string, values?: Record<string, string | number>) => string} Localise */
 
 /**
  * The PRN and PERN columns. The published tab gives these a table of their
@@ -148,8 +135,8 @@ const EXPORTER_COLUMNS = [
 
 /**
  * @template {string} Totalled
- * @param {Record<string, Record<Totalled | 'averagePricePerTonne', number> & OperatorCounts>} byMaterial
- * @param {Record<Totalled, number> & OperatorCounts} totals
+ * @param {Record<string, Record<Totalled | 'averagePricePerTonne', number>>} byMaterial
+ * @param {Record<Totalled, number>} totals
  * @param {[Totalled, (value: number) => string][]} totalledColumns
  * @param {'reprocessor' | 'exporter'} accreditationType
  * @param {Localise} localise
@@ -173,16 +160,14 @@ const toTable = (
     rows: Object.entries(byMaterial)
       .map(([material, figures]) => ({
         label: getMaterialDisplayName(material),
-        figures: columns.map(([measure, format]) => format(figures[measure])),
-        fewOperators: fewOperatorsOf(figures, localise)
+        figures: columns.map(([measure, format]) => format(figures[measure]))
       }))
       .sort((one, other) => one.label.localeCompare(other.label)),
     total: {
       label: localise('regulators:marketInsights:figures:total:label'),
       figures: totalledColumns.map(([measure, format]) =>
         format(totals[measure])
-      ),
-      fewOperators: fewOperatorsOf(totals, localise)
+      )
     }
   }
 }

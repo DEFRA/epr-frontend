@@ -24,7 +24,6 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 /**
  * @import { ReprocessorExporterAggregate } from '../helpers/fetch-reprocessor-exporter-figures.js'
  * @import { ExporterFigures, ReprocessorFigures } from '../helpers/to-reprocessor-exporter-tables.js'
- * @import { OperatorCounts } from '../helpers/few-operators.js'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -34,10 +33,7 @@ const figuresUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/repr
  * A month in which plastic was reprocessed and aluminium exported, every
  * other served figure at zero. The page shows whatever materials are served,
  * so two are enough to see both tables laid out.
- * @param {{
- *   plastic: Partial<ReprocessorFigures & OperatorCounts>,
- *   aluminium: Partial<ExporterFigures & OperatorCounts>
- * }} figures
+ * @param {{ plastic: Partial<ReprocessorFigures>, aluminium: Partial<ExporterFigures> }} figures
  * @param {ReprocessorExporterAggregate['data']['months'][string]['reports']} [reports]
  * @param {ReprocessorExporterAggregate['data']['months'][string]['totals']} [totals]
  * @returns {ReprocessorExporterAggregate['data']['months'][string]}
@@ -475,86 +471,9 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Each table ends in a Grand Total row, which adds up every material. No average price is calculated for it, so that cell shows a dash.',
         'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted.',
         'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
-        'Figures from few operators',
-        'A figure is marked ‘Few operators’ when one or two operators could have contributed to it, or when one or two operators did. The mark gives both counts. A figure no operator could have contributed to is not marked.',
-        'The operators who could have contributed to a figure are every operator owed a monthly report for that month, whether or not it submitted one, and any other operator whose report the figure includes. A suspended operator counts. An operator whose accreditation stood cancelled for the whole month does not, unless the figure includes a report from it all the same. An operator the figures leave out does not count either.',
-        'The operators who did contribute are those whose reports the figure includes.',
-        'An operator is a business. It counts once however many sites it has, so an operator with sites in two nations counts once in each nation’s figures and once in the UK’s.',
         'January 2026',
         'Monthly reports submitted: 1 of 2'
       ])
-    })
-
-    it('marks each material and Grand Total few operators contributed to with both counts, beside the figures rather than in them', async ({
-      msw,
-      server
-    }) => {
-      msw.use(
-        http.get(figuresUrl, () =>
-          HttpResponse.json({
-            meta: { generatedAt: '2026-04-10T09:30:00.000Z' },
-            data: {
-              months: {
-                '2026-01': figuresMonthOf(
-                  {
-                    plastic: {
-                      tonnageReceived: 40,
-                      operatorCount: 2,
-                      submittingOperatorCount: 1
-                    },
-                    aluminium: { operatorCount: 3, submittingOperatorCount: 0 }
-                  },
-                  { expected: 2, submitted: 1 },
-                  totalsOf({
-                    reprocessor: {
-                      tonnageReceived: 40,
-                      operatorCount: 5,
-                      submittingOperatorCount: 3
-                    },
-                    exporter: { operatorCount: 3, submittingOperatorCount: 1 }
-                  })
-                ),
-                '2026-02': figuresMonthOf({ plastic: {}, aluminium: {} }),
-                '2026-03': figuresMonthOf({ plastic: {}, aluminium: {} })
-              }
-            }
-          })
-        )
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: paths.regulators.marketInsightsUk,
-        auth: regulator
-      })
-
-      const body = documentOf(asHtml(result))
-      /** @param {string} name */
-      const rowHeadersOf = (name) =>
-        getAllByRole(getByRole(body, 'table', { name }), 'rowheader').map(
-          (header) => (header.textContent ?? '').replaceAll(/\s+/g, ' ').trim()
-        )
-
-      expect(rowHeadersOf('Reprocessor data for January 2026')).toStrictEqual([
-        'Aluminium',
-        'Plastic Few operators 2 could have contributed, 1 did',
-        'Grand Total'
-      ])
-      expect(rowHeadersOf('Exporter data for January 2026')).toStrictEqual([
-        'Aluminium',
-        'Plastic',
-        'Grand Total Few operators 3 could have contributed, 1 did'
-      ])
-
-      // The mark sits with the row's name, so every figure still reads as the
-      // figure alone.
-      expect(
-        rowsOf(
-          getByRole(body, 'table', {
-            name: 'Reprocessor data for January 2026'
-          })
-        )[1].slice(1, 2)
-      ).toStrictEqual(['40.00'])
     })
 
     it('asks for the reporting period through the last complete month, and for nothing else', async ({

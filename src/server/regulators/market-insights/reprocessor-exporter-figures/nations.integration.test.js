@@ -261,58 +261,6 @@ describe.each(NATIONS)(
         expect(
           getByRole(body, 'heading', { name: 'How the figures are calculated' })
         ).not.toBeNull()
-        expect(
-          getByRole(body, 'heading', { name: 'Figures from few operators' })
-        ).not.toBeNull()
-      })
-
-      it('marks a material few of the nation’s operators contributed to', async ({
-        msw,
-        server
-      }) => {
-        msw.use(
-          http.get(nationFiguresUrl, () =>
-            HttpResponse.json({
-              ...nationFigures,
-              data: {
-                months: {
-                  ...nationFigures.data.months,
-                  '2026-01': {
-                    ...nationFigures.data.months['2026-01'],
-                    figures: {
-                      plastic: {
-                        reprocessor: reprocessorOf({
-                          operatorCount: 1,
-                          submittingOperatorCount: 1
-                        }),
-                        exporter: exporterOf()
-                      }
-                    }
-                  }
-                }
-              }
-            })
-          )
-        )
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: path,
-          auth: regulator
-        })
-
-        const table = getByRole(documentOf(asHtml(result)), 'table', {
-          name: 'Reprocessor data for January 2026'
-        })
-
-        expect(
-          getAllByRole(table, 'rowheader').map((header) =>
-            (header.textContent ?? '').replaceAll(/\s+/g, ' ').trim()
-          )
-        ).toStrictEqual([
-          'Plastic Few operators 1 could have contributed, 1 did',
-          'Grand Total'
-        ])
       })
     })
 

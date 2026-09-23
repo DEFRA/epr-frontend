@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { toReprocessorExporterTables } from './to-reprocessor-exporter-tables.js'
 
 /**
- * @import { ReprocessorExporterData, ReprocessorExporterTotals } from './to-reprocessor-exporter-tables.js'
+ * @import { ExporterFigures, ReprocessorFigures, ReprocessorExporterData, ReprocessorExporterTotals } from './to-reprocessor-exporter-tables.js'
  */
 
 /**
@@ -23,7 +23,7 @@ const asKey = (key, values = {}) =>
   ].join(':')
 
 /**
- * @param {ReprocessorExporterData['months'][string]['figures']} figures
+ * @param {Record<string, { reprocessor: ReprocessorFigures, exporter: ExporterFigures }>} figures
  * @param {ReprocessorExporterData['months'][string]['reports']} [reports]
  * @param {ReprocessorExporterTotals} [totals]
  */
@@ -151,8 +151,7 @@ describe(toReprocessorExporterTables, () => {
         '900.00',
         '£108,000.00',
         '£121.00'
-      ],
-      fewOperators: undefined
+      ]
     })
   })
 
@@ -220,8 +219,7 @@ describe(toReprocessorExporterTables, () => {
         '250.00',
         '£12,345.68',
         '£50.00'
-      ],
-      fewOperators: undefined
+      ]
     })
   })
 
@@ -281,8 +279,7 @@ describe(toReprocessorExporterTables, () => {
         '10.00',
         '800.00',
         '£96,000.00'
-      ],
-      fewOperators: undefined
+      ]
     })
     expect(exporter.total).toStrictEqual({
       label: 'translated:regulators:marketInsights:figures:total:label',
@@ -299,46 +296,8 @@ describe(toReprocessorExporterTables, () => {
         '0.13',
         '450.00',
         '£22,500.50'
-      ],
-      fewOperators: undefined
+      ]
     })
-  })
-
-  it('states the operator counts on each material and Grand Total that few operators contributed to, and on no other', () => {
-    const { reprocessor, exporter } = toReprocessorExporterTables(
-      dataOf({
-        '2026-01': monthOf(
-          {
-            plastic: {
-              reprocessor: reprocessorOf({
-                operatorCount: 2,
-                submittingOperatorCount: 1
-              }),
-              exporter: exporterOf({
-                operatorCount: 4,
-                submittingOperatorCount: 3
-              })
-            }
-          },
-          { expected: 0, submitted: 0 },
-          totalsOf({
-            reprocessor: { operatorCount: 6, submittingOperatorCount: 5 },
-            exporter: { operatorCount: 4, submittingOperatorCount: 1 }
-          })
-        )
-      }),
-      ['2026-01'],
-      asKey
-    ).months[0]
-
-    expect(reprocessor.rows[0].fewOperators).toBe(
-      'translated:regulators:marketInsights:fewOperators:counts:operators=2:submitting=1'
-    )
-    expect(reprocessor.total.fewOperators).toBeUndefined()
-    expect(exporter.rows[0].fewOperators).toBeUndefined()
-    expect(exporter.total.fewOperators).toBe(
-      'translated:regulators:marketInsights:fewOperators:counts:operators=4:submitting=1'
-    )
   })
 
   it('names the materials the way the rest of the service does, and orders the rows by that name', () => {

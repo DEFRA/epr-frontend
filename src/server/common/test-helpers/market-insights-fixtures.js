@@ -6,7 +6,6 @@ import { IDENTITIES } from './identity-helper.js'
 /**
  * @import { ExporterFigures, ReprocessorExporterTotals, ReprocessorFigures } from '#server/regulators/market-insights/helpers/to-reprocessor-exporter-tables.js'
  * @import { OutstandingByBand } from '#server/regulators/market-insights/helpers/to-outstanding-returns-tables.js'
- * @import { OperatorCounts } from '#server/regulators/market-insights/helpers/few-operators.js'
  */
 
 /** A regulator, who reads every market insights page. */
@@ -36,8 +35,8 @@ export const NOTICE =
   'This page is still being built. Some figures may be missing or wrong.'
 
 /**
- * @param {Partial<ReprocessorFigures & OperatorCounts>} figures
- * @returns {ReprocessorFigures & OperatorCounts}
+ * @param {Partial<ReprocessorFigures>} figures
+ * @returns {ReprocessorFigures}
  */
 export const reprocessorOf = (figures = {}) => ({
   tonnageReceived: 0,
@@ -50,14 +49,12 @@ export const reprocessorOf = (figures = {}) => ({
   revisedTonnageIssued: 0,
   totalRevenue: 0,
   averagePricePerTonne: 0,
-  operatorCount: 0,
-  submittingOperatorCount: 0,
   ...figures
 })
 
 /**
- * @param {Partial<ExporterFigures & OperatorCounts>} figures
- * @returns {ExporterFigures & OperatorCounts}
+ * @param {Partial<ExporterFigures>} figures
+ * @returns {ExporterFigures}
  */
 export const exporterOf = (figures = {}) => ({
   tonnageReceived: 0,
@@ -73,8 +70,6 @@ export const exporterOf = (figures = {}) => ({
   revisedTonnageIssued: 0,
   totalRevenue: 0,
   averagePricePerTonne: 0,
-  operatorCount: 0,
-  submittingOperatorCount: 0,
   ...figures
 })
 
