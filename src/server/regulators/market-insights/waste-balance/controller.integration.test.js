@@ -76,7 +76,19 @@ const januaryToMarch = {
         { expected: 3, submitted: 0 }
       )
     },
-    period: { reports: { expected: 9, submitted: 4 } }
+    period: {
+      reports: { expected: 9, submitted: 4 },
+      operatorCounts: {
+        glass_re_melt: {
+          reprocessor: { operatorCount: 6, submittingOperatorCount: 4 },
+          exporter: { operatorCount: 6, submittingOperatorCount: 4 }
+        },
+        aluminium: {
+          reprocessor: { operatorCount: 6, submittingOperatorCount: 4 },
+          exporter: { operatorCount: 6, submittingOperatorCount: 4 }
+        }
+      }
+    }
   }
 }
 
@@ -213,7 +225,7 @@ describe('the UK waste balance page', () => {
       ).toBe(paths.regulators.marketInsights)
     })
 
-    it('marks each month few operators contributed to with both counts, beneath its figure', async ({
+    it('marks each month and row total few operators contributed to with both counts, beneath its figure', async ({
       msw,
       server
     }) => {
@@ -223,6 +235,19 @@ describe('the UK waste balance page', () => {
             ...januaryToMarch,
             data: {
               ...januaryToMarch.data,
+              period: {
+                ...januaryToMarch.data.period,
+                operatorCounts: {
+                  ...januaryToMarch.data.period.operatorCounts,
+                  aluminium: {
+                    reprocessor: {
+                      operatorCount: 0,
+                      submittingOperatorCount: 0
+                    },
+                    exporter: { operatorCount: 4, submittingOperatorCount: 1 }
+                  }
+                }
+              },
               months: {
                 ...januaryToMarch.data.months,
                 '2026-02': {
@@ -268,7 +293,14 @@ describe('the UK waste balance page', () => {
           row.map((cell) => cell.replaceAll(/\s+/g, ' '))
         )
       ).toStrictEqual([
-        ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00'],
+        [
+          'Aluminium',
+          'Exporter',
+          '0.00',
+          '8.00',
+          '0.00',
+          '8.00 Few operators 4 could have contributed, 1 did'
+        ],
         ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00'],
         ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
         [
@@ -330,6 +362,7 @@ describe('the UK waste balance page', () => {
         'A figure is marked ‘Few operators’ when one or two operators could have contributed to it, or when one or two operators did. The mark gives both counts. A figure no operator contributed to is not marked.',
         'The operators who could have contributed to a figure are every operator owed a monthly report for that month, whether or not it submitted one, and any other operator whose tonnage the figure includes. A suspended operator counts. An operator whose accreditation stood cancelled for the whole month does not, unless the figure includes its tonnage all the same.',
         'The operators who did contribute are those whose credited tonnage the figure includes.',
+        'A row’s total is counted across all its months, so an operator that could have contributed in more than one month counts once.',
         'An operator is a business. It counts once however many sites it has, so an operator with sites in two nations counts once in each nation’s figures and once in the UK’s.'
       ])
     })

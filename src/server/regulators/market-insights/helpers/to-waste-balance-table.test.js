@@ -52,14 +52,35 @@ const monthOf = (figures, reports = { expected: 0, submitted: 0 }) => ({
 })
 
 /**
+ * The backend serves a row total's operator counts for every row its months
+ * serve, so each is at zero unless a test names it.
  * @param {Record<string, PublishedMonth>} months
- * @param {WasteBalanceData['period']} [period]
+ * @param {Partial<WasteBalanceData['period']>} [period]
  * @returns {WasteBalanceData}
  */
-const dataOf = (
-  months,
-  period = { reports: { expected: 0, submitted: 0 } }
-) => ({ months, period })
+const dataOf = (months, { reports, operatorCounts = {} } = {}) => {
+  /** @type {WasteBalanceData['period']['operatorCounts']} */
+  const counts = {}
+  for (const { figures } of Object.values(months)) {
+    for (const [material, byType] of Object.entries(figures)) {
+      for (const accreditationType of Object.keys(byType)) {
+        counts[material] = {
+          ...counts[material],
+          [accreditationType]: operatorCounts[material]?.[
+            accreditationType
+          ] ?? { operatorCount: 0, submittingOperatorCount: 0 }
+        }
+      }
+    }
+  }
+  return {
+    months,
+    period: {
+      reports: reports ?? { expected: 0, submitted: 0 },
+      operatorCounts: counts
+    }
+  }
+}
 
 describe(toWasteBalanceTable, () => {
   it('names the months it was given, in calendar order', () => {
@@ -91,7 +112,8 @@ describe(toWasteBalanceTable, () => {
         accreditationType: reprocessor,
         netCredits: ['90.00', '42.50'],
         fewOperators: [undefined, undefined],
-        total: '132.50'
+        total: '132.50',
+        totalFewOperators: undefined
       }
     ])
   })
@@ -114,7 +136,8 @@ describe(toWasteBalanceTable, () => {
           accreditationType: reprocessor,
           netCredits: ['90.00'],
           fewOperators: [undefined],
-          total: '90.00'
+          total: '90.00',
+          totalFewOperators: undefined
         }
       ],
       reports: {
@@ -154,6 +177,42 @@ describe(toWasteBalanceTable, () => {
     ).toStrictEqual([
       'translated:regulators:marketInsights:fewOperators:counts:operators=4:submitting=2',
       undefined
+    ])
+  })
+
+  it('states the operator counts the period served for a row total few operators contributed to, and not for another', () => {
+    const period = {
+      reports: { expected: 0, submitted: 0 },
+      operatorCounts: {
+        plastic: {
+          reprocessor: { operatorCount: 5, submittingOperatorCount: 2 },
+          exporter: { operatorCount: 5, submittingOperatorCount: 4 }
+        }
+      }
+    }
+
+    expect(
+      toWasteBalanceTable(
+        dataOf(
+          {
+            '2026-01': monthOf({
+              plastic: { reprocessor: figuresOf(1), exporter: figuresOf(2) }
+            })
+          },
+          period
+        ),
+        ['2026-01'],
+        asKey
+      ).rows.map(({ accreditationType, totalFewOperators }) => [
+        accreditationType,
+        totalFewOperators
+      ])
+    ).toStrictEqual([
+      [exporter, undefined],
+      [
+        reprocessor,
+        'translated:regulators:marketInsights:fewOperators:counts:operators=5:submitting=2'
+      ]
     ])
   })
 

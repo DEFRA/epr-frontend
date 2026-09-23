@@ -31,6 +31,7 @@
       <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:marked') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:possible') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:submitting') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:total') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:business') }}</p>
 
       <div class="govuk-body" data-testid="app-page-body">
@@ -57,7 +58,14 @@
               {% set cells = cells.concat([{ text: netCredit, format: "numeric" }]) %}
             {% endif %}
           {% endfor %}
-          {% set cells = cells.concat([{ text: row.total, format: "numeric" }]) %}
+          {% if row.totalFewOperators %}
+            {% set cells = cells.concat([{
+              html: row.total ~ fewOperators(localise('regulators:marketInsights:fewOperators:tag'), row.totalFewOperators),
+              format: "numeric"
+            }]) %}
+          {% else %}
+            {% set cells = cells.concat([{ text: row.total, format: "numeric" }]) %}
+          {% endif %}
           {% set tableRows = tableRows.concat([cells]) %}
         {% endfor %}
 

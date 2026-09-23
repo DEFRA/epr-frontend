@@ -171,7 +171,8 @@
       },
       "fewOperators": {
         "possible": "The operators who could have contributed to a figure are every operator owed a monthly report for that month, whether or not it submitted one, and any other operator whose tonnage the figure includes. A suspended operator counts. An operator whose accreditation stood cancelled for the whole month does not, unless the figure includes its tonnage all the same.",
-        "submitting": "The operators who did contribute are those whose credited tonnage the figure includes."
+        "submitting": "The operators who did contribute are those whose credited tonnage the figure includes.",
+        "total": "A row’s total is counted across all its months, so an operator that could have contributed in more than one month counts once."
       }
     },
     "fewOperators": {

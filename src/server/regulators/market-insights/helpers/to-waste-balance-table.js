@@ -32,9 +32,14 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
+ * The period as the backend serves it: the reports it was owed, and the
+ * operator counts behind each row's total across its months.
  * @typedef {{
  *   months: Record<string, PublishedMonth>,
- *   period: { reports: ReportCount }
+ *   period: {
+ *     reports: ReportCount,
+ *     operatorCounts: Record<string, Record<string, OperatorCounts>>
+ *   }
  * }} WasteBalanceData
  */
 
@@ -44,7 +49,8 @@ import { nameOf } from './reporting-period.js'
  *   accreditationType: string,
  *   netCredits: string[],
  *   fewOperators: (string | undefined)[],
- *   total: string
+ *   total: string,
+ *   totalFewOperators: string | undefined
  * }} WasteBalanceRow
  */
 
@@ -97,6 +103,10 @@ export const toWasteBalanceTable = (
       material: getMaterialDisplayName(material),
       accreditationType: localise(
         `regulators:marketInsights:wasteBalance:accreditationTypes:${accreditationType}`
+      ),
+      totalFewOperators: fewOperatorsOf(
+        period.operatorCounts[material][accreditationType],
+        localise
       ),
       figures: months.map(
         (month) => served[month].figures[material][accreditationType]
