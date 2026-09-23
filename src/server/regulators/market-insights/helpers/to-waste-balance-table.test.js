@@ -110,10 +110,11 @@ describe(toWasteBalanceTable, () => {
       {
         material: 'Plastic',
         accreditationType: reprocessor,
-        netCredits: ['90.00', '42.50'],
-        fewOperators: [undefined, undefined],
-        total: '132.50',
-        totalFewOperators: undefined
+        netCredits: [
+          { figure: '90.00', fewOperators: undefined },
+          { figure: '42.50', fewOperators: undefined }
+        ],
+        total: { figure: '132.50', fewOperators: undefined }
       }
     ])
   })
@@ -134,10 +135,8 @@ describe(toWasteBalanceTable, () => {
         {
           material: 'Plastic',
           accreditationType: reprocessor,
-          netCredits: ['90.00'],
-          fewOperators: [undefined],
-          total: '90.00',
-          totalFewOperators: undefined
+          netCredits: [{ figure: '90.00', fewOperators: undefined }],
+          total: { figure: '90.00', fewOperators: undefined }
         }
       ],
       reports: {
@@ -173,7 +172,7 @@ describe(toWasteBalanceTable, () => {
         }),
         januaryAndFebruary,
         asKey
-      ).rows[0].fewOperators
+      ).rows[0].netCredits.map(({ fewOperators }) => fewOperators)
     ).toStrictEqual([
       'translated:regulators:marketInsights:fewOperators:counts:operators=4:submitting=2',
       undefined
@@ -203,9 +202,9 @@ describe(toWasteBalanceTable, () => {
         ),
         ['2026-01'],
         asKey
-      ).rows.map(({ accreditationType, totalFewOperators }) => [
+      ).rows.map(({ accreditationType, total }) => [
         accreditationType,
-        totalFewOperators
+        total.fewOperators
       ])
     ).toStrictEqual([
       [exporter, undefined],
@@ -242,7 +241,7 @@ describe(toWasteBalanceTable, () => {
       ).rows.map(({ material, accreditationType, total }) => [
         material,
         accreditationType,
-        total
+        total.figure
       ])
     ).toStrictEqual([
       ['Aluminium', exporter, '4.00'],

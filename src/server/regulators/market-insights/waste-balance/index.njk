@@ -32,7 +32,7 @@
       <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:possible') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:submitting') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:total') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:business') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:business') }}</p>
 
       <div class="govuk-body" data-testid="app-page-body">
         {% set tableHead = [
@@ -50,12 +50,12 @@
           {% set cells = [{ text: row.material }, { text: row.accreditationType }] %}
           {% for netCredit in row.netCredits %}
             {% set cells = cells.concat([{
-              html: withFewOperators(netCredit, row.fewOperators[loop.index0], fewOperatorsTag),
+              html: withFewOperators(netCredit.figure, netCredit.fewOperators, fewOperatorsTag),
               format: "numeric"
             }]) %}
           {% endfor %}
           {% set cells = cells.concat([{
-            html: withFewOperators(row.total, row.totalFewOperators, fewOperatorsTag),
+            html: withFewOperators(row.total.figure, row.total.fewOperators, fewOperatorsTag),
             format: "numeric"
           }]) %}
           {% set tableRows = tableRows.concat([cells]) %}

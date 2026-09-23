@@ -44,13 +44,17 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
+ * A formatted figure, and the operator counts where few operators contributed
+ * to it.
+ * @typedef {{ figure: string, fewOperators: string | undefined }} MarkedFigure
+ */
+
+/**
  * @typedef {{
  *   material: string,
  *   accreditationType: string,
- *   netCredits: string[],
- *   fewOperators: (string | undefined)[],
- *   total: string,
- *   totalFewOperators: string | undefined
+ *   netCredits: MarkedFigure[],
+ *   total: MarkedFigure
  * }} WasteBalanceRow
  */
 
@@ -104,10 +108,7 @@ export const toWasteBalanceTable = (
       accreditationType: localise(
         `regulators:marketInsights:wasteBalance:accreditationTypes:${accreditationType}`
       ),
-      totalFewOperators: fewOperatorsOf(
-        period.operatorCounts[material][accreditationType],
-        localise
-      ),
+      periodCounts: period.operatorCounts[material][accreditationType],
       figures: months.map(
         (month) => served[month].figures[material][accreditationType]
       )
@@ -117,13 +118,18 @@ export const toWasteBalanceTable = (
         one.material.localeCompare(other.material) ||
         one.accreditationType.localeCompare(other.accreditationType)
     )
-    .map(({ figures, ...row }) => ({
+    .map(({ figures, periodCounts, ...row }) => ({
       ...row,
-      netCredits: figures.map(({ netCredit }) => formatTonnage(netCredit)),
-      fewOperators: figures.map((counts) => fewOperatorsOf(counts, localise)),
-      total: formatTonnage(
-        figures.reduce((sum, { netCredit }) => sum + netCredit, 0)
-      )
+      netCredits: figures.map((figure) => ({
+        figure: formatTonnage(figure.netCredit),
+        fewOperators: fewOperatorsOf(figure, localise)
+      })),
+      total: {
+        figure: formatTonnage(
+          figures.reduce((sum, { netCredit }) => sum + netCredit, 0)
+        ),
+        fewOperators: fewOperatorsOf(periodCounts, localise)
+      }
     }))
 
   /** @param {ReportCount} count */

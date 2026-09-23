@@ -360,10 +360,10 @@ describe('the UK waste balance page', () => {
         'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.',
         'Figures from few operators',
         'A figure is marked ‘Few operators’ when one or two operators could have contributed to it, or when one or two operators did. The mark gives both counts. A figure no operator could have contributed to is not marked.',
-        'The operators who could have contributed to a figure are every operator owed a monthly report for that month, whether or not it submitted one, and any other operator whose tonnage the figure includes. A suspended operator counts. An operator whose accreditation stood cancelled for the whole month does not, unless the figure includes its tonnage all the same.',
-        'The operators who did contribute are those whose credited tonnage the figure includes.',
+        'The operators who could have contributed to a figure are every operator owed a monthly report for that month, whether or not the figure includes any of its tonnage, and any other operator with tonnage in the figure. A suspended operator counts. An operator whose accreditation stood cancelled for the whole month does not, unless it sent tonnage on that month. An operator the figures leave out does not count either.',
+        'The operators with tonnage in a figure are those with a load that adds to it, or a load sent on that comes off it. A load the waste balance ignores, such as one dated while the accreditation was suspended, does not count.',
         'A row’s total is counted across all its months, so an operator that could have contributed in more than one month counts once.',
-        'An operator is a business. It counts once however many sites it has, so an operator with sites in two nations counts once in each nation’s figures and once in the UK’s.'
+        'An operator is a business. It counts once however many sites it has.'
       ])
     })
 
