@@ -2,7 +2,6 @@
 
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
-{% from "few-operators/macro.njk" import withFewOperators %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -44,20 +43,13 @@
         {% endfor %}
         {% set tableHead = tableHead.concat([{ text: localise('regulators:marketInsights:wasteBalance:table:total'), format: "numeric" }]) %}
 
-        {% set fewOperatorsTag = localise('regulators:marketInsights:fewOperators:tag') %}
         {% set tableRows = [] %}
         {% for row in wasteBalance.rows %}
           {% set cells = [{ text: row.material }, { text: row.accreditationType }] %}
           {% for netCredit in row.netCredits %}
-            {% set cells = cells.concat([{
-              html: withFewOperators(netCredit.figure, netCredit.fewOperators, fewOperatorsTag),
-              format: "numeric"
-            }]) %}
+            {% set cells = cells.concat([{ text: netCredit, format: "numeric" }]) %}
           {% endfor %}
-          {% set cells = cells.concat([{
-            html: withFewOperators(row.total.figure, row.total.fewOperators, fewOperatorsTag),
-            format: "numeric"
-          }]) %}
+          {% set cells = cells.concat([{ text: row.total, format: "numeric" }]) %}
           {% set tableRows = tableRows.concat([cells]) %}
         {% endfor %}
 
@@ -68,7 +60,11 @@
         {% set reportCells = reportCells.concat([{ text: wasteBalance.reports.period, format: "numeric" }]) %}
         {% set tableRows = tableRows.concat([reportCells]) %}
 
+        {% if wasteBalance.marked %}
+          <p class="govuk-body" id="waste-balance-key">{{ localise('regulators:marketInsights:fewOperators:key') }}</p>
+        {% endif %}
         {{ govukTable({
+          attributes: { 'aria-describedby': 'waste-balance-key' } if wasteBalance.marked else {},
           caption: localise('regulators:marketInsights:wasteBalance:table:caption'),
           captionClasses: "govuk-table__caption--m",
           firstCellIsHeader: true,

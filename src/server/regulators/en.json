@@ -173,10 +173,9 @@
       }
     },
     "fewOperators": {
-      "counts": "{{ operators }} could have contributed, {{ submitting }} did",
       "heading": "Figures from few operators",
-      "marked": "A figure is marked ‘Few operators’ when one or two operators could have contributed to it, or when one or two operators did. The mark gives both counts. A figure no operator could have contributed to is not marked.",
-      "tag": "Few operators"
+      "key": "Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because one or two operators could have contributed to it, or one or two did.",
+      "marked": "A figure is marked [c] when one or two operators could have contributed to it, or when one or two operators did. A figure no operator could have contributed to is not marked."
     }
   },
   "notAuthorised": {

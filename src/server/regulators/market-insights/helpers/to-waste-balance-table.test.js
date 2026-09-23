@@ -110,11 +110,8 @@ describe(toWasteBalanceTable, () => {
       {
         material: 'Plastic',
         accreditationType: reprocessor,
-        netCredits: [
-          { figure: '90.00', fewOperators: undefined },
-          { figure: '42.50', fewOperators: undefined }
-        ],
-        total: { figure: '132.50', fewOperators: undefined }
+        netCredits: ['90.00', '42.50'],
+        total: '132.50'
       }
     ])
   })
@@ -135,8 +132,8 @@ describe(toWasteBalanceTable, () => {
         {
           material: 'Plastic',
           accreditationType: reprocessor,
-          netCredits: [{ figure: '90.00', fewOperators: undefined }],
-          total: { figure: '90.00', fewOperators: undefined }
+          netCredits: ['90.00'],
+          total: '90.00'
         }
       ],
       reports: {
@@ -145,41 +142,39 @@ describe(toWasteBalanceTable, () => {
         ],
         period:
           'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
-      }
+      },
+      marked: false
     })
   })
 
-  it('states the operator counts under each month few operators contributed to, and under no other', () => {
-    expect(
-      toWasteBalanceTable(
-        dataOf({
-          '2026-01': monthOf({
-            plastic: {
-              reprocessor: figuresOf(90, {
-                operatorCount: 4,
-                submittingOperatorCount: 2
-              })
-            }
-          }),
-          '2026-02': monthOf({
-            plastic: {
-              reprocessor: figuresOf(42.5, {
-                operatorCount: 4,
-                submittingOperatorCount: 3
-              })
-            }
-          })
+  it('marks each month few operators contributed to as confidential', () => {
+    const [row] = toWasteBalanceTable(
+      dataOf({
+        '2026-01': monthOf({
+          plastic: {
+            reprocessor: figuresOf(90, {
+              operatorCount: 4,
+              submittingOperatorCount: 2
+            })
+          }
         }),
-        januaryAndFebruary,
-        asKey
-      ).rows[0].netCredits.map(({ fewOperators }) => fewOperators)
-    ).toStrictEqual([
-      'translated:regulators:marketInsights:fewOperators:counts:operators=4:submitting=2',
-      undefined
-    ])
+        '2026-02': monthOf({
+          plastic: {
+            reprocessor: figuresOf(42.5, {
+              operatorCount: 4,
+              submittingOperatorCount: 3
+            })
+          }
+        })
+      }),
+      januaryAndFebruary,
+      asKey
+    ).rows
+
+    expect(row.netCredits).toStrictEqual(['90.00 [c]', '42.50'])
   })
 
-  it('states the operator counts the period served for a row total few operators contributed to, and not for another', () => {
+  it('marks a row total the period served few operators for as confidential, and marks no other', () => {
     const period = {
       reports: { expected: 0, submitted: 0 },
       operatorCounts: {
@@ -202,17 +197,31 @@ describe(toWasteBalanceTable, () => {
         ),
         ['2026-01'],
         asKey
-      ).rows.map(({ accreditationType, total }) => [
-        accreditationType,
-        total.fewOperators
-      ])
+      ).rows.map(({ accreditationType, total }) => [accreditationType, total])
     ).toStrictEqual([
-      [exporter, undefined],
-      [
-        reprocessor,
-        'translated:regulators:marketInsights:fewOperators:counts:operators=5:submitting=2'
-      ]
+      [exporter, '2.00'],
+      [reprocessor, '1.00 [c]']
     ])
+  })
+
+  it('says it is marked when any row has a figure few operators contributed to', () => {
+    expect(
+      toWasteBalanceTable(
+        dataOf({
+          '2026-01': monthOf({
+            plastic: {
+              reprocessor: figuresOf(1),
+              exporter: figuresOf(2, {
+                operatorCount: 2,
+                submittingOperatorCount: 0
+              })
+            }
+          })
+        }),
+        ['2026-01'],
+        asKey
+      ).marked
+    ).toBe(true)
   })
 
   it('names a material the way the rest of the service does', () => {
@@ -241,7 +250,7 @@ describe(toWasteBalanceTable, () => {
       ).rows.map(({ material, accreditationType, total }) => [
         material,
         accreditationType,
-        total.figure
+        total
       ])
     ).toStrictEqual([
       ['Aluminium', exporter, '4.00'],

@@ -1,7 +1,7 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
-import { fewOperatorsOf } from './few-operators.js'
+import { fromFewOperators, markedFigureOf } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
 /** @import { OperatorCounts } from './few-operators.js' */
@@ -44,17 +44,13 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
- * A formatted figure, and the operator counts where few operators contributed
+ * A row's figures, each marked confidential where few operators contributed
  * to it.
- * @typedef {{ figure: string, fewOperators: string | undefined }} MarkedFigure
- */
-
-/**
  * @typedef {{
  *   material: string,
  *   accreditationType: string,
- *   netCredits: MarkedFigure[],
- *   total: MarkedFigure
+ *   netCredits: string[],
+ *   total: string
  * }} WasteBalanceRow
  */
 
@@ -62,7 +58,8 @@ import { nameOf } from './reporting-period.js'
  * @typedef {{
  *   months: string[],
  *   rows: WasteBalanceRow[],
- *   reports: { byMonth: string[], period: string }
+ *   reports: { byMonth: string[], period: string },
+ *   marked: boolean
  * }} WasteBalanceTable
  */
 
@@ -102,7 +99,7 @@ export const toWasteBalanceTable = (
     }
   }
 
-  const rows = [...partitions.values()]
+  const partitioned = [...partitions.values()]
     .map(({ material, accreditationType }) => ({
       material: getMaterialDisplayName(material),
       accreditationType: localise(
@@ -118,19 +115,17 @@ export const toWasteBalanceTable = (
         one.material.localeCompare(other.material) ||
         one.accreditationType.localeCompare(other.accreditationType)
     )
-    .map(({ figures, periodCounts, ...row }) => ({
-      ...row,
-      netCredits: figures.map((figure) => ({
-        figure: formatTonnage(figure.netCredit),
-        fewOperators: fewOperatorsOf(figure, localise)
-      })),
-      total: {
-        figure: formatTonnage(
-          figures.reduce((sum, { netCredit }) => sum + netCredit, 0)
-        ),
-        fewOperators: fewOperatorsOf(periodCounts, localise)
-      }
-    }))
+
+  const rows = partitioned.map(({ figures, periodCounts, ...row }) => ({
+    ...row,
+    netCredits: figures.map((figure) =>
+      markedFigureOf(formatTonnage(figure.netCredit), figure)
+    ),
+    total: markedFigureOf(
+      formatTonnage(figures.reduce((sum, { netCredit }) => sum + netCredit, 0)),
+      periodCounts
+    )
+  }))
 
   /** @param {ReportCount} count */
   const stated = ({ expected, submitted }) =>
@@ -145,6 +140,9 @@ export const toWasteBalanceTable = (
     reports: {
       byMonth: months.map((month) => stated(served[month].reports)),
       period: stated(period.reports)
-    }
+    },
+    marked: partitioned.some(({ figures, periodCounts }) =>
+      [...figures, periodCounts].some(fromFewOperators)
+    )
   }
 }

@@ -4,7 +4,11 @@
  * @typedef {{ operatorCount: number, submittingOperatorCount: number }} OperatorCounts
  */
 
-/** @typedef {(key: string, values?: Record<string, string | number>) => string} Localise */
+/**
+ * The Analysis Function's shorthand for a figure that would give away
+ * confidential information about a single respondent.
+ */
+const CONFIDENTIAL = '[c]'
 
 /**
  * A figure from one or two operators is as good as theirs. Three is where it
@@ -14,19 +18,19 @@
 const isFew = (count) => count === 1 || count === 2
 
 /**
- * Both operator counts, stated for a figure either of them marks as coming
- * from few operators, and nothing for any other figure.
+ * Whether either count marks a figure as coming from few operators.
  * @param {OperatorCounts} counts
- * @param {Localise} localise
- * @returns {string | undefined}
+ * @returns {boolean}
  */
-export const fewOperatorsOf = (
-  { operatorCount, submittingOperatorCount },
-  localise
-) =>
+export const fromFewOperators = ({ operatorCount, submittingOperatorCount }) =>
   isFew(operatorCount) || isFew(submittingOperatorCount)
-    ? localise('regulators:marketInsights:fewOperators:counts', {
-        operators: operatorCount,
-        submitting: submittingOperatorCount
-      })
-    : undefined
+
+/**
+ * A formatted figure, followed by the confidential shorthand when few
+ * operators contributed to it.
+ * @param {string} figure
+ * @param {OperatorCounts} counts
+ * @returns {string}
+ */
+export const markedFigureOf = (figure, counts) =>
+  fromFewOperators(counts) ? `${figure} ${CONFIDENTIAL}` : figure

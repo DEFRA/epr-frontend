@@ -225,7 +225,7 @@ describe('the UK waste balance page', () => {
       ).toBe(paths.regulators.marketInsights)
     })
 
-    it('marks each month and row total few operators contributed to with both counts, beneath its figure', async ({
+    it('marks each month and row total few operators contributed to as confidential', async ({
       msw,
       server
     }) => {
@@ -284,33 +284,19 @@ describe('the UK waste balance page', () => {
         auth: regulator
       })
 
+      // The key is the table's description, so a screen reader announces
+      // what the shorthand means as it reaches the table.
       const table = getByRole(documentOf(asHtml(result)), 'table', {
-        name: 'Waste balance'
+        name: 'Waste balance',
+        description:
+          'Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because one or two operators could have contributed to it, or one or two did.'
       })
 
-      expect(
-        rowsOf(table).map((row) =>
-          row.map((cell) => cell.replaceAll(/\s+/g, ' '))
-        )
-      ).toStrictEqual([
-        [
-          'Aluminium',
-          'Exporter',
-          '0.00',
-          '8.00',
-          '0.00',
-          '8.00 Few operators 4 could have contributed, 1 did'
-        ],
+      expect(rowsOf(table)).toStrictEqual([
+        ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00 [c]'],
         ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00'],
         ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
-        [
-          'Glass remelt',
-          'Reprocessor',
-          '90.00',
-          '42.50 Few operators 3 could have contributed, 2 did',
-          '0.00',
-          '132.50'
-        ],
+        ['Glass remelt', 'Reprocessor', '90.00', '42.50 [c]', '0.00', '132.50'],
         ['Monthly reports submitted', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
       ])
     })
@@ -359,7 +345,7 @@ describe('the UK waste balance page', () => {
         'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
         'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.',
         'Figures from few operators',
-        'A figure is marked ‘Few operators’ when one or two operators could have contributed to it, or when one or two operators did. The mark gives both counts. A figure no operator could have contributed to is not marked.',
+        'A figure is marked [c] when one or two operators could have contributed to it, or when one or two operators did. A figure no operator could have contributed to is not marked.',
         'The operators who could have contributed to a figure are every operator owed a monthly report for that month, whether or not the figure includes any of its tonnage, and any other operator with tonnage in the figure. A suspended operator counts. An operator whose accreditation stood cancelled for the whole month does not, unless it sent tonnage on that month. An operator the figures leave out does not count either.',
         'The operators with tonnage in a figure are those with a load that adds to it, or a load sent on that comes off it. A load the waste balance ignores, such as one dated while the accreditation was suspended, does not count.',
         'A row’s total is counted across all its months, so an operator that could have contributed in more than one month counts once.',
