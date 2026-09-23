@@ -31,7 +31,9 @@ const januaryAggregate = {
               tonnageSentOnToOtherFacilities: 10.25,
               revisedTonnageIssued: 900,
               totalRevenue: 108000,
-              averagePricePerTonne: 120
+              averagePricePerTonne: 120,
+              operatorCount: 4,
+              submittingOperatorCount: 2
             },
             exporter: {
               tonnageReceived: 300,
@@ -46,7 +48,9 @@ const januaryAggregate = {
               tonnageRepatriated: 0,
               revisedTonnageIssued: 0,
               totalRevenue: 0,
-              averagePricePerTonne: 0
+              averagePricePerTonne: 0,
+              operatorCount: 1,
+              submittingOperatorCount: 1
             }
           }
         },

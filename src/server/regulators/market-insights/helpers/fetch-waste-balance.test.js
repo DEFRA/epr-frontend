@@ -24,13 +24,22 @@ const januaryAggregate = {
               totalCredited: 120,
               eligibleForWasteBalance: 100,
               sentOnDeductions: 10,
-              netCredit: 90
+              netCredit: 90,
+              operatorCount: 3,
+              submittingOperatorCount: 2
             }
           }
         }
       }
     },
-    period: { reports: { expected: 2, submitted: 1 } }
+    period: {
+      reports: { expected: 2, submitted: 1 },
+      operatorCounts: {
+        glass_re_melt: {
+          reprocessor: { operatorCount: 3, submittingOperatorCount: 2 }
+        }
+      }
+    }
   }
 }
 
