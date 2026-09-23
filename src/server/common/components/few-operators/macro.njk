@@ -1,0 +1,8 @@
+{#
+  Marks a market insights figure few operators contributed to. The tag's words
+  carry the mark, so it reads the same without its colour.
+#}
+{% macro fewOperators(tag, counts) %}
+  <strong class="govuk-tag govuk-tag--yellow govuk-!-margin-top-1">{{ tag }}</strong>
+  <span class="govuk-!-display-block govuk-body-s govuk-!-margin-bottom-0">{{ counts }}</span>
+{% endmacro %}

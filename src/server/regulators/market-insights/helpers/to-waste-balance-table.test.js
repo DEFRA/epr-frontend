@@ -4,6 +4,7 @@ import { toWasteBalanceTable } from './to-waste-balance-table.js'
 
 /**
  * @import { PublishedFigures, PublishedMonth, WasteBalanceData } from './to-waste-balance-table.js'
+ * @import { OperatorCounts } from './few-operators.js'
  */
 
 /**
@@ -27,13 +28,17 @@ const januaryAndFebruary = ['2026-01', '2026-02']
 
 /**
  * @param {number} netCredit
+ * @param {Partial<OperatorCounts>} [counts]
  * @returns {PublishedFigures}
  */
-const figuresOf = (netCredit) => ({
+const figuresOf = (netCredit, counts = {}) => ({
   totalCredited: netCredit,
   eligibleForWasteBalance: netCredit,
   sentOnDeductions: 0,
-  netCredit
+  netCredit,
+  operatorCount: 0,
+  submittingOperatorCount: 0,
+  ...counts
 })
 
 /**
@@ -85,6 +90,7 @@ describe(toWasteBalanceTable, () => {
         material: 'Plastic',
         accreditationType: reprocessor,
         netCredits: ['90.00', '42.50'],
+        fewOperators: [undefined, undefined],
         total: '132.50'
       }
     ])
@@ -107,6 +113,7 @@ describe(toWasteBalanceTable, () => {
           material: 'Plastic',
           accreditationType: reprocessor,
           netCredits: ['90.00'],
+          fewOperators: [undefined],
           total: '90.00'
         }
       ],
@@ -118,6 +125,36 @@ describe(toWasteBalanceTable, () => {
           'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
       }
     })
+  })
+
+  it('states the operator counts under each month few operators contributed to, and under no other', () => {
+    expect(
+      toWasteBalanceTable(
+        dataOf({
+          '2026-01': monthOf({
+            plastic: {
+              reprocessor: figuresOf(90, {
+                operatorCount: 4,
+                submittingOperatorCount: 2
+              })
+            }
+          }),
+          '2026-02': monthOf({
+            plastic: {
+              reprocessor: figuresOf(42.5, {
+                operatorCount: 4,
+                submittingOperatorCount: 3
+              })
+            }
+          })
+        }),
+        januaryAndFebruary,
+        asKey
+      ).rows[0].fewOperators
+    ).toStrictEqual([
+      'translated:regulators:marketInsights:fewOperators:counts:operators=4:submitting=2',
+      undefined
+    ])
   })
 
   it('names a material the way the rest of the service does', () => {

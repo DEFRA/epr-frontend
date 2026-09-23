@@ -300,6 +300,43 @@ describe(toReprocessorExporterTables, () => {
     })
   })
 
+  it('states the operator counts on each material and Grand Total that few operators contributed to, and on no other', () => {
+    const { reprocessor, exporter } = toReprocessorExporterTables(
+      dataOf({
+        '2026-01': monthOf(
+          {
+            plastic: {
+              reprocessor: reprocessorOf({
+                operatorCount: 2,
+                submittingOperatorCount: 1
+              }),
+              exporter: exporterOf({
+                operatorCount: 4,
+                submittingOperatorCount: 3
+              })
+            }
+          },
+          { expected: 0, submitted: 0 },
+          totalsOf({
+            reprocessor: { operatorCount: 6, submittingOperatorCount: 5 },
+            exporter: { operatorCount: 4, submittingOperatorCount: 1 }
+          })
+        )
+      }),
+      ['2026-01'],
+      asKey
+    ).months[0]
+
+    expect(reprocessor.rows[0].fewOperators).toBe(
+      'translated:regulators:marketInsights:fewOperators:counts:operators=2:submitting=1'
+    )
+    expect(reprocessor.total.fewOperators).toBeUndefined()
+    expect(exporter.rows[0].fewOperators).toBeUndefined()
+    expect(exporter.total.fewOperators).toBe(
+      'translated:regulators:marketInsights:fewOperators:counts:operators=4:submitting=1'
+    )
+  })
+
   it('names the materials the way the rest of the service does, and orders the rows by that name', () => {
     const { reprocessor, exporter } = toReprocessorExporterTables(
       dataOf({

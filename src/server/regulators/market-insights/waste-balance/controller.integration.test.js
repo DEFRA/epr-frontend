@@ -21,6 +21,7 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 /**
  * @import { WasteBalanceAggregate } from '../helpers/fetch-waste-balance.js'
  * @import { PublishedFigures, PublishedMonth } from '../helpers/to-waste-balance-table.js'
+ * @import { OperatorCounts } from '../helpers/few-operators.js'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -28,13 +29,17 @@ const wasteBalanceUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period
 
 /**
  * @param {number} netCredit
+ * @param {Partial<OperatorCounts>} [counts]
  * @returns {PublishedFigures}
  */
-const figuresOf = (netCredit) => ({
+const figuresOf = (netCredit, counts = {}) => ({
   totalCredited: netCredit,
   eligibleForWasteBalance: netCredit,
   sentOnDeductions: 0,
-  netCredit
+  netCredit,
+  operatorCount: 0,
+  submittingOperatorCount: 0,
+  ...counts
 })
 
 /**
@@ -208,6 +213,76 @@ describe('the UK waste balance page', () => {
       ).toBe(paths.regulators.marketInsights)
     })
 
+    it('marks each month few operators contributed to with both counts, beneath its figure', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () =>
+          HttpResponse.json({
+            ...januaryToMarch,
+            data: {
+              ...januaryToMarch.data,
+              months: {
+                ...januaryToMarch.data.months,
+                '2026-02': {
+                  reports: { expected: 2, submitted: 2 },
+                  figures: {
+                    glass_re_melt: {
+                      reprocessor: figuresOf(42.5, {
+                        operatorCount: 3,
+                        submittingOperatorCount: 2
+                      }),
+                      exporter: figuresOf(0, {
+                        operatorCount: 3,
+                        submittingOperatorCount: 0
+                      })
+                    },
+                    aluminium: {
+                      reprocessor: figuresOf(0),
+                      exporter: figuresOf(8, {
+                        operatorCount: 7,
+                        submittingOperatorCount: 5
+                      })
+                    }
+                  }
+                }
+              }
+            }
+          })
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsightsWasteBalance,
+        auth: regulator
+      })
+
+      const table = getByRole(documentOf(asHtml(result)), 'table', {
+        name: 'Waste balance'
+      })
+
+      expect(
+        rowsOf(table).map((row) =>
+          row.map((cell) => cell.replaceAll(/\s+/g, ' '))
+        )
+      ).toStrictEqual([
+        ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00'],
+        ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00'],
+        ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
+        [
+          'Glass remelt',
+          'Reprocessor',
+          '90.00',
+          '42.50 Few operators 3 could have contributed, 2 did',
+          '0.00',
+          '132.50'
+        ],
+        ['Monthly reports submitted', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
+      ])
+    })
+
     it('says how the figures are calculated, before the table', async ({
       server
     }) => {
@@ -228,7 +303,7 @@ describe('the UK waste balance page', () => {
       /** @type {(string | string[])[]} */
       const wording = []
       let element = heading.nextElementSibling
-      while (element !== null && element.matches('p, ul')) {
+      while (element !== null && element.matches('p, ul, h2')) {
         wording.push(
           element.matches('ul')
             ? Array.from(element.querySelectorAll('li')).map((item) =>
@@ -250,7 +325,12 @@ describe('the UK waste balance page', () => {
           'an overseas reprocessor received the exported waste'
         ],
         'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
-        'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.'
+        'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.',
+        'Figures from few operators',
+        'A figure is marked ‘Few operators’ when one or two operators could have contributed to it, or when one or two operators did. The mark gives both counts. A figure no operator contributed to is not marked.',
+        'The operators who could have contributed to a figure are every operator owed a monthly report for that month, whether or not it submitted one, and any other operator whose tonnage the figure includes. A suspended operator counts. An operator whose accreditation stood cancelled for the whole month does not, unless the figure includes its tonnage all the same.',
+        'The operators who did contribute are those whose credited tonnage the figure includes.',
+        'An operator is a business. It counts once however many sites it has, so an operator with sites in two nations counts once in each nation’s figures and once in the UK’s.'
       ])
     })
 

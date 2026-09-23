@@ -2,6 +2,7 @@
 
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "few-operators/macro.njk" import fewOperators %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -26,6 +27,12 @@
       <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:deductions') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:live') }}</p>
 
+      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:marked') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:possible') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:submitting') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:business') }}</p>
+
       <div class="govuk-body" data-testid="app-page-body">
         {% set tableHead = [
           { text: localise('regulators:marketInsights:table:material') },
@@ -40,7 +47,15 @@
         {% for row in wasteBalance.rows %}
           {% set cells = [{ text: row.material }, { text: row.accreditationType }] %}
           {% for netCredit in row.netCredits %}
-            {% set cells = cells.concat([{ text: netCredit, format: "numeric" }]) %}
+            {% set fewOperatorCounts = row.fewOperators[loop.index0] %}
+            {% if fewOperatorCounts %}
+              {% set cells = cells.concat([{
+                html: netCredit ~ fewOperators(localise('regulators:marketInsights:fewOperators:tag'), fewOperatorCounts),
+                format: "numeric"
+              }]) %}
+            {% else %}
+              {% set cells = cells.concat([{ text: netCredit, format: "numeric" }]) %}
+            {% endif %}
           {% endfor %}
           {% set cells = cells.concat([{ text: row.total, format: "numeric" }]) %}
           {% set tableRows = tableRows.concat([cells]) %}

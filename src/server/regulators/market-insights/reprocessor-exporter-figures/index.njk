@@ -2,6 +2,7 @@
 
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "few-operators/macro.njk" import fewOperators %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -28,6 +29,19 @@
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:zero') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:live') }}</p>
 
+      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:marked') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:possible') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:submitting') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:business') }}</p>
+
+      {% macro labelOf(row) %}
+        {{ row.label }}
+        {% if row.fewOperators %}
+          {{ fewOperators(localise('regulators:marketInsights:fewOperators:tag'), row.fewOperators) }}
+        {% endif %}
+      {% endmacro %}
+
       {% macro figuresTable(table, caption) %}
         {% set head = [{ text: localise('regulators:marketInsights:table:material') }] %}
         {% for column in table.columns %}
@@ -36,14 +50,14 @@
 
         {% set rows = [] %}
         {% for row in table.rows %}
-          {% set cells = [{ text: row.label }] %}
+          {% set cells = [{ html: labelOf(row) }] %}
           {% for figure in row.figures %}
             {% set cells = cells.concat([{ text: figure, format: "numeric" }]) %}
           {% endfor %}
           {% set rows = rows.concat([cells]) %}
         {% endfor %}
 
-        {% set cells = [{ text: table.total.label }] %}
+        {% set cells = [{ html: labelOf(table.total) }] %}
         {% for figure in table.total.figures %}
           {% set cells = cells.concat([{ text: figure, format: "numeric" }]) %}
         {% endfor %}

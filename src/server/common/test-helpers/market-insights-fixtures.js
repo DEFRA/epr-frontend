@@ -49,6 +49,8 @@ export const reprocessorOf = (figures = {}) => ({
   revisedTonnageIssued: 0,
   totalRevenue: 0,
   averagePricePerTonne: 0,
+  operatorCount: 0,
+  submittingOperatorCount: 0,
   ...figures
 })
 
@@ -70,6 +72,8 @@ export const exporterOf = (figures = {}) => ({
   revisedTonnageIssued: 0,
   totalRevenue: 0,
   averagePricePerTonne: 0,
+  operatorCount: 0,
+  submittingOperatorCount: 0,
   ...figures
 })
 

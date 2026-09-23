@@ -1,7 +1,10 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
+import { fewOperatorsOf } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
+
+/** @import { OperatorCounts } from './few-operators.js' */
 
 /**
  * How many monthly reports were expected and how many the figures include.
@@ -16,7 +19,7 @@ import { nameOf } from './reporting-period.js'
  *   eligibleForWasteBalance: number,
  *   sentOnDeductions: number,
  *   netCredit: number
- * }} PublishedFigures
+ * } & OperatorCounts} PublishedFigures
  */
 
 /**
@@ -40,6 +43,7 @@ import { nameOf } from './reporting-period.js'
  *   material: string,
  *   accreditationType: string,
  *   netCredits: string[],
+ *   fewOperators: (string | undefined)[],
  *   total: string
  * }} WasteBalanceRow
  */
@@ -94,8 +98,8 @@ export const toWasteBalanceTable = (
       accreditationType: localise(
         `regulators:marketInsights:wasteBalance:accreditationTypes:${accreditationType}`
       ),
-      netCredits: months.map(
-        (month) => served[month].figures[material][accreditationType].netCredit
+      figures: months.map(
+        (month) => served[month].figures[material][accreditationType]
       )
     }))
     .sort(
@@ -103,10 +107,13 @@ export const toWasteBalanceTable = (
         one.material.localeCompare(other.material) ||
         one.accreditationType.localeCompare(other.accreditationType)
     )
-    .map(({ netCredits, ...row }) => ({
+    .map(({ figures, ...row }) => ({
       ...row,
-      netCredits: netCredits.map((credit) => formatTonnage(credit)),
-      total: formatTonnage(netCredits.reduce((sum, credit) => sum + credit, 0))
+      netCredits: figures.map(({ netCredit }) => formatTonnage(netCredit)),
+      fewOperators: figures.map((counts) => fewOperatorsOf(counts, localise)),
+      total: formatTonnage(
+        figures.reduce((sum, { netCredit }) => sum + netCredit, 0)
+      )
     }))
 
   /** @param {ReportCount} count */
