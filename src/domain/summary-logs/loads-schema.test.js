@@ -110,7 +110,8 @@ describe('summaryLogStatusResponseSchema validation', () => {
           balanceAffecting: { count: 2, tonnageDelta: -4 },
           nonBalanceAffecting: { count: 1 }
         }
-      }
+      },
+      periodsRequiringResubmission: [{ year: 2025, period: 1 }]
     }
 
     it('should accept a realistic payload and preserve it intact when stripping unknown keys', () => {
