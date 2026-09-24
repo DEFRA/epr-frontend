@@ -4,6 +4,7 @@ import { toWasteBalanceTable } from './to-waste-balance-table.js'
 
 /**
  * @import { PublishedFigures, PublishedMonth, WasteBalanceData } from './to-waste-balance-table.js'
+ * @import { OperatorCounts } from './few-operators.js'
  */
 
 /**
@@ -27,13 +28,17 @@ const januaryAndFebruary = ['2026-01', '2026-02']
 
 /**
  * @param {number} netCredit
+ * @param {Partial<OperatorCounts>} [counts]
  * @returns {PublishedFigures}
  */
-const figuresOf = (netCredit) => ({
+const figuresOf = (netCredit, counts = {}) => ({
   totalCredited: netCredit,
   eligibleForWasteBalance: netCredit,
   sentOnDeductions: 0,
-  netCredit
+  netCredit,
+  operatorCount: 0,
+  submittingOperatorCount: 0,
+  ...counts
 })
 
 /**
@@ -47,14 +52,35 @@ const monthOf = (figures, reports = { expected: 0, submitted: 0 }) => ({
 })
 
 /**
+ * The backend serves a row total's operator counts for every row its months
+ * serve, so each is at zero unless a test names it.
  * @param {Record<string, PublishedMonth>} months
- * @param {WasteBalanceData['period']} [period]
+ * @param {Partial<WasteBalanceData['period']>} [period]
  * @returns {WasteBalanceData}
  */
-const dataOf = (
-  months,
-  period = { reports: { expected: 0, submitted: 0 } }
-) => ({ months, period })
+const dataOf = (months, { reports, operatorCounts = {} } = {}) => {
+  /** @type {WasteBalanceData['period']['operatorCounts']} */
+  const counts = {}
+  for (const { figures } of Object.values(months)) {
+    for (const [material, byType] of Object.entries(figures)) {
+      for (const accreditationType of Object.keys(byType)) {
+        counts[material] = {
+          ...counts[material],
+          [accreditationType]: operatorCounts[material]?.[
+            accreditationType
+          ] ?? { operatorCount: 0, submittingOperatorCount: 0 }
+        }
+      }
+    }
+  }
+  return {
+    months,
+    period: {
+      reports: reports ?? { expected: 0, submitted: 0 },
+      operatorCounts: counts
+    }
+  }
+}
 
 describe(toWasteBalanceTable, () => {
   it('names the months it was given, in calendar order', () => {
@@ -116,8 +142,86 @@ describe(toWasteBalanceTable, () => {
         ],
         period:
           'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
-      }
+      },
+      marked: false
     })
+  })
+
+  it('marks each month few operators contributed to as confidential', () => {
+    const [row] = toWasteBalanceTable(
+      dataOf({
+        '2026-01': monthOf({
+          plastic: {
+            reprocessor: figuresOf(90, {
+              operatorCount: 4,
+              submittingOperatorCount: 2
+            })
+          }
+        }),
+        '2026-02': monthOf({
+          plastic: {
+            reprocessor: figuresOf(42.5, {
+              operatorCount: 4,
+              submittingOperatorCount: 3
+            })
+          }
+        })
+      }),
+      januaryAndFebruary,
+      asKey
+    ).rows
+
+    expect(row.netCredits).toStrictEqual(['90.00 [c]', '42.50'])
+  })
+
+  it('marks a row total the period served few operators for as confidential, and marks no other', () => {
+    const period = {
+      reports: { expected: 0, submitted: 0 },
+      operatorCounts: {
+        plastic: {
+          reprocessor: { operatorCount: 5, submittingOperatorCount: 2 },
+          exporter: { operatorCount: 5, submittingOperatorCount: 4 }
+        }
+      }
+    }
+
+    expect(
+      toWasteBalanceTable(
+        dataOf(
+          {
+            '2026-01': monthOf({
+              plastic: { reprocessor: figuresOf(1), exporter: figuresOf(2) }
+            })
+          },
+          period
+        ),
+        ['2026-01'],
+        asKey
+      ).rows.map(({ accreditationType, total }) => [accreditationType, total])
+    ).toStrictEqual([
+      [exporter, '2.00'],
+      [reprocessor, '1.00 [c]']
+    ])
+  })
+
+  it('says it is marked when any row has a figure few operators contributed to', () => {
+    expect(
+      toWasteBalanceTable(
+        dataOf({
+          '2026-01': monthOf({
+            plastic: {
+              reprocessor: figuresOf(1),
+              exporter: figuresOf(2, {
+                operatorCount: 2,
+                submittingOperatorCount: 0
+              })
+            }
+          })
+        }),
+        ['2026-01'],
+        asKey
+      ).marked
+    ).toBe(true)
   })
 
   it('names a material the way the rest of the service does', () => {

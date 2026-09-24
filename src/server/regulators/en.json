@@ -164,7 +164,29 @@
         "caption": "Waste balance",
         "reports": "Monthly reports submitted",
         "total": "Total"
+      },
+      "fewOperators": {
+        "business": "An operator is a business. It counts once however many sites it has.",
+        "possible": {
+          "cancelled": "An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes tonnage it sent on that month.",
+          "included": "the figure includes some of its tonnage",
+          "leadIn": "An operator could have contributed to a figure if:",
+          "noTonnage": "An operator that owed a report counts even if none of its tonnage is in the figure. A suspended operator still owes reports, so it counts.",
+          "owed": "it owed a monthly report for that month"
+        },
+        "submitting": {
+          "added": "a load that adds to its waste balance",
+          "ignored": "A load its waste balance ignores does not count, such as a load dated while the accreditation was suspended.",
+          "leadIn": "An operator contributed to a figure if the figure includes its tonnage from:",
+          "sentOn": "a load it sent on, which comes off the figure"
+        },
+        "total": "A row’s total is counted across all its months, so an operator that could have contributed in more than one month counts once."
       }
+    },
+    "fewOperators": {
+      "heading": "Figures from few operators",
+      "key": "Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because one or two operators could have contributed to it, or one or two did.",
+      "marked": "A figure is marked [c] if only one or two operators could have contributed to it, or only one or two did. A figure no operator could have contributed to is not marked."
     }
   },
   "notAuthorised": {
