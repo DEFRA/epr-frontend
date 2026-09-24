@@ -194,7 +194,7 @@
     },
     "fewOperators": {
       "heading": "Figures from few operators",
-      "key": "Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because one or two operators could have contributed to it, or one or two did.",
+      "key": "Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because only one or two operators could have contributed to it, or only one or two did.",
       "marked": "A figure is marked [c] if only one or two operators could have contributed to it, or only one or two did. A figure no operator could have contributed to is not marked.",
       "business": "An operator is a business. It counts once however many sites it has.",
       "possible": {

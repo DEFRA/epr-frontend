@@ -40,7 +40,7 @@ export const NOTICE =
  * as coming from few operators.
  */
 export const CONFIDENTIAL_KEY =
-  'Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because one or two operators could have contributed to it, or one or two did.'
+  'Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because only one or two operators could have contributed to it, or only one or two did.'
 
 /** @returns {ReprocessorFigures} */
 const noReprocessorFigures = () => ({
