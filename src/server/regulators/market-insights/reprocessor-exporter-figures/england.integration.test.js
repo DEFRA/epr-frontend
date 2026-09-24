@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHtml, documentOf, rowsOf } from '#server/common/test-helpers/dom.js'
 import {
+  CONFIDENTIAL_KEY,
   NOTICE,
   exporterOf,
   operator,
@@ -36,7 +37,14 @@ const englandFigures = {
         reports: { expected: 4, submitted: 3 },
         figures: {
           plastic: {
-            reprocessor: reprocessorOf({ tonnageReceived: 640.25 }),
+            reprocessor: reprocessorOf(
+              { tonnageReceived: 640.25 },
+              {
+                operatorCount: 4,
+                submittingOperatorCount: 3,
+                contributingOperatorCounts: { tonnageReceived: 1 }
+              }
+            ),
             exporter: exporterOf()
           }
         },
@@ -137,14 +145,17 @@ describe('the England reprocessor and exporter figures page', () => {
         )
       ).not.toBeNull()
 
-      const [januaryReprocessors] = getAllByRole(body, 'table', {
-        name: 'Reprocessor data for January 2026'
+      // A figure few operators contributed to is marked, and the key is the
+      // description of the table it sits in.
+      const januaryReprocessors = getByRole(body, 'table', {
+        name: 'Reprocessor data for January 2026',
+        description: CONFIDENTIAL_KEY
       })
 
       expect(rowsOf(januaryReprocessors)).toStrictEqual([
         [
           'Plastic',
-          '640.25',
+          '640.25 [c]',
           '0.00',
           '0.00',
           '0.00',
@@ -235,6 +246,9 @@ describe('the England reprocessor and exporter figures page', () => {
       expect(getByText(body, NOTICE)).not.toBeNull()
       expect(
         getByRole(body, 'heading', { name: 'How the figures are calculated' })
+      ).not.toBeNull()
+      expect(
+        getByRole(body, 'heading', { name: 'Figures from few operators' })
       ).not.toBeNull()
     })
   })

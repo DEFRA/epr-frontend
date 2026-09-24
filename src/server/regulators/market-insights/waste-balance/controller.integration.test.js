@@ -7,6 +7,7 @@ import {
   rowsOf
 } from '#server/common/test-helpers/dom.js'
 import {
+  CONFIDENTIAL_KEY,
   NOTICE,
   operator,
   regulator,
@@ -288,8 +289,7 @@ describe('the UK waste balance page', () => {
       // what the shorthand means as it reaches the table.
       const table = getByRole(documentOf(asHtml(result)), 'table', {
         name: 'Waste balance',
-        description:
-          'Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because one or two operators could have contributed to it, or one or two did.'
+        description: CONFIDENTIAL_KEY
       })
 
       expect(rowsOf(table)).toStrictEqual([

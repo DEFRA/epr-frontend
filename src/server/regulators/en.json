@@ -94,6 +94,18 @@
         "linkText": "Reprocessor and exporter figures: Wales",
         "pageTitle": "Reprocessor and exporter figures: Wales",
         "scope": "These figures cover operators registered with Natural Resources Wales, the regulator for Wales."
+      },
+      "fewOperators": {
+        "contributing": {
+          "derived": "An operator contributed to the tonnage sent on in total if it sent any tonnage on. It contributed to the average price per tonne if it reported revenue, or tonnage of notes issued other than free of charge.",
+          "reported": "An operator contributed to a figure if its report put something other than 0 into it."
+        },
+        "possible": {
+          "cancelled": "An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes its report for that month.",
+          "included": "the figure includes its report for that month",
+          "noReport": "An operator that owed a report counts even if it has not submitted it, or its report put nothing into the figure. A suspended operator still owes reports, so it counts."
+        },
+        "total": "A Grand Total is counted across all the materials in its table, so an operator that could have contributed to more than one material counts once."
       }
     },
     "heading": "Market insights",
@@ -166,13 +178,10 @@
         "total": "Total"
       },
       "fewOperators": {
-        "business": "An operator is a business. It counts once however many sites it has.",
         "possible": {
           "cancelled": "An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes tonnage it sent on that month.",
           "included": "the figure includes some of its tonnage",
-          "leadIn": "An operator could have contributed to a figure if:",
-          "noTonnage": "An operator that owed a report counts even if none of its tonnage is in the figure. A suspended operator still owes reports, so it counts.",
-          "owed": "it owed a monthly report for that month"
+          "noTonnage": "An operator that owed a report counts even if none of its tonnage is in the figure. A suspended operator still owes reports, so it counts."
         },
         "submitting": {
           "added": "a load that adds to its waste balance",
@@ -185,8 +194,13 @@
     },
     "fewOperators": {
       "heading": "Figures from few operators",
-      "key": "Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because one or two operators could have contributed to it, or one or two did.",
-      "marked": "A figure is marked [c] if only one or two operators could have contributed to it, or only one or two did. A figure no operator could have contributed to is not marked."
+      "key": "Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because only one or two operators could have contributed to it, or only one or two did.",
+      "marked": "A figure is marked [c] if only one or two operators could have contributed to it, or only one or two did. A figure no operator could have contributed to is not marked.",
+      "business": "An operator is a business. It counts once however many sites it has.",
+      "possible": {
+        "leadIn": "An operator could have contributed to a figure if:",
+        "owed": "it owed a monthly report for that month"
+      }
     }
   },
   "notAuthorised": {

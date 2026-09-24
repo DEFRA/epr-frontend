@@ -1,5 +1,9 @@
 import { config } from '#config/config.js'
-import { totalsOf } from '#server/common/test-helpers/market-insights-fixtures.js'
+import {
+  exporterOf,
+  reprocessorOf,
+  totalsOf
+} from '#server/common/test-helpers/market-insights-fixtures.js'
 import { test } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
@@ -21,33 +25,32 @@ const januaryAggregate = {
         reports: { expected: 3, submitted: 2 },
         figures: {
           plastic: {
-            reprocessor: {
-              tonnageReceived: 1250.5,
-              tonnageRecycled: 1100,
-              tonnageReceivedButNotRecycled: 150.5,
-              tonnageSentOnTotal: 50.25,
-              tonnageSentOnToReprocessor: 40,
-              tonnageSentOnToExporter: 0,
-              tonnageSentOnToOtherFacilities: 10.25,
-              revisedTonnageIssued: 900,
-              totalRevenue: 108000,
-              averagePricePerTonne: 120
-            },
-            exporter: {
+            reprocessor: reprocessorOf(
+              {
+                tonnageReceived: 1250.5,
+                tonnageRecycled: 1100,
+                tonnageReceivedButNotRecycled: 150.5,
+                tonnageSentOnTotal: 50.25,
+                tonnageSentOnToReprocessor: 40,
+                tonnageSentOnToOtherFacilities: 10.25,
+                revisedTonnageIssued: 900,
+                totalRevenue: 108000,
+                averagePricePerTonne: 120
+              },
+              {
+                operatorCount: 3,
+                submittingOperatorCount: 2,
+                contributingOperatorCounts: {
+                  tonnageReceived: 2,
+                  revisedTonnageIssued: 1
+                }
+              }
+            ),
+            exporter: exporterOf({
               tonnageReceived: 300,
               tonnageExported: 280,
-              tonnageReceivedButNotExported: 20,
-              tonnageSentOnTotal: 0,
-              tonnageSentOnToReprocessor: 0,
-              tonnageSentOnToExporter: 0,
-              tonnageSentOnToOtherFacilities: 0,
-              tonnageStopped: 0,
-              tonnageRefused: 0,
-              tonnageRepatriated: 0,
-              revisedTonnageIssued: 0,
-              totalRevenue: 0,
-              averagePricePerTonne: 0
-            }
+              tonnageReceivedButNotExported: 20
+            })
           }
         },
         totals: totalsOf()

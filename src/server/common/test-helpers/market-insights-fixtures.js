@@ -4,7 +4,8 @@ import { buildMockAuth, sessionIdentity } from './auth-helper.js'
 import { IDENTITIES } from './identity-helper.js'
 
 /**
- * @import { ExporterFigures, ReprocessorExporterTotals, ReprocessorFigures } from '#server/regulators/market-insights/helpers/to-reprocessor-exporter-tables.js'
+ * @import { OperatorCounts } from '#server/regulators/market-insights/helpers/few-operators.js'
+ * @import { ExporterFigures, ExporterTotals, ReprocessorExporterTotals, ReprocessorFigures, ReprocessorTotals, WithOperatorCounts } from '#server/regulators/market-insights/helpers/to-reprocessor-exporter-tables.js'
  * @import { OutstandingByBand } from '#server/regulators/market-insights/helpers/to-outstanding-returns-tables.js'
  */
 
@@ -35,10 +36,14 @@ export const NOTICE =
   'This page is still being built. Some figures may be missing or wrong.'
 
 /**
- * @param {Partial<ReprocessorFigures>} figures
- * @returns {ReprocessorFigures}
+ * The key a table carries, as its description, when a figure in it is marked
+ * as coming from few operators.
  */
-export const reprocessorOf = (figures = {}) => ({
+export const CONFIDENTIAL_KEY =
+  'Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because only one or two operators could have contributed to it, or only one or two did.'
+
+/** @returns {ReprocessorFigures} */
+const noReprocessorFigures = () => ({
   tonnageReceived: 0,
   tonnageRecycled: 0,
   tonnageReceivedButNotRecycled: 0,
@@ -48,15 +53,11 @@ export const reprocessorOf = (figures = {}) => ({
   tonnageSentOnToOtherFacilities: 0,
   revisedTonnageIssued: 0,
   totalRevenue: 0,
-  averagePricePerTonne: 0,
-  ...figures
+  averagePricePerTonne: 0
 })
 
-/**
- * @param {Partial<ExporterFigures>} figures
- * @returns {ExporterFigures}
- */
-export const exporterOf = (figures = {}) => ({
+/** @returns {ExporterFigures} */
+const noExporterFigures = () => ({
   tonnageReceived: 0,
   tonnageExported: 0,
   tonnageReceivedButNotExported: 0,
@@ -69,26 +70,100 @@ export const exporterOf = (figures = {}) => ({
   tonnageRepatriated: 0,
   revisedTonnageIssued: 0,
   totalRevenue: 0,
-  averagePricePerTonne: 0,
-  ...figures
+  averagePricePerTonne: 0
 })
+
+/**
+ * The operators behind a row, where a fixture names only the counts it cares
+ * about and every other count is zero, which marks nothing.
+ * @template {PropertyKey} Measure
+ * @typedef {Partial<OperatorCounts> & {
+ *   contributingOperatorCounts?: Partial<Record<Measure, number>>
+ * }} CountsOf
+ */
+
+/**
+ * @template {Record<string, number>} Figures
+ * @param {Figures} figures
+ * @param {Figures} noFigures - every figure at zero, which also serves as no operators behind each
+ * @param {CountsOf<keyof Figures>} counts
+ * @returns {WithOperatorCounts<Figures>}
+ */
+const withCounts = (
+  figures,
+  noFigures,
+  { contributingOperatorCounts, ...counts }
+) => ({
+  ...figures,
+  operatorCount: 0,
+  submittingOperatorCount: 0,
+  ...counts,
+  contributingOperatorCounts: { ...noFigures, ...contributingOperatorCounts }
+})
+
+/**
+ * @param {Partial<ReprocessorFigures>} [figures]
+ * @param {CountsOf<keyof ReprocessorFigures>} [counts]
+ * @returns {WithOperatorCounts<ReprocessorFigures>}
+ */
+export const reprocessorOf = (figures = {}, counts = {}) =>
+  withCounts(
+    { ...noReprocessorFigures(), ...figures },
+    noReprocessorFigures(),
+    counts
+  )
+
+/**
+ * @param {Partial<ExporterFigures>} [figures]
+ * @param {CountsOf<keyof ExporterFigures>} [counts]
+ * @returns {WithOperatorCounts<ExporterFigures>}
+ */
+export const exporterOf = (figures = {}, counts = {}) =>
+  withCounts(
+    { ...noExporterFigures(), ...figures },
+    noExporterFigures(),
+    counts
+  )
+
+/** @returns {ReprocessorTotals} */
+const noReprocessorTotals = () => {
+  const { averagePricePerTonne: _average, ...totals } = noReprocessorFigures()
+  return totals
+}
+
+/** @returns {ExporterTotals} */
+const noExporterTotals = () => {
+  const { averagePricePerTonne: _average, ...totals } = noExporterFigures()
+  return totals
+}
 
 /**
  * A month's totals entry, which carries every figure but the average price.
  * @param {{
- *   reprocessor?: Partial<ReprocessorExporterTotals['reprocessor']>,
- *   exporter?: Partial<ReprocessorExporterTotals['exporter']>
+ *   reprocessor?: Partial<ReprocessorTotals>,
+ *   exporter?: Partial<ExporterTotals>,
+ *   reprocessorCounts?: CountsOf<keyof ReprocessorTotals>,
+ *   exporterCounts?: CountsOf<keyof ExporterTotals>
  * }} [totals]
  * @returns {ReprocessorExporterTotals}
  */
-export const totalsOf = ({ reprocessor = {}, exporter = {} } = {}) => {
-  const { averagePricePerTonne: _reprocessorAverage, ...reprocessorTotals } =
-    reprocessorOf(reprocessor)
-  const { averagePricePerTonne: _exporterAverage, ...exporterTotals } =
-    exporterOf(exporter)
-
-  return { reprocessor: reprocessorTotals, exporter: exporterTotals }
-}
+export const totalsOf = ({
+  reprocessor = {},
+  exporter = {},
+  reprocessorCounts = {},
+  exporterCounts = {}
+} = {}) => ({
+  reprocessor: withCounts(
+    { ...noReprocessorTotals(), ...reprocessor },
+    noReprocessorTotals(),
+    reprocessorCounts
+  ),
+  exporter: withCounts(
+    { ...noExporterTotals(), ...exporter },
+    noExporterTotals(),
+    exporterCounts
+  )
+})
 
 /**
  * The outstanding reports for one material in a month, with every band the
