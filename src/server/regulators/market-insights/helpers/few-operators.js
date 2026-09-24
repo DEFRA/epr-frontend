@@ -15,7 +15,7 @@ const CONFIDENTIAL = '[c]'
  * stops being one business's figure, and a figure from none identifies no one.
  * @param {number} count
  */
-const isFew = (count) => count === 1 || count === 2
+export const isFew = (count) => count === 1 || count === 2
 
 /**
  * Whether either count marks a figure as coming from few operators.
@@ -33,4 +33,13 @@ export const fromFewOperators = ({ operatorCount, submittingOperatorCount }) =>
  * @returns {string}
  */
 export const markedFigureOf = (figure, counts) =>
-  fromFewOperators(counts) ? `${figure} ${CONFIDENTIAL}` : figure
+  withMark(figure, fromFewOperators(counts))
+
+/**
+ * A formatted figure, followed by the confidential shorthand when it is marked.
+ * @param {string} figure
+ * @param {boolean} marked
+ * @returns {string}
+ */
+export const withMark = (figure, marked) =>
+  marked ? `${figure} ${CONFIDENTIAL}` : figure

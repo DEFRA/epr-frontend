@@ -626,7 +626,7 @@ describe('the UK reprocessor and exporter figures page', () => {
         'An operator that owed a report counts even if it has not submitted it, or its report put nothing into the figure. A suspended operator still owes reports, so it counts.',
         'An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes its report for that month.',
         'An operator contributed to a figure if its report put something other than 0 into it.',
-        'An operator contributed to the tonnage sent on in total if it sent any tonnage on. It contributed to the average price per tonne if it reported revenue or tonnage of notes issued.',
+        'An operator contributed to the tonnage sent on in total if it sent any tonnage on. It contributed to the average price per tonne if it reported revenue, or tonnage of notes issued other than free of charge.',
         'A Grand Total is counted across all the materials in its table, so an operator that could have contributed to more than one material counts once.',
         'An operator is a business. It counts once however many sites it has.',
         'January 2026',

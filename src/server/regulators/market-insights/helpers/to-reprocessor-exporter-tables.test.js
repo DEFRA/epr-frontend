@@ -418,6 +418,29 @@ describe(toReprocessorExporterTables, () => {
       ])
     })
 
+    it('does not mark a figure by how many operators submitted a report, only by how many put something into it', () => {
+      const { reprocessor } = toReprocessorExporterTables(
+        dataOf({
+          '2026-01': monthOf({
+            plastic: {
+              reprocessor: reprocessorOf(
+                {},
+                { operatorCount: 5, submittingOperatorCount: 2 }
+              ),
+              exporter: exporterOf()
+            }
+          })
+        }),
+        ['2026-01'],
+        asKey
+      ).months[0]
+
+      expect(
+        reprocessor.rows[0].figures.filter((figure) => figure.endsWith('[c]'))
+      ).toStrictEqual([])
+      expect(reprocessor.marked).toBe(false)
+    })
+
     it('marks the Grand Total by its own counts, whatever the rows above it', () => {
       const { reprocessor } = toReprocessorExporterTables(
         dataOf({

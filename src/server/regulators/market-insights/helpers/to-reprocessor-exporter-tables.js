@@ -2,7 +2,7 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
-import { fromFewOperators, markedFigureOf } from './few-operators.js'
+import { isFew, withMark } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
 /**
@@ -160,38 +160,23 @@ const EXPORTER_COLUMNS = [
 ]
 
 /**
- * The counts that decide whether one figure is marked: the operators who could
- * have contributed to its row, and those whose reports put something into the
- * figure itself, which is what a single figure includes of a report.
- * @template {string} Measure
- * @param {WithOperatorCounts<Record<Measure, number>>} served
- * @param {Measure} measure
- * @returns {OperatorCounts}
- */
-const countsOf = ({ operatorCount, contributingOperatorCounts }, measure) => ({
-  operatorCount,
-  submittingOperatorCount: contributingOperatorCounts[measure]
-})
-
-/**
+ * Each figure in a row, marked when one or two operators could have
+ * contributed to the row, or one or two put something into the figure itself.
  * @template {string} Measure
  * @param {WithOperatorCounts<Record<Measure, number>>} served
  * @param {[Measure, (value: number) => string][]} columns
- * @returns {string[]}
+ * @returns {{ figure: string, marked: boolean }[]}
  */
-const markedFiguresOf = (served, columns) =>
-  columns.map(([measure, format]) =>
-    markedFigureOf(format(served[measure]), countsOf(served, measure))
-  )
+const cellsOf = (served, columns) =>
+  columns.map(([measure, format]) => {
+    const marked =
+      isFew(served.operatorCount) ||
+      isFew(served.contributingOperatorCounts[measure])
+    return { figure: withMark(format(served[measure]), marked), marked }
+  })
 
-/**
- * @template {string} Measure
- * @param {WithOperatorCounts<Record<Measure, number>>} served
- * @param {[Measure, (value: number) => string][]} columns
- * @returns {boolean}
- */
-const anyFromFewOperators = (served, columns) =>
-  columns.some(([measure]) => fromFewOperators(countsOf(served, measure)))
+/** @param {{ figure: string }[]} cells */
+const figuresOf = (cells) => cells.map(({ figure }) => figure)
 
 /**
  * @template {string} Totalled
@@ -210,6 +195,11 @@ const toTable = (
   localise
 ) => {
   const columns = [...totalledColumns, AVERAGE_PRICE_COLUMN]
+  const rows = Object.entries(byMaterial).map(([material, served]) => ({
+    label: getMaterialDisplayName(material),
+    cells: cellsOf(served, columns)
+  }))
+  const totalCells = cellsOf(totals, totalledColumns)
 
   return {
     columns: columns.map(([measure]) =>
@@ -217,20 +207,16 @@ const toTable = (
         `regulators:marketInsights:figures:columns:${accreditationType}:${measure}`
       )
     ),
-    rows: Object.entries(byMaterial)
-      .map(([material, served]) => ({
-        label: getMaterialDisplayName(material),
-        figures: markedFiguresOf(served, columns)
-      }))
+    rows: rows
+      .map(({ label, cells }) => ({ label, figures: figuresOf(cells) }))
       .sort((one, other) => one.label.localeCompare(other.label)),
     total: {
       label: localise('regulators:marketInsights:figures:total:label'),
-      figures: markedFiguresOf(totals, totalledColumns)
+      figures: figuresOf(totalCells)
     },
-    marked:
-      Object.values(byMaterial).some((served) =>
-        anyFromFewOperators(served, columns)
-      ) || anyFromFewOperators(totals, totalledColumns)
+    marked: [...rows.flatMap(({ cells }) => cells), ...totalCells].some(
+      ({ marked }) => marked
+    )
   }
 }
 

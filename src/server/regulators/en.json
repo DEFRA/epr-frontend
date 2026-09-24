@@ -97,7 +97,7 @@
       },
       "fewOperators": {
         "contributing": {
-          "derived": "An operator contributed to the tonnage sent on in total if it sent any tonnage on. It contributed to the average price per tonne if it reported revenue or tonnage of notes issued.",
+          "derived": "An operator contributed to the tonnage sent on in total if it sent any tonnage on. It contributed to the average price per tonne if it reported revenue, or tonnage of notes issued other than free of charge.",
           "reported": "An operator contributed to a figure if its report put something other than 0 into it."
         },
         "possible": {
