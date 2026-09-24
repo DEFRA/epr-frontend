@@ -16,16 +16,10 @@
         {% else %}
           <h2 class="govuk-heading-m">{{ localise('registrations:details:registeredOnlyPeriod:reports:heading') }}</h2>
 
-          {% if reports.rows | length > 0 %}
-            {{ govukTable({
-              attributes: { "data-testid": "reports-table" },
-              firstCellIsHeader: true,
-              head: reports.head,
-              rows: reports.rows
-            }) }}
-          {% else %}
-            <p class="govuk-body app-colour-secondary" data-testid="no-reports">{{ localise('registrations:details:registeredOnlyPeriod:reports:none') }}</p>
-          {% endif %}
+          {% set reportsHead = reports.head %}
+          {% set reportsRows = reports.rows %}
+          {% set reportsNoneText = localise('registrations:details:registeredOnlyPeriod:reports:none') %}
+          {% include "partials/reports/table.njk" %}
 
           {% if ledger %}
             {# No waste balance here, so no balance columns and no balance in

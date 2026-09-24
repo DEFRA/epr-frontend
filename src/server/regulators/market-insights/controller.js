@@ -1,0 +1,73 @@
+import { paths } from '#server/paths.js'
+
+/**
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ */
+
+/**
+ * The market insights preview, which mirrors the monthly workbook a page at a
+ * time. This page names the sets of figures and links to them; each one reads
+ * only what it shows, so opening this page reads nothing.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+export const controller = {
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    const { t: localise } = request
+
+    return h.view('regulators/market-insights/index', {
+      pageTitle: localise('regulators:marketInsights:pageTitle'),
+      heading: localise('regulators:marketInsights:heading'),
+      description: localise('regulators:marketInsights:description'),
+      figureSets: [
+        {
+          text: localise('regulators:marketInsights:wasteBalance:linkText'),
+          href: request.localiseUrl(paths.regulators.marketInsightsWasteBalance)
+        },
+        {
+          text: localise('regulators:marketInsights:figures:uk:linkText'),
+          href: request.localiseUrl(paths.regulators.marketInsightsUk)
+        },
+        {
+          text: localise('regulators:marketInsights:figures:england:linkText'),
+          href: request.localiseUrl(paths.regulators.marketInsightsEngland)
+        },
+        {
+          text: localise('regulators:marketInsights:figures:wales:linkText'),
+          href: request.localiseUrl(paths.regulators.marketInsightsWales)
+        },
+        {
+          text: localise('regulators:marketInsights:figures:scotland:linkText'),
+          href: request.localiseUrl(paths.regulators.marketInsightsScotland)
+        },
+        {
+          text: localise(
+            'regulators:marketInsights:figures:northern-ireland:linkText'
+          ),
+          href: request.localiseUrl(
+            paths.regulators.marketInsightsNorthernIreland
+          )
+        },
+        {
+          text: localise(
+            'regulators:marketInsights:outstandingReturns:linkText'
+          ),
+          href: request.localiseUrl(
+            paths.regulators.marketInsightsOutstandingReturns
+          )
+        }
+      ],
+      // The only way to take the figures away. It sits here rather than on the
+      // seven pages because one export holds all of them.
+      exportDescription: localise(
+        'regulators:marketInsights:export:description'
+      ),
+      exportText: localise('regulators:marketInsights:export:linkText'),
+      exportHref: request.localiseUrl(paths.regulators.marketInsightsExport)
+    })
+  }
+}

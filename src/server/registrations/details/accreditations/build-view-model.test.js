@@ -1,6 +1,7 @@
+import { config } from '#config/config.js'
 import { CADENCE } from '#server/reports/constants.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { buildViewModel } from './build-view-model.js'
 
@@ -41,6 +42,9 @@ const localise = createMockLocalise({
   'registrations:details:accreditation:summary:status': 'Accreditation status',
   'registrations:details:accreditation:summary:wasteBalanceAvailable':
     'Waste balance available (tonnes)',
+  'registrations:details:accreditation:summary:wasteRecords':
+    'Latest waste record CSV',
+  'registrations:details:accreditation:summary:download': 'Download',
   'registrations:details:allOrganisations': 'All organisations',
   'registrations:details:current': 'Current',
   'registrations:details:heading': 'Registration details',
@@ -322,6 +326,41 @@ describe('the accreditation details view model', () => {
     })
   })
 
+  it('holds no waste records row while the download is dark', () => {
+    expect(build().summaryRows.map((row) => row.key)).not.toContain(
+      'Latest waste record CSV'
+    )
+  })
+
+  describe('with the waste records download lit', () => {
+    beforeAll(() => {
+      config.set('featureFlags.wasteRecordsDownload', true)
+    })
+
+    afterAll(() => {
+      config.set('featureFlags.wasteRecordsDownload', false)
+    })
+
+    it('offers the latest waste records beneath the balance', () => {
+      expect(build().summaryRows.at(3)).toStrictEqual({
+        key: 'Latest waste record CSV',
+        html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv" class="govuk-link">Download</a>`
+      })
+    })
+
+    it('leaves the three rows above it as they were', () => {
+      expect(
+        build()
+          .summaryRows.slice(0, 3)
+          .map((row) => row.key)
+      ).toStrictEqual([
+        'Accreditation status',
+        'Accreditation number',
+        'Waste balance available (tonnes)'
+      ])
+    })
+  })
+
   it('walks back to the registration and the organisation', () => {
     expect(build().breadcrumbs).toStrictEqual([
       { text: 'All organisations', href: '/regulators/home' },
@@ -443,15 +482,137 @@ describe('the reports table on the accreditation details view model', () => {
   it('shows no rows for a calendar the page could not read', () => {
     expect(reportRows([], null)).toStrictEqual([])
   })
+
+  it('shows no more than the three most recent periods, and counts what it shows', () => {
+    const { reports } = build(undefined, undefined, aWasteBalance, {
+      cadence: CADENCE.MONTHLY,
+      reportingPeriods: [
+        aPeriod({ year: 2025, period: 7 }),
+        aPeriod({ period: 7 }),
+        aPeriod({ year: 2025, period: 12 }),
+        aPeriod({ period: 8 }),
+        aPeriod({ year: 2025, period: 8 })
+      ]
+    })
+
+    expect(reports.count).toBe(3)
+    expect(reports.rows.map((row) => row[0])).toStrictEqual([
+      { text: 'August, 2026' },
+      { text: 'July, 2026' },
+      { text: 'December, 2025' }
+    ])
+  })
+
+  it('counts what there is where fewer periods are owed', () => {
+    const { reports } = build(undefined, undefined, aWasteBalance, {
+      cadence: CADENCE.MONTHLY,
+      reportingPeriods: [aPeriod({ period: 7 }), aPeriod({ period: 8 })]
+    })
+
+    expect(reports.rows).toHaveLength(2)
+    expect(reports.count).toBe(2)
+  })
+
+  it.each([CADENCE.QUARTERLY, null])(
+    'counts nothing where the cadence is %s',
+    (cadence) => {
+      const { reports } = build(undefined, undefined, aWasteBalance, {
+        cadence,
+        reportingPeriods: [aPeriod({ period: 3 })]
+      })
+
+      expect(reports.count).toBe(0)
+    }
+  )
+
+  it("points its full list at the accreditation's reports, in the reader's language", () => {
+    const { reports } = buildViewModel({
+      organisation,
+      registration: aRegistration(),
+      accreditation: anAccreditation(),
+      wasteBalance: aWasteBalance,
+      reportingPeriods: [],
+      cadence: CADENCE.MONTHLY,
+      ledgerEvents: null,
+      packagingRecyclingNotes: [],
+      localise,
+      localiseUrl: (path) => `/cy${path}`
+    })
+
+    expect(reports.href).toBe(
+      `/cy/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reports`
+    )
+  })
 })
 
 describe('the waste balance ledger on the accreditation details view model', () => {
+  const ledgerPath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`
+
+  /**
+   * The backend answers a ledger in append order, so the last is the newest.
+   * @param {number} count
+   * @returns {LedgerEvent[]}
+   */
+  const summaryLogsOldestFirst = (count) =>
+    Array.from({ length: count }, (_, index) => ({
+      ...summaryLogSubmitted,
+      createdAt: `2026-01-0${index + 1}T09:00:00.000Z`,
+      summaryLog: { id: `log-${index + 1}`, creditTotal: 100 }
+    }))
+
+  beforeAll(() => {
+    config.set('featureFlags.wasteRecordsDownload', true)
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.wasteRecordsDownload', false)
+  })
+
   it('offers no ledger where none was read', () => {
     expect(ledgerOf(null)).toBeNull()
   })
 
   it('offers an empty ledger where nothing has moved the balance yet', () => {
-    expect(ledgerOf([])).toStrictEqual({ rows: [] })
+    expect(ledgerOf([])).toStrictEqual({
+      count: 0,
+      href: ledgerPath,
+      rows: []
+    })
+  })
+
+  it('shows no more than the three most recent events, and counts what it shows', () => {
+    const ledger = ledgerOf(summaryLogsOldestFirst(5))
+
+    expect(ledger?.count).toBe(3)
+    expect(ledger?.rows.map((row) => row.at(0))).toStrictEqual([
+      { text: '5 January 2026, 9:00am' },
+      { text: '4 January 2026, 9:00am' },
+      { text: '3 January 2026, 9:00am' }
+    ])
+  })
+
+  it('counts what there is where fewer events have moved the balance', () => {
+    const ledger = ledgerOf([summaryLogSubmitted, prnIssued])
+
+    expect(ledger?.rows).toHaveLength(2)
+    expect(ledger?.count).toBe(2)
+  })
+
+  it("points its full list at the accreditation's ledger, in the reader's language", () => {
+    const { ledger } = buildViewModel({
+      organisation,
+      registration: aRegistration(),
+      accreditation: anAccreditation(),
+      wasteBalance: aWasteBalance,
+      reportingPeriods: [],
+      cadence: CADENCE.MONTHLY,
+      ledgerEvents: [],
+      packagingRecyclingNotes: [],
+      localise,
+      localiseUrl: (path) => `/cy${path}`
+    })
+
+    expect(ledger?.href).toBe(`/cy${ledgerPath}`)
   })
 
   it('reads the events newest first, each with what it moved, the balance it left and its actor', () => {
@@ -463,7 +624,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
         { text: '87.50', format: 'numeric' },
         { text: 'Ada Lovelace (ada@example.com)' },
         {
-          html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-001/view?from=accreditation" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
+          html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-001/view" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
           classes: 'govuk-!-text-align-right'
         }
       ],
@@ -474,11 +635,22 @@ describe('the waste balance ledger on the accreditation details view model', () 
         { text: '100.00', format: 'numeric' },
         { text: 'System' },
         {
-          html: `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
+          html: `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a><br>\n<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
           classes: 'govuk-!-text-align-right'
         }
       ]
     ])
+  })
+
+  it('offers the workbook alone while the records are dark', () => {
+    config.set('featureFlags.wasteRecordsDownload', false)
+    const cell = ledgerOf([summaryLogSubmitted])?.rows.at(0)?.at(5)
+    config.set('featureFlags.wasteRecordsDownload', true)
+
+    expect(cell).toStrictEqual({
+      html: `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
+      classes: 'govuk-!-text-align-right'
+    })
   })
 
   it("names an exporter's notes PERNs", () => {
@@ -518,7 +690,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
           { text: '28 Jan 2026' },
           { text: 20 },
           {
-            html: `<a href="${notesPath}/prn-9/view?from=accreditation" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
+            html: `<a href="${notesPath}/prn-9/view" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
             classes: 'govuk-!-text-align-right'
           }
         ]
@@ -543,7 +715,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
       ]).rows
 
       expect(rows.at(0)?.at(4)).toStrictEqual({
-        html: `<a href="${notesPath}/prn-001/view?from=accreditation" class="govuk-link">View <span class="govuk-visually-hidden">26 Jan 2026</span></a>`,
+        html: `<a href="${notesPath}/prn-001/view" class="govuk-link">View <span class="govuk-visually-hidden">26 Jan 2026</span></a>`,
         classes: 'govuk-!-text-align-right'
       })
     })

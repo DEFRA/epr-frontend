@@ -5,7 +5,10 @@
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
+{# `super()` keeps the layout's phase banner and breadcrumbs. A regulator walks
+   the trail back, so only an operator is offered the back link. #}
 {% block beforeContent %}
+  {{ super() }}
   {% if backUrl %}
     {{ govukBackLink({
       text: localise("common:back"),

@@ -60,7 +60,8 @@ const packagingRecyclingNotes = [
   aNote({
     status: 'accepted',
     prnNumber: '240000123',
-    issuedAt: '2026-01-28T09:00:00.000Z'
+    issuedAt: '2026-01-28T09:00:00.000Z',
+    isDecemberWaste: true
   }),
   aNote({
     status: 'cancelled',
@@ -156,9 +157,20 @@ describe('the regulator PRNs detailed view', () => {
       'Producer or compliance scheme',
       'Date issued',
       'Tonnage',
+      'December waste?',
       'Status',
       'View in new tab'
     ])
+  })
+
+  it('shows December waste as Yes or No on the shared note-tables partial', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const table = getByRole(panel(body, 'issued'), 'table')
+    const dataRow = getAllByRole(table, 'row')[1]
+
+    expect(textOf(getAllByRole(dataRow, 'cell'))[4]).toBe('Yes')
   })
 
   it('shows a regulator neither a draft note nor a discarded one', async ({
@@ -247,23 +259,26 @@ describe('the regulator PRNs detailed view', () => {
     ).toContain('PERNs')
   })
 
-  it('offers a way back to the accreditation', async ({ server }) => {
+  it('walks back by the breadcrumbs, with no back link', async ({ server }) => {
     const { body } = await visit(server, regulator)
     const document = documentOf(body)
+    const crumbs = [
+      ...document.querySelectorAll('.govuk-breadcrumbs__list-item')
+    ]
 
-    expect(
-      document.querySelector('.govuk-back-link')?.getAttribute('href')
-    ).toBe(accreditationPath)
+    expect(document.querySelector('.govuk-back-link')).toBeNull()
 
-    expect(
-      textOf([...document.querySelectorAll('.govuk-breadcrumbs__list-item')])
-    ).toStrictEqual([
+    expect(textOf(crumbs)).toStrictEqual([
       'All organisations',
       'Kirkby Plastics Ltd',
       'Registration details',
       'Accreditation details',
       'PRNs'
     ])
+    expect(crumbs.at(3)?.querySelector('a')?.getAttribute('href')).toBe(
+      accreditationPath
+    )
+    expect(crumbs.at(4)?.querySelector('a')).toBeNull()
   })
 
   it('offers none of the operator furniture', async ({ server }) => {

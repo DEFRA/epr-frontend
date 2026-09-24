@@ -5,7 +5,7 @@ import { getInProgressActionPath } from './helpers/get-in-progress-action-path.j
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { reportAttempt } from './helpers/report-attempt.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { isReportDataIncompleteError } from './helpers/report-data-incomplete.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 
@@ -69,7 +69,7 @@ export const createController = {
       }
     }
 
-    await journeyMetrics.start(
+    await metrics.journey.start(
       request,
       JOURNEY.createReport,
       reportAttempt(request.params)

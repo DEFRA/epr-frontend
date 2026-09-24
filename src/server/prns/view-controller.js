@@ -8,6 +8,9 @@ import {
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { availableForPool } from '#server/common/helpers/waste-balance/available-for-pool.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnCoreRows,
@@ -17,8 +20,9 @@ import {
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { buildPrnBasePath } from './helpers/fetch-prn-context.js'
+import { buildNoteBreadcrumbs } from './helpers/build-note-breadcrumbs.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { noteReturn } from './helpers/note-return-path.js'
@@ -86,13 +90,28 @@ export const viewPostController = {
     }
 
     try {
-      const wasteBalanceMap = await fetchWasteBalances(
-        organisationId,
-        [accreditationId],
-        session.backendToken
+      const [wasteBalanceMap, eligibility] = await Promise.all([
+        fetchWasteBalances(
+          organisationId,
+          [accreditationId],
+          session.backendToken
+        ),
+        fetchDecemberPrnEligibility(
+          organisationId,
+          registrationId,
+          accreditationId,
+          session.backendToken
+        )
+      ])
+      const balance = wasteBalanceMap[accreditationId] ?? {
+        amount: 0,
+        availableAmount: 0
+      }
+      const availableAmount = availableForPool(
+        balance,
+        prnDraft.isDecemberWaste &&
+          eligibility.mode === DECEMBER_WASTE_CONTROL.selectPool
       )
-      const availableAmount =
-        wasteBalanceMap[accreditationId]?.availableAmount ?? 0
       const prnParams = {
         organisationId,
         registrationId,
@@ -164,8 +183,10 @@ const discardDraftOverBalance = async (
 
   request.yar.clear('prnDraft')
 
+  const poolParam = prnDraft.isDecemberWaste ? '&pool=december' : ''
+
   return h.redirect(
-    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance`
+    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance${poolParam}`
   )
 }
 
@@ -199,7 +220,7 @@ const confirmDraft = async (
     isDecemberWaste: prnDraft.isDecemberWaste
   })
 
-  await journeyMetrics.end(request, JOURNEY.createPrn, accreditationId)
+  await metrics.journey.end(request, JOURNEY.createPrn, accreditationId)
 
   return h.redirect(
     `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/${prnId}/created`
@@ -321,18 +342,29 @@ async function handleExistingView(
     prn.issuedToOrganisation
   )
 
-  const { isExporter, noteType, noteTypeFull, wasteAction } =
+  const { isExporter, noteType, noteTypeFull, noteTypePlural, wasteAction } =
     getNoteTypeDisplayNames(registration)
 
-  const back = noteReturn({
-    organisationId,
-    registrationId,
-    accreditationId,
-    isRegulator: readsAsARegulator(session),
-    from: request.query?.from
-  })
+  const isRegulator = readsAsARegulator(session)
 
-  const backUrl = request.localiseUrl(back.path)
+  const back = noteReturn({ organisationId, registrationId, accreditationId })
+
+  // A regulator walks the trail back instead, so the page offers them neither
+  // the back link nor the return link. An operator reads a note from their own
+  // list and keeps both.
+  const backUrl = isRegulator ? null : request.localiseUrl(back.path)
+
+  const breadcrumbs = isRegulator
+    ? buildNoteBreadcrumbs({
+        organisation: organisationData,
+        registration,
+        accreditationId,
+        noteTypePlural,
+        prn,
+        localise,
+        localiseUrl: request.localiseUrl.bind(request)
+      })
+    : []
 
   const displayMaterial = getRegistrationMaterialDisplayName(registration)
 
@@ -367,11 +399,12 @@ async function handleExistingView(
     accreditationRows,
     backUrl,
     back,
+    isRegulator,
     localise,
     request
   })
 
-  return h.view('prns/view', viewData)
+  return h.view('prns/view', { ...viewData, breadcrumbs })
 }
 
 /**
@@ -384,8 +417,9 @@ async function handleExistingView(
  *   isNotDraft: boolean,
  *   prnDetailRows: Array<object>,
  *   accreditationRows: Array<object>,
- *   backUrl: string,
+ *   backUrl: string | null,
  *   back: { path: string, textKey: string },
+ *   isRegulator: boolean,
  *   localise: TFunction,
  *   request: HapiRequest
  * }} params
@@ -401,6 +435,7 @@ function buildExistingPrnViewData({
   accreditationRows,
   backUrl,
   back,
+  isRegulator,
   localise,
   request
 }) {
@@ -421,10 +456,12 @@ function buildExistingPrnViewData({
     accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl,
-    returnLink: {
-      href: request.localiseUrl(back.path),
-      text: localise(back.textKey, { noteType })
-    }
+    returnLink: isRegulator
+      ? null
+      : {
+          href: request.localiseUrl(back.path),
+          text: localise(back.textKey, { noteType })
+        }
   }
 }
 

@@ -53,6 +53,9 @@
         </div>
 
         {% if accreditation.exists %}
+        {% if wasteBalance.breakdown %}
+        {% include "partials/waste-balance/december-balance-panel.njk" %}
+        {% else %}
         <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-8">
           <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
             <div>
@@ -71,6 +74,7 @@
               </p>
             </div>
         </div>
+        {% endif %}
         {% endif %}
 
         {% if wasteBalanceLedgerUrl %}

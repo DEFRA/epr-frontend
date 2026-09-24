@@ -16,14 +16,22 @@
     "accreditation": {
       "breadcrumb": "Accreditation details",
       "heading": "Accreditation",
+      "ledger": {
+        "mostRecent": "Most recent ({{count}} items)",
+        "viewAll": "View all",
+        "viewAllHidden": "ledger events"
+      },
       "reports": {
         "actions": "Actions",
         "dueDate": "Due date",
         "heading": "Reports",
+        "mostRecent": "Most recent ({{count}} items)",
         "none": "There are no reporting periods for this accreditation yet. Periods appear once one has ended.",
         "period": "Period",
         "status": "Status",
-        "submissionDate": "Submission date"
+        "submissionDate": "Submission date",
+        "viewAll": "View all",
+        "viewAllHidden": "reports"
       },
       "prns": {
         "action": "Action",
@@ -37,12 +45,15 @@
         "status": "Status",
         "tonnage": "Tonnage",
         "view": "View",
-        "viewAll": "View all"
+        "viewAll": "View all",
+        "viewAllHidden": "{{noteTypePlural}}"
       },
       "summary": {
+        "download": "Download",
         "number": "Accreditation number",
         "status": "Accreditation status",
-        "wasteBalanceAvailable": "Waste balance available (tonnes)"
+        "wasteBalanceAvailable": "Waste balance available (tonnes)",
+        "wasteRecords": "Latest waste record CSV"
       }
     },
     "registeredOnlyPeriod": {

@@ -420,11 +420,23 @@ export const config = convict({
     }
   },
   featureFlags: {
+    marketInsights: {
+      doc: 'Feature Flag: Link regulators to the market insights page from their home page',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_MARKET_INSIGHTS'
+    },
     regulatorAccess: {
       doc: 'Feature Flag: Enable Entra ID login for regulators',
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_REGULATOR_ACCESS'
+    },
+    wasteRecordsDownload: {
+      doc: 'Feature Flag: Offer waste records as CSV to regulators',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_WASTE_RECORDS_DOWNLOAD'
     }
   },
   reapplyAccreditation: {

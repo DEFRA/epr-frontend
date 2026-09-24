@@ -1,4 +1,9 @@
-import { holdsNoRole, isRegulator, REGULATOR_ROLE } from '#server/auth/roles.js'
+import {
+  ADMIN_ROLES,
+  holdsNoRole,
+  REGULATOR_ROLE,
+  seesRegulatorView
+} from '#server/auth/roles.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { describe, expect, it } from 'vitest'
 
@@ -8,25 +13,39 @@ describe('the regulator role', () => {
   })
 })
 
-describe('#isRegulator', () => {
+describe('the admin roles', () => {
+  it('are the tiers the backend resolves from its admin email lists', () => {
+    expect(ADMIN_ROLES).toStrictEqual([
+      'service_maintainer_write',
+      'service_maintainer',
+      'support'
+    ])
+  })
+})
+
+describe('#seesRegulatorView', () => {
   it('recognises a session holding the regulator role', () => {
-    expect(isRegulator({ role: REGULATOR_ROLE })).toBe(true)
+    expect(seesRegulatorView({ role: REGULATOR_ROLE })).toBe(true)
+  })
+
+  it.for(ADMIN_ROLES)('recognises a session holding the %s role', (role) => {
+    expect(seesRegulatorView({ role })).toBe(true)
   })
 
   it('does not recognise an operator', () => {
-    expect(isRegulator({ role: 'operator' })).toBe(false)
+    expect(seesRegulatorView({ role: 'operator' })).toBe(false)
   })
 
   it('does not recognise a role this app renders no shell for', () => {
-    expect(isRegulator({ role: 'service_maintainer' })).toBe(false)
+    expect(seesRegulatorView({ role: 'unknown_role' })).toBe(false)
   })
 
   it('does not recognise a session the backend granted no role', () => {
-    expect(isRegulator({ role: null })).toBe(false)
+    expect(seesRegulatorView({ role: null })).toBe(false)
   })
 
   it('does not recognise an absent session', () => {
-    expect(isRegulator(null)).toBe(false)
+    expect(seesRegulatorView(null)).toBe(false)
   })
 
   it("reads the role and not the scopes, so a regulator's scopes alone are not an identity", () => {
@@ -35,7 +54,7 @@ describe('#isRegulator', () => {
       scope: [...IDENTITIES.regulator.scopes]
     }
 
-    expect(isRegulator(credentials)).toBe(false)
+    expect(seesRegulatorView(credentials)).toBe(false)
   })
 })
 

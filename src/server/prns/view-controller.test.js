@@ -19,7 +19,7 @@ import {
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getByRole,
@@ -28,7 +28,7 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { describe, expect, vi } from 'vitest'
+import { afterEach, describe, expect, vi } from 'vitest'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 vi.mock(
@@ -42,19 +42,17 @@ vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 const { fetchWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
+const { fetchDecemberPrnEligibility } =
+  await import('./helpers/fetch-december-prn-eligibility.js')
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -176,6 +174,10 @@ describe('#viewController', () => {
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
     vi.mocked(fetchWasteBalances).mockResolvedValue({
       'acc-001': { amount: 1000, availableAmount: 500 }
+    })
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      mode: 'none',
+      windowOpen: false
     })
   })
 
@@ -589,75 +591,53 @@ describe('#viewController', () => {
         expect(returnLink.getAttribute('href')).toBe(listUrl)
       })
 
-      it('sends a note opened from the accreditation back to it', async ({
-        server
-      }) => {
-        config.set('featureFlags.regulatorAccess', true)
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: `${viewUrl}?from=accreditation`,
-          auth: buildMockAuth({
-            provider: OIDC_ENTRA_ID,
-            ...sessionIdentity(IDENTITIES.regulator)
+      describe('for a regulator, who walks the trail back', () => {
+        const asRegulator = (server) =>
+          server.inject({
+            method: 'GET',
+            url: viewUrl,
+            auth: buildMockAuth({
+              provider: OIDC_ENTRA_ID,
+              ...sessionIdentity(IDENTITIES.regulator)
+            })
           })
+
+        beforeEach(() => {
+          config.set('featureFlags.regulatorAccess', true)
         })
 
-        config.set('featureFlags.regulatorAccess', false)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const accreditationUrl = listUrl.replace(
-          '/packaging-recycling-notes',
-          ''
-        )
-
-        expect(
-          body.querySelector('.govuk-back-link')?.getAttribute('href')
-        ).toBe(accreditationUrl)
-
-        const returnLink = getByText(
-          getByRole(body, 'main'),
-          /Return to accreditation/i
-        )
-        expect(returnLink.getAttribute('href')).toBe(accreditationUrl)
-      })
-
-      it('sends an operator to their own list, whatever a shared link says', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: `${viewUrl}?from=accreditation`,
-          auth: mockAuth
+        afterEach(() => {
+          config.set('featureFlags.regulatorAccess', false)
         })
 
-        const { body } = new JSDOM(result).window.document
+        it('walks from all organisations down to the note', async ({
+          server
+        }) => {
+          const { result } = await asRegulator(server)
+          const { body } = new JSDOM(result).window.document
 
-        expect(
-          body.querySelector('.govuk-back-link')?.getAttribute('href')
-        ).toBe(listUrl)
-        expect(
-          getByText(
-            getByRole(body, 'main'),
-            /Return to PRN list/i
-          ).getAttribute('href')
-        ).toBe(listUrl)
-      })
-
-      it('ignores a return it does not know', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: `${viewUrl}?from=https://example.com`,
-          auth: mockAuth
+          expect(
+            Array.from(body.querySelectorAll('.govuk-breadcrumbs__link')).map(
+              (link) => link.getAttribute('href')
+            )
+          ).toStrictEqual([
+            '/regulators/home',
+            `/organisations/${organisationId}`,
+            `/organisations/${organisationId}/registrations/${registrationId}`,
+            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`,
+            listUrl
+          ])
         })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+        it('offers neither the back link nor the return link', async ({
+          server
+        }) => {
+          const { result } = await asRegulator(server)
+          const { body } = new JSDOM(result).window.document
 
-        expect(
-          body.querySelector('.govuk-back-link')?.getAttribute('href')
-        ).toBe(listUrl)
+          expect(body.querySelector('.govuk-back-link')).toBeNull()
+          expect(queryByText(getByRole(body, 'main'), /Return to/i)).toBeNull()
+        })
       })
 
       it('displays PERN details for exporter registration', async ({
@@ -1943,6 +1923,206 @@ describe('#viewController', () => {
         )
       })
 
+      it('discards a December draft whose tonnage fits the total but not the December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: true })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 1000,
+            decemberAmount: 60,
+            decemberAvailableAmount: 60
+          }
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toContain('error=insufficient_balance')
+      })
+
+      it('confirms a general draft whose tonnage fits total minus the reserved December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: false })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 1100,
+            decemberAmount: 50,
+            decemberAvailableAmount: 50,
+            nonDecemberAvailableAmount: 1050
+          }
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createdUrl)
+      })
+
+      it('discards a general draft whose tonnage exceeds total minus the reserved December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: false })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 130,
+            decemberAmount: 50,
+            decemberAvailableAmount: 50,
+            nonDecemberAvailableAmount: 80
+          }
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toContain('error=insufficient_balance')
+      })
+
+      it('confirms a disclosure-only December draft against the total, when the accreditation has no separate December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: true })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 1000
+          }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createdUrl)
+      })
+
       it('treats missing waste balance as zero available', async ({
         server
       }) => {
@@ -2020,7 +2200,7 @@ describe('#viewController', () => {
         payload: { crumb }
       })
 
-      expect(journeyMetrics.end).toHaveBeenCalledWith(
+      expect(metrics.journey.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.createPrn,
         accreditationId

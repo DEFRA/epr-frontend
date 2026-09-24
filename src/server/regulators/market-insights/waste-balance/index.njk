@@ -1,0 +1,88 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl">
+        <span class="govuk-caption-xl">{{ caption }}</span>
+        {{ heading }}
+      </h1>
+      {{ govukInsetText({ text: localise('regulators:marketInsights:notice') }) }}
+      <p class="govuk-body">{{ description }}</p>
+      <p class="govuk-body-s">{{ dataTakenAt }}</p>
+
+      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:wasteBalance:calculation:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:source') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:rules') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:leadIn') }}</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:received') }}</li>
+        <li>{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:product') }}</li>
+        <li>{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:exported') }}</li>
+      </ul>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:deductions') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:live') }}</p>
+
+      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:marked') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:possible:leadIn') }}</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>{{ localise('regulators:marketInsights:fewOperators:possible:owed') }}</li>
+        <li>{{ localise('regulators:marketInsights:wasteBalance:fewOperators:possible:included') }}</li>
+      </ul>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:possible:noTonnage') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:possible:cancelled') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:submitting:leadIn') }}</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>{{ localise('regulators:marketInsights:wasteBalance:fewOperators:submitting:added') }}</li>
+        <li>{{ localise('regulators:marketInsights:wasteBalance:fewOperators:submitting:sentOn') }}</li>
+      </ul>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:submitting:ignored') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:total') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:business') }}</p>
+
+      <div class="govuk-body" data-testid="app-page-body">
+        {% set tableHead = [
+          { text: localise('regulators:marketInsights:table:material') },
+          { text: localise('regulators:marketInsights:wasteBalance:table:accreditationType') }
+        ] %}
+        {% for month in wasteBalance.months %}
+          {% set tableHead = tableHead.concat([{ text: month, format: "numeric" }]) %}
+        {% endfor %}
+        {% set tableHead = tableHead.concat([{ text: localise('regulators:marketInsights:wasteBalance:table:total'), format: "numeric" }]) %}
+
+        {% set tableRows = [] %}
+        {% for row in wasteBalance.rows %}
+          {% set cells = [{ text: row.material }, { text: row.accreditationType }] %}
+          {% for netCredit in row.netCredits %}
+            {% set cells = cells.concat([{ text: netCredit, format: "numeric" }]) %}
+          {% endfor %}
+          {% set cells = cells.concat([{ text: row.total, format: "numeric" }]) %}
+          {% set tableRows = tableRows.concat([cells]) %}
+        {% endfor %}
+
+        {% set reportCells = [{ text: localise('regulators:marketInsights:wasteBalance:table:reports'), colspan: 2 }] %}
+        {% for count in wasteBalance.reports.byMonth %}
+          {% set reportCells = reportCells.concat([{ text: count, format: "numeric" }]) %}
+        {% endfor %}
+        {% set reportCells = reportCells.concat([{ text: wasteBalance.reports.period, format: "numeric" }]) %}
+        {% set tableRows = tableRows.concat([reportCells]) %}
+
+        {% if wasteBalance.marked %}
+          <p class="govuk-body" id="waste-balance-key">{{ localise('regulators:marketInsights:fewOperators:key') }}</p>
+        {% endif %}
+        {{ govukTable({
+          attributes: { 'aria-describedby': 'waste-balance-key' } if wasteBalance.marked else {},
+          caption: localise('regulators:marketInsights:wasteBalance:table:caption'),
+          captionClasses: "govuk-table__caption--m",
+          firstCellIsHeader: true,
+          head: tableHead,
+          rows: tableRows
+        }) }}
+      </div>
+    </div>
+  </div>
+{% endblock %}

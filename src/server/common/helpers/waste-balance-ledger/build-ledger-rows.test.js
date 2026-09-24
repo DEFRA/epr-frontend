@@ -36,6 +36,7 @@ const buildRows = (overrides = {}) =>
     localise,
     localiseUrl,
     noteType: 'PRN',
+    offersCsvDownloads: true,
     offersDownloads: true,
     organisationId: 'org-1',
     registrationId: 'reg-1',
@@ -144,7 +145,7 @@ describe(buildLedgerRows, () => {
       'waste-balance-ledger:table.noMovement',
       '87.50',
       'Ada Lovelace (ada@example.com)',
-      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view?from=ledger" class="govuk-link">waste-balance-ledger:actionView <span class="govuk-visually-hidden">15 February 2026, 3:09pm</span></a>'
+      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:actionView <span class="govuk-visually-hidden">15 February 2026, 3:09pm</span></a>'
     ])
   })
 
@@ -254,7 +255,7 @@ describe(buildLedgerRows, () => {
     const [row] = buildRows({ events: [buildNumberedEvent()] })
 
     expect(cellsOf(row).at(5)).toBe(
-      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view?from=ledger" class="govuk-link">waste-balance-ledger:actionView <span class="govuk-visually-hidden">240000123</span></a>'
+      '<a href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn-1/view" class="govuk-link">waste-balance-ledger:actionView <span class="govuk-visually-hidden">240000123</span></a>'
     )
   })
 
@@ -285,7 +286,7 @@ describe(buildLedgerRows, () => {
     })
 
     expect(cellsOf(rows.at(1)).at(5)).toContain(
-      '/packaging-recycling-notes/prn-1/view?from=ledger'
+      '/packaging-recycling-notes/prn-1/view'
     )
   })
 
@@ -310,6 +311,30 @@ describe(buildLedgerRows, () => {
 
   it('offers a summary log its own file rather than a note to open', () => {
     const [row] = buildRows({ events: [buildSummaryLogEvent()] })
+
+    expect(cellsOf(row).at(5)).toBe(
+      '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a><br>\n<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
+    )
+  })
+
+  // The journey tests read the cell's first anchor, so the workbook leading is
+  // an invariant rather than a preference.
+  it('offers the workbook before the records', () => {
+    const [row] = buildRows({ events: [buildSummaryLogEvent()] })
+
+    const hrefs = [...(cellsOf(row).at(5) ?? '').matchAll(/href="([^"]+)"/g)]
+
+    expect(hrefs.map(([, href]) => href)).toStrictEqual([
+      '/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download',
+      '/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download.csv'
+    ])
+  })
+
+  it('offers the workbook alone while the records are not on offer', () => {
+    const [row] = buildRows({
+      events: [buildSummaryLogEvent()],
+      offersCsvDownloads: false
+    })
 
     expect(cellsOf(row).at(5)).toBe(
       '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
@@ -397,17 +422,22 @@ describe(buildLedgerRows, () => {
         '4 January 2026, 9:00am',
         'waste-balance-ledger:events.summary-log-submitted({"noteType":"PRN"})',
         'Ada Lovelace (ada@example.com)',
-        '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
+        '<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a><br>\n<a href="/en/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>'
       ])
     })
 
     // A submission offers its file without an accreditation, which is what a
     // registered-only ledger has none of.
-    it('offers the download even though the ledger names no accreditation', () => {
+    it('offers both downloads even though the ledger names no accreditation', () => {
       const [row] = buildBalanceFreeRows()
 
-      expect(cellsOf(row).at(3)).toContain(
-        '/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download'
+      const cell = cellsOf(row).at(3)
+
+      expect(cell).toContain(
+        '/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download"'
+      )
+      expect(cell).toContain(
+        '/organisations/org-1/registrations/reg-1/summary-logs/files/log-2/download.csv'
       )
     })
 

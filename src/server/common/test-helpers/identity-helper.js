@@ -13,12 +13,15 @@ import { http, HttpResponse } from 'msw'
  * app names. A guard added later must add its scope here too, or an
  * integration test signs a user in with less than the real session carries.
  * The regulator's `organisation.search` guards the regulator's own page,
- * `waste-balance.ledger.read` guards the waste balance ledger and
- * `organisation.read` guards the overseas reprocessing sites, so a stale
- * fixture is caught on any of the three.
+ * `waste-balance.ledger.read` guards the waste balance ledger,
+ * `organisation.read` guards the overseas reprocessing sites and
+ * `market-data.read` guards the market insights preview, so a stale fixture is
+ * caught on any of the four.
  *
  * `operatorWithoutWrite` is the same operator after the backend stops granting
  * the write scope: a narrower answer that still names a role.
+ *
+ * `support` is the lowest admin tier: a regulator's reads and no writes.
  */
 export const IDENTITIES = Object.freeze({
   operator: {
@@ -32,8 +35,20 @@ export const IDENTITIES = Object.freeze({
   regulator: {
     role: REGULATOR_ROLE,
     scopes: [
+      SCOPES.marketDataRead,
       SCOPES.organisationRead,
       SCOPES.organisationSearch,
+      SCOPES.wasteBalanceLedgerRead
+    ]
+  },
+  support: {
+    role: 'support',
+    scopes: [
+      'admin.read',
+      SCOPES.marketDataRead,
+      SCOPES.organisationRead,
+      SCOPES.organisationSearch,
+      'summary-log.read',
       SCOPES.wasteBalanceLedgerRead
     ]
   },

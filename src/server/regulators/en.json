@@ -5,6 +5,204 @@
     "body": "You have signed out of the '{{ serviceName }}' service.",
     "signInAgain": "Sign in again"
   },
+  "marketInsights": {
+    "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
+    "description": "These pages show figures from the monthly market insights workbook. Each set of figures has its own page.",
+    "export": {
+      "description": "Download every figure behind these pages as a set of CSV files in one zip. Each file covers the whole reporting period, with a column for the month. The file takes up to a minute to prepare, so the page will wait after you select the link.",
+      "heading": "Download the figures",
+      "linkText": "Download all the figures (ZIP)"
+    },
+    "figures": {
+      "calculation": {
+        "accreditations": "A report counts only if the accreditation it was submitted under is currently approved or suspended. An accreditation that has since been cancelled loses every month it reported.",
+        "average": "Operators report notes issued free of charge separately, and that tonnage is excluded. Revenue and tonnage are each added up across all operators, then total revenue is divided by total tonnage to give the average price per tonne. Where no tonnage was issued, the average is 0.",
+        "heading": "How the figures are calculated",
+        "live": "The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.",
+        "revenue": "Revenue is what operators reported receiving, or expecting to receive, for their notes, excluding VAT.",
+        "rounding": "Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.",
+        "source": "The figures come from the monthly reports operators submit, not from the summary logs the UK waste balance uses. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.",
+        "total": "Each table ends in a Grand Total row, which adds up every material. No average price is calculated for it, so that cell shows a dash.",
+        "zero": "Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted."
+      },
+      "columns": {
+        "exporter": {
+          "averagePricePerTonne": "Average PERN price per tonne (£)",
+          "revisedTonnageIssued": "Tonnage of PERNs issued, excluding those issued free of charge",
+          "tonnageExported": "Tonnage exported for recycling",
+          "tonnageReceived": "Tonnage received for exporting",
+          "tonnageReceivedButNotExported": "Tonnage received but not exported",
+          "tonnageRefused": "Tonnage exported that was refused",
+          "tonnageRepatriated": "Tonnage repatriated",
+          "tonnageSentOnToExporter": "Tonnage sent on to an exporter",
+          "tonnageSentOnToOtherFacilities": "Tonnage sent on to other facilities",
+          "tonnageSentOnToReprocessor": "Tonnage sent on to a reprocessor",
+          "tonnageSentOnTotal": "Tonnage sent on, total",
+          "tonnageStopped": "Tonnage exported that was stopped",
+          "totalRevenue": "PERN revenue (£)"
+        },
+        "reprocessor": {
+          "averagePricePerTonne": "Average PRN price per tonne (£)",
+          "revisedTonnageIssued": "Tonnage of PRNs issued, excluding those issued free of charge",
+          "tonnageReceived": "Tonnage received for recycling",
+          "tonnageReceivedButNotRecycled": "Tonnage received but not recycled",
+          "tonnageRecycled": "Tonnage recycled",
+          "tonnageSentOnToExporter": "Tonnage sent on to an exporter",
+          "tonnageSentOnToOtherFacilities": "Tonnage sent on to other facilities",
+          "tonnageSentOnToReprocessor": "Tonnage sent on to a reprocessor",
+          "tonnageSentOnTotal": "Tonnage sent on, total",
+          "totalRevenue": "PRN revenue (£)"
+        }
+      },
+      "completeness": "These figures are only as good as the reports operators have submitted. An operator that has not submitted a month adds nothing to it. The newest months are the least complete, because returns are still arriving. Each month says how many of the monthly reports it was owed have been submitted.",
+      "description": "For each month, the tables show what accredited reprocessors and exporters reported by material: tonnage received, recycled or exported, and sent on. They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price per tonne. The monthly market insights workbook uses these figures.",
+      "england": {
+        "heading": "Reprocessor and exporter figures: England",
+        "linkText": "Reprocessor and exporter figures: England",
+        "pageTitle": "Reprocessor and exporter figures: England",
+        "scope": "These figures cover operators registered with the Environment Agency, the regulator for England."
+      },
+      "northern-ireland": {
+        "heading": "Reprocessor and exporter figures: Northern Ireland",
+        "linkText": "Reprocessor and exporter figures: Northern Ireland",
+        "pageTitle": "Reprocessor and exporter figures: Northern Ireland",
+        "scope": "These figures cover operators registered with the Northern Ireland Environment Agency, the regulator for Northern Ireland."
+      },
+      "reports": "Monthly reports submitted: {{ count }}",
+      "scotland": {
+        "heading": "Reprocessor and exporter figures: Scotland",
+        "linkText": "Reprocessor and exporter figures: Scotland",
+        "pageTitle": "Reprocessor and exporter figures: Scotland",
+        "scope": "These figures cover operators registered with the Scottish Environment Protection Agency, the regulator for Scotland."
+      },
+      "table": {
+        "exporter": "Exporter data for {{ month }}",
+        "reprocessor": "Reprocessor data for {{ month }}"
+      },
+      "total": {
+        "dash": "-",
+        "label": "Grand Total",
+        "noAverage": "No average price is calculated"
+      },
+      "uk": {
+        "heading": "Reprocessor and exporter figures: UK",
+        "linkText": "Reprocessor and exporter figures: UK",
+        "pageTitle": "Reprocessor and exporter figures: UK"
+      },
+      "wales": {
+        "heading": "Reprocessor and exporter figures: Wales",
+        "linkText": "Reprocessor and exporter figures: Wales",
+        "pageTitle": "Reprocessor and exporter figures: Wales",
+        "scope": "These figures cover operators registered with Natural Resources Wales, the regulator for Wales."
+      },
+      "fewOperators": {
+        "contributing": {
+          "derived": "An operator contributed to the tonnage sent on in total if it sent any tonnage on. It contributed to the average price per tonne if it reported revenue, or tonnage of notes issued other than free of charge.",
+          "reported": "An operator contributed to a figure if its report put something other than 0 into it."
+        },
+        "possible": {
+          "cancelled": "An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes its report for that month.",
+          "included": "the figure includes its report for that month",
+          "noReport": "An operator that owed a report counts even if it has not submitted it, or its report put nothing into the figure. A suspended operator still owes reports, so it counts."
+        },
+        "total": "A Grand Total is counted across all the materials in its table, so an operator that could have contributed to more than one material counts once."
+      }
+    },
+    "heading": "Market insights",
+    "linkText": "Market insights",
+    "notice": "This page is still being built. Some figures may be missing or wrong.",
+    "outstandingReturns": {
+      "bands": {
+        "up_to_500": "Up to 500 tonnes",
+        "up_to_5000": "Up to 5,000 tonnes",
+        "up_to_10000": "Up to 10,000 tonnes",
+        "over_10000": "Over 10,000 tonnes"
+      },
+      "calculation": {
+        "bands": "A report is counted under the tonnage band the accreditation holds now, not the band it held in the month the report was owed. A band change therefore moves all of that accreditation’s outstanding months to the new band.",
+        "glass": "Glass is two materials here. An operator accredited for glass remelt and for glass other holds a registration for each, owes a report for each, and appears in both tables.",
+        "heading": "How the figures are calculated",
+        "live": "The figures are live. They come from the monthly reports and the accreditations held at the time shown above, not from a record of what was published. If an operator submits a report late, its month stops being outstanding.",
+        "owed": "One monthly report is owed for each accredited registration, so an operator accredited for two materials, or at two sites, owes two reports a month. A registration with no accreditation owes none, and so does one whose accreditation was never approved, whatever validity dates it carries.",
+        "source": "The figures count the monthly reports accredited operators owe and have not submitted. Quarterly reports do not count.",
+        "submitted": "A month counts as submitted once the operator has submitted it, whatever figures the report carries. A report the operator has started but not submitted does not count, and neither does one submitted for a month the accreditation does not owe. A report submitted and later unsubmitted still counts, because the submission is kept, so its month is not outstanding.",
+        "validity": "Once an accreditation has been approved, a report is owed for every month its validity period covered any part of, so the month it started counts and so does the month it ended. A suspended accreditation still owes its reports. A cancelled one owes nothing for a month it stood cancelled throughout, and owes again from a month inside its validity period that it was reinstated in.",
+        "zero": "A cell shows 0 where nothing is outstanding, whether every report owed was submitted or no report was owed at all. Every material and every band appears for every month either way."
+      },
+      "description": "The tables show how many monthly reports accredited operators have not submitted, by material and tonnage band. Reprocessors and exporters are counted together and no operator is named. The monthly market insights workbook uses these figures.",
+      "heading": "Outstanding monthly reports: UK",
+      "linkText": "Outstanding monthly reports: UK",
+      "pageTitle": "Outstanding monthly reports: UK",
+      "table": {
+        "band": "Tonnage band",
+        "caption": "Reports not submitted for {{ material }}"
+      }
+    },
+    "pageTitle": "Market insights",
+    "period": {
+      "month": "{{ month }} {{ year }}",
+      "months": "{{ from }} to {{ to }} {{ year }}"
+    },
+    "reports": {
+      "count": "{{ submitted }} of {{ expected }}"
+    },
+    "table": {
+      "material": "Material"
+    },
+    "wasteBalance": {
+      "accreditationTypes": {
+        "exporter": "Exporter",
+        "reprocessor": "Reprocessor"
+      },
+      "calculation": {
+        "counted": {
+          "exported": "an overseas reprocessor received the exported waste",
+          "leadIn": "A load counts in the month:",
+          "product": "a recycled product left the reprocessing site",
+          "received": "a reprocessor received it"
+        },
+        "deductions": "Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.",
+        "heading": "How the figures are calculated",
+        "live": "The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.",
+        "rules": "A load counts under the same rules as the operator’s own waste balance. The accreditation must have been valid on the date the load counts.",
+        "source": "The figures come from the latest summary log each accreditation has submitted. The last row shows how many monthly reports were due for each month and how many operators submitted. This is a guide to how complete the figures are. The figures do not come from the monthly reports."
+      },
+      "description": "The table shows tonnage credited to accredited operators’ waste balances by material and accreditation type, less tonnage sent on. The monthly market insights workbook uses these figures.",
+      "heading": "UK waste balance",
+      "linkText": "UK waste balance",
+      "pageTitle": "UK waste balance",
+      "table": {
+        "accreditationType": "Accreditation type",
+        "caption": "Waste balance",
+        "reports": "Monthly reports submitted",
+        "total": "Total"
+      },
+      "fewOperators": {
+        "possible": {
+          "cancelled": "An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes tonnage it sent on that month.",
+          "included": "the figure includes some of its tonnage",
+          "noTonnage": "An operator that owed a report counts even if none of its tonnage is in the figure. A suspended operator still owes reports, so it counts."
+        },
+        "submitting": {
+          "added": "a load that adds to its waste balance",
+          "ignored": "A load its waste balance ignores does not count, such as a load dated while the accreditation was suspended.",
+          "leadIn": "An operator contributed to a figure if the figure includes its tonnage from:",
+          "sentOn": "a load it sent on, which comes off the figure"
+        },
+        "total": "A row’s total is counted across all its months, so an operator that could have contributed in more than one month counts once."
+      }
+    },
+    "fewOperators": {
+      "heading": "Figures from few operators",
+      "key": "Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because only one or two operators could have contributed to it, or only one or two did.",
+      "marked": "A figure is marked [c] if only one or two operators could have contributed to it, or only one or two did. A figure no operator could have contributed to is not marked.",
+      "business": "An operator is a business. It counts once however many sites it has.",
+      "possible": {
+        "leadIn": "An operator could have contributed to a figure if:",
+        "owed": "it owed a monthly report for that month"
+      }
+    }
+  },
   "notAuthorised": {
     "pageTitle": "You do not have access to this service",
     "heading": "You do not have access to this service",
@@ -36,7 +234,7 @@
       "view": "View"
     }
   },
-  "serviceName": "Access reprocessed or exported packaging waste data",
+  "serviceName": "Record reprocessed or exported packaging waste: regulators",
   "start": {
     "pageTitle": "Start",
     "bodyOne": "This service gives regulators from across the four nations access to UK packaging waste regulations operator data.",

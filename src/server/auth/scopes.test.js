@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   hasLedgerReadScope,
+  hasMarketDataReadScope,
   hasOrganisationReadScope,
   hasWriteScope,
   SCOPES
@@ -104,6 +105,44 @@ describe(hasLedgerReadScope, () => {
 
   it('refuses an absent argument', () => {
     expect(hasLedgerReadScope()).toBe(false)
+  })
+})
+
+describe(hasMarketDataReadScope, () => {
+  it('admits a session the backend granted the market data read scope', () => {
+    expect(
+      hasMarketDataReadScope(
+        credentials(['market-data.read', 'organisation.search'])
+      )
+    ).toBe(true)
+  })
+
+  it('refuses a regulator the backend granted every other read scope', () => {
+    expect(
+      hasMarketDataReadScope(
+        credentials([
+          'organisation.read',
+          'organisation.search',
+          'waste-balance.ledger.read'
+        ])
+      )
+    ).toBe(false)
+  })
+
+  it('refuses a session the backend granted nothing', () => {
+    expect(hasMarketDataReadScope(credentials([]))).toBe(false)
+  })
+
+  it('refuses a session carrying no scopes at all', () => {
+    expect(hasMarketDataReadScope(credentials(undefined))).toBe(false)
+  })
+
+  it('refuses a request with no session', () => {
+    expect(hasMarketDataReadScope(null)).toBe(false)
+  })
+
+  it('refuses an absent argument', () => {
+    expect(hasMarketDataReadScope()).toBe(false)
   })
 })
 

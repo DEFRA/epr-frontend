@@ -18,8 +18,8 @@ import {
   isExporterRegistration,
   isReprocessorRegistration
 } from '#server/common/helpers/prns/registration-helpers.js'
+import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-import { reportReturnPath } from './helpers/report-return-path.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
 /** @import { SubmissionStatusValue } from './constants.js' */
@@ -316,22 +316,23 @@ export const viewGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration, accreditation }, reportDetail] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.backendToken
-      ),
-      fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        session.backendToken
-      )
-    ])
+    const [{ organisationData, registration, accreditation }, reportDetail] =
+      await Promise.all([
+        fetchRegistrationAndAccreditation(
+          organisationId,
+          registrationId,
+          session.backendToken
+        ),
+        fetchReportDetail(
+          organisationId,
+          registrationId,
+          year,
+          cadence,
+          period,
+          submissionNumber,
+          session.backendToken
+        )
+      ])
 
     const currentStatus = reportDetail.status?.currentStatus
     if (
@@ -342,23 +343,16 @@ export const viewGetController = {
     }
 
     const reportsPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-    const backUrl = request.localiseUrl(
-      reportReturnPath({
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        isRegulator: readsAsARegulator(session),
-        accreditationId: registration.accreditationId
-      })
-    )
     const reportsUrl = request.localiseUrl(reportsPath)
+    const isRegulator = readsAsARegulator(session)
+    // A regulator walks the trail back instead, so the page offers them no
+    // back link. An operator reads a report from their own list and keeps one.
+    const backUrl = isRegulator ? null : reportsUrl
     const periodPath = `${reportsPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
     const makeChangesUrl = request.localiseUrl(`${periodPath}/make-changes`)
 
-    return h.view(
-      'reports/view',
-      buildViewData({
+    return h.view('reports/view', {
+      ...buildViewData({
         registration,
         accreditation,
         reportDetail,
@@ -370,7 +364,18 @@ export const viewGetController = {
         reportsUrl,
         makeChangesUrl,
         localise
-      })
-    )
+      }),
+      breadcrumbs: isRegulator
+        ? buildReportBreadcrumbs({
+            organisation: organisationData,
+            registration,
+            pageName: localise('reports:view:pageTitle'),
+            year,
+            cadence,
+            localise,
+            localiseUrl: request.localiseUrl.bind(request)
+          })
+        : []
+    })
   }
 }

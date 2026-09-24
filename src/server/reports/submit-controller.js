@@ -26,7 +26,7 @@ import {
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { reportAttempt } from './helpers/report-attempt.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { isResubmission } from './helpers/resubmission.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { buildValidationErrors } from './helpers/validation.js'
@@ -394,7 +394,7 @@ export const submitGetController = {
 
     const viewData = await buildViewData(request)
 
-    await journeyMetrics.start(
+    await metrics.journey.start(
       request,
       JOURNEY.submitReport,
       reportAttempt(request.params)
@@ -469,7 +469,7 @@ export const submitPostController = {
       session.backendToken
     )
 
-    await journeyMetrics.end(
+    await metrics.journey.end(
       request,
       JOURNEY.submitReport,
       reportAttempt(request.params)

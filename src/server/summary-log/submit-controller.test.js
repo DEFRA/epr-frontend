@@ -4,7 +4,7 @@ import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summ
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
@@ -24,13 +24,8 @@ vi.mock(
   })
 )
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
@@ -132,7 +127,7 @@ describe('#submitSummaryLogController', () => {
       payload: { crumb }
     })
 
-    expect(journeyMetrics.end).toHaveBeenCalledWith(
+    expect(metrics.journey.end).toHaveBeenCalledWith(
       expect.anything(),
       JOURNEY.uploadSummaryLog,
       registrationId
@@ -159,7 +154,7 @@ describe('#submitSummaryLogController', () => {
       payload: { crumb }
     })
 
-    expect(journeyMetrics.end).not.toHaveBeenCalled()
+    expect(metrics.journey.end).not.toHaveBeenCalled()
   })
 
   it('should render conflict view when backend returns 409', async ({

@@ -8,7 +8,7 @@ import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
-import { journeyMetrics } from '#server/common/helpers/metrics/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByLabelText, getByRole, getByText } from '@testing-library/dom'
@@ -40,13 +40,8 @@ const mockOrganisationData = /** @type {Organisation} */ (
   })
 )
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    journeyMetrics: { start: vi.fn(), end: vi.fn() }
-  })
-)
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
@@ -152,7 +147,7 @@ describe('#summaryLogUploadController', () => {
   }) => {
     await server.inject({ method: 'GET', url, auth: mockAuth })
 
-    expect(journeyMetrics.start).toHaveBeenCalledWith(
+    expect(metrics.journey.start).toHaveBeenCalledWith(
       expect.anything(),
       JOURNEY.uploadSummaryLog,
       registrationId
@@ -172,7 +167,7 @@ describe('#summaryLogUploadController', () => {
       })
     })
 
-    expect(journeyMetrics.start).not.toHaveBeenCalled()
+    expect(metrics.journey.start).not.toHaveBeenCalled()
   })
 
   it('should display error page without leaking backend error details', async ({

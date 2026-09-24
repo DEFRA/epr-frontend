@@ -1,10 +1,11 @@
 /** @import { ServerInjectResponse } from '@hapi/hapi'; */
 import { config } from '#config/config.js'
 import { REGULATOR_ROLE } from '#server/auth/roles.js'
-import { SIGNED_OUT_PROVIDER_COOKIE } from '#server/auth/helpers/signed-out-provider.js'
+import { SIGN_IN_PROVIDER_COOKIE } from '#server/auth/helpers/sign-in-provider.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { extractCookieValues } from '#server/common/test-helpers/cookie-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
@@ -27,14 +28,10 @@ const regulatorAuth = buildMockAuth({
  * @param {ServerInjectResponse} response
  * @returns {string}
  */
-const providerCookieHeader = (response) => {
-  const setCookie = /** @type {string[]} */ (response.headers['set-cookie'])
-
-  return setCookie
-    .filter((header) => header.startsWith(`${SIGNED_OUT_PROVIDER_COOKIE}=`))
-    .map((header) => header.replace(/;.*$/, ''))
+const providerCookieHeader = (response) =>
+  extractCookieValues(response.headers['set-cookie'])
+    .filter((cookie) => cookie.startsWith(`${SIGN_IN_PROVIDER_COOKIE}=`))
     .join('')
-}
 
 describe('which sign out page a provider sends a user to', () => {
   beforeAll(() => {
@@ -63,6 +60,24 @@ describe('which sign out page a provider sends a user to', () => {
       expect(returned.headers.location).toBe('/regulators/logged-out')
     })
 
+    it('keeps the provider cookie for a session that lapses later', async ({
+      server
+    }) => {
+      const signOut = await server.inject({
+        method: 'GET',
+        url: '/logout',
+        auth: regulatorAuth
+      })
+
+      const returned = await server.inject({
+        method: 'GET',
+        url: '/auth/logout',
+        headers: { cookie: providerCookieHeader(signOut) }
+      })
+
+      expect(providerCookieHeader(returned)).toBe('')
+    })
+
     it('offers them the Entra ID route back in', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -87,6 +102,19 @@ describe('which sign out page a provider sends a user to', () => {
       expect(headers.location).toBe('/regulators/home')
     })
 
+    it('names the regulator service on the way out', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/regulators/logged-out'
+      })
+
+      const $ = load(asHtml(result))
+
+      expect($('main').text()).toContain(
+        "You have signed out of the 'Record reprocessed or exported packaging waste: regulators' service."
+      )
+    })
+
     it('does not name the operator service on the way out', async ({
       server
     }) => {
@@ -95,8 +123,8 @@ describe('which sign out page a provider sends a user to', () => {
         url: '/regulators/logged-out'
       })
 
-      expect(asHtml(result)).not.toContain(
-        'Record reprocessed or exported packaging waste'
+      expect(asHtml(result)).not.toMatch(
+        /Record reprocessed or exported packaging waste(?!: regulators)/
       )
     })
   })
@@ -158,7 +186,7 @@ describe('when regulator access is switched off', () => {
     const returned = await server.inject({
       method: 'GET',
       url: '/auth/logout',
-      headers: { cookie: `${SIGNED_OUT_PROVIDER_COOKIE}=${OIDC_ENTRA_ID}` }
+      headers: { cookie: `${SIGN_IN_PROVIDER_COOKIE}=${OIDC_ENTRA_ID}` }
     })
 
     expect(returned.statusCode).toBe(statusCodes.found)

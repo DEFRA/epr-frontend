@@ -6,6 +6,8 @@
  * `organisationSearch` is checked via `options.auth.scope` on the regulator's
  * own page. `wasteBalanceLedgerRead` is checked the same way on the waste
  * balance ledger, and the backend guards its own ledger routes on it too.
+ * `marketDataRead` guards the market insights page the same way, and the
+ * backend guards the aggregate that page reads on it too.
  * `organisationLinkedWrite` is the operator's durable write permission — the
  * backend grants it to an operator for its own organisation and to nobody
  * else. The per-request `organisation.write` is decided on each backend call
@@ -18,6 +20,7 @@
  * a regulator's or an admin's.
  */
 export const SCOPES = Object.freeze({
+  marketDataRead: 'market-data.read',
   organisationLinkedWrite: 'organisation.linked.write',
   organisationRead: 'organisation.read',
   organisationSearch: 'organisation.search',
@@ -55,6 +58,16 @@ export const hasWriteScope = (credentials) =>
  */
 export const hasLedgerReadScope = (credentials) =>
   credentials?.scope?.includes(SCOPES.wasteBalanceLedgerRead) === true
+
+/**
+ * The single answer to "may this session read the published market data?". The
+ * route gate and the link that offers the page both decide from here, so the
+ * page cannot admit a session the link hides it from, or the reverse.
+ * @param {ScopeBearingCredentials} [credentials]
+ * @returns {boolean}
+ */
+export const hasMarketDataReadScope = (credentials) =>
+  credentials?.scope?.includes(SCOPES.marketDataRead) === true
 
 /**
  * The single answer to "may this session read an organisation it does not
