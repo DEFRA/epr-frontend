@@ -247,17 +247,20 @@ describe('#summaryLogUploadProgressController', () => {
     }
     const emptyPeriod = () => ({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
 
+    const closedAdjustmentRows = () => ({
+      added: ZERO_CHANGE,
+      adjusted: {
+        balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
+        nonBalanceAffecting: { count: 0, rows: [] }
+      }
+    })
+
     const submittedWithClosedAdjustment = () => ({
       status: summaryLogStatuses.submitted,
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: {
-          added: ZERO_CHANGE,
-          adjusted: {
-            balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
-            nonBalanceAffecting: { count: 0, rows: [] }
-          }
-        }
+        closedPeriodLoads: closedAdjustmentRows(),
+        periodsRequiringResubmission: [{ year: 2025, period: 1 }]
       }
     })
 
@@ -567,6 +570,28 @@ describe('#summaryLogUploadProgressController', () => {
               adjusted: ZERO_CHANGE
             },
             closedPeriodLoads: emptyPeriod()
+          }
+        })
+
+        const main = await getMain(server)
+
+        expect(
+          queryByRole(main, 'heading', { name: 'Further action needed' })
+        ).toBeNull()
+        expect(
+          queryByRole(main, 'button', { name: 'Go to reports' })
+        ).toBeNull()
+      })
+
+      it('hides the section when a closed period changed but no figures require resubmission', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          loadsByReportingPeriod: {
+            openPeriodLoads: emptyPeriod(),
+            closedPeriodLoads: closedAdjustmentRows(),
+            periodsRequiringResubmission: []
           }
         })
 
@@ -4368,18 +4393,21 @@ describe('summary log check view', () => {
       'for any relevant period and an approved person from your business ' +
       'will need to resubmit it to your regulator.'
 
-    const periodWithClosedAdjustment = () => ({
-      openPeriodLoads: emptyPeriod(),
-      closedPeriodLoads: {
-        added: ZERO_CHANGE,
-        adjusted: {
-          balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
-          nonBalanceAffecting: { count: 0, rows: [] }
-        }
+    const closedAdjustmentRows = () => ({
+      added: ZERO_CHANGE,
+      adjusted: {
+        balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
+        nonBalanceAffecting: { count: 0, rows: [] }
       }
     })
 
-    it('shows the Important banner when the summary log touches a closed period', async ({
+    const periodWithClosedAdjustment = () => ({
+      openPeriodLoads: emptyPeriod(),
+      closedPeriodLoads: closedAdjustmentRows(),
+      periodsRequiringResubmission: [{ year: 2025, period: 1 }]
+    })
+
+    it('shows the Important banner when a closed period requires resubmission', async ({
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
@@ -4414,6 +4442,33 @@ describe('summary log check view', () => {
       const { main } = await renderMain(server)
 
       expect(queryByText(main, BANNER_BODY)).toBeNull()
+    })
+
+    it('hides the banner but keeps closed-period detail when figures are unchanged', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: closedAdjustmentRows(),
+          periodsRequiringResubmission: []
+        }
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(queryByText(main, BANNER_BODY)).toBeNull()
+      expect(
+        queryByRole(main, 'heading', { name: 'Closed periods: adjusted loads' })
+      ).not.toBeNull()
+      expect(
+        queryByText(
+          main,
+          'The adjusted loads will remove 4.00 tonnes from your waste balance.'
+        )
+      ).not.toBeNull()
     })
   })
 })
