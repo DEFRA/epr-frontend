@@ -345,9 +345,20 @@ describe('the UK waste balance page', () => {
         'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
         'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.',
         'Figures from few operators',
-        'A figure is marked [c] when one or two operators could have contributed to it, or when one or two operators did. A figure no operator could have contributed to is not marked.',
-        'The operators who could have contributed to a figure are every operator owed a monthly report for that month, whether or not the figure includes any of its tonnage, and any other operator with tonnage in the figure. A suspended operator counts. An operator whose accreditation stood cancelled for the whole month does not, unless it sent tonnage on that month. An operator the figures leave out does not count either.',
-        'The operators with tonnage in a figure are those with a load that adds to it, or a load sent on that comes off it. A load the waste balance ignores, such as one dated while the accreditation was suspended, does not count.',
+        'A figure is marked [c] if only one or two operators could have contributed to it, or only one or two did. A figure no operator could have contributed to is not marked.',
+        'An operator could have contributed to a figure if:',
+        [
+          'it owed a monthly report for that month',
+          'the figure includes some of its tonnage'
+        ],
+        'An operator that owed a report counts even if none of its tonnage is in the figure. A suspended operator still owes reports, so it counts.',
+        'An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes tonnage it sent on that month.',
+        'An operator contributed to a figure if the figure includes its tonnage from:',
+        [
+          'a load that adds to its waste balance',
+          'a load it sent on, which comes off the figure'
+        ],
+        'A load its waste balance ignores does not count, such as a load dated while the accreditation was suspended.',
         'A row’s total is counted across all its months, so an operator that could have contributed in more than one month counts once.',
         'An operator is a business. It counts once however many sites it has.'
       ])
