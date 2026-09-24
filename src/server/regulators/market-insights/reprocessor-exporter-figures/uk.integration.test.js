@@ -7,6 +7,7 @@ import {
   rowsOf
 } from '#server/common/test-helpers/dom.js'
 import {
+  CONFIDENTIAL_KEY,
   NOTICE,
   exporterOf,
   operator,
@@ -373,6 +374,144 @@ describe('the UK reprocessor and exporter figures page', () => {
       ])
     })
 
+    it('marks each figure few operators contributed to as confidential, and describes each table holding one by the key', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(figuresUrl, () =>
+          HttpResponse.json({
+            ...januaryToMarchFigures,
+            data: {
+              months: {
+                ...januaryToMarchFigures.data.months,
+                '2026-02': {
+                  reports: { expected: 5, submitted: 5 },
+                  figures: {
+                    plastic: {
+                      reprocessor: reprocessorOf(
+                        {
+                          tonnageReceived: 500,
+                          revisedTonnageIssued: 10,
+                          totalRevenue: 1200,
+                          averagePricePerTonne: 120
+                        },
+                        {
+                          operatorCount: 5,
+                          submittingOperatorCount: 5,
+                          contributingOperatorCounts: {
+                            tonnageReceived: 5,
+                            revisedTonnageIssued: 1,
+                            totalRevenue: 1,
+                            averagePricePerTonne: 1
+                          }
+                        }
+                      ),
+                      exporter: exporterOf()
+                    },
+                    aluminium: {
+                      reprocessor: reprocessorOf(),
+                      exporter: exporterOf(
+                        { tonnageReceived: 40 },
+                        {
+                          operatorCount: 5,
+                          submittingOperatorCount: 5,
+                          contributingOperatorCounts: { tonnageReceived: 5 }
+                        }
+                      )
+                    }
+                  },
+                  totals: totalsOf({
+                    reprocessor: {
+                      tonnageReceived: 500,
+                      revisedTonnageIssued: 10,
+                      totalRevenue: 1200
+                    },
+                    reprocessorCounts: {
+                      operatorCount: 5,
+                      submittingOperatorCount: 5,
+                      contributingOperatorCounts: {
+                        tonnageReceived: 5,
+                        revisedTonnageIssued: 1,
+                        totalRevenue: 1
+                      }
+                    }
+                  })
+                }
+              }
+            }
+          })
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsightsUk,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+
+      // The key is the table's description, so a screen reader announces
+      // what the shorthand means as it reaches the table.
+      const februaryReprocessors = getByRole(body, 'table', {
+        name: 'Reprocessor data for February 2026',
+        description: CONFIDENTIAL_KEY
+      })
+
+      expect(rowsOf(februaryReprocessors)).toStrictEqual([
+        [
+          'Aluminium',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£0.00',
+          '£0.00'
+        ],
+        [
+          'Plastic',
+          '500.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '10.00 [c]',
+          '£1,200.00 [c]',
+          '£120.00 [c]'
+        ],
+        [
+          'Grand Total',
+          '500.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '10.00 [c]',
+          '£1,200.00 [c]',
+          '- No average price is calculated'
+        ]
+      ])
+
+      // A table with no marked figure carries no key.
+      expect(
+        getByRole(body, 'table', {
+          name: 'Exporter data for February 2026'
+        }).getAttribute('aria-describedby')
+      ).toBeNull()
+      expect(
+        getAllByRole(body, 'table', { description: CONFIDENTIAL_KEY })
+      ).toHaveLength(1)
+    })
+
     it('states the period the figures cover and when they were taken', async ({
       server
     }) => {
@@ -449,11 +588,17 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       // The wording runs from the notice to the first month's tables, so a
       // regulator reads it before the figures it explains.
-      /** @type {string[]} */
+      /** @type {(string | string[])[]} */
       const wording = []
       let element = getByText(body, NOTICE).nextElementSibling
-      while (element !== null && element.matches('p, h2')) {
-        wording.push((element.textContent ?? '').trim())
+      while (element !== null && element.matches('p, h2, ul')) {
+        wording.push(
+          element.matches('ul')
+            ? Array.from(element.querySelectorAll('li')).map((item) =>
+                (item.textContent ?? '').trim()
+              )
+            : (element.textContent ?? '').trim()
+        )
         element = element.nextElementSibling
       }
 
@@ -471,6 +616,19 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Each table ends in a Grand Total row, which adds up every material. No average price is calculated for it, so that cell shows a dash.',
         'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted.',
         'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
+        'Figures from few operators',
+        'A figure is marked [c] if only one or two operators could have contributed to it, or only one or two did. A figure no operator could have contributed to is not marked.',
+        'An operator could have contributed to a figure if:',
+        [
+          'it owed a monthly report for that month',
+          'the figure includes its report for that month'
+        ],
+        'An operator that owed a report counts even if it has not submitted it, or its report put nothing into the figure. A suspended operator still owes reports, so it counts.',
+        'An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes its report for that month.',
+        'An operator contributed to a figure if its report put something other than 0 into it.',
+        'An operator contributed to the tonnage sent on in total if it sent any tonnage on. It contributed to the average price per tonne if it reported revenue or tonnage of notes issued.',
+        'A Grand Total is counted across all the materials in its table, so an operator that could have contributed to more than one material counts once.',
+        'An operator is a business. It counts once however many sites it has.',
         'January 2026',
         'Monthly reports submitted: 1 of 2'
       ])

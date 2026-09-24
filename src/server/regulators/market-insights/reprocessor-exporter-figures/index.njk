@@ -28,7 +28,21 @@
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:zero') }}</p>
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:live') }}</p>
 
-      {% macro figuresTable(table, caption) %}
+      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:marked') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:possible:leadIn') }}</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>{{ localise('regulators:marketInsights:fewOperators:possible:owed') }}</li>
+        <li>{{ localise('regulators:marketInsights:figures:fewOperators:possible:included') }}</li>
+      </ul>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:possible:noReport') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:possible:cancelled') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:contributing:reported') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:contributing:derived') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:total') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:business') }}</p>
+
+      {% macro figuresTable(table, caption, id) %}
         {% set head = [{ text: localise('regulators:marketInsights:table:material') }] %}
         {% for column in table.columns %}
           {% set head = head.concat([{ text: column, format: "numeric" }]) %}
@@ -53,7 +67,11 @@
         }]) %}
         {% set rows = rows.concat([cells]) %}
 
+        {% if table.marked %}
+          <p class="govuk-body" id="{{ id }}-key">{{ localise('regulators:marketInsights:fewOperators:key') }}</p>
+        {% endif %}
         {{ govukTable({
+          attributes: { 'aria-describedby': id ~ '-key' } if table.marked else {},
           caption: caption,
           captionClasses: "govuk-table__caption--m",
           firstCellIsHeader: true,
@@ -66,8 +84,8 @@
         <h2 class="govuk-heading-l" id="figures-month-{{ loop.index }}">{{ month.name }}</h2>
         <p class="govuk-body">{{ localise('regulators:marketInsights:figures:reports', { count: month.reports }) }}</p>
         <div class="govuk-body epr-wide-table" role="region" aria-labelledby="figures-month-{{ loop.index }}" tabindex="0">
-          {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor', { month: month.name })) }}
-          {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter', { month: month.name })) }}
+          {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor', { month: month.name }), 'figures-month-' ~ loop.index ~ '-reprocessor') }}
+          {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter', { month: month.name }), 'figures-month-' ~ loop.index ~ '-exporter') }}
         </div>
       {% endfor %}
     </div>

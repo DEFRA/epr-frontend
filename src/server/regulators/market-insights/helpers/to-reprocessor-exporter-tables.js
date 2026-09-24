@@ -2,9 +2,13 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
+import { fromFewOperators, markedFigureOf } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
-/** @import { ReportCount } from './to-waste-balance-table.js' */
+/**
+ * @import { OperatorCounts } from './few-operators.js'
+ * @import { ReportCount } from './to-waste-balance-table.js'
+ */
 
 /**
  * The measures both published tables print: what came in, where it was sent
@@ -45,7 +49,23 @@ import { nameOf } from './reporting-period.js'
  * @typedef {Omit<SharedFigures, 'averagePricePerTonne'>} SharedTotals
  * @typedef {Omit<ReprocessorFigures, 'averagePricePerTonne'>} ReprocessorTotals
  * @typedef {Omit<ExporterFigures, 'averagePricePerTonne'>} ExporterTotals
- * @typedef {{ reprocessor: ReprocessorTotals, exporter: ExporterTotals }} ReprocessorExporterTotals
+ */
+
+/**
+ * A row of figures beside the operators behind it: how many could have
+ * contributed to the row, how many it includes a report from, and how many
+ * put something into each of its figures.
+ * @template {Record<string, number>} Figures
+ * @typedef {Figures & OperatorCounts & {
+ *   contributingOperatorCounts: Record<keyof Figures, number>
+ * }} WithOperatorCounts
+ */
+
+/**
+ * @typedef {{
+ *   reprocessor: WithOperatorCounts<ReprocessorTotals>,
+ *   exporter: WithOperatorCounts<ExporterTotals>
+ * }} ReprocessorExporterTotals
  */
 
 /**
@@ -55,8 +75,8 @@ import { nameOf } from './reporting-period.js'
  * @typedef {{
  *   reports: ReportCount,
  *   figures: Record<string, {
- *     reprocessor: ReprocessorFigures,
- *     exporter: ExporterFigures
+ *     reprocessor: WithOperatorCounts<ReprocessorFigures>,
+ *     exporter: WithOperatorCounts<ExporterFigures>
  *   }>,
  *   totals: ReprocessorExporterTotals
  * }} ReprocessorExporterMonth
@@ -70,8 +90,14 @@ import { nameOf } from './reporting-period.js'
  * A table as the page lays it out: the column headings after the material,
  * one row per material with a formatted figure under each heading, and the
  * Grand Total, whose figures stop before the average price column because
- * the served totals carry none.
- * @typedef {{ columns: string[], rows: FiguresRow[], total: FiguresRow }} FiguresTable
+ * the served totals carry none. Each figure few operators contributed to is
+ * marked confidential, and the table says whether any is.
+ * @typedef {{
+ *   columns: string[],
+ *   rows: FiguresRow[],
+ *   total: FiguresRow,
+ *   marked: boolean
+ * }} FiguresTable
  */
 
 /**
@@ -134,9 +160,43 @@ const EXPORTER_COLUMNS = [
 ]
 
 /**
+ * The counts that decide whether one figure is marked: the operators who could
+ * have contributed to its row, and those whose reports put something into the
+ * figure itself, which is what a single figure includes of a report.
+ * @template {string} Measure
+ * @param {WithOperatorCounts<Record<Measure, number>>} served
+ * @param {Measure} measure
+ * @returns {OperatorCounts}
+ */
+const countsOf = ({ operatorCount, contributingOperatorCounts }, measure) => ({
+  operatorCount,
+  submittingOperatorCount: contributingOperatorCounts[measure]
+})
+
+/**
+ * @template {string} Measure
+ * @param {WithOperatorCounts<Record<Measure, number>>} served
+ * @param {[Measure, (value: number) => string][]} columns
+ * @returns {string[]}
+ */
+const markedFiguresOf = (served, columns) =>
+  columns.map(([measure, format]) =>
+    markedFigureOf(format(served[measure]), countsOf(served, measure))
+  )
+
+/**
+ * @template {string} Measure
+ * @param {WithOperatorCounts<Record<Measure, number>>} served
+ * @param {[Measure, (value: number) => string][]} columns
+ * @returns {boolean}
+ */
+const anyFromFewOperators = (served, columns) =>
+  columns.some(([measure]) => fromFewOperators(countsOf(served, measure)))
+
+/**
  * @template {string} Totalled
- * @param {Record<string, Record<Totalled | 'averagePricePerTonne', number>>} byMaterial
- * @param {Record<Totalled, number>} totals
+ * @param {Record<string, WithOperatorCounts<Record<Totalled | 'averagePricePerTonne', number>>>} byMaterial
+ * @param {WithOperatorCounts<Record<Totalled, number>>} totals
  * @param {[Totalled, (value: number) => string][]} totalledColumns
  * @param {'reprocessor' | 'exporter'} accreditationType
  * @param {Localise} localise
@@ -158,17 +218,19 @@ const toTable = (
       )
     ),
     rows: Object.entries(byMaterial)
-      .map(([material, figures]) => ({
+      .map(([material, served]) => ({
         label: getMaterialDisplayName(material),
-        figures: columns.map(([measure, format]) => format(figures[measure]))
+        figures: markedFiguresOf(served, columns)
       }))
       .sort((one, other) => one.label.localeCompare(other.label)),
     total: {
       label: localise('regulators:marketInsights:figures:total:label'),
-      figures: totalledColumns.map(([measure, format]) =>
-        format(totals[measure])
-      )
-    }
+      figures: markedFiguresOf(totals, totalledColumns)
+    },
+    marked:
+      Object.values(byMaterial).some((served) =>
+        anyFromFewOperators(served, columns)
+      ) || anyFromFewOperators(totals, totalledColumns)
   }
 }
 
