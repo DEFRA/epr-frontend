@@ -71,9 +71,10 @@ const periodStatusByChangeSchema = Joi.object({
   adjusted: periodStatusGroupSchema.required()
 })
 
-// Only the closed periods whose reported figures changed, so drives the
-// resubmission messaging. Optional and defaulted so pre-existing responses that
-// predate the field still validate (and are treated as needing no resubmission).
+// periodsRequiringResubmission lists only the closed periods whose reported
+// figures changed, so it drives the resubmission messaging. It is optional and
+// defaults to empty, so responses that predate the field still validate and are
+// treated as needing no resubmission.
 const periodRefSchema = Joi.object({
   year: Joi.number().integer().required(),
   period: Joi.number().integer().required()
