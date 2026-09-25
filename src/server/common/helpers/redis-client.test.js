@@ -47,6 +47,7 @@ describe('#buildRedisClient', () => {
     test('should instantiate a single Redis client', () => {
       expect(Redis).toHaveBeenCalledExactlyOnceWith({
         db: 0,
+        enableReadyCheck: false,
         host: '127.0.0.1',
         keyPrefix: 'epr-frontend:',
         port: 6379
@@ -71,7 +72,13 @@ describe('#buildRedisClient', () => {
         {
           dnsLookup: expect.any(Function),
           keyPrefix: 'epr-frontend:',
-          redisOptions: { db: 0, password: 'pass', tls: {}, username: 'user' },
+          redisOptions: {
+            db: 0,
+            enableReadyCheck: false,
+            password: 'pass',
+            tls: {},
+            username: 'user'
+          },
           slotsRefreshTimeout: 10000
         }
       )
