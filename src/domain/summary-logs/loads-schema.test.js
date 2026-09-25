@@ -126,6 +126,23 @@ describe('summaryLogStatusResponseSchema validation', () => {
       expect(value.loadsByReportingPeriod).toStrictEqual(loadsByReportingPeriod)
     })
 
+    it('should default periodsRequiringResubmission to empty when the backend omits it', () => {
+      const { openPeriodLoads, closedPeriodLoads } = loadsByReportingPeriod
+
+      const { error, value } = summaryLogStatusResponseSchema.validate(
+        {
+          status: 'validated',
+          loadsByReportingPeriod: { openPeriodLoads, closedPeriodLoads }
+        },
+        { stripUnknown: true }
+      )
+
+      expect(error).toBeUndefined()
+      expect(
+        value.loadsByReportingPeriod.periodsRequiringResubmission
+      ).toStrictEqual([])
+    })
+
     it('should reject a payload missing a required bucket', () => {
       const { error } = summaryLogStatusResponseSchema.validate({
         status: 'validated',
