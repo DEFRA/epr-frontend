@@ -110,7 +110,8 @@ describe('summaryLogStatusResponseSchema validation', () => {
           balanceAffecting: { count: 2, tonnageDelta: -4 },
           nonBalanceAffecting: { count: 1 }
         }
-      }
+      },
+      periodsRequiringResubmission: [{ year: 2025, period: 1 }]
     }
 
     it('should accept a realistic payload and preserve it intact when stripping unknown keys', () => {
@@ -123,6 +124,23 @@ describe('summaryLogStatusResponseSchema validation', () => {
       // Guards against the field being dropped on the floor: before it was added
       // to the schema, stripUnknown would have removed it from the response.
       expect(value.loadsByReportingPeriod).toStrictEqual(loadsByReportingPeriod)
+    })
+
+    it('should default periodsRequiringResubmission to empty when the backend omits it', () => {
+      const { openPeriodLoads, closedPeriodLoads } = loadsByReportingPeriod
+
+      const { error, value } = summaryLogStatusResponseSchema.validate(
+        {
+          status: 'validated',
+          loadsByReportingPeriod: { openPeriodLoads, closedPeriodLoads }
+        },
+        { stripUnknown: true }
+      )
+
+      expect(error).toBeUndefined()
+      expect(
+        value.loadsByReportingPeriod.periodsRequiringResubmission
+      ).toStrictEqual([])
     })
 
     it('should reject a payload missing a required bucket', () => {

@@ -6,7 +6,7 @@ import {
   isRegisteredOnlyProcessingType
 } from '#domain/summary-logs/meta-fields.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
-import { hasClosedPeriodChanges } from './closed-period-changes.js'
+import { requiresResubmission } from './closed-period-changes.js'
 
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
@@ -381,7 +381,7 @@ export const renderCheckView = (
     maxRowsPerBucket: MAX_ROWS_PER_BUCKET,
     periodSections: { open, closed },
     isEmpty: open === null && closed === null,
-    showClosedPeriodImportant: hasClosedPeriodChanges(loadsByReportingPeriod),
+    showClosedPeriodImportant: requiresResubmission(loadsByReportingPeriod),
     wasteBalanceProjection: buildWasteBalanceProjection(
       isAccredited,
       wasteBalance,

@@ -1,48 +1,45 @@
 import { describe, expect, it } from 'vitest'
 
-import { hasClosedPeriodChanges } from './closed-period-changes.js'
+import { requiresResubmission } from './closed-period-changes.js'
 
 const ZERO_CHANGE = {
   balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
   nonBalanceAffecting: { count: 0, rows: [] }
 }
 
-const change = (balanceCount, nonBalanceCount) => ({
-  balanceAffecting: { count: balanceCount, tonnageDelta: 0, rows: [] },
-  nonBalanceAffecting: { count: nonBalanceCount, rows: [] }
-})
+const closedRows = {
+  added: {
+    balanceAffecting: { count: 2, tonnageDelta: 4, rows: [] },
+    nonBalanceAffecting: { count: 0, rows: [] }
+  },
+  adjusted: ZERO_CHANGE
+}
 
-const loads = (closed) => ({
+const loads = (periodsRequiringResubmission) => ({
   openPeriodLoads: { added: ZERO_CHANGE, adjusted: ZERO_CHANGE },
-  closedPeriodLoads: closed
+  closedPeriodLoads: closedRows,
+  periodsRequiringResubmission
 })
 
-describe(hasClosedPeriodChanges, () => {
+describe(requiresResubmission, () => {
   it('returns false when loadsByReportingPeriod is undefined', () => {
-    expect(hasClosedPeriodChanges(undefined)).toBe(false)
+    expect(requiresResubmission(undefined)).toBe(false)
   })
 
-  it('returns false when the closed period has no added or adjusted loads', () => {
+  it('returns false when periodsRequiringResubmission is absent', () => {
     expect(
-      hasClosedPeriodChanges(
-        loads({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
-      )
+      requiresResubmission({
+        openPeriodLoads: { added: ZERO_CHANGE, adjusted: ZERO_CHANGE },
+        closedPeriodLoads: closedRows
+      })
     ).toBe(false)
   })
 
-  it('returns true when the closed period has new (added) loads', () => {
-    expect(
-      hasClosedPeriodChanges(
-        loads({ added: change(1, 0), adjusted: ZERO_CHANGE })
-      )
-    ).toBe(true)
+  it('returns false when periodsRequiringResubmission is empty despite closed-period rows', () => {
+    expect(requiresResubmission(loads([]))).toBe(false)
   })
 
-  it('returns true when the closed period has only non-balance-affecting adjusted loads', () => {
-    expect(
-      hasClosedPeriodChanges(
-        loads({ added: ZERO_CHANGE, adjusted: change(0, 2) })
-      )
-    ).toBe(true)
+  it('returns true when periodsRequiringResubmission lists a period', () => {
+    expect(requiresResubmission(loads([{ year: 2025, period: 1 }]))).toBe(true)
   })
 })
