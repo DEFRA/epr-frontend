@@ -618,13 +618,8 @@ describe('the UK reprocessor and exporter figures page', () => {
         'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
         'Figures from few operators',
         'A figure is marked [c] if only one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure no operator was accredited for is not marked.',
-        'An operator counts as accredited for a figure if:',
-        [
-          'it owed a monthly report for that month',
-          'the figure includes its report for that month'
-        ],
-        'An operator that owed a report counts even if it has not submitted it, or its report put nothing into the figure. A suspended operator still owes reports, so it counts.',
-        'An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes its report for that month.',
+        'An operator counts as accredited for a figure if it was accredited for that material on any day of the month. A suspended operator counts. An operator whose accreditation was cancelled for the whole month does not.',
+        'An accredited operator counts even if it has not submitted its report, or its report put nothing into the figure.',
         'A Grand Total is counted across all the materials in its table, so an operator accredited for more than one material counts once.',
         'An operator is a business. It counts once however many sites it has.',
         'January 2026',

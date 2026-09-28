@@ -96,11 +96,7 @@
         "scope": "These figures cover operators registered with Natural Resources Wales, the regulator for Wales."
       },
       "fewOperators": {
-        "possible": {
-          "cancelled": "An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes its report for that month.",
-          "included": "the figure includes its report for that month",
-          "noReport": "An operator that owed a report counts even if it has not submitted it, or its report put nothing into the figure. A suspended operator still owes reports, so it counts."
-        },
+        "noReport": "An accredited operator counts even if it has not submitted its report, or its report put nothing into the figure.",
         "total": "A Grand Total is counted across all the materials in its table, so an operator accredited for more than one material counts once."
       }
     },
@@ -174,11 +170,7 @@
         "total": "Total"
       },
       "fewOperators": {
-        "possible": {
-          "cancelled": "An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes tonnage it sent on that month.",
-          "included": "the figure includes some of its tonnage",
-          "noTonnage": "An operator that owed a report counts even if none of its tonnage is in the figure. A suspended operator still owes reports, so it counts."
-        },
+        "noTonnage": "An accredited operator counts even if none of its tonnage is in the figure.",
         "total": "A row’s total is counted across all its months, so an operator accredited in more than one month counts once."
       }
     },
@@ -187,10 +179,7 @@
       "key": "Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because only one or two operators were accredited for it.",
       "marked": "A figure is marked [c] if only one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure no operator was accredited for is not marked.",
       "business": "An operator is a business. It counts once however many sites it has.",
-      "possible": {
-        "leadIn": "An operator counts as accredited for a figure if:",
-        "owed": "it owed a monthly report for that month"
-      }
+      "accredited": "An operator counts as accredited for a figure if it was accredited for that material on any day of the month. A suspended operator counts. An operator whose accreditation was cancelled for the whole month does not."
     }
   },
   "notAuthorised": {
