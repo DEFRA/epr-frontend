@@ -64,6 +64,11 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
+ * A row's figures, before its own marked state is stripped for display.
+ * @typedef {WasteBalanceRow & { marked: boolean }} MarkedWasteBalanceRow
+ */
+
+/**
  * Lays the served figures out the way the published Waste Balance tab is: one
  * row per material and accreditation type, the reporting months across as
  * columns, and the net credit in the cells, with a row beneath saying how many
@@ -116,6 +121,7 @@ export const toWasteBalanceTable = (
         one.accreditationType.localeCompare(other.accreditationType)
     )
 
+  /** @type {MarkedWasteBalanceRow[]} */
   const rows = partitioned.map(({ figures, periodCounts, ...row }) => {
     const totalNetCredit = figures.reduce(
       (sum, { netCredit }) => sum + netCredit,

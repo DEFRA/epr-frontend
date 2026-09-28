@@ -160,13 +160,18 @@ const EXPORTER_COLUMNS = [
 ]
 
 /**
+ * A row's formatted figures, and whether any of them was marked.
+ * @typedef {{ figures: string[], marked: boolean }} MarkedFigures
+ */
+
+/**
  * Each figure in a row, marked wherever few operators were accredited for
  * the row and the figure holds data, or one or two were accredited whether
  * or not it does.
  * @template {string} Measure
  * @param {WithOperatorCounts<Record<Measure, number>>} served
  * @param {[Measure, (value: number) => string][]} columns
- * @returns {{ figures: string[], marked: boolean }}
+ * @returns {MarkedFigures}
  */
 const figuresOf = (served, columns) => {
   const cells = columns.map(([measure, format]) => ({
