@@ -175,7 +175,7 @@ describe(toWasteBalanceTable, () => {
   })
 
   it('marks a month no operator was accredited for that still holds net credit', () => {
-    const [row] = toWasteBalanceTable(
+    const { rows, marked } = toWasteBalanceTable(
       dataOf(
         {
           '2026-01': monthOf({
@@ -197,14 +197,15 @@ describe(toWasteBalanceTable, () => {
       ),
       ['2026-01'],
       asKey
-    ).rows
+    )
 
-    expect(row.netCredits).toStrictEqual(['90.00 [c]'])
-    expect(row.total).toBe('90.00 [c]')
+    expect(rows[0].netCredits).toStrictEqual(['90.00 [c]'])
+    expect(rows[0].total).toBe('90.00 [c]')
+    expect(marked).toBe(true)
   })
 
   it('leaves a month unmarked that no operator was accredited for and that holds no net credit', () => {
-    const [row] = toWasteBalanceTable(
+    const { rows, marked } = toWasteBalanceTable(
       dataOf({
         '2026-01': monthOf({
           plastic: {
@@ -217,10 +218,36 @@ describe(toWasteBalanceTable, () => {
       }),
       ['2026-01'],
       asKey
-    ).rows
+    )
 
-    expect(row.netCredits).toStrictEqual(['0.00'])
-    expect(row.total).toBe('0.00')
+    expect(rows[0].netCredits).toStrictEqual(['0.00'])
+    expect(rows[0].total).toBe('0.00')
+    expect(marked).toBe(false)
+  })
+
+  it('leaves a row total unmarked when it nets to a floating-point sliver of zero, even though its months genuinely held data', () => {
+    const zeroCount = { operatorCount: 0, submittingOperatorCount: 0 }
+
+    const { rows } = toWasteBalanceTable(
+      dataOf(
+        {
+          '2026-01': monthOf({
+            plastic: { reprocessor: figuresOf(0.1, zeroCount) }
+          }),
+          '2026-02': monthOf({
+            plastic: { reprocessor: figuresOf(0.2, zeroCount) }
+          }),
+          '2026-03': monthOf({
+            plastic: { reprocessor: figuresOf(-0.3, zeroCount) }
+          })
+        },
+        { operatorCounts: { plastic: { reprocessor: zeroCount } } }
+      ),
+      ['2026-01', '2026-02', '2026-03'],
+      asKey
+    )
+
+    expect(rows[0].total).toBe('0.00')
   })
 
   it('marks a row total the period served few accredited operators for as confidential, and marks no other', () => {

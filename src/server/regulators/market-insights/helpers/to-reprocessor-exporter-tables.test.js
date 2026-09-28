@@ -371,7 +371,7 @@ describe(toReprocessorExporterTables, () => {
       expect(exporter.marked).toBe(true)
     })
 
-    it('marks a figure no operator was accredited for that still holds data, but leaves the rest of the row unmarked', () => {
+    it('marks every figure in a row no operator was accredited for when any figure in it holds data, including those still at zero', () => {
       const { reprocessor } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf({
@@ -388,9 +388,18 @@ describe(toReprocessorExporterTables, () => {
         asKey
       ).months[0]
 
-      expect(
-        reprocessor.rows[0].figures.filter((figure) => figure.endsWith('[c]'))
-      ).toStrictEqual(['12.00 [c]'])
+      expect(reprocessor.rows[0].figures).toStrictEqual([
+        '12.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '£0.00 [c]',
+        '£0.00 [c]'
+      ])
       expect(reprocessor.marked).toBe(true)
     })
 

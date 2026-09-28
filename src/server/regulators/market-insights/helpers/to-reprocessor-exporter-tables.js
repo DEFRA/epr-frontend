@@ -2,7 +2,7 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
-import { fromFewOperators, markedFigureOf } from './few-operators.js'
+import { fromFewOperators, holdsData, markedFigureOf } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
 /**
@@ -165,23 +165,22 @@ const EXPORTER_COLUMNS = [
  */
 
 /**
- * Each figure in a row, marked wherever few operators were accredited for
- * the row and the figure holds data, or one or two were accredited whether
- * or not it does.
+ * Each figure in a row, all marked wherever few operators were accredited
+ * for the row and any figure in it holds data, or one or two were accredited
+ * whether or not any of them does.
  * @template {string} Measure
  * @param {WithOperatorCounts<Record<Measure, number>>} served
  * @param {[Measure, (value: number) => string][]} columns
  * @returns {MarkedFigures}
  */
 const figuresOf = (served, columns) => {
-  const cells = columns.map(([measure, format]) => ({
-    text: markedFigureOf(format(served[measure]), served, served[measure]),
-    marked: fromFewOperators(served, served[measure])
-  }))
+  const rowHoldsData = columns.some(([measure]) => holdsData(served[measure]))
 
   return {
-    figures: cells.map(({ text }) => text),
-    marked: cells.some(({ marked }) => marked)
+    figures: columns.map(([measure, format]) =>
+      markedFigureOf(format(served[measure]), served, rowHoldsData)
+    ),
+    marked: fromFewOperators(served, rowHoldsData)
   }
 }
 

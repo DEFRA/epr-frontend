@@ -1,7 +1,7 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
-import { fromFewOperators, markedFigureOf } from './few-operators.js'
+import { fromFewOperators, holdsData, markedFigureOf } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
 /** @import { OperatorCounts } from './few-operators.js' */
@@ -134,17 +134,18 @@ export const toWasteBalanceTable = (
         markedFigureOf(
           formatTonnage(figure.netCredit),
           figure,
-          figure.netCredit
+          holdsData(figure.netCredit)
         )
       ),
       total: markedFigureOf(
         formatTonnage(totalNetCredit),
         periodCounts,
-        totalNetCredit
+        holdsData(totalNetCredit)
       ),
       marked:
-        figures.some((figure) => fromFewOperators(figure, figure.netCredit)) ||
-        fromFewOperators(periodCounts, totalNetCredit)
+        figures.some((figure) =>
+          fromFewOperators(figure, holdsData(figure.netCredit))
+        ) || fromFewOperators(periodCounts, holdsData(totalNetCredit))
     }
   })
 

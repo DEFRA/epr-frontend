@@ -11,29 +11,43 @@
  */
 const CONFIDENTIAL = '[c]'
 
+/** Below this, a served value is a rounding sliver rather than real data. */
+const ZERO_THRESHOLD = 0.005
+
 /**
- * Whether fewer than three operators were accredited for a figure that holds
- * data. Three is where nobody can tell which of them reported. A figure with
- * one or two identifies them however few of them reported; a figure with
- * none identifies whichever one still put something into it, for example one
- * cancelled for the whole month whose late report still landed. A figure
- * with none accredited and nothing in it identifies no one.
- * @param {OperatorCounts} counts
+ * Whether a served value is different from zero once rounded to how it is
+ * displayed, so a floating-point sum that nets to a sliver of a penny reads
+ * as holding nothing.
  * @param {number} value
  * @returns {boolean}
  */
-export const fromFewOperators = ({ operatorCount }, value) =>
+export const holdsData = (value) => Math.abs(value) >= ZERO_THRESHOLD
+
+/**
+ * Whether fewer than three operators were accredited for a row that holds
+ * data. Three is where nobody can tell which of them reported. A row with
+ * one or two identifies them however few of them reported, so every figure
+ * in it is marked even where that one figure is zero; a row with none
+ * identifies whichever one still put something into it, so it is marked
+ * only where the row holds data somewhere, for example a late report from an
+ * operator cancelled for the whole month. A row with none accredited and
+ * nothing in it identifies no one.
+ * @param {OperatorCounts} counts
+ * @param {boolean} rowHoldsData
+ * @returns {boolean}
+ */
+export const fromFewOperators = ({ operatorCount }, rowHoldsData) =>
   operatorCount === 1 ||
   operatorCount === 2 ||
-  (operatorCount === 0 && value !== 0)
+  (operatorCount === 0 && rowHoldsData)
 
 /**
  * A formatted figure, followed by the confidential shorthand when few
- * operators were accredited for it.
+ * operators were accredited for its row.
  * @param {string} figure
  * @param {OperatorCounts} counts
- * @param {number} value
+ * @param {boolean} rowHoldsData
  * @returns {string}
  */
-export const markedFigureOf = (figure, counts, value) =>
-  fromFewOperators(counts, value) ? `${figure} ${CONFIDENTIAL}` : figure
+export const markedFigureOf = (figure, counts, rowHoldsData) =>
+  fromFewOperators(counts, rowHoldsData) ? `${figure} ${CONFIDENTIAL}` : figure
