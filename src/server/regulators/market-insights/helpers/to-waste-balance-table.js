@@ -44,8 +44,8 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
- * A row's figures, each marked confidential where few operators contributed
- * to it.
+ * A row's figures, each marked confidential where few operators were
+ * accredited for it.
  * @typedef {{
  *   material: string,
  *   accreditationType: string,

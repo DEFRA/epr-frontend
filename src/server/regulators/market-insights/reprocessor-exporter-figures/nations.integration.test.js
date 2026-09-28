@@ -40,8 +40,8 @@ const nationFigures = {
             reprocessor: reprocessorOf(
               { tonnageReceived: 320.5 },
               {
-                operatorCount: 4,
-                submittingOperatorCount: 3,
+                operatorCount: 2,
+                submittingOperatorCount: 2,
                 contributingOperatorCounts: { tonnageReceived: 1 }
               }
             ),
@@ -181,15 +181,15 @@ describe.each(NATIONS)(
           [
             'Plastic',
             '320.50 [c]',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '£0.00',
-            '£0.00'
+            '0.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '£0.00 [c]',
+            '£0.00 [c]'
           ],
           [
             'Grand Total',
