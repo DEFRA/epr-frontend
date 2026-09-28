@@ -18,6 +18,7 @@ export const paths = Object.freeze({
     loggedOut: '/regulators/logged-out',
     marketInsights: '/regulators/market-insights',
     marketInsightsEngland: '/regulators/market-insights/england',
+    marketInsightsExport: '/regulators/market-insights/export.zip',
     marketInsightsNorthernIreland:
       '/regulators/market-insights/northern-ireland',
     marketInsightsOutstandingReturns:
