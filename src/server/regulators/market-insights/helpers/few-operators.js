@@ -11,13 +11,13 @@
  */
 const CONFIDENTIAL = '[c]'
 
-/** Below this, a served value is a rounding sliver rather than real data. */
+/** Below this, a served value is floating-point noise, not real data. */
 const ZERO_THRESHOLD = 0.005
 
 /**
  * Whether a served value is different from zero once rounded to how it is
- * displayed, so a floating-point sum that nets to a sliver of a penny reads
- * as holding nothing.
+ * displayed, so noise left over from summing floats reads as holding
+ * nothing.
  * @param {number} value
  * @returns {boolean}
  */
