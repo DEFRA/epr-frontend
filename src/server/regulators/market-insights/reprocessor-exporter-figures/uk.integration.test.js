@@ -374,7 +374,7 @@ describe('the UK reprocessor and exporter figures page', () => {
       ])
     })
 
-    it('marks each figure few operators contributed to as confidential, and describes each table holding one by the key', async ({
+    it('marks each figure few operators were accredited for as confidential, however many of them reported, and describes each table holding one by the key', async ({
       msw,
       server
     }) => {
@@ -397,13 +397,13 @@ describe('the UK reprocessor and exporter figures page', () => {
                           averagePricePerTonne: 120
                         },
                         {
-                          operatorCount: 5,
-                          submittingOperatorCount: 5,
+                          operatorCount: 2,
+                          submittingOperatorCount: 2,
                           contributingOperatorCounts: {
-                            tonnageReceived: 5,
-                            revisedTonnageIssued: 1,
-                            totalRevenue: 1,
-                            averagePricePerTonne: 1
+                            tonnageReceived: 2,
+                            revisedTonnageIssued: 2,
+                            totalRevenue: 2,
+                            averagePricePerTonne: 2
                           }
                         }
                       ),
@@ -428,12 +428,12 @@ describe('the UK reprocessor and exporter figures page', () => {
                       totalRevenue: 1200
                     },
                     reprocessorCounts: {
-                      operatorCount: 5,
-                      submittingOperatorCount: 5,
+                      operatorCount: 3,
+                      submittingOperatorCount: 2,
                       contributingOperatorCounts: {
-                        tonnageReceived: 5,
-                        revisedTonnageIssued: 1,
-                        totalRevenue: 1
+                        tonnageReceived: 2,
+                        revisedTonnageIssued: 2,
+                        totalRevenue: 2
                       }
                     }
                   })
@@ -475,13 +475,13 @@ describe('the UK reprocessor and exporter figures page', () => {
         ],
         [
           'Plastic',
-          '500.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
+          '500.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
           '10.00 [c]',
           '£1,200.00 [c]',
           '£120.00 [c]'
@@ -495,8 +495,8 @@ describe('the UK reprocessor and exporter figures page', () => {
           '0.00',
           '0.00',
           '0.00',
-          '10.00 [c]',
-          '£1,200.00 [c]',
+          '10.00',
+          '£1,200.00',
           '- No average price is calculated'
         ]
       ])
@@ -617,17 +617,15 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted.',
         'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
         'Figures from few operators',
-        'A figure is marked [c] if only one or two operators could have contributed to it, or only one or two did. A figure no operator could have contributed to is not marked.',
-        'An operator could have contributed to a figure if:',
+        'A figure is marked [c] if only one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure no operator was accredited for is not marked.',
+        'An operator counts as accredited for a figure if:',
         [
           'it owed a monthly report for that month',
           'the figure includes its report for that month'
         ],
         'An operator that owed a report counts even if it has not submitted it, or its report put nothing into the figure. A suspended operator still owes reports, so it counts.',
         'An operator whose accreditation was cancelled for the whole month did not owe a report. It counts only if the figure includes its report for that month.',
-        'An operator contributed to a figure if its report put something other than 0 into it.',
-        'An operator contributed to the tonnage sent on in total if it sent any tonnage on. It contributed to the average price per tonne if it reported revenue, or tonnage of notes issued other than free of charge.',
-        'A Grand Total is counted across all the materials in its table, so an operator that could have contributed to more than one material counts once.',
+        'A Grand Total is counted across all the materials in its table, so an operator accredited for more than one material counts once.',
         'An operator is a business. It counts once however many sites it has.',
         'January 2026',
         'Monthly reports submitted: 1 of 2'

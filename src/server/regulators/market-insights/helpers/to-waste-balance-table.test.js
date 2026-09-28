@@ -147,13 +147,13 @@ describe(toWasteBalanceTable, () => {
     })
   })
 
-  it('marks each month few operators contributed to as confidential', () => {
+  it('marks each month few operators were accredited for as confidential, however few of them contributed', () => {
     const [row] = toWasteBalanceTable(
       dataOf({
         '2026-01': monthOf({
           plastic: {
             reprocessor: figuresOf(90, {
-              operatorCount: 4,
+              operatorCount: 2,
               submittingOperatorCount: 2
             })
           }
@@ -161,8 +161,8 @@ describe(toWasteBalanceTable, () => {
         '2026-02': monthOf({
           plastic: {
             reprocessor: figuresOf(42.5, {
-              operatorCount: 4,
-              submittingOperatorCount: 3
+              operatorCount: 3,
+              submittingOperatorCount: 1
             })
           }
         })
@@ -174,13 +174,13 @@ describe(toWasteBalanceTable, () => {
     expect(row.netCredits).toStrictEqual(['90.00 [c]', '42.50'])
   })
 
-  it('marks a row total the period served few operators for as confidential, and marks no other', () => {
+  it('marks a row total the period served few accredited operators for as confidential, and marks no other', () => {
     const period = {
       reports: { expected: 0, submitted: 0 },
       operatorCounts: {
         plastic: {
-          reprocessor: { operatorCount: 5, submittingOperatorCount: 2 },
-          exporter: { operatorCount: 5, submittingOperatorCount: 4 }
+          reprocessor: { operatorCount: 2, submittingOperatorCount: 2 },
+          exporter: { operatorCount: 3, submittingOperatorCount: 1 }
         }
       }
     }
@@ -204,7 +204,7 @@ describe(toWasteBalanceTable, () => {
     ])
   })
 
-  it('says it is marked when any row has a figure few operators contributed to', () => {
+  it('says it is marked when any row has a figure few operators were accredited for', () => {
     expect(
       toWasteBalanceTable(
         dataOf({

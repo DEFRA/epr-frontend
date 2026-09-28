@@ -2,7 +2,7 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
-import { isFew, withMark } from './few-operators.js'
+import { fromFewOperators, markedFigureOf } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
 /**
@@ -90,8 +90,8 @@ import { nameOf } from './reporting-period.js'
  * A table as the page lays it out: the column headings after the material,
  * one row per material with a formatted figure under each heading, and the
  * Grand Total, whose figures stop before the average price column because
- * the served totals carry none. Each figure few operators contributed to is
- * marked confidential, and the table says whether any is.
+ * the served totals carry none. Each figure few operators were accredited
+ * for is marked confidential, and the table says whether any is.
  * @typedef {{
  *   columns: string[],
  *   rows: FiguresRow[],
@@ -160,23 +160,17 @@ const EXPORTER_COLUMNS = [
 ]
 
 /**
- * Each figure in a row, marked when one or two operators could have
- * contributed to the row, or one or two put something into the figure itself.
+ * Each figure in a row, all marked when one or two operators were accredited
+ * for the row.
  * @template {string} Measure
  * @param {WithOperatorCounts<Record<Measure, number>>} served
  * @param {[Measure, (value: number) => string][]} columns
- * @returns {{ figure: string, marked: boolean }[]}
+ * @returns {string[]}
  */
-const cellsOf = (served, columns) =>
-  columns.map(([measure, format]) => {
-    const marked =
-      isFew(served.operatorCount) ||
-      isFew(served.contributingOperatorCounts[measure])
-    return { figure: withMark(format(served[measure]), marked), marked }
-  })
-
-/** @param {{ figure: string }[]} cells */
-const figuresOf = (cells) => cells.map(({ figure }) => figure)
+const figuresOf = (served, columns) =>
+  columns.map(([measure, format]) =>
+    markedFigureOf(format(served[measure]), served)
+  )
 
 /**
  * @template {string} Totalled
@@ -195,11 +189,6 @@ const toTable = (
   localise
 ) => {
   const columns = [...totalledColumns, AVERAGE_PRICE_COLUMN]
-  const rows = Object.entries(byMaterial).map(([material, served]) => ({
-    label: getMaterialDisplayName(material),
-    cells: cellsOf(served, columns)
-  }))
-  const totalCells = cellsOf(totals, totalledColumns)
 
   return {
     columns: columns.map(([measure]) =>
@@ -207,16 +196,17 @@ const toTable = (
         `regulators:marketInsights:figures:columns:${accreditationType}:${measure}`
       )
     ),
-    rows: rows
-      .map(({ label, cells }) => ({ label, figures: figuresOf(cells) }))
+    rows: Object.entries(byMaterial)
+      .map(([material, served]) => ({
+        label: getMaterialDisplayName(material),
+        figures: figuresOf(served, columns)
+      }))
       .sort((one, other) => one.label.localeCompare(other.label)),
     total: {
       label: localise('regulators:marketInsights:figures:total:label'),
-      figures: figuresOf(totalCells)
+      figures: figuresOf(totals, totalledColumns)
     },
-    marked: [...rows.flatMap(({ cells }) => cells), ...totalCells].some(
-      ({ marked }) => marked
-    )
+    marked: [...Object.values(byMaterial), totals].some(fromFewOperators)
   }
 }
 

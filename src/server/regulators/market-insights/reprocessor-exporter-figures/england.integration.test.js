@@ -40,8 +40,8 @@ const englandFigures = {
             reprocessor: reprocessorOf(
               { tonnageReceived: 640.25 },
               {
-                operatorCount: 4,
-                submittingOperatorCount: 3,
+                operatorCount: 2,
+                submittingOperatorCount: 2,
                 contributingOperatorCounts: { tonnageReceived: 1 }
               }
             ),
@@ -156,15 +156,15 @@ describe('the England reprocessor and exporter figures page', () => {
         [
           'Plastic',
           '640.25 [c]',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '£0.00',
-          '£0.00'
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '£0.00 [c]',
+          '£0.00 [c]'
         ],
         [
           'Grand Total',
