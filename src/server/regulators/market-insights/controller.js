@@ -62,12 +62,12 @@ export const controller = {
         }
       ],
       // The only way to take the figures away. It sits here rather than on the
-      // seven pages because one export holds all of them.
-      exportDescription: localise(
-        'regulators:marketInsights:export:description'
+      // seven pages because one workbook holds all of them.
+      workbookDescription: localise(
+        'regulators:marketInsights:workbook:description'
       ),
-      exportText: localise('regulators:marketInsights:export:linkText'),
-      exportHref: request.localiseUrl(paths.regulators.marketInsightsExport)
+      workbookText: localise('regulators:marketInsights:workbook:linkText'),
+      workbookHref: request.localiseUrl(paths.regulators.marketInsightsWorkbook)
     })
   }
 }

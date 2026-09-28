@@ -18,7 +18,6 @@ export const paths = Object.freeze({
     loggedOut: '/regulators/logged-out',
     marketInsights: '/regulators/market-insights',
     marketInsightsEngland: '/regulators/market-insights/england',
-    marketInsightsExport: '/regulators/market-insights/export.zip',
     marketInsightsNorthernIreland:
       '/regulators/market-insights/northern-ireland',
     marketInsightsOutstandingReturns:
@@ -27,6 +26,7 @@ export const paths = Object.freeze({
     marketInsightsUk: '/regulators/market-insights/uk',
     marketInsightsWales: '/regulators/market-insights/wales',
     marketInsightsWasteBalance: '/regulators/market-insights/waste-balance',
+    marketInsightsWorkbook: '/regulators/market-insights/workbook.xlsx',
     start: '/regulators/start'
   }),
   start: '/start'

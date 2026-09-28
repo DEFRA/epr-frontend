@@ -21,9 +21,12 @@ import { reportingPeriodNow } from './helpers/reporting-period.js'
 vi.mock(import('#server/common/helpers/fetch-stream-from-backend.js'))
 
 const disposition =
-  'attachment; filename="market-insights-2026-monthly-8-2026-09-18-090000.zip"'
+  'attachment; filename="market-insights-2026-monthly-8-2026-09-18-090000.xlsx"'
 
-const zip = 'zip-bytes'
+const xlsxContentType =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+const workbook = 'workbook-bytes'
 
 /**
  * @param {{
@@ -33,10 +36,10 @@ const zip = 'zip-bytes'
  */
 const backendStreams = ({
   contentDisposition = disposition,
-  contentType = 'application/zip'
+  contentType = xlsxContentType
 } = {}) =>
   vi.mocked(fetchStreamFromBackend).mockResolvedValue({
-    body: Readable.from([Buffer.from(zip)], { objectMode: false }),
+    body: Readable.from([Buffer.from(workbook)], { objectMode: false }),
     contentDisposition,
     contentType
   })
@@ -48,11 +51,11 @@ const backendStreams = ({
 const visit = (server, auth) =>
   server.inject({
     method: 'GET',
-    url: paths.regulators.marketInsightsExport,
+    url: paths.regulators.marketInsightsWorkbook,
     auth
   })
 
-describe('the market insights export', () => {
+describe('the market insights workbook download', () => {
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
   })
@@ -65,11 +68,11 @@ describe('the market insights export', () => {
     config.set('featureFlags.regulatorAccess', false)
   })
 
-  it('serves the zip the backend built', async ({ server }) => {
+  it('serves the workbook the backend built', async ({ server }) => {
     const response = await visit(server, regulator)
 
     expect(response.statusCode).toBe(statusCodes.ok)
-    expect(response.rawPayload.toString()).toBe(zip)
+    expect(response.rawPayload.toString()).toBe(workbook)
   })
 
   it('asks for the reporting period the pages show, carrying the session token', async ({
@@ -80,7 +83,7 @@ describe('the market insights export', () => {
     const { year, month } = reportingPeriodNow()
 
     expect(fetchStreamFromBackend).toHaveBeenCalledWith(
-      `/v1/market-insights/${year}/monthly/${month}/export.zip`,
+      `/v1/market-insights/${year}/monthly/${month}/workbook.xlsx`,
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: expect.stringContaining('Bearer ')
@@ -95,7 +98,7 @@ describe('the market insights export', () => {
     expect(response.headers['content-disposition']).toBe(disposition)
   })
 
-  it('still serves the zip where the backend named no file', async ({
+  it('still serves the workbook where the backend named no file', async ({
     server
   }) => {
     backendStreams({ contentDisposition: null })
@@ -109,15 +112,17 @@ describe('the market insights export', () => {
   it('takes the content type from the backend', async ({ server }) => {
     const response = await visit(server, regulator)
 
-    expect(response.headers['content-type']).toContain('application/zip')
+    expect(response.headers['content-type']).toContain(xlsxContentType)
   })
 
-  it('calls it a zip where the backend named no type', async ({ server }) => {
+  it('calls it a workbook where the backend named no type', async ({
+    server
+  }) => {
     backendStreams({ contentType: null })
 
     const response = await visit(server, regulator)
 
-    expect(response.headers['content-type']).toContain('application/zip')
+    expect(response.headers['content-type']).toContain(xlsxContentType)
   })
 
   // A refusal reaching the caller as 502 says the gateway broke, which sends

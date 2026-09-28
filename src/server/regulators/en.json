@@ -8,10 +8,10 @@
   "marketInsights": {
     "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
     "description": "These pages show figures from the monthly market insights workbook. Each set of figures has its own page.",
-    "export": {
-      "description": "Download every figure behind these pages as a set of CSV files in one zip. Each file covers the whole reporting period, with a column for the month. The file takes up to a minute to prepare, so the page will wait after you select the link.",
-      "heading": "Download the figures",
-      "linkText": "Download all the figures (ZIP)"
+    "workbook": {
+      "description": "Download the published market insights workbook for the reporting period these pages show. The file takes up to a minute to prepare, so the page will wait after you select the link.",
+      "heading": "Download the workbook",
+      "linkText": "Download the workbook"
     },
     "figures": {
       "calculation": {

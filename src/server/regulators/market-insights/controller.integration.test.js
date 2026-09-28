@@ -126,7 +126,7 @@ describe('the market insights page', () => {
       expect(asked).not.toHaveBeenCalled()
     })
 
-    it('is offered every figure behind those pages as one download', async ({
+    it('is offered the published workbook as one download', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -137,9 +137,9 @@ describe('the market insights page', () => {
 
       expect(
         getByRole(documentOf(asHtml(result)), 'link', {
-          name: 'Download all the figures (ZIP)'
+          name: 'Download the workbook'
         }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsightsExport)
+      ).toBe(paths.regulators.marketInsightsWorkbook)
     })
 
     it('says the page is still being built, above the description', async ({
