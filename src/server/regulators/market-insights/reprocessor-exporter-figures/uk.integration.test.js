@@ -617,7 +617,7 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted.',
         'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
         'Figures from few operators',
-        'A figure is marked [c] if only one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure no operator was accredited for is not marked.',
+        'A figure is marked [c] if fewer than three operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure with no accredited operators is marked too if it holds any data, for example a late report from an operator cancelled for the whole month. A figure with no accredited operators and no data in it is not marked.',
         'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material for a reprocessor figure, or to export it for an exporter figure. A suspended operator counts. An operator whose accreditation was cancelled for the whole month does not.',
         'An accredited operator counts even if it has not submitted its report, or its report put nothing into the figure.',
         'A Grand Total is counted across all the materials in its table, so an operator accredited for more than one material counts once.',

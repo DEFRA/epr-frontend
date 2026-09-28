@@ -38,7 +38,7 @@ const figuresOf = (netCredit, counts = {}) => ({
   eligibleForWasteBalance: netCredit,
   sentOnDeductions: 0,
   netCredit,
-  operatorCount: 0,
+  operatorCount: 3,
   submittingOperatorCount: 0,
   ...counts
 })
@@ -345,7 +345,7 @@ describe('the UK waste balance page', () => {
         'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
         'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.',
         'Figures from few operators',
-        'A figure is marked [c] if only one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure no operator was accredited for is not marked.',
+        'A figure is marked [c] if fewer than three operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure with no accredited operators is marked too if it holds any data, for example a late report from an operator cancelled for the whole month. A figure with no accredited operators and no data in it is not marked.',
         'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material for a reprocessor figure, or to export it for an exporter figure. A suspended operator counts. An operator whose accreditation was cancelled for the whole month does not.',
         'An accredited operator counts even if none of its tonnage is in the figure.',
         'A row’s total is counted across all its months, so an operator accredited in more than one month counts once.',

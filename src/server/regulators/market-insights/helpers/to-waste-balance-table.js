@@ -116,16 +116,31 @@ export const toWasteBalanceTable = (
         one.accreditationType.localeCompare(other.accreditationType)
     )
 
-  const rows = partitioned.map(({ figures, periodCounts, ...row }) => ({
-    ...row,
-    netCredits: figures.map((figure) =>
-      markedFigureOf(formatTonnage(figure.netCredit), figure)
-    ),
-    total: markedFigureOf(
-      formatTonnage(figures.reduce((sum, { netCredit }) => sum + netCredit, 0)),
-      periodCounts
+  const rows = partitioned.map(({ figures, periodCounts, ...row }) => {
+    const totalNetCredit = figures.reduce(
+      (sum, { netCredit }) => sum + netCredit,
+      0
     )
-  }))
+
+    return {
+      ...row,
+      netCredits: figures.map((figure) =>
+        markedFigureOf(
+          formatTonnage(figure.netCredit),
+          figure,
+          figure.netCredit
+        )
+      ),
+      total: markedFigureOf(
+        formatTonnage(totalNetCredit),
+        periodCounts,
+        totalNetCredit
+      ),
+      marked:
+        figures.some((figure) => fromFewOperators(figure, figure.netCredit)) ||
+        fromFewOperators(periodCounts, totalNetCredit)
+    }
+  })
 
   /** @param {ReportCount} count */
   const stated = ({ expected, submitted }) =>
@@ -136,13 +151,11 @@ export const toWasteBalanceTable = (
 
   return {
     months: months.map(nameOf),
-    rows,
+    rows: rows.map(({ marked: _marked, ...row }) => row),
     reports: {
       byMonth: months.map((month) => stated(served[month].reports)),
       period: stated(period.reports)
     },
-    marked: partitioned.some(({ figures, periodCounts }) =>
-      [...figures, periodCounts].some(fromFewOperators)
-    )
+    marked: rows.some((row) => row.marked)
   }
 }
