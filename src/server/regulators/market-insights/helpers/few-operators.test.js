@@ -9,7 +9,7 @@ describe(fromFewOperators, () => {
     [2, 0],
     [2, 2]
   ])(
-    'holds when %i operators were accredited for the figure, whether %i contributed',
+    'holds when %i operators were accredited for the figure, however many, %i, reported',
     (operatorCount, submittingOperatorCount) => {
       expect(fromFewOperators({ operatorCount, submittingOperatorCount })).toBe(
         true
@@ -24,7 +24,7 @@ describe(fromFewOperators, () => {
     [5, 2],
     [12, 7]
   ])(
-    'does not hold when %i operators were accredited for the figure, however few of them, %i, contributed',
+    'does not hold when %i operators were accredited for the figure, however few of them, %i, reported',
     (operatorCount, submittingOperatorCount) => {
       expect(fromFewOperators({ operatorCount, submittingOperatorCount })).toBe(
         false

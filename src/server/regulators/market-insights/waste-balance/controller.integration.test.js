@@ -346,7 +346,7 @@ describe('the UK waste balance page', () => {
         'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.',
         'Figures from few operators',
         'A figure is marked [c] if only one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure no operator was accredited for is not marked.',
-        'An operator counts as accredited for a figure if it was accredited for that material on any day of the month. A suspended operator counts. An operator whose accreditation was cancelled for the whole month does not.',
+        'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material for a reprocessor figure, or to export it for an exporter figure. A suspended operator counts. An operator whose accreditation was cancelled for the whole month does not.',
         'An accredited operator counts even if none of its tonnage is in the figure.',
         'A row’s total is counted across all its months, so an operator accredited in more than one month counts once.',
         'An operator is a business. It counts once however many sites it has.'

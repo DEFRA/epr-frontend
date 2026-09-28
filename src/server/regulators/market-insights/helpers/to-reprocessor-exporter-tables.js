@@ -52,9 +52,9 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
- * A row of figures beside the operators behind it: how many could have
- * contributed to the row, how many it includes a report from, and how many
- * put something into each of its figures.
+ * A row of figures beside the operators behind it: how many were accredited
+ * for the row, how many it includes a report from, and how many put something
+ * into each of its figures. Only the accredited count marks a figure.
  * @template {Record<string, number>} Figures
  * @typedef {Figures & OperatorCounts & {
  *   contributingOperatorCounts: Record<keyof Figures, number>

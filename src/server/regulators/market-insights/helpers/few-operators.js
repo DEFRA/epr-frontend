@@ -1,8 +1,7 @@
 /**
- * How many separate operators could have contributed to a figure, and how many
- * of them it includes a report from, as the backend serves them beside it.
- * Those that could have contributed are the operators accredited for it that
- * month, whether or not they reported.
+ * How many separate operators were accredited for a figure that month, whether
+ * or not they reported, and how many it includes a report from, as the backend
+ * serves them beside it.
  * @typedef {{ operatorCount: number, submittingOperatorCount: number }} OperatorCounts
  */
 
