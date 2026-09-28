@@ -61,8 +61,16 @@ export const controller = {
           )
         }
       ],
-      // The only way to take the figures away. It sits here rather than on the
-      // seven pages because one export holds all of them.
+      // The only ways to take the figures away. They sit here rather than on
+      // the seven pages because each holds every one of them: the workbook in
+      // the published format, the zip as every underlying CSV.
+      workbookDescription: localise(
+        'regulators:marketInsights:workbook:description'
+      ),
+      workbookText: localise('regulators:marketInsights:workbook:linkText'),
+      workbookHref: request.localiseUrl(
+        paths.regulators.marketInsightsWorkbook
+      ),
       exportDescription: localise(
         'regulators:marketInsights:export:description'
       ),

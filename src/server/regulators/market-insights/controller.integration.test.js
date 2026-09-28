@@ -126,6 +126,22 @@ describe('the market insights page', () => {
       expect(asked).not.toHaveBeenCalled()
     })
 
+    it('is offered the workbook, in the published format, as one download', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      expect(
+        getByRole(documentOf(asHtml(result)), 'link', {
+          name: 'Download the market insights workbook (XLSX)'
+        }).getAttribute('href')
+      ).toBe(paths.regulators.marketInsightsWorkbook)
+    })
+
     it('is offered every figure behind those pages as one download', async ({
       server
     }) => {

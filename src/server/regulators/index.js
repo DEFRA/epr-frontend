@@ -7,6 +7,7 @@ import { marketInsightsExportController } from './market-insights/export-control
 import { controller as marketInsightsOutstandingReturnsController } from './market-insights/outstanding-returns/controller.js'
 import { reprocessorExporterFiguresController } from './market-insights/reprocessor-exporter-figures/controller.js'
 import { controller as marketInsightsWasteBalanceController } from './market-insights/waste-balance/controller.js'
+import { marketInsightsWorkbookController } from './market-insights/workbook-controller.js'
 import { controller } from './organisations/controller.js'
 import { controller as startController } from './start/controller.js'
 
@@ -110,6 +111,14 @@ export const regulators = {
           ...marketInsightsOutstandingReturnsController,
           method: 'GET',
           path: paths.regulators.marketInsightsOutstandingReturns,
+          options: {
+            auth: { scope: [SCOPES.marketDataRead] }
+          }
+        },
+        {
+          ...marketInsightsWorkbookController,
+          method: 'GET',
+          path: paths.regulators.marketInsightsWorkbook,
           options: {
             auth: { scope: [SCOPES.marketDataRead] }
           }
