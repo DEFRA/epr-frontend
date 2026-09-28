@@ -88,6 +88,16 @@ const januaryToMarch = {
           reprocessor: { operatorCount: 6, submittingOperatorCount: 4 },
           exporter: { operatorCount: 6, submittingOperatorCount: 4 }
         }
+      },
+      figures: {
+        glass_re_melt: {
+          reprocessor: { netCredit: 132.5 },
+          exporter: { netCredit: 0 }
+        },
+        aluminium: {
+          reprocessor: { netCredit: 0 },
+          exporter: { netCredit: 8 }
+        }
       }
     }
   }
@@ -321,6 +331,17 @@ describe('the UK waste balance page', () => {
                       submittingOperatorCount: 0
                     },
                     exporter: { operatorCount: 3, submittingOperatorCount: 0 }
+                  }
+                },
+                figures: {
+                  ...januaryToMarch.data.period.figures,
+                  glass_re_melt: {
+                    ...januaryToMarch.data.period.figures.glass_re_melt,
+                    reprocessor: { netCredit: 90 }
+                  },
+                  aluminium: {
+                    reprocessor: { netCredit: 90 },
+                    exporter: { netCredit: 0 }
                   }
                 }
               },

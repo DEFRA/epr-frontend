@@ -11,18 +11,6 @@
  */
 const CONFIDENTIAL = '[c]'
 
-/** Below this, a served value is floating-point noise, not real data. */
-const ZERO_THRESHOLD = 0.005
-
-/**
- * Whether a served value is different from zero once rounded to how it is
- * displayed, so noise left over from summing floats reads as holding
- * nothing.
- * @param {number} value
- * @returns {boolean}
- */
-export const holdsData = (value) => Math.abs(value) >= ZERO_THRESHOLD
-
 /**
  * Whether fewer than three operators were accredited for a row that holds
  * data. Three is where nobody can tell which of them reported. A row with

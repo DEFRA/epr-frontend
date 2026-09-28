@@ -38,6 +38,11 @@ const januaryAggregate = {
         glass_re_melt: {
           reprocessor: { operatorCount: 3, submittingOperatorCount: 2 }
         }
+      },
+      figures: {
+        glass_re_melt: {
+          reprocessor: { netCredit: 90 }
+        }
       }
     }
   }

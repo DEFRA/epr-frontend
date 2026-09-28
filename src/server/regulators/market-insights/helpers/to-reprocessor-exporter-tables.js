@@ -2,7 +2,7 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
-import { fromFewOperators, holdsData, markedFigureOf } from './few-operators.js'
+import { fromFewOperators, markedFigureOf } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
 /**
@@ -174,7 +174,7 @@ const EXPORTER_COLUMNS = [
  * @returns {MarkedFigures}
  */
 const figuresOf = (served, columns) => {
-  const rowHoldsData = columns.some(([measure]) => holdsData(served[measure]))
+  const rowHoldsData = columns.some(([measure]) => served[measure] !== 0)
 
   return {
     figures: columns.map(([measure, format]) =>

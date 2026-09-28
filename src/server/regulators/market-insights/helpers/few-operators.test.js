@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { fromFewOperators, holdsData, markedFigureOf } from './few-operators.js'
+import { fromFewOperators, markedFigureOf } from './few-operators.js'
 
 describe(fromFewOperators, () => {
   it.each([
@@ -48,21 +48,6 @@ describe(fromFewOperators, () => {
       ).toBe(false)
     }
   )
-})
-
-describe(holdsData, () => {
-  it('holds for a value plainly different from zero', () => {
-    expect(holdsData(8)).toBe(true)
-    expect(holdsData(-8)).toBe(true)
-  })
-
-  it('does not hold for exactly zero', () => {
-    expect(holdsData(0)).toBe(false)
-  })
-
-  it('does not hold for a floating-point sliver a sum of zeros can net to', () => {
-    expect(holdsData(5.55e-17)).toBe(false)
-  })
 })
 
 describe(markedFigureOf, () => {
