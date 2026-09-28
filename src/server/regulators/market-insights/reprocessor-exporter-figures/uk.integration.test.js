@@ -512,6 +512,96 @@ describe('the UK reprocessor and exporter figures page', () => {
       ).toHaveLength(1)
     })
 
+    it('marks a row no operator was accredited for that still holds data, and describes its table by the key', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(figuresUrl, () =>
+          HttpResponse.json({
+            ...januaryToMarchFigures,
+            data: {
+              months: {
+                ...januaryToMarchFigures.data.months,
+                '2026-02': {
+                  reports: { expected: 5, submitted: 5 },
+                  figures: {
+                    plastic: {
+                      reprocessor: reprocessorOf(
+                        { tonnageReceived: 500 },
+                        { operatorCount: 0, submittingOperatorCount: 0 }
+                      ),
+                      exporter: exporterOf()
+                    },
+                    aluminium: {
+                      reprocessor: reprocessorOf(),
+                      exporter: exporterOf()
+                    }
+                  },
+                  totals: totalsOf()
+                }
+              }
+            }
+          })
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsightsUk,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+
+      const februaryReprocessors = getByRole(body, 'table', {
+        name: 'Reprocessor data for February 2026',
+        description: CONFIDENTIAL_KEY
+      })
+
+      expect(rowsOf(februaryReprocessors)).toStrictEqual([
+        [
+          'Aluminium',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£0.00',
+          '£0.00'
+        ],
+        [
+          'Plastic',
+          '500.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '£0.00 [c]',
+          '£0.00 [c]'
+        ],
+        [
+          'Grand Total',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£0.00',
+          '- No average price is calculated'
+        ]
+      ])
+    })
+
     it('states the period the figures cover and when they were taken', async ({
       server
     }) => {
@@ -617,7 +707,7 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted.',
         'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
         'Figures from few operators',
-        'A figure is marked [c] if only one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure no operator was accredited for is not marked.',
+        'A figure is marked [c] if one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure is also marked if no operator was accredited for it, but another figure in the same row does hold data, for example a late report from an operator cancelled for the whole month. A row with no accredited operators and nothing in it is not marked.',
         'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material for a reprocessor figure, or to export it for an exporter figure. A suspended operator counts. An operator whose accreditation was cancelled for the whole month does not.',
         'An accredited operator counts even if it has not submitted its report, or its report put nothing into the figure.',
         'A Grand Total is counted across all the materials in its table, so an operator accredited for more than one material counts once.',

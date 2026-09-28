@@ -12,21 +12,30 @@
 const CONFIDENTIAL = '[c]'
 
 /**
- * Whether one or two operators were accredited for a figure. Three is where
- * nobody can tell which of them reported, and a figure none were accredited
- * for identifies no one. How many actually reported does not matter.
+ * Whether fewer than three operators were accredited for a row that holds
+ * data. Three is where nobody can tell which of them reported. A row with
+ * one or two identifies them however few of them reported, so every figure
+ * in it is marked even where that one figure is zero; a row with none
+ * identifies whichever one still put something into it, so it is marked
+ * only where the row holds data somewhere, for example a late report from an
+ * operator cancelled for the whole month. A row with none accredited and
+ * nothing in it identifies no one.
  * @param {OperatorCounts} counts
+ * @param {boolean} rowHoldsData
  * @returns {boolean}
  */
-export const fromFewOperators = ({ operatorCount }) =>
-  operatorCount === 1 || operatorCount === 2
+export const fromFewOperators = ({ operatorCount }, rowHoldsData) =>
+  operatorCount === 1 ||
+  operatorCount === 2 ||
+  (operatorCount === 0 && rowHoldsData)
 
 /**
  * A formatted figure, followed by the confidential shorthand when few
- * operators were accredited for it.
+ * operators were accredited for its row.
  * @param {string} figure
  * @param {OperatorCounts} counts
+ * @param {boolean} rowHoldsData
  * @returns {string}
  */
-export const markedFigureOf = (figure, counts) =>
-  fromFewOperators(counts) ? `${figure} ${CONFIDENTIAL}` : figure
+export const markedFigureOf = (figure, counts, rowHoldsData) =>
+  fromFewOperators(counts, rowHoldsData) ? `${figure} ${CONFIDENTIAL}` : figure

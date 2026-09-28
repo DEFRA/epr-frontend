@@ -160,17 +160,29 @@ const EXPORTER_COLUMNS = [
 ]
 
 /**
- * Each figure in a row, all marked when one or two operators were accredited
- * for the row.
+ * A row's formatted figures, and whether any of them was marked.
+ * @typedef {{ figures: string[], marked: boolean }} MarkedFigures
+ */
+
+/**
+ * Each figure in a row, all marked wherever few operators were accredited
+ * for the row and any figure in it holds data, or one or two were accredited
+ * whether or not any of them does.
  * @template {string} Measure
  * @param {WithOperatorCounts<Record<Measure, number>>} served
  * @param {[Measure, (value: number) => string][]} columns
- * @returns {string[]}
+ * @returns {MarkedFigures}
  */
-const figuresOf = (served, columns) =>
-  columns.map(([measure, format]) =>
-    markedFigureOf(format(served[measure]), served)
-  )
+const figuresOf = (served, columns) => {
+  const rowHoldsData = columns.some(([measure]) => served[measure] !== 0)
+
+  return {
+    figures: columns.map(([measure, format]) =>
+      markedFigureOf(format(served[measure]), served, rowHoldsData)
+    ),
+    marked: fromFewOperators(served, rowHoldsData)
+  }
+}
 
 /**
  * @template {string} Totalled
@@ -190,23 +202,27 @@ const toTable = (
 ) => {
   const columns = [...totalledColumns, AVERAGE_PRICE_COLUMN]
 
+  const rows = Object.entries(byMaterial)
+    .map(([material, served]) => ({
+      label: getMaterialDisplayName(material),
+      ...figuresOf(served, columns)
+    }))
+    .sort((one, other) => one.label.localeCompare(other.label))
+
+  const total = figuresOf(totals, totalledColumns)
+
   return {
     columns: columns.map(([measure]) =>
       localise(
         `regulators:marketInsights:figures:columns:${accreditationType}:${measure}`
       )
     ),
-    rows: Object.entries(byMaterial)
-      .map(([material, served]) => ({
-        label: getMaterialDisplayName(material),
-        figures: figuresOf(served, columns)
-      }))
-      .sort((one, other) => one.label.localeCompare(other.label)),
+    rows: rows.map(({ label, figures }) => ({ label, figures })),
     total: {
       label: localise('regulators:marketInsights:figures:total:label'),
-      figures: figuresOf(totals, totalledColumns)
+      figures: total.figures
     },
-    marked: [...Object.values(byMaterial), totals].some(fromFewOperators)
+    marked: rows.some(({ marked }) => marked) || total.marked
   }
 }
 

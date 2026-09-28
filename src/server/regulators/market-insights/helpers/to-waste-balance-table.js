@@ -32,13 +32,15 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
- * The period as the backend serves it: the reports it was owed, and the
- * operator counts behind each row's total across its months.
+ * The period as the backend serves it: the reports it was owed, the operator
+ * counts behind each row's total across its months, and the net credit each
+ * row totals across them, already summed and rounded by the backend.
  * @typedef {{
  *   months: Record<string, PublishedMonth>,
  *   period: {
  *     reports: ReportCount,
- *     operatorCounts: Record<string, Record<string, OperatorCounts>>
+ *     operatorCounts: Record<string, Record<string, OperatorCounts>>,
+ *     figures: Record<string, Record<string, { netCredit: number }>>
  *   }
  * }} WasteBalanceData
  */
@@ -64,14 +66,19 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
+ * A row's figures, before its own marked state is stripped for display.
+ * @typedef {WasteBalanceRow & { marked: boolean }} MarkedWasteBalanceRow
+ */
+
+/**
  * Lays the served figures out the way the published Waste Balance tab is: one
  * row per material and accreditation type, the reporting months across as
  * columns, and the net credit in the cells, with a row beneath saying how many
  * of the reports each month expected the figures include.
  *
- * The pivot is presentation. Every figure in a cell is the one the service
- * served for that month, and the only sum is the row total across them; the
- * period's report count is served, not added up here.
+ * The pivot is presentation. Every figure, including a row's total across its
+ * months and the period's report count, is the one the service served;
+ * nothing here is summed.
  *
  * The months are the page's period, so the columns run over the span the
  * caption states, and a served month outside it is not shown.
@@ -106,6 +113,7 @@ export const toWasteBalanceTable = (
         `regulators:marketInsights:wasteBalance:accreditationTypes:${accreditationType}`
       ),
       periodCounts: period.operatorCounts[material][accreditationType],
+      totalNetCredit: period.figures[material][accreditationType].netCredit,
       figures: months.map(
         (month) => served[month].figures[material][accreditationType]
       )
@@ -116,16 +124,28 @@ export const toWasteBalanceTable = (
         one.accreditationType.localeCompare(other.accreditationType)
     )
 
-  const rows = partitioned.map(({ figures, periodCounts, ...row }) => ({
-    ...row,
-    netCredits: figures.map((figure) =>
-      markedFigureOf(formatTonnage(figure.netCredit), figure)
-    ),
-    total: markedFigureOf(
-      formatTonnage(figures.reduce((sum, { netCredit }) => sum + netCredit, 0)),
-      periodCounts
-    )
-  }))
+  /** @type {MarkedWasteBalanceRow[]} */
+  const rows = partitioned.map(
+    ({ figures, periodCounts, totalNetCredit, ...row }) => ({
+      ...row,
+      netCredits: figures.map((figure) =>
+        markedFigureOf(
+          formatTonnage(figure.netCredit),
+          figure,
+          figure.netCredit !== 0
+        )
+      ),
+      total: markedFigureOf(
+        formatTonnage(totalNetCredit),
+        periodCounts,
+        totalNetCredit !== 0
+      ),
+      marked:
+        figures.some((figure) =>
+          fromFewOperators(figure, figure.netCredit !== 0)
+        ) || fromFewOperators(periodCounts, totalNetCredit !== 0)
+    })
+  )
 
   /** @param {ReportCount} count */
   const stated = ({ expected, submitted }) =>
@@ -136,13 +156,11 @@ export const toWasteBalanceTable = (
 
   return {
     months: months.map(nameOf),
-    rows,
+    rows: rows.map(({ marked: _marked, ...row }) => row),
     reports: {
       byMonth: months.map((month) => stated(served[month].reports)),
       period: stated(period.reports)
     },
-    marked: partitioned.some(({ figures, periodCounts }) =>
-      [...figures, periodCounts].some(fromFewOperators)
-    )
+    marked: rows.some((row) => row.marked)
   }
 }

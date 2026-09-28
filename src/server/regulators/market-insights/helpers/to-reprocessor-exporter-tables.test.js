@@ -371,6 +371,61 @@ describe(toReprocessorExporterTables, () => {
       expect(exporter.marked).toBe(true)
     })
 
+    it('marks every figure in a row no operator was accredited for when any figure in it holds data, including those still at zero', () => {
+      const { reprocessor } = toReprocessorExporterTables(
+        dataOf({
+          '2026-01': monthOf({
+            plastic: {
+              reprocessor: reprocessorOf(
+                { tonnageReceived: 12 },
+                { operatorCount: 0, submittingOperatorCount: 0 }
+              ),
+              exporter: exporterOf()
+            }
+          })
+        }),
+        ['2026-01'],
+        asKey
+      ).months[0]
+
+      expect(reprocessor.rows[0].figures).toStrictEqual([
+        '12.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '£0.00 [c]',
+        '£0.00 [c]'
+      ])
+      expect(reprocessor.marked).toBe(true)
+    })
+
+    it('leaves a row unmarked when no operator was accredited for it and it holds no data', () => {
+      const { reprocessor } = toReprocessorExporterTables(
+        dataOf({
+          '2026-01': monthOf({
+            plastic: {
+              reprocessor: reprocessorOf(
+                {},
+                { operatorCount: 0, submittingOperatorCount: 0 }
+              ),
+              exporter: exporterOf()
+            }
+          })
+        }),
+        ['2026-01'],
+        asKey
+      ).months[0]
+
+      expect(
+        reprocessor.rows[0].figures.filter((figure) => figure.endsWith('[c]'))
+      ).toStrictEqual([])
+      expect(reprocessor.marked).toBe(false)
+    })
+
     it('does not mark a row three or more operators were accredited for, however few of them reported or put something into a figure', () => {
       const { reprocessor } = toReprocessorExporterTables(
         dataOf({

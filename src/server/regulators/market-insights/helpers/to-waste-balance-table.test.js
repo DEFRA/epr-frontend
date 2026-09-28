@@ -36,7 +36,7 @@ const figuresOf = (netCredit, counts = {}) => ({
   eligibleForWasteBalance: netCredit,
   sentOnDeductions: 0,
   netCredit,
-  operatorCount: 0,
+  operatorCount: 3,
   submittingOperatorCount: 0,
   ...counts
 })
@@ -52,32 +52,59 @@ const monthOf = (figures, reports = { expected: 0, submitted: 0 }) => ({
 })
 
 /**
- * The backend serves a row total's operator counts for every row its months
- * serve, so each is at zero unless a test names it.
+ * The backend serves a row total's operator counts, and its net credit
+ * already summed across the row's months, for every row its months serve.
+ * The operator count defaults to three accredited unless a test names it, and
+ * the net credit defaults to the sum of the months a test gave it, unless a
+ * test serves its own row total.
  * @param {Record<string, PublishedMonth>} months
  * @param {Partial<WasteBalanceData['period']>} [period]
  * @returns {WasteBalanceData}
  */
-const dataOf = (months, { reports, operatorCounts = {} } = {}) => {
+const dataOf = (
+  months,
+  { reports, operatorCounts = {}, figures = {} } = {}
+) => {
   /** @type {WasteBalanceData['period']['operatorCounts']} */
   const counts = {}
-  for (const { figures } of Object.values(months)) {
-    for (const [material, byType] of Object.entries(figures)) {
-      for (const accreditationType of Object.keys(byType)) {
+  /** @type {Record<string, Record<string, number>>} */
+  const netCreditSums = {}
+  for (const { figures: monthFigures } of Object.values(months)) {
+    for (const [material, byType] of Object.entries(monthFigures)) {
+      for (const [accreditationType, figure] of Object.entries(byType)) {
         counts[material] = {
           ...counts[material],
           [accreditationType]: operatorCounts[material]?.[
             accreditationType
-          ] ?? { operatorCount: 0, submittingOperatorCount: 0 }
+          ] ?? { operatorCount: 3, submittingOperatorCount: 0 }
+        }
+        netCreditSums[material] = {
+          ...netCreditSums[material],
+          [accreditationType]:
+            (netCreditSums[material]?.[accreditationType] ?? 0) +
+            figure.netCredit
         }
       }
     }
   }
+
+  /** @type {WasteBalanceData['period']['figures']} */
+  const totals = {}
+  for (const [material, byType] of Object.entries(netCreditSums)) {
+    totals[material] = {}
+    for (const accreditationType of Object.keys(byType)) {
+      totals[material][accreditationType] = figures[material]?.[
+        accreditationType
+      ] ?? { netCredit: byType[accreditationType] }
+    }
+  }
+
   return {
     months,
     period: {
       reports: reports ?? { expected: 0, submitted: 0 },
-      operatorCounts: counts
+      operatorCounts: counts,
+      figures: totals
     }
   }
 }
@@ -119,10 +146,13 @@ describe(toWasteBalanceTable, () => {
   it('shows only the months it was given, so a served month outside them is neither a column nor counted', () => {
     expect(
       toWasteBalanceTable(
-        dataOf({
-          '2026-01': monthOf({ plastic: { reprocessor: figuresOf(90) } }),
-          '2026-02': monthOf({ plastic: { reprocessor: figuresOf(1000) } })
-        }),
+        dataOf(
+          {
+            '2026-01': monthOf({ plastic: { reprocessor: figuresOf(90) } }),
+            '2026-02': monthOf({ plastic: { reprocessor: figuresOf(1000) } })
+          },
+          { figures: { plastic: { reprocessor: { netCredit: 90 } } } }
+        ),
         ['2026-01'],
         asKey
       )
@@ -172,6 +202,57 @@ describe(toWasteBalanceTable, () => {
     ).rows
 
     expect(row.netCredits).toStrictEqual(['90.00 [c]', '42.50'])
+  })
+
+  it('marks a month no operator was accredited for that still holds net credit', () => {
+    const { rows, marked } = toWasteBalanceTable(
+      dataOf(
+        {
+          '2026-01': monthOf({
+            plastic: {
+              reprocessor: figuresOf(90, {
+                operatorCount: 0,
+                submittingOperatorCount: 0
+              })
+            }
+          })
+        },
+        {
+          operatorCounts: {
+            plastic: {
+              reprocessor: { operatorCount: 0, submittingOperatorCount: 0 }
+            }
+          }
+        }
+      ),
+      ['2026-01'],
+      asKey
+    )
+
+    expect(rows[0].netCredits).toStrictEqual(['90.00 [c]'])
+    expect(rows[0].total).toBe('90.00 [c]')
+    expect(marked).toBe(true)
+  })
+
+  it('leaves a month unmarked that no operator was accredited for and that holds no net credit', () => {
+    const { rows, marked } = toWasteBalanceTable(
+      dataOf({
+        '2026-01': monthOf({
+          plastic: {
+            reprocessor: figuresOf(0, {
+              operatorCount: 0,
+              submittingOperatorCount: 0
+            })
+          }
+        })
+      }),
+      ['2026-01'],
+      asKey
+    )
+
+    expect(rows[0].netCredits).toStrictEqual(['0.00'])
+    expect(rows[0].total).toBe('0.00')
+    expect(marked).toBe(false)
   })
 
   it('marks a row total the period served few accredited operators for as confidential, and marks no other', () => {

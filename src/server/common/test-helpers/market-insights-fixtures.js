@@ -40,7 +40,7 @@ export const NOTICE =
  * as coming from few operators.
  */
 export const CONFIDENTIAL_KEY =
-  'Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because only one or two operators were accredited for it.'
+  'Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because fewer than three operators were accredited for it.'
 
 /** @returns {ReprocessorFigures} */
 const noReprocessorFigures = () => ({
@@ -75,7 +75,8 @@ const noExporterFigures = () => ({
 
 /**
  * The operators behind a row, where a fixture names only the counts it cares
- * about and every other count is zero, which marks nothing.
+ * about. Every other count defaults to three operators accredited, which
+ * marks nothing whatever the figures hold.
  * @template {PropertyKey} Measure
  * @typedef {Partial<OperatorCounts> & {
  *   contributingOperatorCounts?: Partial<Record<Measure, number>>
@@ -95,7 +96,7 @@ const withCounts = (
   { contributingOperatorCounts, ...counts }
 ) => ({
   ...figures,
-  operatorCount: 0,
+  operatorCount: 3,
   submittingOperatorCount: 0,
   ...counts,
   contributingOperatorCounts: { ...noFigures, ...contributingOperatorCounts }

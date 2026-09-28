@@ -38,7 +38,7 @@ const figuresOf = (netCredit, counts = {}) => ({
   eligibleForWasteBalance: netCredit,
   sentOnDeductions: 0,
   netCredit,
-  operatorCount: 0,
+  operatorCount: 3,
   submittingOperatorCount: 0,
   ...counts
 })
@@ -87,6 +87,16 @@ const januaryToMarch = {
         aluminium: {
           reprocessor: { operatorCount: 6, submittingOperatorCount: 4 },
           exporter: { operatorCount: 6, submittingOperatorCount: 4 }
+        }
+      },
+      figures: {
+        glass_re_melt: {
+          reprocessor: { netCredit: 132.5 },
+          exporter: { netCredit: 0 }
+        },
+        aluminium: {
+          reprocessor: { netCredit: 0 },
+          exporter: { netCredit: 8 }
         }
       }
     }
@@ -301,6 +311,84 @@ describe('the UK waste balance page', () => {
       ])
     })
 
+    it('marks a month no operator was accredited for that still holds a net credit, and describes the table by the key', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(wasteBalanceUrl, () =>
+          HttpResponse.json({
+            ...januaryToMarch,
+            data: {
+              ...januaryToMarch.data,
+              period: {
+                ...januaryToMarch.data.period,
+                operatorCounts: {
+                  ...januaryToMarch.data.period.operatorCounts,
+                  aluminium: {
+                    reprocessor: {
+                      operatorCount: 0,
+                      submittingOperatorCount: 0
+                    },
+                    exporter: { operatorCount: 3, submittingOperatorCount: 0 }
+                  }
+                },
+                figures: {
+                  ...januaryToMarch.data.period.figures,
+                  glass_re_melt: {
+                    ...januaryToMarch.data.period.figures.glass_re_melt,
+                    reprocessor: { netCredit: 90 }
+                  },
+                  aluminium: {
+                    reprocessor: { netCredit: 90 },
+                    exporter: { netCredit: 0 }
+                  }
+                }
+              },
+              months: {
+                ...januaryToMarch.data.months,
+                '2026-02': {
+                  reports: { expected: 2, submitted: 2 },
+                  figures: {
+                    glass_re_melt: {
+                      reprocessor: figuresOf(0),
+                      exporter: figuresOf(0)
+                    },
+                    aluminium: {
+                      reprocessor: figuresOf(90, {
+                        operatorCount: 0,
+                        submittingOperatorCount: 0
+                      }),
+                      exporter: figuresOf(0)
+                    }
+                  }
+                }
+              }
+            }
+          })
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsightsWasteBalance,
+        auth: regulator
+      })
+
+      const table = getByRole(documentOf(asHtml(result)), 'table', {
+        name: 'Waste balance',
+        description: CONFIDENTIAL_KEY
+      })
+
+      expect(rowsOf(table)).toStrictEqual([
+        ['Aluminium', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
+        ['Aluminium', 'Reprocessor', '0.00', '90.00 [c]', '0.00', '90.00 [c]'],
+        ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
+        ['Glass remelt', 'Reprocessor', '90.00', '0.00', '0.00', '90.00'],
+        ['Monthly reports submitted', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
+      ])
+    })
+
     it('says how the figures are calculated, before the table', async ({
       server
     }) => {
@@ -345,7 +433,7 @@ describe('the UK waste balance page', () => {
         'Tonnage a reprocessor sends on comes off the figure in the month the load left its site. This applies only to a reprocessor accredited on the tonnage it receives. It comes off even if the accreditation was not valid on that date. The figures do not deduct PRNs and PERNs the operator issues from its waste balance. They include tonnage the operator has already issued notes for.',
         'The figures are live. They come from the summary logs held at the time shown above, not from a record of what was published. If an operator resubmits a summary log, earlier months change. The columns run from January of the reporting year to the last complete month, and the total adds the months together.',
         'Figures from few operators',
-        'A figure is marked [c] if only one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure no operator was accredited for is not marked.',
+        'A figure is marked [c] if one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure is also marked if no operator was accredited for it, but another figure in the same row does hold data, for example a late report from an operator cancelled for the whole month. A row with no accredited operators and nothing in it is not marked.',
         'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material for a reprocessor figure, or to export it for an exporter figure. A suspended operator counts. An operator whose accreditation was cancelled for the whole month does not.',
         'An accredited operator counts even if none of its tonnage is in the figure.',
         'A row’s total is counted across all its months, so an operator accredited in more than one month counts once.',
