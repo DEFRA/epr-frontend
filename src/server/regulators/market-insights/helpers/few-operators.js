@@ -1,6 +1,7 @@
 /**
- * How many separate operators could have contributed to a figure, and how many
- * of them it includes a report from, as the backend serves them beside it.
+ * How many separate operators were accredited for a figure that month, whether
+ * or not they reported, and how many it includes a report from, as the backend
+ * serves them beside it.
  * @typedef {{ operatorCount: number, submittingOperatorCount: number }} OperatorCounts
  */
 
@@ -11,35 +12,21 @@
 const CONFIDENTIAL = '[c]'
 
 /**
- * A figure from one or two operators is as good as theirs. Three is where it
- * stops being one business's figure, and a figure from none identifies no one.
- * @param {number} count
- */
-export const isFew = (count) => count === 1 || count === 2
-
-/**
- * Whether either count marks a figure as coming from few operators.
+ * Whether one or two operators were accredited for a figure. Three is where
+ * nobody can tell which of them reported, and a figure none were accredited
+ * for identifies no one. How many actually reported does not matter.
  * @param {OperatorCounts} counts
  * @returns {boolean}
  */
-export const fromFewOperators = ({ operatorCount, submittingOperatorCount }) =>
-  isFew(operatorCount) || isFew(submittingOperatorCount)
+export const fromFewOperators = ({ operatorCount }) =>
+  operatorCount === 1 || operatorCount === 2
 
 /**
  * A formatted figure, followed by the confidential shorthand when few
- * operators contributed to it.
+ * operators were accredited for it.
  * @param {string} figure
  * @param {OperatorCounts} counts
  * @returns {string}
  */
 export const markedFigureOf = (figure, counts) =>
-  withMark(figure, fromFewOperators(counts))
-
-/**
- * A formatted figure, followed by the confidential shorthand when it is marked.
- * @param {string} figure
- * @param {boolean} marked
- * @returns {string}
- */
-export const withMark = (figure, marked) =>
-  marked ? `${figure} ${CONFIDENTIAL}` : figure
+  fromFewOperators(counts) ? `${figure} ${CONFIDENTIAL}` : figure

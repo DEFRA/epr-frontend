@@ -331,56 +331,8 @@ describe(toReprocessorExporterTables, () => {
     ])
   })
 
-  describe('marking the figures few operators contributed to', () => {
-    it('marks each figure in a row by how many operators put something into it', () => {
-      const { reprocessor } = toReprocessorExporterTables(
-        dataOf({
-          '2026-01': monthOf({
-            plastic: {
-              reprocessor: reprocessorOf(
-                {
-                  tonnageReceived: 500,
-                  tonnageRecycled: 450,
-                  revisedTonnageIssued: 10,
-                  totalRevenue: 1200,
-                  averagePricePerTonne: 120
-                },
-                {
-                  operatorCount: 5,
-                  submittingOperatorCount: 5,
-                  contributingOperatorCounts: {
-                    tonnageReceived: 5,
-                    tonnageRecycled: 3,
-                    revisedTonnageIssued: 1,
-                    totalRevenue: 2,
-                    averagePricePerTonne: 2
-                  }
-                }
-              ),
-              exporter: exporterOf()
-            }
-          })
-        }),
-        ['2026-01'],
-        asKey
-      ).months[0]
-
-      expect(reprocessor.rows[0].figures).toStrictEqual([
-        '500.00',
-        '450.00',
-        '0.00',
-        '0.00',
-        '0.00',
-        '0.00',
-        '0.00',
-        '10.00 [c]',
-        '£1,200.00 [c]',
-        '£120.00 [c]'
-      ])
-      expect(reprocessor.marked).toBe(true)
-    })
-
-    it('marks every figure in a row one or two operators could have contributed to, including those none of them put anything into', () => {
+  describe('marking the figures from operators accredited for them', () => {
+    it('marks every figure in a row one or two operators were accredited for, including those none of them put anything into', () => {
       const { exporter } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf({
@@ -416,16 +368,31 @@ describe(toReprocessorExporterTables, () => {
         '£0.00 [c]',
         '£0.00 [c]'
       ])
+      expect(exporter.marked).toBe(true)
     })
 
-    it('does not mark a figure by how many operators submitted a report, only by how many put something into it', () => {
+    it('does not mark a row three or more operators were accredited for, however few of them reported or put something into a figure', () => {
       const { reprocessor } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf({
             plastic: {
               reprocessor: reprocessorOf(
-                {},
-                { operatorCount: 5, submittingOperatorCount: 2 }
+                {
+                  tonnageReceived: 500,
+                  revisedTonnageIssued: 10,
+                  totalRevenue: 1200,
+                  averagePricePerTonne: 120
+                },
+                {
+                  operatorCount: 3,
+                  submittingOperatorCount: 2,
+                  contributingOperatorCounts: {
+                    tonnageReceived: 2,
+                    revisedTonnageIssued: 1,
+                    totalRevenue: 1,
+                    averagePricePerTonne: 1
+                  }
+                }
               ),
               exporter: exporterOf()
             }
@@ -441,7 +408,7 @@ describe(toReprocessorExporterTables, () => {
       expect(reprocessor.marked).toBe(false)
     })
 
-    it('marks the Grand Total by its own counts, whatever the rows above it', () => {
+    it('marks the Grand Total by its own accredited count, whatever the rows above it', () => {
       const { reprocessor } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf(
@@ -449,13 +416,7 @@ describe(toReprocessorExporterTables, () => {
               plastic: {
                 reprocessor: reprocessorOf(
                   { tonnageReceived: 500, tonnageSentOnTotal: 20 },
-                  {
-                    operatorCount: 4,
-                    contributingOperatorCounts: {
-                      tonnageReceived: 4,
-                      tonnageSentOnTotal: 3
-                    }
-                  }
+                  { operatorCount: 4 }
                 ),
                 exporter: exporterOf()
               }
@@ -463,13 +424,7 @@ describe(toReprocessorExporterTables, () => {
             { expected: 4, submitted: 4 },
             totalsOf({
               reprocessor: { tonnageReceived: 500, tonnageSentOnTotal: 20 },
-              reprocessorCounts: {
-                operatorCount: 4,
-                contributingOperatorCounts: {
-                  tonnageReceived: 4,
-                  tonnageSentOnTotal: 1
-                }
-              }
+              reprocessorCounts: { operatorCount: 2 }
             })
           )
         }),
@@ -477,22 +432,24 @@ describe(toReprocessorExporterTables, () => {
         asKey
       ).months[0]
 
-      expect(reprocessor.rows[0].figures[3]).toBe('20.00')
+      expect(
+        reprocessor.rows[0].figures.filter((figure) => figure.endsWith('[c]'))
+      ).toStrictEqual([])
       expect(reprocessor.total.figures).toStrictEqual([
-        '500.00',
-        '0.00',
-        '0.00',
+        '500.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
         '20.00 [c]',
-        '0.00',
-        '0.00',
-        '0.00',
-        '0.00',
-        '£0.00'
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '£0.00 [c]'
       ])
       expect(reprocessor.marked).toBe(true)
     })
 
-    it('leaves unmarked a table where every figure had three or more operators behind it, or none', () => {
+    it('leaves unmarked a table where every row and the Grand Total had three or more operators accredited for them, or none', () => {
       const { reprocessor, exporter } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf(
@@ -500,17 +457,11 @@ describe(toReprocessorExporterTables, () => {
               plastic: {
                 reprocessor: reprocessorOf(
                   { tonnageReceived: 500 },
-                  {
-                    operatorCount: 3,
-                    contributingOperatorCounts: { tonnageReceived: 3 }
-                  }
+                  { operatorCount: 3 }
                 ),
                 exporter: exporterOf(
                   { tonnageReceived: 20 },
-                  {
-                    operatorCount: 1,
-                    contributingOperatorCounts: { tonnageReceived: 1 }
-                  }
+                  { operatorCount: 1 }
                 )
               },
               aluminium: {
@@ -521,10 +472,7 @@ describe(toReprocessorExporterTables, () => {
             { expected: 4, submitted: 4 },
             totalsOf({
               reprocessor: { tonnageReceived: 500 },
-              reprocessorCounts: {
-                operatorCount: 3,
-                contributingOperatorCounts: { tonnageReceived: 3 }
-              }
+              reprocessorCounts: { operatorCount: 3 }
             })
           )
         }),
@@ -539,11 +487,11 @@ describe(toReprocessorExporterTables, () => {
         ].filter((figure) => figure.endsWith('[c]'))
       ).toStrictEqual([])
       expect(reprocessor.marked).toBe(false)
-      // The exporter table beside it is the one few operators reported into.
+      // The exporter table beside it is the one few operators were accredited for.
       expect(exporter.marked).toBe(true)
     })
 
-    it('marks a table whose only figure from few operators is in its Grand Total', () => {
+    it('marks a table whose only figures from few operators are in its Grand Total', () => {
       const { exporter } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf(
@@ -551,10 +499,7 @@ describe(toReprocessorExporterTables, () => {
             { expected: 1, submitted: 1 },
             totalsOf({
               exporter: { totalRevenue: 50 },
-              exporterCounts: {
-                operatorCount: 3,
-                contributingOperatorCounts: { totalRevenue: 2 }
-              }
+              exporterCounts: { operatorCount: 2 }
             })
           )
         }),
