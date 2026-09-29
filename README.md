@@ -91,9 +91,9 @@ disable setting `SESSION_CACHE_ENGINE=false` or changing the default value in `~
 
 ## Proxy
 
-We are using forward-proxy which is set up by default. Node's built-in `fetch` uses it through Node's own proxy support, which reads `NODE_USE_ENV_PROXY`, `HTTPS_PROXY` and `NO_PROXY` from the environment. No dispatcher is needed.
+We are using forward-proxy which is set up by default. Node's built-in `fetch` uses it through Node's own proxy support, which reads `NODE_USE_ENV_PROXY`, `HTTPS_PROXY` and `NO_PROXY` from the environment. No dispatcher is needed. These variables come from the CDP app config.
 
-Clients that create their own agents, such as Wreck (and so Bell's OAuth token exchange), are routed through the proxy by `global-agent`, which `setupProxy()` bootstraps when a proxy URL is configured.
+`node:http` and `node:https` clients, such as Wreck (and so Bell's OAuth token exchange), are routed through the proxy by `global-agent`. `setupProxy()` bootstraps it when `HTTP_PROXY` is set. It honours `GLOBAL_AGENT_NO_PROXY`, not `NO_PROXY`.
 
 ## Local Development
 

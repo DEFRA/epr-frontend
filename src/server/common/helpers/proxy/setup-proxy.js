@@ -5,7 +5,7 @@ const logger = createLogger()
 
 /**
  * If HTTP_PROXY is set setupProxy() will enable it globally
- * for http clients that create their own agents.
+ * for node:http and node:https clients.
  * Node's built-in fetch is proxied by Node itself (NODE_USE_ENV_PROXY).
  */
 export function setupProxy() {
