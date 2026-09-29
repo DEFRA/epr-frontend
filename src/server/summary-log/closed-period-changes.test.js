@@ -26,11 +26,20 @@ describe(requiresResubmission, () => {
     expect(requiresResubmission(undefined)).toBe(false)
   })
 
-  it('returns false when periodsRequiringResubmission is absent', () => {
+  it('falls back to closed-period counts when periodsRequiringResubmission is absent', () => {
     expect(
       requiresResubmission({
         openPeriodLoads: { added: ZERO_CHANGE, adjusted: ZERO_CHANGE },
         closedPeriodLoads: closedRows
+      })
+    ).toBe(true)
+  })
+
+  it('returns false when periodsRequiringResubmission is absent and no closed-period rows changed', () => {
+    expect(
+      requiresResubmission({
+        openPeriodLoads: { added: ZERO_CHANGE, adjusted: ZERO_CHANGE },
+        closedPeriodLoads: { added: ZERO_CHANGE, adjusted: ZERO_CHANGE }
       })
     ).toBe(false)
   })

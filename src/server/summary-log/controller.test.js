@@ -604,6 +604,27 @@ describe('#summaryLogUploadProgressController', () => {
           queryByRole(main, 'button', { name: 'Go to reports' })
         ).toBeNull()
       })
+
+      it('shows the section from closed-period counts when the backend omits periodsRequiringResubmission', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          loadsByReportingPeriod: {
+            openPeriodLoads: emptyPeriod(),
+            closedPeriodLoads: closedAdjustmentRows()
+          }
+        })
+
+        const main = await getMain(server)
+
+        expect(
+          queryByRole(main, 'heading', { name: 'Further action needed' })
+        ).not.toBeNull()
+        expect(
+          queryByRole(main, 'button', { name: 'Go to reports' })
+        ).not.toBeNull()
+      })
     })
 
     describe('satisfaction survey', () => {
@@ -4469,6 +4490,23 @@ describe('summary log check view', () => {
           'The adjusted loads will remove 4.00 tonnes from your waste balance.'
         )
       ).not.toBeNull()
+    })
+
+    it('shows the banner from closed-period counts when the backend omits periodsRequiringResubmission', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: closedAdjustmentRows()
+        }
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(queryByText(main, BANNER_BODY)).not.toBeNull()
     })
   })
 })

@@ -126,7 +126,7 @@ describe('summaryLogStatusResponseSchema validation', () => {
       expect(value.loadsByReportingPeriod).toStrictEqual(loadsByReportingPeriod)
     })
 
-    it('should default periodsRequiringResubmission to empty when the backend omits it', () => {
+    it('should leave periodsRequiringResubmission absent when the backend omits it', () => {
       const { openPeriodLoads, closedPeriodLoads } = loadsByReportingPeriod
 
       const { error, value } = summaryLogStatusResponseSchema.validate(
@@ -140,7 +140,7 @@ describe('summaryLogStatusResponseSchema validation', () => {
       expect(error).toBeUndefined()
       expect(
         value.loadsByReportingPeriod.periodsRequiringResubmission
-      ).toStrictEqual([])
+      ).toBeUndefined()
     })
 
     it('should reject a payload missing a required bucket', () => {
