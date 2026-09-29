@@ -91,23 +91,9 @@ disable setting `SESSION_CACHE_ENGINE=false` or changing the default value in `~
 
 ## Proxy
 
-We are using forward-proxy which is set up by default. To make use of this: `import { fetch } from 'undici'` then because of the `setGlobalDispatcher(new ProxyAgent(proxyUrl))` calls will use the ProxyAgent Dispatcher
+We are using forward-proxy which is set up by default. Node's built-in `fetch` uses it through Node's own proxy support, which reads `NODE_USE_ENV_PROXY`, `HTTPS_PROXY` and `NO_PROXY` from the environment. No dispatcher is needed. These variables come from the CDP app config.
 
-If you are not using Wreck, Axios or Undici or a similar http that uses `Request`. Then you may have to provide the proxy dispatcher:
-
-To add the dispatcher to your own client:
-
-```javascript
-import { ProxyAgent } from 'undici'
-
-return await fetch(url, {
-  dispatcher: new ProxyAgent({
-    uri: proxyUrl,
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
-  })
-})
-```
+`node:http` and `node:https` clients, such as Wreck (and so Bell's OAuth token exchange), are routed through the proxy by `global-agent`. `setupProxy()` bootstraps it when `HTTP_PROXY` is set. It honours `GLOBAL_AGENT_NO_PROXY`, not `NO_PROXY`.
 
 ## Local Development
 
