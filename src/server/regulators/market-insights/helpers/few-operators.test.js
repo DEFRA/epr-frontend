@@ -90,4 +90,37 @@ describe(markedFigureOf, () => {
       )
     ).toBe('8.00')
   })
+
+  it('follows a total that includes a marked figure with the marker for one, however many operators were accredited for the total', () => {
+    expect(
+      markedFigureOf(
+        '8.00',
+        { operatorCount: 5, submittingOperatorCount: 5 },
+        true,
+        true
+      )
+    ).toBe('8.00 [c]')
+  })
+
+  it('follows a total few operators were accredited for with the confidential shorthand, whether or not it includes a marked figure', () => {
+    expect(
+      markedFigureOf(
+        '8.00',
+        { operatorCount: 2, submittingOperatorCount: 2 },
+        true,
+        true
+      )
+    ).toBe('8.00 [c]')
+  })
+
+  it('leaves a total that includes no marked figure to its own accredited count', () => {
+    expect(
+      markedFigureOf(
+        '8.00',
+        { operatorCount: 5, submittingOperatorCount: 5 },
+        true,
+        false
+      )
+    ).toBe('8.00')
+  })
 })

@@ -463,7 +463,55 @@ describe(toReprocessorExporterTables, () => {
       expect(reprocessor.marked).toBe(false)
     })
 
-    it('marks the Grand Total by its own accredited count, whatever the rows above it', () => {
+    it('marks every figure in the Grand Total when a row above it is marked, however many operators were accredited for the total', () => {
+      const { reprocessor, exporter } = toReprocessorExporterTables(
+        dataOf({
+          '2026-01': monthOf(
+            {
+              plastic: {
+                reprocessor: reprocessorOf(
+                  { tonnageReceived: 500 },
+                  { operatorCount: 4 }
+                ),
+                exporter: exporterOf()
+              },
+              aluminium: {
+                reprocessor: reprocessorOf(
+                  { tonnageReceived: 20 },
+                  { operatorCount: 1 }
+                ),
+                exporter: exporterOf()
+              }
+            },
+            { expected: 5, submitted: 5 },
+            totalsOf({
+              reprocessor: { tonnageReceived: 520 },
+              reprocessorCounts: { operatorCount: 5 }
+            })
+          )
+        }),
+        ['2026-01'],
+        asKey
+      ).months[0]
+
+      expect(reprocessor.total.figures).toStrictEqual([
+        '520.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '0.00 [c]',
+        '£0.00 [c]'
+      ])
+      // No row of the exporter table beside it is marked.
+      expect(
+        exporter.total.figures.filter((figure) => figure.endsWith('[c]'))
+      ).toStrictEqual([])
+    })
+
+    it('marks the Grand Total by its own accredited count, even where no row above it is marked', () => {
       const { reprocessor } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf(

@@ -145,8 +145,9 @@ describe('the England reprocessor and exporter figures page', () => {
         )
       ).not.toBeNull()
 
-      // A figure few operators contributed to is marked, and the key is the
-      // description of the table it sits in.
+      // A figure few operators contributed to is marked, and so is the Grand
+      // Total that includes it. The key is the description of the table they
+      // sit in.
       const januaryReprocessors = getByRole(body, 'table', {
         name: 'Reprocessor data for January 2026',
         description: CONFIDENTIAL_KEY
@@ -168,15 +169,15 @@ describe('the England reprocessor and exporter figures page', () => {
         ],
         [
           'Grand Total',
-          '700.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '£0.00',
+          '700.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '£0.00 [c]',
           '- No average price is calculated'
         ]
       ])

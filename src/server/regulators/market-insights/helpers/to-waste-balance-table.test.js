@@ -204,6 +204,36 @@ describe(toWasteBalanceTable, () => {
     expect(row.netCredits).toStrictEqual(['90.00 [c]', '42.50'])
   })
 
+  it('marks a row total that includes a marked month, however many operators were accredited for the total', () => {
+    const [row] = toWasteBalanceTable(
+      dataOf({
+        '2026-01': monthOf({
+          plastic: { reprocessor: figuresOf(90, { operatorCount: 1 }) }
+        }),
+        '2026-02': monthOf({
+          plastic: { reprocessor: figuresOf(42.5) }
+        })
+      }),
+      januaryAndFebruary,
+      asKey
+    ).rows
+
+    expect(row.total).toBe('132.50 [c]')
+  })
+
+  it('leaves a row total unmarked when none of its months is marked and three or more operators were accredited for it', () => {
+    const [row] = toWasteBalanceTable(
+      dataOf({
+        '2026-01': monthOf({ plastic: { reprocessor: figuresOf(90) } }),
+        '2026-02': monthOf({ plastic: { reprocessor: figuresOf(42.5) } })
+      }),
+      januaryAndFebruary,
+      asKey
+    ).rows
+
+    expect(row.total).toBe('132.50')
+  })
+
   it('marks a month no operator was accredited for that still holds net credit', () => {
     const { rows, marked } = toWasteBalanceTable(
       dataOf(

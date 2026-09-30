@@ -12,6 +12,12 @@
 const CONFIDENTIAL = '[c]'
 
 /**
+ * The marker the published workbook puts on a total that includes a figure
+ * marked confidential, because it shows that total without the figure.
+ */
+const INCLUDES_CONFIDENTIAL = '[c]'
+
+/**
  * Whether fewer than three operators were accredited for a row that holds
  * data. Three is where nobody can tell which of them reported. A row with
  * one or two identifies them however few of them reported, so every figure
@@ -31,11 +37,23 @@ export const fromFewOperators = ({ operatorCount }, rowHoldsData) =>
 
 /**
  * A formatted figure, followed by the confidential shorthand when few
- * operators were accredited for its row.
+ * operators were accredited for its row. A total that includes a marked
+ * figure, but is not from few operators itself, is followed by the marker the
+ * workbook puts on it instead.
  * @param {string} figure
  * @param {OperatorCounts} counts
  * @param {boolean} rowHoldsData
+ * @param {boolean} [includesMarked]
  * @returns {string}
  */
-export const markedFigureOf = (figure, counts, rowHoldsData) =>
-  fromFewOperators(counts, rowHoldsData) ? `${figure} ${CONFIDENTIAL}` : figure
+export const markedFigureOf = (
+  figure,
+  counts,
+  rowHoldsData,
+  includesMarked = false
+) => {
+  if (fromFewOperators(counts, rowHoldsData)) {
+    return `${figure} ${CONFIDENTIAL}`
+  }
+  return includesMarked ? `${figure} ${INCLUDES_CONFIDENTIAL}` : figure
+}

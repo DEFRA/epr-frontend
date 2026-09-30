@@ -167,18 +167,25 @@ const EXPORTER_COLUMNS = [
 /**
  * Each figure in a row, all marked wherever few operators were accredited
  * for the row and any figure in it holds data, or one or two were accredited
- * whether or not any of them does.
+ * whether or not any of them does. A Grand Total is also marked wherever it
+ * includes a marked row.
  * @template {string} Measure
  * @param {WithOperatorCounts<Record<Measure, number>>} served
  * @param {[Measure, (value: number) => string][]} columns
+ * @param {boolean} [includesMarked]
  * @returns {MarkedFigures}
  */
-const figuresOf = (served, columns) => {
+const figuresOf = (served, columns, includesMarked = false) => {
   const rowHoldsData = columns.some(([measure]) => served[measure] !== 0)
 
   return {
     figures: columns.map(([measure, format]) =>
-      markedFigureOf(format(served[measure]), served, rowHoldsData)
+      markedFigureOf(
+        format(served[measure]),
+        served,
+        rowHoldsData,
+        includesMarked
+      )
     ),
     marked: fromFewOperators(served, rowHoldsData)
   }
@@ -209,7 +216,11 @@ const toTable = (
     }))
     .sort((one, other) => one.label.localeCompare(other.label))
 
-  const total = figuresOf(totals, totalledColumns)
+  const total = figuresOf(
+    totals,
+    totalledColumns,
+    rows.some(({ marked }) => marked)
+  )
 
   return {
     columns: columns.map(([measure]) =>

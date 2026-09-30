@@ -488,15 +488,15 @@ describe('the UK reprocessor and exporter figures page', () => {
         ],
         [
           'Grand Total',
-          '500.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '10.00',
-          '£1,200.00',
+          '500.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '10.00 [c]',
+          '£1,200.00 [c]',
           '- No average price is calculated'
         ]
       ])
@@ -588,15 +588,15 @@ describe('the UK reprocessor and exporter figures page', () => {
         ],
         [
           'Grand Total',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '£0.00',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '0.00 [c]',
+          '£0.00 [c]',
           '- No average price is calculated'
         ]
       ])

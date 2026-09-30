@@ -126,25 +126,30 @@ export const toWasteBalanceTable = (
 
   /** @type {MarkedWasteBalanceRow[]} */
   const rows = partitioned.map(
-    ({ figures, periodCounts, totalNetCredit, ...row }) => ({
-      ...row,
-      netCredits: figures.map((figure) =>
-        markedFigureOf(
-          formatTonnage(figure.netCredit),
-          figure,
-          figure.netCredit !== 0
-        )
-      ),
-      total: markedFigureOf(
-        formatTonnage(totalNetCredit),
-        periodCounts,
-        totalNetCredit !== 0
-      ),
-      marked:
-        figures.some((figure) =>
-          fromFewOperators(figure, figure.netCredit !== 0)
-        ) || fromFewOperators(periodCounts, totalNetCredit !== 0)
-    })
+    ({ figures, periodCounts, totalNetCredit, ...row }) => {
+      const includesMarked = figures.some((figure) =>
+        fromFewOperators(figure, figure.netCredit !== 0)
+      )
+
+      return {
+        ...row,
+        netCredits: figures.map((figure) =>
+          markedFigureOf(
+            formatTonnage(figure.netCredit),
+            figure,
+            figure.netCredit !== 0
+          )
+        ),
+        total: markedFigureOf(
+          formatTonnage(totalNetCredit),
+          periodCounts,
+          totalNetCredit !== 0,
+          includesMarked
+        ),
+        marked:
+          includesMarked || fromFewOperators(periodCounts, totalNetCredit !== 0)
+      }
+    }
   )
 
   /** @param {ReportCount} count */

@@ -170,8 +170,9 @@ describe.each(NATIONS)(
         // nation means here.
         expect(getByText(body, scope)).not.toBeNull()
 
-        // A figure few operators contributed to is marked, and the key is the
-        // description of the table it sits in.
+        // A figure few operators contributed to is marked, and so is the Grand
+        // Total that includes it. The key is the description of the table
+        // they sit in.
         const januaryReprocessors = getByRole(body, 'table', {
           name: 'Reprocessor data for January 2026',
           description: CONFIDENTIAL_KEY
@@ -193,15 +194,15 @@ describe.each(NATIONS)(
           ],
           [
             'Grand Total',
-            '350.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '£0.00',
+            '350.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '0.00 [c]',
+            '£0.00 [c]',
             '- No average price is calculated'
           ]
         ])
