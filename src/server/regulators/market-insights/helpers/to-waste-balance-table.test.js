@@ -205,7 +205,7 @@ describe(toWasteBalanceTable, () => {
     expect(row.netCredits).toStrictEqual(['90.00 [c]', '42.50'])
   })
 
-  it('notes a row total that includes a marked month, and gives the note’s text, however many operators were accredited for the total', () => {
+  it('notes a row total that includes a marked month, and gives the note’s text, where three or more operators were accredited for the total', () => {
     const {
       rows: [row],
       note

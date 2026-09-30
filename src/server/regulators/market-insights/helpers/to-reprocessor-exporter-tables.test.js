@@ -463,7 +463,7 @@ describe(toReprocessorExporterTables, () => {
       expect(reprocessor.marked).toBe(false)
     })
 
-    it('notes the Grand Total on its label when a row above it is marked, and gives the note’s text, however many operators were accredited for the total', () => {
+    it('notes the Grand Total on its label when a row above it is marked, and gives the note’s text, where three or more operators were accredited for the total', () => {
       const { reprocessor, exporter } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf(

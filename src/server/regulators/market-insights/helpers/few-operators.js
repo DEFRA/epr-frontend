@@ -50,9 +50,18 @@ export const markedFigureOf = (figure, counts, rowHoldsData) =>
   fromFewOperators(counts, rowHoldsData) ? `${figure} ${CONFIDENTIAL}` : figure
 
 /**
- * A total's text, followed by the note marker. The published workbook notes
- * a total that includes a figure marked confidential, unless few operators
- * were accredited for the total itself, which withholds it instead.
+ * Whether the published workbook notes a total as leaving out confidential
+ * figures: it includes a figure marked confidential, and few operators were
+ * not accredited for the total itself, which would withhold it instead.
+ * @param {boolean} includesMarked
+ * @param {boolean} totalMarked
+ * @returns {boolean}
+ */
+export const leavesOutConfidential = (includesMarked, totalMarked) =>
+  includesMarked && !totalMarked
+
+/**
+ * A total's text, followed by the note marker.
  * @param {string} text
  * @returns {string}
  */

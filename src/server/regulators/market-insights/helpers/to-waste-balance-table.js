@@ -3,6 +3,7 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 
 import {
   fromFewOperators,
+  leavesOutConfidential,
   markedFigureOf,
   noteOf,
   notedOf
@@ -145,7 +146,7 @@ export const toWasteBalanceTable = (
         periodCounts,
         totalNetCredit !== 0
       )
-      const noted = monthMarked && !totalMarked
+      const noted = leavesOutConfidential(monthMarked, totalMarked)
 
       return {
         ...row,

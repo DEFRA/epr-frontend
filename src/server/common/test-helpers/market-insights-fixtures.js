@@ -47,7 +47,7 @@ export const CONFIDENTIAL_KEY =
  * in it includes a figure marked as coming from few operators.
  */
 export const LEAVES_OUT_CONFIDENTIAL_NOTE =
-  '[note 1] = in the published workbook, this total is the sum of the figures shown, and leaves out the figures marked [c].'
+  '[note 1] = in the published workbook, this total leaves out the figures marked [c], and is the sum of the others. The total shown here includes them.'
 
 /** @returns {ReprocessorFigures} */
 const noReprocessorFigures = () => ({

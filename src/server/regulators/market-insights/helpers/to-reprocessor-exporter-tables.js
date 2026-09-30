@@ -4,6 +4,7 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 
 import {
   fromFewOperators,
+  leavesOutConfidential,
   markedFigureOf,
   noteOf,
   notedOf
@@ -219,7 +220,7 @@ const toTable = (
 
   const total = figuresOf(totals, totalledColumns)
   const rowMarked = rows.some(({ marked }) => marked)
-  const noted = rowMarked && !total.marked
+  const noted = leavesOutConfidential(rowMarked, total.marked)
   const label = localise('regulators:marketInsights:figures:total:label')
 
   return {
