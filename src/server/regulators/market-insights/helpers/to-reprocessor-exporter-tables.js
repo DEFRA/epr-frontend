@@ -221,7 +221,7 @@ const toTable = (
   const total = figuresOf(totals, totalledColumns)
   const rowMarked = rows.some(({ marked }) => marked)
   const noted = leavesOutConfidential(rowMarked, total.marked)
-  const label = localise('regulators:marketInsights:figures:total:label')
+  const totalLabel = localise('regulators:marketInsights:figures:total:label')
 
   return {
     columns: columns.map(([measure]) =>
@@ -231,7 +231,7 @@ const toTable = (
     ),
     rows: rows.map(({ label, figures }) => ({ label, figures })),
     total: {
-      label: noted ? notedOf(label) : label,
+      label: noted ? notedOf(totalLabel) : totalLabel,
       figures: total.figures
     },
     marked: rowMarked || total.marked,

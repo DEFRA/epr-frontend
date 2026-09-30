@@ -81,6 +81,45 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
+ * A row with each month's net credit and its total across the months marked
+ * or noted.
+ * @param {{
+ *   material: string,
+ *   accreditationType: string,
+ *   periodCounts: OperatorCounts,
+ *   totalNetCredit: number,
+ *   figures: PublishedFigures[]
+ * }} row
+ * @returns {MarkedWasteBalanceRow}
+ */
+const markedRowOf = ({ figures, periodCounts, totalNetCredit, ...row }) => {
+  const monthMarked = figures.some((figure) =>
+    fromFewOperators(figure, figure.netCredit !== 0)
+  )
+  const totalMarked = fromFewOperators(periodCounts, totalNetCredit !== 0)
+  const total = markedFigureOf(
+    formatTonnage(totalNetCredit),
+    periodCounts,
+    totalNetCredit !== 0
+  )
+  const noted = leavesOutConfidential(monthMarked, totalMarked)
+
+  return {
+    ...row,
+    netCredits: figures.map((figure) =>
+      markedFigureOf(
+        formatTonnage(figure.netCredit),
+        figure,
+        figure.netCredit !== 0
+      )
+    ),
+    total: noted ? notedOf(total) : total,
+    marked: monthMarked || totalMarked,
+    noted
+  }
+}
+
+/**
  * Lays the served figures out the way the published Waste Balance tab is: one
  * row per material and accreditation type, the reporting months across as
  * columns, and the net credit in the cells, with a row beneath saying how many
@@ -134,35 +173,7 @@ export const toWasteBalanceTable = (
         one.accreditationType.localeCompare(other.accreditationType)
     )
 
-  /** @type {MarkedWasteBalanceRow[]} */
-  const rows = partitioned.map(
-    ({ figures, periodCounts, totalNetCredit, ...row }) => {
-      const monthMarked = figures.some((figure) =>
-        fromFewOperators(figure, figure.netCredit !== 0)
-      )
-      const totalMarked = fromFewOperators(periodCounts, totalNetCredit !== 0)
-      const total = markedFigureOf(
-        formatTonnage(totalNetCredit),
-        periodCounts,
-        totalNetCredit !== 0
-      )
-      const noted = leavesOutConfidential(monthMarked, totalMarked)
-
-      return {
-        ...row,
-        netCredits: figures.map((figure) =>
-          markedFigureOf(
-            formatTonnage(figure.netCredit),
-            figure,
-            figure.netCredit !== 0
-          )
-        ),
-        total: noted ? notedOf(total) : total,
-        marked: monthMarked || totalMarked,
-        noted
-      }
-    }
-  )
+  const rows = partitioned.map(markedRowOf)
 
   /** @param {ReportCount} count */
   const stated = ({ expected, submitted }) =>
