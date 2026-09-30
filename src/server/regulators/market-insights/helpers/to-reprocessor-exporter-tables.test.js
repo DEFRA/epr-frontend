@@ -463,7 +463,108 @@ describe(toReprocessorExporterTables, () => {
       expect(reprocessor.marked).toBe(false)
     })
 
-    it('marks the Grand Total by its own accredited count, whatever the rows above it', () => {
+    it('adds a published total under the Grand Total, summing the unmarked rows, when a row above it is marked and three or more operators were accredited for the total', () => {
+      const { reprocessor, exporter } = toReprocessorExporterTables(
+        dataOf({
+          '2026-01': monthOf(
+            {
+              plastic: {
+                reprocessor: reprocessorOf(
+                  { tonnageReceived: 500, totalRevenue: 250 },
+                  { operatorCount: 4 }
+                ),
+                exporter: exporterOf()
+              },
+              glass_remelt: {
+                reprocessor: reprocessorOf(
+                  { tonnageReceived: 30.25, totalRevenue: 100 },
+                  { operatorCount: 3 }
+                ),
+                exporter: exporterOf()
+              },
+              aluminium: {
+                reprocessor: reprocessorOf(
+                  { tonnageReceived: 20, totalRevenue: 40 },
+                  { operatorCount: 1 }
+                ),
+                exporter: exporterOf()
+              }
+            },
+            { expected: 5, submitted: 5 },
+            totalsOf({
+              reprocessor: { tonnageReceived: 550.25, totalRevenue: 390 },
+              reprocessorCounts: { operatorCount: 8 }
+            })
+          )
+        }),
+        ['2026-01'],
+        asKey
+      ).months[0]
+
+      expect(reprocessor.total).toStrictEqual({
+        label: 'translated:regulators:marketInsights:figures:total:label',
+        figures: [
+          '550.25',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£390.00'
+        ]
+      })
+      expect(reprocessor.published).toStrictEqual({
+        label: 'translated:regulators:marketInsights:figures:total:published',
+        figures: [
+          '530.25',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£350.00'
+        ]
+      })
+      // No row of the exporter table beside it is marked.
+      expect(exporter.published).toBeNull()
+    })
+
+    it('marks a Grand Total few operators were accredited for as confidential, and adds no published total, even when a row above it is marked', () => {
+      const { reprocessor } = toReprocessorExporterTables(
+        dataOf({
+          '2026-01': monthOf(
+            {
+              plastic: {
+                reprocessor: reprocessorOf(
+                  { tonnageReceived: 20 },
+                  { operatorCount: 1 }
+                ),
+                exporter: exporterOf()
+              }
+            },
+            { expected: 2, submitted: 2 },
+            totalsOf({
+              reprocessor: { tonnageReceived: 20 },
+              reprocessorCounts: { operatorCount: 2 }
+            })
+          )
+        }),
+        ['2026-01'],
+        asKey
+      ).months[0]
+
+      expect(reprocessor.total.label).toBe(
+        'translated:regulators:marketInsights:figures:total:label'
+      )
+      expect(reprocessor.total.figures[0]).toBe('20.00 [c]')
+      expect(reprocessor.published).toBeNull()
+    })
+
+    it('marks the Grand Total by its own accredited count, even where no row above it is marked', () => {
       const { reprocessor } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf(

@@ -498,6 +498,19 @@ describe('the UK reprocessor and exporter figures page', () => {
           '10.00',
           '£1,200.00',
           '- No average price is calculated'
+        ],
+        [
+          'Published total, without the figures marked [c]',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£0.00',
+          '- No average price is calculated'
         ]
       ])
 
@@ -508,7 +521,9 @@ describe('the UK reprocessor and exporter figures page', () => {
         }).getAttribute('aria-describedby')
       ).toBeNull()
       expect(
-        getAllByRole(body, 'table', { description: CONFIDENTIAL_KEY })
+        getAllByRole(body, 'table', {
+          description: CONFIDENTIAL_KEY
+        })
       ).toHaveLength(1)
     })
 
@@ -588,6 +603,19 @@ describe('the UK reprocessor and exporter figures page', () => {
         ],
         [
           'Grand Total',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£0.00',
+          '- No average price is calculated'
+        ],
+        [
+          'Published total, without the figures marked [c]',
           '0.00',
           '0.00',
           '0.00',

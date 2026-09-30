@@ -302,12 +302,38 @@ describe('the UK waste balance page', () => {
         description: CONFIDENTIAL_KEY
       })
 
+      // A row total that includes a marked month, but is not marked itself,
+      // has the published total beside it, which leaves the marked month out.
+      expect(headingsOf(table)).toStrictEqual([
+        'Material',
+        'Accreditation type',
+        'January',
+        'February',
+        'March',
+        'Total',
+        'Published total, without the months marked [c]'
+      ])
       expect(rowsOf(table)).toStrictEqual([
-        ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00 [c]'],
-        ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00'],
-        ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
-        ['Glass remelt', 'Reprocessor', '90.00', '42.50 [c]', '0.00', '132.50'],
-        ['Monthly reports submitted', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
+        ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00 [c]', ''],
+        ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00', ''],
+        ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00', ''],
+        [
+          'Glass remelt',
+          'Reprocessor',
+          '90.00',
+          '42.50 [c]',
+          '0.00',
+          '132.50',
+          '90.00'
+        ],
+        [
+          'Monthly reports submitted',
+          '1 of 2',
+          '2 of 2',
+          '0 of 3',
+          '4 of 9',
+          ''
+        ]
       ])
     })
 
