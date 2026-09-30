@@ -60,17 +60,11 @@
         }]) %}
         {% set rows = rows.concat([cells]) %}
 
-        {% set describedBy = [] %}
         {% if table.marked %}
           <p class="govuk-body" id="{{ id }}-key">{{ localise('regulators:marketInsights:fewOperators:key') }}</p>
-          {% set describedBy = describedBy.concat([id ~ '-key']) %}
-        {% endif %}
-        {% if table.note %}
-          <p class="govuk-body" id="{{ id }}-note">{{ table.note }}</p>
-          {% set describedBy = describedBy.concat([id ~ '-note']) %}
         {% endif %}
         {{ govukTable({
-          attributes: { 'aria-describedby': describedBy | join(' ') } if describedBy | length else {},
+          attributes: { 'aria-describedby': id ~ '-key' } if table.marked else {},
           caption: caption,
           captionClasses: "govuk-table__caption--m",
           firstCellIsHeader: true,

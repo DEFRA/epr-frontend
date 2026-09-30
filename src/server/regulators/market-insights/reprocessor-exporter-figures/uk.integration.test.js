@@ -8,7 +8,6 @@ import {
 } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
-  LEAVES_OUT_CONFIDENTIAL_NOTE,
   NOTICE,
   exporterOf,
   operator,
@@ -457,7 +456,7 @@ describe('the UK reprocessor and exporter figures page', () => {
       // what the shorthand means as it reaches the table.
       const februaryReprocessors = getByRole(body, 'table', {
         name: 'Reprocessor data for February 2026',
-        description: `${CONFIDENTIAL_KEY} ${LEAVES_OUT_CONFIDENTIAL_NOTE}`
+        description: CONFIDENTIAL_KEY
       })
 
       expect(rowsOf(februaryReprocessors)).toStrictEqual([
@@ -488,7 +487,7 @@ describe('the UK reprocessor and exporter figures page', () => {
           '£120.00 [c]'
         ],
         [
-          'Grand Total [note 1]',
+          'Grand Total, published without the figures marked [c]',
           '500.00',
           '0.00',
           '0.00',
@@ -510,7 +509,7 @@ describe('the UK reprocessor and exporter figures page', () => {
       ).toBeNull()
       expect(
         getAllByRole(body, 'table', {
-          description: `${CONFIDENTIAL_KEY} ${LEAVES_OUT_CONFIDENTIAL_NOTE}`
+          description: CONFIDENTIAL_KEY
         })
       ).toHaveLength(1)
     })
@@ -559,7 +558,7 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       const februaryReprocessors = getByRole(body, 'table', {
         name: 'Reprocessor data for February 2026',
-        description: `${CONFIDENTIAL_KEY} ${LEAVES_OUT_CONFIDENTIAL_NOTE}`
+        description: CONFIDENTIAL_KEY
       })
 
       expect(rowsOf(februaryReprocessors)).toStrictEqual([
@@ -590,7 +589,7 @@ describe('the UK reprocessor and exporter figures page', () => {
           '£0.00 [c]'
         ],
         [
-          'Grand Total [note 1]',
+          'Grand Total, published without the figures marked [c]',
           '0.00',
           '0.00',
           '0.00',

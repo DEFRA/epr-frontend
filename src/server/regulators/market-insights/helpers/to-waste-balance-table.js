@@ -4,9 +4,7 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 import {
   fromFewOperators,
   leavesOutConfidential,
-  markedFigureOf,
-  noteOf,
-  notedOf
+  markedFigureOf
 } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
@@ -54,30 +52,32 @@ import { nameOf } from './reporting-period.js'
 /**
  * A row's figures, each marked confidential where few operators were
  * accredited for it. A total the published workbook shows without its
- * confidential months is noted.
+ * confidential months says so in the row's note, which is otherwise empty.
  * @typedef {{
  *   material: string,
  *   accreditationType: string,
  *   netCredits: string[],
- *   total: string
+ *   total: string,
+ *   note: string
  * }} WasteBalanceRow
  */
 
 /**
- * The table carries the note's text when any row's total is noted.
+ * The table has a column of notes when any row's total leaves out confidential
+ * months.
  * @typedef {{
  *   months: string[],
  *   rows: WasteBalanceRow[],
  *   reports: { byMonth: string[], period: string },
  *   marked: boolean,
- *   note: string | null
+ *   noted: boolean
  * }} WasteBalanceTable
  */
 
 /**
  * A row's figures, before its own marked and noted states are stripped for
  * display.
- * @typedef {WasteBalanceRow & { marked: boolean, noted: boolean }} MarkedWasteBalanceRow
+ * @typedef {Omit<WasteBalanceRow, 'note'> & { marked: boolean, noted: boolean }} MarkedWasteBalanceRow
  */
 
 /**
@@ -113,7 +113,7 @@ const markedRowOf = ({ figures, periodCounts, totalNetCredit, ...row }) => {
         figure.netCredit !== 0
       )
     ),
-    total: noted ? notedOf(total) : total,
+    total,
     marked: monthMarked || totalMarked,
     noted
   }
@@ -184,12 +184,19 @@ export const toWasteBalanceTable = (
 
   return {
     months: months.map(nameOf),
-    rows: rows.map(({ marked: _marked, noted: _noted, ...row }) => row),
+    rows: rows.map(({ marked: _marked, noted, ...row }) => ({
+      ...row,
+      note: noted
+        ? localise(
+            'regulators:marketInsights:wasteBalance:table:withoutConfidential'
+          )
+        : ''
+    })),
     reports: {
       byMonth: months.map((month) => stated(served[month].reports)),
       period: stated(period.reports)
     },
     marked: rows.some((row) => row.marked),
-    note: rows.some((row) => row.noted) ? noteOf(localise) : null
+    noted: rows.some((row) => row.noted)
   }
 }

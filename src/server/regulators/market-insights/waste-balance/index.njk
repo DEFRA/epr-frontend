@@ -42,6 +42,9 @@
           {% set tableHead = tableHead.concat([{ text: month, format: "numeric" }]) %}
         {% endfor %}
         {% set tableHead = tableHead.concat([{ text: localise('regulators:marketInsights:wasteBalance:table:total'), format: "numeric" }]) %}
+        {% if wasteBalance.noted %}
+          {% set tableHead = tableHead.concat([{ text: localise('regulators:marketInsights:wasteBalance:table:notes') }]) %}
+        {% endif %}
 
         {% set tableRows = [] %}
         {% for row in wasteBalance.rows %}
@@ -50,6 +53,9 @@
             {% set cells = cells.concat([{ text: netCredit, format: "numeric" }]) %}
           {% endfor %}
           {% set cells = cells.concat([{ text: row.total, format: "numeric" }]) %}
+          {% if wasteBalance.noted %}
+            {% set cells = cells.concat([{ text: row.note }]) %}
+          {% endif %}
           {% set tableRows = tableRows.concat([cells]) %}
         {% endfor %}
 
@@ -58,19 +64,16 @@
           {% set reportCells = reportCells.concat([{ text: count, format: "numeric" }]) %}
         {% endfor %}
         {% set reportCells = reportCells.concat([{ text: wasteBalance.reports.period, format: "numeric" }]) %}
+        {% if wasteBalance.noted %}
+          {% set reportCells = reportCells.concat([{ text: '' }]) %}
+        {% endif %}
         {% set tableRows = tableRows.concat([reportCells]) %}
 
-        {% set describedBy = [] %}
         {% if wasteBalance.marked %}
           <p class="govuk-body" id="waste-balance-key">{{ localise('regulators:marketInsights:fewOperators:key') }}</p>
-          {% set describedBy = describedBy.concat(['waste-balance-key']) %}
-        {% endif %}
-        {% if wasteBalance.note %}
-          <p class="govuk-body" id="waste-balance-note">{{ wasteBalance.note }}</p>
-          {% set describedBy = describedBy.concat(['waste-balance-note']) %}
         {% endif %}
         {{ govukTable({
-          attributes: { 'aria-describedby': describedBy | join(' ') } if describedBy | length else {},
+          attributes: { 'aria-describedby': 'waste-balance-key' } if wasteBalance.marked else {},
           caption: localise('regulators:marketInsights:wasteBalance:table:caption'),
           captionClasses: "govuk-table__caption--m",
           firstCellIsHeader: true,

@@ -3,7 +3,6 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHtml, documentOf, rowsOf } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
-  LEAVES_OUT_CONFIDENTIAL_NOTE,
   NOTICE,
   exporterOf,
   operator,
@@ -150,7 +149,7 @@ describe('the England reprocessor and exporter figures page', () => {
       // description of the table it sits in.
       const januaryReprocessors = getByRole(body, 'table', {
         name: 'Reprocessor data for January 2026',
-        description: `${CONFIDENTIAL_KEY} ${LEAVES_OUT_CONFIDENTIAL_NOTE}`
+        description: CONFIDENTIAL_KEY
       })
 
       expect(rowsOf(januaryReprocessors)).toStrictEqual([
@@ -168,7 +167,7 @@ describe('the England reprocessor and exporter figures page', () => {
           '£0.00 [c]'
         ],
         [
-          'Grand Total [note 1]',
+          'Grand Total, published without the figures marked [c]',
           '700.00',
           '0.00',
           '0.00',

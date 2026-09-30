@@ -138,7 +138,8 @@ describe(toWasteBalanceTable, () => {
         material: 'Plastic',
         accreditationType: reprocessor,
         netCredits: ['90.00', '42.50'],
-        total: '132.50'
+        total: '132.50',
+        note: ''
       }
     ])
   })
@@ -163,7 +164,8 @@ describe(toWasteBalanceTable, () => {
           material: 'Plastic',
           accreditationType: reprocessor,
           netCredits: ['90.00'],
-          total: '90.00'
+          total: '90.00',
+          note: ''
         }
       ],
       reports: {
@@ -174,7 +176,7 @@ describe(toWasteBalanceTable, () => {
           'translated:regulators:marketInsights:reports:count:submitted=0:expected=0'
       },
       marked: false,
-      note: null
+      noted: false
     })
   })
 
@@ -205,10 +207,10 @@ describe(toWasteBalanceTable, () => {
     expect(row.netCredits).toStrictEqual(['90.00 [c]', '42.50'])
   })
 
-  it('notes a row total that includes a marked month, and gives the note’s text, where three or more operators were accredited for the total', () => {
+  it('says in the row’s note that the published total leaves out the marked months when a month in it is marked, where three or more operators were accredited for the total', () => {
     const {
       rows: [row],
-      note
+      noted
     } = toWasteBalanceTable(
       dataOf({
         '2026-01': monthOf({
@@ -222,16 +224,17 @@ describe(toWasteBalanceTable, () => {
       asKey
     )
 
-    expect(row.total).toBe('132.50 [note 1]')
-    expect(note).toBe(
-      'translated:regulators:marketInsights:fewOperators:note:marker=[note 1]'
+    expect(row.total).toBe('132.50')
+    expect(row.note).toBe(
+      'translated:regulators:marketInsights:wasteBalance:table:withoutConfidential'
     )
+    expect(noted).toBe(true)
   })
 
-  it('marks a row total few operators were accredited for as confidential, and does not note it, even when a month in it is marked', () => {
+  it('marks a row total few operators were accredited for as confidential, and gives the row no note, even when a month in it is marked', () => {
     const {
       rows: [row],
-      note
+      noted
     } = toWasteBalanceTable(
       dataOf(
         {
@@ -252,13 +255,14 @@ describe(toWasteBalanceTable, () => {
     )
 
     expect(row.total).toBe('90.00 [c]')
-    expect(note).toBeNull()
+    expect(row.note).toBe('')
+    expect(noted).toBe(false)
   })
 
-  it('leaves a row total unmarked and unnoted when none of its months is marked and three or more operators were accredited for it', () => {
+  it('leaves a row total unmarked, and the row without a note, when none of its months is marked and three or more operators were accredited for it', () => {
     const {
       rows: [row],
-      note
+      noted
     } = toWasteBalanceTable(
       dataOf({
         '2026-01': monthOf({ plastic: { reprocessor: figuresOf(90) } }),
@@ -269,7 +273,8 @@ describe(toWasteBalanceTable, () => {
     )
 
     expect(row.total).toBe('132.50')
-    expect(note).toBeNull()
+    expect(row.note).toBe('')
+    expect(noted).toBe(false)
   })
 
   it('marks a month no operator was accredited for that still holds net credit', () => {

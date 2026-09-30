@@ -3,8 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   fromFewOperators,
   markedFigureOf,
-  noteOf,
-  notedOf
+  leavesOutConfidential
 } from './few-operators.js'
 
 describe(fromFewOperators, () => {
@@ -97,19 +96,15 @@ describe(markedFigureOf, () => {
   })
 })
 
-describe(notedOf, () => {
-  it('follows a total with the note marker, in the Analysis Function’s form', () => {
-    expect(notedOf('Grand Total')).toBe('Grand Total [note 1]')
-  })
-})
-
-describe(noteOf, () => {
-  it('gives the note’s text with the same marker', () => {
-    /** @type {(key: string, values?: Record<string, string | number>) => string} */
-    const localise = (key, values = {}) => `${key}:${values.marker}`
-
-    expect(noteOf(localise)).toBe(
-      'regulators:marketInsights:fewOperators:note:[note 1]'
-    )
-  })
+describe(leavesOutConfidential, () => {
+  it.each([
+    [true, false, true],
+    [true, true, false],
+    [false, false, false]
+  ])(
+    'for a total that includes a marked figure (%s), and is marked itself (%s), says it leaves them out (%s)',
+    (includesMarked, totalMarked, leavesOut) => {
+      expect(leavesOutConfidential(includesMarked, totalMarked)).toBe(leavesOut)
+    }
+  )
 })

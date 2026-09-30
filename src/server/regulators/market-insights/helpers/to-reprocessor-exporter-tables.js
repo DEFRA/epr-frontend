@@ -5,9 +5,7 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 import {
   fromFewOperators,
   leavesOutConfidential,
-  markedFigureOf,
-  noteOf,
-  notedOf
+  markedFigureOf
 } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
@@ -98,14 +96,13 @@ import { nameOf } from './reporting-period.js'
  * Grand Total, whose figures stop before the average price column because
  * the served totals carry none. Each figure few operators were accredited
  * for is marked confidential, and the table says whether any is. A Grand
- * Total the published workbook shows without its confidential figures is
- * noted on its label, and the table carries that note's text.
+ * Total the published workbook shows without its confidential figures says
+ * so in its label.
  * @typedef {{
  *   columns: string[],
  *   rows: FiguresRow[],
  *   total: FiguresRow,
- *   marked: boolean,
- *   note: string | null
+ *   marked: boolean
  * }} FiguresTable
  */
 
@@ -220,8 +217,9 @@ const toTable = (
 
   const total = figuresOf(totals, totalledColumns)
   const rowMarked = rows.some(({ marked }) => marked)
-  const noted = leavesOutConfidential(rowMarked, total.marked)
-  const totalLabel = localise('regulators:marketInsights:figures:total:label')
+  const totalLabel = leavesOutConfidential(rowMarked, total.marked)
+    ? 'withoutConfidential'
+    : 'label'
 
   return {
     columns: columns.map(([measure]) =>
@@ -231,11 +229,10 @@ const toTable = (
     ),
     rows: rows.map(({ label, figures }) => ({ label, figures })),
     total: {
-      label: noted ? notedOf(totalLabel) : totalLabel,
+      label: localise(`regulators:marketInsights:figures:total:${totalLabel}`),
       figures: total.figures
     },
-    marked: rowMarked || total.marked,
-    note: noted ? noteOf(localise) : null
+    marked: rowMarked || total.marked
   }
 }
 

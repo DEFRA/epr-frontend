@@ -8,7 +8,6 @@ import {
 } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
-  LEAVES_OUT_CONFIDENTIAL_NOTE,
   NOTICE,
   operator,
   regulator,
@@ -300,22 +299,41 @@ describe('the UK waste balance page', () => {
       // what the shorthand means as it reaches the table.
       const table = getByRole(documentOf(asHtml(result)), 'table', {
         name: 'Waste balance',
-        description: `${CONFIDENTIAL_KEY} ${LEAVES_OUT_CONFIDENTIAL_NOTE}`
+        description: CONFIDENTIAL_KEY
       })
 
+      // A row total that includes a marked month, but is not marked itself,
+      // says in a column of notes what the published total leaves out.
+      expect(headingsOf(table)).toStrictEqual([
+        'Material',
+        'Accreditation type',
+        'January',
+        'February',
+        'March',
+        'Total',
+        'Notes'
+      ])
       expect(rowsOf(table)).toStrictEqual([
-        ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00 [c]'],
-        ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00'],
-        ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
+        ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00 [c]', ''],
+        ['Aluminium', 'Reprocessor', '0.00', '0.00', '0.00', '0.00', ''],
+        ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00', ''],
         [
           'Glass remelt',
           'Reprocessor',
           '90.00',
           '42.50 [c]',
           '0.00',
-          '132.50 [note 1]'
+          '132.50',
+          'Total published without the months marked [c]'
         ],
-        ['Monthly reports submitted', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
+        [
+          'Monthly reports submitted',
+          '1 of 2',
+          '2 of 2',
+          '0 of 3',
+          '4 of 9',
+          ''
+        ]
       ])
     })
 

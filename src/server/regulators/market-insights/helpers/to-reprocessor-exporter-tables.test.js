@@ -463,7 +463,7 @@ describe(toReprocessorExporterTables, () => {
       expect(reprocessor.marked).toBe(false)
     })
 
-    it('notes the Grand Total on its label when a row above it is marked, and gives the note’s text, where three or more operators were accredited for the total', () => {
+    it('says in the Grand Total’s label that the published total leaves out the marked figures when a row above it is marked, where three or more operators were accredited for the total', () => {
       const { reprocessor, exporter } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf(
@@ -496,7 +496,7 @@ describe(toReprocessorExporterTables, () => {
 
       expect(reprocessor.total).toStrictEqual({
         label:
-          'translated:regulators:marketInsights:figures:total:label [note 1]',
+          'translated:regulators:marketInsights:figures:total:withoutConfidential',
         figures: [
           '520.00',
           '0.00',
@@ -509,17 +509,13 @@ describe(toReprocessorExporterTables, () => {
           '£0.00'
         ]
       })
-      expect(reprocessor.note).toBe(
-        'translated:regulators:marketInsights:fewOperators:note:marker=[note 1]'
-      )
       // No row of the exporter table beside it is marked.
       expect(exporter.total.label).toBe(
         'translated:regulators:marketInsights:figures:total:label'
       )
-      expect(exporter.note).toBeNull()
     })
 
-    it('marks a Grand Total few operators were accredited for as confidential, and does not note it, even when a row above it is marked', () => {
+    it('marks a Grand Total few operators were accredited for as confidential, and keeps its plain label, even when a row above it is marked', () => {
       const { reprocessor } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf(
@@ -547,7 +543,6 @@ describe(toReprocessorExporterTables, () => {
         'translated:regulators:marketInsights:figures:total:label'
       )
       expect(reprocessor.total.figures[0]).toBe('20.00 [c]')
-      expect(reprocessor.note).toBeNull()
     })
 
     it('marks the Grand Total by its own accredited count, even where no row above it is marked', () => {

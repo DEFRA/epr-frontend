@@ -5,20 +5,11 @@
  * @typedef {{ operatorCount: number, submittingOperatorCount: number }} OperatorCounts
  */
 
-/** @import { Localise } from './to-reprocessor-exporter-tables.js' */
-
 /**
  * The Analysis Function's shorthand for a figure that would give away
  * confidential information about a single respondent.
  */
 const CONFIDENTIAL = '[c]'
-
-/**
- * The note marker, in the Analysis Function's form, that the published
- * workbook puts on a total it shows without the confidential figures it
- * includes.
- */
-const LEAVES_OUT_CONFIDENTIAL = '[note 1]'
 
 /**
  * Whether fewer than three operators were accredited for a row that holds
@@ -50,29 +41,13 @@ export const markedFigureOf = (figure, counts, rowHoldsData) =>
   fromFewOperators(counts, rowHoldsData) ? `${figure} ${CONFIDENTIAL}` : figure
 
 /**
- * Whether the published workbook notes a total as leaving out confidential
- * figures: it includes a figure marked confidential, and few operators were
- * not accredited for the total itself, which would withhold it instead.
+ * Whether the published workbook shows a total without the confidential
+ * figures it includes, and says so in words beside it: the total includes a
+ * figure marked confidential, and few operators were not accredited for the
+ * total itself, which would withhold it instead.
  * @param {boolean} includesMarked
  * @param {boolean} totalMarked
  * @returns {boolean}
  */
 export const leavesOutConfidential = (includesMarked, totalMarked) =>
   includesMarked && !totalMarked
-
-/**
- * A total's text, followed by the note marker.
- * @param {string} text
- * @returns {string}
- */
-export const notedOf = (text) => `${text} ${LEAVES_OUT_CONFIDENTIAL}`
-
-/**
- * The note a table gives beside itself when a total in it is noted.
- * @param {Localise} localise
- * @returns {string}
- */
-export const noteOf = (localise) =>
-  localise('regulators:marketInsights:fewOperators:note', {
-    marker: LEAVES_OUT_CONFIDENTIAL
-  })
