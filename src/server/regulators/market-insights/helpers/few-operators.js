@@ -5,6 +5,8 @@
  * @typedef {{ operatorCount: number, submittingOperatorCount: number }} OperatorCounts
  */
 
+/** @import { Localise } from './to-reprocessor-exporter-tables.js' */
+
 /**
  * The Analysis Function's shorthand for a figure that would give away
  * confidential information about a single respondent.
@@ -12,10 +14,11 @@
 const CONFIDENTIAL = '[c]'
 
 /**
- * The marker the published workbook puts on a total that includes a figure
- * marked confidential, because it shows that total without the figure.
+ * The note marker, in the Analysis Function's form, that the published
+ * workbook puts on a total it shows without the confidential figures it
+ * includes.
  */
-const INCLUDES_CONFIDENTIAL = '[c]'
+const LEAVES_OUT_CONFIDENTIAL = '[note 1]'
 
 /**
  * Whether fewer than three operators were accredited for a row that holds
@@ -37,23 +40,30 @@ export const fromFewOperators = ({ operatorCount }, rowHoldsData) =>
 
 /**
  * A formatted figure, followed by the confidential shorthand when few
- * operators were accredited for its row. A total that includes a marked
- * figure, but is not from few operators itself, is followed by the marker the
- * workbook puts on it instead.
+ * operators were accredited for its row.
  * @param {string} figure
  * @param {OperatorCounts} counts
  * @param {boolean} rowHoldsData
- * @param {boolean} [includesMarked]
  * @returns {string}
  */
-export const markedFigureOf = (
-  figure,
-  counts,
-  rowHoldsData,
-  includesMarked = false
-) => {
-  if (fromFewOperators(counts, rowHoldsData)) {
-    return `${figure} ${CONFIDENTIAL}`
-  }
-  return includesMarked ? `${figure} ${INCLUDES_CONFIDENTIAL}` : figure
-}
+export const markedFigureOf = (figure, counts, rowHoldsData) =>
+  fromFewOperators(counts, rowHoldsData) ? `${figure} ${CONFIDENTIAL}` : figure
+
+/**
+ * A total's text, followed by the note marker. The published workbook notes
+ * a total that includes a figure marked confidential, unless few operators
+ * were accredited for the total itself, which withholds it instead.
+ * @param {string} text
+ * @returns {string}
+ */
+export const notedOf = (text) => `${text} ${LEAVES_OUT_CONFIDENTIAL}`
+
+/**
+ * The note a table gives beside itself when a total in it is noted.
+ * @param {Localise} localise
+ * @returns {string}
+ */
+export const noteOf = (localise) =>
+  localise('regulators:marketInsights:fewOperators:note', {
+    marker: LEAVES_OUT_CONFIDENTIAL
+  })

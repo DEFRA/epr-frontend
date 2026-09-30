@@ -60,11 +60,17 @@
         {% set reportCells = reportCells.concat([{ text: wasteBalance.reports.period, format: "numeric" }]) %}
         {% set tableRows = tableRows.concat([reportCells]) %}
 
+        {% set describedBy = [] %}
         {% if wasteBalance.marked %}
           <p class="govuk-body" id="waste-balance-key">{{ localise('regulators:marketInsights:fewOperators:key') }}</p>
+          {% set describedBy = describedBy.concat(['waste-balance-key']) %}
+        {% endif %}
+        {% if wasteBalance.note %}
+          <p class="govuk-body" id="waste-balance-note">{{ wasteBalance.note }}</p>
+          {% set describedBy = describedBy.concat(['waste-balance-note']) %}
         {% endif %}
         {{ govukTable({
-          attributes: { 'aria-describedby': 'waste-balance-key' } if wasteBalance.marked else {},
+          attributes: { 'aria-describedby': describedBy | join(' ') } if describedBy | length else {},
           caption: localise('regulators:marketInsights:wasteBalance:table:caption'),
           captionClasses: "govuk-table__caption--m",
           firstCellIsHeader: true,

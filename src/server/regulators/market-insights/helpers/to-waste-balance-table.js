@@ -1,7 +1,12 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
-import { fromFewOperators, markedFigureOf } from './few-operators.js'
+import {
+  fromFewOperators,
+  markedFigureOf,
+  noteOf,
+  notedOf
+} from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
 /** @import { OperatorCounts } from './few-operators.js' */
@@ -47,7 +52,8 @@ import { nameOf } from './reporting-period.js'
 
 /**
  * A row's figures, each marked confidential where few operators were
- * accredited for it.
+ * accredited for it. A total the published workbook shows without its
+ * confidential months is noted.
  * @typedef {{
  *   material: string,
  *   accreditationType: string,
@@ -57,17 +63,20 @@ import { nameOf } from './reporting-period.js'
  */
 
 /**
+ * The table carries the note's text when any row's total is noted.
  * @typedef {{
  *   months: string[],
  *   rows: WasteBalanceRow[],
  *   reports: { byMonth: string[], period: string },
- *   marked: boolean
+ *   marked: boolean,
+ *   note: string | null
  * }} WasteBalanceTable
  */
 
 /**
- * A row's figures, before its own marked state is stripped for display.
- * @typedef {WasteBalanceRow & { marked: boolean }} MarkedWasteBalanceRow
+ * A row's figures, before its own marked and noted states are stripped for
+ * display.
+ * @typedef {WasteBalanceRow & { marked: boolean, noted: boolean }} MarkedWasteBalanceRow
  */
 
 /**
@@ -127,9 +136,16 @@ export const toWasteBalanceTable = (
   /** @type {MarkedWasteBalanceRow[]} */
   const rows = partitioned.map(
     ({ figures, periodCounts, totalNetCredit, ...row }) => {
-      const includesMarked = figures.some((figure) =>
+      const monthMarked = figures.some((figure) =>
         fromFewOperators(figure, figure.netCredit !== 0)
       )
+      const totalMarked = fromFewOperators(periodCounts, totalNetCredit !== 0)
+      const total = markedFigureOf(
+        formatTonnage(totalNetCredit),
+        periodCounts,
+        totalNetCredit !== 0
+      )
+      const noted = monthMarked && !totalMarked
 
       return {
         ...row,
@@ -140,14 +156,9 @@ export const toWasteBalanceTable = (
             figure.netCredit !== 0
           )
         ),
-        total: markedFigureOf(
-          formatTonnage(totalNetCredit),
-          periodCounts,
-          totalNetCredit !== 0,
-          includesMarked
-        ),
-        marked:
-          includesMarked || fromFewOperators(periodCounts, totalNetCredit !== 0)
+        total: noted ? notedOf(total) : total,
+        marked: monthMarked || totalMarked,
+        noted
       }
     }
   )
@@ -161,11 +172,12 @@ export const toWasteBalanceTable = (
 
   return {
     months: months.map(nameOf),
-    rows: rows.map(({ marked: _marked, ...row }) => row),
+    rows: rows.map(({ marked: _marked, noted: _noted, ...row }) => row),
     reports: {
       byMonth: months.map((month) => stated(served[month].reports)),
       period: stated(period.reports)
     },
-    marked: rows.some((row) => row.marked)
+    marked: rows.some((row) => row.marked),
+    note: rows.some((row) => row.noted) ? noteOf(localise) : null
   }
 }

@@ -2,7 +2,12 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
-import { fromFewOperators, markedFigureOf } from './few-operators.js'
+import {
+  fromFewOperators,
+  markedFigureOf,
+  noteOf,
+  notedOf
+} from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
 /**
@@ -91,12 +96,15 @@ import { nameOf } from './reporting-period.js'
  * one row per material with a formatted figure under each heading, and the
  * Grand Total, whose figures stop before the average price column because
  * the served totals carry none. Each figure few operators were accredited
- * for is marked confidential, and the table says whether any is.
+ * for is marked confidential, and the table says whether any is. A Grand
+ * Total the published workbook shows without its confidential figures is
+ * noted on its label, and the table carries that note's text.
  * @typedef {{
  *   columns: string[],
  *   rows: FiguresRow[],
  *   total: FiguresRow,
- *   marked: boolean
+ *   marked: boolean,
+ *   note: string | null
  * }} FiguresTable
  */
 
@@ -167,25 +175,18 @@ const EXPORTER_COLUMNS = [
 /**
  * Each figure in a row, all marked wherever few operators were accredited
  * for the row and any figure in it holds data, or one or two were accredited
- * whether or not any of them does. A Grand Total is also marked wherever it
- * includes a marked row.
+ * whether or not any of them does.
  * @template {string} Measure
  * @param {WithOperatorCounts<Record<Measure, number>>} served
  * @param {[Measure, (value: number) => string][]} columns
- * @param {boolean} [includesMarked]
  * @returns {MarkedFigures}
  */
-const figuresOf = (served, columns, includesMarked = false) => {
+const figuresOf = (served, columns) => {
   const rowHoldsData = columns.some(([measure]) => served[measure] !== 0)
 
   return {
     figures: columns.map(([measure, format]) =>
-      markedFigureOf(
-        format(served[measure]),
-        served,
-        rowHoldsData,
-        includesMarked
-      )
+      markedFigureOf(format(served[measure]), served, rowHoldsData)
     ),
     marked: fromFewOperators(served, rowHoldsData)
   }
@@ -216,11 +217,10 @@ const toTable = (
     }))
     .sort((one, other) => one.label.localeCompare(other.label))
 
-  const total = figuresOf(
-    totals,
-    totalledColumns,
-    rows.some(({ marked }) => marked)
-  )
+  const total = figuresOf(totals, totalledColumns)
+  const rowMarked = rows.some(({ marked }) => marked)
+  const noted = rowMarked && !total.marked
+  const label = localise('regulators:marketInsights:figures:total:label')
 
   return {
     columns: columns.map(([measure]) =>
@@ -230,10 +230,11 @@ const toTable = (
     ),
     rows: rows.map(({ label, figures }) => ({ label, figures })),
     total: {
-      label: localise('regulators:marketInsights:figures:total:label'),
+      label: noted ? notedOf(label) : label,
       figures: total.figures
     },
-    marked: rows.some(({ marked }) => marked) || total.marked
+    marked: rowMarked || total.marked,
+    note: noted ? noteOf(localise) : null
   }
 }
 

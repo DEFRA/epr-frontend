@@ -3,6 +3,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHtml, documentOf, rowsOf } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
+  LEAVES_OUT_CONFIDENTIAL_NOTE,
   NOTICE,
   exporterOf,
   operator,
@@ -170,12 +171,11 @@ describe.each(NATIONS)(
         // nation means here.
         expect(getByText(body, scope)).not.toBeNull()
 
-        // A figure few operators contributed to is marked, and so is the Grand
-        // Total that includes it. The key is the description of the table
-        // they sit in.
+        // A figure few operators contributed to is marked, and the key is the
+        // description of the table it sits in.
         const januaryReprocessors = getByRole(body, 'table', {
           name: 'Reprocessor data for January 2026',
-          description: CONFIDENTIAL_KEY
+          description: `${CONFIDENTIAL_KEY} ${LEAVES_OUT_CONFIDENTIAL_NOTE}`
         })
 
         expect(rowsOf(januaryReprocessors)).toStrictEqual([
@@ -193,16 +193,16 @@ describe.each(NATIONS)(
             '£0.00 [c]'
           ],
           [
-            'Grand Total',
-            '350.00 [c]',
-            '0.00 [c]',
-            '0.00 [c]',
-            '0.00 [c]',
-            '0.00 [c]',
-            '0.00 [c]',
-            '0.00 [c]',
-            '0.00 [c]',
-            '£0.00 [c]',
+            'Grand Total [note 1]',
+            '350.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            '£0.00',
             '- No average price is calculated'
           ]
         ])

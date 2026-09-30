@@ -42,6 +42,13 @@ export const NOTICE =
 export const CONFIDENTIAL_KEY =
   'Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because fewer than three operators were accredited for it.'
 
+/**
+ * The note a table carries, after the key in its description, when a total
+ * in it includes a figure marked as coming from few operators.
+ */
+export const LEAVES_OUT_CONFIDENTIAL_NOTE =
+  '[note 1] = in the published workbook, this total is the sum of the figures shown, and leaves out the figures marked [c].'
+
 /** @returns {ReprocessorFigures} */
 const noReprocessorFigures = () => ({
   tonnageReceived: 0,

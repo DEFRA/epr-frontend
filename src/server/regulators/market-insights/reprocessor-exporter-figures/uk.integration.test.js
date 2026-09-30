@@ -8,6 +8,7 @@ import {
 } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
+  LEAVES_OUT_CONFIDENTIAL_NOTE,
   NOTICE,
   exporterOf,
   operator,
@@ -456,7 +457,7 @@ describe('the UK reprocessor and exporter figures page', () => {
       // what the shorthand means as it reaches the table.
       const februaryReprocessors = getByRole(body, 'table', {
         name: 'Reprocessor data for February 2026',
-        description: CONFIDENTIAL_KEY
+        description: `${CONFIDENTIAL_KEY} ${LEAVES_OUT_CONFIDENTIAL_NOTE}`
       })
 
       expect(rowsOf(februaryReprocessors)).toStrictEqual([
@@ -487,16 +488,16 @@ describe('the UK reprocessor and exporter figures page', () => {
           '£120.00 [c]'
         ],
         [
-          'Grand Total',
-          '500.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '10.00 [c]',
-          '£1,200.00 [c]',
+          'Grand Total [note 1]',
+          '500.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '10.00',
+          '£1,200.00',
           '- No average price is calculated'
         ]
       ])
@@ -508,7 +509,9 @@ describe('the UK reprocessor and exporter figures page', () => {
         }).getAttribute('aria-describedby')
       ).toBeNull()
       expect(
-        getAllByRole(body, 'table', { description: CONFIDENTIAL_KEY })
+        getAllByRole(body, 'table', {
+          description: `${CONFIDENTIAL_KEY} ${LEAVES_OUT_CONFIDENTIAL_NOTE}`
+        })
       ).toHaveLength(1)
     })
 
@@ -556,7 +559,7 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       const februaryReprocessors = getByRole(body, 'table', {
         name: 'Reprocessor data for February 2026',
-        description: CONFIDENTIAL_KEY
+        description: `${CONFIDENTIAL_KEY} ${LEAVES_OUT_CONFIDENTIAL_NOTE}`
       })
 
       expect(rowsOf(februaryReprocessors)).toStrictEqual([
@@ -587,16 +590,16 @@ describe('the UK reprocessor and exporter figures page', () => {
           '£0.00 [c]'
         ],
         [
-          'Grand Total',
-          '0.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '0.00 [c]',
-          '£0.00 [c]',
+          'Grand Total [note 1]',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£0.00',
           '- No average price is calculated'
         ]
       ])

@@ -8,6 +8,7 @@ import {
 } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
+  LEAVES_OUT_CONFIDENTIAL_NOTE,
   NOTICE,
   operator,
   regulator,
@@ -299,7 +300,7 @@ describe('the UK waste balance page', () => {
       // what the shorthand means as it reaches the table.
       const table = getByRole(documentOf(asHtml(result)), 'table', {
         name: 'Waste balance',
-        description: CONFIDENTIAL_KEY
+        description: `${CONFIDENTIAL_KEY} ${LEAVES_OUT_CONFIDENTIAL_NOTE}`
       })
 
       expect(rowsOf(table)).toStrictEqual([
@@ -312,7 +313,7 @@ describe('the UK waste balance page', () => {
           '90.00',
           '42.50 [c]',
           '0.00',
-          '132.50 [c]'
+          '132.50 [note 1]'
         ],
         ['Monthly reports submitted', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
       ])

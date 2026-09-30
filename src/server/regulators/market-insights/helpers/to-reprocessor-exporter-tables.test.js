@@ -463,7 +463,7 @@ describe(toReprocessorExporterTables, () => {
       expect(reprocessor.marked).toBe(false)
     })
 
-    it('marks every figure in the Grand Total when a row above it is marked, however many operators were accredited for the total', () => {
+    it('notes the Grand Total on its label when a row above it is marked, and gives the note’s text, however many operators were accredited for the total', () => {
       const { reprocessor, exporter } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf(
@@ -494,21 +494,60 @@ describe(toReprocessorExporterTables, () => {
         asKey
       ).months[0]
 
-      expect(reprocessor.total.figures).toStrictEqual([
-        '520.00 [c]',
-        '0.00 [c]',
-        '0.00 [c]',
-        '0.00 [c]',
-        '0.00 [c]',
-        '0.00 [c]',
-        '0.00 [c]',
-        '0.00 [c]',
-        '£0.00 [c]'
-      ])
+      expect(reprocessor.total).toStrictEqual({
+        label:
+          'translated:regulators:marketInsights:figures:total:label [note 1]',
+        figures: [
+          '520.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£0.00'
+        ]
+      })
+      expect(reprocessor.note).toBe(
+        'translated:regulators:marketInsights:fewOperators:note:marker=[note 1]'
+      )
       // No row of the exporter table beside it is marked.
-      expect(
-        exporter.total.figures.filter((figure) => figure.endsWith('[c]'))
-      ).toStrictEqual([])
+      expect(exporter.total.label).toBe(
+        'translated:regulators:marketInsights:figures:total:label'
+      )
+      expect(exporter.note).toBeNull()
+    })
+
+    it('marks a Grand Total few operators were accredited for as confidential, and does not note it, even when a row above it is marked', () => {
+      const { reprocessor } = toReprocessorExporterTables(
+        dataOf({
+          '2026-01': monthOf(
+            {
+              plastic: {
+                reprocessor: reprocessorOf(
+                  { tonnageReceived: 20 },
+                  { operatorCount: 1 }
+                ),
+                exporter: exporterOf()
+              }
+            },
+            { expected: 2, submitted: 2 },
+            totalsOf({
+              reprocessor: { tonnageReceived: 20 },
+              reprocessorCounts: { operatorCount: 2 }
+            })
+          )
+        }),
+        ['2026-01'],
+        asKey
+      ).months[0]
+
+      expect(reprocessor.total.label).toBe(
+        'translated:regulators:marketInsights:figures:total:label'
+      )
+      expect(reprocessor.total.figures[0]).toBe('20.00 [c]')
+      expect(reprocessor.note).toBeNull()
     })
 
     it('marks the Grand Total by its own accredited count, even where no row above it is marked', () => {
