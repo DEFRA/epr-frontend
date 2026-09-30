@@ -4,6 +4,7 @@ import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
+import { registrationUploadYear } from '#server/common/helpers/upload/registration-upload-year.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { requiresResubmission } from './closed-period-changes.js'
 import { renderCheckView } from './check-controller.js'
@@ -129,19 +130,23 @@ const getStatusData = async (
   }
 
   const {
+    accreditationId,
     accreditationNumber,
     loadsByReportingPeriod,
     processingType,
     status,
-    validation
+    validation,
+    year
   } = data
 
   return {
+    accreditationId,
     accreditationNumber,
     loadsByReportingPeriod,
     processingType,
     status,
-    validation
+    validation,
+    year
   }
 }
 
@@ -306,7 +311,10 @@ const renderViewForStatus = (options) => {
 }
 
 /**
- * Gets a pre-signed upload URL for re-uploading a summary log
+ * Gets a pre-signed upload URL for re-uploading a summary log, scoped to the
+ * registration's own `validFrom` year. Which accreditation, if any, the
+ * upload belongs to isn't decided here — the backend resolves that from the
+ * file itself when it validates.
  * @param {string} status - Current summary log status
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
@@ -325,9 +333,16 @@ const getUploadUrl = async (
     return {}
   }
 
+  const { registration } = await fetchRegistrationAndAccreditation(
+    organisationId,
+    registrationId,
+    backendToken
+  )
+
   const { uploadUrl } = await initiateSummaryLogUpload({
     organisationId,
     registrationId,
+    year: registrationUploadYear(registration),
     redirectUrl,
     backendToken
   })

@@ -261,13 +261,19 @@
  */
 
 /**
+ * `year` and `accreditationId` are absent (not present as keys) on a legacy
+ * summary log inserted before PAE-2002. `accreditationId: null` is a valid,
+ * meaningful value (registered-only) distinct from absent, so callers must
+ * check presence (`'year' in response`), never `??` or plain truthiness.
  * @typedef {{
+ *   accreditationId?: string | null,
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType
  *   status: string,
  *   validation?: ValidationResponse,
+ *   year?: number,
  * }} SummaryLogStatusResponse
  */
 
