@@ -303,7 +303,7 @@ describe('the UK waste balance page', () => {
       })
 
       // A row total that includes a marked month, but is not marked itself,
-      // says in a column of notes what the published total leaves out.
+      // has the published total beside it, which leaves the marked month out.
       expect(headingsOf(table)).toStrictEqual([
         'Material',
         'Accreditation type',
@@ -311,7 +311,7 @@ describe('the UK waste balance page', () => {
         'February',
         'March',
         'Total',
-        'Notes'
+        'Published total, without the months marked [c]'
       ])
       expect(rowsOf(table)).toStrictEqual([
         ['Aluminium', 'Exporter', '0.00', '8.00', '0.00', '8.00 [c]', ''],
@@ -324,7 +324,7 @@ describe('the UK waste balance page', () => {
           '42.50 [c]',
           '0.00',
           '132.50',
-          'Total published without the months marked [c]'
+          '90.00'
         ],
         [
           'Monthly reports submitted',

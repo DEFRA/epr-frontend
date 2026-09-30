@@ -167,8 +167,21 @@ describe('the England reprocessor and exporter figures page', () => {
           '£0.00 [c]'
         ],
         [
-          'Grand Total, published without the figures marked [c]',
+          'Grand Total',
           '700.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '0.00',
+          '£0.00',
+          '- No average price is calculated'
+        ],
+        [
+          'Published total, without the figures marked [c]',
+          '0.00',
           '0.00',
           '0.00',
           '0.00',

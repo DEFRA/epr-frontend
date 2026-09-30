@@ -42,8 +42,8 @@
           {% set tableHead = tableHead.concat([{ text: month, format: "numeric" }]) %}
         {% endfor %}
         {% set tableHead = tableHead.concat([{ text: localise('regulators:marketInsights:wasteBalance:table:total'), format: "numeric" }]) %}
-        {% if wasteBalance.noted %}
-          {% set tableHead = tableHead.concat([{ text: localise('regulators:marketInsights:wasteBalance:table:notes') }]) %}
+        {% if wasteBalance.publishedColumn %}
+          {% set tableHead = tableHead.concat([{ text: localise('regulators:marketInsights:wasteBalance:table:published'), format: "numeric" }]) %}
         {% endif %}
 
         {% set tableRows = [] %}
@@ -53,8 +53,8 @@
             {% set cells = cells.concat([{ text: netCredit, format: "numeric" }]) %}
           {% endfor %}
           {% set cells = cells.concat([{ text: row.total, format: "numeric" }]) %}
-          {% if wasteBalance.noted %}
-            {% set cells = cells.concat([{ text: row.note }]) %}
+          {% if wasteBalance.publishedColumn %}
+            {% set cells = cells.concat([{ text: row.published, format: "numeric" }]) %}
           {% endif %}
           {% set tableRows = tableRows.concat([cells]) %}
         {% endfor %}
@@ -64,7 +64,7 @@
           {% set reportCells = reportCells.concat([{ text: count, format: "numeric" }]) %}
         {% endfor %}
         {% set reportCells = reportCells.concat([{ text: wasteBalance.reports.period, format: "numeric" }]) %}
-        {% if wasteBalance.noted %}
+        {% if wasteBalance.publishedColumn %}
           {% set reportCells = reportCells.concat([{ text: '' }]) %}
         {% endif %}
         {% set tableRows = tableRows.concat([reportCells]) %}

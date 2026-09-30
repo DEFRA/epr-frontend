@@ -88,7 +88,7 @@
         "dash": "-",
         "label": "Grand Total",
         "noAverage": "No average price is calculated",
-        "withoutConfidential": "Grand Total, published without the figures marked [c]"
+        "published": "Published total, without the figures marked [c]"
       },
       "uk": {
         "heading": "Reprocessor and exporter figures: UK",
@@ -172,10 +172,9 @@
       "table": {
         "accreditationType": "Accreditation type",
         "caption": "Waste balance",
-        "notes": "Notes",
+        "published": "Published total, without the months marked [c]",
         "reports": "Monthly reports submitted",
-        "total": "Total",
-        "withoutConfidential": "Total published without the months marked [c]"
+        "total": "Total"
       },
       "fewOperators": {
         "noTonnage": "An accredited operator counts even if none of its tonnage is in the figure.",

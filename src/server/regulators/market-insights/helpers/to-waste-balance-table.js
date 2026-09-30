@@ -4,7 +4,8 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 import {
   fromFewOperators,
   leavesOutConfidential,
-  markedFigureOf
+  markedFigureOf,
+  sumOf
 } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
@@ -51,33 +52,34 @@ import { nameOf } from './reporting-period.js'
 
 /**
  * A row's figures, each marked confidential where few operators were
- * accredited for it. A total the published workbook shows without its
- * confidential months says so in the row's note, which is otherwise empty.
+ * accredited for it. Where the published workbook shows the total without its
+ * confidential months, the published total sums the rest; otherwise it is
+ * empty.
  * @typedef {{
  *   material: string,
  *   accreditationType: string,
  *   netCredits: string[],
  *   total: string,
- *   note: string
+ *   published: string
  * }} WasteBalanceRow
  */
 
 /**
- * The table has a column of notes when any row's total leaves out confidential
- * months.
+ * The table has a published total column when any row's total leaves out
+ * confidential months.
  * @typedef {{
  *   months: string[],
  *   rows: WasteBalanceRow[],
  *   reports: { byMonth: string[], period: string },
  *   marked: boolean,
- *   noted: boolean
+ *   publishedColumn: boolean
  * }} WasteBalanceTable
  */
 
 /**
- * A row's figures, before its own marked and noted states are stripped for
- * display.
- * @typedef {Omit<WasteBalanceRow, 'note'> & { marked: boolean, noted: boolean }} MarkedWasteBalanceRow
+ * A row's figures, before its own marked and published states are stripped
+ * for display.
+ * @typedef {WasteBalanceRow & { marked: boolean, publishes: boolean }} MarkedWasteBalanceRow
  */
 
 /**
@@ -93,16 +95,17 @@ import { nameOf } from './reporting-period.js'
  * @returns {MarkedWasteBalanceRow}
  */
 const markedRowOf = ({ figures, periodCounts, totalNetCredit, ...row }) => {
-  const monthMarked = figures.some((figure) =>
-    fromFewOperators(figure, figure.netCredit !== 0)
+  const unmarked = figures.filter(
+    (figure) => !fromFewOperators(figure, figure.netCredit !== 0)
   )
+  const monthMarked = unmarked.length < figures.length
   const totalMarked = fromFewOperators(periodCounts, totalNetCredit !== 0)
   const total = markedFigureOf(
     formatTonnage(totalNetCredit),
     periodCounts,
     totalNetCredit !== 0
   )
-  const noted = leavesOutConfidential(monthMarked, totalMarked)
+  const publishes = leavesOutConfidential(monthMarked, totalMarked)
 
   return {
     ...row,
@@ -114,8 +117,11 @@ const markedRowOf = ({ figures, periodCounts, totalNetCredit, ...row }) => {
       )
     ),
     total,
+    published: publishes
+      ? formatTonnage(sumOf(unmarked.map(({ netCredit }) => netCredit)))
+      : '',
     marked: monthMarked || totalMarked,
-    noted
+    publishes
   }
 }
 
@@ -126,8 +132,8 @@ const markedRowOf = ({ figures, periodCounts, totalNetCredit, ...row }) => {
  * of the reports each month expected the figures include.
  *
  * The pivot is presentation. Every figure, including a row's total across its
- * months and the period's report count, is the one the service served;
- * nothing here is summed.
+ * months and the period's report count, is the one the service served,
+ * except a published total, which sums the months the workbook publishes.
  *
  * The months are the page's period, so the columns run over the span the
  * caption states, and a served month outside it is not shown.
@@ -184,19 +190,12 @@ export const toWasteBalanceTable = (
 
   return {
     months: months.map(nameOf),
-    rows: rows.map(({ marked: _marked, noted, ...row }) => ({
-      ...row,
-      note: noted
-        ? localise(
-            'regulators:marketInsights:wasteBalance:table:withoutConfidential'
-          )
-        : ''
-    })),
+    rows: rows.map(({ marked: _marked, publishes: _publishes, ...row }) => row),
     reports: {
       byMonth: months.map((month) => stated(served[month].reports)),
       period: stated(period.reports)
     },
     marked: rows.some((row) => row.marked),
-    noted: rows.some((row) => row.noted)
+    publishedColumn: rows.some((row) => row.publishes)
   }
 }

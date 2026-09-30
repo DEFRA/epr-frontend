@@ -192,8 +192,21 @@ describe.each(NATIONS)(
             '£0.00 [c]'
           ],
           [
-            'Grand Total, published without the figures marked [c]',
+            'Grand Total',
             '350.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            '£0.00',
+            '- No average price is calculated'
+          ],
+          [
+            'Published total, without the figures marked [c]',
+            '0.00',
             '0.00',
             '0.00',
             '0.00',

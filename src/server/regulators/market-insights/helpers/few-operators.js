@@ -42,12 +42,20 @@ export const markedFigureOf = (figure, counts, rowHoldsData) =>
 
 /**
  * Whether the published workbook shows a total without the confidential
- * figures it includes, and says so in words beside it: the total includes a
- * figure marked confidential, and few operators were not accredited for the
- * total itself, which would withhold it instead.
+ * figures it includes: the total includes a figure marked confidential, and
+ * few operators were not accredited for the total itself, which would
+ * withhold it instead.
  * @param {boolean} includesMarked
  * @param {boolean} totalMarked
  * @returns {boolean}
  */
 export const leavesOutConfidential = (includesMarked, totalMarked) =>
   includesMarked && !totalMarked
+
+/**
+ * The sum of the given figures.
+ * @param {number[]} figures
+ * @returns {number}
+ */
+export const sumOf = (figures) =>
+  figures.reduce((sum, figure) => sum + figure, 0)
