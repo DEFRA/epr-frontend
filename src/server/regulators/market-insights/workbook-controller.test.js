@@ -20,9 +20,6 @@ import { reportingPeriodNow } from './helpers/reporting-period.js'
 
 vi.mock(import('#server/common/helpers/fetch-stream-from-backend.js'))
 
-const disposition =
-  'attachment; filename="market-insights-2026-monthly-8-2026-09-18-090000.xlsx"'
-
 const xlsxContentType =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
@@ -30,201 +27,149 @@ const workbook = 'workbook-bytes'
 
 /**
  * @param {{
- *   contentDisposition?: string | null,
+ *   contentDisposition: string | null,
  *   contentType?: string | null
- * }} [stream]
+ * }} stream
  */
 const backendStreams = ({
-  contentDisposition = disposition,
+  contentDisposition,
   contentType = xlsxContentType
-} = {}) =>
+}) =>
   vi.mocked(fetchStreamFromBackend).mockResolvedValue({
     body: Readable.from([Buffer.from(workbook)], { objectMode: false }),
     contentDisposition,
     contentType
   })
 
-/**
- * @param {HapiServer} server
- * @param {typeof regulator} auth
- * @param {string} [url]
- */
-const visit = (server, auth, url = paths.regulators.marketInsightsWorkbook) =>
-  server.inject({ method: 'GET', url, auth })
+// Each download the pages offer, by the query it asks the backend's workbook
+// route with.
+const DOWNLOADS = [
+  {
+    download: 'workbook',
+    url: paths.regulators.marketInsightsWorkbook,
+    query: '',
+    disposition:
+      'attachment; filename="market-insights-2026-monthly-8-2026-09-18-090000.xlsx"'
+  },
+  {
+    download: 'unredacted workbook',
+    url: paths.regulators.marketInsightsUnredactedWorkbook,
+    query: '?unredacted=true',
+    disposition:
+      'attachment; filename="market-insights-unredacted-2026-monthly-8-2026-09-18-090000.xlsx"'
+  }
+]
 
-describe('the market insights workbook download', () => {
-  beforeAll(() => {
-    config.set('featureFlags.regulatorAccess', true)
-  })
+describe.each(DOWNLOADS)(
+  'the market insights $download download',
+  ({ url, query, disposition }) => {
+    /**
+     * @param {HapiServer} server
+     * @param {typeof regulator} auth
+     */
+    const visit = (server, auth) => server.inject({ method: 'GET', url, auth })
 
-  beforeEach(() => {
-    backendStreams()
-  })
+    beforeAll(() => {
+      config.set('featureFlags.regulatorAccess', true)
+    })
 
-  afterAll(() => {
-    config.set('featureFlags.regulatorAccess', false)
-  })
+    beforeEach(() => {
+      backendStreams({ contentDisposition: disposition })
+    })
 
-  it('serves the workbook the backend built', async ({ server }) => {
-    const response = await visit(server, regulator)
+    afterAll(() => {
+      config.set('featureFlags.regulatorAccess', false)
+    })
 
-    expect(response.statusCode).toBe(statusCodes.ok)
-    expect(response.rawPayload.toString()).toBe(workbook)
-  })
+    it('serves the workbook the backend built', async ({ server }) => {
+      const response = await visit(server, regulator)
 
-  it('asks for the reporting period the pages show, carrying the session token', async ({
-    server
-  }) => {
-    await visit(server, regulator)
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.rawPayload.toString()).toBe(workbook)
+    })
 
-    const { year, month } = reportingPeriodNow()
+    it('asks for the reporting period the pages show, carrying the session token', async ({
+      server
+    }) => {
+      await visit(server, regulator)
 
-    expect(fetchStreamFromBackend).toHaveBeenCalledWith(
-      `/v1/market-insights/${year}/monthly/${month}/workbook.xlsx`,
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: expect.stringContaining('Bearer ')
+      const { year, month } = reportingPeriodNow()
+
+      expect(fetchStreamFromBackend).toHaveBeenCalledWith(
+        `/v1/market-insights/${year}/monthly/${month}/workbook.xlsx${query}`,
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: expect.stringContaining('Bearer ')
+          })
         })
-      })
-    )
-  })
+      )
+    })
 
-  it('names the file as the backend named it', async ({ server }) => {
-    const response = await visit(server, regulator)
+    it('names the file as the backend named it', async ({ server }) => {
+      const response = await visit(server, regulator)
 
-    expect(response.headers['content-disposition']).toBe(disposition)
-  })
+      expect(response.headers['content-disposition']).toBe(disposition)
+    })
 
-  it('still serves the workbook where the backend named no file', async ({
-    server
-  }) => {
-    backendStreams({ contentDisposition: null })
+    it('still serves the workbook where the backend named no file', async ({
+      server
+    }) => {
+      backendStreams({ contentDisposition: null })
 
-    const response = await visit(server, regulator)
+      const response = await visit(server, regulator)
 
-    expect(response.statusCode).toBe(statusCodes.ok)
-    expect(response.headers['content-disposition']).toBeUndefined()
-  })
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.headers['content-disposition']).toBeUndefined()
+    })
 
-  it('takes the content type from the backend', async ({ server }) => {
-    const response = await visit(server, regulator)
+    it('takes the content type from the backend', async ({ server }) => {
+      const response = await visit(server, regulator)
 
-    expect(response.headers['content-type']).toContain(xlsxContentType)
-  })
+      expect(response.headers['content-type']).toContain(xlsxContentType)
+    })
 
-  it('calls it a workbook where the backend named no type', async ({
-    server
-  }) => {
-    backendStreams({ contentType: null })
+    it('calls it a workbook where the backend named no type', async ({
+      server
+    }) => {
+      backendStreams({ contentDisposition: disposition, contentType: null })
 
-    const response = await visit(server, regulator)
+      const response = await visit(server, regulator)
 
-    expect(response.headers['content-type']).toContain(xlsxContentType)
-  })
+      expect(response.headers['content-type']).toContain(xlsxContentType)
+    })
 
-  // A refusal reaching the caller as 502 says the gateway broke, which sends
-  // whoever reads the logs after the wrong thing.
-  it('reports a backend refusal as that status, not as a gateway fault', async ({
-    server
-  }) => {
-    vi.mocked(fetchStreamFromBackend).mockRejectedValue(
-      upstreamStatus('Backend refused', 404, errorCodes.externalFetchFailed, {
-        event: { action: 'external_fetch', reason: 'backend_responded_404' }
-      })
-    )
-
-    const response = await visit(server, regulator)
-
-    expect(response.statusCode).toBe(statusCodes.notFound)
-  })
-
-  it('is refused an operator, and asks the backend for nothing', async ({
-    server
-  }) => {
-    const response = await visit(server, operator)
-
-    expect(response.statusCode).toBe(statusCodes.forbidden)
-    expect(fetchStreamFromBackend).not.toHaveBeenCalled()
-  })
-
-  it('is refused a session the backend granted no market data scope', async ({
-    server
-  }) => {
-    const response = await visit(server, regulatorWithoutMarketScope)
-
-    expect(response.statusCode).toBe(statusCodes.forbidden)
-    expect(fetchStreamFromBackend).not.toHaveBeenCalled()
-  })
-})
-
-describe('the unredacted market insights workbook download', () => {
-  const unredactedDisposition =
-    'attachment; filename="market-insights-unredacted-2026-monthly-8-2026-09-18-090000.xlsx"'
-
-  /**
-   * @param {HapiServer} server
-   * @param {typeof regulator} auth
-   */
-  const visitUnredacted = (server, auth) =>
-    visit(server, auth, paths.regulators.marketInsightsUnredactedWorkbook)
-
-  beforeAll(() => {
-    config.set('featureFlags.regulatorAccess', true)
-  })
-
-  beforeEach(() => {
-    backendStreams({ contentDisposition: unredactedDisposition })
-  })
-
-  afterAll(() => {
-    config.set('featureFlags.regulatorAccess', false)
-  })
-
-  it('serves the workbook the backend built', async ({ server }) => {
-    const response = await visitUnredacted(server, regulator)
-
-    expect(response.statusCode).toBe(statusCodes.ok)
-    expect(response.rawPayload.toString()).toBe(workbook)
-  })
-
-  it('asks the backend for the unredacted workbook of the reporting period the pages show', async ({
-    server
-  }) => {
-    await visitUnredacted(server, regulator)
-
-    const { year, month } = reportingPeriodNow()
-
-    expect(fetchStreamFromBackend).toHaveBeenCalledWith(
-      `/v1/market-insights/${year}/monthly/${month}/workbook.xlsx?unredacted=true`,
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: expect.stringContaining('Bearer ')
+    // A refusal reaching the caller as 502 says the gateway broke, which sends
+    // whoever reads the logs after the wrong thing.
+    it('reports a backend refusal as that status, not as a gateway fault', async ({
+      server
+    }) => {
+      vi.mocked(fetchStreamFromBackend).mockRejectedValue(
+        upstreamStatus('Backend refused', 404, errorCodes.externalFetchFailed, {
+          event: { action: 'external_fetch', reason: 'backend_responded_404' }
         })
-      })
-    )
-  })
+      )
 
-  it('names the file as the backend named it', async ({ server }) => {
-    const response = await visitUnredacted(server, regulator)
+      const response = await visit(server, regulator)
 
-    expect(response.headers['content-disposition']).toBe(unredactedDisposition)
-  })
+      expect(response.statusCode).toBe(statusCodes.notFound)
+    })
 
-  it('is refused an operator, and asks the backend for nothing', async ({
-    server
-  }) => {
-    const response = await visitUnredacted(server, operator)
+    it('is refused an operator, and asks the backend for nothing', async ({
+      server
+    }) => {
+      const response = await visit(server, operator)
 
-    expect(response.statusCode).toBe(statusCodes.forbidden)
-    expect(fetchStreamFromBackend).not.toHaveBeenCalled()
-  })
+      expect(response.statusCode).toBe(statusCodes.forbidden)
+      expect(fetchStreamFromBackend).not.toHaveBeenCalled()
+    })
 
-  it('is refused a session the backend granted no market data scope', async ({
-    server
-  }) => {
-    const response = await visitUnredacted(server, regulatorWithoutMarketScope)
+    it('is refused a session the backend granted no market data scope', async ({
+      server
+    }) => {
+      const response = await visit(server, regulatorWithoutMarketScope)
 
-    expect(response.statusCode).toBe(statusCodes.forbidden)
-    expect(fetchStreamFromBackend).not.toHaveBeenCalled()
-  })
-})
+      expect(response.statusCode).toBe(statusCodes.forbidden)
+      expect(fetchStreamFromBackend).not.toHaveBeenCalled()
+    })
+  }
+)
