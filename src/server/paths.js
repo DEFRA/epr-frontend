@@ -25,6 +25,8 @@ export const paths = Object.freeze({
       '/regulators/market-insights/outstanding-returns',
     marketInsightsScotland: '/regulators/market-insights/scotland',
     marketInsightsUk: '/regulators/market-insights/uk',
+    marketInsightsUnredactedWorkbook:
+      '/regulators/market-insights/unredacted-workbook.xlsx',
     marketInsightsWales: '/regulators/market-insights/wales',
     marketInsightsWasteBalance: '/regulators/market-insights/waste-balance',
     marketInsightsWorkbook: '/regulators/market-insights/workbook.xlsx',

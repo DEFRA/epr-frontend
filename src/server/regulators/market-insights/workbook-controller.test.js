@@ -47,13 +47,10 @@ const backendStreams = ({
 /**
  * @param {HapiServer} server
  * @param {typeof regulator} auth
+ * @param {string} [url]
  */
-const visit = (server, auth) =>
-  server.inject({
-    method: 'GET',
-    url: paths.regulators.marketInsightsWorkbook,
-    auth
-  })
+const visit = (server, auth, url = paths.regulators.marketInsightsWorkbook) =>
+  server.inject({ method: 'GET', url, auth })
 
 describe('the market insights workbook download', () => {
   beforeAll(() => {
@@ -154,6 +151,78 @@ describe('the market insights workbook download', () => {
     server
   }) => {
     const response = await visit(server, regulatorWithoutMarketScope)
+
+    expect(response.statusCode).toBe(statusCodes.forbidden)
+    expect(fetchStreamFromBackend).not.toHaveBeenCalled()
+  })
+})
+
+describe('the unredacted market insights workbook download', () => {
+  const unredactedDisposition =
+    'attachment; filename="market-insights-unredacted-2026-monthly-8-2026-09-18-090000.xlsx"'
+
+  /**
+   * @param {HapiServer} server
+   * @param {typeof regulator} auth
+   */
+  const visitUnredacted = (server, auth) =>
+    visit(server, auth, paths.regulators.marketInsightsUnredactedWorkbook)
+
+  beforeAll(() => {
+    config.set('featureFlags.regulatorAccess', true)
+  })
+
+  beforeEach(() => {
+    backendStreams({ contentDisposition: unredactedDisposition })
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.regulatorAccess', false)
+  })
+
+  it('serves the workbook the backend built', async ({ server }) => {
+    const response = await visitUnredacted(server, regulator)
+
+    expect(response.statusCode).toBe(statusCodes.ok)
+    expect(response.rawPayload.toString()).toBe(workbook)
+  })
+
+  it('asks the backend for the unredacted workbook of the reporting period the pages show', async ({
+    server
+  }) => {
+    await visitUnredacted(server, regulator)
+
+    const { year, month } = reportingPeriodNow()
+
+    expect(fetchStreamFromBackend).toHaveBeenCalledWith(
+      `/v1/market-insights/${year}/monthly/${month}/workbook.xlsx?unredacted=true`,
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: expect.stringContaining('Bearer ')
+        })
+      })
+    )
+  })
+
+  it('names the file as the backend named it', async ({ server }) => {
+    const response = await visitUnredacted(server, regulator)
+
+    expect(response.headers['content-disposition']).toBe(unredactedDisposition)
+  })
+
+  it('is refused an operator, and asks the backend for nothing', async ({
+    server
+  }) => {
+    const response = await visitUnredacted(server, operator)
+
+    expect(response.statusCode).toBe(statusCodes.forbidden)
+    expect(fetchStreamFromBackend).not.toHaveBeenCalled()
+  })
+
+  it('is refused a session the backend granted no market data scope', async ({
+    server
+  }) => {
+    const response = await visitUnredacted(server, regulatorWithoutMarketScope)
 
     expect(response.statusCode).toBe(statusCodes.forbidden)
     expect(fetchStreamFromBackend).not.toHaveBeenCalled()

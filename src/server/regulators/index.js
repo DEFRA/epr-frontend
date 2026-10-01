@@ -116,9 +116,17 @@ export const regulators = {
           }
         },
         {
-          ...marketInsightsWorkbookController,
+          ...marketInsightsWorkbookController(),
           method: 'GET',
           path: paths.regulators.marketInsightsWorkbook,
+          options: {
+            auth: { scope: [SCOPES.marketDataRead] }
+          }
+        },
+        {
+          ...marketInsightsWorkbookController({ unredacted: true }),
+          method: 'GET',
+          path: paths.regulators.marketInsightsUnredactedWorkbook,
           options: {
             auth: { scope: [SCOPES.marketDataRead] }
           }
