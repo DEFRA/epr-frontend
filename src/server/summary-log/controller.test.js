@@ -2360,13 +2360,11 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('re-upload year resolution', () => {
-      it("scopes re-upload to the registration's own validFrom year, ignoring the summary log's own year/accreditationId", async ({
+      it("scopes re-upload to the registration's own validFrom year", async ({
         server
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
-          year: 2020,
-          accreditationId: 'acc-own-123',
           validation: { failures: [{ errorCode: 'REGISTRATION_MISMATCH' }] }
         })
 

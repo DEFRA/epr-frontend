@@ -130,23 +130,19 @@ const getStatusData = async (
   }
 
   const {
-    accreditationId,
     accreditationNumber,
     loadsByReportingPeriod,
     processingType,
     status,
-    validation,
-    year
+    validation
   } = data
 
   return {
-    accreditationId,
     accreditationNumber,
     loadsByReportingPeriod,
     processingType,
     status,
-    validation,
-    year
+    validation
   }
 }
 
@@ -313,8 +309,8 @@ const renderViewForStatus = (options) => {
 /**
  * Gets a pre-signed upload URL for re-uploading a summary log, scoped to the
  * registration's own `validFrom` year. Which accreditation, if any, the
- * upload belongs to isn't decided here — the backend resolves that from the
- * file itself when it validates.
+ * upload belongs to isn't decided here — the backend stamps it from the
+ * registration's current accreditation link.
  * @param {string} status - Current summary log status
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID

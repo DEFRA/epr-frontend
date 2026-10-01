@@ -5,8 +5,8 @@
 /**
  * The year a fresh summary log upload for this registration targets: the UTC
  * year of the registration's own `validFrom`. Which accreditation, if any,
- * the upload belongs to isn't decided here — the backend resolves that from
- * the file itself when it validates.
+ * the upload belongs to isn't decided here — the backend stamps it at
+ * upload-completed from the registration's current accreditation link.
  *
  * A registration reaches this helper only once it's eligible for upload,
  * which requires it to be approved and therefore to carry a `validFrom` —
