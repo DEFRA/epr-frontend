@@ -56,7 +56,7 @@ const DOWNLOADS = [
     url: paths.regulators.marketInsightsUnredactedWorkbook,
     query: '?unredacted=true',
     disposition:
-      'attachment; filename="market-insights-unredacted-2026-monthly-8-2026-09-18-090000.xlsx"'
+      'attachment; filename="market-insights-2026-monthly-8-unredacted-2026-09-18-090000.xlsx"'
   }
 ]
 
