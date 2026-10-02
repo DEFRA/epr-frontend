@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { CADENCE } from '#server/reports/constants.js'
 import { requiresResubmission } from './closed-period-changes.js'
 
 const ZERO_CHANGE = {
@@ -49,6 +50,10 @@ describe(requiresResubmission, () => {
   })
 
   it('returns true when periodsRequiringResubmission lists a period', () => {
-    expect(requiresResubmission(loads([{ year: 2025, period: 1 }]))).toBe(true)
+    expect(
+      requiresResubmission(
+        loads([{ year: 2025, cadence: CADENCE.MONTHLY, period: 1 }])
+      )
+    ).toBe(true)
   })
 })

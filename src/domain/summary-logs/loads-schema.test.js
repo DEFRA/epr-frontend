@@ -111,7 +111,9 @@ describe('summaryLogStatusResponseSchema validation', () => {
           nonBalanceAffecting: { count: 1 }
         }
       },
-      periodsRequiringResubmission: [{ year: 2025, period: 1 }]
+      periodsRequiringResubmission: [
+        { year: 2025, cadence: 'monthly', period: 1 }
+      ]
     }
 
     it('should accept a realistic payload and preserve it intact when stripping unknown keys', () => {

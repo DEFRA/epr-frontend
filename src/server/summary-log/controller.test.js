@@ -29,6 +29,7 @@ import {
 import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
+import { CADENCE } from '#server/reports/constants.js'
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 
 /**
@@ -260,7 +261,9 @@ describe('#summaryLogUploadProgressController', () => {
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
         closedPeriodLoads: closedAdjustmentRows(),
-        periodsRequiringResubmission: [{ year: 2025, period: 1 }]
+        periodsRequiringResubmission: [
+          { year: 2025, cadence: CADENCE.MONTHLY, period: 1 }
+        ]
       }
     })
 
@@ -4425,7 +4428,9 @@ describe('summary log check view', () => {
     const periodWithClosedAdjustment = () => ({
       openPeriodLoads: emptyPeriod(),
       closedPeriodLoads: closedAdjustmentRows(),
-      periodsRequiringResubmission: [{ year: 2025, period: 1 }]
+      periodsRequiringResubmission: [
+        { year: 2025, cadence: CADENCE.MONTHLY, period: 1 }
+      ]
     })
 
     it('shows the Important banner when a closed period requires resubmission', async ({

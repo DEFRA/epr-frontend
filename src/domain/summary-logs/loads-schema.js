@@ -2,6 +2,7 @@ import Joi from 'joi'
 
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
+import { CADENCE } from '#server/reports/constants.js'
 
 const nonNegativeInteger = Joi.number().integer().min(0).required()
 
@@ -79,6 +80,9 @@ const periodStatusByChangeSchema = Joi.object({
 // changed" (empty array -> no resubmission needed).
 const periodRefSchema = Joi.object({
   year: Joi.number().integer().required(),
+  cadence: Joi.string()
+    .valid(...Object.values(CADENCE))
+    .required(),
   period: Joi.number().integer().required()
 })
 
