@@ -50,6 +50,7 @@
       },
       "summary": {
         "download": "Download",
+        "latestSummaryLog": "Latest summary log",
         "number": "Accreditation number",
         "status": "Accreditation status",
         "wasteBalanceAvailable": "Waste balance available (tonnes)",
