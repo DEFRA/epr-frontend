@@ -12,15 +12,19 @@ const DEFAULT_CONTENT_TYPE =
 
 /**
  * Serves the market insights workbook, in the published format, for the
- * reporting period the pages show.
+ * reporting period the pages show: redacted as it would be published, or
+ * unredacted for regulators to compare against.
  *
  * The backend builds the workbook inside the request and this passes the body
  * straight through, so nothing is held here and nothing is stored. The
  * response takes tens of seconds, which is accepted: one regulator asks for it
  * at a time, rarely, and knows they asked.
- * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ * @param {{ unredacted?: boolean }} [options]
+ * @returns {Partial<HapiServerRoute<HapiRequest>>}
  */
-export const marketInsightsWorkbookController = {
+export const marketInsightsWorkbookController = ({
+  unredacted = false
+} = {}) => ({
   /**
    * @param {HapiRequest} request
    * @param {ResponseToolkit} h
@@ -28,10 +32,11 @@ export const marketInsightsWorkbookController = {
   async handler(request, h) {
     const { backendToken } = request.auth.credentials
     const { year, month } = reportingPeriodNow()
+    const query = unredacted ? '?unredacted=true' : ''
 
     const { body, contentDisposition, contentType } =
       await fetchStreamFromBackend(
-        `/v1/market-insights/${year}/monthly/${month}/workbook.xlsx`,
+        `/v1/market-insights/${year}/monthly/${month}/workbook.xlsx${query}`,
         { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
       )
 
@@ -41,4 +46,4 @@ export const marketInsightsWorkbookController = {
       ? response.header('Content-Disposition', contentDisposition)
       : response
   }
-}
+})
