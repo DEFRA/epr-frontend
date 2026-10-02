@@ -33,7 +33,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} accreditationId - The accreditation ID
  * @param {string} prnId - The PRN ID
  * @param {UpdatePrnStatusPayload} payload - Status update data
- * @param {string} idToken - JWT ID token for authorisation
+ * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<UpdatePrnStatusResponse>}
  */
 async function updatePrnStatus(
@@ -42,14 +42,14 @@ async function updatePrnStatus(
   accreditationId,
   prnId,
   payload,
-  idToken
+  backendToken
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes/${encodeURIComponent(prnId)}/status`
 
   return fetchJsonFromBackend(path, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${backendToken}`
     },
     body: JSON.stringify(payload)
   })

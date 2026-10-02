@@ -14,6 +14,8 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
@@ -94,6 +96,9 @@ const mockPernCreated = asCreatePrnResponse({
   status: 'draft',
   wasteProcessingType: 'exporter'
 })
+
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 describe('#discardController', () => {
   beforeEach(() => {
@@ -398,7 +403,7 @@ describe('#discardController', () => {
           accreditationId,
           prnId,
           { status: 'discarded' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 
@@ -560,6 +565,70 @@ describe('#discardController', () => {
 
         expect(statusCode).toBe(statusCodes.forbidden)
       })
+    })
+  })
+
+  describe('journey events', () => {
+    const startDraft = async (server) => {
+      const { cookie: csrfCookie, crumb } = await getCsrfToken(
+        server,
+        createUrl,
+        { auth: mockAuth }
+      )
+
+      const postResponse = await server.inject({
+        method: 'POST',
+        url: createUrl,
+        auth: mockAuth,
+        headers: { cookie: csrfCookie },
+        payload: { ...validPayload, crumb }
+      })
+
+      const cookies = mergeCookies(
+        csrfCookie,
+        ...extractCookieValues(postResponse.headers['set-cookie'])
+      )
+
+      return { cookies, crumb }
+    }
+
+    it('should record the journey start when the confirmation page renders', async ({
+      server
+    }) => {
+      const { cookies } = await startDraft(server)
+
+      await server.inject({
+        method: 'GET',
+        url: discardUrl,
+        auth: mockAuth,
+        headers: { cookie: cookies }
+      })
+
+      expect(metrics.journey.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.discardPrn,
+        prnId
+      )
+    })
+
+    it('should record the journey end once the action succeeds', async ({
+      server
+    }) => {
+      const { cookies, crumb } = await startDraft(server)
+
+      await server.inject({
+        method: 'POST',
+        url: discardUrl,
+        auth: mockAuth,
+        headers: { cookie: cookies },
+        payload: { crumb }
+      })
+
+      expect(metrics.journey.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.discardPrn,
+        prnId
+      )
     })
   })
 })

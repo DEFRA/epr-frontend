@@ -50,6 +50,7 @@ import {
   reportStaleErrorGetController,
   reportStaleErrorPostController
 } from './report-stale-error-controller.js'
+import { reportDataIncompleteGetController } from './report-data-incomplete-controller.js'
 import { ReportStaleError } from './helpers/stale.js'
 
 const basePath =
@@ -216,6 +217,11 @@ export const reports = {
           ...reportStaleErrorPostController,
           method: 'POST',
           path: `${periodPath}/report-stale-error`
+        },
+        {
+          ...reportDataIncompleteGetController,
+          method: 'GET',
+          path: `${periodPath}/report-data-incomplete`
         }
       ])
 
@@ -246,7 +252,12 @@ export const reports = {
             request.localiseUrl(`${reportPath}/report-stale-error`)
           )
         },
-        options: { before: '@hapi/yar' }
+        options: {
+          // Must run before boom-error-logger's onPreResponse, or that
+          // extension logs the auto-boomified ReportStaleError as a spurious
+          // 500 before this redirect ever replaces it (PAE-1973).
+          before: ['boom-error-logger', '@hapi/yar']
+        }
       })
     }
   }

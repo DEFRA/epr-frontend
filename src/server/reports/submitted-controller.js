@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -36,7 +36,7 @@ export const submittedController = {
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.backendToken
       ),
       fetchReportDetail(
         organisationId,
@@ -45,7 +45,7 @@ export const submittedController = {
         cadence,
         period,
         submissionNumber,
-        session.idToken
+        session.backendToken
       )
     ])
 
@@ -53,7 +53,7 @@ export const submittedController = {
       throw Boom.notFound()
     }
 
-    const material = getDisplayMaterial(registration)
+    const material = getRegistrationMaterialDisplayName(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
     return h.view('reports/submitted', {

@@ -4,10 +4,14 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * Fetches waste balance data for an organisation from EPR Backend
  * @param {string} organisationId - The organisation ID
  * @param {string[]} accreditationIds - Array of accreditation IDs to fetch balances for
- * @param {string} idToken - JWT ID token for authorization
+ * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<WasteBalanceMap>} Map of accreditationId to balance data
  */
-async function fetchWasteBalances(organisationId, accreditationIds, idToken) {
+async function fetchWasteBalances(
+  organisationId,
+  accreditationIds,
+  backendToken
+) {
   if (accreditationIds.length === 0) {
     return {}
   }
@@ -18,7 +22,7 @@ async function fetchWasteBalances(organisationId, accreditationIds, idToken) {
   return fetchJsonFromBackend(path, {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${backendToken}`
     }
   })
 }

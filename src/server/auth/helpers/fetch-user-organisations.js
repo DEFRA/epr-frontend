@@ -7,15 +7,15 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 
 /**
  * Fetches user organisations from the backend API
- * @param {string} idToken
+ * @param {string} backendToken
  * @returns {Promise<UserOrganisations>}
  */
-export async function fetchUserOrganisations(idToken) {
+export async function fetchUserOrganisations(backendToken) {
   /** @type {{ organisations: UserOrganisations }} */
   const data = await fetchJsonFromBackend('/v1/me/organisations', {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${backendToken}`
     }
   })
   return data.organisations

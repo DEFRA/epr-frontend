@@ -1,5 +1,6 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "satisfaction-survey/macro.njk" import appSatisfactionSurvey %}
 
 {% block content %}
 <div class="govuk-grid-row">
@@ -35,4 +36,8 @@
     </p>
   </div>
 </div>
+{% endblock %}
+
+{% block footerStart %}
+{{ appSatisfactionSurvey(satisfactionSurvey.report) }}
 {% endblock %}

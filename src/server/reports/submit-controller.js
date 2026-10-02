@@ -4,7 +4,7 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -24,6 +24,9 @@ import {
   getStatusTagClass
 } from './helpers/format-submission-status.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportAttempt } from './helpers/report-attempt.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { isResubmission } from './helpers/resubmission.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { buildValidationErrors } from './helpers/validation.js'
@@ -195,7 +198,7 @@ function getReportSummaryFields({
   const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
     reportDetail.status
   )
-  const material = getDisplayMaterial(registration)
+  const material = getRegistrationMaterialDisplayName(registration)
   const periodLabel = formatPeriodLabelWithComma(
     { year, period },
     cadence,
@@ -304,7 +307,7 @@ async function buildViewData(request, options = {}) {
     fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.backendToken
     ),
     fetchReportDetail(
       organisationId,
@@ -313,7 +316,7 @@ async function buildViewData(request, options = {}) {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
   ])
 
@@ -364,7 +367,7 @@ export const submitGetController = {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
 
     const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
@@ -390,6 +393,12 @@ export const submitGetController = {
     }
 
     const viewData = await buildViewData(request)
+
+    await metrics.journey.start(
+      request,
+      JOURNEY.submitReport,
+      reportAttempt(request.params)
+    )
 
     return h.view('reports/submit', viewData)
   }
@@ -457,7 +466,13 @@ export const submitPostController = {
         submissionNumber
       },
       transition,
-      session.idToken
+      session.backendToken
+    )
+
+    await metrics.journey.end(
+      request,
+      JOURNEY.submitReport,
+      reportAttempt(request.params)
     )
 
     return h.redirect(

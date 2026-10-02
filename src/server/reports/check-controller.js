@@ -1,6 +1,6 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -16,6 +16,9 @@ import {
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportAttempt } from './helpers/report-attempt.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
@@ -169,7 +172,7 @@ export const checkGetController = {
       await fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.backendToken
       )
 
     const reportDetail = await fetchReportDetail(
@@ -179,7 +182,7 @@ export const checkGetController = {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
 
     if (reportDetail.status?.currentStatus !== SUBMISSION_STATUS.IN_PROGRESS) {
@@ -191,7 +194,7 @@ export const checkGetController = {
     }
 
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
-    const material = getDisplayMaterial(registration)
+    const material = getRegistrationMaterialDisplayName(registration)
     const periodLabel = formatPeriodLabelWithComma(
       { year, period },
       cadence,
@@ -254,7 +257,13 @@ export const checkPostController = {
         submissionNumber
       },
       transition,
-      session.idToken
+      session.backendToken
+    )
+
+    await metrics.journey.end(
+      request,
+      JOURNEY.createReport,
+      reportAttempt(request.params)
     )
 
     return h.redirect(

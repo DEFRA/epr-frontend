@@ -1,4 +1,7 @@
 import { config } from '#config/config.js'
+import { REGULATOR_ROLE } from '#server/auth/roles.js'
+import { SCOPES } from '#server/auth/scopes.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import {
   afterEach,
   beforeAll,
@@ -41,6 +44,19 @@ function mockRequest(options) {
     ...options
   }
 }
+
+// mockRequest carries no i18n, so localise passes the key straight through
+const surveyCopy = {
+  title: 'common:satisfactionSurvey:title',
+  body: 'common:satisfactionSurvey:body',
+  linkText: 'common:satisfactionSurvey:link'
+}
+
+const noSurveys = () => ({
+  prn: { href: '', ...surveyCopy },
+  report: { href: '', ...surveyCopy },
+  summaryLog: { href: '', ...surveyCopy }
+})
 
 describe('#context', () => {
   let contextResult
@@ -106,6 +122,148 @@ describe('#context', () => {
     })
   })
 
+  describe('the shell the header renders', () => {
+    let contextImport
+
+    beforeAll(async () => {
+      contextImport = await import('#config/nunjucks/context/context.js')
+    })
+
+    /**
+     * @param {Record<string, unknown>} credentials
+     */
+    const contextFor = (credentials) =>
+      contextImport.context(
+        mockRequest(
+          /** @type {Partial<Request>} */ ({
+            auth: { isAuthenticated: true, credentials }
+          })
+        )
+      )
+
+    it('calls the service by its regulator name for a regulator', async () => {
+      contextResult = await contextFor({ role: REGULATOR_ROLE })
+
+      expect(contextResult.serviceName).toBe('regulators:serviceName')
+    })
+
+    it('sends a regulator to their own home from the service link', async () => {
+      contextResult = await contextFor({ role: REGULATOR_ROLE })
+
+      expect(contextResult.serviceUrl).toBe('/regulators/home')
+    })
+
+    it('gives a support user the regulator shell', async () => {
+      contextResult = await contextFor({ role: 'support' })
+
+      expect(contextResult.serviceUrl).toBe('/regulators/home')
+    })
+
+    it('calls the service by its operator name for an operator', async () => {
+      contextResult = await contextFor({ role: 'operator' })
+
+      expect(contextResult.serviceName).toBe('common:serviceName')
+    })
+
+    it('sends an operator to the start page from the service link', async () => {
+      contextResult = await contextFor({ role: 'operator' })
+
+      expect(contextResult.serviceUrl).toBe('/start')
+    })
+
+    it('leaves a signed out request the operator shell', async () => {
+      contextResult = await contextImport.context(mockRequest())
+
+      expect(contextResult.serviceName).toBe('common:serviceName')
+      expect(contextResult.serviceUrl).toBe('/start')
+    })
+
+    it("chooses on the role, so a regulator's scopes alone do not rename the service", async () => {
+      contextResult = await contextFor({
+        role: 'operator',
+        scope: [...IDENTITIES.regulator.scopes]
+      })
+
+      expect(contextResult.serviceName).toBe('common:serviceName')
+    })
+  })
+
+  describe('the write scope flag', () => {
+    let contextImport
+
+    beforeAll(async () => {
+      contextImport = await import('#config/nunjucks/context/context.js')
+    })
+
+    it('gives a regulator no write scope', async () => {
+      contextResult = await contextImport.context(
+        mockRequest(
+          /** @type {Partial<Request>} */ ({
+            auth: {
+              isAuthenticated: true,
+              credentials: { scope: [...IDENTITIES.regulator.scopes] }
+            }
+          })
+        )
+      )
+
+      expect(contextResult.hasWriteScope).toBe(false)
+    })
+
+    it('gives an operator holding the write scope the flag', async () => {
+      contextResult = await contextImport.context(
+        mockRequest(
+          /** @type {Partial<Request>} */ ({
+            auth: {
+              isAuthenticated: true,
+              credentials: {
+                scope: [
+                  'organisation.linked.read',
+                  SCOPES.organisationLinkedWrite
+                ]
+              }
+            }
+          })
+        )
+      )
+
+      expect(contextResult.hasWriteScope).toBe(true)
+    })
+
+    it('gives a session holding other scopes no write scope', async () => {
+      contextResult = await contextImport.context(
+        mockRequest(
+          /** @type {Partial<Request>} */ ({
+            auth: {
+              isAuthenticated: true,
+              credentials: { scope: ['something-else'] }
+            }
+          })
+        )
+      )
+
+      expect(contextResult.hasWriteScope).toBe(false)
+    })
+
+    it('gives a session without scopes no write scope', async () => {
+      contextResult = await contextImport.context(
+        mockRequest(
+          /** @type {Partial<Request>} */ ({
+            auth: { isAuthenticated: true, credentials: {} }
+          })
+        )
+      )
+
+      expect(contextResult.hasWriteScope).toBe(false)
+    })
+
+    it('gives a signed out request no write scope', async () => {
+      contextResult = await contextImport.context(mockRequest())
+
+      expect(contextResult.hasWriteScope).toBe(false)
+    })
+  })
+
   describe('when webpack manifest file read succeeds', () => {
     let contextImport
 
@@ -130,12 +288,25 @@ describe('#context', () => {
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
+        analytics: {
+          hasConsented: false,
+          hasRejected: false,
+          isEnabled: false,
+          measurementId: '',
+          pagePath: '/',
+          pageReferrer: null,
+          returnUrl: '/',
+          shouldAskConsent: false
+        },
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
+        hasWriteScope: false,
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
+        satisfactionSurvey: noSurveys(),
+        serviceName: 'common:serviceName',
         serviceUrl: '/start'
       })
     })
@@ -213,12 +384,25 @@ describe('#context cache', () => {
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
+        analytics: {
+          hasConsented: false,
+          hasRejected: false,
+          isEnabled: false,
+          measurementId: '',
+          pagePath: '/',
+          pageReferrer: null,
+          returnUrl: '/',
+          shouldAskConsent: false
+        },
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
+        hasWriteScope: false,
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
+        satisfactionSurvey: noSurveys(),
+        serviceName: 'common:serviceName',
         serviceUrl: '/start'
       })
     })

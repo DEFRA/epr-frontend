@@ -9,6 +9,8 @@ import {
   fetchPrnContext,
   fetchPrnForUpdate
 } from './helpers/fetch-prn-context.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -28,6 +30,8 @@ export const deleteGetController = {
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
+
+    await metrics.journey.start(request, JOURNEY.deletePrn, prnId)
 
     return h.view('prns/delete', {
       pageTitle: localise('prns:delete:pageTitle', { noteType }),
@@ -52,7 +56,7 @@ export const deletePostController = {
       accreditationId,
       prnId,
       prn,
-      idToken
+      backendToken
     } = await fetchPrnForUpdate(request)
     const redirectBasePath = buildPrnBasePath(request.params)
 
@@ -67,8 +71,10 @@ export const deletePostController = {
         accreditationId,
         prnId,
         { status: 'deleted' },
-        idToken
+        backendToken
       )
+
+      await metrics.journey.end(request, JOURNEY.deletePrn, prnId)
 
       return h.redirect(redirectBasePath)
     } catch (error) {

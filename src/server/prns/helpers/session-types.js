@@ -30,7 +30,8 @@
  *   tonnage: number,
  *   material: string,
  *   status: string,
- *   wasteProcessingType: string
+ *   wasteProcessingType: string,
+ *   isDecemberWaste: boolean
  * }} PrnCreatedSession
  */
 

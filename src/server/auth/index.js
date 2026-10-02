@@ -4,6 +4,10 @@ import {
   entraIdCallbackController
 } from '#server/auth/callback/controller.js'
 import { controller as organisationController } from '#server/auth/organisation/controller.js'
+import {
+  registerSignInProviderCookie,
+  signedOutPage
+} from '#server/auth/helpers/sign-in-provider.js'
 import { paths } from '#server/paths.js'
 
 /**
@@ -17,6 +21,8 @@ const auth = {
   plugin: {
     name: 'auth',
     register: (server) => {
+      registerSignInProviderCookie(server)
+
       server.route([
         {
           ...defraIdCallbackController,
@@ -25,7 +31,7 @@ const auth = {
         },
         {
           handler: (request, h) =>
-            h.redirect(request.localiseUrl(paths.loggedOut)),
+            h.redirect(request.localiseUrl(signedOutPage(request))),
           method: 'GET',
           options: { auth: false },
           path: paths.auth.postLogoutRedirect

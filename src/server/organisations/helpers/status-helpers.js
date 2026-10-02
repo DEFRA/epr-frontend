@@ -1,3 +1,9 @@
+import { capitalize } from 'lodash-es'
+
+/**
+ * @typedef {{ text: string, classes: string }} StatusTag
+ */
+
 /**
  * Maps status to GOV.UK tag color class
  * @param {string} status - The status value
@@ -15,3 +21,12 @@ export function getStatusClass(status) {
 
   return statusMap[status.toLowerCase()] || 'grey'
 }
+
+/**
+ * @param {string} status
+ * @returns {StatusTag}
+ */
+export const toStatusTag = (status) => ({
+  text: capitalize(status),
+  classes: `govuk-tag--${getStatusClass(status)}`
+})

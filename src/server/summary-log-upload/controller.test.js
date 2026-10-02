@@ -1,7 +1,14 @@
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByLabelText, getByRole, getByText } from '@testing-library/dom'
@@ -33,7 +40,10 @@ const mockOrganisationData = /** @type {Organisation} */ (
   })
 )
 
-const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
+
+const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
 describe('#summaryLogUploadController', () => {
   const organisationId = '123'
@@ -73,6 +83,91 @@ describe('#summaryLogUploadController', () => {
     expect(result).toContain(
       `href="/organisations/${organisationId}/registrations/${registrationId}"`
     )
+  })
+
+  it('should render the upload form for an operator', async ({ server }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const $ = cheerio.load(
+      /** @type {string} */ (/** @type {unknown} */ (result))
+    )
+
+    expect($('main form')).toHaveLength(1)
+  })
+
+  it('should not render the upload form for a regulator', async ({
+    server
+  }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url,
+      auth: buildMockAuth({
+        provider: OIDC_ENTRA_ID,
+        idToken: 'test-id-token',
+        ...sessionIdentity(IDENTITIES.regulator)
+      })
+    })
+
+    const $ = cheerio.load(
+      /** @type {string} */ (/** @type {unknown} */ (result))
+    )
+
+    expect($('main form')).toHaveLength(0)
+  })
+
+  it('should not create a summary log for a regulator opening the page', async ({
+    server
+  }) => {
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: buildMockAuth({
+        provider: OIDC_ENTRA_ID,
+        idToken: 'test-id-token',
+        ...sessionIdentity(IDENTITIES.regulator)
+      })
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(initiateSummaryLogUpload).not.toHaveBeenCalled()
+
+    const $ = cheerio.load(
+      /** @type {string} */ (/** @type {unknown} */ (result))
+    )
+
+    expect($('main h1').text()).toContain('Summary log')
+  })
+
+  it('should record the journey start when an operator opens the upload page', async ({
+    server
+  }) => {
+    await server.inject({ method: 'GET', url, auth: mockAuth })
+
+    expect(metrics.journey.start).toHaveBeenCalledWith(
+      expect.anything(),
+      JOURNEY.uploadSummaryLog,
+      registrationId
+    )
+  })
+
+  it('should not record a journey start for a regulator opening the page', async ({
+    server
+  }) => {
+    await server.inject({
+      method: 'GET',
+      url,
+      auth: buildMockAuth({
+        provider: OIDC_ENTRA_ID,
+        idToken: 'test-id-token',
+        ...sessionIdentity(IDENTITIES.regulator)
+      })
+    })
+
+    expect(metrics.journey.start).not.toHaveBeenCalled()
   })
 
   it('should display error page without leaking backend error details', async ({
@@ -121,7 +216,7 @@ describe('#summaryLogUploadController', () => {
       registrationId: '456',
       redirectUrl:
         '/organisations/123/registrations/456/summary-logs/{summaryLogId}',
-      idToken: 'test-id-token'
+      backendToken: 'test-id-token'
     })
   })
 

@@ -1,4 +1,5 @@
 import convict from 'convict'
+import Joi from 'joi'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -14,6 +15,28 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
+
+/**
+ * The highest valid day-of-month to accept, for the current year.
+ * @param {number} month 1-12
+ * @returns {number}
+ */
+function maxDayOfMonth(month) {
+  const currentYear = new Date().getFullYear()
+  return new Date(currentYear, month, 0).getDate()
+}
+
+/**
+ * @param {string} value
+ */
+export const assertOptionalHttpUrl = (value) =>
+  Joi.assert(
+    value,
+    Joi.string()
+      .allow('')
+      .uri({ scheme: ['http', 'https'] }),
+    'must be empty or an http(s) URL:'
+  )
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
@@ -249,6 +272,12 @@ export const config = convict({
     default: 'http://localhost:3000',
     env: 'APP_BASE_URL'
   },
+  allowedRedirectOrigins: {
+    doc: 'Comma-separated list of additional origins the service answers on, such as a vanity domain. A request arriving on one of these keeps that origin for its authentication redirects, instead of falling back to appBaseUrl.',
+    format: Array,
+    default: /** @type {string[]} */ ([]),
+    env: 'ALLOWED_REDIRECT_ORIGINS'
+  },
   eprBackendUrl: {
     doc: 'EPR Backend API base URL',
     format: String,
@@ -328,12 +357,6 @@ export const config = convict({
       default:
         'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration'
     },
-    tenantId: {
-      doc: 'Entra ID Tenant ID',
-      format: String,
-      env: 'ENTRA_TENANT_ID',
-      default: '6f504113-6b64-43f2-ade9-242e05780007'
-    },
     clientId: {
       doc: 'Entra ID Client ID',
       format: String,
@@ -356,17 +379,137 @@ export const config = convict({
       env: 'AUDIT_ENABLED'
     }
   },
+  analytics: {
+    isEnabled: {
+      doc: 'Is analytics enabled',
+      format: Boolean,
+      default: false,
+      env: 'ANALYTICS_ENABLED'
+    },
+    measurementId: {
+      doc: 'Measurement id of the analytics property to report to',
+      format: String,
+      default: '',
+      env: 'ANALYTICS_MEASUREMENT_ID'
+    }
+  },
+  satisfactionSurvey: {
+    isEnabled: {
+      doc: 'Feature Flag: Show the satisfaction survey link on completion pages',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_SATISFACTION_SURVEYS'
+    },
+    prnUrl: {
+      doc: 'Satisfaction survey for the issue a PRN or PERN journey',
+      format: assertOptionalHttpUrl,
+      default: '',
+      env: 'SATISFACTION_SURVEY_PRN_URL'
+    },
+    reportUrl: {
+      doc: 'Satisfaction survey for the submit your report journey',
+      format: assertOptionalHttpUrl,
+      default: '',
+      env: 'SATISFACTION_SURVEY_REPORT_URL'
+    },
+    summaryLogUrl: {
+      doc: 'Satisfaction survey for the update your summary log journey',
+      format: assertOptionalHttpUrl,
+      default: '',
+      env: 'SATISFACTION_SURVEY_SUMMARY_LOG_URL'
+    }
+  },
   featureFlags: {
+    marketInsights: {
+      doc: 'Feature Flag: Link regulators to the market insights page from their home page',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_MARKET_INSIGHTS'
+    },
     regulatorAccess: {
       doc: 'Feature Flag: Enable Entra ID login for regulators',
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_REGULATOR_ACCESS'
+    },
+    wasteRecordsDownload: {
+      doc: 'Feature Flag: Offer waste records as CSV to regulators',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_WASTE_RECORDS_DOWNLOAD'
+    }
+  },
+  reapplyAccreditation: {
+    windowStart: {
+      doc: 'Recurring annual start (inclusive) of the reapply-for-accreditation window, as MM-DDTHH:mm in UK local time (Europe/London)',
+      format: assertValidReapplyWindowBound,
+      default: '09-01T09:05',
+      env: 'REAPPLY_ACCREDITATION_WINDOW_START'
+    },
+    windowEnd: {
+      doc: 'Recurring annual end (inclusive) of the reapply-for-accreditation window, as MM-DDTHH:mm in UK local time (Europe/London)',
+      format: assertValidReapplyWindowBound,
+      default: '12-31T23:59',
+      env: 'REAPPLY_ACCREDITATION_WINDOW_END'
+    },
+    baseUrl: {
+      doc: 'WS2 register/enrol frontend base URL the reapply link points at',
+      format: assertOptionalHttpUrl,
+      default: '',
+      env: 'REAPPLY_ACCREDITATION_BASE_URL'
     }
   }
 })
 
 config.validate({ allowed: 'strict' })
+
+/**
+ * Fail fast on a misconfigured reapply window. The feature has no flag and is
+ * gated entirely on this config, so a silent bad value is a silent kill switch.
+ * Both bounds are validated for shape by `assertValidReapplyWindowBound`
+ * (invalid dates such as 02-30 are already unrepresentable by the time this
+ * runs); this guard covers the one thing a single bound cannot check on its
+ * own - the start being after the end. Because both are zero-padded
+ * `MM-DDTHH:mm`, a plain string comparison orders them correctly and stays
+ * year-independent, so the annual recurrence still holds.
+ * @param {{ windowStart: string; windowEnd: string }} window
+ */
+export const assertValidReapplyWindow = ({ windowStart, windowEnd }) => {
+  if (windowStart > windowEnd) {
+    throw new Error(
+      `reapplyAccreditation.windowStart (${windowStart}) must not be after windowEnd (${windowEnd})`
+    )
+  }
+}
+
+/**
+ * Convict format for `reapplyAccreditation.windowStart` / `windowEnd`. Must be
+ * `MM-DDTHH:mm` (year omitted - the window recurs annually) naming a real UK
+ * wall-clock date and time, so an invalid date stays unrepresentable rather
+ * than silently rolling over at resolution time. Declared as a function so it
+ * is hoisted for the schema above.
+ * @param {string} value
+ */
+export function assertValidReapplyWindowBound(value) {
+  const match = /^(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d)$/.exec(value)
+
+  if (!match) {
+    throw new Error(
+      `reapplyAccreditation window bound must be MM-DDTHH:mm (24-hour), got "${value}"`
+    )
+  }
+
+  const month = Number(match[1])
+  const day = Number(match[2])
+
+  if (month < 1 || month > 12 || day < 1 || day > maxDayOfMonth(month)) {
+    throw new Error(
+      `reapplyAccreditation window bound must name a real UK date, got "${value}"`
+    )
+  }
+}
+
+assertValidReapplyWindow(config.get('reapplyAccreditation'))
 
 export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'

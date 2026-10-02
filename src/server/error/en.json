@@ -2,6 +2,11 @@
   "badRequest": "Bad request",
   "forbidden": "Forbidden",
   "generic": "Something went wrong. Please try again.",
+  "noPermission": {
+    "pageTitle": "You do not have permission",
+    "heading": "You do not have permission",
+    "body": "You cannot use the page you asked for. If you think you should have access, contact us using the details at the bottom of this page."
+  },
   "notFound": "Page not found",
   "page": {
     "pageTitle": "Something has gone wrong",

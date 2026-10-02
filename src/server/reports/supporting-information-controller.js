@@ -1,6 +1,6 @@
 import Joi from 'joi'
 
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
@@ -173,7 +173,7 @@ async function buildViewData(request, options = {}) {
     await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.backendToken
     )
 
   const reportDetail = await fetchReportDetail(
@@ -183,10 +183,10 @@ async function buildViewData(request, options = {}) {
     cadence,
     period,
     submissionNumber,
-    session.idToken
+    session.backendToken
   )
 
-  const material = getDisplayMaterial(registration)
+  const material = getRegistrationMaterialDisplayName(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
@@ -292,7 +292,7 @@ export const supportingInformationPostController = {
         submissionNumber
       },
       { supportingInformation },
-      request.auth.credentials.idToken
+      request.auth.credentials.backendToken
     )
 
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`

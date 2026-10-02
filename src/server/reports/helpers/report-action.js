@@ -39,6 +39,29 @@ const ACTION_BY_STATUS = {
     REPORT_ACTION.REVIEW_AND_CREATE_DRAFT
 }
 
+/**
+ * Whether an action only reads. Every other action opens a journey that changes
+ * the operator's data, so a session holding no write scope is offered no link
+ * for that row rather than a link into a page it cannot use.
+ *
+ * Exhaustive by ReportActionValue, so a new action is a type error until
+ * somebody decides which side of the line it falls.
+ * @type {Record<ReportActionValue, boolean>}
+ */
+const ACTION_READS = {
+  [REPORT_ACTION.CREATE_DRAFT]: false,
+  [REPORT_ACTION.CONTINUE]: false,
+  [REPORT_ACTION.REVIEW_AND_SUBMIT]: false,
+  [REPORT_ACTION.VIEW]: true,
+  [REPORT_ACTION.REVIEW_AND_CREATE_DRAFT]: false
+}
+
+/**
+ * @param {ReportActionValue} action
+ * @returns {boolean}
+ */
+export const actionReads = (action) => ACTION_READS[action]
+
 /** @type {Record<ReportActionValue, string>} */
 const actionLabelKeys = {
   [REPORT_ACTION.CREATE_DRAFT]: 'reports:actionCreateDraft',

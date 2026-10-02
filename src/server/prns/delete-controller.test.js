@@ -10,6 +10,8 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
@@ -76,6 +78,9 @@ const mockPrnIssued = asPackagingRecyclingNote({
   ...mockPrnAwaitingAuth,
   status: 'awaiting_acceptance'
 })
+
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 describe('#deleteController', () => {
   beforeEach(() => {
@@ -248,7 +253,7 @@ describe('#deleteController', () => {
           accreditationId,
           prnId,
           { status: 'deleted' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 
@@ -340,6 +345,42 @@ describe('#deleteController', () => {
 
         expect(statusCode).toBe(statusCodes.forbidden)
       })
+    })
+  })
+
+  describe('journey events', () => {
+    it('should record the journey start when the confirmation page renders', async ({
+      server
+    }) => {
+      await server.inject({ method: 'GET', url: deleteUrl, auth: mockAuth })
+
+      expect(metrics.journey.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.deletePrn,
+        prnId
+      )
+    })
+
+    it('should record the journey end once the action succeeds', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, deleteUrl, {
+        auth: mockAuth
+      })
+
+      await server.inject({
+        method: 'POST',
+        url: deleteUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(metrics.journey.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.deletePrn,
+        prnId
+      )
     })
   })
 })

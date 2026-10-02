@@ -66,7 +66,7 @@ const mockRequest = {
   },
   auth: {
     credentials: {
-      idToken: 'mock-id-token'
+      backendToken: 'mock-backend-token'
     }
   },
   t: (key) => key,

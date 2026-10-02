@@ -22,11 +22,14 @@ vi.mock(
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 const { fetchWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
+const { fetchDecemberPrnEligibility } =
+  await import('./helpers/fetch-december-prn-eligibility.js')
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -91,6 +94,15 @@ const mockPrnCreated = asCreatePrnResponse({
   material: 'plastic',
   status: 'draft',
   wasteProcessingType: 'reprocessor-input'
+})
+
+const mockDecemberWastePrnCreated = asCreatePrnResponse({
+  id: 'prn-789',
+  tonnage: 100,
+  material: 'plastic',
+  status: 'draft',
+  wasteProcessingType: 'reprocessor-input',
+  isDecemberWaste: true
 })
 
 const mockPernCreated = asCreatePrnResponse({
@@ -175,6 +187,10 @@ describe('#createdController', () => {
     vi.mocked(fetchWasteBalances).mockResolvedValue({
       'acc-001': { amount: 1000, availableAmount: 500 }
     })
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      mode: 'none',
+      windowOpen: false
+    })
   })
 
   describe('request handling', () => {
@@ -198,6 +214,41 @@ describe('#createdController', () => {
         const main = getByRole(body, 'main')
 
         expect(getByText(main, /PRN created/i)).toBeDefined()
+      })
+
+      it('displays "PRN created from December waste" heading when the flag is true', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(mockDecemberWastePrnCreated)
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 500,
+            decemberAmount: 500,
+            decemberAvailableAmount: 500
+          }
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+
+        const { cookies } = await createPrnAndConfirm(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(
+          getByText(main, /PRN created from December waste/i)
+        ).toBeDefined()
       })
 
       it('displays status awaiting authorisation in panel', async ({

@@ -16,7 +16,7 @@ describe(updateReport, () => {
   const cadence = 'quarterly'
   const period = 1
   const submissionNumber = 1
-  const idToken = 'test-token'
+  const backendToken = 'test-token'
 
   const mockResponse = { ok: true }
 
@@ -37,7 +37,7 @@ describe(updateReport, () => {
         submissionNumber
       },
       { supportingInformation: 'Supply chain disruption in February' },
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -67,7 +67,7 @@ describe(updateReport, () => {
         submissionNumber
       },
       { status: 'ready_to_submit' },
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -95,7 +95,7 @@ describe(updateReport, () => {
         submissionNumber
       },
       { supportingInformation: '' },
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -119,7 +119,7 @@ describe(updateReport, () => {
         submissionNumber
       },
       { supportingInformation: 'notes' },
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -141,7 +141,7 @@ describe(updateReport, () => {
         submissionNumber
       },
       { supportingInformation: 'notes' },
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(mockResponse)
@@ -162,7 +162,7 @@ describe(updateReport, () => {
           submissionNumber
         },
         { supportingInformation: 'notes' },
-        idToken
+        backendToken
       )
     ).rejects.toThrow('Network error')
   })

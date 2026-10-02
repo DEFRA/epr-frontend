@@ -14,7 +14,7 @@ describe(updatePrnStatus, () => {
   const registrationId = 'reg-456'
   const accreditationId = 'acc-abc'
   const prnId = 'prn-789'
-  const idToken = 'test-token'
+  const backendToken = 'test-token'
 
   const payload = {
     status: 'awaiting_authorisation'
@@ -43,7 +43,7 @@ describe(updatePrnStatus, () => {
       accreditationId,
       prnId,
       payload,
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -51,7 +51,7 @@ describe(updatePrnStatus, () => {
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${idToken}`
+          Authorization: `Bearer ${backendToken}`
         },
         body: JSON.stringify(payload)
       }
@@ -67,7 +67,7 @@ describe(updatePrnStatus, () => {
       'acc@abc',
       'prn#789',
       payload,
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -85,7 +85,7 @@ describe(updatePrnStatus, () => {
       accreditationId,
       prnId,
       payload,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(mockResponse)
@@ -102,7 +102,7 @@ describe(updatePrnStatus, () => {
         accreditationId,
         prnId,
         payload,
-        idToken
+        backendToken
       )
     ).rejects.toThrow('Network error')
   })

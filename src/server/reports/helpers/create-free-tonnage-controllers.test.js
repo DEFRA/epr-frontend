@@ -358,7 +358,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
             submissionNumber: 1
           },
           { freeTonnage: 5 },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })

@@ -29,13 +29,14 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     const result = await getRequiredRegistrationWithAccreditation({
       organisationId: 'org-123',
       registrationId: 'reg-001',
-      idToken: 'mock-token',
+      backendToken: 'mock-token',
       accreditationId: 'acc-001'
     })
 
     expect(result).toStrictEqual({
       registration,
       accreditation,
+      rawAccreditation: accreditation,
       organisationData: { id: 'org-123' }
     })
   })
@@ -49,7 +50,7 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       getRequiredRegistrationWithAccreditation({
         organisationId: 'org-123',
         registrationId: 'reg-nonexistent',
-        idToken: 'mock-token'
+        backendToken: 'mock-token'
       })
     ).rejects.toMatchObject({
       isBoom: true,
@@ -70,7 +71,7 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       getRequiredRegistrationWithAccreditation({
         organisationId: 'org-123',
         registrationId: 'reg-001',
-        idToken: 'mock-token'
+        backendToken: 'mock-token'
       })
     ).rejects.toMatchObject({
       isBoom: true,
@@ -99,13 +100,14 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     const result = await getRequiredRegistrationWithAccreditation({
       organisationId: 'org-123',
       registrationId: 'reg-001',
-      idToken: 'mock-token',
+      backendToken: 'mock-token',
       accreditationId: 'acc-001'
     })
 
     expect(result).toStrictEqual({
       registration,
       accreditation,
+      rawAccreditation: accreditation,
       organisationData: { id: 'org-123' }
     })
   })
@@ -123,7 +125,7 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       getRequiredRegistrationWithAccreditation({
         organisationId: 'org-123',
         registrationId: 'reg-001',
-        idToken: 'mock-token',
+        backendToken: 'mock-token',
         accreditationId: 'acc-wrong'
       })
     ).rejects.toMatchObject({
@@ -150,7 +152,7 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     await getRequiredRegistrationWithAccreditation({
       organisationId: 'org-123',
       registrationId: 'reg-001',
-      idToken: 'mock-token',
+      backendToken: 'mock-token',
       accreditationId: 'acc-001'
     })
 

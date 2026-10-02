@@ -246,7 +246,7 @@ describe('#tonnesNotRecycledController', () => {
             submissionNumber: 1
           },
           { tonnageNotRecycled: 20 },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })

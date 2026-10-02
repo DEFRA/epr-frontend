@@ -12,25 +12,25 @@ describe(linkOrganisation, () => {
     msw
   }) => {
     const organisationId = 'org-123'
-    const idToken = 'valid-id-token'
+    const backendToken = 'valid-id-token'
 
     msw.use(
       bearerAuthHandler(
         'post',
         `${backendUrl}/v1/organisations/${organisationId}/link`,
-        idToken,
+        backendToken,
         () => HttpResponse.json({})
       )
     )
 
     await expect(
-      linkOrganisation(idToken, organisationId)
+      linkOrganisation(backendToken, organisationId)
     ).resolves.toBeUndefined()
   })
 
   it('should throw error when backend returns 401', async ({ msw }) => {
     const organisationId = 'org-456'
-    const idToken = 'invalid-token'
+    const backendToken = 'invalid-token'
 
     msw.use(
       http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
@@ -39,7 +39,7 @@ describe(linkOrganisation, () => {
     )
 
     await expect(
-      linkOrganisation(idToken, organisationId)
+      linkOrganisation(backendToken, organisationId)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -50,7 +50,7 @@ describe(linkOrganisation, () => {
 
   it('should throw error when backend returns 404', async ({ msw }) => {
     const organisationId = 'non-existent-org'
-    const idToken = 'valid-token'
+    const backendToken = 'valid-token'
 
     msw.use(
       http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
@@ -62,7 +62,7 @@ describe(linkOrganisation, () => {
     )
 
     await expect(
-      linkOrganisation(idToken, organisationId)
+      linkOrganisation(backendToken, organisationId)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -73,7 +73,7 @@ describe(linkOrganisation, () => {
 
   it('should throw error when backend returns 500', async ({ msw }) => {
     const organisationId = 'org-789'
-    const idToken = 'valid-token'
+    const backendToken = 'valid-token'
 
     msw.use(
       http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
@@ -85,7 +85,7 @@ describe(linkOrganisation, () => {
     )
 
     await expect(
-      linkOrganisation(idToken, organisationId)
+      linkOrganisation(backendToken, organisationId)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {

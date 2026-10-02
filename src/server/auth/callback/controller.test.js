@@ -1,6 +1,11 @@
 import { defraIdCallbackController } from '#server/auth/callback/controller.js'
+import * as fetchIdentityModule from '#server/auth/helpers/fetch-identity.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
-import { asUserOrganisations } from '#server/common/test-helpers/auth-helper.js'
+import {
+  asUserOrganisations,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import {
   mockHapiRequest,
   asResponseToolkit
@@ -25,16 +30,20 @@ vi.mock(import('node:crypto'), () => ({
   )
 }))
 
+vi.mock(import('#server/auth/helpers/fetch-identity.js'))
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
 vi.mock(import('#server/auth/helpers/add-user-to-organisation.js'))
 vi.mock(import('#server/common/helpers/metrics/index.js'))
 
 describe('#authCallbackController', () => {
   beforeEach(() => {
-    vi.mocked(metricsModule.metrics.signInSuccess).mockResolvedValue(undefined)
-    vi.mocked(metricsModule.metrics.signInFailure).mockResolvedValue(undefined)
+    vi.mocked(fetchIdentityModule.fetchIdentity).mockResolvedValue(
+      IDENTITIES.operator
+    )
+    vi.mocked(metricsModule.metrics.signIn.success).mockResolvedValue(undefined)
+    vi.mocked(metricsModule.metrics.signIn.failure).mockResolvedValue(undefined)
     vi.mocked(
-      metricsModule.metrics.signInSuccessNonInitialUser
+      metricsModule.metrics.signIn.successNonInitialUser
     ).mockResolvedValue(undefined)
   })
 
@@ -76,6 +85,7 @@ describe('#authCallbackController', () => {
             profile: mockProfile,
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             urls: {
               token: 'http://test.auth/token',
@@ -104,6 +114,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -120,13 +131,15 @@ describe('#authCallbackController', () => {
         {
           profile: mockProfile,
           idToken: 'mock-id-token',
+          backendToken: 'mock-backend-token',
           expiresAt: expect.any(String),
           refreshToken: 'mock-refresh-token',
           urls: {
             token: 'http://test.auth/token',
             logout: 'http://test.auth/logout'
           },
-          linkedOrganisationId: 'defra-org-uuid'
+          linkedOrganisationId: 'defra-org-uuid',
+          ...sessionIdentity(IDENTITIES.operator)
         }
       )
 
@@ -139,6 +152,67 @@ describe('#authCallbackController', () => {
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/dashboard')
       // eslint-disable-next-line vitest/max-expects
       expect(result).toBe('redirect-response')
+    })
+
+    it('takes the newest stashed referrer when the operator has more than one', async () => {
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockResolvedValue(
+        asUserOrganisations({
+          current: { id: 'defra-org-uuid', name: 'Test Defra Organisation' },
+          linked: {
+            id: 'defra-org-uuid',
+            name: 'Test Defra Organisation',
+            linkedBy: { email: 'user@example.com', id: 'user-123' },
+            linkedAt: '2025-12-10T09:00:00.000Z'
+          },
+          unlinked: []
+        })
+      )
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: {
+              id: 'user-123',
+              email: 'test@example.com',
+              displayName: 'Test User',
+              firstName: 'Test',
+              lastName: 'User'
+            },
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
+            refreshToken: 'mock-refresh-token',
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
+          }
+        },
+        server: {
+          app: { cache: { set: vi.fn().mockResolvedValue(undefined) } }
+        },
+        cookieAuth: { set: vi.fn() },
+        logger: { info: vi.fn(), error: vi.fn() },
+        yar: {
+          flash: vi.fn().mockReturnValue(['/first/page', '/second/page'])
+        },
+        localiseUrl: vi.fn((url) => url)
+      }
+
+      const mockH = {
+        unstate: vi.fn(),
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
+
+      await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
+
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/second/page')
     })
 
     it('should log sign-in with userId for unique user logging', async () => {
@@ -168,6 +242,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -185,7 +260,10 @@ describe('#authCallbackController', () => {
         localiseUrl: vi.fn((url) => url)
       }
 
-      const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
+      const mockH = {
+        unstate: vi.fn(),
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
 
       await defraIdCallbackController.handler(
         mockHapiRequest(mockRequest),
@@ -289,6 +367,7 @@ describe('#authCallbackController', () => {
         }
 
         const mockH = {
+          unstate: vi.fn(),
           redirect: vi.fn().mockReturnValue('redirect-response')
         }
 
@@ -339,6 +418,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -368,6 +448,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -430,6 +511,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -459,6 +541,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -469,7 +552,7 @@ describe('#authCallbackController', () => {
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      ).toHaveBeenCalledExactlyOnceWith('mock-backend-token')
 
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
@@ -511,6 +594,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -539,6 +623,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-to-linking')
       }
 
@@ -577,6 +662,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -617,6 +703,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -687,6 +774,7 @@ describe('#authCallbackController', () => {
         }
 
         const mockH = {
+          unstate: vi.fn(),
           redirect: vi.fn().mockReturnValue('redirect-response')
         }
 
@@ -721,6 +809,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -749,6 +838,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -766,7 +856,7 @@ describe('#authCallbackController', () => {
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      ).toHaveBeenCalledExactlyOnceWith('mock-backend-token')
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
         expect.any(Object)
@@ -818,6 +908,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -847,6 +938,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -896,6 +988,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -924,6 +1017,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -962,6 +1056,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -990,6 +1085,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 

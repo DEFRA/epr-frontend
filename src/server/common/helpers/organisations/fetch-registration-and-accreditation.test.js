@@ -12,7 +12,7 @@ describe(fetchRegistrationAndAccreditation, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const accreditationId = 'acc-789'
-  const idToken = 'test-id-token'
+  const backendToken = 'test-id-token'
 
   test('returns organisation data, registration and accreditation when all exist', async ({
     msw
@@ -38,17 +38,20 @@ describe(fetchRegistrationAndAccreditation, () => {
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
+
+    const accreditation = {
+      id: accreditationId,
+      accreditationNumber: 'ACC-2025-001',
+      status: 'approved'
+    }
 
     expect(result).toStrictEqual({
       organisationData: mockOrganisationData,
       registration: { id: registrationId, accreditationId },
-      accreditation: {
-        id: accreditationId,
-        accreditationNumber: 'ACC-2025-001',
-        status: 'approved'
-      }
+      accreditation,
+      rawAccreditation: accreditation
     })
   })
 
@@ -76,13 +79,18 @@ describe(fetchRegistrationAndAccreditation, () => {
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual({
       organisationData: mockOrganisationData,
       registration: { id: registrationId, accreditationId },
-      accreditation: undefined
+      accreditation: undefined,
+      rawAccreditation: {
+        id: accreditationId,
+        accreditationNumber: 'ACC-2025-001',
+        status: 'created'
+      }
     })
   })
 
@@ -100,7 +108,11 @@ describe(fetchRegistrationAndAccreditation, () => {
     )
 
     await expect(
-      fetchRegistrationAndAccreditation(organisationId, registrationId, idToken)
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        backendToken
+      )
     ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 404 } })
   })
 
@@ -124,13 +136,14 @@ describe(fetchRegistrationAndAccreditation, () => {
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual({
       organisationData: mockOrganisationData,
       registration: { id: registrationId },
-      accreditation: undefined
+      accreditation: undefined,
+      rawAccreditation: undefined
     })
   })
 
@@ -156,13 +169,14 @@ describe(fetchRegistrationAndAccreditation, () => {
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual({
       organisationData: mockOrganisationData,
       registration: { id: registrationId, accreditationId: 'non-existent-acc' },
-      accreditation: undefined
+      accreditation: undefined,
+      rawAccreditation: undefined
     })
   })
 
@@ -180,7 +194,11 @@ describe(fetchRegistrationAndAccreditation, () => {
     )
 
     await expect(
-      fetchRegistrationAndAccreditation(organisationId, registrationId, idToken)
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        backendToken
+      )
     ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 404 } })
   })
 
@@ -203,7 +221,7 @@ describe(fetchRegistrationAndAccreditation, () => {
     await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     expect(
@@ -220,7 +238,11 @@ describe(fetchRegistrationAndAccreditation, () => {
     )
 
     await expect(
-      fetchRegistrationAndAccreditation(organisationId, registrationId, idToken)
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        backendToken
+      )
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }

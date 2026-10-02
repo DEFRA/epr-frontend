@@ -1,4 +1,4 @@
-@use "govuk-frontend" as *;
+@use 'govuk-frontend' as *;
 
 .epr-task-cards {
   display: flex;
@@ -28,16 +28,57 @@
     background: #e5e6e7;
 
     .govuk-summary-card__title {
-      color: govuk-colour("blue");
+      color: govuk-colour('blue');
       @include govuk-font($size: 48, $weight: bold);
     }
 
     p {
-      color: govuk-colour("blue");
+      color: govuk-colour('blue');
     }
   }
 
   .govuk-summary-card__content {
-    background: govuk-colour("black", $variant: "tint-95");
+    background: govuk-colour('black', $variant: 'tint-95');
+  }
+}
+
+// The December breakdown panel (PAE-1921) is a three-band variant of the
+// banner (see the updated December 2026 Figma frames): the blue heading sits on
+// the grey band, the December / non-December / total rows sit on the lighter
+// band below with GDS row dividers, and the hint returns to the grey band
+// beneath. Each band is a full-bleed sibling of the card, carrying its own
+// padding so the heading, the rows and the hint all share one left edge. The
+// rows keep the default (near-black) text colour rather than the heading's
+// blue: blue on the tint falls below the WCAG AA contrast ratio for normal-size
+// text, and GDS reserves blue for links. A standard (bordered)
+// govuk-summary-list keeps the GDS responsive behaviour, so each key stacks
+// over its value below the tablet breakpoint and the panel reflows without a
+// horizontal scrollbar at 320px.
+.epr-waste-balance-banner--breakdown {
+  // The rows sit on the lighter content band. Padding on the content div (not
+  // the summary list, whose `display: table` box ignores it) insets the rows
+  // and their dividers so they line up with the heading and hint.
+  .govuk-summary-card__content {
+    padding: govuk-spacing(3) govuk-spacing(6);
+  }
+
+  .govuk-summary-list {
+    margin-bottom: 0;
+
+    // A 50% key column starts the figures on the same vertical line as the
+    // accreditation column of the details grid above: that grid splits the
+    // content width in half, and the card's padding is symmetric, so a
+    // half-and-half split here lands the values directly beneath it.
+    @include govuk-media-query($from: tablet) {
+      .govuk-summary-list__key {
+        width: 50%;
+      }
+    }
+  }
+
+  // The hint returns to the heading's grey band, sandwiching the lighter rows.
+  .epr-waste-balance-banner__hint {
+    padding: govuk-spacing(4) govuk-spacing(6);
+    background: #e5e6e7;
   }
 }

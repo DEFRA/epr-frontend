@@ -1,10 +1,16 @@
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { extractCookieValues } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
@@ -21,7 +27,7 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 
@@ -98,7 +104,7 @@ const mockFetchWasteBalances = vi.mocked(fetchWasteBalances, {
   deep: true
 })
 
-const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
+const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
 const enablesClientSidePolling = () =>
   expect.stringContaining('meta http-equiv="refresh"')
@@ -135,7 +141,7 @@ describe('#summaryLogUploadProgressController', () => {
       organisationId,
       registrationId,
       summaryLogId,
-      { idToken: 'test-id-token' }
+      { backendToken: 'test-id-token' }
     )
     expect(result).toStrictEqual(expect.stringContaining('Summary log |'))
     expect(statusCode).toBe(statusCodes.ok)
@@ -235,6 +241,36 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('terminal states', () => {
+    const ZERO_CHANGE = {
+      balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+      nonBalanceAffecting: { count: 0, rows: [] }
+    }
+    const emptyPeriod = () => ({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
+
+    const submittedWithClosedAdjustment = () => ({
+      status: summaryLogStatuses.submitted,
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
+            nonBalanceAffecting: { count: 0, rows: [] }
+          }
+        }
+      }
+    })
+
+    const getMain = async (server) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+      return getByRole(body, 'main')
+    }
+
     it('status: submitted - should show success page and stop polling', async ({
       server
     }) => {
@@ -496,36 +532,6 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('closed-period adjustments "Further action needed" section', () => {
-      const ZERO_CHANGE = {
-        balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
-        nonBalanceAffecting: { count: 0, rows: [] }
-      }
-      const emptyPeriod = () => ({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
-
-      const submittedWithClosedAdjustment = () => ({
-        status: summaryLogStatuses.submitted,
-        loadsByReportingPeriod: {
-          openPeriodLoads: emptyPeriod(),
-          closedPeriodLoads: {
-            added: ZERO_CHANGE,
-            adjusted: {
-              balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
-              nonBalanceAffecting: { count: 0, rows: [] }
-            }
-          }
-        }
-      })
-
-      const getMain = async (server) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
-        const { body } = new JSDOM(result).window.document
-        return getByRole(body, 'main')
-      }
-
       it('shows the section and a "Go to reports" link when a closed period changed', async ({
         server
       }) => {
@@ -572,6 +578,90 @@ describe('#summaryLogUploadProgressController', () => {
         expect(
           queryByRole(main, 'button', { name: 'Go to reports' })
         ).toBeNull()
+      })
+    })
+
+    describe('satisfaction survey', () => {
+      const surveyUrl = 'https://survey.example/summary-log'
+      const surveyTitle = 'Help us improve this service'
+      const surveyText = 'Give us your feedback (opens in a new tab)'
+
+      const liveSurvey = () => {
+        config.set('satisfactionSurvey.isEnabled', true)
+        config.set('satisfactionSurvey.summaryLogUrl', surveyUrl)
+      }
+
+      afterEach(() => {
+        config.reset('satisfactionSurvey.isEnabled')
+        config.reset('satisfactionSurvey.summaryLogUrl')
+      })
+
+      const submittedWithoutClosedAdjustment = () => ({
+        status: summaryLogStatuses.submitted
+      })
+
+      const getBody = async (server) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        return new JSDOM(result, { url: 'http://localhost' }).window.document
+          .body
+      }
+
+      it('asks nothing while the surveys are switched off', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          submittedWithoutClosedAdjustment()
+        )
+
+        const body = await getBody(server)
+
+        expect(queryByText(body, surveyTitle)).toBeNull()
+      })
+
+      it.for([
+        {
+          description: 'an open period',
+          summaryLogStatus: submittedWithoutClosedAdjustment
+        },
+        {
+          description: 'a closed period needing further action',
+          summaryLogStatus: submittedWithClosedAdjustment
+        }
+      ])(
+        'asks below the page content after $description, leaving the links the user must act on alone',
+        async ({ summaryLogStatus }, { server }) => {
+          liveSurvey()
+          mockFetchSummaryLogStatus.mockResolvedValueOnce(summaryLogStatus())
+
+          const body = await getBody(server)
+          const main = getByRole(body, 'main')
+
+          expect(getByText(body, surveyTitle)).toBeDefined()
+          expect(queryByText(main, surveyTitle)).toBeNull()
+          expect(
+            getAllByRole(main, 'link').map((link) => link.textContent?.trim())
+          ).toStrictEqual(['Return to home'])
+        }
+      )
+
+      it('sends the user to the summary log survey, not one from another journey', async ({
+        server
+      }) => {
+        liveSurvey()
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          submittedWithoutClosedAdjustment()
+        )
+
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'link', { name: surveyText }).getAttribute('href')
+        ).toBe(surveyUrl)
       })
     })
 
@@ -1201,8 +1291,33 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
+    })
+
+    it('status: rejected - should not initiate an upload for a regulator', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.rejected,
+        validation: {
+          failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: buildMockAuth({
+          provider: OIDC_ENTRA_ID,
+          idToken: 'test-id-token',
+          ...sessionIdentity(IDENTITIES.regulator)
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(initiateSummaryLogUpload).not.toHaveBeenCalled()
+      expect(result).not.toContain('<form')
     })
 
     it('status: rejected without validation - should show validation failures page with technical error', async ({
@@ -1317,7 +1432,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
     })
 
@@ -2148,7 +2263,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
     })
 
@@ -2187,7 +2302,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
     })
 

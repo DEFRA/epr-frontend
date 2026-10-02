@@ -1,4 +1,4 @@
-import { config } from '#config/config.js'
+/** @import { SetupServerApi } from 'msw/node'; */
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { refreshIdToken } from '#server/auth/helpers/refresh-token.js'
 import { it } from '#vite/fixtures/server.js'
@@ -9,8 +9,18 @@ import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js
 
 /**
  * @import { Result } from '#server/common/helpers/result.js'
+ * @import { AuthProvider } from '#server/auth/types/auth-provider.js'
  * @import { UserSession } from '#server/auth/types/session.js'
  */
+
+/**
+ * An auth provider that contributes only the parameters its own token
+ * endpoint expects.
+ * @param {Record<string, string>} tokenRequestParams
+ * @returns {AuthProvider}
+ */
+const authProviderSending = (tokenRequestParams) =>
+  /** @type {AuthProvider} */ ({ tokenRequestParams })
 
 /**
  * @param {unknown} session
@@ -20,16 +30,20 @@ const asSessionResult = (session) =>
   /** @type {Result<UserSession>} */ (session)
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
-vi.mock(import('#config/config.js'))
 vi.mock(import('@defra/hapi-tracing'), () => ({
   withTraceId: vi.fn((_headerName, headers = {}) => headers),
   tracing: { plugin: {} }
 }))
 
 describe('refresh token', () => {
-  it('should refresh id token with correct parameters', async ({ msw }) => {
+  /**
+   * @param {SetupServerApi} msw
+   * @returns {() => Request | undefined}
+   */
+  const captureTokenRequest = (msw) => {
     /** @type {Request | undefined} */
     let capturedRequest
+
     msw.use(
       http.post('http://defra-id.auth/token', async ({ request }) => {
         capturedRequest = request.clone()
@@ -41,6 +55,10 @@ describe('refresh token', () => {
       })
     )
 
+    return () => capturedRequest
+  }
+
+  const sessionWithRefreshToken = () =>
     vi.mocked(getUserSession).mockResolvedValue(
       asSessionResult({
         ok: true,
@@ -51,18 +69,22 @@ describe('refresh token', () => {
       })
     )
 
-    vi.spyOn(vi.mocked(config), 'get').mockImplementation((key) => {
-      const values = {
-        'defraId.clientId': 'client-id-123',
-        'defraId.clientSecret': 'client-secret-456',
-        'defraId.serviceId': 'service-id-789'
-      }
-      return values[key]
-    })
+  it('should refresh id token with correct parameters', async ({ msw }) => {
+    const capturedRequest = captureTokenRequest(msw)
+
+    sessionWithRefreshToken()
 
     const mockRequest = { logger: { info: vi.fn() } }
 
-    await refreshIdToken(mockHapiRequest(mockRequest))
+    await refreshIdToken(
+      mockHapiRequest(mockRequest),
+      authProviderSending({
+        client_id: 'client-id-123',
+        client_secret: 'client-secret-456',
+        scope: 'openid offline_access',
+        serviceId: 'service-id-789'
+      })
+    )
 
     expect(getUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
     expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith({
@@ -75,7 +97,7 @@ describe('refresh token', () => {
       http: { response: { status_code: 200 } }
     })
 
-    const request = /** @type {Request} */ (capturedRequest)
+    const request = /** @type {Request} */ (capturedRequest())
     const params = new URLSearchParams(await request.text())
     expect(Object.fromEntries(params)).toStrictEqual({
       client_id: 'client-id-123',
@@ -84,6 +106,33 @@ describe('refresh token', () => {
       refresh_token: 'refresh-token-123',
       scope: 'openid offline_access',
       serviceId: 'service-id-789'
+    })
+  })
+
+  it('should send the parameters of the provider that issued the session', async ({
+    msw
+  }) => {
+    const capturedRequest = captureTokenRequest(msw)
+
+    sessionWithRefreshToken()
+
+    await refreshIdToken(
+      mockHapiRequest({ logger: { info: vi.fn() } }),
+      authProviderSending({
+        client_id: 'entra-client-id',
+        client_secret: 'entra-client-secret',
+        scope: 'openid api://entra-client-id/.default'
+      })
+    )
+
+    const request = /** @type {Request} */ (capturedRequest())
+    const params = new URLSearchParams(await request.text())
+    expect(Object.fromEntries(params)).toStrictEqual({
+      client_id: 'entra-client-id',
+      client_secret: 'entra-client-secret',
+      grant_type: 'refresh_token',
+      refresh_token: 'refresh-token-123',
+      scope: 'openid api://entra-client-id/.default'
     })
   })
 
@@ -99,7 +148,10 @@ describe('refresh token', () => {
     )
 
     await expect(
-      refreshIdToken(mockHapiRequest({ logger: createMockLogger() }))
+      refreshIdToken(
+        mockHapiRequest({ logger: createMockLogger() }),
+        authProviderSending({})
+      )
     ).rejects.toThrow('Cannot refresh token: no refresh token found')
   })
 
@@ -112,7 +164,10 @@ describe('refresh token', () => {
     )
 
     await expect(
-      refreshIdToken(mockHapiRequest({ logger: createMockLogger() }))
+      refreshIdToken(
+        mockHapiRequest({ logger: createMockLogger() }),
+        authProviderSending({})
+      )
     ).rejects.toThrow('Cannot refresh token: no refresh token found')
   })
 
@@ -121,9 +176,9 @@ describe('refresh token', () => {
 
     const mockRequest = { logger: { info: vi.fn() } }
 
-    await expect(refreshIdToken(mockHapiRequest(mockRequest))).rejects.toThrow(
-      'Cannot refresh token: no user session found'
-    )
+    await expect(
+      refreshIdToken(mockHapiRequest(mockRequest), authProviderSending({}))
+    ).rejects.toThrow('Cannot refresh token: no user session found')
 
     expect(mockRequest.logger.info).not.toHaveBeenCalled()
   })

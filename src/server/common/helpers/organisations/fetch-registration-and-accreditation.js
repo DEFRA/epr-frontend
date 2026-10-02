@@ -10,10 +10,22 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  */
 
 /**
+ * `accreditation` and `rawAccreditation` are the same linked record seen two
+ * ways, and yes, it is a bit awkward to expose both:
+ * - `accreditation` is the *filtered* view — present only when the record is
+ *   live (approved/suspended, per `isAccreditationActive`). Almost every
+ *   consumer wants this, because a non-live accreditation should render as
+ *   registered-only (no waste balance, no PRN card, no status tag).
+ * - `rawAccreditation` is the *unfiltered* record, whatever its status. It
+ *   exists solely because the reapply-for-accreditation link (PAE-1791) must
+ *   also react to `cancelled` accreditations, which the filtered view hides.
+ *   Prefer `accreditation`; reach for `rawAccreditation` only when you
+ *   genuinely need to inspect a non-live status.
  * @typedef {{
  *   organisationData: Organisation,
  *   registration: Registration,
- *   accreditation?: Accreditation
+ *   accreditation?: Accreditation,
+ *   rawAccreditation?: Accreditation
  * }} RegistrationWithAccreditation
  */
 
@@ -21,15 +33,18 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  * Fetches organisation data and extracts the registration and its linked accreditation
  * @param {string} organisationId - The organisation ID
  * @param {string} registrationId - The registration ID to find
- * @param {string} idToken - JWT ID token for authorization
+ * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<RegistrationWithAccreditation>} Organisation data with registration and accreditation
  */
 async function fetchRegistrationAndAccreditation(
   organisationId,
   registrationId,
-  idToken
+  backendToken
 ) {
-  const organisationData = await fetchOrganisationById(organisationId, idToken)
+  const organisationData = await fetchOrganisationById(
+    organisationId,
+    backendToken
+  )
 
   const registration = organisationData.registrations.find(
     ({ id }) => id === registrationId
@@ -51,6 +66,9 @@ async function fetchRegistrationAndAccreditation(
   return {
     organisationData,
     registration,
+    // The raw record is returned as-is; `accreditation` below is the same
+    // object filtered to live statuses only. See the typedef for the why.
+    rawAccreditation,
     accreditation: isAccreditationActive(rawAccreditation)
       ? rawAccreditation
       : undefined

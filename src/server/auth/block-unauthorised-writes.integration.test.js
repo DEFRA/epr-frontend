@@ -1,0 +1,265 @@
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
+import { paths } from '#server/paths.js'
+import { beforeEach, it } from '#vite/fixtures/server.js'
+import { JSDOM } from 'jsdom'
+import { http, HttpResponse } from 'msw'
+import { afterAll, beforeAll, describe, expect } from 'vitest'
+
+const backendUrl = config.get('eprBackendUrl')
+const organisationId = 'org-1'
+const linkingUrl = '/account/linking'
+
+const regulatorAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'jane.doe@example.com' },
+  ...sessionIdentity(IDENTITIES.regulator)
+})
+
+const supportAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-3', email: 'support.user@example.com' },
+  ...sessionIdentity(IDENTITIES.support)
+})
+
+const grantedNothingAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-2', email: 'john.doe@example.com' },
+  role: null,
+  scope: []
+})
+
+const operatorAuth = buildMockAuth()
+
+/**
+ * Write controls are forms inside main. A form has no ARIA role unless it is
+ * named, so there is nothing for a role query to match here.
+ * @param {unknown} result
+ */
+const writeControlsIn = (result) =>
+  new JSDOM(asHtml(result)).window.document.querySelectorAll('main form')
+
+describe('write guard', () => {
+  beforeAll(() => {
+    config.set('featureFlags.regulatorAccess', true)
+  })
+
+  beforeEach(({ msw }) => {
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations`, () =>
+        HttpResponse.json({
+          items: [],
+          page: 1,
+          pageSize: 50,
+          totalItems: 0,
+          totalPages: 0
+        })
+      ),
+      http.get(`${backendUrl}/v1/me/organisations`, () =>
+        HttpResponse.json({
+          organisations: {
+            current: { id: 'defra-org-123', name: 'My Defra Organisation' },
+            linked: null,
+            unlinked: [
+              {
+                id: organisationId,
+                name: 'Test Company Ltd',
+                orgId: '12345678'
+              }
+            ]
+          }
+        })
+      )
+    )
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.regulatorAccess', false)
+  })
+
+  it('refuses a regulator posting to an operator route, in place', async ({
+    server
+  }) => {
+    const { cookie, crumb } = await getCsrfToken(
+      server,
+      paths.regulators.home,
+      {
+        auth: regulatorAuth
+      }
+    )
+
+    const { statusCode, headers } = await server.inject({
+      method: 'POST',
+      url: linkingUrl,
+      auth: regulatorAuth,
+      headers: { cookie },
+      payload: { organisationId, crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.forbidden)
+    expect(headers.location).toBeUndefined()
+  })
+
+  it('refuses a support user posting to an operator route, in place', async ({
+    server
+  }) => {
+    const { cookie, crumb } = await getCsrfToken(
+      server,
+      paths.regulators.home,
+      {
+        auth: supportAuth
+      }
+    )
+
+    const { statusCode, headers } = await server.inject({
+      method: 'POST',
+      url: linkingUrl,
+      auth: supportAuth,
+      headers: { cookie },
+      payload: { organisationId, crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.forbidden)
+    expect(headers.location).toBeUndefined()
+  })
+
+  it('leaves an operator posting to the same route unaffected', async ({
+    server,
+    msw
+  }) => {
+    msw.use(
+      http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () =>
+        HttpResponse.json({})
+      )
+    )
+
+    const { cookie, crumb } = await getCsrfToken(server, '/cookies', {
+      auth: operatorAuth
+    })
+
+    const { statusCode, headers } = await server.inject({
+      method: 'POST',
+      url: linkingUrl,
+      auth: operatorAuth,
+      headers: { cookie },
+      payload: { organisationId, crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(`/organisations/${organisationId}`)
+  })
+
+  it('refuses a session the backend granted nothing, in place', async ({
+    server
+  }) => {
+    const { cookie, crumb } = await getCsrfToken(server, '/cookies', {
+      auth: grantedNothingAuth
+    })
+
+    const { statusCode, headers } = await server.inject({
+      method: 'POST',
+      url: linkingUrl,
+      auth: grantedNothingAuth,
+      headers: { cookie },
+      payload: { organisationId, crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.forbidden)
+    expect(headers.location).toBeUndefined()
+  })
+
+  it('shows a session the backend granted nothing no write controls', async ({
+    server
+  }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url: linkingUrl,
+      auth: grantedNothingAuth
+    })
+
+    expect(writeControlsIn(result)).toHaveLength(0)
+  })
+
+  it('shows an operator the write controls on an operator page', async ({
+    server
+  }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url: linkingUrl,
+      auth: operatorAuth
+    })
+
+    expect(writeControlsIn(result)).toHaveLength(1)
+  })
+
+  it('shows a regulator no write controls on the same page', async ({
+    server
+  }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url: linkingUrl,
+      auth: regulatorAuth
+    })
+
+    expect(writeControlsIn(result)).toHaveLength(0)
+  })
+
+  it.for([
+    paths.regulators.home,
+    paths.loggedOut,
+    paths.auth.defraId.login,
+    paths.auth.entraId.login,
+    '/',
+    '/cookies',
+    '/contact'
+  ])('leaves %s reachable by a regulator', async (url, { server }) => {
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: regulatorAuth
+    })
+
+    expect(statusCode).toBeLessThan(statusCodes.badRequest)
+  })
+
+  describe('recording a cookie choice', () => {
+    it('lets a signed-out visitor post their consent', async ({ server }) => {
+      const { cookie, crumb } = await getCsrfToken(server, '/cookies')
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/cookies/consent',
+        headers: { cookie },
+        payload: { crumb, analytics: 'rejected', returnUrl: '/cookies' }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+    })
+
+    it('still blocks a signed-in session that holds no write scope from writing elsewhere', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, linkingUrl, {
+        auth: grantedNothingAuth
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: linkingUrl,
+        headers: { cookie },
+        auth: grantedNothingAuth,
+        payload: { crumb, organisationId }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+  })
+})

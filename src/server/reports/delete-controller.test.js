@@ -6,6 +6,8 @@ import { asRegistrationWithAccreditation } from '#server/common/test-helpers/org
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
@@ -36,6 +38,10 @@ const registeredOnlyExporter = asRegistrationWithAccreditation({
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
 const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/delete`
+const reportAttempt = `${registrationId}/2026/quarterly/1/1`
+
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 describe('#deleteController', () => {
   beforeEach(() => {
@@ -306,7 +312,7 @@ describe('#deleteController', () => {
           'quarterly',
           1,
           1,
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })
@@ -372,6 +378,51 @@ describe('#deleteController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
+    })
+  })
+
+  describe('journey events', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        registeredOnlyExporter
+      )
+      vi.mocked(deleteReport).mockResolvedValue(
+        /** @type {void} */ (/** @type {unknown} */ ({ ok: true }))
+      )
+    })
+
+    it('should record the journey start when the confirmation page renders', async ({
+      server
+    }) => {
+      await server.inject({ method: 'GET', url: baseUrl, auth: mockAuth })
+
+      expect(metrics.journey.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.deleteReport,
+        reportAttempt
+      )
+    })
+
+    it('should record the journey end once the report is deleted', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+        auth: mockAuth
+      })
+
+      await server.inject({
+        method: 'POST',
+        url: baseUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(metrics.journey.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.deleteReport,
+        reportAttempt
+      )
     })
   })
 })

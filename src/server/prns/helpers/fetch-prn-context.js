@@ -58,7 +58,7 @@ async function fetchPrnContext(request) {
     getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      idToken: session.idToken,
+      backendToken: session.backendToken,
       accreditationId
     }),
     fetchPackagingRecyclingNote(
@@ -66,7 +66,7 @@ async function fetchPrnContext(request) {
       registrationId,
       accreditationId,
       safePrnId,
-      session.idToken
+      session.backendToken
     )
   ])
 
@@ -102,7 +102,7 @@ async function fetchPrnForUpdate(request) {
     registrationId,
     accreditationId,
     safePrnId,
-    session.idToken
+    session.backendToken
   )
 
   return {
@@ -112,7 +112,7 @@ async function fetchPrnForUpdate(request) {
     prnId: safePrnId,
     basePath,
     prn,
-    idToken: session.idToken
+    backendToken: session.backendToken
   }
 }
 

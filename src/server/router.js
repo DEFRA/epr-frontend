@@ -16,6 +16,7 @@ import { regulators } from '#server/regulators/index.js'
 import { reports } from '#server/reports/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
+import { wasteBalanceLedger } from '#server/waste-balance-ledger/index.js'
 import inert from '@hapi/inert'
 
 export const router = {
@@ -40,7 +41,9 @@ export const router = {
         organisations,
         prns,
         registrations,
-        ...(config.get('featureFlags.regulatorAccess') ? [regulators] : []),
+        ...(config.get('featureFlags.regulatorAccess')
+          ? [regulators, wasteBalanceLedger]
+          : []),
         reports,
         summaryLog,
         summaryLogUpload

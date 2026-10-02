@@ -1,3 +1,4 @@
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -97,7 +98,7 @@ const getProgressViewData = (localise, status) => {
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} summaryLogId - Summary log ID
- * @param {string} idToken - JWT ID token for authorization
+ * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<SummaryLogStatusResponse>}
  */
 const getStatusData = async (
@@ -105,7 +106,7 @@ const getStatusData = async (
   organisationId,
   registrationId,
   summaryLogId,
-  idToken
+  backendToken
 ) => {
   /** @type {SummaryLogsSession | null} */
   const storedSession = request.yar.get(sessionNames.summaryLogs)
@@ -116,7 +117,7 @@ const getStatusData = async (
   const data =
     freshData ??
     (await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-      idToken
+      backendToken
     }))
 
   if (freshDataMap !== undefined && summaryLogId in freshDataMap) {
@@ -310,7 +311,7 @@ const renderViewForStatus = (options) => {
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
- * @param {string} idToken - JWT ID token for authorization
+ * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<{uploadUrl?: string}>} Upload URL, or empty object if not needed
  */
 const getUploadUrl = async (
@@ -318,7 +319,7 @@ const getUploadUrl = async (
   organisationId,
   registrationId,
   redirectUrl,
-  idToken
+  backendToken
 ) => {
   if (!REUPLOAD_STATES.has(status)) {
     return {}
@@ -328,7 +329,7 @@ const getUploadUrl = async (
     organisationId,
     registrationId,
     redirectUrl,
-    idToken
+    backendToken
   })
 
   return { uploadUrl }
@@ -351,7 +352,7 @@ const needsWasteBalance = (status) =>
  * @param {string} status - Current summary log status
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
- * @param {string} idToken - JWT ID token for authorization
+ * @param {string} backendToken - Bearer token for the backend
  * @param {TypedLogger} logger - Request logger
  * @returns {Promise<{wasteBalance?: number}>} Waste balance, or empty object if not applicable
  */
@@ -359,7 +360,7 @@ const getWasteBalanceData = async (
   status,
   organisationId,
   registrationId,
-  idToken,
+  backendToken,
   logger
 ) => {
   if (!needsWasteBalance(status)) {
@@ -370,7 +371,7 @@ const getWasteBalanceData = async (
     const { registration } = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     if (!registration.accreditationId) {
@@ -380,7 +381,7 @@ const getWasteBalanceData = async (
     const wasteBalances = await fetchWasteBalances(
       organisationId,
       [registration.accreditationId],
-      idToken
+      backendToken
     )
 
     const balance = wasteBalances[registration.accreditationId]
@@ -422,7 +423,7 @@ export const summaryLogUploadProgressController = {
       organisationId,
       registrationId,
       summaryLogId,
-      session.idToken
+      session.backendToken
     )
 
     const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
@@ -430,19 +431,24 @@ export const summaryLogUploadProgressController = {
     const redirectUrl = `${baseUrl}/summary-logs/{summaryLogId}`
     const cancelUrl = baseUrl
 
-    const { uploadUrl } = await getUploadUrl(
-      status,
-      organisationId,
-      registrationId,
-      redirectUrl,
-      session.idToken
-    )
+    // Asking for an upload URL creates a summary log, so this GET writes. A
+    // session holding no write scope reads the page without one; the re-upload
+    // form is hidden.
+    const { uploadUrl } = hasWriteScope(session)
+      ? await getUploadUrl(
+          status,
+          organisationId,
+          registrationId,
+          redirectUrl,
+          session.backendToken
+        )
+      : {}
 
     const { wasteBalance } = await getWasteBalanceData(
       status,
       organisationId,
       registrationId,
-      session.idToken,
+      session.backendToken,
       request.logger
     )
 

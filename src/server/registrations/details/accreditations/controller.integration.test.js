@@ -1,0 +1,758 @@
+/** @import { HapiServer } from '#server/common/hapi-types.js'; */
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
+import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { fetchAccreditationDetails } from './helpers/fetch-accreditation-details.js'
+import { it } from '#vite/fixtures/server.js'
+import {
+  getAllByRole,
+  getByRole,
+  getByTestId,
+  getByText,
+  queryByRole,
+  within
+} from '@testing-library/dom'
+import { JSDOM } from 'jsdom'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+
+/**
+ * @import { AccreditationDetails } from './helpers/fetch-accreditation-details.js'
+ */
+
+vi.mock(import('./helpers/fetch-accreditation-details.js'))
+
+const organisationId = '6507f1f77bcf86cd79943901'
+const registrationId = 'reg-001'
+const accreditationId = 'acc-001'
+const path = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
+
+const operator = buildMockAuth()
+
+const regulator = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
+  ...sessionIdentity(IDENTITIES.regulator)
+})
+
+const regulatorWithoutLedgerScope = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-2', email: 'no.ledger@example.gov.uk' },
+  role: IDENTITIES.regulator.role,
+  scope: [SCOPES.organisationSearch]
+})
+
+/** @type {AccreditationDetails['ledgerEvents']} */
+const ledgerEvents = [
+  {
+    kind: 'summary-log-submitted',
+    createdAt: '2026-01-04T09:00:00.000Z',
+    createdBy: { id: 'system' },
+    summaryLog: { id: 'log-1', creditTotal: 100 },
+    balance: {
+      opening: { total: 0, available: 0 },
+      closing: { total: 100, available: 100 }
+    }
+  },
+  {
+    kind: 'prn-created',
+    createdAt: '2026-02-01T10:30:00.000Z',
+    createdBy: {
+      id: 'user-1',
+      name: 'Ada Lovelace',
+      email: 'ada@example.com'
+    },
+    prn: { id: 'prn-001', prnNumber: null, tonnage: 12.5 },
+    balance: {
+      opening: { total: 100, available: 100 },
+      closing: { total: 100, available: 87.5 }
+    }
+  },
+  {
+    kind: 'prn-issued',
+    createdAt: '2026-02-15T15:09:00.000Z',
+    createdBy: {
+      id: 'user-1',
+      name: 'Ada Lovelace',
+      email: 'ada@example.com'
+    },
+    prn: { id: 'prn-001', prnNumber: '240000123', tonnage: 12.5 },
+    balance: {
+      opening: { total: 100, available: 87.5 },
+      closing: { total: 87.5, available: 87.5 }
+    }
+  }
+]
+
+/**
+ * More events than the section shows, so the cap is read without growing the
+ * fixture every other case relies on.
+ * @type {AccreditationDetails['ledgerEvents']}
+ */
+const fourLedgerEvents = [1, 2, 3, 4].map((day) => ({
+  kind: 'summary-log-submitted',
+  createdAt: `2026-03-0${day}T09:00:00.000Z`,
+  createdBy: { id: 'system' },
+  summaryLog: { id: `log-${day}`, creditTotal: 100 },
+  balance: {
+    opening: { total: 0, available: 0 },
+    closing: { total: 100, available: 100 }
+  }
+}))
+
+/** @type {AccreditationDetails['packagingRecyclingNotes']} */
+const packagingRecyclingNotes = [
+  {
+    id: 'prn-issued',
+    prnNumber: '240000123',
+    issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+    tonnage: 20,
+    material: 'plastic',
+    status: 'accepted',
+    createdAt: '2026-01-27T09:00:00.000Z',
+    issuedAt: '2026-01-28T09:00:00.000Z',
+    wasteProcessingType: 'reprocessor',
+    processToBeUsed: '',
+    isDecemberWaste: false
+  },
+  {
+    id: 'prn-draft',
+    prnNumber: null,
+    issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+    tonnage: 5,
+    material: 'plastic',
+    status: 'draft',
+    createdAt: '2026-02-02T09:00:00.000Z',
+    issuedAt: null,
+    wasteProcessingType: 'reprocessor',
+    processToBeUsed: '',
+    isDecemberWaste: false
+  }
+]
+
+/** @type {AccreditationDetails} */
+const accreditationDetails = {
+  organisation: asOrganisation({
+    id: organisationId,
+    companyDetails: { name: 'Kirkby Plastics Ltd' }
+  }),
+  registration: /** @type {AccreditationDetails['registration']} */ (
+    /** @type {unknown} */ ({
+      id: registrationId,
+      registrationNumber: 'R26ER5001180041PL'
+    })
+  ),
+  accreditation: {
+    id: accreditationId,
+    accreditationNumber: 'A26ER5001180114PL',
+    status: 'approved',
+    reprocessingType: 'input',
+    dateRange: { validFrom: '2026-07-01', validTo: '2026-12-31' },
+    application: {
+      orgName: 'Kirkby Plastics',
+      submittedToRegulator: 'ea',
+      material: 'plastic',
+      wasteProcessingType: 'reprocessor'
+    }
+  },
+  wasteBalance: { amount: 1234.5, availableAmount: 987.25 },
+  cadence: 'monthly',
+  reportingPeriods: [
+    /** @type {AccreditationDetails['reportingPeriods'][number]} */ (
+      /** @type {unknown} */ ({
+        year: 2026,
+        period: 8,
+        submissionNumber: 1,
+        startDate: '2026-08-01',
+        endDate: '2026-08-31',
+        dueDate: '2026-09-20',
+        periodStatus: 'submitted',
+        report: { submittedAt: '2026-09-15T15:09:00.000Z' }
+      })
+    ),
+    /** @type {AccreditationDetails['reportingPeriods'][number]} */ (
+      /** @type {unknown} */ ({
+        year: 2026,
+        period: 7,
+        submissionNumber: 1,
+        startDate: '2026-07-01',
+        endDate: '2026-07-31',
+        dueDate: '2026-08-20',
+        periodStatus: 'overdue',
+        report: null
+      })
+    )
+  ],
+  ledgerEvents,
+  packagingRecyclingNotes
+}
+
+/**
+ * @param {HapiServer} server
+ * @param {ReturnType<typeof buildMockAuth>} auth
+ */
+const visit = async (server, auth) => {
+  const response = await server.inject({ method: 'GET', url: path, auth })
+
+  return { statusCode: response.statusCode, body: asHtml(response.result) }
+}
+
+/** @param {string} body */
+const documentOf = (body) => new JSDOM(body).window.document.body
+
+/** @param {ReturnType<typeof documentOf>} body */
+const ledgerTable = (body) => getByTestId(body, 'waste-balance-ledger-table')
+
+/** @param {ReturnType<typeof getAllByRole>} cells */
+const textOf = (cells) => cells.map((cell) => cell.textContent?.trim())
+
+/**
+ * The ledger read follows the session: the helper is asked to read it only
+ * where the session may, and answers none where it was not asked.
+ */
+const detailsForTheSession = () =>
+  vi
+    .mocked(fetchAccreditationDetails)
+    .mockImplementation(async ({ canReadLedger }) => ({
+      ...accreditationDetails,
+      ledgerEvents: canReadLedger ? ledgerEvents : null
+    }))
+
+describe('the accreditation details page', () => {
+  beforeAll(() => {
+    config.set('featureFlags.regulatorAccess', true)
+  })
+
+  beforeEach(() => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue(accreditationDetails)
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.regulatorAccess', false)
+  })
+
+  it('names the accreditation and its period in the heading', async ({
+    server
+  }) => {
+    const { statusCode, body } = await visit(server, regulator)
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(
+      getByRole(documentOf(body), 'heading', { level: 1 }).textContent?.replace(
+        /\s+/g,
+        ' '
+      )
+    ).toContain('Accreditation 1 July to 31 December 2026')
+  })
+
+  it('sets the caption a size down and the period on its own line', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const heading = getByRole(documentOf(body), 'heading', { level: 1 })
+
+    expect(getByText(heading, /Kirkby Plastics Ltd/).className).toBe(
+      'govuk-caption-m govuk-!-margin-bottom-4'
+    )
+    expect(getByText(heading, '1 July to 31 December 2026').className).toBe(
+      'govuk-!-display-block govuk-!-font-size-36'
+    )
+  })
+
+  it('shows the status and the number', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(body).toContain('Accreditation status')
+    expect(body).toContain('Approved')
+    expect(body).toContain('A26ER5001180114PL')
+  })
+
+  it('shows the balance still available, and not the total behind it', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(body).toContain('Waste balance available (tonnes)')
+    expect(body).toContain('987.25')
+    expect(body).not.toContain('1,234.50')
+  })
+
+  it('offers the latest waste records at the foot of the summary', async ({
+    server
+  }) => {
+    config.set('featureFlags.wasteRecordsDownload', true)
+    const { body } = await visit(server, regulator)
+    config.set('featureFlags.wasteRecordsDownload', false)
+    const document = documentOf(body)
+
+    expect(getByText(document, 'Latest waste record CSV')).toBeDefined()
+    expect(
+      getByRole(document, 'link', { name: 'Download' }).getAttribute('href')
+    ).toBe(
+      `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv`
+    )
+  })
+
+  it('names no waste records while the download is dark', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const document = documentOf(body)
+
+    expect(body).not.toContain('Latest waste record CSV')
+    expect(queryByRole(document, 'link', { name: 'Download' })).toBeNull()
+  })
+
+  it('lists the reporting periods below the summary, under their five headings', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+
+    const table = documentOf(body).querySelector(
+      '[data-testid="reports-table"]'
+    )
+    const headings = [...(table?.querySelectorAll('thead th') ?? [])].map(
+      (cell) => cell.textContent?.trim()
+    )
+
+    expect(body.indexOf('govuk-summary-list')).toBeLessThan(
+      body.indexOf('data-testid="reports-table"')
+    )
+    expect(headings).toStrictEqual([
+      'Period',
+      'Due date',
+      'Submission date',
+      'Status',
+      'Actions'
+    ])
+  })
+
+  it('reads a submitted period, its period naming the row', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+
+    const firstRow = documentOf(body).querySelector(
+      '[data-testid="reports-table"] tbody tr'
+    )
+    const cells = [...(firstRow?.querySelectorAll('th, td') ?? [])].map(
+      (cell) => cell.textContent?.trim()
+    )
+
+    expect(firstRow?.firstElementChild?.tagName).toBe('TH')
+    expect(cells).toStrictEqual([
+      'August, 2026',
+      '20 Sept 2026',
+      '15 Sept 2026, 4:09pm',
+      'Submitted',
+      'View August, 2026'
+    ])
+    expect(body).toContain(
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/8/submissions/1/view`
+    )
+  })
+
+  it('says why the table is empty rather than showing an empty table', async ({
+    server
+  }) => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+      ...accreditationDetails,
+      cadence: null,
+      reportingPeriods: []
+    })
+
+    const { body } = await visit(server, regulator)
+
+    expect(body).not.toContain('data-testid="reports-table"')
+    expect(body).toContain('data-testid="no-reports"')
+    expect(body).toContain('There are no reporting periods')
+  })
+
+  it('lists the waste balance ledger beneath the reports, under its six headings', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const document = documentOf(body)
+
+    expect(body.indexOf('data-testid="reports-table"')).toBeLessThan(
+      body.indexOf('data-testid="waste-balance-ledger-table"')
+    )
+    expect(
+      getByRole(document, 'heading', { level: 2, name: 'Waste balance ledger' })
+    ).toBeDefined()
+    expect(
+      textOf(getAllByRole(ledgerTable(document), 'columnheader'))
+    ).toStrictEqual([
+      'Date',
+      'Event',
+      'Tonnage',
+      'Waste balance available (tonnes)',
+      'Who',
+      'Actions'
+    ])
+  })
+
+  it('reads the ledger newest first, the date naming the row', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const [, firstRow] = getAllByRole(ledgerTable(documentOf(body)), 'row')
+
+    expect(within(firstRow).getByRole('rowheader').textContent?.trim()).toBe(
+      '15 February 2026, 3:09pm'
+    )
+    expect(textOf(within(firstRow).getAllByRole('cell'))).toStrictEqual([
+      'PRN issued\n240000123',
+      'N/A',
+      '87.50',
+      'Ada Lovelace (ada@example.com)',
+      'View 240000123'
+    ])
+  })
+
+  it('opens the note a movement came from, named by its number', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const [, firstRow] = getAllByRole(ledgerTable(documentOf(body)), 'row')
+
+    expect(
+      within(firstRow)
+        .getByRole('link', { name: 'View 240000123' })
+        .getAttribute('href')
+      // The ledger is a section of this page, so the note comes back to it.
+    ).toBe(`${path}/packaging-recycling-notes/prn-001/view`)
+  })
+
+  it('states what each event moved the available balance by', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const [, , noteCreated, summaryLogSubmitted] = getAllByRole(
+      ledgerTable(documentOf(body)),
+      'row'
+    )
+
+    expect(textOf(within(noteCreated).getAllByRole('cell')).at(1)).toBe(
+      '-12.50'
+    )
+    expect(textOf(within(summaryLogSubmitted).getAllByRole('cell')).at(1)).toBe(
+      '+100.00'
+    )
+  })
+
+  it('says so where nothing has moved the balance yet', async ({ server }) => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+      ...accreditationDetails,
+      ledgerEvents: []
+    })
+
+    const { body } = await visit(server, regulator)
+
+    expect(body).not.toContain('data-testid="waste-balance-ledger-table"')
+    expect(
+      getByText(documentOf(body), 'Nothing has changed this waste balance yet.')
+    ).toHaveClass('app-colour-secondary')
+  })
+
+  it('reads no ledger, and shows none, for a regulator the backend granted no ledger scope', async ({
+    server
+  }) => {
+    detailsForTheSession()
+
+    const { statusCode, body } = await visit(
+      server,
+      regulatorWithoutLedgerScope
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(fetchAccreditationDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ canReadLedger: false })
+    )
+    expect(body).not.toContain('Waste balance ledger')
+    expect(body).not.toContain('Nothing has changed this waste balance yet.')
+  })
+
+  it('reads the ledger for a regulator holding the ledger scope', async ({
+    server
+  }) => {
+    detailsForTheSession()
+
+    const { body } = await visit(server, regulator)
+
+    expect(fetchAccreditationDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ canReadLedger: true })
+    )
+    expect(body).toContain('data-testid="waste-balance-ledger-table"')
+  })
+
+  it('offers no way to change anything on the page', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    const main = documentOf(body).querySelector('#main-content')
+
+    expect(main?.querySelectorAll('button, form')).toHaveLength(0)
+  })
+
+  describe('the reports section', () => {
+    it('opens the full list through a link rather than a button', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      // Three sections carry this link, so each names its own list rather
+      // than reading "View all" three times over.
+      const link = getByRole(documentOf(body), 'button', {
+        name: 'View all reports'
+      })
+      const heading = link.parentElement?.querySelector('h2')
+
+      expect(link.tagName).toBe('A')
+      expect(
+        link.querySelector('.govuk-visually-hidden')?.textContent?.trim()
+      ).toBe('reports')
+      expect(link.getAttribute('href')).toBe(`${path}/reports`)
+
+      // It sits beside the heading rather than beneath it.
+      expect(heading?.textContent?.trim()).toBe('Reports')
+      expect(heading?.className).toContain('govuk-!-display-inline-block')
+    })
+
+    it('names how many periods it shows', async ({ server }) => {
+      const { body } = await visit(server, regulator)
+
+      expect(
+        getByTestId(documentOf(body), 'reports-most-recent').textContent?.trim()
+      ).toBe('Most recent (2 items)')
+    })
+
+    it('offers no full list and no count where there are no periods', async ({
+      server
+    }) => {
+      vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+        ...accreditationDetails,
+        reportingPeriods: []
+      })
+
+      const { body } = await visit(server, regulator)
+
+      const document = documentOf(body)
+
+      expect(
+        getByText(document, /There are no reporting periods/)
+      ).toBeDefined()
+      expect(
+        queryByRole(document, 'button', { name: 'View all reports' })
+      ).toBeNull()
+
+      // The other two sections keep their own count lines.
+      expect(
+        getAllByRole(document, 'heading', { level: 3, name: /^Most recent/ })
+      ).toHaveLength(2)
+    })
+  })
+
+  describe('the PRNs section', () => {
+    it('lists the notes the accreditation has issued, above the ledger', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      const table = getByTestId(documentOf(body), 'prns-table')
+
+      expect(textOf(getAllByRole(table, 'columnheader'))).toStrictEqual([
+        'Producer or compliance scheme',
+        'Status',
+        'Date',
+        'Tonnage',
+        'Action'
+      ])
+
+      expect(body.indexOf('data-testid="prns-table"')).toBeLessThan(
+        body.indexOf('data-testid="waste-balance-ledger-table"')
+      )
+    })
+
+    it('shows a regulator no draft note among them', async ({ server }) => {
+      const { body } = await visit(server, regulator)
+
+      const rows = getAllByRole(
+        getByTestId(documentOf(body), 'prns-table'),
+        'row'
+      )
+
+      // One heading row and the one note a regulator may see.
+      expect(rows).toHaveLength(2)
+      expect(rows.at(1)?.textContent).toContain('Radar Compliance PLC')
+    })
+
+    it('opens the full list through a link rather than a button', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      // Three sections carry this link, so each names its own list rather
+      // than reading "View all" three times over.
+      const link = getByRole(documentOf(body), 'button', {
+        name: 'View all PRNs'
+      })
+
+      expect(link.tagName).toBe('A')
+
+      // It sits beside the heading rather than beneath it.
+      expect(link.parentElement?.querySelector('h2')?.className).toContain(
+        'govuk-!-display-inline-block'
+      )
+      expect(link.getAttribute('href')).toBe(
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+      )
+    })
+
+    it('names how many rows it shows rather than a fixed three', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      // The seed holds one note a regulator may see, so the section names one
+      // - the number is what is shown, not what was asked for.
+      expect(
+        getByTestId(documentOf(body), 'prns-most-recent').textContent
+      ).toContain('(1 items)')
+    })
+
+    it('says so where the accreditation has issued none', async ({
+      server
+    }) => {
+      vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+        ...accreditationDetails,
+        packagingRecyclingNotes: []
+      })
+
+      const { body } = await visit(server, regulator)
+
+      const document = documentOf(body)
+
+      expect(
+        getByText(document, /This accreditation has issued no PRNs/)
+      ).toBeDefined()
+      expect(
+        queryByRole(document, 'columnheader', {
+          name: 'Producer or compliance scheme'
+        })
+      ).toBeNull()
+
+      // The full list would only repeat the line above it.
+      expect(
+        queryByRole(document, 'button', { name: 'View all PRNs' })
+      ).toBeNull()
+    })
+  })
+
+  describe('the ledger section', () => {
+    it('opens the full ledger through a link rather than a button', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+
+      // Three sections carry this link, so each names its own list rather
+      // than reading "View all" three times over.
+      const link = getByRole(documentOf(body), 'button', {
+        name: 'View all ledger events'
+      })
+
+      expect(link.tagName).toBe('A')
+      expect(link.getAttribute('href')).toBe(`${path}/waste-balance-ledger`)
+
+      // It sits beside the heading rather than beneath it.
+      expect(link.parentElement?.querySelector('h2')?.className).toContain(
+        'govuk-!-display-inline-block'
+      )
+    })
+
+    it('names how many events it shows', async ({ server }) => {
+      const { body } = await visit(server, regulator)
+
+      expect(
+        getByTestId(documentOf(body), 'ledger-most-recent').textContent?.trim()
+      ).toBe('Most recent (3 items)')
+    })
+
+    it('shows the three newest events where more have moved the balance', async ({
+      server
+    }) => {
+      vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+        ...accreditationDetails,
+        ledgerEvents: fourLedgerEvents
+      })
+
+      const { body } = await visit(server, regulator)
+      const [, ...rows] = getAllByRole(ledgerTable(documentOf(body)), 'row')
+
+      expect(
+        rows.map((row) =>
+          within(row).getByRole('rowheader').textContent?.trim()
+        )
+      ).toStrictEqual([
+        '4 March 2026, 9:00am',
+        '3 March 2026, 9:00am',
+        '2 March 2026, 9:00am'
+      ])
+    })
+
+    it('offers no full ledger and no count where nothing has moved the balance', async ({
+      server
+    }) => {
+      vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+        ...accreditationDetails,
+        ledgerEvents: []
+      })
+
+      const { body } = await visit(server, regulator)
+
+      const document = documentOf(body)
+
+      expect(
+        queryByRole(document, 'button', { name: 'View all ledger events' })
+      ).toBeNull()
+
+      // The reports and PRNs sections keep their own count lines.
+      expect(
+        getAllByRole(document, 'heading', { level: 3, name: /^Most recent/ })
+      ).toHaveLength(2)
+      expect(
+        getByText(document, /Nothing has changed this waste balance yet/)
+      ).toBeDefined()
+    })
+  })
+
+  it('offers a way back to the registration', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(body).toContain(
+      `/organisations/${organisationId}/registrations/${registrationId}`
+    )
+  })
+
+  it('does not exist for an operator', async ({ server }) => {
+    const { statusCode } = await visit(server, operator)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  it('does not exist for a regulator while the surface is off', async ({
+    server
+  }) => {
+    config.set('featureFlags.regulatorAccess', false)
+    const { statusCode } = await visit(server, regulator)
+    config.set('featureFlags.regulatorAccess', true)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+})

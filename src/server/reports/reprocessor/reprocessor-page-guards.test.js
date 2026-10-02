@@ -37,7 +37,7 @@ const mockRequest = {
     period: 1,
     submissionNumber: 1
   },
-  auth: { credentials: { idToken: 'mock-id-token' } }
+  auth: { credentials: { backendToken: 'mock-backend-token' } }
 }
 
 describe('reprocessor shim wires isReprocessorRegistration', () => {

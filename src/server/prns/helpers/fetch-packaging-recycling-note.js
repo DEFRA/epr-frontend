@@ -6,7 +6,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} registrationId - The registration ID
  * @param {string} accreditationId - The accreditation ID
  * @param {string} prnId - The PRN ID
- * @param {string} idToken - JWT ID token for authorisation
+ * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<PackagingRecyclingNote>} The packaging recycling note
  */
 async function fetchPackagingRecyclingNote(
@@ -14,14 +14,14 @@ async function fetchPackagingRecyclingNote(
   registrationId,
   accreditationId,
   prnId,
-  idToken
+  backendToken
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes/${encodeURIComponent(prnId)}`
 
   return fetchJsonFromBackend(path, {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${backendToken}`
     }
   })
 }

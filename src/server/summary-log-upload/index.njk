@@ -1,5 +1,5 @@
 {% extends 'layouts/page.njk' %}
-{% from "summary-log-upload/macro.njk" import summaryLogUpload %}
+{% from "summary-log-upload/macro.njk" import summaryLogUpload with context %}
 
 {% block beforeContent %}
   {{ govukBackLink({

@@ -16,7 +16,7 @@ describe(requestResubmission, () => {
   const cadence = 'quarterly'
   const period = 1
   const submissionNumber = 1
-  const idToken = 'test-token'
+  const backendToken = 'test-token'
 
   const mockResponse = { status: 'requires_resubmission' }
 
@@ -36,7 +36,7 @@ describe(requestResubmission, () => {
         period,
         submissionNumber
       },
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -62,7 +62,7 @@ describe(requestResubmission, () => {
         period,
         submissionNumber
       },
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -83,7 +83,7 @@ describe(requestResubmission, () => {
         period,
         submissionNumber
       },
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(mockResponse)
@@ -109,7 +109,7 @@ describe(requestResubmission, () => {
           period,
           submissionNumber
         },
-        idToken
+        backendToken
       )
     ).rejects.toThrow('Conflict')
   })

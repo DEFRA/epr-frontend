@@ -8,7 +8,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} cadence
  * @param {number} period
  * @param {number} submissionNumber
- * @param {string} idToken
+ * @param {string} backendToken
  * @returns {Promise<void>}
  */
 export async function deleteReport(
@@ -18,12 +18,12 @@ export async function deleteReport(
   cadence,
   period,
   submissionNumber,
-  idToken
+  backendToken
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
 
   return fetchJsonFromBackend(path, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${idToken}` }
+    headers: { Authorization: `Bearer ${backendToken}` }
   })
 }

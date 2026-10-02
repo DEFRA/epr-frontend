@@ -6,6 +6,8 @@ import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtu
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { createReport } from '#server/reports/helpers/create-report.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { beforeEach, describe, expect, vi } from 'vitest'
@@ -15,6 +17,9 @@ vi.mock(
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('#server/reports/helpers/create-report.js'))
+
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -138,7 +143,7 @@ describe('#createReportController', () => {
         'quarterly',
         1,
         1,
-        'mock-id-token'
+        'mock-backend-token'
       )
     })
 
@@ -464,6 +469,52 @@ describe('#createReportController', () => {
     })
   })
 
+  describe('when backend returns report_data_incomplete 400', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        registeredOnlyExporterRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
+      vi.mocked(createReport).mockRejectedValue({
+        isBoom: true,
+        output: {
+          statusCode: statusCodes.badRequest,
+          payload: {
+            reason: 'report_data_incomplete',
+            total: 2,
+            issues: [
+              { sheet: 'Exported', rowId: '1001', field: 'SUPPLIER_NAME' },
+              {
+                sheet: 'Sent on',
+                rowId: '4001',
+                field: 'FINAL_DESTINATION_NAME'
+              }
+            ]
+          }
+        }
+      })
+    })
+
+    it('redirects to the report-data-incomplete screen', async ({ server }) => {
+      const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+        auth: mockAuth
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: detailUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${detailUrl}/report-data-incomplete`)
+    })
+  })
+
   describe('CSRF protection', () => {
     it('should return 403 when crumb is missing', async ({ server }) => {
       const { statusCode } = await server.inject({
@@ -473,6 +524,40 @@ describe('#createReportController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.forbidden)
+    })
+  })
+
+  describe('journey events', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        reprocessorRegistration
+      )
+      vi.mocked(createReport).mockResolvedValue({
+        id: 'report-001',
+        status: 'in_progress'
+      })
+    })
+
+    it('should record the create journey start when the report is begun', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+        auth: mockAuth
+      })
+
+      await server.inject({
+        method: 'POST',
+        url: detailUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(metrics.journey.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.createReport,
+        'reg-001/2026/quarterly/1/1'
+      )
     })
   })
 })

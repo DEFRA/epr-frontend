@@ -9,6 +9,8 @@ import {
   fetchPrnContext,
   fetchPrnForUpdate
 } from './helpers/fetch-prn-context.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -28,6 +30,8 @@ export const cancelGetController = {
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
+
+    await metrics.journey.start(request, JOURNEY.cancelPrn, prnId)
 
     return h.view('prns/cancel', {
       pageTitle: localise('prns:cancel:pageTitle', { noteType }),
@@ -53,7 +57,7 @@ export const cancelPostController = {
       accreditationId,
       prnId,
       prn,
-      idToken
+      backendToken
     } = await fetchPrnForUpdate(request)
     const {
       organisationId: orgId,
@@ -74,8 +78,10 @@ export const cancelPostController = {
         accreditationId,
         prnId,
         { status: 'cancelled' },
-        idToken
+        backendToken
       )
+
+      await metrics.journey.end(request, JOURNEY.cancelPrn, prnId)
 
       return h.redirect(
         `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes/${noteId}/cancelled`

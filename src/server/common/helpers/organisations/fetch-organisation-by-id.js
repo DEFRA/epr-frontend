@@ -5,16 +5,16 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 /**
  * Fetches organisation data by ID from EPR Backend
  * @param {string} organisationId - The organisation ID
- * @param {string} idToken - JWT ID token for authorization
+ * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<Organisation>} Organisation data with accreditations and registrations
  */
-async function fetchOrganisationById(organisationId, idToken) {
+async function fetchOrganisationById(organisationId, backendToken) {
   const path = `/v1/organisations/${organisationId}`
 
   return fetchJsonFromBackend(path, {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${backendToken}`
     }
   })
 }

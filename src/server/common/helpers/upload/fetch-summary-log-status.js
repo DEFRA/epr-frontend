@@ -12,18 +12,18 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
  * @param {string} registrationId
  * @param {string} summaryLogId
  * @param {object} options
- * @param {string} options.idToken - JWT ID token for authorization
+ * @param {string} options.backendToken - Bearer token for the backend
  * @returns {Promise<SummaryLogStatusResponse>}
  */
 const fetchSummaryLogStatus = async (
   organisationId,
   registrationId,
   summaryLogId,
-  { idToken }
+  { backendToken }
 ) => {
   const data = await fetchJsonFromBackend(
     `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
-    { method: 'GET', headers: { Authorization: `Bearer ${idToken}` } }
+    { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
   )
 
   // stripUnknown drops fields outside the schema; we keep the validated value

@@ -1,0 +1,163 @@
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { loggingEventActions } from '#server/common/enums/event.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+
+import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
+import { fetchLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+import {
+  toAccreditationChildPage,
+  toRegistrationTrail
+} from '#server/registrations/details/helpers/accreditation-child-page.js'
+
+/**
+ * @typedef {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   accreditationId?: string
+ * }} WasteBalanceLedgerParams
+ */
+
+/**
+ * One waste balance ledger, read as business events.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+export const controller = {
+  /**
+   * @param {HapiRequest & { params: WasteBalanceLedgerParams }} request
+   * @param {ResponseToolkit} h
+   */
+  async handler(request, h) {
+    const session = request.auth.credentials
+
+    const { organisationId, registrationId, accreditationId } = request.params
+
+    const { organisationData, registration, rawAccreditation } =
+      await fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.backendToken
+      )
+
+    const accreditation = accreditationId
+      ? requireCurrentAccreditation({
+          accreditationId,
+          registration,
+          rawAccreditation
+        })
+      : undefined
+
+    const events = await fetchLedgerEvents({
+      organisationId,
+      registrationId,
+      accreditationId,
+      backendToken: session.backendToken
+    })
+
+    const { t: localise } = request
+    const { noteType } = getNoteTypeDisplayNames(registration)
+    const heading = localise('waste-balance-ledger:heading')
+
+    // The registered-only partition sits under no accreditation, so its trail
+    // stops at the registration and its caption names the phase instead.
+    const page = accreditation
+      ? toAccreditationChildPage({
+          accreditation,
+          heading,
+          localise,
+          localiseUrl: request.localiseUrl,
+          organisation: organisationData,
+          registration
+        })
+      : {
+          breadcrumbs: [
+            ...toRegistrationTrail({
+              localise,
+              localiseUrl: request.localiseUrl,
+              organisation: organisationData,
+              registration
+            }),
+            { text: heading }
+          ],
+          caption: localise('waste-balance-ledger:registeredOnlyCaption'),
+          heading,
+          pageTitle: localise('waste-balance-ledger:pageTitle')
+        }
+
+    return h.view('waste-balance-ledger/index', {
+      ...page,
+      ledgerRows: buildLedgerRows({
+        accreditationId,
+        events,
+        localise,
+        localiseUrl: request.localiseUrl,
+        noteType,
+        offersCsvDownloads: readsWasteRecordsDownloads(session),
+        // An operator reaches this page too, and may not fetch the file.
+        offersDownloads: readsAsARegulator(session),
+        organisationId,
+        registrationId
+      })
+    })
+  }
+}
+
+/**
+ * The accreditation the address names, whatever its status. A closed
+ * accreditation keeps its ledger, so the page must still name it.
+ *
+ * Only the ledger the registration writes to now is reachable from the
+ * registration page, so an address pairing a registration with any other
+ * accreditation names no ledger at all. Refusing it matters more than it
+ * looks: the backend answers that pair with an empty array, so rendering it
+ * would tell a regulator that nothing has moved a balance that does not exist.
+ * @param {{
+ *   accreditationId: string,
+ *   registration: Registration,
+ *   rawAccreditation: Accreditation | undefined
+ * }} params
+ * @returns {Accreditation}
+ */
+function requireCurrentAccreditation({
+  accreditationId,
+  registration,
+  rawAccreditation
+}) {
+  if (registration.accreditationId !== accreditationId) {
+    throw notFound(
+      'Accreditation ID mismatch',
+      errorCodes.accreditationIdMismatch,
+      {
+        event: {
+          action: loggingEventActions.checkAccreditation,
+          reason: `registrationId=${registration.id} accreditationId=${accreditationId}`
+        }
+      }
+    )
+  }
+
+  if (!rawAccreditation) {
+    throw notFound(
+      'Accreditation not found',
+      errorCodes.accreditationNotFound,
+      {
+        event: {
+          action: loggingEventActions.checkAccreditation,
+          reason: `registrationId=${registration.id} accreditationId=${accreditationId}`
+        }
+      }
+    )
+  }
+
+  return rawAccreditation
+}
+
+/**
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ */

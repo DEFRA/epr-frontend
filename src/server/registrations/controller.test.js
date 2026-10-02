@@ -1,7 +1,15 @@
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { fetchDecemberPrnEligibility } from '#server/prns/helpers/fetch-december-prn-eligibility.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import {
   asRegistrationWithAccreditation,
@@ -17,7 +25,7 @@ import {
 } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
@@ -27,6 +35,8 @@ vi.mock(
 )
 
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+
+vi.mock(import('#server/prns/helpers/fetch-december-prn-eligibility.js'))
 
 const glassApproved = findRegistrationAndAccreditation(
   fixtureData,
@@ -41,12 +51,18 @@ const exporterPlasticApproved = findRegistrationAndAccreditation(
   'reg-export-001-plastic-approved'
 )
 
-const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
+const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
 describe('#accreditationDashboardController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({})
+    // Out of the December window by default, so every test not about the
+    // December panel sees the single balance exactly as before.
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      mode: 'pool',
+      windowOpen: false
+    })
   })
 
   describe('happy path - reprocessor', () => {
@@ -724,6 +740,217 @@ describe('#accreditationDashboardController', () => {
     })
   })
 
+  describe('December available balance panel', () => {
+    const openDashboard = async (server) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      return { $: load(asHtml(result)), statusCode }
+    }
+
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        glassApproved
+      )
+      // Which operator types see the breakdown is the backend's decision,
+      // carried by `mode`: 'manual' only for an output reprocessor, so
+      // 'pool' here means an exporter or an input reprocessor, in window,
+      // regardless of amounts accrued.
+      vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+        mode: 'pool',
+        windowOpen: true
+      })
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-001-glass-approved': {
+          amount: 1500,
+          availableAmount: 500.5,
+          decemberAmount: 200,
+          decemberAvailableAmount: 120.25,
+          nonDecemberAvailableAmount: 380.25
+        }
+      })
+    })
+
+    it('breaks the balance into December, non-December and total for an eligible operator in window', async ({
+      server
+    }) => {
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-waste-balance"]').text()).toContain(
+        '120.25'
+      )
+      expect($('[data-testid="non-december-waste-balance"]').text()).toContain(
+        '380.25'
+      )
+      expect($('[data-testid="total-waste-balance"]').text()).toContain(
+        '500.50'
+      )
+    })
+
+    it('labels the three balances and keeps the panel heading', async ({
+      server
+    }) => {
+      const { $ } = await openDashboard(server)
+
+      const panel = $('[data-testid="december-balance-panel"]')
+
+      expect(panel.text()).toContain('Available waste balance')
+      expect(panel.text()).toContain('December waste balance')
+      expect(panel.text()).toContain('Non-December waste balance')
+      expect(panel.text()).toContain('Total tonnage')
+    })
+
+    it('tells a reprocessor it can create PRNs from either balance', async ({
+      server
+    }) => {
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-balance-panel"]').text()).toContain(
+        'You can create PRNs from either waste balance'
+      )
+    })
+
+    it('replaces the single-balance banner while the panel shows', async ({
+      server
+    }) => {
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="waste-balance-amount"]')).toHaveLength(0)
+    })
+
+    it('tells an exporter it can create PERNs from either balance', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        exporterPlasticApproved
+      )
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-export-001-plastic-approved': {
+          amount: 500,
+          availableAmount: 250.75,
+          decemberAmount: 100,
+          decemberAvailableAmount: 50.5
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(asHtml(result))
+
+      expect($('[data-testid="december-balance-panel"]').text()).toContain(
+        'You can create PERNs from either waste balance'
+      )
+    })
+
+    it('shows a 0.00 December balance when the backend holds no December portion', async ({
+      server
+    }) => {
+      // The backend omits the December fields entirely for an accreditation
+      // that has never accrued December tonnage, so an eligible operator's
+      // empty pool must still render as zero rather than dropping the panel.
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-001-glass-approved': { amount: 1500, availableAmount: 500.5 }
+      })
+
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-waste-balance"]').text()).toContain(
+        '0.00'
+      )
+      expect($('[data-testid="non-december-waste-balance"]').text()).toContain(
+        '500.50'
+      )
+      expect($('[data-testid="total-waste-balance"]').text()).toContain(
+        '500.50'
+      )
+    })
+
+    it('renders a negative non-December balance unclamped, by design', async ({
+      server
+    }) => {
+      // Any dimension can go transiently negative and there is deliberately
+      // no clamp (ADR-0049, "Negative balances"). The worked example: receive
+      // 300t in December then send 200t of it on, and the backend serves a
+      // non-December portion of -200 while the December pool holds 300.
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-001-glass-approved': {
+          amount: 100,
+          availableAmount: 100,
+          decemberAmount: 300,
+          decemberAvailableAmount: 300,
+          nonDecemberAvailableAmount: -200
+        }
+      })
+
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-waste-balance"]').text()).toContain(
+        '300.00'
+      )
+      expect($('[data-testid="non-december-waste-balance"]').text()).toContain(
+        '-200.00'
+      )
+      expect($('[data-testid="total-waste-balance"]').text()).toContain(
+        '100.00'
+      )
+    })
+
+    it('keeps the single balance for an output reprocessor, which declares December waste manually', async ({
+      server
+    }) => {
+      vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+        mode: 'manual',
+        windowOpen: true
+      })
+
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-balance-panel"]')).toHaveLength(0)
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        '500.50'
+      )
+    })
+
+    it('keeps the single balance outside the December window', async ({
+      server
+    }) => {
+      vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+        mode: 'pool',
+        windowOpen: false
+      })
+
+      const { $ } = await openDashboard(server)
+
+      expect($('[data-testid="december-balance-panel"]')).toHaveLength(0)
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        '500.50'
+      )
+    })
+
+    it('keeps the single balance when the eligibility check fails', async ({
+      server
+    }) => {
+      vi.mocked(fetchDecemberPrnEligibility).mockRejectedValue(
+        new Error('Service unavailable')
+      )
+
+      const { $, statusCode } = await openDashboard(server)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect($('[data-testid="december-balance-panel"]')).toHaveLength(0)
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        '500.50'
+      )
+    })
+  })
+
   describe('registered-only', () => {
     const registeredOnlyRegistration = asRegistrationWithAccreditation({
       registration: glassApproved.registration,
@@ -833,6 +1060,187 @@ describe('#accreditationDashboardController', () => {
     })
   })
 
+  describe('reapply for accreditation link', () => {
+    const url =
+      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-plastic-approved'
+    const placeholder =
+      'Registration and accreditation management is not yet available.'
+    // Phase 1 only shows the link for a current-year accreditation, and the
+    // controller reads the real clock, so derive the fixture year from now
+    // rather than hard-coding it (else these tests rot at the year boundary).
+    const currentYear = new Date().getFullYear()
+    const nextYear = currentYear + 1
+    const originalWindowStart = config.get('reapplyAccreditation.windowStart')
+    const originalWindowEnd = config.get('reapplyAccreditation.windowEnd')
+    const originalBaseUrl = config.get('reapplyAccreditation.baseUrl')
+
+    beforeEach(() => {
+      // Only one test below targets the window itself; the rest (status,
+      // year, href, write-scope) don't care when they run, so keep the
+      // window open all year to take "is today in the window?" out of play.
+      // Open from the first instant of 1 January so this can't flake
+      // overnight on New Year's Day.
+      config.set('reapplyAccreditation.windowStart', '01-01T00:00')
+      config.set('reapplyAccreditation.windowEnd', '12-31T23:59')
+      config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
+    })
+
+    afterEach(() => {
+      config.set('reapplyAccreditation.windowStart', originalWindowStart)
+      config.set('reapplyAccreditation.windowEnd', originalWindowEnd)
+      config.set('reapplyAccreditation.baseUrl', originalBaseUrl)
+    })
+
+    /** @param {object} overrides */
+    const mockRegistration = (overrides) =>
+      asRegistrationWithAccreditation({
+        organisationData: {},
+        registration: {
+          id: 'reg-001-plastic-approved',
+          wasteProcessingType: 'reprocessor',
+          material: 'plastic',
+          status: 'approved',
+          site: { address: { line1: 'Test Site' } }
+        },
+        accreditation: undefined,
+        ...overrides
+      })
+
+    const expectedHref = `https://ws2.example/operator-accreditation/6507f1f77bcf86cd79943901/reg-001-plastic-approved/plastic/${nextYear}`
+
+    it.for([
+      {
+        name: 'an approved accreditation with a validFrom',
+        status: 'approved'
+      },
+      {
+        name: 'a suspended accreditation with a validFrom',
+        status: 'suspended'
+      },
+      {
+        name: 'a cancelled accreditation with a validFrom',
+        status: 'cancelled'
+      }
+    ])(
+      'shows the "apply for {year}" link (year = validFrom + 1) in place of the placeholder for $name',
+      async ({ status }, { server }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          mockRegistration({
+            rawAccreditation: { status, validFrom: `${currentYear}-01-01` }
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const link = getByRole(body, 'link', {
+          name: `apply for ${nextYear} accreditation`
+        })
+        expect(link.getAttribute('href')).toBe(expectedHref)
+
+        // The link replaces the placeholder, which is no longer rendered.
+        expect(queryByText(body, placeholder)).toBeNull()
+      }
+    )
+
+    it.for([
+      { name: 'there is no accreditation (registered-only)', overrides: {} },
+      {
+        name: 'the accreditation was created but never approved',
+        overrides: { rawAccreditation: { status: 'created' } }
+      },
+      {
+        name: 'the accreditation was rejected',
+        overrides: { rawAccreditation: { status: 'rejected' } }
+      },
+      {
+        name: 'the accreditation is cancelled with no validFrom',
+        overrides: { rawAccreditation: { status: 'cancelled' } }
+      },
+      {
+        name: 'the registration is not approved',
+        overrides: {
+          registration: {
+            id: 'reg-001-plastic-approved',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            status: 'created',
+            site: { address: { line1: 'Test Site' } }
+          },
+          rawAccreditation: {
+            status: 'approved',
+            validFrom: `${currentYear}-01-01`
+          }
+        }
+      }
+    ])(
+      'hides the link but keeps the placeholder when $name',
+      async ({ overrides }, { server }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          mockRegistration(overrides)
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          queryByRole(body, 'link', {
+            name: `apply for ${nextYear} accreditation`
+          })
+        ).toBeNull()
+        expect(queryByText(body, placeholder)).not.toBeNull()
+      }
+    )
+
+    it('hides the link but keeps the placeholder when today is outside the window', async ({
+      server
+    }) => {
+      // A one-minute window on a month other than the current one guarantees
+      // today falls outside it, independent of the real date the test runs on.
+      const thisMonth = new Date().getMonth() + 1
+      const otherMonth = String(thisMonth === 1 ? 12 : 1).padStart(2, '0')
+      config.set('reapplyAccreditation.windowStart', `${otherMonth}-01T00:00`)
+      config.set('reapplyAccreditation.windowEnd', `${otherMonth}-01T00:01`)
+
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        mockRegistration({
+          rawAccreditation: {
+            status: 'approved',
+            validFrom: `${currentYear}-01-01`
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      expect(
+        queryByRole(body, 'link', {
+          name: `apply for ${nextYear} accreditation`
+        })
+      ).toBeNull()
+      expect(queryByText(body, placeholder)).not.toBeNull()
+    })
+  })
+
   describe('packaging-recycling-notes', () => {
     beforeEach(() => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
@@ -921,3 +1329,226 @@ describe('#accreditationDashboardController', () => {
     })
   })
 })
+
+/**
+ * @import { ServerFixtures } from '#vite/fixtures/server.js'
+ */
+
+describe('a session that may not change the operator data', () => {
+  const readOnlyAuth = buildMockAuth({
+    backendToken: 'test-id-token',
+    scope: []
+  })
+  const configuredWindow = config.get('reapplyAccreditation')
+  const thisYear = new Date().getFullYear()
+  const validFrom = `${thisYear}-01-01`
+
+  // The reapply link is offered only inside a window, and only for an
+  // accreditation of the current year, so both are arranged here. Without them
+  // the link never renders and asserting its absence would prove nothing.
+  const renewable = asRegistrationWithAccreditation({
+    ...glassApproved,
+    accreditation: { ...glassApproved.accreditation, validFrom },
+    rawAccreditation: { ...glassApproved.rawAccreditation, validFrom }
+  })
+
+  /**
+   * @param {ServerFixtures['server']} server
+   * @param {ReturnType<typeof buildMockAuth>} auth
+   */
+  const openRegistration = async (server, auth) => {
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(renewable)
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+      auth
+    })
+
+    return new JSDOM(asHtml(result)).window.document.body
+  }
+
+  const reapplyLink = { name: /apply for \d{4} accreditation/ }
+
+  beforeEach(() => {
+    // See the equivalent comment in the 'reapply for accreditation link'
+    // describe block above: avoids flaking overnight on New Year's Day.
+    config.set('reapplyAccreditation.windowStart', '01-01T00:00')
+    config.set('reapplyAccreditation.windowEnd', '12-31T23:59')
+    config.set('reapplyAccreditation.baseUrl', 'https://reapply.example')
+  })
+
+  afterEach(() => {
+    config.set('reapplyAccreditation.windowStart', configuredWindow.windowStart)
+    config.set('reapplyAccreditation.windowEnd', configuredWindow.windowEnd)
+    config.set('reapplyAccreditation.baseUrl', configuredWindow.baseUrl)
+  })
+
+  it('offers an operator all three, so the absences below say something', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, mockAuth)
+
+    expect(
+      queryByRole(body, 'link', { name: 'Upload your summary log' })
+    ).not.toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Create new PRN' })).not.toBeNull()
+    expect(queryByRole(body, 'link', reapplyLink)).not.toBeNull()
+  })
+
+  it('offers none of them to a session holding no write scope', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, readOnlyAuth)
+
+    expect(
+      queryByRole(body, 'link', { name: 'Upload your summary log' })
+    ).toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Create new PRN' })).toBeNull()
+    expect(queryByRole(body, 'link', reapplyLink)).toBeNull()
+  })
+
+  it('heads the summary log card for an operator, who can upload one', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, mockAuth)
+
+    expect(queryByRole(body, 'heading', { name: 'Summary log' })).not.toBeNull()
+  })
+
+  it('drops the summary log card, which offers only the upload', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, readOnlyAuth)
+
+    expect(queryByRole(body, 'heading', { name: 'Summary log' })).toBeNull()
+    expect(
+      queryByText(
+        body,
+        'Upload your summary log to record new packaging waste or adjust previously submitted data.'
+      )
+    ).toBeNull()
+  })
+
+  it('still lets it read the notes the operator has issued', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, readOnlyAuth)
+
+    expect(queryByRole(body, 'link', { name: 'View PRNs' })).not.toBeNull()
+    expect(queryByRole(body, 'link', { name: 'View reports' })).not.toBeNull()
+  })
+
+  it('tells an operator it can create and manage, as it always did', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, mockAuth)
+
+    expect(queryByText(body, 'Create and manage PRNs.')).not.toBeNull()
+    expect(queryByText(body, 'Create and manage your reports.')).not.toBeNull()
+    expect(
+      queryByText(body, 'View and manage your applications.')
+    ).not.toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Manage PRNs' })).not.toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Manage reports' })).not.toBeNull()
+  })
+
+  it('offers a read-only session no card that says it can manage', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, readOnlyAuth)
+
+    expect(
+      queryByText(body, 'View the PRNs issued for this registration.')
+    ).not.toBeNull()
+    expect(
+      queryByText(body, 'View the reports submitted for this registration.')
+    ).not.toBeNull()
+    expect(queryByText(body, 'View applications.')).not.toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Manage PRNs' })).toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Manage reports' })).toBeNull()
+  })
+})
+
+describe('the waste balance ledger link', () => {
+  const regulatorAuth = buildMockAuth({
+    provider: OIDC_ENTRA_ID,
+    ...sessionIdentity(IDENTITIES.regulator),
+    profile: { id: 'entra-user-1', email: 'regulator@example.com' },
+    backendToken: 'test-id-token'
+  })
+
+  const registeredOnly = findRegistrationAndAccreditation(
+    fixtureData,
+    'reg-006-plastic-export-created'
+  )
+
+  /**
+   * @param {HapiServer} server
+   * @param {ReturnType<typeof buildMockAuth>} auth
+   * @param {RegistrationWithAccreditation} registration
+   */
+  const openRegistration = async (server, auth, registration) => {
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(registration)
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/organisations/6507f1f77bcf86cd79943901/registrations/${registration.registration.id}`,
+      auth
+    })
+
+    return new JSDOM(asHtml(result)).window.document.body
+  }
+
+  const ledgerLink = { name: 'View waste balance ledger' }
+
+  it('sends a regulator to the ledger of the accreditation in force', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, regulatorAuth, glassApproved)
+
+    expect(queryByRole(body, 'link', ledgerLink)?.getAttribute('href')).toBe(
+      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/waste-balance-ledger'
+    )
+  })
+
+  it('sends a regulator to the registered-only ledger where no accreditation is in force', async ({
+    server
+  }) => {
+    const body = await openRegistration(server, regulatorAuth, registeredOnly)
+
+    expect(queryByRole(body, 'link', ledgerLink)?.getAttribute('href')).toBe(
+      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-006-plastic-export-created/waste-balance-ledger'
+    )
+  })
+
+  it('offers an operator no link at all', async ({ server }) => {
+    const body = await openRegistration(server, mockAuth, glassApproved)
+
+    expect(queryByRole(body, 'link', ledgerLink)).toBeNull()
+  })
+
+  it('offers no link to a session the backend granted no ledger scope, whatever role it carries', async ({
+    server
+  }) => {
+    const withoutLedgerScope = buildMockAuth({
+      provider: OIDC_ENTRA_ID,
+      role: IDENTITIES.regulator.role,
+      scope: [SCOPES.organisationSearch],
+      profile: { id: 'entra-user-2', email: 'no.ledger@example.com' },
+      backendToken: 'test-id-token'
+    })
+    const body = await openRegistration(
+      server,
+      withoutLedgerScope,
+      glassApproved
+    )
+
+    expect(queryByRole(body, 'link', ledgerLink)).toBeNull()
+  })
+})
+
+/**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ */

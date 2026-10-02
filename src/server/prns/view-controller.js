@@ -1,4 +1,5 @@
 import { isNil } from '#server/common/helpers/is-nil.js'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
   badImplementation,
@@ -7,6 +8,9 @@ import {
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { availableForPool } from '#server/common/helpers/waste-balance/available-for-pool.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnCoreRows,
@@ -15,10 +19,15 @@ import {
 } from './helpers/build-prn-detail-rows.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import { buildPrnBasePath } from './helpers/fetch-prn-context.js'
+import { buildNoteBreadcrumbs } from './helpers/build-note-breadcrumbs.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
+import { noteReturn } from './helpers/note-return-path.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
@@ -71,77 +80,52 @@ export const viewPostController = {
       request.params
     const session = request.auth.credentials
 
-    // Retrieve draft PRN data from session
     /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
 
     if (prnDraft?.id !== prnId) {
-      // No draft in session or ID mismatch - redirect to create page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+        `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create`
       )
     }
 
     try {
-      // Re-validate tonnage against Available Waste Balance before confirming
-      const wasteBalanceMap = await fetchWasteBalances(
-        organisationId,
-        [accreditationId],
-        session.idToken
-      )
-      const wasteBalance = wasteBalanceMap[accreditationId]
-      const availableAmount = wasteBalance?.availableAmount ?? 0
-
-      if (prnDraft.tonnage > availableAmount) {
-        // Tonnage exceeds available balance - cancel draft and redirect with error
-        request.logger.warn({
-          message: 'PRN tonnage exceeds available waste balance',
-          event: {
-            action: 'prn_tonnage_exceeds_balance',
-            reference: prnId,
-            reason: `tonnage=${prnDraft.tonnage} availableAmount=${availableAmount}`
-          }
-        })
-
-        await updatePrnStatus(
+      const [wasteBalanceMap, eligibility] = await Promise.all([
+        fetchWasteBalances(
+          organisationId,
+          [accreditationId],
+          session.backendToken
+        ),
+        fetchDecemberPrnEligibility(
           organisationId,
           registrationId,
           accreditationId,
-          prnId,
-          { status: 'discarded' },
-          session.idToken
+          session.backendToken
         )
-
-        request.yar.clear('prnDraft')
-
-        return h.redirect(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create?error=insufficient_balance`
-        )
+      ])
+      const balance = wasteBalanceMap[accreditationId] ?? {
+        amount: 0,
+        availableAmount: 0
       }
-
-      // Update PRN status from draft to awaiting_authorisation
-      const result = await updatePrnStatus(
+      const availableAmount = availableForPool(
+        balance,
+        prnDraft.isDecemberWaste &&
+          eligibility.mode === DECEMBER_WASTE_CONTROL.selectPool
+      )
+      const prnParams = {
         organisationId,
         registrationId,
         accreditationId,
-        prnId,
-        { status: 'awaiting_authorisation' },
-        session.idToken
-      )
+        prnId
+      }
 
-      // Clear draft and store for created page
-      request.yar.clear('prnDraft')
-      request.yar.set('prnCreated', {
-        id: result.id,
-        tonnage: result.tonnage,
-        material: result.material,
-        status: result.status,
-        wasteProcessingType: prnDraft.wasteProcessingType
-      })
-
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
-      )
+      return await (prnDraft.tonnage > availableAmount
+        ? discardDraftOverBalance(request, h, {
+            ...prnParams,
+            availableAmount,
+            prnDraft
+          })
+        : confirmDraft(request, h, { ...prnParams, prnDraft }))
     } catch (error) {
       if (error.isBoom) {
         throw error
@@ -159,6 +143,88 @@ export const viewPostController = {
       )
     }
   }
+}
+
+/**
+ * Discards a draft whose tonnage no longer fits the available waste balance.
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {PrnDetailParams & { availableAmount: number, prnDraft: PrnDraftSession }} params
+ */
+const discardDraftOverBalance = async (
+  request,
+  h,
+  {
+    organisationId,
+    registrationId,
+    accreditationId,
+    prnId,
+    availableAmount,
+    prnDraft
+  }
+) => {
+  request.logger.warn({
+    message: 'PRN tonnage exceeds available waste balance',
+    event: {
+      action: 'prn_tonnage_exceeds_balance',
+      reference: prnId,
+      reason: `tonnage=${prnDraft.tonnage} availableAmount=${availableAmount}`
+    }
+  })
+
+  await updatePrnStatus(
+    organisationId,
+    registrationId,
+    accreditationId,
+    prnId,
+    { status: 'discarded' },
+    request.auth.credentials.backendToken
+  )
+
+  request.yar.clear('prnDraft')
+
+  const poolParam = prnDraft.isDecemberWaste ? '&pool=december' : ''
+
+  return h.redirect(
+    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance${poolParam}`
+  )
+}
+
+/**
+ * Moves a draft to awaiting authorisation, ending the create journey.
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {PrnDetailParams & { prnDraft: PrnDraftSession }} params
+ */
+const confirmDraft = async (
+  request,
+  h,
+  { organisationId, registrationId, accreditationId, prnId, prnDraft }
+) => {
+  const result = await updatePrnStatus(
+    organisationId,
+    registrationId,
+    accreditationId,
+    prnId,
+    { status: 'awaiting_authorisation' },
+    request.auth.credentials.backendToken
+  )
+
+  request.yar.clear('prnDraft')
+  request.yar.set('prnCreated', {
+    id: result.id,
+    tonnage: result.tonnage,
+    material: result.material,
+    status: result.status,
+    wasteProcessingType: prnDraft.wasteProcessingType,
+    isDecemberWaste: prnDraft.isDecemberWaste
+  })
+
+  await metrics.journey.end(request, JOURNEY.createPrn, accreditationId)
+
+  return h.redirect(
+    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/${prnId}/created`
+  )
 }
 
 /**
@@ -188,13 +254,13 @@ async function handleDraftView(
     await getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      idToken: session.idToken,
+      backendToken: session.backendToken,
       accreditationId
     })
 
   const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
 
-  const displayMaterial = getDisplayMaterial(registration)
+  const displayMaterial = getRegistrationMaterialDisplayName(registration)
 
   const prnDetailRows = buildDraftPrnDetailRows({
     prnDraft,
@@ -260,7 +326,7 @@ async function handleExistingView(
       getRequiredRegistrationWithAccreditation({
         organisationId,
         registrationId,
-        idToken: session.idToken,
+        backendToken: session.backendToken,
         accreditationId
       }),
       fetchPackagingRecyclingNote(
@@ -268,7 +334,7 @@ async function handleExistingView(
         registrationId,
         accreditationId,
         prnId,
-        session.idToken
+        session.backendToken
       )
     ])
 
@@ -276,14 +342,31 @@ async function handleExistingView(
     prn.issuedToOrganisation
   )
 
-  const { isExporter, noteType, noteTypeFull, wasteAction } =
+  const { isExporter, noteType, noteTypeFull, noteTypePlural, wasteAction } =
     getNoteTypeDisplayNames(registration)
 
-  const backUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-  )
+  const isRegulator = readsAsARegulator(session)
 
-  const displayMaterial = getDisplayMaterial(registration)
+  const back = noteReturn({ organisationId, registrationId, accreditationId })
+
+  // A regulator walks the trail back instead, so the page offers them neither
+  // the back link nor the return link. An operator reads a note from their own
+  // list and keeps both.
+  const backUrl = isRegulator ? null : request.localiseUrl(back.path)
+
+  const breadcrumbs = isRegulator
+    ? buildNoteBreadcrumbs({
+        organisation: organisationData,
+        registration,
+        accreditationId,
+        noteTypePlural,
+        prn,
+        localise,
+        localiseUrl: request.localiseUrl.bind(request)
+      })
+    : []
+
+  const displayMaterial = getRegistrationMaterialDisplayName(registration)
 
   const statusConfig = getStatusConfig(prn.status, localise)
   const isNotDraft = prn.status !== 'draft'
@@ -315,14 +398,13 @@ async function handleExistingView(
     prnDetailRows,
     accreditationRows,
     backUrl,
+    back,
+    isRegulator,
     localise,
-    request,
-    organisationId,
-    registrationId,
-    accreditationId
+    request
   })
 
-  return h.view('prns/view', viewData)
+  return h.view('prns/view', { ...viewData, breadcrumbs })
 }
 
 /**
@@ -335,12 +417,11 @@ async function handleExistingView(
  *   isNotDraft: boolean,
  *   prnDetailRows: Array<object>,
  *   accreditationRows: Array<object>,
- *   backUrl: string,
+ *   backUrl: string | null,
+ *   back: { path: string, textKey: string },
+ *   isRegulator: boolean,
  *   localise: TFunction,
- *   request: HapiRequest,
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string
+ *   request: HapiRequest
  * }} params
  * @returns {object} View data object
  */
@@ -353,14 +434,11 @@ function buildExistingPrnViewData({
   prnDetailRows,
   accreditationRows,
   backUrl,
+  back,
+  isRegulator,
   localise,
-  request,
-  organisationId,
-  registrationId,
-  accreditationId
+  request
 }) {
-  const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-
   return {
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
     heading: noteTypeFull,
@@ -378,10 +456,12 @@ function buildExistingPrnViewData({
     accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl,
-    returnLink: {
-      href: request.localiseUrl(returnUrl),
-      text: localise('prns:view:returnLink', { noteType })
-    }
+    returnLink: isRegulator
+      ? null
+      : {
+          href: request.localiseUrl(back.path),
+          text: localise(back.textKey, { noteType })
+        }
   }
 }
 

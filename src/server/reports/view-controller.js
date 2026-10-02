@@ -1,4 +1,5 @@
 import Boom from '@hapi/boom'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
@@ -11,12 +12,13 @@ import {
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
   isReprocessorRegistration
 } from '#server/common/helpers/prns/registration-helpers.js'
+import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
@@ -238,7 +240,7 @@ function buildViewData({
   localise
 }) {
   const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
-  const material = getDisplayMaterial(registration)
+  const material = getRegistrationMaterialDisplayName(registration)
   const periodLabel = formatPeriodLabelWithComma(
     { year, period },
     cadence,
@@ -314,22 +316,23 @@ export const viewGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration, accreditation }, reportDetail] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      ),
-      fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        session.idToken
-      )
-    ])
+    const [{ organisationData, registration, accreditation }, reportDetail] =
+      await Promise.all([
+        fetchRegistrationAndAccreditation(
+          organisationId,
+          registrationId,
+          session.backendToken
+        ),
+        fetchReportDetail(
+          organisationId,
+          registrationId,
+          year,
+          cadence,
+          period,
+          submissionNumber,
+          session.backendToken
+        )
+      ])
 
     const currentStatus = reportDetail.status?.currentStatus
     if (
@@ -340,14 +343,16 @@ export const viewGetController = {
     }
 
     const reportsPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-    const backUrl = request.localiseUrl(reportsPath)
     const reportsUrl = request.localiseUrl(reportsPath)
+    const isRegulator = readsAsARegulator(session)
+    // A regulator walks the trail back instead, so the page offers them no
+    // back link. An operator reads a report from their own list and keeps one.
+    const backUrl = isRegulator ? null : reportsUrl
     const periodPath = `${reportsPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
     const makeChangesUrl = request.localiseUrl(`${periodPath}/make-changes`)
 
-    return h.view(
-      'reports/view',
-      buildViewData({
+    return h.view('reports/view', {
+      ...buildViewData({
         registration,
         accreditation,
         reportDetail,
@@ -359,7 +364,18 @@ export const viewGetController = {
         reportsUrl,
         makeChangesUrl,
         localise
-      })
-    )
+      }),
+      breadcrumbs: isRegulator
+        ? buildReportBreadcrumbs({
+            organisation: organisationData,
+            registration,
+            pageName: localise('reports:view:pageTitle'),
+            year,
+            cadence,
+            localise,
+            localiseUrl: request.localiseUrl.bind(request)
+          })
+        : []
+    })
   }
 }

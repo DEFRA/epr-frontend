@@ -1,6 +1,9 @@
-import { vi, describe, expect, it, beforeEach } from 'vitest'
+import { vi, describe, expect, it, afterEach, beforeEach } from 'vitest'
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { SIGN_IN_PROVIDER_COOKIE } from '#server/auth/helpers/sign-in-provider.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 
 import { catchAll } from '#server/common/helpers/errors.js'
 import {
@@ -19,6 +22,7 @@ describe(catchAll, () => {
   const mockToolkit = {
     view: vi.fn().mockReturnThis(),
     code: vi.fn().mockReturnThis(),
+    takeover: vi.fn().mockReturnThis(),
     redirect: mockRedirect
   }
 
@@ -30,12 +34,17 @@ describe(catchAll, () => {
       redirect: mockRedirect
     },
     logger: { error: mockErrorLogger },
+    state: {},
     t: vi.fn((key) => key),
     localiseUrl: vi.fn((key) => key)
   })
 
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    config.reset('featureFlags.regulatorAccess')
   })
 
   it('should skip non-boom responses', async () => {
@@ -65,6 +74,22 @@ describe(catchAll, () => {
     expect(mockErrorLogger).not.toHaveBeenCalled()
   })
 
+  it('renders the no-permission page with the refusal status for any session', async () => {
+    const req = {
+      ...makeRequest(statusCodes.forbidden),
+      auth: { isAuthenticated: true }
+    }
+
+    await catchAll(asRequest(req), asResponseToolkit(mockToolkit))
+
+    expect(mockToolkit.view).toHaveBeenCalledWith('error/no-permission', {
+      pageTitle: 'error:noPermission:pageTitle'
+    })
+    expect(mockToolkit.code).toHaveBeenCalledWith(statusCodes.forbidden)
+    expect(mockToolkit.takeover).toHaveBeenCalledWith()
+    expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
   it('logs user out when session is missing', async () => {
     const req = makeRequest(statusCodes.unauthorized)
     await catchAll(asRequest(req), asResponseToolkit(mockToolkit))
@@ -72,6 +97,20 @@ describe(catchAll, () => {
     expect(removeUserSession).toHaveBeenCalledWith(req)
     expect(mockRedirect).toHaveBeenCalledWith('/logged-out')
     expect(mockTakeover).toHaveBeenCalledWith()
+  })
+
+  it('sends a regulator whose session lapsed to the regulator logged-out page', async () => {
+    config.set('featureFlags.regulatorAccess', true)
+
+    const req = {
+      ...makeRequest(statusCodes.unauthorized),
+      state: { [SIGN_IN_PROVIDER_COOKIE]: OIDC_ENTRA_ID }
+    }
+
+    await catchAll(asRequest(req), asResponseToolkit(mockToolkit))
+
+    expect(removeUserSession).toHaveBeenCalledWith(req)
+    expect(mockRedirect).toHaveBeenCalledWith('/regulators/logged-out')
   })
 
   it('should use fallback message when localise function not available', async () => {

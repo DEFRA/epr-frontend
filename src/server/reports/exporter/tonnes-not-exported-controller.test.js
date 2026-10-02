@@ -356,7 +356,7 @@ describe('#tonnesNotExportedController', () => {
           submissionNumber: 1
         },
         { tonnageNotExported: 15.5 },
-        'mock-id-token'
+        'mock-backend-token'
       )
     })
 

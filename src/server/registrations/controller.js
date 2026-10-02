@@ -1,6 +1,13 @@
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { config } from '#config/config.js'
+import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
+import {
+  showsDecemberBalance,
+  toDecemberBalanceBreakdown
+} from '#server/common/helpers/waste-balance/december-balance.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { capitalize } from 'lodash-es'
@@ -20,28 +27,39 @@ export const controller = {
 
     const session = request.auth.credentials
 
-    const { registration, accreditation } =
+    const { registration, accreditation, rawAccreditation } =
       await fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.backendToken
       )
 
-    const wasteBalance = registration.accreditationId
-      ? await getWasteBalance(
-          organisationId,
-          registration.accreditationId,
-          session.idToken,
-          request.logger
-        )
-      : null
+    const [wasteBalance, showsDecember] = registration.accreditationId
+      ? await Promise.all([
+          getWasteBalance(
+            organisationId,
+            registration.accreditationId,
+            session.backendToken,
+            request.logger
+          ),
+          showsDecemberBalance({
+            organisationId,
+            registrationId,
+            accreditationId: registration.accreditationId,
+            backendToken: session.backendToken,
+            logger: request.logger
+          })
+        ])
+      : [null, false]
 
     const viewModel = buildViewModel({
       request,
       organisationId,
       accreditation,
+      rawAccreditation,
       registration,
-      wasteBalance
+      wasteBalance,
+      showsDecember
     })
 
     return h.view('registrations/index', viewModel)
@@ -79,11 +97,17 @@ export const controller = {
  *   material: string;
  *   pageTitle: string;
  *   prns: { description: string; link: Link; manageLink: Link; title: string };
+ *   reapplyAccreditation: ReapplyLink | null;
  *   registration: TaggedReference;
  *   reports: { link: Link };
  *   siteName: string | null;
  *   uploadSummaryLogUrl: string;
- *   wasteBalance: { availableAmount: number | null; noteTypePlural: 'PRNs' | 'PERNs' };
+ *   wasteBalance: {
+ *     availableAmount: number | null;
+ *     noteTypePlural: 'PRNs' | 'PERNs';
+ *     breakdown: DecemberBalanceBreakdown | null;
+ *   };
+ *   wasteBalanceLedgerUrl: string | null;
  * }} RegistrationViewModel
  */
 
@@ -119,7 +143,9 @@ const buildMaybeTaggedReference = ({ reference, status }) => {
  *   organisationId: string;
  *   registration: Registration;
  *   accreditation: Accreditation | undefined;
+ *   rawAccreditation: Accreditation | undefined;
  *   wasteBalance: WasteBalance | null;
+ *   showsDecember: boolean;
  * }} params
  * @returns {RegistrationViewModel}
  */
@@ -127,8 +153,10 @@ function buildViewModel({
   request,
   organisationId,
   accreditation,
+  rawAccreditation,
   registration,
-  wasteBalance
+  wasteBalance,
+  showsDecember
 }) {
   const { t: localise } = request
 
@@ -138,11 +166,24 @@ function buildViewModel({
     ? null
     : (registration.site?.address?.line1 ??
       localise('registrations:unknownSite'))
-  const material = getDisplayMaterial(registration)
+  const material = getRegistrationMaterialDisplayName(registration)
 
   const uploadSummaryLogUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
   )
+
+  const { windowStart, windowEnd, baseUrl } = config.get('reapplyAccreditation')
+  const reapplyAccreditation = buildReapplyAccreditation({
+    now: new Date(),
+    window: { windowStart, windowEnd },
+    baseUrl,
+    organisationId,
+    registration,
+    // Deliberately the raw (unfiltered) accreditation, not the live-only
+    // `accreditation` above: the reapply link must also show for a `cancelled`
+    // accreditation, which the filtered view drops to undefined.
+    accreditation: rawAccreditation
+  })
 
   /** @type {RegistrationViewModel} */
   const viewModel = {
@@ -165,6 +206,7 @@ function buildViewModel({
       registration.id,
       registration.accreditationId
     ),
+    reapplyAccreditation,
     reports: getReportsViewData(request, organisationId, registration.id),
     registration: buildTaggedReference({
       reference: registration.registrationNumber,
@@ -172,10 +214,31 @@ function buildViewModel({
     }),
     siteName,
     uploadSummaryLogUrl,
-    wasteBalance: getWasteBalanceViewData(wasteBalance, noteTypePlural)
+    wasteBalance: getWasteBalanceViewData(
+      wasteBalance,
+      noteTypePlural,
+      showsDecember
+    ),
+    wasteBalanceLedgerUrl: getWasteBalanceLedgerUrl(
+      request,
+      organisationId,
+      registration
+    )
   }
 
   return viewModel
+}
+
+/**
+ * Chooses between a string and its read-only variant. A card that offers a
+ * session nothing but a list should not describe itself as a way to create and
+ * manage, so the copy follows the same signal the controls do.
+ * @param {HapiRequest} request
+ * @param {string} key
+ * @returns {string}
+ */
+function keyForSession(request, key) {
+  return hasWriteScope(request.auth.credentials) ? key : `${key}ReadOnly`
 }
 
 /**
@@ -191,7 +254,7 @@ function getReportsViewData(request, organisationId, registrationId) {
   return {
     link: {
       href: request.localiseUrl(reportsUrl),
-      text: localise('registrations:manageReports')
+      text: localise(keyForSession(request, 'registrations:manageReports'))
     }
   }
 }
@@ -217,30 +280,60 @@ function getPrnViewData(
   const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   return {
-    description: localise('registrations:notes.description', {
-      noteTypePlural
-    }),
+    description: localise(
+      keyForSession(request, 'registrations:notes.description'),
+      { noteTypePlural }
+    ),
     link: {
       href: request.localiseUrl(createUrl),
       text: localise('registrations:notes.createNew', { noteType })
     },
     manageLink: {
       href: request.localiseUrl(manageUrl),
-      text: localise('registrations:notes.manage', { noteTypePlural })
+      text: localise(keyForSession(request, 'registrations:notes.manage'), {
+        noteTypePlural
+      })
     },
     title: localise('registrations:notes.title', { noteTypePlural })
   }
 }
 
 /**
+ * The ledger this registration writes to now. A ledger is partitioned by
+ * accreditation, the registered-only phase included, so the link carries the
+ * accreditation in force, or none where the period is registered only.
+ *
+ * The link is offered on the same scope the ledger page itself is gated on, so
+ * a session is never shown a link to a page that will refuse it.
+ * @param {HapiRequest} request
+ * @param {string} organisationId
+ * @param {Registration} registration
+ * @returns {string | null}
+ */
+function getWasteBalanceLedgerUrl(request, organisationId, registration) {
+  if (!hasLedgerReadScope(request.auth.credentials)) {
+    return null
+  }
+
+  const registrationPath = `/organisations/${organisationId}/registrations/${registration.id}`
+  const ledgerPath = registration.accreditationId
+    ? `${registrationPath}/accreditations/${registration.accreditationId}`
+    : registrationPath
+
+  return request.localiseUrl(`${ledgerPath}/waste-balance-ledger`)
+}
+
+/**
  * @param {WasteBalance | null} wasteBalance
  * @param {'PRNs' | 'PERNs'} noteTypePlural
+ * @param {boolean} showsDecember
  */
-function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
+function getWasteBalanceViewData(wasteBalance, noteTypePlural, showsDecember) {
   return {
     availableAmount:
       wasteBalance === null ? null : wasteBalance.availableAmount,
-    noteTypePlural
+    noteTypePlural,
+    breakdown: showsDecember ? toDecemberBalanceBreakdown(wasteBalance) : null
   }
 }
 
@@ -249,5 +342,7 @@ function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { ReapplyLink } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
+ * @import { DecemberBalanceBreakdown } from '#server/common/helpers/waste-balance/december-balance.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */

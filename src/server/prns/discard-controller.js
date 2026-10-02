@@ -5,6 +5,8 @@ import {
   classifierTail
 } from '#server/common/helpers/logging/cdp-boom.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -31,13 +33,15 @@ export const discardGetController = {
     const { registration } = await getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      idToken: session.idToken,
+      backendToken: session.backendToken,
       accreditationId
     })
 
     const { noteType } = getNoteTypeDisplayNames(registration)
 
     const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
+
+    await metrics.journey.start(request, JOURNEY.discardPrn, prnId)
 
     return h.view('prns/discard', {
       pageTitle: localise('prns:discard:pageTitle', { noteType }),
@@ -76,10 +80,12 @@ export const discardPostController = {
         accreditationId,
         prnId,
         { status: 'discarded' },
-        session.idToken
+        session.backendToken
       )
 
       request.yar.clear('prnDraft')
+
+      await metrics.journey.end(request, JOURNEY.discardPrn, prnId)
 
       return h.redirect(createUrl)
     } catch (error) {

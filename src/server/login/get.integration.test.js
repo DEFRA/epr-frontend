@@ -1,18 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import { describe, expect, vi } from 'vitest'
 
-const mockSignInAttemptedMetric = vi.fn()
-
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    metrics: {
-      ...(await importOriginal()).metrics,
-      signInAttempted: (oidcProvider) => mockSignInAttemptedMetric(oidcProvider)
-    }
-  })
-)
+vi.spyOn(metrics.signIn, 'attempted').mockResolvedValue()
 
 describe('#loginController - integration', () => {
   describe('login flow', () => {
@@ -48,8 +39,8 @@ describe('#loginController - integration', () => {
           url
         })
 
-        expect(mockSignInAttemptedMetric).toHaveBeenCalledTimes(1)
-        expect(mockSignInAttemptedMetric).toHaveBeenCalledWith('defra-id')
+        expect(metrics.signIn.attempted).toHaveBeenCalledTimes(1)
+        expect(metrics.signIn.attempted).toHaveBeenCalledWith('defra-id')
       }
     )
   })

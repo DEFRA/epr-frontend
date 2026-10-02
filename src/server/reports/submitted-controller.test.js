@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
@@ -5,9 +6,15 @@ import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtu
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole, getByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -234,6 +241,80 @@ describe('#submittedController', () => {
       const { body } = dom.window.document
 
       expect(body.querySelector('.govuk-back-link')).toBeNull()
+    })
+
+    describe('satisfaction survey', () => {
+      const surveyUrl = 'https://survey.example/report'
+      const surveyTitle = 'Help us improve this service'
+      const surveyText = 'Give us your feedback (opens in a new tab)'
+
+      const liveSurvey = () => {
+        config.set('satisfactionSurvey.isEnabled', true)
+        config.set('satisfactionSurvey.reportUrl', surveyUrl)
+      }
+
+      afterEach(() => {
+        config.reset('satisfactionSurvey.isEnabled')
+        config.reset('satisfactionSurvey.reportUrl')
+      })
+
+      const getBody = async (server) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: submittedUrl,
+          auth: mockAuth
+        })
+
+        return new JSDOM(result, { url: 'http://localhost' }).window.document
+          .body
+      }
+
+      it('asks nothing while the surveys are switched off', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(queryByText(body, surveyTitle)).toBeNull()
+      })
+
+      it('asks below the page content, leaving the return link alone', async ({
+        server
+      }) => {
+        liveSurvey()
+
+        const body = await getBody(server)
+        const main = getByRole(body, 'main')
+
+        expect(getByText(body, surveyTitle)).toBeDefined()
+        expect(queryByText(main, surveyTitle)).toBeNull()
+        expect(
+          getAllByRole(main, 'link').map((link) => link.textContent?.trim())
+        ).toStrictEqual(['Return to your reports'])
+      })
+
+      it('does not introduce a what happens next heading', async ({
+        server
+      }) => {
+        liveSurvey()
+
+        const main = getByRole(await getBody(server), 'main')
+
+        expect(
+          queryByRole(main, 'heading', { name: 'What happens next' })
+        ).toBeNull()
+      })
+
+      it('sends the user to the report survey, not one from another journey', async ({
+        server
+      }) => {
+        liveSurvey()
+
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'link', { name: surveyText }).getAttribute('href')
+        ).toBe(surveyUrl)
+      })
     })
 
     it('should return 200 on refresh (repeated GET)', async ({ server }) => {

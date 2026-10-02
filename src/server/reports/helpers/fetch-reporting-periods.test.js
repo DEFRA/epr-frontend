@@ -12,7 +12,7 @@ const { fetchJsonFromBackend } =
 describe(fetchReportingPeriods, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
-  const idToken = 'test-token'
+  const backendToken = 'test-token'
 
   const mockResponse = {
     cadence: 'monthly',
@@ -35,14 +35,14 @@ describe(fetchReportingPeriods, () => {
   it('calls fetchJsonFromBackend with correct path and options', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
-    await fetchReportingPeriods(organisationId, registrationId, idToken)
+    await fetchReportingPeriods(organisationId, registrationId, backendToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       '/v1/organisations/org-123/registrations/reg-456/reports/calendar',
       {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${idToken}`
+          Authorization: `Bearer ${backendToken}`
         }
       }
     )
@@ -51,7 +51,7 @@ describe(fetchReportingPeriods, () => {
   it('encodes URL path parameters with special characters', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
-    await fetchReportingPeriods('org/123', 'reg&456', idToken)
+    await fetchReportingPeriods('org/123', 'reg&456', backendToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       '/v1/organisations/org%2F123/registrations/reg%26456/reports/calendar',
@@ -65,7 +65,7 @@ describe(fetchReportingPeriods, () => {
     const result = await fetchReportingPeriods(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(mockResponse)
@@ -76,7 +76,7 @@ describe(fetchReportingPeriods, () => {
     vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await expect(
-      fetchReportingPeriods(organisationId, registrationId, idToken)
+      fetchReportingPeriods(organisationId, registrationId, backendToken)
     ).rejects.toThrow('Network error')
   })
 })

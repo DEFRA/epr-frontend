@@ -15,7 +15,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} cadence
  * @param {number} period
  * @param {number} submissionNumber
- * @param {string} idToken
+ * @param {string} backendToken
  * @returns {Promise<CreateReportResponse>}
  */
 export async function createReport(
@@ -25,12 +25,12 @@ export async function createReport(
   cadence,
   period,
   submissionNumber,
-  idToken
+  backendToken
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
 
   return fetchJsonFromBackend(path, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${idToken}` }
+    headers: { Authorization: `Bearer ${backendToken}` }
   })
 }

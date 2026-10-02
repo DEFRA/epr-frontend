@@ -7,10 +7,10 @@ import { fetchReportBackend } from './fetch-report-backend.js'
  * the 409 codes here aren't stale reasons, so they propagate as-is rather
  * than becoming a ReportStaleError.
  * @param {{ organisationId: string, registrationId: string, year: number, cadence: string, period: number, submissionNumber: number }} periodParams
- * @param {string} idToken
+ * @param {string} backendToken
  * @returns {Promise<unknown>}
  */
-export async function requestResubmission(periodParams, idToken) {
+export async function requestResubmission(periodParams, backendToken) {
   const {
     organisationId,
     registrationId,
@@ -24,7 +24,7 @@ export async function requestResubmission(periodParams, idToken) {
   return fetchReportBackend(path, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${backendToken}`
     }
   })
 }

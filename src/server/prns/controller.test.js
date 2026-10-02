@@ -3,6 +3,9 @@ import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getByLabelText,
@@ -18,6 +21,10 @@ vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
+
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -59,6 +66,10 @@ const exporterUrl =
 describe('#createPrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      mode: 'none',
+      windowOpen: false
+    })
   })
 
   describe('request handling', () => {
@@ -86,7 +97,7 @@ describe('#createPrnController', () => {
         )
       })
 
-      it('should render page with correct title and heading', async ({
+      it('should render page with correct title, caption and heading', async ({
         server
       }) => {
         const { result, statusCode } = await server.inject({
@@ -100,12 +111,15 @@ describe('#createPrnController', () => {
         const dom = new JSDOM(result)
         const { body, title } = dom.window.document
 
-        expect(title).toMatch(/Create a PRN/i)
+        expect(title).toMatch(/Enter PRN details/i)
 
         const main = getByRole(body, 'main')
         const heading = getByRole(main, 'heading', { level: 1 })
 
-        expect(heading.textContent).toContain('Create a PRN')
+        expect(heading.textContent).toContain('Enter PRN details')
+        expect(main.querySelector('.govuk-caption-xl').textContent.trim()).toBe(
+          'Create PRN'
+        )
       })
 
       it('should render material type display', async ({ server }) => {
@@ -160,7 +174,7 @@ describe('#createPrnController', () => {
         const main = getByRole(body, 'main')
 
         expect(
-          getByText(main, /Enter who this PRN will be issued to/i)
+          getByText(main, /Who will this PRN be issued to\?/i)
         ).toBeDefined()
 
         expect(
@@ -171,7 +185,7 @@ describe('#createPrnController', () => {
         ).toBeDefined()
 
         const recipientSelect = getByRole(main, 'combobox', {
-          name: /Enter who this PRN will be issued to/i
+          name: /Who will this PRN be issued to\?/i
         })
 
         expect(recipientSelect.options.length).toBeGreaterThan(1)
@@ -269,7 +283,7 @@ describe('#createPrnController', () => {
         expect(getRequiredRegistrationWithAccreditation).toHaveBeenCalledWith({
           organisationId: 'org-123',
           registrationId: 'reg-001',
-          idToken: 'mock-id-token',
+          backendToken: 'mock-backend-token',
           accreditationId: 'acc-001'
         })
       })
@@ -331,7 +345,9 @@ describe('#createPrnController', () => {
           )
         })
 
-        it('should display PRN in title and heading', async ({ server }) => {
+        it('should display PRN in title, caption and heading', async ({
+          server
+        }) => {
           const { result } = await server.inject({
             method: 'GET',
             url: reprocessorUrl,
@@ -342,10 +358,13 @@ describe('#createPrnController', () => {
           const { body, title } = dom.window.document
           const main = getByRole(body, 'main')
 
-          expect(title).toContain('Create a PRN')
+          expect(title).toContain('Enter PRN details')
+          expect(main.querySelector('.govuk-caption-xl').textContent).toContain(
+            'Create PRN'
+          )
           expect(
             getByRole(main, 'heading', { level: 1 }).textContent
-          ).toContain('Create a PRN')
+          ).toContain('Enter PRN details')
         })
 
         it('should display PRN in form labels and help text', async ({
@@ -364,7 +383,7 @@ describe('#createPrnController', () => {
 
           expect(getByText(main, /Enter PRN tonnage/i)).toBeDefined()
           expect(
-            getByText(main, /Enter who this PRN will be issued to/i)
+            getByText(main, /Who will this PRN be issued to\?/i)
           ).toBeDefined()
           expect(
             getByText(main, /These notes will appear on the PRN/i)
@@ -382,7 +401,9 @@ describe('#createPrnController', () => {
           )
         })
 
-        it('should display PERN in title and heading', async ({ server }) => {
+        it('should display PERN in title, caption and heading', async ({
+          server
+        }) => {
           const { result } = await server.inject({
             method: 'GET',
             url: exporterUrl,
@@ -393,10 +414,13 @@ describe('#createPrnController', () => {
           const { body, title } = dom.window.document
           const main = getByRole(body, 'main')
 
-          expect(title).toContain('Create a PERN')
+          expect(title).toContain('Enter PERN details')
+          expect(main.querySelector('.govuk-caption-xl').textContent).toContain(
+            'Create PERN'
+          )
           expect(
             getByRole(main, 'heading', { level: 1 }).textContent
-          ).toContain('Create a PERN')
+          ).toContain('Enter PERN details')
         })
 
         it('should display PERN in form labels and help text', async ({
@@ -415,7 +439,7 @@ describe('#createPrnController', () => {
 
           expect(getByText(main, /Enter PERN tonnage/i)).toBeDefined()
           expect(
-            getByText(main, /Enter who this PERN will be issued to/i)
+            getByText(main, /Who will this PERN be issued to\?/i)
           ).toBeDefined()
           expect(
             getByText(main, /These notes will appear on the PERN/i)
@@ -510,6 +534,101 @@ describe('#createPrnController', () => {
       })
     })
 
+    describe('select waste balance pool', () => {
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 60,
+          availableAmount: 60,
+          decemberAmount: 50,
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 10
+        })
+      })
+
+      it('renders both balance radios with their tonnages, and the either-balance inset text', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const decemberRadio = getByLabelText(
+          main,
+          /December waste balance \(50\.00 tonnes\)/i
+        )
+        expect(decemberRadio.getAttribute('type')).toBe('radio')
+
+        const generalRadio = getByLabelText(
+          main,
+          /Non-December waste balance \(10\.00 tonnes\)/i
+        )
+        expect(generalRadio.getAttribute('type')).toBe('radio')
+
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText.textContent).toContain(
+          'You can create PRNs from either waste balance.'
+        )
+      })
+
+      it('does not render the manual December Yes/No question', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Select which waste balance/i)).toBeDefined()
+        expect(main.textContent).not.toContain('Is this December waste?')
+      })
+
+      it('does not pre-select either waste balance radio', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const decemberRadio = getByLabelText(
+          main,
+          /December waste balance \(50\.00 tonnes\)/i
+        )
+        const generalRadio = getByLabelText(
+          main,
+          /Non-December waste balance \(10\.00 tonnes\)/i
+        )
+
+        expect(decemberRadio.checked).toBe(false)
+        expect(generalRadio.checked).toBe(false)
+      })
+    })
+
     describe('insufficient balance error', () => {
       beforeEach(() => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
@@ -567,6 +686,30 @@ describe('#createPrnController', () => {
         const errorSummary = main.querySelector('.govuk-error-summary')
         expect(errorSummary).toBeNull()
       })
+    })
+  })
+
+  describe('journey events', () => {
+    beforeEach(() => {
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+    })
+
+    it('should record the create journey start when the form renders', async ({
+      server
+    }) => {
+      await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      expect(metrics.journey.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.createPrn,
+        'acc-001'
+      )
     })
   })
 })

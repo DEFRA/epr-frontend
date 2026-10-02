@@ -3,7 +3,7 @@ import Boom from '@hapi/boom'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { badImplementation } from '#server/common/helpers/logging/cdp-boom.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { CADENCE } from '../constants.js'
 import { fetchReportDetail } from './fetch-report-detail.js'
 import { formatPeriodLabel, formatPeriodShort } from './format-period-label.js'
@@ -35,7 +35,7 @@ async function fetchGuardedData(isMatchingRegistration, request) {
     fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.backendToken
     ),
     fetchReportDetail(
       organisationId,
@@ -44,7 +44,7 @@ async function fetchGuardedData(isMatchingRegistration, request) {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
   ])
 
@@ -204,7 +204,7 @@ async function buildViewData(
     throw Boom.notFound()
   }
 
-  const material = getDisplayMaterial(registration)
+  const material = getRegistrationMaterialDisplayName(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const periodShort = formatPeriodShort({ year, period }, cadence, localise)
   const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`

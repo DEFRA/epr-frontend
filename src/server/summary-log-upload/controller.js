@@ -1,7 +1,10 @@
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const summaryLogUploadController = {
@@ -17,7 +20,7 @@ export const summaryLogUploadController = {
 
     const organisationData = await fetchOrganisationById(
       organisationId,
-      session.idToken
+      session.backendToken
     )
 
     const registration = organisationData.registrations?.find(
@@ -45,12 +48,26 @@ export const summaryLogUploadController = {
     }
 
     try {
-      const { uploadUrl } = await initiateSummaryLogUpload({
-        organisationId,
-        registrationId,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: session.idToken
-      })
+      // Starting an upload creates a summary log, so this GET writes. A session
+      // holding no write scope reads the page without one; the form is hidden.
+      const canUpload = hasWriteScope(session)
+
+      const { uploadUrl } = canUpload
+        ? await initiateSummaryLogUpload({
+            organisationId,
+            registrationId,
+            redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+            backendToken: session.backendToken
+          })
+        : {}
+
+      if (canUpload) {
+        await metrics.journey.start(
+          request,
+          JOURNEY.uploadSummaryLog,
+          registrationId
+        )
+      }
 
       const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`
 

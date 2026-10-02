@@ -5,21 +5,21 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {string} summaryLogId
- * @param {string} idToken - JWT ID token for authorization
+ * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<{status: string, accreditationNumber: string}>}
  */
 async function submitSummaryLog(
   organisationId,
   registrationId,
   summaryLogId,
-  idToken
+  backendToken
 ) {
   const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
 
   return fetchJsonFromBackend(path, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${backendToken}`
     }
   })
 }

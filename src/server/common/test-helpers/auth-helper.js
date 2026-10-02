@@ -1,20 +1,41 @@
+import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 
 /**
+ * @import { Identity } from '#server/auth/helpers/fetch-identity.js'
  * @import { UserSession } from '#server/auth/types/session.js'
  * @import { UserOrganisations } from '#server/auth/types/organisations.js'
  */
 
 /**
+ * The two credential fields a session takes from a backend identity, for a test
+ * that builds a session with {@link buildMockAuth}. `updateUserSession` maps
+ * `/v1/me` the same way, so a test session holds what the backend granted and
+ * one place decides what an identity is.
+ * @param {Identity} identity
+ * @returns {{ role: string | null, scope: string[] }}
+ */
+export const sessionIdentity = ({ role, scopes }) => ({
+  role,
+  scope: [...scopes]
+})
+
+/**
  * Builds a `session`-strategy auth object for `server.inject`, with credentials
  * that satisfy the app's `AuthCredentials` augmentation (see
  * `src/server/types/hapi.d.ts` -> `UserSession`). Pass overrides to vary
- * individual credential fields (e.g. `idToken`).
+ * individual credential fields (e.g. `backendToken`).
+ *
+ * The default is an operator, carrying the role and scopes the backend grants
+ * a Defra ID identity. Spread {@link sessionIdentity} to build a session for
+ * another identity. Pass `scope` alone only where the test's subject is a
+ * session holding a scope without the role that comes with it.
  * @param {Partial<UserSession>} [overrides]
  * @returns {{ strategy: string, credentials: UserSession }}
  */
 export const buildMockAuth = (overrides = {}) => ({
-  strategy: 'session',
+  strategy: SESSION_STRATEGY,
   credentials: {
     provider: OIDC_DEFRA_ID,
     query: {},
@@ -22,7 +43,8 @@ export const buildMockAuth = (overrides = {}) => ({
     profile: { id: 'user-123', email: 'test@example.com' },
     expiresAt: '2099-01-01T00:00:00.000Z',
     idToken: 'mock-id-token',
-    scope: [],
+    backendToken: 'mock-backend-token',
+    ...sessionIdentity(IDENTITIES.operator),
     urls: {
       token: 'http://defra-id.auth/token',
       logout: 'http://defra-id.auth/logout'

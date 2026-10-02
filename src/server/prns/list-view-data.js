@@ -1,4 +1,7 @@
+/** @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'; */
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
+import { toDecemberBalanceBreakdown } from '#server/common/helpers/waste-balance/december-balance.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
@@ -6,7 +9,8 @@ import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
 /**
  * @param {{
  *   t: (key: string, params?: object) => string,
- *   localiseUrl: (url: string) => string
+ *   localiseUrl: (url: string) => string,
+ *   auth: { credentials?: { scope?: string[] } | null }
  * }} request
  * @param {{
  *   organisationId: string,
@@ -18,7 +22,8 @@ import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
  *   issuedPrns?: object[],
  *   cancelledPrns?: object[],
  *   hasCreatedPrns?: boolean,
- *   wasteBalance?: { availableAmount?: number } | null
+ *   wasteBalance?: Partial<WasteBalance> | null,
+ *   showsDecember?: boolean
  * }} options
  */
 export function buildListViewData(
@@ -33,11 +38,13 @@ export function buildListViewData(
     issuedPrns = [],
     cancelledPrns = [],
     hasCreatedPrns,
-    wasteBalance
+    wasteBalance,
+    showsDecember = false
   }
 ) {
   const { t: localise } = request
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
+  const canWrite = hasWriteScope(request.auth.credentials)
   const routeBase = `/organisations/${organisationId}/registrations/${registrationId}`
 
   const buildAwaiting = (prnList) =>
@@ -46,7 +53,8 @@ export function buildListViewData(
       registrationId,
       accreditationId,
       prns: prnList,
-      localise
+      localise,
+      canWrite
     })
 
   const buildDetail = (prnList, i18nPrefix) =>
@@ -72,7 +80,9 @@ export function buildListViewData(
     wasteBalance: {
       amount: wasteBalance?.availableAmount ?? 0,
       label: localise('prns:list:availableWasteBalance'),
-      hint: localise('prns:list:balanceHint', { noteTypePlural })
+      hint: localise('prns:list:balanceHint', { noteTypePlural }),
+      noteTypePlural,
+      breakdown: showsDecember ? toDecemberBalanceBreakdown(wasteBalance) : null
     },
     hasCreatedPrns,
     table: buildAwaiting(prns),
@@ -112,30 +122,62 @@ function buildListLabels(localise, { noteType, noteTypePlural }) {
   }
 }
 
+/**
+ * The awaiting-action table. Its action link opens the page that issues or
+ * cancels a note, so a session holding no write scope is sent to the note's
+ * read page instead. An awaiting note appears in no other table, so an empty
+ * cell would leave that session able to see the note listed and unable to open
+ * it. The link is assembled here rather than in the template, so the template
+ * scan that hides write controls cannot see it and the decision has to be made
+ * at this call site.
+ * @param {{ localiseUrl: (url: string) => string }} request
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   accreditationId: string,
+ *   prns: Array<{
+ *     id: string,
+ *     recipient: string,
+ *     createdAt: string,
+ *     tonnage?: number | null,
+ *     status: string,
+ *     isDecemberWaste: boolean
+ *   }>,
+ *   localise: (key: string, params?: object) => string,
+ *   canWrite: boolean
+ * }} options
+ */
 function buildAwaitingTable(
   request,
-  { organisationId, registrationId, accreditationId, prns, localise }
+  { organisationId, registrationId, accreditationId, prns, localise, canWrite }
 ) {
   const headings = {
     recipient: localise('prns:list:table:recipientHeading'),
     createdAt: localise('prns:list:table:dateHeading'),
     tonnage: localise('prns:list:table:tonnageHeading'),
+    decemberWaste: localise('prns:decemberWasteLabel'),
     status: localise('prns:list:table:statusHeading'),
     action: localise('prns:list:table:actionHeading')
   }
 
   const selectText = localise('prns:list:table:selectText')
+  const viewText = localise('prns:list:table:viewText')
 
   const dataRows = prns.map((prn) => {
-    const actionUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}`
-    )
+    const notePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}`
+    const actionUrl = request.localiseUrl(notePath)
+    const viewUrl = request.localiseUrl(`${notePath}/view`)
     return [
-      { text: prn.recipient },
+      { text: prn.recipient, classes: cssClasses.wrap.breakWord },
       { text: formatDate(prn.createdAt) },
       { text: prn.tonnage },
+      { text: buildDecemberWasteText(prn.isDecemberWaste, localise) },
       { html: buildStatusTagHtml(prn.status, localise) },
-      { html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>` }
+      canWrite
+        ? {
+            html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>`
+          }
+        : { html: `<a href="${viewUrl}" class="govuk-link">${viewText}</a>` }
     ]
   })
 
@@ -151,6 +193,7 @@ function buildAwaitingTable(
     },
     { text: '' },
     { text: totalTonnage, classes: cssClasses.fontWeight.bold },
+    { text: '' },
     { text: '' },
     { text: '' }
   ]
@@ -177,6 +220,7 @@ function buildDetailTable(
     recipient: localise(`prns:list:${i18nPrefix}:recipientHeading`),
     dateIssued: localise(`prns:list:${i18nPrefix}:dateIssuedHeading`),
     tonnage: localise(`prns:list:${i18nPrefix}:tonnageHeading`),
+    decemberWaste: localise('prns:decemberWasteLabel'),
     status: localise(`prns:list:${i18nPrefix}:statusHeading`),
     action: localise(`prns:list:${i18nPrefix}:actionHeading`)
   }
@@ -189,9 +233,10 @@ function buildDetailTable(
     )
     return [
       { text: prn.prnNumber },
-      { text: prn.recipient },
+      { text: prn.recipient, classes: cssClasses.wrap.breakWord },
       { text: formatDate(prn.issuedAt) },
       { text: prn.tonnage ?? 0 },
+      { text: buildDecemberWasteText(prn.isDecemberWaste, localise) },
       { html: buildStatusTagHtml(prn.status, localise) },
       {
         html: `<a href="${viewUrl}" class="govuk-link" target="_blank" rel="noopener noreferrer">${selectText}</a>`
@@ -213,10 +258,22 @@ function buildDetailTable(
     { text: '' },
     { text: totalTonnage, classes: cssClasses.fontWeight.bold },
     { text: '' },
+    { text: '' },
     { text: '' }
   ]
 
   return { headings, rows: [...rows, totalRow] }
+}
+
+/**
+ * @param {boolean} isDecemberWaste
+ * @param {(key: string) => string} localise
+ * @returns {string}
+ */
+function buildDecemberWasteText(isDecemberWaste, localise) {
+  return localise(
+    isDecemberWaste ? 'prns:decemberWasteYes' : 'prns:decemberWasteNo'
+  )
 }
 
 /**
@@ -225,7 +282,7 @@ function buildDetailTable(
  * @param {(key: string) => string} localise
  * @returns {string}
  */
-function buildStatusTagHtml(status, localise) {
+export function buildStatusTagHtml(status, localise) {
   const statusConfig = getStatusConfig(status, localise)
   return `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
 }

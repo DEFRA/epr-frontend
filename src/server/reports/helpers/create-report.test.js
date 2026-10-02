@@ -16,7 +16,7 @@ describe(createReport, () => {
   const cadence = 'monthly'
   const period = 1
   const submissionNumber = 1
-  const idToken = 'test-token'
+  const backendToken = 'test-token'
 
   const mockResponse = {
     id: 'report-789',
@@ -37,7 +37,7 @@ describe(createReport, () => {
       cadence,
       period,
       submissionNumber,
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -45,7 +45,7 @@ describe(createReport, () => {
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${idToken}`
+          Authorization: `Bearer ${backendToken}`
         }
       }
     )
@@ -61,7 +61,7 @@ describe(createReport, () => {
       'quarterly',
       period,
       submissionNumber,
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -80,7 +80,7 @@ describe(createReport, () => {
       cadence,
       period,
       submissionNumber,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(mockResponse)
@@ -98,7 +98,7 @@ describe(createReport, () => {
         cadence,
         period,
         submissionNumber,
-        idToken
+        backendToken
       )
     ).rejects.toThrow('Network error')
   })

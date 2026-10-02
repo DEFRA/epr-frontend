@@ -2,6 +2,14 @@
   "back": "Back",
   "cancel": "Cancel",
   "continue": "Continue",
+  "cookieBanner": {
+    "heading": "Cookies on {{ serviceName }}",
+    "essential": "We use some essential cookies to make this service work.",
+    "analytics": "We'd also like to use analytics cookies so we can understand how you use the service and make improvements.",
+    "accept": "Accept analytics cookies",
+    "reject": "Reject analytics cookies",
+    "viewCookies": "View cookies"
+  },
   "errorSummaryTitle": "There is a problem",
   "footer": {
     "getHelp": {
@@ -28,7 +36,21 @@
     "manageAccount": "Manage account",
     "signOut": "Sign out"
   },
+  "satisfactionSurvey": {
+    "title": "Help us improve this service",
+    "body": "Tell us about your experience using this service.",
+    "link": "Give us your feedback (opens in a new tab)"
+  },
   "serviceName": "Record reprocessed or exported packaging waste",
   "submit": "Submit",
-  "warning": "Warning"
+  "warning": "Warning",
+  "wasteBalance": {
+    "decemberPanel": {
+      "title": "Available waste balance",
+      "december": "December waste balance",
+      "nonDecember": "Non-December waste balance",
+      "total": "Total tonnage",
+      "hint": "You can create {{noteTypePlural}} from either waste balance."
+    }
+  }
 }

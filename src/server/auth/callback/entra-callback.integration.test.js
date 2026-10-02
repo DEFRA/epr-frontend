@@ -1,53 +1,83 @@
 import * as jose from 'jose'
 import { config } from '#config/config.js'
-import { REGULATOR_ROLE } from '#server/auth/plugins/entra-id.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { beforeEach, it } from '#vite/fixtures/server.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import {
+  assertUserSession,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import {
+  IDENTITIES,
+  identityHandler
+} from '#server/common/test-helpers/identity-helper.js'
+import { SIGN_IN_PROVIDER_COOKIE } from '#server/auth/helpers/sign-in-provider.js'
+import {
+  OIDC_ENTRA_ID,
+  SELECT_ACCOUNT_QUERY
+} from '#server/auth/plugins/entra-id.js'
+import { paths } from '#server/paths.js'
+import {
+  extractCookieValues,
+  findSetCookie,
+  mergeCookies
+} from '#server/common/test-helpers/cookie-helper.js'
+import { ENTRA_ID_BASE_URL, beforeEach, it } from '#vite/fixtures/server.js'
+import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
 
+/**
+ * @import { SetupServerApi } from 'msw/node'
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
+
 const mock = {
-  cdpAuditing: vi.fn(),
-  signInSuccessMetric: vi.fn(),
-  signInFailureMetric: vi.fn()
+  cdpAuditing: vi.fn()
 }
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    metrics: {
-      ...(await importOriginal()).metrics,
-      signInFailure: (oidcProvider) => mock.signInFailureMetric(oidcProvider),
-      signInSuccess: (oidcProvider) => mock.signInSuccessMetric(oidcProvider)
-    }
-  })
-)
+vi.spyOn(metrics.signIn, 'failure').mockResolvedValue()
+vi.spyOn(metrics.signIn, 'success').mockResolvedValue()
 
 vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mock.cdpAuditing(...args)
 }))
 
-const performSignInFlow = async (server, mswServer, tokenInfo) => {
-  const { accessToken, publicKey, referer, callbackReferer } = tokenInfo
+const cookieHeaderFrom = (response) =>
+  extractCookieValues(response.headers['set-cookie']).join('; ')
+
+/**
+ * `jar` is mutated with the cookies each response sets. Pass the same jar to
+ * two flows to sign in twice as one visitor; omit it and each flow is a new
+ * visitor.
+ */
+const performSignInFlow = async (
+  server,
+  mswServer,
+  tokenInfo,
+  /** @type {{ cookie?: string }} */ jar = {}
+) => {
+  const { accessToken, idToken, publicKey, referer, callbackReferer } =
+    tokenInfo
   const signInResponse = await server.inject({
     method: 'GET',
     url: '/regulators/login',
-    headers: referer ? { referer } : {}
+    headers: {
+      ...(referer ? { referer } : {}),
+      ...(jar.cookie ? { cookie: jar.cookie } : {})
+    }
   })
-  const ssoUrl = new URL(signInResponse.headers['location'])
 
-  const rawCookies = signInResponse.headers['set-cookie']
-  const cookieList = Array.isArray(rawCookies)
-    ? rawCookies
-    : rawCookies
-      ? [rawCookies]
-      : []
-  const setCookieHeaders = cookieList.map((header) => header.split(';')[0])
+  jar.cookie = mergeCookies(jar.cookie ?? '', cookieHeaderFrom(signInResponse))
+  const ssoUrl = new URL(signInResponse.headers['location'])
 
   mswServer.use(
     http.post('http://entra-id.auth/token', () =>
-      HttpResponse.json({ access_token: accessToken, id_token: accessToken })
+      HttpResponse.json({
+        access_token: accessToken,
+        id_token: idToken ?? accessToken
+      })
     )
   )
 
@@ -61,14 +91,18 @@ const performSignInFlow = async (server, mswServer, tokenInfo) => {
 
   const stateParam = ssoUrl.searchParams.get('state')
   const code = randomUUID()
-  return server.inject({
+  const response = await server.inject({
     method: 'GET',
     url: `/auth/callback/entra?state=${stateParam}&code=${code}&refresh=1`,
     headers: {
-      cookie: setCookieHeaders.join('; '),
+      cookie: jar.cookie,
       ...(callbackReferer ? { referer: callbackReferer } : {})
     }
   })
+
+  jar.cookie = mergeCookies(jar.cookie, cookieHeaderFrom(response))
+
+  return response
 }
 
 async function generateAccessToken(
@@ -104,17 +138,19 @@ describe('/auth/callback/entra - GET integration', async () => {
     oid: 'entra-user-id',
     preferred_username: 'jane.doe@example.com',
     aud: 'test-entra-client-id',
-    iss: 'https://login.microsoftonline.com/test-tenant-id/v2.0'
+    iss: ENTRA_ID_BASE_URL
   }
 
+  // The application role rides on the token and this app never reads it. The
+  // backend resolves it and answers over the identity endpoint, so every test
+  // below varies that answer rather than the claim.
   const regulatorToken = await generateAccessToken({
     ...claims,
-    roles: [REGULATOR_ROLE]
+    roles: ['Waste.Regulator.Standard']
   })
 
-  const nonRegulatorToken = await generateAccessToken({
-    ...claims
-    // Entra emits the roles claim when user has no application roles assigned
+  beforeEach(({ msw }) => {
+    msw.use(identityHandler(IDENTITIES.regulator))
   })
 
   describe('on successful return from Entra ID - authorised regulator', () => {
@@ -135,11 +171,28 @@ describe('/auth/callback/entra - GET integration', async () => {
       expect(setCookieHeaders).toContain('userSession=')
     })
 
+    it('remembers for 30 days that this browser signed in as a regulator', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      const providerCookie = findSetCookie(
+        response.headers['set-cookie'],
+        SIGN_IN_PROVIDER_COOKIE
+      )
+
+      expect(providerCookie).toContain(
+        `${SIGN_IN_PROVIDER_COOKIE}=${OIDC_ENTRA_ID};`
+      )
+      expect(providerCookie).toContain('Max-Age=2592000')
+    })
+
     it('records sign in success metric', async ({ server, msw }) => {
       await performSignInFlow(server, msw, regulatorToken)
 
-      expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInSuccessMetric).toHaveBeenCalledWith('entra-id')
+      expect(metrics.signIn.success).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.success).toHaveBeenCalledWith('entra-id')
     })
 
     it('audits a successful sign in attempt', async ({ server, msw }) => {
@@ -159,6 +212,53 @@ describe('/auth/callback/entra - GET integration', async () => {
           email: 'jane.doe@example.com'
         }
       })
+    })
+  })
+
+  describe('on successful return from Entra ID - the tokens the session keeps', () => {
+    const storedSession = async (server, msw) => {
+      const cacheSet = vi.spyOn(server.app.cache, 'set')
+
+      await performSignInFlow(server, msw, {
+        ...regulatorToken,
+        idToken: 'entra-id-token'
+      })
+
+      return assertUserSession(cacheSet.mock.calls[0][1])
+    }
+
+    it('presents the access token to the backend, because it carries the roles claim', async ({
+      server,
+      msw
+    }) => {
+      const session = await storedSession(server, msw)
+
+      expect(session.backendToken).toBe(regulatorToken.accessToken)
+    })
+
+    it('keeps the id token for the logout hint', async ({ server, msw }) => {
+      const session = await storedSession(server, msw)
+
+      expect(session.idToken).toBe('entra-id-token')
+    })
+  })
+
+  describe('on successful return from Entra ID - the identity the session keeps', () => {
+    const storedSession = async (server, msw) => {
+      const cacheSet = vi.spyOn(server.app.cache, 'set')
+
+      await performSignInFlow(server, msw, regulatorToken)
+
+      return assertUserSession(cacheSet.mock.calls[0][1])
+    }
+
+    it('takes the role and scopes from the backend', async ({
+      server,
+      msw
+    }) => {
+      const session = await storedSession(server, msw)
+
+      expect(session).toMatchObject(sessionIdentity(IDENTITIES.regulator))
     })
   })
 
@@ -237,6 +337,14 @@ describe('/auth/callback/entra - GET integration', async () => {
         description: 'Welsh logged-out page'
       },
       {
+        referrer: '/regulators/start',
+        description: 'regulator start page'
+      },
+      {
+        referrer: '/cy/regulators/start',
+        description: 'Welsh regulator start page'
+      },
+      {
         referrer: '/auth/callback',
         description: 'Defra ID auth callback page'
       },
@@ -258,48 +366,218 @@ describe('/auth/callback/entra - GET integration', async () => {
     )
   })
 
-  describe('on successful return from Entra ID - user without regulator role', () => {
-    it('redirects to the regulators home page', async ({ server, msw }) => {
-      const response = await performSignInFlow(server, msw, nonRegulatorToken)
+  describe('on successful return from Entra ID - authorised regulator, after an attempt that was refused', () => {
+    const pageTheRefusedAttemptSetOutFor =
+      'http://localhost:3000/page/before/refusal'
+
+    /**
+     * The refusal page is served by the callback route, so a sign in started
+     * from its link arrives with the callback URL as its referrer.
+     */
+    const refusalPage = `http://localhost:3000${paths.auth.entraId.callback}?state=abc&code=def`
+
+    /**
+     * @param {HapiServer} server
+     * @param {SetupServerApi} msw
+     * @param {string} secondSignInReferer
+     */
+    const refusedThenSignedIn = async (server, msw, secondSignInReferer) => {
+      const jar = {}
+
+      msw.use(identityHandler(IDENTITIES.unrecognised))
+      await performSignInFlow(
+        server,
+        msw,
+        { ...regulatorToken, referer: pageTheRefusedAttemptSetOutFor },
+        jar
+      )
+
+      msw.use(identityHandler(IDENTITIES.regulator))
+
+      return performSignInFlow(
+        server,
+        msw,
+        { ...regulatorToken, referer: secondSignInReferer },
+        jar
+      )
+    }
+
+    it('returns to the page the refused attempt set out for when this sign in starts from the refusal page', async ({
+      server,
+      msw
+    }) => {
+      const response = await refusedThenSignedIn(server, msw, refusalPage)
 
       expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers['location']).toBe('/regulators/home')
+      expect(response.headers['location']).toBe('/page/before/refusal')
     })
 
-    it('creates a session', async ({ server, msw }) => {
-      const response = await performSignInFlow(server, msw, nonRegulatorToken)
+    it('prefers the page this sign in started from when it did not start from the refusal page', async ({
+      server,
+      msw
+    }) => {
+      const response = await refusedThenSignedIn(
+        server,
+        msw,
+        'http://localhost:3000/fresh/page'
+      )
 
-      const setCookieHeaders = []
-        .concat(response.headers['set-cookie'] ?? [])
-        .join(';')
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/fresh/page')
+    })
+  })
 
-      expect(setCookieHeaders).toContain('userSession=')
+  describe('on successful return from Entra ID - an identity the backend does not recognise', () => {
+    beforeEach(({ msw }) => {
+      msw.use(identityHandler(IDENTITIES.unrecognised))
     })
 
-    it('records sign in success metric', async ({ server, msw }) => {
-      await performSignInFlow(server, msw, nonRegulatorToken)
+    it('refuses the sign in with the not-authorised page', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
 
-      expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInSuccessMetric).toHaveBeenCalledWith('entra-id')
+      expect(response.statusCode).toBe(statusCodes.forbidden)
+
+      const $ = load(asHtml(response.result))
+      expect($('h1').text().trim()).toBe(
+        'You do not have access to this service'
+      )
+      expect($('[data-testid="app-page-body"]').text()).toContain(
+        'your account has no role in this service'
+      )
     })
 
-    it('audits a successful sign in attempt', async ({ server, msw }) => {
-      await performSignInFlow(server, msw, nonRegulatorToken)
+    it('names no identity provider to a reader who has just been refused', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
 
-      expect(mock.cdpAuditing).toHaveBeenCalledTimes(1)
-      expect(mock.cdpAuditing).toHaveBeenCalledWith({
-        event: {
-          category: 'access',
-          action: 'sign-in'
-        },
-        context: {
-          oidcProvider: 'entra-id'
-        },
-        user: {
-          id: 'entra-user-id',
-          email: 'jane.doe@example.com'
-        }
+      expect(asHtml(response.result)).not.toMatch(/entra/i)
+    })
+
+    it('creates no session', async ({ server, msw }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      expect(
+        extractCookieValues(response.headers['set-cookie']).join(';')
+      ).not.toContain('userSession=')
+    })
+
+    it('does not remember the refused user as a regulator', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      expect(
+        findSetCookie(response.headers['set-cookie'], SIGN_IN_PROVIDER_COOKIE)
+      ).toBeUndefined()
+    })
+
+    it('offers a sign in that asks which account to use', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      const $ = load(asHtml(response.result))
+      const href = $('[data-testid="sign-in-link"]').attr('href')
+
+      expect(href).toBe(`/regulators/login?${SELECT_ACCOUNT_QUERY}`)
+    })
+
+    it('leaves the refused user unauthenticated on an operator route', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      const operatorResponse = await server.inject({
+        method: 'GET',
+        url: `/organisations/${randomUUID()}`,
+        headers: { cookie: cookieHeaderFrom(response) }
       })
+
+      expect(operatorResponse.statusCode).toBe(statusCodes.found)
+      expect(operatorResponse.headers['location']).toBe('/logged-out')
+    })
+
+    it('records sign in failure metric', async ({ server, msw }) => {
+      await performSignInFlow(server, msw, regulatorToken)
+
+      expect(metrics.signIn.success).not.toHaveBeenCalled()
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledWith('entra-id')
+    })
+
+    it('does not audit a sign in', async ({ server, msw }) => {
+      await performSignInFlow(server, msw, regulatorToken)
+
+      expect(mock.cdpAuditing).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('after a signed in regulator’s session lapses', () => {
+    /**
+     * The browser sends everything sign in left it except the session cookie,
+     * which expires long before the provider cookie does.
+     * @param {HapiServer} server
+     * @param {SetupServerApi} msw
+     */
+    const cookiesAfterLapse = async (server, msw) => {
+      const jar = {}
+
+      await performSignInFlow(server, msw, regulatorToken, jar)
+
+      return jar.cookie
+        .split('; ')
+        .filter((cookie) => !cookie.startsWith('userSession='))
+        .join('; ')
+    }
+
+    it('sends them from a page operators also use to the regulator signed-out page', async ({
+      server,
+      msw
+    }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url: `/organisations/${randomUUID()}`,
+        headers: { cookie: await cookiesAfterLapse(server, msw) }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/regulators/logged-out')
+    })
+
+    it('keeps them in Welsh on the way to the regulator signed-out page', async ({
+      server,
+      msw
+    }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url: `/cy/organisations/${randomUUID()}`,
+        headers: { cookie: await cookiesAfterLapse(server, msw) }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/cy/regulators/logged-out')
+    })
+
+    it('sends them to the regulator signed-out page when they then sign out', async ({
+      server,
+      msw
+    }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url: paths.logout,
+        headers: { cookie: await cookiesAfterLapse(server, msw) }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/regulators/logged-out')
     })
   })
 
@@ -320,8 +598,8 @@ describe('/auth/callback/entra - GET integration', async () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledWith('entra-id')
     })
   })
 
@@ -341,8 +619,8 @@ describe('/auth/callback/entra - GET integration', async () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledWith('entra-id')
     })
   })
 
@@ -362,8 +640,36 @@ describe('/auth/callback/entra - GET integration', async () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledWith('entra-id')
+    })
+  })
+
+  describe('on an access token issued by someone other than the provider the discovery document names', () => {
+    let response
+
+    // Differs from the accepted token in its `iss` claim alone. It is signed
+    // by the key the JWKS endpoint answers with, so only the issuer check can
+    // refuse it. Remove that check and this test signs a regulator in.
+    beforeEach(async ({ server, msw }) => {
+      const impostorToken = await generateAccessToken({
+        ...claims,
+        iss: 'https://login.microsoftonline.com/another-tenant/v2.0',
+        roles: ['Waste.Regulator.Standard']
+      })
+
+      response = await performSignInFlow(server, msw, impostorToken)
+    })
+
+    it('refuses the sign in and redirects to the start page', () => {
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/')
+    })
+
+    it('creates no session', () => {
+      expect(
+        extractCookieValues(response.headers['set-cookie']).join(';')
+      ).not.toContain('userSession=')
     })
   })
 

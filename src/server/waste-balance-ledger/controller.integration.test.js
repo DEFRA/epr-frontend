@@ -1,0 +1,583 @@
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
+import {
+  asRegistrationWithAccreditation,
+  findRegistrationAndAccreditation
+} from '#server/common/test-helpers/organisation-fixtures.js'
+import { it } from '#vite/fixtures/server.js'
+import { getByRole, queryByText } from '@testing-library/dom'
+import { http, HttpResponse } from 'msw'
+import { JSDOM } from 'jsdom'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+
+import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
+
+vi.mock(
+  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+)
+
+const backendUrl = config.get('eprBackendUrl')
+
+const organisationId = '6507f1f77bcf86cd79943901'
+const accreditedRegistrationId = 'reg-001-glass-approved'
+const accreditationId = 'acc-001-glass-approved'
+const registeredOnlyRegistrationId = 'reg-006-plastic-export-created'
+
+const accreditedPath = `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/waste-balance-ledger`
+const registeredOnlyPath = `/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}/waste-balance-ledger`
+
+const accreditedLedgerUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/waste-balance-ledger`
+const registeredOnlyLedgerUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}/waste-balance-ledger`
+
+const regulator = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'regulator@example.com' },
+  backendToken: 'regulator-backend-token',
+  ...sessionIdentity(IDENTITIES.regulator)
+})
+
+const operator = buildMockAuth()
+
+const regulatorWithoutLedgerScope = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-2', email: 'no.ledger@example.com' },
+  role: IDENTITIES.regulator.role,
+  scope: [SCOPES.organisationSearch]
+})
+
+const prnCreated = {
+  number: 2,
+  kind: 'prn-created',
+  createdAt: '2026-02-01T10:30:00.000Z',
+  prn: { id: 'prn-1', prnNumber: null, tonnage: 12.5 },
+  balance: {
+    opening: { total: 100, available: 100 },
+    closing: { total: 100, available: 87.5 }
+  },
+  createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' }
+}
+
+const prnIssued = {
+  number: 3,
+  kind: 'prn-issued',
+  createdAt: '2026-02-15T15:09:00.000Z',
+  prn: { id: 'prn-1', prnNumber: '240000123', tonnage: 12.5 },
+  balance: {
+    opening: { total: 100, available: 87.5 },
+    closing: { total: 87.5, available: 87.5 }
+  },
+  createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' }
+}
+
+const summaryLogSubmitted = {
+  number: 1,
+  kind: 'summary-log-submitted',
+  createdAt: '2026-01-04T09:00:00.000Z',
+  summaryLog: { id: 'log-1', creditTotal: 100 },
+  balance: {
+    opening: { total: 0, available: 0 },
+    closing: { total: 100, available: 100 }
+  },
+  createdBy: { id: 'system', name: 'backfill' }
+}
+
+/**
+ * A ledger read answers the address it was asked for, and the registered-only
+ * partition is keyed by a null accreditation rather than by its absence.
+ * @param {string} registrationId
+ * @param {string | null} accreditationOfLedger
+ * @returns {(events: unknown[]) => { ledger: object, events: unknown[] }}
+ */
+const ledgerOf = (registrationId, accreditationOfLedger) => (events) => ({
+  ledger: {
+    organisationId,
+    registrationId,
+    accreditationId: accreditationOfLedger
+  },
+  events
+})
+
+const accreditedLedgerOf = ledgerOf(accreditedRegistrationId, accreditationId)
+const registeredOnlyLedgerOf = ledgerOf(registeredOnlyRegistrationId, null)
+
+/**
+ * @param {string} html
+ */
+const documentOf = (html) => new JSDOM(html).window.document.body
+
+/**
+ * @param {ReturnType<typeof documentOf>} body
+ * @returns {string[][]}
+ */
+const rowsOf = (body) =>
+  Array.from(body.querySelectorAll('tbody tr')).map((row) =>
+    Array.from(row.querySelectorAll('th, td')).map((cell) =>
+      cell.textContent.trim()
+    )
+  )
+
+/**
+ * @param {ReturnType<typeof documentOf>} body
+ */
+const crumbsOf = (body) =>
+  Array.from(body.querySelectorAll('.govuk-breadcrumbs__list-item'))
+
+/**
+ * @param {ReturnType<typeof crumbsOf>} crumbs
+ * @returns {(string | undefined)[]}
+ */
+const textOf = (crumbs) => crumbs.map((crumb) => crumb.textContent?.trim())
+
+describe('the waste balance ledger page', () => {
+  beforeAll(() => {
+    config.set('featureFlags.regulatorAccess', true)
+    config.set('featureFlags.wasteRecordsDownload', true)
+  })
+
+  beforeEach(() => {
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      findRegistrationAndAccreditation(fixtureData, accreditedRegistrationId)
+    )
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.regulatorAccess', false)
+    config.set('featureFlags.wasteRecordsDownload', false)
+  })
+
+  describe('a regulator', () => {
+    it('reads the ledger of the accreditation the address names, each event stating what it moved', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(
+            accreditedLedgerOf([summaryLogSubmitted, prnCreated, prnIssued])
+          )
+        )
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(rowsOf(documentOf(asHtml(result)))).toStrictEqual([
+        [
+          '15 February 2026, 3:09pm',
+          'PRN issued\n240000123',
+          'N/A',
+          '87.50',
+          'Ada Lovelace (ada@example.com)',
+          'View 240000123'
+        ],
+        [
+          '1 February 2026, 10:30am',
+          'PRN created',
+          '-12.50',
+          '87.50',
+          'Ada Lovelace (ada@example.com)',
+          'View 1 February 2026, 10:30am'
+        ],
+        [
+          '4 January 2026, 9:00am',
+          'Summary log submitted',
+          '+100.00',
+          '100.00',
+          'System',
+          'Download XLSX 4 January 2026, 9:00am\nDownload CSV 4 January 2026, 9:00am'
+        ]
+      ])
+    })
+
+    it('offers the workbook alone while the records are dark', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([summaryLogSubmitted]))
+        )
+      )
+      config.set('featureFlags.wasteRecordsDownload', false)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      config.set('featureFlags.wasteRecordsDownload', true)
+
+      expect(
+        rowsOf(documentOf(asHtml(result)))
+          .at(0)
+          ?.at(5)
+      ).toBe('Download XLSX 4 January 2026, 9:00am')
+    })
+
+    it('returns a note opened from a row to this page', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([prnIssued]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      // This ledger is a page of its own, not the section on the
+      // accreditation, so the note comes back here.
+      expect(asHtml(result)).toContain(
+        `/packaging-recycling-notes/${prnIssued.prn.id}/view`
+      )
+    })
+
+    it('heads the six columns, and offers neither a sequence number nor a payload', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([prnIssued]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+      const headings = Array.from(body.querySelectorAll('thead th')).map(
+        (cell) => cell.textContent.trim()
+      )
+
+      expect(headings).toStrictEqual([
+        'Date',
+        'Event',
+        'Tonnage',
+        'Waste balance available (tonnes)',
+        'Who',
+        'Actions'
+      ])
+      expect(queryByText(body, 'Number')).toBeNull()
+      expect(queryByText(body, 'Payload')).toBeNull()
+    })
+
+    it('names the records the ledger sits under, down to the accreditation', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      const heading = getByRole(documentOf(asHtml(result)), 'heading', {
+        level: 1
+      })
+
+      expect(heading.textContent).toContain('ACME ltd - REG001234 - ACC001234')
+      expect(heading.textContent).toContain('Waste balance ledger')
+    })
+
+    it('titles the page by the accreditation number', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      expect(documentOf(asHtml(result)).ownerDocument.title).toContain(
+        'ACC001234: Waste balance ledger'
+      )
+    })
+
+    it('walks back through the accreditation by the breadcrumbs, with no back link', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+      const crumbs = crumbsOf(body)
+
+      expect(body.querySelector('.govuk-back-link')).toBeNull()
+      expect(textOf(crumbs)).toStrictEqual([
+        'All organisations',
+        'ACME ltd',
+        'Registration details',
+        'Accreditation details',
+        'Waste balance ledger'
+      ])
+      expect(crumbs.at(3)?.querySelector('a')?.getAttribute('href')).toBe(
+        `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}`
+      )
+      expect(crumbs.at(4)?.querySelector('a')).toBeNull()
+    })
+
+    it('carries the phase banner the layout offers every page', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      expect(
+        documentOf(asHtml(result)).querySelector('.govuk-phase-banner')
+      ).not.toBeNull()
+    })
+
+    it('walks the registered-only ledger back to the registration, with no back link', async ({
+      msw,
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        findRegistrationAndAccreditation(
+          fixtureData,
+          registeredOnlyRegistrationId
+        )
+      )
+      msw.use(
+        http.get(registeredOnlyLedgerUrl, () =>
+          HttpResponse.json(registeredOnlyLedgerOf([]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: registeredOnlyPath,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+      const crumbs = crumbsOf(body)
+
+      expect(body.querySelector('.govuk-back-link')).toBeNull()
+      expect(textOf(crumbs)).toStrictEqual([
+        'All organisations',
+        'ACME ltd',
+        'Registration details',
+        'Waste balance ledger'
+      ])
+      expect(crumbs.at(2)?.querySelector('a')?.getAttribute('href')).toBe(
+        `/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}`
+      )
+      expect(crumbs.at(3)?.querySelector('a')).toBeNull()
+      expect(body.ownerDocument.title).toContain('Waste balance ledger')
+    })
+
+    it('reads the registered-only ledger, and says the period carries no accreditation', async ({
+      msw,
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        findRegistrationAndAccreditation(
+          fixtureData,
+          registeredOnlyRegistrationId
+        )
+      )
+      msw.use(
+        http.get(registeredOnlyLedgerUrl, () =>
+          HttpResponse.json(registeredOnlyLedgerOf([summaryLogSubmitted]))
+        )
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: registeredOnlyPath,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const heading = getByRole(documentOf(asHtml(result)), 'heading', {
+        level: 1
+      })
+
+      expect(heading.textContent).toContain('Registered-only')
+    })
+
+    it("names an exporter's notes PERNs", async ({ msw, server }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        findRegistrationAndAccreditation(
+          fixtureData,
+          registeredOnlyRegistrationId
+        )
+      )
+      msw.use(
+        http.get(registeredOnlyLedgerUrl, () =>
+          HttpResponse.json(registeredOnlyLedgerOf([prnIssued]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: registeredOnlyPath,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+
+      expect(rowsOf(body).at(0)?.at(1)).toBe('PERN issued\n240000123')
+    })
+
+    it('says so where nothing has moved the balance yet', async ({
+      msw,
+      server
+    }) => {
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(accreditedLedgerOf([]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+
+      expect(body.querySelector('table')).toBeNull()
+      expect(
+        queryByText(body, 'Nothing has changed this waste balance yet.')
+      ).not.toBeNull()
+    })
+
+    it('refuses an address pairing the registration with another accreditation, rather than reporting an empty ledger', async ({
+      server
+    }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/acc-005-steel-approved/waste-balance-ledger`,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('refuses a registration whose accreditation the organisation does not hold', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        asRegistrationWithAccreditation({
+          organisationData: fixtureData,
+          registration: {
+            id: accreditedRegistrationId,
+            accreditationId: 'acc-not-in-organisation',
+            wasteProcessingType: 'reprocessor'
+          },
+          rawAccreditation: undefined
+        })
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/acc-not-in-organisation/waste-balance-ledger`,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+  })
+
+  describe('an operator', () => {
+    it('is refused the page, and asks the backend for nothing', async ({
+      server
+    }) => {
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: operator
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(
+        getByRole(documentOf(asHtml(result)), 'heading', {
+          level: 1
+        }).textContent.trim()
+      ).toBe('You do not have permission')
+      expect(fetchRegistrationAndAccreditation).not.toHaveBeenCalled()
+    })
+
+    it('is refused the registered-only address too', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: registeredOnlyPath,
+        auth: operator
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+  })
+
+  describe('a session the backend granted no ledger scope', () => {
+    it('is refused the page, whatever role it carries', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulatorWithoutLedgerScope
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(fetchRegistrationAndAccreditation).not.toHaveBeenCalled()
+    })
+  })
+})

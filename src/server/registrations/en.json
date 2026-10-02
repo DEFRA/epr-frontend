@@ -3,22 +3,133 @@
   "accreditationNumber": "Accreditation number",
   "chooseTask": "Choose a task",
   "contactRegulator": "contact your regulator",
+  "details": {
+    "accreditedPeriods": {
+      "actions": "Actions",
+      "dateRange": "Date range",
+      "heading": "Accredited periods",
+      "none": "This registration holds no accreditation.",
+      "number": "Accreditation number",
+      "status": "Accreditation status",
+      "view": "View"
+    },
+    "accreditation": {
+      "breadcrumb": "Accreditation details",
+      "heading": "Accreditation",
+      "ledger": {
+        "mostRecent": "Most recent ({{count}} items)",
+        "viewAll": "View all",
+        "viewAllHidden": "ledger events"
+      },
+      "reports": {
+        "actions": "Actions",
+        "dueDate": "Due date",
+        "heading": "Reports",
+        "mostRecent": "Most recent ({{count}} items)",
+        "none": "There are no reporting periods for this accreditation yet. Periods appear once one has ended.",
+        "period": "Period",
+        "status": "Status",
+        "submissionDate": "Submission date",
+        "viewAll": "View all",
+        "viewAllHidden": "reports"
+      },
+      "prns": {
+        "action": "Action",
+        "date": "Date",
+        "heading": "{{noteTypePlural}}",
+        "listHeading": "{{noteTypePlural}}",
+        "mostRecent": "Most recent ({{count}} items)",
+        "none": "This accreditation has issued no {{noteTypePlural}}.",
+        "noneCancelled": "No {{noteTypePlural}} have been cancelled.",
+        "recipient": "Producer or compliance scheme",
+        "status": "Status",
+        "tonnage": "Tonnage",
+        "view": "View",
+        "viewAll": "View all",
+        "viewAllHidden": "{{noteTypePlural}}"
+      },
+      "summary": {
+        "download": "Download",
+        "number": "Accreditation number",
+        "status": "Accreditation status",
+        "wasteBalanceAvailable": "Waste balance available (tonnes)",
+        "wasteRecords": "Latest waste record CSV"
+      }
+    },
+    "registeredOnlyPeriod": {
+      "breadcrumb": "{{year}} Registered-only periods",
+      "heading": "{{year}} Registered-only periods",
+      "noData": "This registered-only period doesn’t have any data because this operator has been accredited since the start of the registration period.",
+      "reports": {
+        "actions": "Actions",
+        "dueDate": "Due date",
+        "heading": "Reports",
+        "none": "There are no reporting periods for this registered-only period yet. Periods appear once one has ended.",
+        "period": "Period",
+        "status": "Status",
+        "submissionDate": "Submission date"
+      },
+      "returnToRegistration": "If you’d like to see the accreditation details please return to the registration details page."
+    },
+    "overseasSites": {
+      "columns": {
+        "addressLine1": "Address line 1",
+        "addressLine2": "Address line 2",
+        "coordinates": "Coordinates",
+        "country": "Destination country",
+        "material": "Packaging waste category",
+        "name": "Overseas reprocessor name",
+        "orsId": "ORS ID",
+        "postcode": "Postcode or similar",
+        "stateOrRegion": "State, province or region",
+        "townOrCity": "City or town"
+      },
+      "heading": "Overseas reprocessing sites",
+      "none": "This registration holds no overseas reprocessing site."
+    },
+    "registeredOnlyPeriods": {
+      "actions": "Actions",
+      "heading": "Registered-only",
+      "none": "This registration holds no registered-only period.",
+      "period": "Period",
+      "view": "View reg-only period"
+    },
+    "allOrganisations": "All organisations",
+    "current": "Current",
+    "period": "{{from}} to {{to}}",
+    "heading": "Registration details",
+    "summary": {
+      "material": "Material",
+      "overseasSites": "Overseas reprocessing site",
+      "overseasSitesView": "View",
+      "processingType": "Processing type",
+      "site": "Site",
+      "status": "Status"
+    }
+  },
   "manageReports": "Manage reports",
+  "manageReportsReadOnly": "View reports",
   "notes": {
     "title": "{{noteTypePlural}}",
     "description": "Create and manage {{noteTypePlural}}.",
+    "descriptionReadOnly": "View the {{noteTypePlural}} issued for this registration.",
     "createNew": "Create new {{noteType}}",
-    "manage": "Manage {{noteTypePlural}}"
+    "manage": "Manage {{noteTypePlural}}",
+    "manageReadOnly": "View {{noteTypePlural}}"
   },
   "pageTitle": "{{ siteName }}: {{ material }}",
+  "reapplyAccreditationLead": "You can now",
+  "reapplyAccreditationLink": "apply for {{ year }} accreditation",
   "registration": "Registration",
   "registrationAndAccreditation": "Registration and accreditation",
   "registrationAndAccreditationDescription": "View and manage your applications.",
+  "registrationAndAccreditationDescriptionReadOnly": "View applications.",
   "registrationNotAvailablePart1": "Registration and accreditation management is not yet available.",
   "registrationNotAvailablePart2": "If you have any questions about a registration or accreditation,",
   "registrationNumber": "Registration number",
   "reports": "Reports",
   "reportsDescription": "Create and manage your reports.",
+  "reportsDescriptionReadOnly": "View the reports submitted for this registration.",
   "summaryLog": "Summary log",
   "summaryLogDescription": "Upload your summary log to record new packaging waste or adjust previously submitted data.",
   "unknownSite": "Unknown site",
@@ -29,5 +140,6 @@
       "title": "Available waste balance",
       "description": "This is the balance available for creating new {{noteTypePlural}}"
     }
-  }
+  },
+  "wasteBalanceLedger": "View waste balance ledger"
 }

@@ -498,7 +498,7 @@ describe('#supportingInformationController', () => {
             submissionNumber: 1
           },
           { supportingInformation: 'Notes for regulator' },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
 
@@ -531,7 +531,7 @@ describe('#supportingInformationController', () => {
             submissionNumber: 1
           },
           { supportingInformation: '' },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })
@@ -591,7 +591,7 @@ describe('#supportingInformationController', () => {
             submissionNumber: 1
           },
           { supportingInformation: 'Partial notes' },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })

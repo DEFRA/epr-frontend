@@ -9,20 +9,20 @@ import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accr
 
 /**
  * Fetches registration and accreditation, throwing 404 if either is missing.
- * @param {{ organisationId: string, registrationId: string, idToken: string, accreditationId?: string }} params
+ * @param {{ organisationId: string, registrationId: string, backendToken: string, accreditationId?: string }} params
  * @returns {Promise<Required<RegistrationWithAccreditation>>}
  */
 export async function getRequiredRegistrationWithAccreditation({
   organisationId,
   registrationId,
   accreditationId,
-  idToken
+  backendToken
 }) {
   const { registration, accreditation, organisationData } =
     await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
   if (!accreditation) {
@@ -51,5 +51,14 @@ export async function getRequiredRegistrationWithAccreditation({
     )
   }
 
-  return { registration, accreditation, organisationData }
+  return {
+    registration,
+    accreditation,
+    // This path only returns once `accreditation` is confirmed present (and
+    // therefore live), so the raw and filtered records are the same object
+    // here. We echo it into `rawAccreditation` purely to satisfy the
+    // `Required<RegistrationWithAccreditation>` return type.
+    rawAccreditation: accreditation,
+    organisationData
+  }
 }

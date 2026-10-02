@@ -25,13 +25,13 @@ const userOrganisations = {
   ]
 }
 
-// Authorises on the session idToken, so a 200 also proves the handler forwards
+// Authorises on the session backendToken, so a 200 also proves the handler forwards
 // the bearer token to the backend link endpoint.
 const linkSucceeds = () =>
   bearerAuthHandler(
     'post',
     `${backendUrl}/v1/organisations/${organisationId}/link`,
-    'mock-id-token',
+    'mock-backend-token',
     () => HttpResponse.json({})
   )
 

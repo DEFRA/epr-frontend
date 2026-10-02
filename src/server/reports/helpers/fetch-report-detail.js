@@ -12,7 +12,7 @@ import { ReportStaleError, staleReasons } from './stale.js'
  * @param {string} cadence
  * @param {number} period
  * @param {number} submissionNumber
- * @param {string} idToken
+ * @param {string} backendToken
  * @returns {Promise<ReportDetailResponse>}
  */
 export async function fetchReportDetail(
@@ -22,13 +22,13 @@ export async function fetchReportDetail(
   cadence,
   period,
   submissionNumber,
-  idToken
+  backendToken
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
 
   const report = await fetchReportBackend(path, {
     method: 'GET',
-    headers: { Authorization: `Bearer ${idToken}` }
+    headers: { Authorization: `Bearer ${backendToken}` }
   })
 
   const reasons = staleReasons(report.stale)
@@ -104,6 +104,17 @@ export async function fetchReportDetail(
  *     prnCancelled?: { occurredAt: string, prnId: string }
  *   },
  *   canRequestResubmission?: boolean,
+ *   incompleteSummaryLogRows?: {
+ *     total: number,
+ *     issues: { sheet: string, rowId: string, field: string }[]
+ *   },
+ *   resubmissionRequired?: {
+ *     operatorRequested?: {
+ *       requestedAt: string,
+ *       requestedBy: { id: string, name: string, position: string }
+ *     },
+ *     closedPeriodRestated?: { uploadedAt: string, summaryLogId: string }
+ *   },
  *   supportingInformation?: string,
  *   prn?: {
  *     issuedTonnage: number,

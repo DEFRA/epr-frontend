@@ -2,9 +2,6 @@ import { config } from '#config/config.js'
 
 /** @import { HapiRequest } from '#server/common/hapi-types.js' */
 
-const PRODUCTION_SERVICE_URL =
-  'https://record-reprocessed-exported-packaging-waste.defra.gov.uk'
-
 const VALID_PROTOCOLS = new Set(['http', 'https'])
 
 /**
@@ -15,7 +12,11 @@ const VALID_PROTOCOLS = new Set(['http', 'https'])
  */
 const getRedirectUrl = (request, path) => {
   const appBaseUrl = config.get('appBaseUrl')
-  const allowedOrigins = new Set([appBaseUrl, PRODUCTION_SERVICE_URL])
+  const allowedOrigins = new Set(
+    [appBaseUrl, ...config.get('allowedRedirectOrigins')].map(
+      (value) => URL.parse(value)?.origin
+    )
+  )
 
   const forwardedProto = request.headers['x-forwarded-proto']
   const protocol =

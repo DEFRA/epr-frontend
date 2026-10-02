@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
@@ -10,26 +11,48 @@ import {
   extractCookieValues,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole, getByText, queryByRole } from '@testing-library/dom'
+import {
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { describe, expect, vi } from 'vitest'
+import { afterEach, describe, expect, vi } from 'vitest'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+// The create endpoint (used here only to seed a draft) runs a submission-time
+// balance pre-check via getWasteBalance. Auto-mock it so that check fails open
+// during seeding; confirm-step balance is driven by fetchWasteBalances.
+vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
+
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 const { fetchWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
+const { fetchDecemberPrnEligibility } =
+  await import('./helpers/fetch-december-prn-eligibility.js')
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -152,6 +175,10 @@ describe('#viewController', () => {
     vi.mocked(fetchWasteBalances).mockResolvedValue({
       'acc-001': { amount: 1000, availableAmount: 500 }
     })
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      mode: 'none',
+      windowOpen: false
+    })
   })
 
   describe('request handling', () => {
@@ -178,6 +205,27 @@ describe('#viewController', () => {
         expect(getByText(main, '100')).toBeDefined()
         // Check material (in accreditation section)
         expect(getByText(main, /Plastic/i)).toBeDefined()
+      })
+
+      it('reads the note to a regulator without offering a way to change it', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: buildMockAuth({
+            provider: OIDC_ENTRA_ID,
+            ...sessionIdentity(IDENTITIES.regulator)
+          })
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
+        expect(main.querySelector('form')).toBeNull()
+        expect(main.querySelector('button')).toBeNull()
       })
 
       it('displays issuer organisation name on certificate page', async ({
@@ -541,6 +589,55 @@ describe('#viewController', () => {
         const returnLink = getByText(main, /Return to PRN list/i)
         expect(returnLink).toBeDefined()
         expect(returnLink.getAttribute('href')).toBe(listUrl)
+      })
+
+      describe('for a regulator, who walks the trail back', () => {
+        const asRegulator = (server) =>
+          server.inject({
+            method: 'GET',
+            url: viewUrl,
+            auth: buildMockAuth({
+              provider: OIDC_ENTRA_ID,
+              ...sessionIdentity(IDENTITIES.regulator)
+            })
+          })
+
+        beforeEach(() => {
+          config.set('featureFlags.regulatorAccess', true)
+        })
+
+        afterEach(() => {
+          config.set('featureFlags.regulatorAccess', false)
+        })
+
+        it('walks from all organisations down to the note', async ({
+          server
+        }) => {
+          const { result } = await asRegulator(server)
+          const { body } = new JSDOM(result).window.document
+
+          expect(
+            Array.from(body.querySelectorAll('.govuk-breadcrumbs__link')).map(
+              (link) => link.getAttribute('href')
+            )
+          ).toStrictEqual([
+            '/regulators/home',
+            `/organisations/${organisationId}`,
+            `/organisations/${organisationId}/registrations/${registrationId}`,
+            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`,
+            listUrl
+          ])
+        })
+
+        it('offers neither the back link nor the return link', async ({
+          server
+        }) => {
+          const { result } = await asRegulator(server)
+          const { body } = new JSDOM(result).window.document
+
+          expect(body.querySelector('.govuk-back-link')).toBeNull()
+          expect(queryByText(getByRole(body, 'main'), /Return to/i)).toBeNull()
+        })
       })
 
       it('displays PERN details for exporter registration', async ({
@@ -1116,7 +1213,7 @@ describe('#viewController', () => {
           accreditationId,
           prnId,
           { status: 'awaiting_acceptance' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
     })
@@ -1177,6 +1274,43 @@ describe('#viewController', () => {
         expect(getByText(main, /Check before creating PRN/i)).toBeDefined()
         // Should show December waste as Yes
         expect(getByText(main, /^Yes$/)).toBeDefined()
+      })
+
+      it('hides the discard link from a regulator', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: buildMockAuth({
+            provider: OIDC_ENTRA_ID,
+            ...sessionIdentity(IDENTITIES.regulator)
+          }),
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByText(main, /Discard and start again/i)).toBeNull()
       })
 
       it('displays discard link below create button on check page', async ({
@@ -1428,7 +1562,7 @@ describe('#viewController', () => {
           'Tonnage',
           'Tonnage in words',
           'Process to be used',
-          'December waste',
+          'December waste?',
           'Issuer',
           'Issued date',
           'Issued by',
@@ -1573,7 +1707,7 @@ describe('#viewController', () => {
           accreditationId,
           prnId,
           { status: 'awaiting_authorisation' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 
@@ -1728,7 +1862,7 @@ describe('#viewController', () => {
           accreditationId,
           prnId,
           { status: 'discarded' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
 
         expect(server.loggerMocks.warn).toHaveBeenCalledWith({
@@ -1785,8 +1919,208 @@ describe('#viewController', () => {
           accreditationId,
           prnId,
           { status: 'awaiting_authorisation' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
+      })
+
+      it('discards a December draft whose tonnage fits the total but not the December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: true })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 1000,
+            decemberAmount: 60,
+            decemberAvailableAmount: 60
+          }
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toContain('error=insufficient_balance')
+      })
+
+      it('confirms a general draft whose tonnage fits total minus the reserved December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: false })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 1100,
+            decemberAmount: 50,
+            decemberAvailableAmount: 50,
+            nonDecemberAvailableAmount: 1050
+          }
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createdUrl)
+      })
+
+      it('discards a general draft whose tonnage exceeds total minus the reserved December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: false })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 130,
+            decemberAmount: 50,
+            decemberAvailableAmount: 50,
+            nonDecemberAvailableAmount: 80
+          }
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toContain('error=insufficient_balance')
+      })
+
+      it('confirms a disclosure-only December draft against the total, when the accreditation has no separate December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: true })
+        )
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': {
+            amount: 1000,
+            availableAmount: 1000
+          }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createdUrl)
       })
 
       it('treats missing waste balance as zero available', async ({
@@ -1829,9 +2163,48 @@ describe('#viewController', () => {
           accreditationId,
           prnId,
           { status: 'discarded' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
+    })
+  })
+
+  describe('journey events', () => {
+    it('should record the create journey end once the note is confirmed', async ({
+      server
+    }) => {
+      const { cookie: csrfCookie, crumb } = await getCsrfToken(
+        server,
+        createUrl,
+        { auth: mockAuth }
+      )
+
+      const createResponse = await server.inject({
+        method: 'POST',
+        url: createUrl,
+        auth: mockAuth,
+        headers: { cookie: csrfCookie },
+        payload: { ...validPayload, crumb }
+      })
+
+      const cookies = mergeCookies(
+        csrfCookie,
+        ...extractCookieValues(createResponse.headers['set-cookie'])
+      )
+
+      await server.inject({
+        method: 'POST',
+        url: viewUrl,
+        auth: mockAuth,
+        headers: { cookie: cookies },
+        payload: { crumb }
+      })
+
+      expect(metrics.journey.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.createPrn,
+        accreditationId
+      )
     })
   })
 })

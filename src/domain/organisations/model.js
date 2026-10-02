@@ -4,16 +4,31 @@
 /** @import {Registration} from '#domain/organisations/registration.js' */
 
 /**
- * Status values for registrations and accreditations
- * @typedef {typeof REG_ACC_STATUS[keyof typeof REG_ACC_STATUS]} RegAccStatus
+ * Status values a registration can hold.
+ * @typedef {typeof REGISTRATION_STATUS[keyof typeof REGISTRATION_STATUS]} RegistrationStatus
  */
-export const REG_ACC_STATUS = Object.freeze({
+export const REGISTRATION_STATUS = Object.freeze({
+  CREATED: 'created',
+  APPROVED: 'approved',
+  CANCELLED: 'cancelled',
+  REJECTED: 'rejected'
+})
+
+/**
+ * Status values an accreditation can hold.
+ * @typedef {typeof ACCREDITATION_STATUS[keyof typeof ACCREDITATION_STATUS]} AccreditationStatus
+ */
+export const ACCREDITATION_STATUS = Object.freeze({
   CREATED: 'created',
   APPROVED: 'approved',
   CANCELLED: 'cancelled',
   REJECTED: 'rejected',
   SUSPENDED: 'suspended'
 })
+
+/**
+ * @typedef {RegistrationStatus | AccreditationStatus} RegOrAccStatus
+ */
 
 /**
  * Status values for organisations
@@ -34,7 +49,9 @@ export const REGULATOR = Object.freeze({
 })
 
 /**
- * @typedef {typeof MATERIAL[keyof typeof MATERIAL]} Material
+ * The material as the applicant declared it on the form, which is one of the
+ * seven the form offers and so includes plain `glass`.
+ * @typedef {typeof MATERIAL[keyof typeof MATERIAL]} AppliedForMaterial
  */
 export const MATERIAL = Object.freeze({
   ALUMINIUM: 'aluminium',
@@ -112,11 +129,13 @@ export const GLASS_RECYCLING_PROCESS = Object.freeze({
   GLASS_OTHER: 'glass_other'
 })
 
-/** @type {readonly (Material | GlassRecyclingProcess)[]} */
-export const TONNAGE_MONITORING_MATERIALS = Object.freeze([
-  ...Object.values(MATERIAL).filter((m) => m !== MATERIAL.GLASS),
-  ...Object.values(GLASS_RECYCLING_PROCESS)
-])
+/**
+ * The material a record is for. Glass is the only material that sub-divides,
+ * so this is one of the six that do not, or one of the two glass recycling
+ * processes. Plain `glass` is not one of them: a record still holding it has
+ * not been split, and so is not yet for either.
+ * @typedef {Exclude<AppliedForMaterial, 'glass'> | GlassRecyclingProcess} Material
+ */
 
 /**
  * @typedef {typeof TONNAGE_BAND[keyof typeof TONNAGE_BAND]} TonnageBand
@@ -210,7 +229,7 @@ export const USER_ROLES = Object.freeze({
 
 /**
  * @typedef {{
- *   status: RegAccStatus;
+ *   status: RegOrAccStatus;
  *   updatedAt: string;
  *   updatedBy?: string;
  * }} StatusHistoryItem

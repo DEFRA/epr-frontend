@@ -32,9 +32,13 @@ export const createdController = {
     const createUrl = `${listUrl}/create`
     const homeUrl = `/organisations/${organisationId}`
 
+    const headingKey = prnCreated.isDecemberWaste
+      ? 'prns:create:successHeadingDecemberWaste'
+      : 'prns:create:successHeading'
+
     return h.view('prns/created', {
       pageTitle: localise('prns:create:successPageTitle', { noteType }),
-      heading: localise('prns:create:successHeading', { noteType }),
+      heading: localise(headingKey, { noteType }),
       prnNumberLabel: localise('prns:created:prnNumberLabel', { noteType }),
       prnNumber: prnCreated.prnNumber,
       statusLabel: localise('prns:created:statusLabel'),

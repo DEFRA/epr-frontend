@@ -3,6 +3,8 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
@@ -22,7 +24,10 @@ vi.mock(
   })
 )
 
-const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
+
+const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
 describe('#submitSummaryLogController', () => {
   const organisationId = '123'
@@ -99,6 +104,57 @@ describe('#submitSummaryLogController', () => {
     expect(
       Array.isArray(sessionCookie) ? sessionCookie[0] : sessionCookie
     ).toContain('session=')
+  })
+
+  it('should record the journey end when the summary log is submitted', async ({
+    server
+  }) => {
+    vi.mocked(submitSummaryLog).mockResolvedValueOnce({
+      status: 'submitted',
+      accreditationNumber: '493021'
+    })
+
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl, {
+      auth: mockAuth
+    })
+
+    await server.inject({
+      method: 'POST',
+      url,
+      auth: mockAuth,
+      headers: { cookie },
+      payload: { crumb }
+    })
+
+    expect(metrics.journey.end).toHaveBeenCalledWith(
+      expect.anything(),
+      JOURNEY.uploadSummaryLog,
+      registrationId
+    )
+  })
+
+  it('should not record the journey end when the backend rejects the submission', async ({
+    server
+  }) => {
+    vi.mocked(submitSummaryLog).mockRejectedValueOnce(
+      Boom.conflict('Summary log must be validated before submission')
+    )
+
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl, {
+      auth: mockAuth
+    })
+
+    await server.inject({
+      method: 'POST',
+      url,
+      auth: mockAuth,
+      headers: { cookie },
+      payload: { crumb }
+    })
+
+    expect(metrics.journey.end).not.toHaveBeenCalled()
   })
 
   it('should render conflict view when backend returns 409', async ({

@@ -1,6 +1,12 @@
-import { cspFormAction } from '#server/common/helpers/content-security-policy.js'
+import {
+  cspFormAction,
+  cspOptions
+} from '#server/common/helpers/content-security-policy.js'
 import { it } from '#vite/fixtures/server.js'
 import { describe, expect, test } from 'vitest'
+
+const govukInlineScriptHash =
+  "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='"
 
 describe(cspFormAction, () => {
   test.each([
@@ -8,6 +14,65 @@ describe(cspFormAction, () => {
     ['production', { isProduction: true }, ['self']]
   ])('should use %s values', (_, config, values) => {
     expect(cspFormAction(config)).toStrictEqual(values)
+  })
+})
+
+describe(cspOptions, () => {
+  it('should not reach any google origin when analytics is disabled', () => {
+    const options = cspOptions({
+      isProduction: false,
+      allowAnalytics: false
+    })
+
+    expect(options).toStrictEqual({
+      connectSrc: ['self', 'wss', 'data:'],
+      defaultSrc: ['self'],
+      fontSrc: ['self', 'data:'],
+      formAction: ['self', 'localhost:*'],
+      frameAncestors: ['none'],
+      frameSrc: ['self', 'data:'],
+      generateNonces: false,
+      imgSrc: ['self', 'data:'],
+      manifestSrc: ['self'],
+      mediaSrc: ['self'],
+      objectSrc: ['none'],
+      scriptSrc: ['self', govukInlineScriptHash],
+      styleSrc: ['self']
+    })
+  })
+
+  it('should allow the gtag script and analytics endpoints when analytics is enabled', () => {
+    const options = cspOptions({
+      isProduction: true,
+      allowAnalytics: true
+    })
+
+    expect(options).toStrictEqual({
+      connectSrc: [
+        'self',
+        'wss',
+        'data:',
+        'https://*.google-analytics.com',
+        'https://*.analytics.google.com',
+        'https://www.googletagmanager.com'
+      ],
+      defaultSrc: ['self'],
+      fontSrc: ['self', 'data:'],
+      formAction: ['self'],
+      frameAncestors: ['none'],
+      frameSrc: ['self', 'data:'],
+      generateNonces: false,
+      imgSrc: ['self', 'data:', 'https://*.google-analytics.com'],
+      manifestSrc: ['self'],
+      mediaSrc: ['self'],
+      objectSrc: ['none'],
+      scriptSrc: [
+        'self',
+        govukInlineScriptHash,
+        'https://www.googletagmanager.com'
+      ],
+      styleSrc: ['self']
+    })
   })
 })
 

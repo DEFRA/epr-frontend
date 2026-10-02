@@ -1,6 +1,7 @@
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { paths } from '#server/paths.js'
 import { it } from '#vite/fixtures/server.js'
@@ -8,18 +9,9 @@ import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 
-const mockSignOutSuccessMetric = vi.fn()
 const mockCdpAuditing = vi.fn()
 
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    metrics: {
-      ...(await importOriginal()).metrics,
-      signOutSuccess: (oidcProvider) => mockSignOutSuccessMetric(oidcProvider)
-    }
-  })
-)
+vi.spyOn(metrics.signOut, 'success').mockResolvedValue()
 
 vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mockCdpAuditing(...args)
@@ -96,14 +88,15 @@ describe('#logoutController - integration', () => {
         auth: mockAuth
       })
 
-      expect(mockSignOutSuccessMetric).toHaveBeenCalledTimes(1)
-      expect(mockSignOutSuccessMetric).toHaveBeenCalledWith('defra-id')
+      expect(metrics.signOut.success).toHaveBeenCalledTimes(1)
+      expect(metrics.signOut.success).toHaveBeenCalledWith('defra-id')
     })
   })
 
   describe('when user is logged in to Entra ID', () => {
     const mockAuth = buildMockAuth({
       idToken: 'test-id-token',
+      backendToken: 'test-access-token',
       profile: {
         id: 'user-id',
         email: 'user@email.com'
@@ -137,6 +130,26 @@ describe('#logoutController - integration', () => {
       )
     })
 
+    // The session presents the access token to the backend, but Entra ends the
+    // session only on the id token. Sending the wrong one fails silently.
+    it('should send the id token as the logout hint, not the backend token', async ({
+      server
+    }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url: paths.logout,
+        auth: mockAuth
+      })
+
+      const redirectUrl = new URL(
+        /** @type {string} */ (response.headers.location)
+      )
+
+      expect(redirectUrl.searchParams.get('id_token_hint')).toBe(
+        'test-id-token'
+      )
+    })
+
     it('should audit a successful sign out attempt', async ({ server }) => {
       await server.inject({
         method: 'GET',
@@ -167,8 +180,8 @@ describe('#logoutController - integration', () => {
         auth: mockAuth
       })
 
-      expect(mockSignOutSuccessMetric).toHaveBeenCalledTimes(1)
-      expect(mockSignOutSuccessMetric).toHaveBeenCalledWith('entra-id')
+      expect(metrics.signOut.success).toHaveBeenCalledTimes(1)
+      expect(metrics.signOut.success).toHaveBeenCalledWith('entra-id')
     })
   })
 
@@ -198,7 +211,7 @@ describe('#logoutController - integration', () => {
         url: paths.logout
       })
 
-      expect(mockSignOutSuccessMetric).not.toHaveBeenCalled()
+      expect(metrics.signOut.success).not.toHaveBeenCalled()
     })
   })
 })

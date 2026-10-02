@@ -1,9 +1,12 @@
 import Joi from 'joi'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportAttempt } from './helpers/report-attempt.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { deleteReport } from './helpers/delete-report.js'
 
 const payloadSchema = Joi.object({
@@ -62,10 +65,10 @@ export const deleteGetController = {
     const { registration } = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.backendToken
     )
 
-    const material = getDisplayMaterial(registration)
+    const material = getRegistrationMaterialDisplayName(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
     const viewData = {
@@ -76,6 +79,12 @@ export const deleteGetController = {
       confirmButtonText: localise('reports:deleteConfirmButton'),
       backUrl: resolveBackUrl(request)
     }
+
+    await metrics.journey.start(
+      request,
+      JOURNEY.deleteReport,
+      reportAttempt(request.params)
+    )
 
     return h.view('reports/confirm-delete', viewData)
   }
@@ -111,7 +120,13 @@ export const deletePostController = {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
+    )
+
+    await metrics.journey.end(
+      request,
+      JOURNEY.deleteReport,
+      reportAttempt(request.params)
     )
 
     return h.redirect(

@@ -1,0 +1,37 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-m govuk-!-margin-bottom-4">{{ caption }}</span>
+          {{ heading }}
+        </h1>
+
+        {% if not hasData %}
+          <p class="govuk-body" data-testid="no-data">{{ localise('registrations:details:registeredOnlyPeriod:noData') }}</p>
+          <p class="govuk-body" data-testid="return-to-registration">{{ localise('registrations:details:registeredOnlyPeriod:returnToRegistration') }}</p>
+        {% else %}
+          <h2 class="govuk-heading-m">{{ localise('registrations:details:registeredOnlyPeriod:reports:heading') }}</h2>
+
+          {% set reportsHead = reports.head %}
+          {% set reportsRows = reports.rows %}
+          {% set reportsNoneText = localise('registrations:details:registeredOnlyPeriod:reports:none') %}
+          {% include "partials/reports/table.njk" %}
+
+          {% if ledger %}
+            {# No waste balance here, so no balance columns and no balance in
+               the title. #}
+            <h2 class="govuk-heading-m">{{ localise("waste-balance-ledger:registeredOnlyHeading") }}</h2>
+            {% set ledgerRows = ledger.rows %}
+            {% set ledgerHoldsABalance = false %}
+            {% include "partials/waste-balance-ledger/table.njk" %}
+          {% endif %}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

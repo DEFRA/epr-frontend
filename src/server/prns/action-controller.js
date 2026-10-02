@@ -8,9 +8,11 @@ import {
   buildPrnIssuerRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const actionController = {
@@ -29,7 +31,7 @@ export const actionController = {
         getRequiredRegistrationWithAccreditation({
           organisationId,
           registrationId,
-          idToken: session.idToken,
+          backendToken: session.backendToken,
           accreditationId
         }),
         fetchPackagingRecyclingNote(
@@ -37,7 +39,7 @@ export const actionController = {
           registrationId,
           accreditationId,
           prnId,
-          session.idToken
+          session.backendToken
         )
       ])
 
@@ -58,6 +60,10 @@ export const actionController = {
       registrationId,
       request
     })
+
+    if (viewData.issueButton) {
+      await metrics.journey.start(request, JOURNEY.issuePrn, prnId)
+    }
 
     return h.view('prns/action', viewData)
   }
@@ -95,7 +101,7 @@ function buildActionViewData({
   const { isExporter, noteType, noteTypeFull } =
     getNoteTypeDisplayNames(registration)
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-  const displayMaterial = getDisplayMaterial(registration)
+  const displayMaterial = getRegistrationMaterialDisplayName(registration)
   const isNotDraft = prn.status !== 'draft'
   const statusConfig = getStatusConfig(prn.status, localise)
 

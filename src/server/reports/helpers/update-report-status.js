@@ -4,10 +4,14 @@ import { fetchReportBackend } from './fetch-report-backend.js'
  * Transitions a report's status via the backend POST endpoint.
  * @param {{ organisationId: string, registrationId: string, year: number, cadence: string, period: number, submissionNumber: number }} periodParams
  * @param {{ status: string, version: number, submissionDeclaredBy?: string }} transition - The target status and report version for optimistic locking
- * @param {string} idToken
+ * @param {string} backendToken
  * @returns {Promise<unknown>}
  */
-export async function updateReportStatus(periodParams, transition, idToken) {
+export async function updateReportStatus(
+  periodParams,
+  transition,
+  backendToken
+) {
   const {
     organisationId,
     registrationId,
@@ -21,7 +25,7 @@ export async function updateReportStatus(periodParams, transition, idToken) {
   return fetchReportBackend(path, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${backendToken}`
     },
     body: JSON.stringify(transition)
   })
