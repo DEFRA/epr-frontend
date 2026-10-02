@@ -10,7 +10,9 @@
       {% if site.name %}
         <h3 class="govuk-heading-m">{{ site.name }}</h3>
       {% endif %}
-      {{ govukTable(site) }}
+      <div class="govuk-body epr-wide-table" role="region" aria-label="{{ site.name or tableTitle }}" tabindex="0">
+        {{ govukTable(site) }}
+      </div>
     {% endfor %}
   {% else %}
     <p class="govuk-body">{{ localise('organisations:table:noSitesFound') }}.</p>

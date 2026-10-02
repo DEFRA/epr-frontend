@@ -162,6 +162,34 @@ describe('#organisationController', () => {
       expect(tableHeaders).toContain('Accreditation')
     })
 
+    it('should wrap the site table in a scrollable region', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(asOrganisation(fixtureData))
+
+      const { payload } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(payload).window.document
+      const tables = getAllByRole(body, 'table')
+
+      expect(tables.length).toBeGreaterThan(0)
+
+      tables.forEach((table) => {
+        const region = table.closest('[role="region"]')
+
+        expect(region).not.toBeNull()
+        expect(region).toHaveClass('epr-wide-table')
+        expect(region).toHaveAttribute('tabindex', '0')
+        expect(region).toHaveAccessibleName()
+      })
+    })
+
     it('should display organisation page with exporting sites on exporting route', async ({
       server
     }) => {
