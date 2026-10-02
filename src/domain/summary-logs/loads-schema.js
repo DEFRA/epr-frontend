@@ -121,5 +121,7 @@ export const summaryLogStatusResponseSchema = Joi.object({
   loadsByReportingPeriod: loadsByReportingPeriodSchema.optional(),
   processingType: Joi.string().optional(),
   material: Joi.string().optional(),
-  accreditationNumber: Joi.string().optional()
+  accreditationNumber: Joi.string().optional(),
+  year: Joi.number().integer().optional(),
+  accreditationId: Joi.string().allow(null).optional()
 })

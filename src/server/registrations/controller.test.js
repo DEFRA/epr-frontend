@@ -160,7 +160,7 @@ describe('#accreditationDashboardController', () => {
       expect(result).toContain('ACC001234')
     })
 
-    it('should display upload summary log link with registration ID', async ({
+    it('should display an upload summary log link to the unscoped upload page', async ({
       server
     }) => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(

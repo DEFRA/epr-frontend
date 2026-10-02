@@ -118,7 +118,10 @@ describe('journey metrics emit-once, driven through a real session', () => {
     const mockOrganisationData = /** @type {Organisation} */ (
       /** @type {unknown} */ ({
         id: organisationId,
-        registrations: [{ id: registrationId, status: 'approved' }]
+        registrations: [
+          { id: registrationId, status: 'approved', validFrom: '2026-01-01' }
+        ],
+        accreditations: []
       })
     )
 

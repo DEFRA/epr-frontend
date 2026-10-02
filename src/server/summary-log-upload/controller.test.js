@@ -5,7 +5,7 @@ import {
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -16,10 +16,15 @@ import * as cheerio from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
-/** @import {Organisation} from '#domain/organisations/model.js' */
-
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
+  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js'),
+  () => ({
+    fetchRegistrationAndAccreditation: vi.fn().mockResolvedValue({
+      organisationData: { id: '123' },
+      registration: { id: '456', status: 'approved', validFrom: '2026-01-01' },
+      accreditation: undefined
+    })
+  })
 )
 
 vi.mock(
@@ -33,11 +38,9 @@ vi.mock(
   })
 )
 
-const mockOrganisationData = /** @type {Organisation} */ (
-  /** @type {unknown} */ ({
-    id: '123',
-    registrations: [{ id: '456', status: 'approved' }]
-  })
+const mockFetchRegistrationAndAccreditation = vi.mocked(
+  fetchRegistrationAndAccreditation,
+  { partial: true, deep: true }
 )
 
 vi.spyOn(metrics.journey, 'start').mockResolvedValue()
@@ -52,9 +55,15 @@ describe('#summaryLogUploadController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchOrganisationModule.fetchOrganisationById).mockResolvedValue(
-      mockOrganisationData
-    )
+    mockFetchRegistrationAndAccreditation.mockResolvedValue({
+      organisationData: { id: organisationId },
+      registration: {
+        id: registrationId,
+        status: 'approved',
+        validFrom: '2026-01-01'
+      },
+      accreditation: undefined
+    })
   })
 
   it('should provide expected response', async ({ server }) => {
@@ -202,7 +211,7 @@ describe('#summaryLogUploadController', () => {
     })
   })
 
-  it('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async ({
+  it('should call initiateSummaryLogUpload with the year from the registration validFrom and redirectUrl template', async ({
     server
   }) => {
     await server.inject({
@@ -214,10 +223,35 @@ describe('#summaryLogUploadController', () => {
     expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
       organisationId: '123',
       registrationId: '456',
+      year: 2026,
       redirectUrl:
         '/organisations/123/registrations/456/summary-logs/{summaryLogId}',
       backendToken: 'test-id-token'
     })
+  })
+
+  it("should use the registration's own validFrom year, not the current year, when they differ", async ({
+    server
+  }) => {
+    mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+      organisationData: { id: organisationId },
+      registration: {
+        id: registrationId,
+        status: 'approved',
+        validFrom: '2025-06-01'
+      },
+      accreditation: undefined
+    })
+
+    await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    expect(initiateSummaryLogUpload).toHaveBeenCalledWith(
+      expect.objectContaining({ year: 2025 })
+    )
   })
 
   describe('page content', () => {
@@ -383,6 +417,10 @@ describe('#summaryLogUploadController', () => {
     it('should return 404 when registration not found for organisation', async ({
       server
     }) => {
+      mockFetchRegistrationAndAccreditation.mockRejectedValueOnce(
+        Boom.notFound('Registration not found')
+      )
+
       const { statusCode } = await server.inject({
         method: 'GET',
         url: `/organisations/${organisationId}/registrations/nonexistent-registration/summary-logs/upload`,
@@ -395,6 +433,10 @@ describe('#summaryLogUploadController', () => {
     it('should not call initiateSummaryLogUpload when registration not found', async ({
       server
     }) => {
+      mockFetchRegistrationAndAccreditation.mockRejectedValueOnce(
+        Boom.notFound('Registration not found')
+      )
+
       await server.inject({
         method: 'GET',
         url: `/organisations/${organisationId}/registrations/nonexistent-registration/summary-logs/upload`,

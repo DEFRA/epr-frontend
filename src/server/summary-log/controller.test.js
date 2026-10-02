@@ -71,7 +71,7 @@ vi.mock(
   () => ({
     fetchRegistrationAndAccreditation: vi.fn().mockResolvedValue({
       organisationData: undefined,
-      registration: undefined,
+      registration: { id: '456', validFrom: '2026-01-01' },
       accreditation: undefined
     })
   })
@@ -1339,6 +1339,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         organisationId,
         registrationId,
+        year: 2026,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
@@ -1480,6 +1481,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         organisationId,
         registrationId,
+        year: 2026,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
@@ -2311,6 +2313,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         organisationId,
         registrationId,
+        year: 2026,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
@@ -2350,8 +2353,36 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         organisationId,
         registrationId,
+        year: 2026,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
+      })
+    })
+
+    describe('re-upload year resolution', () => {
+      it("scopes re-upload to the registration's own validFrom year", async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: { failures: [{ errorCode: 'REGISTRATION_MISMATCH' }] }
+        })
+
+        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+          organisationData: { id: organisationId },
+          registration: { id: registrationId, validFrom: '2025-02-02' },
+          accreditation: undefined
+        })
+
+        await server.inject({ method: 'GET', url, auth: mockAuth })
+
+        expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+          organisationId,
+          registrationId,
+          year: 2025,
+          redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+          backendToken: 'test-id-token'
+        })
       })
     })
 
