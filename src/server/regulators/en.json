@@ -16,7 +16,8 @@
     "workbook": {
       "description": "Download a workbook in the published format, built from the figures for the reporting period these pages show as they currently stand. The file takes up to a minute to prepare, so the page will wait after you select the link.",
       "heading": "Download the workbook",
-      "linkText": "Download the market insights workbook (XLSX)"
+      "linkText": "Download the market insights workbook (XLSX)",
+      "unredactedLinkText": "Download the unredacted market insights workbook (XLSX)"
     },
     "figures": {
       "calculation": {

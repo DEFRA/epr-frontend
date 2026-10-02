@@ -71,6 +71,12 @@ export const controller = {
       workbookHref: request.localiseUrl(
         paths.regulators.marketInsightsWorkbook
       ),
+      unredactedWorkbookText: localise(
+        'regulators:marketInsights:workbook:unredactedLinkText'
+      ),
+      unredactedWorkbookHref: request.localiseUrl(
+        paths.regulators.marketInsightsUnredactedWorkbook
+      ),
       exportDescription: localise(
         'regulators:marketInsights:export:description'
       ),
