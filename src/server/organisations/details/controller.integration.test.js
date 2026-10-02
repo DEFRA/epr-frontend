@@ -233,6 +233,19 @@ describe('the organisation homepage a regulator reads', () => {
     ])
   })
 
+  it('wraps the registrations table in a scrollable region', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const table = within(documentOf(body)).getByRole('table')
+    const region = table.closest('[role="region"]')
+
+    expect(region).not.toBeNull()
+    expect(region).toHaveClass('epr-wide-table')
+    expect(region).toHaveAttribute('tabindex', '0')
+    expect(region).toHaveAccessibleName()
+  })
+
   it('reads each registration out of the record', async ({ server }) => {
     const { body } = await visit(server, regulator)
 
