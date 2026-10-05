@@ -9,14 +9,14 @@ import { initiateSummaryLogUpload } from './initiate-summary-log-upload.js'
 const backendUrl = config.get('eprBackendUrl')
 
 describe(initiateSummaryLogUpload, () => {
-  test('calls backend summary-logs endpoint with redirectUrl', async ({
+  test('calls backend summary-logs endpoint scoped to year with redirectUrl', async ({
     msw
   }) => {
     /** @type {Request | undefined} */
     let capturedRequest
     msw.use(
       http.post(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs`,
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/2026`,
         async ({ request }) => {
           capturedRequest = request
           return HttpResponse.json({
@@ -32,6 +32,7 @@ describe(initiateSummaryLogUpload, () => {
     await initiateSummaryLogUpload({
       organisationId: 'org-123',
       registrationId: 'reg-456',
+      year: 2026,
       redirectUrl: '/redirect/path',
       backendToken: 'test-id-token'
     })
@@ -57,7 +58,7 @@ describe(initiateSummaryLogUpload, () => {
 
     msw.use(
       http.post(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs`,
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/2026`,
         () => HttpResponse.json(mockResponse)
       )
     )
@@ -65,6 +66,7 @@ describe(initiateSummaryLogUpload, () => {
     const result = await initiateSummaryLogUpload({
       organisationId: 'org-123',
       registrationId: 'reg-456',
+      year: 2026,
       redirectUrl: '/redirect/path',
       backendToken: 'test-id-token'
     })
@@ -77,7 +79,7 @@ describe(initiateSummaryLogUpload, () => {
   }) => {
     msw.use(
       http.post(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs`,
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/2026`,
         () =>
           new HttpResponse(null, {
             status: 500,
@@ -90,6 +92,7 @@ describe(initiateSummaryLogUpload, () => {
       initiateSummaryLogUpload({
         organisationId: 'org-123',
         registrationId: 'reg-456',
+        year: 2026,
         redirectUrl: '/redirect/path',
         backendToken: 'test-id-token'
       })

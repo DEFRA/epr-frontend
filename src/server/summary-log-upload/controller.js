@@ -1,8 +1,7 @@
 import { hasWriteScope } from '#server/auth/scopes.js'
-import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { errorCodes } from '#server/common/enums/error-codes.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { registrationUploadYear } from '#server/common/helpers/upload/registration-upload-year.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 
@@ -18,34 +17,11 @@ export const summaryLogUploadController = {
 
     const session = request.auth.credentials
 
-    const organisationData = await fetchOrganisationById(
+    const { registration } = await fetchRegistrationAndAccreditation(
       organisationId,
+      registrationId,
       session.backendToken
     )
-
-    const registration = organisationData.registrations?.find(
-      ({ id }) => id === registrationId
-    )
-
-    if (!registration) {
-      request.logger.warn({
-        message: 'Registration not found',
-        event: {
-          action: 'fetch_registration',
-          reason: `organisationId=${organisationId} registrationId=${registrationId}`
-        }
-      })
-      throw notFound(
-        'Registration not found',
-        errorCodes.registrationNotFound,
-        {
-          event: {
-            action: 'fetch_registration',
-            reason: `organisationId=${organisationId} registrationId=${registrationId}`
-          }
-        }
-      )
-    }
 
     try {
       // Starting an upload creates a summary log, so this GET writes. A session
@@ -56,6 +32,7 @@ export const summaryLogUploadController = {
         ? await initiateSummaryLogUpload({
             organisationId,
             registrationId,
+            year: registrationUploadYear(registration),
             redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
             backendToken: session.backendToken
           })
