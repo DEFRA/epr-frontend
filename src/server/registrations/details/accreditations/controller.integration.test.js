@@ -210,6 +210,15 @@ const documentOf = (body) => new JSDOM(body).window.document.body
 /** @param {ReturnType<typeof documentOf>} body */
 const ledgerTable = (body) => getByTestId(body, 'waste-balance-ledger-table')
 
+/**
+ * @param {ReturnType<typeof documentOf>} body
+ * @param {string} key
+ */
+const summaryRow = (body, key) =>
+  /** @type {ReturnType<typeof documentOf>} */ (
+    getByText(body, key).closest('.govuk-summary-list__row')
+  )
+
 /** @param {ReturnType<typeof getAllByRole>} cells */
 const textOf = (cells) => cells.map((cell) => cell.textContent?.trim())
 
@@ -290,13 +299,25 @@ describe('the accreditation details page', () => {
     config.set('featureFlags.wasteRecordsDownload', true)
     const { body } = await visit(server, regulator)
     config.set('featureFlags.wasteRecordsDownload', false)
-    const document = documentOf(body)
+    const row = summaryRow(documentOf(body), 'Latest waste record CSV')
 
-    expect(getByText(document, 'Latest waste record CSV')).toBeDefined()
     expect(
-      getByRole(document, 'link', { name: 'Download' }).getAttribute('href')
+      within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
     ).toBe(
       `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv`
+    )
+  })
+
+  it('offers the latest summary log workbook in the summary', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+    const row = summaryRow(documentOf(body), 'Latest summary log')
+
+    expect(
+      within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
+    ).toBe(
+      `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download`
     )
   })
 
@@ -304,10 +325,9 @@ describe('the accreditation details page', () => {
     server
   }) => {
     const { body } = await visit(server, regulator)
-    const document = documentOf(body)
 
     expect(body).not.toContain('Latest waste record CSV')
-    expect(queryByRole(document, 'link', { name: 'Download' })).toBeNull()
+    expect(body).not.toContain('/waste-records/download.csv')
   })
 
   it('lists the reporting periods below the summary, under their five headings', async ({

@@ -16,6 +16,7 @@ import { toPrnGroups } from '#server/prns/helpers/prn-groups.js'
 import { buildStatusTagHtml as buildPrnStatusTagHtml } from '#server/prns/list-view-data.js'
 
 import { buildWasteRecordsCsvDownloadPath } from '#server/registrations/waste-records-csv-download-controller.js'
+import { buildSummaryLogDownloadPath } from '#server/summary-log/download-controller.js'
 
 import { toAccreditationPath } from '../helpers/accreditation-child-page.js'
 import { organisationName, toCaption } from '../helpers/caption.js'
@@ -120,8 +121,51 @@ const toWasteRecordsRow = ({
 })
 
 /**
+ * The workbook behind the ledger's newest summary log entry, blank where
+ * there is none to offer.
+ * @param {{
+ *   ledgerEvents: LedgerEvent[] | null,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string,
+ *   organisationId: string,
+ *   registrationId: string
+ * }} params
+ * @returns {SummaryRow}
+ */
+const toLatestSummaryLogRow = ({
+  ledgerEvents,
+  localise,
+  localiseUrl,
+  organisationId,
+  registrationId
+}) => {
+  const key = localise(
+    'registrations:details:accreditation:summary:latestSummaryLog'
+  )
+  const latest = ledgerEvents?.findLast((event) => event.summaryLog)
+
+  if (!latest?.summaryLog) {
+    return { key, value: '' }
+  }
+
+  return {
+    key,
+    html: `<a href="${localiseUrl(
+      buildSummaryLogDownloadPath({
+        organisationId,
+        registrationId,
+        fileId: latest.summaryLog.id
+      })
+    )}" class="govuk-link">${escapeHtml(
+      localise('registrations:details:accreditation:summary:download')
+    )}</a>`
+  }
+}
+
+/**
  * @param {{
  *   accreditation: AccreditationResource,
+ *   ledgerEvents: LedgerEvent[] | null,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   organisationId: string,
@@ -132,6 +176,7 @@ const toWasteRecordsRow = ({
  */
 const toSummaryRows = ({
   accreditation,
+  ledgerEvents,
   localise,
   localiseUrl,
   organisationId,
@@ -152,6 +197,13 @@ const toSummaryRows = ({
     ),
     value: toTonnage(wasteBalance?.availableAmount)
   },
+  toLatestSummaryLogRow({
+    ledgerEvents,
+    localise,
+    localiseUrl,
+    organisationId,
+    registrationId
+  }),
   // The page is regulator-only, so the flag is the whole question here.
   ...(offersWasteRecordsDownloads()
     ? [
@@ -451,6 +503,7 @@ export const buildViewModel = ({
     }),
     summaryRows: toSummaryRows({
       accreditation,
+      ledgerEvents,
       localise,
       localiseUrl,
       organisationId: organisation.id,
