@@ -2,6 +2,7 @@ import Joi from 'joi'
 
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
+import { CADENCE } from '#server/reports/constants.js'
 
 const nonNegativeInteger = Joi.number().integer().min(0).required()
 
@@ -71,9 +72,24 @@ const periodStatusByChangeSchema = Joi.object({
   adjusted: periodStatusGroupSchema.required()
 })
 
+// periodsRequiringResubmission lists only the closed periods whose reported
+// figures changed, so it drives the resubmission messaging. It is optional and
+// left absent (rather than defaulted) when the backend omits it, so callers can
+// tell "backend has not shipped this field yet" (undefined -> fall back to the
+// raw closed-period counts) apart from "backend shipped it and no figures
+// changed" (empty array -> no resubmission needed).
+const periodRefSchema = Joi.object({
+  year: Joi.number().integer().required(),
+  cadence: Joi.string()
+    .valid(...Object.values(CADENCE))
+    .required(),
+  period: Joi.number().integer().required()
+})
+
 export const loadsByReportingPeriodSchema = Joi.object({
   openPeriodLoads: periodStatusByChangeSchema.required(),
-  closedPeriodLoads: periodStatusByChangeSchema.required()
+  closedPeriodLoads: periodStatusByChangeSchema.required(),
+  periodsRequiringResubmission: Joi.array().items(periodRefSchema)
 })
 
 export const summaryLogStatusResponseSchema = Joi.object({
@@ -105,5 +121,7 @@ export const summaryLogStatusResponseSchema = Joi.object({
   loadsByReportingPeriod: loadsByReportingPeriodSchema.optional(),
   processingType: Joi.string().optional(),
   material: Joi.string().optional(),
-  accreditationNumber: Joi.string().optional()
+  accreditationNumber: Joi.string().optional(),
+  year: Joi.number().integer().optional(),
+  accreditationId: Joi.string().allow(null).optional()
 })

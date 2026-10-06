@@ -45,6 +45,8 @@ const localise = createMockLocalise({
   'registrations:details:accreditation:summary:wasteRecords':
     'Latest waste record CSV',
   'registrations:details:accreditation:summary:download': 'Download',
+  'registrations:details:accreditation:summary:latestSummaryLog':
+    'Latest summary log',
   'registrations:details:allOrganisations': 'All organisations',
   'registrations:details:current': 'Current',
   'registrations:details:heading': 'Registration details',
@@ -291,15 +293,39 @@ describe('the accreditation details view model', () => {
     ).toBe('')
   })
 
-  it('shows the status as a tag, then the number, then the available balance', () => {
+  it('shows the status as a tag, then the number, then the available balance, then the latest summary log', () => {
     expect(build().summaryRows).toStrictEqual([
       {
         key: 'Accreditation status',
         status: { text: 'Approved', classes: 'govuk-tag--green' }
       },
       { key: 'Accreditation number', value: 'A26ER5001180114PL' },
-      { key: 'Waste balance available (tonnes)', value: '987.25' }
+      { key: 'Waste balance available (tonnes)', value: '987.25' },
+      { key: 'Latest summary log', value: '' }
     ])
+  })
+
+  it("offers the workbook of the ledger's newest summary log", () => {
+    const ledgerEvents = [
+      summaryLogSubmitted,
+      { ...summaryLogSubmitted, summaryLog: { id: 'log-2', creditTotal: 150 } },
+      prnIssued
+    ]
+
+    expect(
+      build(undefined, undefined, aWasteBalance, noCalendar, ledgerEvents)
+        .summaryRows[3]
+    ).toStrictEqual({
+      key: 'Latest summary log',
+      html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-2/download" class="govuk-link">Download</a>`
+    })
+  })
+
+  it('leaves the latest summary log blank when none has been submitted', () => {
+    expect(
+      build(undefined, undefined, aWasteBalance, noCalendar, [prnIssued])
+        .summaryRows[3]
+    ).toStrictEqual({ key: 'Latest summary log', value: '' })
   })
 
   it('shows an empty number for an accreditation that never got one', () => {
@@ -341,22 +367,23 @@ describe('the accreditation details view model', () => {
       config.set('featureFlags.wasteRecordsDownload', false)
     })
 
-    it('offers the latest waste records beneath the balance', () => {
-      expect(build().summaryRows.at(3)).toStrictEqual({
+    it('offers the latest waste records beneath the latest summary log', () => {
+      expect(build().summaryRows.at(4)).toStrictEqual({
         key: 'Latest waste record CSV',
         html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv" class="govuk-link">Download</a>`
       })
     })
 
-    it('leaves the three rows above it as they were', () => {
+    it('leaves the four rows above it as they were', () => {
       expect(
         build()
-          .summaryRows.slice(0, 3)
+          .summaryRows.slice(0, 4)
           .map((row) => row.key)
       ).toStrictEqual([
         'Accreditation status',
         'Accreditation number',
-        'Waste balance available (tonnes)'
+        'Waste balance available (tonnes)',
+        'Latest summary log'
       ])
     })
   })

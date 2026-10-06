@@ -1,6 +1,7 @@
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
+ * @import { CadenceValue } from '#server/reports/constants.js'
  */
 
 /**
@@ -225,10 +226,15 @@
 
 /**
  * loadsByReportingPeriod payload from the backend. Required on the response
- * when status is VALIDATED, otherwise absent.
+ * when status is VALIDATED, otherwise absent. periodsRequiringResubmission
+ * lists only the closed periods whose reported figures changed (empty when
+ * none) and drives the resubmission messaging; closedPeriodLoads still carries
+ * the display data (counts, tonnages, row detail).
+ * @typedef {{ year: number, cadence: CadenceValue, period: number }} PeriodRef
  * @typedef {{
  *   openPeriodLoads: PeriodStatus,
- *   closedPeriodLoads: PeriodStatus
+ *   closedPeriodLoads: PeriodStatus,
+ *   periodsRequiringResubmission?: PeriodRef[]
  * }} LoadsByReportingPeriod
  */
 
