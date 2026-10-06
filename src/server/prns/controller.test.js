@@ -108,8 +108,15 @@ describe('#createPrnController', () => {
 
         const { body } = new JSDOM(result).window.document
         const header = getByRole(body, 'banner')
+        const [banner] = header.querySelectorAll('.govuk-phase-banner')
 
-        expect(within(header).getByText('Beta')).toBeDefined()
+        expect(body.querySelectorAll('.govuk-phase-banner')).toHaveLength(1)
+        expect(within(banner).getByText('Beta')).toHaveClass('govuk-tag')
+        expect(
+          within(banner).getByRole('link', {
+            name: /give your feedback by email/i
+          })
+        ).toBeInTheDocument()
       })
 
       it('should render page with correct title, caption and heading', async ({
