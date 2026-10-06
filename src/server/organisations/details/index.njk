@@ -25,22 +25,20 @@
     ]]) %}
   {% endfor %}
 
-  <div class="govuk-body epr-wide-table" role="region" aria-label="{{ site.name }}" tabindex="0">
-    {{ govukTable({
-      caption: site.name,
-      captionClasses: "govuk-table__caption--m",
-      firstCellIsHeader: true,
-      head: [
-        { text: localise('organisations:details:table:number') },
-        { text: localise('organisations:details:table:registrationStatus') },
-        { text: localise('organisations:details:table:material') },
-        { text: localise('organisations:details:table:regulator') },
-        { text: localise('organisations:details:table:accreditation') },
-        { text: localise('organisations:details:table:actions') }
-      ],
-      rows: registrationRows
-    }) }}
-  </div>
+  {{ govukTable({
+    caption: site.name,
+    captionClasses: "govuk-table__caption--m",
+    firstCellIsHeader: true,
+    head: [
+      { text: localise('organisations:details:table:number') },
+      { text: localise('organisations:details:table:registrationStatus') },
+      { text: localise('organisations:details:table:material') },
+      { text: localise('organisations:details:table:regulator') },
+      { text: localise('organisations:details:table:accreditation') },
+      { text: localise('organisations:details:table:actions') }
+    ],
+    rows: registrationRows
+  }) }}
 {% endmacro %}
 
 {% macro renderSites(tables) %}
