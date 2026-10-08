@@ -39,7 +39,7 @@ export const controller = {
     }
   },
   /**
-   * @param {HapiRequest & { payload: LinkingPayload }} request
+   * @param {HapiRequest & { payload: LinkingPayload, pre: UserOrganisationsPres }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
@@ -52,7 +52,16 @@ export const controller = {
     // Store linked organisation ID in session for navigation
     const sessionId = request.state?.userSession?.sessionId
     if (sessionId) {
+      // The backend only links an organisation from the user's unlinked list
+      const { unlinked } = /** @type {UserOrganisations} */ (
+        request.pre.userOrganisations
+      )
+      const linked = /** @type {EprOrganisationSummary} */ (
+        unlinked.find(({ id }) => id === organisationId)
+      )
+
       session.linkedOrganisationId = organisationId
+      session.linkedOrganisationNumber = String(linked.orgId)
       await request.server.app.cache.set(sessionId, session)
     }
 
@@ -63,4 +72,6 @@ export const controller = {
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { EprOrganisationSummary, UserOrganisations } from '#server/auth/types/organisations.js'
+ * @import { UserOrganisationsPres } from './prerequisites/provide-user-organisations.js'
  */

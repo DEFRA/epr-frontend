@@ -90,6 +90,7 @@ const defraIdCallbackController = {
 
       // Store linked organisation ID in session for navigation
       session.linkedOrganisationId = organisations.linked.id
+      session.linkedOrganisationNumber = String(organisations.linked.orgId)
       await request.server.app.cache.set(sessionId, session)
 
       const redirectUrl = referrerIfPresentElseDefault(

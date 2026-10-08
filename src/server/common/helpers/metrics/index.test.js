@@ -141,7 +141,8 @@ describe('#metrics', () => {
       expect(Object.keys(metrics)).toStrictEqual([
         'signIn',
         'signOut',
-        'journey'
+        'journey',
+        'pageUrl'
       ])
       expect(Object.keys(metrics.signIn)).toStrictEqual([
         'attempted',
@@ -151,6 +152,13 @@ describe('#metrics', () => {
       ])
       expect(Object.keys(metrics.signOut)).toStrictEqual(['success'])
       expect(Object.keys(metrics.journey)).toStrictEqual(['start', 'end'])
+      expect(Object.keys(metrics.pageUrl)).toStrictEqual(['oldRequested'])
+    })
+
+    it('does not record an old page URL', async () => {
+      await metrics.pageUrl.oldRequested()
+
+      expect(mockPutMetric).not.toHaveBeenCalled()
     })
   })
 
@@ -180,6 +188,19 @@ describe('#metrics', () => {
           expect(mockFlush).toHaveBeenCalledWith()
         }
       )
+    })
+
+    it('records an old page URL with no dimensions', async () => {
+      await metrics.pageUrl.oldRequested()
+
+      expect(mockPutMetric).toHaveBeenCalledWith(
+        'OldPageUrlRequested',
+        1,
+        Unit.Count,
+        StorageResolution.Standard
+      )
+      expect(mockSetDimensions).toHaveBeenCalledWith({}, false)
+      expect(mockPutDimensions).not.toHaveBeenCalled()
     })
 
     describe('journey', () => {

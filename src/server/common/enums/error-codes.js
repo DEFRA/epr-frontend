@@ -17,6 +17,7 @@ export const errorCodes = {
   prnDataMissing: 'prn_data_missing',
   prnDeleteFailed: 'prn_delete_failed',
   prnDiscardFailed: 'prn_discard_failed',
+  recordKeyUnresolved: 'record_key_unresolved',
   registrationNotFound: 'registration_not_found',
   summaryLogNotFound: 'summary_log_not_found',
   unknownMaterial: 'unknown_material'
