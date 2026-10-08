@@ -20,9 +20,7 @@ const mockAuth = buildMockAuth()
 const userOrganisations = {
   current: { id: 'defra-org-123', name: 'My Defra Organisation' },
   linked: null,
-  unlinked: [
-    { id: organisationId, name: 'Test Company Ltd', orgId: '12345678' }
-  ]
+  unlinked: [{ id: organisationId, name: 'Test Company Ltd', orgId: 12345678 }]
 }
 
 // Authorises on the session backendToken, so a 200 also proves the handler forwards
@@ -106,6 +104,7 @@ describe('account linking POST controller', () => {
     const cached = await server.app.cache.get(sessionId)
 
     expect(cached?.linkedOrganisationId).toBe(organisationId)
+    expect(cached?.linkedOrganisationNumber).toBe('12345678')
   })
 
   it('should re-render with an error when no organisation is selected', async ({
