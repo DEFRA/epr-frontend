@@ -59,11 +59,12 @@ const NATURAL_KEY = {
 export const routeKeyForm = (routePath) => {
   const parts = routePath.split('/')
 
-  const keyed = parts.flatMap((part, index) => {
+  // `previous` is the segment before `part`, so the first segment is skipped
+  const keyed = parts.slice(1).flatMap((part, previous) => {
     const param = KEYED_PARAMS[part]
 
-    return param && param.literal === parts[index - 1]
-      ? [{ index, record: param.record, form: param.form }]
+    return param?.literal === parts[previous]
+      ? [{ index: previous + 1, record: param.record, form: param.form }]
       : []
   })
 

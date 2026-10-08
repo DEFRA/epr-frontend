@@ -58,21 +58,21 @@ const swapKeys = async (request, form, keys) => {
 
   if (form === 'ids') {
     const ids = /** @type {RecordIds} */ (keys)
-    const organisation = await findOrganisationById(
+    const organisationById = await findOrganisationById(
       ids.organisationId,
       credentials.backendToken
     )
 
-    return organisation && toNaturalKeys(organisation, ids)
+    return organisationById && toNaturalKeys(organisationById, ids)
   }
 
   const naturalKeys = /** @type {NaturalKeys} */ (keys)
-  const organisation = await findOrganisationByNumber(
+  const organisationByNumber = await findOrganisationByNumber(
     naturalKeys.organisationNumber,
     credentials
   )
 
-  return organisation && toIds(organisation, naturalKeys)
+  return organisationByNumber && toIds(organisationByNumber, naturalKeys)
 }
 
 /**
