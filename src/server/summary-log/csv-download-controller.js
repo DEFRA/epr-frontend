@@ -1,6 +1,6 @@
 import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { fetchStreamFromBackend } from '#server/common/helpers/fetch-stream-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 /**
@@ -82,11 +82,11 @@ export const summaryLogCsvDownloadController = {
       )
     }
 
-    const { body, contentDisposition, contentType } =
-      await fetchStreamFromBackend(
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}/records.csv`,
-        { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
-      )
+    const { body, contentDisposition, contentType } = await backend(
+      backendToken
+    ).stream(
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}/records.csv`
+    )
 
     const response = h.response(body).type(contentType ?? DEFAULT_CONTENT_TYPE)
 
