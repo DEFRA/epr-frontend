@@ -133,6 +133,18 @@ describe('#cookieBanner', () => {
       expect(returnUrl?.getAttribute('value')).toBe('/start')
     })
 
+    it('should return a welsh visitor to the welsh page', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/cy/start?page=2'
+      })
+      const returnUrl = bodyOf(result).querySelector('input[name="returnUrl"]')
+
+      expect(returnUrl?.getAttribute('value')).toBe('/cy/start?page=2')
+    })
+
     it('should name the buttons so the choice reaches the server', async ({
       server
     }) => {

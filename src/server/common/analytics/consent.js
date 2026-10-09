@@ -64,9 +64,10 @@ export const takeConfirmedChoice = (request, h) => {
  * @returns {{ confirmedChoice: 'accepted' | 'rejected' | null, hasConsented: boolean, hasRejected: boolean, isEnabled: boolean, returnUrl: string, shouldAskConsent: boolean }}
  */
 export const analyticsConsent = (request) => {
-  const returnUrl = request?.url
+  const path = request?.url
     ? `${request.url.pathname}${request.url.search}`
     : '/'
+  const returnUrl = request?.localiseUrl?.(path) ?? path
 
   if (!isAnalyticsEnabled()) {
     return {
