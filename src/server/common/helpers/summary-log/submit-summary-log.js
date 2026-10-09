@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
  * Submits summary log to EPR Backend
@@ -14,14 +14,9 @@ async function submitSummaryLog(
   summaryLogId,
   backendToken
 ) {
-  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
-
-  return fetchJsonFromBackend(path, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
+  return backend(backendToken).post(
+    path`/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
+  )
 }
 
 export { submitSummaryLog }

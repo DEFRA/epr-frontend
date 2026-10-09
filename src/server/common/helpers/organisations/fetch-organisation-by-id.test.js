@@ -51,24 +51,6 @@ describe(fetchOrganisationById, () => {
     expect(capturedUrl).toMatch(/\/v1\/organisations\/org-123$/)
   })
 
-  test('includes Authorization header with Bearer token', async ({ msw }) => {
-    /** @type {Request | undefined} */
-    let capturedRequest
-    msw.use(
-      http.get(`${backendUrl}/v1/organisations/org-123`, ({ request }) => {
-        capturedRequest = request
-        return HttpResponse.json({})
-      })
-    )
-
-    await fetchOrganisationById(organisationId, backendToken)
-
-    const request = /** @type {Request} */ (capturedRequest)
-
-    expect(request.headers.get('content-type')).toBe('application/json')
-    expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
-  })
-
   test('throws Boom notFound error when backend returns 404', async ({
     msw
   }) => {

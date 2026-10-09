@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
  * Adds the authenticated user to an organisation via the backend API
@@ -7,10 +7,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @returns {Promise<void>}
  */
 export async function addUserToOrganisation(organisationId, backendToken) {
-  await fetchJsonFromBackend(`/v1/organisations/${organisationId}/user`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
+  await backend(backendToken).put(
+    path`/v1/organisations/${organisationId}/user`
+  )
 }

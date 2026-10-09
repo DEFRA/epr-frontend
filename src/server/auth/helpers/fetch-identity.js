@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, strictly } from '#server/common/helpers/backend-client.js'
 import Joi from 'joi'
 
 /**
@@ -18,29 +18,11 @@ import Joi from 'joi'
  * }} Identity
  */
 
+/** @type {Joi.ObjectSchema<Identity>} */
 const identitySchema = Joi.object({
   role: Joi.string().allow(null).required(),
   scopes: Joi.array().items(Joi.string()).required()
 }).unknown(true)
-
-/**
- * @param {unknown} payload
- * @returns {Identity}
- */
-const validateIdentity = (payload) => {
-  const { error, value } = identitySchema.validate(payload, {
-    abortEarly: false
-  })
-
-  if (error) {
-    const details = error.details
-      .map((d) => `${d.path.join('.')}: ${d.message}`)
-      .join('; ')
-    throw new Error(`Invalid identity: ${details}`)
-  }
-
-  return value
-}
 
 /**
  * Asks the backend who the signed-in identity is. The backend holds the only
@@ -50,12 +32,7 @@ const validateIdentity = (payload) => {
  * @returns {Promise<Identity>}
  */
 export async function fetchIdentity(backendToken) {
-  const data = await fetchJsonFromBackend('/v1/me', {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
+  return backend(backendToken).get('/v1/me', {
+    parse: strictly(identitySchema)
   })
-
-  return validateIdentity(data)
 }

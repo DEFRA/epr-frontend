@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
  * @param {string} backendToken
@@ -6,10 +6,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @returns {Promise<void>}
  */
 export async function linkOrganisation(backendToken, organisationId) {
-  await fetchJsonFromBackend(`/v1/organisations/${organisationId}/link`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
+  await backend(backendToken).post(
+    path`/v1/organisations/${organisationId}/link`
+  )
 }

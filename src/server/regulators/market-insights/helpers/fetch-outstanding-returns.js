@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 
 /** @import { OutstandingReturnsData } from './to-outstanding-returns-tables.js' */
 
@@ -20,14 +20,6 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @returns {Promise<OutstandingReturnsAggregate>}
  */
 export const fetchOutstandingReturns = async ({ year, month, backendToken }) =>
-  /** @type {Promise<OutstandingReturnsAggregate>} */ (
-    fetchJsonFromBackend(
-      `/v1/market-insights/${year}/monthly/${month}/outstanding-returns`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${backendToken}`
-        }
-      }
-    )
+  backend(backendToken).get(
+    `/v1/market-insights/${year}/monthly/${month}/outstanding-returns`
   )

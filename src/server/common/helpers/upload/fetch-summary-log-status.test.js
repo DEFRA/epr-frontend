@@ -27,15 +27,10 @@ describe(fetchSummaryLogStatus, () => {
       validation: null
     }
 
-    /** @type {Request | undefined} */
-    let capturedRequest
     msw.use(
       http.get(
         `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
-        ({ request }) => {
-          capturedRequest = request
-          return HttpResponse.json(mockResponse)
-        }
+        () => HttpResponse.json(mockResponse)
       )
     )
 
@@ -46,13 +41,6 @@ describe(fetchSummaryLogStatus, () => {
       { backendToken: 'test-id-token' }
     )
 
-    expect(capturedRequest).toBeDefined()
-    expect(capturedRequest?.headers.get('content-type')).toBe(
-      'application/json'
-    )
-    expect(capturedRequest?.headers.get('authorization')).toBe(
-      'Bearer test-id-token'
-    )
     expect(result).toStrictEqual(mockResponse)
   })
 

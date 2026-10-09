@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 
 /** @import { WasteBalanceData } from './to-waste-balance-table.js' */
 
@@ -20,14 +20,6 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @returns {Promise<WasteBalanceAggregate>}
  */
 export const fetchWasteBalance = async ({ year, month, backendToken }) =>
-  /** @type {Promise<WasteBalanceAggregate>} */ (
-    fetchJsonFromBackend(
-      `/v1/market-insights/${year}/monthly/${month}/waste-balance`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${backendToken}`
-        }
-      }
-    )
+  backend(backendToken).get(
+    `/v1/market-insights/${year}/monthly/${month}/waste-balance`
   )
