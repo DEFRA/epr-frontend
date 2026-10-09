@@ -97,6 +97,28 @@ describe('#createPrnController', () => {
         )
       })
 
+      it('should render the phase banner inside the header on a page that replaces the layout beforeContent', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const header = getByRole(body, 'banner')
+        const [banner] = header.querySelectorAll('.govuk-phase-banner')
+
+        expect(body.querySelectorAll('.govuk-phase-banner')).toHaveLength(1)
+        expect(within(banner).getByText('Beta')).toHaveClass('govuk-tag')
+        expect(
+          within(banner).getByRole('link', {
+            name: /give your feedback by email/i
+          })
+        ).toBeInTheDocument()
+      })
+
       it('should render page with correct title, caption and heading', async ({
         server
       }) => {
