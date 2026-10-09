@@ -65,6 +65,7 @@
  * use here as extra overloads layered on top of yar's own typings.
  * @typedef {{
  *   (type: 'analyticsConsentChoice'): string[]
+ *   (type: 'cookiesBackUrl'): string[]
  *   (type: 'referrer'): string[]
  * } & Yar['flash']} HapiYarFlash
  */

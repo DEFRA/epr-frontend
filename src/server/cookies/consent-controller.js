@@ -3,7 +3,7 @@ import {
   ANALYTICS_CONSENT_COOKIE,
   ANALYTICS_CONSENT_FLASH
 } from '#server/common/analytics/consent.js'
-import { localPath } from '#server/cookies/urls.js'
+import { BACK_URL_FLASH, localPath } from '#server/cookies/urls.js'
 import Joi from 'joi'
 
 /**
@@ -22,19 +22,25 @@ export const consentController = {
         analytics: Joi.string()
           .valid(...Object.values(ANALYTICS_CONSENT))
           .required(),
+        backUrl: Joi.string().optional(),
         returnUrl: Joi.string().optional(),
         crumb: Joi.string().optional()
       })
     }
   },
   /**
-   * @param {HapiRequest & { payload: { analytics: string, returnUrl?: string } }} request
+   * @param {HapiRequest & { payload: { analytics: string, backUrl?: string, returnUrl?: string } }} request
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
     const { analytics, returnUrl } = request.payload
+    const backUrl = localPath(request.payload.backUrl, request.url)
 
     request.yar.flash(ANALYTICS_CONSENT_FLASH, analytics)
+
+    if (backUrl) {
+      request.yar.flash(BACK_URL_FLASH, backUrl)
+    }
 
     return h
       .redirect(localPath(returnUrl, request.url) ?? '/')

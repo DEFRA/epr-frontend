@@ -20,6 +20,7 @@
     "save": "Save cookie settings"
   },
   "confirmation": {
+    "back": "Go back to the page you were looking at",
     "heading": "You've set your cookie preferences."
   },
   "essentialCookies": {

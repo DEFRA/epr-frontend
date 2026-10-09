@@ -1,3 +1,5 @@
+export const BACK_URL_FLASH = 'cookiesBackUrl'
+
 /**
  * The path and query of a URL on this service, or null for anywhere else. The
  * URL is resolved the way a browser would, so a backslash or a tab cannot pass

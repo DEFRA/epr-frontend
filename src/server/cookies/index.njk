@@ -7,10 +7,12 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {% if analytics.confirmedChoice %}
-        {{ govukNotificationBanner({
-          type: 'success',
-          html: '<p class="govuk-notification-banner__heading">' + localise('cookies:confirmation:heading') + '</p>'
-        }) }}
+        {% call govukNotificationBanner({ type: 'success' }) %}
+          <p class="govuk-notification-banner__heading">
+            {{ localise('cookies:confirmation:heading') }}
+            {%- if backUrl %} <a class="govuk-notification-banner__link" href="{{ backUrl }}">{{ localise('cookies:confirmation:back') }}</a>.{% endif %}
+          </p>
+        {% endcall %}
       {% endif %}
 
       <h1 class="govuk-heading-l">{{ localise('cookies:heading') }}</h1>
@@ -86,6 +88,9 @@
         <form method="post" action="/cookies/consent">
           <input type="hidden" name="crumb" value="{{ crumb }}" />
           <input type="hidden" name="returnUrl" value="{{ localiseUrl('/cookies') }}" />
+          {% if backUrl %}
+            <input type="hidden" name="backUrl" value="{{ backUrl }}" />
+          {% endif %}
           {{ govukRadios({
             name: "analytics",
             fieldset: {

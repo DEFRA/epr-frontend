@@ -36,6 +36,28 @@ const getCookiesPageWith = async (server, cookie) => {
 }
 
 /**
+ * @param {unknown} result
+ */
+const bodyOf = (result) => new JSDOM(asHtml(result)).window.document.body
+
+/**
+ * @param {ReturnType<typeof bodyOf>} body
+ */
+const carriedBackUrl = (body) =>
+  getByRole(body, 'group', { name: /accept analytics cookies/i })
+    .closest('form')
+    ?.querySelector('input[name="backUrl"]')
+    ?.getAttribute('value') ?? null
+
+/**
+ * @param {ReturnType<typeof bodyOf>} body
+ */
+const backLink = (body) =>
+  queryByRole(getByRole(body, 'alert'), 'link', {
+    name: 'Go back to the page you were looking at'
+  })
+
+/**
  * The table a heading introduces, so a test names the section the way the page
  * does rather than reaching for a selector the page only carries for tests.
  * @param {Awaited<ReturnType<typeof getCookiesPage>>} body
@@ -200,6 +222,95 @@ describe('#analyticsChoice', () => {
 
       expect(queryByRole(body, 'alert')).toBeNull()
     })
+  })
+
+  describe('the way back to the page the visitor was looking at', () => {
+    beforeAll(() => {
+      config.set('analytics.isEnabled', true)
+      config.set('analytics.measurementId', 'G-TESTONLY01')
+    })
+
+    afterAll(() => {
+      config.set('analytics.isEnabled', false)
+      config.set('analytics.measurementId', '')
+    })
+
+    it.for([
+      {
+        description: 'a page of this service',
+        referer: 'https://service.test/cy/start?page=2',
+        expected: '/cy/start?page=2'
+      },
+      {
+        description: 'another site',
+        referer: 'https://evil.example.com/start',
+        expected: null
+      },
+      {
+        description: 'the cookies page itself',
+        referer: 'https://service.test/cookies',
+        expected: null
+      },
+      {
+        description: 'the welsh cookies page',
+        referer: 'https://service.test/cy/cookies',
+        expected: null
+      },
+      { description: 'nowhere', referer: undefined, expected: null }
+    ])(
+      'should carry $expected through the save arriving from $description',
+      async ({ referer, expected }, { server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/cookies',
+          headers: { host: 'service.test', ...(referer && { referer }) }
+        })
+
+        expect(carriedBackUrl(bodyOf(result))).toBe(expected)
+      }
+    )
+
+    it('should offer the way back once saved', async ({ server }) => {
+      const cookie = await chooseAnalytics(server, {
+        analytics: 'accepted',
+        backUrl: '/cy/start?page=2',
+        returnUrl: '/cookies'
+      })
+      const body = await getCookiesPageWith(server, cookie)
+
+      expect(backLink(body)?.getAttribute('href')).toBe('/cy/start?page=2')
+    })
+
+    it('should still carry the way back for a second save', async ({
+      server
+    }) => {
+      const cookie = await chooseAnalytics(server, {
+        analytics: 'accepted',
+        backUrl: '/start',
+        returnUrl: '/cookies'
+      })
+      const body = await getCookiesPageWith(server, cookie)
+
+      expect(carriedBackUrl(body)).toBe('/start')
+    })
+
+    it.for([
+      { description: 'none was known', backUrl: undefined },
+      { description: 'it leaves the service', backUrl: '/\\evil.example.com' }
+    ])(
+      'should offer no way back when $description',
+      async ({ backUrl }, { server }) => {
+        const cookie = await chooseAnalytics(server, {
+          analytics: 'accepted',
+          backUrl,
+          returnUrl: '/cookies'
+        })
+        const body = await getCookiesPageWith(server, cookie)
+
+        expect(getByRole(body, 'alert')).not.toBeNull()
+        expect(backLink(body)).toBeNull()
+      }
+    )
   })
 
   describe('whatever the analytics setting', () => {
