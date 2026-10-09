@@ -64,6 +64,7 @@
  * module augmentation; since we don't write TypeScript, we add the keys we
  * use here as extra overloads layered on top of yar's own typings.
  * @typedef {{
+ *   (type: 'analyticsConsentChoice'): string[]
  *   (type: 'referrer'): string[]
  * } & Yar['flash']} HapiYarFlash
  */
@@ -85,10 +86,13 @@
  *   - `state.userSession` narrowed to the cookie state written by the
  *     session strategy
  *   - `yar.flash` extended with the flash keys the app uses
+ *   - `app.analyticsConfirmedChoice` set for a view that confirms a cookie
+ *     choice
  *   - `logger` replaces hapi-pino's augmented `pino.Logger` with our
  *     TypedLogger; calls like `request.logger.warn({ ...non-allowlisted
  *     fields })` then fail tsc.
- * @typedef {Omit<Request, 'auth' | 'logger' | 'server' | 'state' | 'yar'> & {
+ * @typedef {Omit<Request, 'app' | 'auth' | 'logger' | 'server' | 'state' | 'yar'> & {
+ *   app: Request['app'] & { analyticsConfirmedChoice?: 'accepted' | 'rejected' | null },
  *   auth: RequestAuth,
  *   logger: TypedLogger,
  *   server: HapiServer,

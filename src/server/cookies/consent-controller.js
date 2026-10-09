@@ -1,6 +1,7 @@
 import {
   ANALYTICS_CONSENT,
-  ANALYTICS_CONSENT_COOKIE
+  ANALYTICS_CONSENT_COOKIE,
+  ANALYTICS_CONSENT_FLASH
 } from '#server/common/analytics/consent.js'
 import Joi from 'joi'
 
@@ -40,6 +41,8 @@ export const consentController = {
    */
   handler(request, h) {
     const { analytics, returnUrl } = request.payload
+
+    request.yar.flash(ANALYTICS_CONSENT_FLASH, analytics)
 
     return h
       .redirect(safeReturnUrl(returnUrl))

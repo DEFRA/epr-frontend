@@ -61,6 +61,20 @@
         }]
       }) }}
     </form>
+  {% elif analytics.confirmedChoice %}
+    {% set changeSettings %}<a class="govuk-link" href="{{ localiseUrl('/cookies') }}">{{ localise('common:cookieBanner:changeSettings') }}</a>{% endset %}
+    {{ govukCookieBanner({
+      ariaLabel: localise('common:cookieBanner:heading', { serviceName: serviceName }),
+      messages: [{
+        role: 'alert',
+        html: '<p class="govuk-body">' + localise('common:cookieBanner:confirmation:' + analytics.confirmedChoice, { changeSettings: changeSettings }) + '</p>',
+        actions: [{
+          text: localise('common:cookieBanner:hide'),
+          type: 'button',
+          href: analytics.returnUrl
+        }]
+      }]
+    }) }}
   {% endif %}
 {% endblock %}
 

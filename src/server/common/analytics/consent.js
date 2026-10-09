@@ -1,6 +1,7 @@
 import { isAnalyticsEnabled } from '#server/common/analytics/enabled.js'
 
 /**
+ * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
@@ -11,17 +12,45 @@ export const ANALYTICS_CONSENT = /** @type {const} */ ({
   rejected: 'rejected'
 })
 
+export const ANALYTICS_CONSENT_FLASH = 'analyticsConsentChoice'
+
 /**
- * @param {HapiRequest | null} request
+ * @param {unknown} value
  * @returns {'accepted' | 'rejected' | null}
  */
-const readConsent = (request) => {
-  const value = request?.state?.[ANALYTICS_CONSENT_COOKIE]
-
-  return value === ANALYTICS_CONSENT.accepted ||
-    value === ANALYTICS_CONSENT.rejected
+const asConsent = (value) =>
+  value === ANALYTICS_CONSENT.accepted || value === ANALYTICS_CONSENT.rejected
     ? value
     : null
+
+/**
+ * @param {HapiRequest | null} request
+ */
+const readConsent = (request) =>
+  asConsent(request?.state?.[ANALYTICS_CONSENT_COOKIE])
+
+/**
+ * Vision marks the responses it renders with a variety hapi's typings omit.
+ * @param {HapiRequest['response']} response
+ */
+const isView = (response) =>
+  /** @type {{ variety?: string }} */ (response).variety === 'view'
+
+/**
+ * Consumes the choice made on the previous request so only the next page
+ * confirms it. Runs before yar saves the session, which a view's context is
+ * built too late to do.
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ */
+export const takeConfirmedChoice = (request, h) => {
+  if (isView(request.response)) {
+    request.app.analyticsConfirmedChoice = asConsent(
+      request.yar.flash(ANALYTICS_CONSENT_FLASH).at(-1)
+    )
+  }
+
+  return h.continue
 }
 
 /**
@@ -32,7 +61,7 @@ const readConsent = (request) => {
  * sends the visitor back to the page they answered from, and is server-built so
  * it is always a local path.
  * @param {HapiRequest | null} request
- * @returns {{ hasConsented: boolean, hasRejected: boolean, isEnabled: boolean, returnUrl: string, shouldAskConsent: boolean }}
+ * @returns {{ confirmedChoice: 'accepted' | 'rejected' | null, hasConsented: boolean, hasRejected: boolean, isEnabled: boolean, returnUrl: string, shouldAskConsent: boolean }}
  */
 export const analyticsConsent = (request) => {
   const returnUrl = request?.url
@@ -41,6 +70,7 @@ export const analyticsConsent = (request) => {
 
   if (!isAnalyticsEnabled()) {
     return {
+      confirmedChoice: null,
       hasConsented: false,
       hasRejected: false,
       isEnabled: false,
@@ -52,6 +82,7 @@ export const analyticsConsent = (request) => {
   const consent = readConsent(request)
 
   return {
+    confirmedChoice: request?.app?.analyticsConfirmedChoice ?? null,
     hasConsented: consent === ANALYTICS_CONSENT.accepted,
     hasRejected: consent === ANALYTICS_CONSENT.rejected,
     isEnabled: true,
