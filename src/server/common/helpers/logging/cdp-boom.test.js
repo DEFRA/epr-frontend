@@ -63,5 +63,16 @@ describe('cdp-boom', () => {
 
       expect(boom.output.payload).toMatchObject({ detail: { id: 'x' } })
     })
+
+    it('chains the underlying error as cause when provided', () => {
+      const cause = new TypeError('fetch failed')
+
+      const boom = internal('msg', 'a_code', {
+        event: { action: 'an_action', reason: 'a_reason' },
+        cause
+      })
+
+      expect(boom.cause).toBe(cause)
+    })
   })
 })

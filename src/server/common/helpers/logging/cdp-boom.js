@@ -5,25 +5,26 @@ import Boom from '@hapi/boom'
  * @import { CdpIndexedLog } from './cdp-log-types.js'
  * @typedef {Pick<NonNullable<CdpIndexedLog['event']>, 'action' | 'reason' | 'reference'>} CdpBoomEvent
  * @typedef {BoomError & { code?: string, event?: CdpBoomEvent }} CdpBoom
- * @typedef {{ event: CdpBoomEvent, payload?: Record<string, unknown> }} CdpBoomEnrichment
+ * @typedef {{ event: CdpBoomEvent, payload?: Record<string, unknown>, cause?: unknown }} CdpBoomEnrichment
  */
 
 /**
- * Attaches CDP-indexed log enrichment fields (`code` + `event`) to a Boom
- * error and optionally merges `payload` into the response body. Mutates and
- * returns the boom so call sites read as
- * `throw badRequest('msg', 'code', { event, payload })`.
+ * Attaches CDP-indexed `code` and `event`, plus optional `payload` and `cause`,
+ * to a Boom. Mutates and returns it.
  * @param {BoomError} boom
  * @param {string} code
  * @param {CdpBoomEnrichment} enrichment
  * @returns {CdpBoom}
  */
-const enrich = (boom, code, { event, payload }) => {
+const enrich = (boom, code, { event, payload, cause }) => {
   const enriched = /** @type {CdpBoom} */ (boom)
   enriched.code = code
   enriched.event = event
   if (payload) {
     enriched.output.payload = { ...enriched.output.payload, ...payload }
+  }
+  if (cause !== undefined) {
+    enriched.cause = cause
   }
   return enriched
 }
