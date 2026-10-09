@@ -3,6 +3,7 @@ import {
   ANALYTICS_CONSENT_COOKIE,
   ANALYTICS_CONSENT_FLASH
 } from '#server/common/analytics/consent.js'
+import { localPath } from '#server/cookies/urls.js'
 import Joi from 'joi'
 
 /**
@@ -11,15 +12,6 @@ import Joi from 'joi'
  */
 
 const CONSENT_MAX_AGE_DAYS = 365
-
-/**
- * A protocol-relative URL is still off-site, so a leading slash alone is not
- * enough to trust a return path with.
- * @param {string} [returnUrl]
- * @returns {string}
- */
-const safeReturnUrl = (returnUrl) =>
-  returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : '/'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const consentController = {
@@ -45,7 +37,7 @@ export const consentController = {
     request.yar.flash(ANALYTICS_CONSENT_FLASH, analytics)
 
     return h
-      .redirect(safeReturnUrl(returnUrl))
+      .redirect(localPath(returnUrl, request.url) ?? '/')
       .state(ANALYTICS_CONSENT_COOKIE, analytics, {
         ttl: CONSENT_MAX_AGE_DAYS * 24 * 60 * 60 * 1000,
         isHttpOnly: false,
