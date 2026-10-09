@@ -43,5 +43,6 @@
     "reprocessor": "Reprocessing",
     "exporter": "Exporting"
   },
-  "titleCaption": "Home"
+  "titleCaption": "Home",
+  "yearData": "This is {{year}} data"
 }
