@@ -85,7 +85,7 @@
 
         <form method="post" action="/cookies/consent">
           <input type="hidden" name="crumb" value="{{ crumb }}" />
-          <input type="hidden" name="returnUrl" value="/cookies" />
+          <input type="hidden" name="returnUrl" value="{{ localiseUrl('/cookies') }}" />
           {{ govukRadios({
             name: "analytics",
             fieldset: {

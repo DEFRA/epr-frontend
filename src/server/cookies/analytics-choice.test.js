@@ -148,6 +148,24 @@ describe('#analyticsChoice', () => {
       ).toBe('/cookies')
     })
 
+    it('should keep a welsh visitor on the welsh page once saved', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/cy/cookies'
+      })
+      const form = getByRole(
+        new JSDOM(asHtml(result)).window.document.body,
+        'group',
+        { name: /accept analytics cookies/i }
+      ).closest('form')
+
+      expect(
+        form?.querySelector('input[name="returnUrl"]')?.getAttribute('value')
+      ).toBe('/cy/cookies')
+    })
+
     it.for(['accepted', 'rejected'])(
       'should confirm the preferences were set having %s',
       async (analytics, { server }) => {
