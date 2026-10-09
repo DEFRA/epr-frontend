@@ -1,4 +1,4 @@
-import { fetchReportBackend } from './fetch-report-backend.js'
+import { reportBackend, reportPath } from './report-backend.js'
 
 /**
  * Updates a report via the backend PATCH endpoint.
@@ -8,21 +8,5 @@ import { fetchReportBackend } from './fetch-report-backend.js'
  * @returns {Promise<unknown>}
  */
 export async function updateReport(periodParams, fields, backendToken) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = periodParams
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
-
-  return fetchReportBackend(path, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    },
-    body: JSON.stringify(fields)
-  })
+  return reportBackend(backendToken).patch(reportPath(periodParams), fields)
 }

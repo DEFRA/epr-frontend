@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
  * Fetches available reporting periods for a registration from the backend.
@@ -12,12 +12,9 @@ export async function fetchReportingPeriods(
   registrationId,
   backendToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/calendar`
-
-  return fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${backendToken}` }
-  })
+  return backend(backendToken).get(
+    path`/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`
+  )
 }
 
 /**

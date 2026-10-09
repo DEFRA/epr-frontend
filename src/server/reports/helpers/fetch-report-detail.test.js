@@ -1,269 +1,83 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { config } from '#config/config.js'
+import { it } from '#vite/fixtures/server.js'
 
 import { fetchReportDetail } from './fetch-report-detail.js'
 import { ReportStaleError, STALE_REASON } from './stale.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
+/**
+ * @import { SetupServerApi } from 'msw/node'
+ */
 
-const { fetchJsonFromBackend: fetchJsonFromBackendRaw } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-const fetchJsonFromBackend = vi.mocked(fetchJsonFromBackendRaw)
+const backendUrl = config.get('eprBackendUrl')
 
 describe(fetchReportDetail, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const year = 2026
-  const cadence = 'quarterly'
-  const period = 1
-  const submissionNumber = 1
-  const backendToken = 'test-token'
-
-  const mockResponse = {
-    operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
-    cadence: 'quarterly',
-    year: 2026,
-    period: 1,
-    startDate: '2026-01-01',
-    endDate: '2026-03-31',
-    source: {
-      summaryLogId: 'sl-1',
-      lastUploadedAt: '2026-02-15T15:09:00.000Z'
-    },
-    details: {
-      material: 'plastic',
-      site: {
-        address: {
-          line1: 'North Road',
-          town: 'Manchester',
-          postcode: 'M1 1AA'
-        }
-      }
-    },
-    sections: {
-      wasteReceived: {
-        totalTonnage: 80.25,
-        suppliers: [
-          { supplierName: 'Grantham Waste', role: 'Baler', tonnage: 42.21 }
-        ]
-      },
-      wasteSentOn: {
-        totalTonnage: 1.0,
-        toReprocessors: 1.0,
-        toExporters: 0.0,
-        toOtherSites: 0.0,
-        destinations: [
-          {
-            recipientName: 'Lincoln recycling',
-            role: 'Reprocessor',
-            tonnage: 1.0
-          }
-        ]
-      }
-    }
+  const report = { id: 'report-1', status: 'in_progress' }
+  const summaryLogChanged = {
+    uploadedAt: '2026-06-01T00:00:00.000Z',
+    summaryLogId: 'sl-1'
+  }
+  const prnCancelled = {
+    occurredAt: '2026-06-01T00:00:00.000Z',
+    prnId: 'prn-1'
   }
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('calls fetchJsonFromBackend with correct path and options', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
-
-    await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1',
-      {
-        method: 'GET',
-        headers: {
-          Authorization: 'Bearer test-token'
-        }
-      }
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
-
-    await fetchReportDetail(
-      'org/123',
-      'reg&456',
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1',
-      expect.any(Object)
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
-
-    const result = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      backendToken
-    )
-
-    expect(result).toStrictEqual(mockResponse)
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    fetchJsonFromBackend.mockRejectedValue(error)
-
-    await expect(
-      fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        backendToken
+  /**
+   * @param {SetupServerApi} msw
+   * @param {object} body
+   */
+  const backendAnswers = (msw, body) =>
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/org-1/registrations/reg-1/reports/2026/monthly/3/submissions/1`,
+        () => HttpResponse.json(body)
       )
-    ).rejects.toThrow('Network error')
-  })
+    )
 
-  it('throws ReportStaleError when the report is stale', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
-      ...mockResponse,
-      stale: {
-        summaryLogChanged: {
-          uploadedAt: '2026-06-01T00:00:00.000Z',
-          summaryLogId: 'sl-1'
-        }
-      }
-    })
+  const fetchDetail = () =>
+    fetchReportDetail('org-1', 'reg-1', 2026, 'monthly', 3, 1, 'a-token')
 
-    await expect(
-      fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        backendToken
-      )
-    ).rejects.toBeInstanceOf(ReportStaleError)
-  })
-
-  it('sets reasons on the thrown ReportStaleError for a summary-log-changed report', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
-      ...mockResponse,
-      stale: {
-        summaryLogChanged: {
-          uploadedAt: '2026-06-01T00:00:00.000Z',
-          summaryLogId: 'sl-1'
-        }
-      }
-    })
-
-    const err = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      backendToken
-    ).catch((e) => e)
-
-    expect(err.reasons).toStrictEqual([STALE_REASON.SUMMARY_LOG_CHANGED])
-  })
-
-  it('sets reasons on the thrown ReportStaleError for a PRN-cancelled report', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
-      ...mockResponse,
-      stale: {
-        prnCancelled: {
-          occurredAt: '2026-06-01T00:00:00.000Z',
-          prnId: 'prn-1'
-        }
-      }
-    })
-
-    const err = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      backendToken
-    ).catch((e) => e)
-
-    expect(err.reasons).toStrictEqual([STALE_REASON.PRN_CANCELLED])
-  })
-
-  it('sets both reasons on the thrown ReportStaleError when both apply', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
-      ...mockResponse,
-      stale: {
-        summaryLogChanged: {
-          uploadedAt: '2026-06-01T00:00:00.000Z',
-          summaryLogId: 'sl-1'
-        },
-        prnCancelled: {
-          occurredAt: '2026-06-01T00:00:00.000Z',
-          prnId: 'prn-1'
-        }
-      }
-    })
-
-    const err = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      backendToken
-    ).catch((e) => e)
-
-    expect(err.reasons).toStrictEqual([
-      STALE_REASON.SUMMARY_LOG_CHANGED,
-      STALE_REASON.PRN_CANCELLED
-    ])
-  })
-
-  it('returns the report normally when stale is present but carries no recognised reason', async () => {
-    const staleResponse = {
-      ...mockResponse,
-      stale: { uploadedAt: '2026-06-01T00:00:00.000Z', summaryLogId: 'sl-1' }
+  it.for([
+    {
+      description: 'a summary log changed under it',
+      stale: { summaryLogChanged },
+      reasons: [STALE_REASON.SUMMARY_LOG_CHANGED]
+    },
+    {
+      description: 'a prn it counted was cancelled',
+      stale: { prnCancelled },
+      reasons: [STALE_REASON.PRN_CANCELLED]
+    },
+    {
+      description: 'both',
+      stale: { summaryLogChanged, prnCancelled },
+      reasons: [STALE_REASON.SUMMARY_LOG_CHANGED, STALE_REASON.PRN_CANCELLED]
     }
-    fetchJsonFromBackend.mockResolvedValue(staleResponse)
+  ])(
+    'should reject as stale a report the backend marks stale because $description',
+    async ({ stale, reasons }, { msw }) => {
+      backendAnswers(msw, { ...report, stale })
 
-    const result = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      backendToken
-    )
+      await expect(fetchDetail()).rejects.toStrictEqual(
+        new ReportStaleError(reasons)
+      )
+    }
+  )
 
-    expect(result).toStrictEqual(staleResponse)
-  })
+  it.for([
+    { description: 'carries no stale marker', body: report },
+    {
+      description: 'carries a stale marker with no reason it recognises',
+      body: { ...report, stale: {} }
+    }
+  ])(
+    'should resolve to a report that $description',
+    async ({ body }, { msw }) => {
+      backendAnswers(msw, body)
+
+      await expect(fetchDetail()).resolves.toStrictEqual(body)
+    }
+  )
 })

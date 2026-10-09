@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, vi } from 'vitest'
 
 // Setup-only mock: fetchRegistrationAndAccreditation supplies the registration
 // the detail page needs. fetchReportDetail is deliberately NOT mocked — this
-// test drives the real fetch-report-detail -> fetch-report-backend client stack
+// test drives the real fetch-report-detail -> report-backend client stack
 // against an MSW-stubbed backend, so the whole wire contract runs: a real 200
 // carrying incompleteSummaryLogRows becomes the signal the detail controller
 // detects on the "Create draft" click, redirects on, and the screen renders.

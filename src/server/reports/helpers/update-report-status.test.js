@@ -1,117 +1,48 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { it } from '#vite/fixtures/server.js'
 
 import { updateReportStatus } from './update-report-status.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(updateReportStatus, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const year = 2026
-  const cadence = 'quarterly'
-  const period = 1
-  const submissionNumber = 1
-  const backendToken = 'test-token'
-
-  const mockResponse = { ok: true }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('calls fetchJsonFromBackend with POST to the status endpoint', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updateReportStatus(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      { status: 'ready_to_submit', version: 1 },
-      backendToken
+  it('should post the transition to the submission status and resolve to the updated report', async ({
+    msw
+  }) => {
+    /** @type {{ method: string, pathname: string, body: string }[]} */
+    const received = []
+    msw.use(
+      http.post(/\/reports\//, async ({ request }) => {
+        received.push({
+          method: request.method,
+          pathname: new URL(request.url).pathname,
+          body: await request.text()
+        })
+        return HttpResponse.json({ id: 'report-1' })
+      })
     )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1/status',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer test-token'
-        },
-        body: JSON.stringify({ status: 'ready_to_submit', version: 1 })
-      }
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updateReportStatus(
-      {
-        organisationId: 'org/123',
-        registrationId: 'reg&456',
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      { status: 'ready_to_submit', version: 1 },
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1/status',
-      expect.any(Object)
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await updateReportStatus(
       {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
+        organisationId: 'org/1',
+        registrationId: 'reg-1',
+        year: 2026,
+        cadence: 'monthly',
+        period: 3,
+        submissionNumber: 1
       },
-      { status: 'ready_to_submit', version: 1 },
-      backendToken
+      { status: 'submitted', version: 1 },
+      'a-token'
     )
 
-    expect(result).toStrictEqual(mockResponse)
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(
-      updateReportStatus(
-        {
-          organisationId,
-          registrationId,
-          year,
-          cadence,
-          period,
-          submissionNumber
-        },
-        /** @type {Parameters<typeof updateReportStatus>[1]} */ (
-          /** @type {unknown} */ ('ready_to_submit')
-        ),
-        backendToken
-      )
-    ).rejects.toThrow('Network error')
+    expect(result).toStrictEqual({ id: 'report-1' })
+    expect(received).toStrictEqual([
+      {
+        method: 'POST',
+        pathname:
+          '/v1/organisations/org%2F1/registrations/reg-1/reports/2026/monthly/3/submissions/1/status',
+        body: JSON.stringify({ status: 'submitted', version: 1 })
+      }
+    ])
   })
 })

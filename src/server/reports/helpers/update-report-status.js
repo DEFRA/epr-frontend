@@ -1,4 +1,4 @@
-import { fetchReportBackend } from './fetch-report-backend.js'
+import { reportBackend, reportPath } from './report-backend.js'
 
 /**
  * Transitions a report's status via the backend POST endpoint.
@@ -12,21 +12,8 @@ export async function updateReportStatus(
   transition,
   backendToken
 ) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = periodParams
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}/status`
-
-  return fetchReportBackend(path, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    },
-    body: JSON.stringify(transition)
-  })
+  return reportBackend(backendToken).post(
+    `${reportPath(periodParams)}/status`,
+    transition
+  )
 }
