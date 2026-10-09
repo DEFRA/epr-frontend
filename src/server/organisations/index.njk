@@ -28,6 +28,10 @@
 
         <hr class="govuk-section-break govuk-section-break--xl govuk-section-break--visible">
 
+        {% if selectedYear %}
+          <p class="govuk-heading-m" data-testid="selected-year">{{ localise('organisations:yearData', { year: selectedYear }) }}</p>
+        {% endif %}
+
         {% if shouldRenderTabs %}
           <div class="govuk-tabs">
             <ul class="govuk-tabs__list">

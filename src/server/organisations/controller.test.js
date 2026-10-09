@@ -1,5 +1,7 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import * as fetchYearsModule from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
@@ -8,7 +10,7 @@ import Boom from '@hapi/boom'
 import { getAllByRole, getByRole } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 /** @import {DOMWindow} from 'jsdom' */
 
@@ -21,6 +23,9 @@ import fixtureSingleReprocessing from '../../../fixtures/organisation/single-rep
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
+)
+vi.mock(
+  import('#server/common/helpers/organisations/fetch-organisation-years.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 
@@ -1164,6 +1169,83 @@ describe('#organisationController', () => {
       const $ = load(payload)
 
       expect($('.govuk-tag--grey').length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('year shown', () => {
+    const get = (server) =>
+      server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
+      })
+
+    beforeEach(() => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(asOrganisation(fixtureData))
+    })
+
+    afterEach(() => {
+      config.set('featureFlags.navigateAcrossYears', false)
+    })
+
+    it('should not read or show the year when the flag is off', async ({
+      server
+    }) => {
+      const { payload } = await get(server)
+
+      expect(fetchYearsModule.fetchOrganisationYears).not.toHaveBeenCalled()
+      expect(load(payload)('[data-testid="selected-year"]')).toHaveLength(0)
+    })
+
+    describe('when the flag is on', () => {
+      beforeEach(() => {
+        config.set('featureFlags.navigateAcrossYears', true)
+      })
+
+      it('should show the latest year and ask by organisation number', async ({
+        server
+      }) => {
+        vi.mocked(fetchYearsModule.fetchOrganisationYears).mockResolvedValue([
+          2027, 2026
+        ])
+
+        const { payload } = await get(server)
+
+        expect(fetchYearsModule.fetchOrganisationYears).toHaveBeenCalledWith(
+          asOrganisation(fixtureData).orgId,
+          'test-backend-token'
+        )
+        expect(load(payload)('[data-testid="selected-year"]').text()).toBe(
+          'This is 2027 data'
+        )
+      })
+
+      it('should show no year when the organisation has none', async ({
+        server
+      }) => {
+        vi.mocked(fetchYearsModule.fetchOrganisationYears).mockResolvedValue([])
+
+        const { payload, statusCode } = await get(server)
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(load(payload)('[data-testid="selected-year"]')).toHaveLength(0)
+      })
+
+      it('should still render the page when the years cannot be read', async ({
+        server
+      }) => {
+        vi.mocked(fetchYearsModule.fetchOrganisationYears).mockRejectedValue(
+          new Error('backend down')
+        )
+
+        const { payload, statusCode } = await get(server)
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(load(payload)('[data-testid="selected-year"]')).toHaveLength(0)
+        expect(load(payload)('h1').text()).toMatch(/ACME ltd/)
+      })
     })
   })
 })
