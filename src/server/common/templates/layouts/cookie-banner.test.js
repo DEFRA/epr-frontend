@@ -1,10 +1,10 @@
 import { config } from '#config/config.js'
 import { ANALYTICS_CONSENT_COOKIE } from '#server/common/analytics/consent.js'
+import { chooseAnalytics } from '#server/common/test-helpers/consent-helper.js'
 import {
   extractCookieValues,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
-import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, queryByRole } from '@testing-library/dom'
@@ -36,22 +36,9 @@ const getStartPage = async ({ server }, cookie) =>
  * @param {string} analytics
  * @returns {Promise<{ cookie: string }>}
  */
-const answerBanner = async ({ server }, analytics) => {
-  const { cookie, crumb } = await getCsrfToken(server, '/start')
-  const { headers } = await server.inject({
-    method: 'POST',
-    url: '/cookies/consent',
-    headers: { cookie },
-    payload: { analytics, crumb, returnUrl: '/start' }
-  })
-
-  return {
-    cookie: mergeCookies(
-      cookie,
-      extractCookieValues(headers['set-cookie']).join('; ')
-    )
-  }
-}
+const answerBanner = async ({ server }, analytics) => ({
+  cookie: await chooseAnalytics(server, { analytics, returnUrl: '/start' })
+})
 
 describe('#cookieBanner', () => {
   describe('when analytics is disabled', () => {

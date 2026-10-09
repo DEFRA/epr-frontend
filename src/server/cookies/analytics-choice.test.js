@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { ANALYTICS_CONSENT_COOKIE } from '#server/common/analytics/consent.js'
+import { chooseAnalytics } from '#server/common/test-helpers/consent-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, queryByRole } from '@testing-library/dom'
@@ -14,11 +15,21 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
  * @param {HapiServer} server
  * @param {string} [consent]
  */
-const getCookiesPage = async (server, consent) => {
+const getCookiesPage = async (server, consent) =>
+  getCookiesPageWith(
+    server,
+    consent ? `${ANALYTICS_CONSENT_COOKIE}=${consent}` : undefined
+  )
+
+/**
+ * @param {HapiServer} server
+ * @param {string} [cookie]
+ */
+const getCookiesPageWith = async (server, cookie) => {
   const { result } = await server.inject({
     method: 'GET',
     url: '/cookies',
-    headers: consent ? { cookie: `${ANALYTICS_CONSENT_COOKIE}=${consent}` } : {}
+    headers: cookie ? { cookie } : {}
   })
 
   return new JSDOM(asHtml(result)).window.document.body
@@ -135,6 +146,41 @@ describe('#analyticsChoice', () => {
       expect(
         form?.querySelector('input[name="returnUrl"]')?.getAttribute('value')
       ).toBe('/cookies')
+    })
+
+    it.for(['accepted', 'rejected'])(
+      'should confirm the preferences were set having %s',
+      async (analytics, { server }) => {
+        const cookie = await chooseAnalytics(server, {
+          analytics,
+          returnUrl: '/cookies'
+        })
+        const body = await getCookiesPageWith(server, cookie)
+
+        expect(getByRole(body, 'alert').textContent).toContain(
+          "You've set your cookie preferences."
+        )
+      }
+    )
+
+    it('should not repeat the confirmation in a cookie banner', async ({
+      server
+    }) => {
+      const cookie = await chooseAnalytics(server, {
+        analytics: 'accepted',
+        returnUrl: '/cookies'
+      })
+      const body = await getCookiesPageWith(server, cookie)
+
+      expect(queryByRole(body, 'region', { name: /cookies on/i })).toBeNull()
+    })
+
+    it('should not confirm anything before a choice is saved', async ({
+      server
+    }) => {
+      const body = await getCookiesPage(server)
+
+      expect(queryByRole(body, 'alert')).toBeNull()
     })
   })
 
