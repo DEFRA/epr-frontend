@@ -1,9 +1,11 @@
 import { capitalize } from 'lodash-es'
 
+import { config } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from './helpers/status-helpers.js'
@@ -313,6 +315,32 @@ async function getWasteBalanceMap(
 }
 
 /**
+ * The year the page shows: the current year when the organisation has data
+ * for it, otherwise its latest year. Behind the navigateAcrossYears flag, and
+ * absent when the years cannot be read, so the page renders as it did before.
+ * @param {number} organisationNumber
+ * @param {string} backendToken
+ * @param {TypedLogger} logger
+ * @returns {Promise<number | null>}
+ */
+async function getSelectedYear(organisationNumber, backendToken, logger) {
+  if (!config.get('featureFlags.navigateAcrossYears')) {
+    return null
+  }
+
+  try {
+    const [latestYear = null] = await fetchOrganisationYears(
+      organisationNumber,
+      backendToken
+    )
+    return latestYear
+  } catch (error) {
+    logger.error({ message: 'Failed to fetch organisation years', err: error })
+    return null
+  }
+}
+
+/**
  * Determines which sites to display and the table title based on available data and active tab
  * @param {object} params
  * @param {Array} params.reprocessorSites - Reprocessor sites
@@ -376,12 +404,19 @@ export const controller = {
     const displayableRegistrations =
       getDisplayableRegistrations(organisationData)
 
-    const wasteBalanceMap = await getWasteBalanceMap(
-      organisationId,
-      displayableRegistrations,
-      session.backendToken,
-      request.logger
-    )
+    const [wasteBalanceMap, selectedYear] = await Promise.all([
+      getWasteBalanceMap(
+        organisationId,
+        displayableRegistrations,
+        session.backendToken,
+        request.logger
+      ),
+      getSelectedYear(
+        organisationData.orgId,
+        session.backendToken,
+        request.logger
+      )
+    ])
 
     const reprocessorSites = getRegistrationSites(
       request,
@@ -422,6 +457,7 @@ export const controller = {
         `/organisations/${organisationId}/exporting`
       ),
       shouldRenderTabs,
+      selectedYear,
       sites,
       tableTitle,
       tabTypes
