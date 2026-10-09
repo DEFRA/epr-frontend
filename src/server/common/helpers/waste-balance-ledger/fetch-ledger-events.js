@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
  * What every entry of a waste balance ledger states, whichever thing it
@@ -75,19 +75,12 @@ export const fetchLedgerEvents = async ({
   accreditationId,
   backendToken
 }) => {
-  const registrationPath = `/v1/organisations/${organisationId}/registrations/${registrationId}`
   const ledgerPath = accreditationId
-    ? `${registrationPath}/accreditations/${accreditationId}/waste-balance-ledger`
-    : `${registrationPath}/waste-balance-ledger`
+    ? path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`
+    : path`/v1/organisations/${organisationId}/registrations/${registrationId}/waste-balance-ledger`
 
-  const { events } = /** @type {{ events: LedgerEvent[] }} */ (
-    await fetchJsonFromBackend(ledgerPath, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${backendToken}`
-      }
-    })
-  )
+  /** @type {{ events: LedgerEvent[] }} */
+  const { events } = await backend(backendToken).get(ledgerPath)
 
   return events
 }

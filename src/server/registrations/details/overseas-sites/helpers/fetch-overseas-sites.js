@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 
@@ -73,15 +73,10 @@ const asMissingRegistration =
  * @param {OverseasSitesRequest} params
  * @returns {Promise<OverseasSitesById>}
  */
-const fetchSites = ({ organisationId, registrationId, backendToken }) =>
-  /** @type {Promise<OverseasSitesById>} */ (
-    fetchJsonFromBackend(
-      `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/overseas-sites`,
-      {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${backendToken}` }
-      }
-    )
+const fetchSites = (params) =>
+  backend(params.backendToken).get(
+    path`/v1/organisations/${params.organisationId}/registrations/${params.registrationId}/overseas-sites`,
+    { onError: asMissingRegistration(params) }
   )
 
 /**
@@ -101,7 +96,7 @@ export const fetchOverseasSites = async (params) => {
       params.registrationId,
       params.backendToken
     ).catch(asMissingRegistration(params)),
-    fetchSites(params).catch(asMissingRegistration(params))
+    fetchSites(params)
   ])
 
   return {

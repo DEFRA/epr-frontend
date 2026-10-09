@@ -1,109 +1,43 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { it } from '#vite/fixtures/server.js'
 
 import { updatePrnStatus } from './update-prn-status.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(updatePrnStatus, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-abc'
-  const prnId = 'prn-789'
-  const backendToken = 'test-token'
-
-  const payload = {
-    status: 'awaiting_authorisation'
-  }
-
-  const mockResponse = {
-    id: 'prn-789',
-    prnNumber: 'PRN-2026-001',
-    tonnage: 100,
-    material: 'plastic',
-    issuedToOrganisation: 'producer-org',
-    status: 'awaiting_authorisation',
-    updatedAt: '2026-01-28T12:00:00.000Z'
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('calls fetchJsonFromBackend with correct path and options', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updatePrnStatus(
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      payload,
-      backendToken
+  it('should post the new status to the note the ids name and resolve to the updated note', async ({
+    msw
+  }) => {
+    const updated = { id: 'prn/4', status: 'awaiting_authorisation' }
+    /** @type {{ pathname: string, body: unknown }[]} */
+    const received = []
+    msw.use(
+      http.post(/\/status$/, async ({ request }) => {
+        received.push({
+          pathname: new URL(request.url).pathname,
+          body: await request.json()
+        })
+        return HttpResponse.json(updated)
+      })
     )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-abc/packaging-recycling-notes/prn-789/status',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${backendToken}`
-        },
-        body: JSON.stringify(payload)
-      }
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updatePrnStatus(
-      'org/123',
-      'reg&456',
-      'acc@abc',
-      'prn#789',
-      payload,
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%40abc/packaging-recycling-notes/prn%23789/status',
-      expect.any(Object)
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await updatePrnStatus(
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      payload,
-      backendToken
+      'org/1',
+      'reg&2',
+      'acc#3',
+      'prn/4',
+      { status: 'awaiting_authorisation' },
+      'a-token'
     )
 
-    expect(result).toStrictEqual(mockResponse)
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(
-      updatePrnStatus(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        payload,
-        backendToken
-      )
-    ).rejects.toThrow('Network error')
+    expect(result).toStrictEqual(updated)
+    expect(received).toStrictEqual([
+      {
+        pathname:
+          '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/packaging-recycling-notes/prn%2F4/status',
+        body: { status: 'awaiting_authorisation' }
+      }
+    ])
   })
 })

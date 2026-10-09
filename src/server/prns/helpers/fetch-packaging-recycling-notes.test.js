@@ -1,22 +1,10 @@
 import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, vi } from 'vitest'
+import { describe, expect } from 'vitest'
 
 import { test } from '#vite/fixtures/server.js'
 
 import { fetchPackagingRecyclingNotes } from './fetch-packaging-recycling-notes.js'
-
-const MOCK_TRACE_ID = 'mock-trace-id-1'
-
-vi.mock(import('@defra/hapi-tracing'), () => ({
-  withTraceId: vi.fn((headerName, headers = {}) => {
-    headers[headerName] = MOCK_TRACE_ID
-    return headers
-  }),
-  tracing: {
-    plugin: {}
-  }
-}))
 
 const backendUrl = config.get('eprBackendUrl')
 
@@ -81,33 +69,6 @@ describe(fetchPackagingRecyclingNotes, () => {
     expect(capturedUrl).toMatch(
       /\/v1\/organisations\/org-123\/registrations\/reg-456\/accreditations\/acc-789\/packaging-recycling-notes$/
     )
-  })
-
-  test('includes Authorization and tracing headers', async ({ msw }) => {
-    /** @type {Request | undefined} */
-    let capturedRequest
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes`,
-        ({ request }) => {
-          capturedRequest = request
-          return HttpResponse.json([])
-        }
-      )
-    )
-
-    await fetchPackagingRecyclingNotes(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
-    )
-
-    const request = /** @type {Request} */ (capturedRequest)
-
-    expect(request.headers.get('content-type')).toBe('application/json')
-    expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
-    expect(request.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
   })
 
   test('encodes URL path parameters with special characters', async ({

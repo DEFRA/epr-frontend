@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 
@@ -35,11 +35,8 @@ const fetchAccreditation = ({
   accreditationId,
   backendToken
 }) =>
-  /** @type {Promise<AccreditationResource>} */ (
-    fetchJsonFromBackend(
-      `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}`,
-      { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
-    )
+  backend(backendToken).get(
+    path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
   )
 
 /**

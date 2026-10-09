@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
@@ -26,18 +26,7 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  * @returns {string}
  */
 const registrationPath = (organisationId, registrationId) =>
-  `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}`
-
-/**
- * @param {string} backendToken
- * @returns {RequestInit}
- */
-const readAs = (backendToken) => ({
-  method: 'GET',
-  headers: {
-    Authorization: `Bearer ${backendToken}`
-  }
-})
+  path`/v1/organisations/${organisationId}/registrations/${registrationId}`
 
 /**
  * A registration this organisation does not hold is a 404 from the registration
@@ -71,11 +60,9 @@ const asMissingRegistration =
  * @returns {Promise<RegistrationResource>}
  */
 const fetchRegistration = (params) =>
-  /** @type {Promise<RegistrationResource>} */ (
-    fetchJsonFromBackend(
-      registrationPath(params.organisationId, params.registrationId),
-      readAs(params.backendToken)
-    ).catch(asMissingRegistration(params))
+  backend(params.backendToken).get(
+    registrationPath(params.organisationId, params.registrationId),
+    { onError: asMissingRegistration(params) }
   )
 
 /**
@@ -87,13 +74,11 @@ const fetchRegistration = (params) =>
  * @returns {Promise<AccreditationResource[]>}
  */
 const fetchAccreditations = async (params) => {
-  const { accreditations } =
-    /** @type {{ accreditations: AccreditationResource[] }} */ (
-      await fetchJsonFromBackend(
-        `${registrationPath(params.organisationId, params.registrationId)}/accreditations`,
-        readAs(params.backendToken)
-      ).catch(asMissingRegistration(params))
-    )
+  /** @type {{ accreditations: AccreditationResource[] }} */
+  const { accreditations } = await backend(params.backendToken).get(
+    `${registrationPath(params.organisationId, params.registrationId)}/accreditations`,
+    { onError: asMissingRegistration(params) }
+  )
 
   return accreditations
 }
