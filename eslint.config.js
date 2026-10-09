@@ -175,6 +175,10 @@ export default [
 
       // Custom vitest rule overrides
       'vitest/consistent-test-it': 'off',
+      'vitest/expect-expect': [
+        'error',
+        { assertFunctionNames: ['expect', 'expectTypeOf'] }
+      ],
       'vitest/no-hooks': 'off',
       'vitest/padding-around-all': 'off', // Let Prettier handle formatting
       'vitest/padding-around-expect-groups': 'off', // Let Prettier handle formatting

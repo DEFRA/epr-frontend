@@ -1,10 +1,11 @@
+import Joi from 'joi'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, vi } from 'vitest'
+import { describe, expect, expectTypeOf, vi } from 'vitest'
 
 import { config } from '#config/config.js'
 import { it } from '#vite/fixtures/server.js'
 
-import { backend, path } from './backend-client.js'
+import { backend, path, strictly } from './backend-client.js'
 
 /**
  * @import { SetupServerApi } from 'msw/node'
@@ -186,6 +187,125 @@ describe('backend-client', () => {
         })
       })
     })
+
+    describe('options', () => {
+      class Mapped extends Error {}
+
+      /** @type {(error: unknown) => never} */
+      const mapToMapped = (error) => {
+        throw new Mapped('mapped', { cause: error })
+      }
+
+      it('should resolve to what parse makes of the body', async ({ msw }) => {
+        msw.use(
+          http.get(`${backendUrl}/v1/thing`, () =>
+            HttpResponse.json({ id: 'thing-1' })
+          )
+        )
+
+        const result = await backend(token).get('/v1/thing', {
+          parse: (payload) => ({ parsed: payload })
+        })
+
+        expect(result).toStrictEqual({ parsed: { id: 'thing-1' } })
+      })
+
+      it('should parse the body a write answers with', async ({ msw }) => {
+        msw.use(
+          http.post(`${backendUrl}/v1/thing`, () =>
+            HttpResponse.json({ id: 'thing-1' }, { status: 201 })
+          )
+        )
+
+        const result = await backend(token).post(
+          '/v1/thing',
+          { name: 'a thing' },
+          { parse: (payload) => ({ parsed: payload }) }
+        )
+
+        expect(result).toStrictEqual({ parsed: { id: 'thing-1' } })
+      })
+
+      it('should reject with what onError maps the failure to', async ({
+        msw
+      }) => {
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/thing`,
+            () => new HttpResponse(null, { status: 404 })
+          )
+        )
+
+        await expect(
+          backend(token).get('/v1/thing', { onError: mapToMapped })
+        ).rejects.toBeInstanceOf(Mapped)
+      })
+
+      it('should reject with what the client onError maps the failure to', async ({
+        msw
+      }) => {
+        msw.use(
+          http.delete(
+            `${backendUrl}/v1/thing`,
+            () => new HttpResponse(null, { status: 404 })
+          )
+        )
+
+        await expect(
+          backend(token, { onError: mapToMapped }).delete('/v1/thing')
+        ).rejects.toBeInstanceOf(Mapped)
+      })
+
+      it('should prefer the call onError over the client onError', async ({
+        msw
+      }) => {
+        class Other extends Error {}
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/thing`,
+            () => new HttpResponse(null, { status: 404 })
+          )
+        )
+
+        await expect(
+          backend(token, { onError: mapToMapped }).get('/v1/thing', {
+            onError: () => {
+              throw new Other()
+            }
+          })
+        ).rejects.toBeInstanceOf(Other)
+      })
+
+      it('should type each call by its parse, its caller, or as void for writes', () => {
+        const api = backend(token)
+
+        /** @returns {Promise<{ id: string }>} */
+        const fetchThing = () => api.get('/v1/thing')
+
+        expectTypeOf(() =>
+          api.get('/v1/thing', { parse: () => ({ count: 1 }) })
+        ).returns.resolves.toEqualTypeOf({ count: 1 })
+        expectTypeOf(fetchThing).returns.resolves.toEqualTypeOf({ id: '' })
+        expectTypeOf(() => api.get('/v1/thing')).returns.resolves.toBeUnknown()
+        expectTypeOf(() =>
+          api.post('/v1/thing', {})
+        ).returns.resolves.toBeVoid()
+        expectTypeOf(() => api.delete('/v1/thing')).returns.resolves.toBeVoid()
+      })
+
+      it('should map a parse failure through onError', async ({ msw }) => {
+        msw.use(http.get(`${backendUrl}/v1/thing`, () => HttpResponse.json({})))
+
+        await expect(
+          backend(token).get('/v1/thing', {
+            parse: () => {
+              throw new Error('unparseable')
+            },
+            onError: mapToMapped
+          })
+        ).rejects.toBeInstanceOf(Mapped)
+      })
+    })
   })
 
   describe(path, () => {
@@ -196,6 +316,57 @@ describe('backend-client', () => {
       expect(path`/v1/organisations/${organisationId}/reports/${year}`).toBe(
         '/v1/organisations/org%2F1/reports/2026'
       )
+    })
+  })
+
+  describe(strictly, () => {
+    /** @type {Joi.ObjectSchema<{ id: string, count: number }>} */
+    const thingSchema = Joi.object({
+      id: Joi.string().required(),
+      count: Joi.number().required()
+    })
+
+    it('should resolve to the validated value, typed by the schema', async ({
+      msw
+    }) => {
+      msw.use(
+        http.get(`${backendUrl}/v1/thing`, () =>
+          HttpResponse.json({ id: 'thing-1', count: 2 })
+        )
+      )
+
+      const fetchThing = () =>
+        backend(token).get('/v1/thing', { parse: strictly(thingSchema) })
+
+      await expect(fetchThing()).resolves.toStrictEqual({
+        id: 'thing-1',
+        count: 2
+      })
+      expectTypeOf(fetchThing).returns.resolves.toEqualTypeOf({
+        id: '',
+        count: 0
+      })
+    })
+
+    it('should reject as a bad gateway naming the url and every failing field', async ({
+      msw
+    }) => {
+      msw.use(
+        http.get(`${backendUrl}/v1/thing`, () => HttpResponse.json({ id: 1 }))
+      )
+
+      await expect(
+        backend(token).get('/v1/thing', { parse: strictly(thingSchema) })
+      ).rejects.toMatchObject({
+        isBoom: true,
+        output: { statusCode: 502 },
+        code: 'backend_response_invalid',
+        message: 'Invalid response from url: http://epr-backend.test/v1/thing',
+        event: {
+          action: 'parse_backend_response',
+          reason: 'id: "id" must be a string; count: "count" is required'
+        }
+      })
     })
   })
 })

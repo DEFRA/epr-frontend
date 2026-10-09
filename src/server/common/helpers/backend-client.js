@@ -3,8 +3,26 @@ import { withTraceId } from '@defra/hapi-tracing'
 
 import { config } from '#config/config.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { classifierTail, internal } from './logging/cdp-boom.js'
+import { badGateway, classifierTail, internal } from './logging/cdp-boom.js'
 import { getTracingHeaderName } from './request-tracing.js'
+
+/**
+ * @import { Schema } from 'joi'
+ */
+
+/**
+ * @typedef {(error: unknown) => never} OnError
+ */
+
+/**
+ * @template T
+ * @typedef {(payload: unknown, context: { url: string }) => T} Parse
+ */
+
+/**
+ * @template T
+ * @typedef {{ onError?: OnError, parse?: Parse<T> }} CallOptions
+ */
 
 /**
  * Builds a backend path with every interpolated value URI-encoded.
@@ -13,6 +31,36 @@ import { getTracingHeaderName } from './request-tracing.js'
  */
 export const path = (strings, ...values) =>
   String.raw({ raw: strings }, ...values.map((v) => encodeURIComponent(v)))
+
+/**
+ * Validates the response against `schema`, failing as a bad gateway that names
+ * every field the backend got wrong.
+ * @template T
+ * @param {Schema<T>} schema
+ * @returns {Parse<T>}
+ */
+export const strictly =
+  (schema) =>
+  (payload, { url }) => {
+    const { error, value } = schema.validate(payload, { abortEarly: false })
+
+    if (error) {
+      throw badGateway(
+        `Invalid response from url: ${url}`,
+        errorCodes.backendResponseInvalid,
+        {
+          event: {
+            action: 'parse_backend_response',
+            reason: error.details
+              .map((detail) => `${detail.path.join('.')}: ${detail.message}`)
+              .join('; ')
+          }
+        }
+      )
+    }
+
+    return value
+  }
 
 /**
  * @param {Response} response
@@ -89,22 +137,45 @@ const sendJson = async (token, method, url, body) => {
 }
 
 /**
- * Calls the backend as `token`.
+ * Calls the backend as `token`. A call's `onError` wins over the client's.
  * @param {string} token
+ * @param {{ onError?: OnError }} [defaults]
  */
-export const backend = (token) => {
+export const backend = (token, defaults = {}) => {
+  /** @param {string} path */
+  const urlOf = (path) => new URL(path, config.get('eprBackendUrl')).href
+
   /**
+   * @template T
+   * @param {{ onError?: OnError }} options
+   * @param {() => Promise<T>} run
+   * @returns {Promise<T>}
+   */
+  const guarded = async (options, run) => {
+    const { onError } = { ...defaults, ...options }
+
+    try {
+      return await run()
+    } catch (error) {
+      onError?.(error)
+      throw error
+    }
+  }
+
+  /**
+   * @template T
    * @param {string} method
    * @param {string} path
-   * @param {unknown} [body]
+   * @param {unknown} body
+   * @param {CallOptions<T>} options
+   * @returns {Promise<T>}
    */
-  const call = (method, path, body) =>
-    sendJson(
-      token,
-      method,
-      new URL(path, config.get('eprBackendUrl')).href,
-      body
-    )
+  const call = (method, path, body, { parse, ...options }) =>
+    guarded(options, async () => {
+      const url = urlOf(path)
+      const payload = await sendJson(token, method, url, body)
+      return parse ? parse(payload, { url }) : /** @type {T} */ (payload)
+    })
 
   /**
    * @param {string} method
@@ -112,19 +183,32 @@ export const backend = (token) => {
   const withBody =
     (method) =>
     /**
+     * @template [T=void]
      * @param {string} path
      * @param {unknown} [body]
+     * @param {CallOptions<T>} [options]
+     * @returns {Promise<T>}
      */
-    (path, body) =>
-      call(method, path, body)
+    (path, body, options = {}) =>
+      call(method, path, body, options)
 
   return {
-    /** @param {string} path */
-    get: (path) => call('GET', path),
+    /**
+     * @template [T=unknown]
+     * @param {string} path
+     * @param {CallOptions<T>} [options]
+     * @returns {Promise<T>}
+     */
+    get: (path, options = {}) => call('GET', path, undefined, options),
     post: withBody('POST'),
     put: withBody('PUT'),
     patch: withBody('PATCH'),
-    /** @param {string} path */
-    delete: (path) => call('DELETE', path)
+    /**
+     * @template [T=void]
+     * @param {string} path
+     * @param {CallOptions<T>} [options]
+     * @returns {Promise<T>}
+     */
+    delete: (path, options = {}) => call('DELETE', path, undefined, options)
   }
 }
