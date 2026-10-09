@@ -8,6 +8,7 @@ import { it } from '#vite/fixtures/server.js'
 import { backend, path, strictly } from './backend-client.js'
 
 /**
+ * @import { Readable } from 'node:stream'
  * @import { SetupServerApi } from 'msw/node'
  */
 
@@ -306,6 +307,207 @@ describe('backend-client', () => {
         ).rejects.toBeInstanceOf(Mapped)
       })
     })
+
+    describe('redirect', () => {
+      it('should resolve to where the backend redirects without following it', async ({
+        msw
+      }) => {
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/file`,
+            () =>
+              new HttpResponse(null, {
+                status: 302,
+                headers: { location: 'https://storage/signed' }
+              })
+          )
+        )
+
+        await expect(backend(token).redirect('/v1/file')).resolves.toBe(
+          'https://storage/signed'
+        )
+      })
+
+      it.for([404, 403])(
+        'should reject a %s as that status rather than a gateway fault',
+        async (status, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/file`,
+              () => new HttpResponse(null, { status })
+            )
+          )
+
+          await expect(
+            backend(token).redirect('/v1/file')
+          ).rejects.toMatchObject({
+            output: { statusCode: status },
+            code: 'external_fetch_failed',
+            event: {
+              action: 'external_redirect',
+              reason: `backend_responded_${status}`
+            }
+          })
+        }
+      )
+
+      it('should reject as a bad gateway an answer that names no location', async ({
+        msw
+      }) => {
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/file`,
+            () => new HttpResponse(null, { status: 200 })
+          )
+        )
+
+        await expect(backend(token).redirect('/v1/file')).rejects.toMatchObject(
+          {
+            output: { statusCode: 502 },
+            code: 'external_redirect_invalid',
+            event: {
+              action: 'external_redirect',
+              reason: 'missing_location_header'
+            }
+          }
+        )
+      })
+    })
+
+    describe('stream', () => {
+      /**
+       * @param {Readable} body
+       */
+      const read = async (body) =>
+        Buffer.concat(await body.toArray()).toString()
+
+      it('should resolve to the body as a node stream with the type and name the backend gave it', async ({
+        msw
+      }) => {
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/export.csv`,
+            () =>
+              new HttpResponse('a,b\n1,2\n', {
+                headers: {
+                  'content-type': 'text/csv',
+                  'content-disposition': 'attachment; filename="export.csv"'
+                }
+              })
+          )
+        )
+
+        const { body, contentType, contentDisposition } =
+          await backend(token).stream('/v1/export.csv')
+
+        expect({
+          body: await read(body),
+          contentType,
+          contentDisposition
+        }).toStrictEqual({
+          body: 'a,b\n1,2\n',
+          contentType: 'text/csv',
+          contentDisposition: 'attachment; filename="export.csv"'
+        })
+      })
+
+      it('should resolve to nulls where the backend named no type or name', async ({
+        msw
+      }) => {
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/export.csv`,
+            () => new HttpResponse(new Blob(['a']))
+          )
+        )
+
+        const { contentType, contentDisposition } =
+          await backend(token).stream('/v1/export.csv')
+
+        expect({ contentType, contentDisposition }).toStrictEqual({
+          contentType: null,
+          contentDisposition: null
+        })
+      })
+
+      it('should reject as a bad gateway an answer with no body', async ({
+        msw
+      }) => {
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/export.csv`,
+            () => new HttpResponse(null, { status: 200 })
+          )
+        )
+
+        await expect(
+          backend(token).stream('/v1/export.csv')
+        ).rejects.toMatchObject({
+          output: { statusCode: 502 },
+          code: 'external_fetch_failed',
+          event: { action: 'external_fetch', reason: 'missing_body' }
+        })
+      })
+
+      it('should not ask for json', async ({ msw }) => {
+        /** @type {(string | null)[]} */
+        const accepted = []
+        msw.use(
+          http.get(`${backendUrl}/v1/export.csv`, ({ request }) => {
+            accepted.push(request.headers.get('accept'))
+            return new HttpResponse('a')
+          })
+        )
+
+        await backend(token).stream('/v1/export.csv')
+
+        expect(accepted).not.toContain('application/json')
+      })
+
+      it.for([404, 403])(
+        'should reject a %s as that status rather than a gateway fault',
+        async (status, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/export.csv`,
+              () => new HttpResponse(null, { status })
+            )
+          )
+
+          await expect(
+            backend(token).stream('/v1/export.csv')
+          ).rejects.toMatchObject({
+            output: { statusCode: status },
+            code: 'external_fetch_failed',
+            event: {
+              action: 'external_fetch',
+              reason: `backend_responded_${status}`
+            }
+          })
+        }
+      )
+    })
+
+    it.for(/** @type {const} */ (['redirect', 'stream']))(
+      'should %s through the client onError',
+      async (method, { msw }) => {
+        class Mapped extends Error {}
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/file`,
+            () => new HttpResponse(null, { status: 404 })
+          )
+        )
+
+        await expect(
+          backend(token, {
+            onError: () => {
+              throw new Mapped()
+            }
+          })[method]('/v1/file')
+        ).rejects.toBeInstanceOf(Mapped)
+      }
+    )
   })
 
   describe(path, () => {

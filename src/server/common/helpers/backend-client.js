@@ -1,13 +1,29 @@
+import { Readable } from 'node:stream'
+
 import Boom from '@hapi/boom'
 import { withTraceId } from '@defra/hapi-tracing'
 
 import { config } from '#config/config.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { badGateway, classifierTail, internal } from './logging/cdp-boom.js'
+import {
+  badGateway,
+  classifierTail,
+  internal,
+  upstreamStatus
+} from './logging/cdp-boom.js'
 import { getTracingHeaderName } from './request-tracing.js'
 
 /**
+ * @import { ReadableStream as WebReadableStream } from 'node:stream/web'
  * @import { Schema } from 'joi'
+ */
+
+/**
+ * @typedef {{
+ *   body: Readable,
+ *   contentDisposition: string | null,
+ *   contentType: string | null
+ * }} BackendStream
  */
 
 /**
@@ -91,6 +107,21 @@ const request = async (url, init) => {
 }
 
 /**
+ * A refusal keeps its own status, so it reaches the caller as itself rather
+ * than as a gateway fault.
+ * @param {string} url
+ * @param {Response} response
+ * @param {string} action
+ */
+const refusal = (url, response, action) =>
+  upstreamStatus(
+    `Backend refused: ${url}`,
+    response.status,
+    errorCodes.externalFetchFailed,
+    { event: { action, reason: `backend_responded_${response.status}` } }
+  )
+
+/**
  * @param {string} url
  * @param {Response} response
  */
@@ -134,6 +165,74 @@ const sendJson = async (token, method, url, body) => {
   }
 
   return hasJsonBody(response) ? response.json() : undefined
+}
+
+/**
+ * @param {string} token
+ * @param {string} url
+ * @returns {Promise<string>}
+ */
+const sendForRedirect = async (token, url) => {
+  const response = await request(url, {
+    method: 'GET',
+    redirect: 'manual',
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  const location = response.headers.get('location')
+
+  if (!location && !response.ok) {
+    throw refusal(url, response, 'external_redirect')
+  }
+
+  if (!location) {
+    throw badGateway(
+      `Backend did not return a redirect for: ${url}`,
+      errorCodes.externalRedirectInvalid,
+      {
+        event: {
+          action: 'external_redirect',
+          reason: 'missing_location_header'
+        }
+      }
+    )
+  }
+
+  return location
+}
+
+/**
+ * Hapi serialises a web stream as `{}`, so the body is handed over as a Node
+ * stream. The double cast bridges a `@types/node` mismatch between the web
+ * `ReadableStream` fetch answers with and the one `Readable.fromWeb` takes.
+ * @param {string} token
+ * @param {string} url
+ * @returns {Promise<BackendStream>}
+ */
+const sendForStream = async (token, url) => {
+  const response = await request(url, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` }
+  })
+
+  if (!response.ok) {
+    throw refusal(url, response, 'external_fetch')
+  }
+
+  if (!response.body) {
+    throw badGateway(
+      `Backend answered with no body for: ${url}`,
+      errorCodes.externalFetchFailed,
+      { event: { action: 'external_fetch', reason: 'missing_body' } }
+    )
+  }
+
+  return {
+    body: Readable.fromWeb(
+      /** @type {WebReadableStream} */ (/** @type {unknown} */ (response.body))
+    ),
+    contentDisposition: response.headers.get('content-disposition'),
+    contentType: response.headers.get('content-type')
+  }
 }
 
 /**
@@ -209,6 +308,20 @@ export const backend = (token, defaults = {}) => {
      * @param {CallOptions<T>} [options]
      * @returns {Promise<T>}
      */
-    delete: (path, options = {}) => call('DELETE', path, undefined, options)
+    delete: (path, options = {}) => call('DELETE', path, undefined, options),
+    /**
+     * Where the backend redirects to, without following it.
+     * @param {string} path
+     * @param {{ onError?: OnError }} [options]
+     */
+    redirect: (path, options = {}) =>
+      guarded(options, () => sendForRedirect(token, urlOf(path))),
+    /**
+     * The body as a stream, for passing straight to `h.response`.
+     * @param {string} path
+     * @param {{ onError?: OnError }} [options]
+     */
+    stream: (path, options = {}) =>
+      guarded(options, () => sendForStream(token, urlOf(path)))
   }
 }
