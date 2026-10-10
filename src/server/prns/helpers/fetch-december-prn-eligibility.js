@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
  * @typedef {object} DecemberPrnEligibility
@@ -18,19 +18,14 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<DecemberPrnEligibility>}
  */
-async function fetchDecemberPrnEligibility(
+const fetchDecemberPrnEligibility = (
   organisationId,
   registrationId,
   accreditationId,
   backendToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes/december-prn-eligibility`
-
-  return fetchJsonFromBackend(path, {
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
-}
+) =>
+  backend(backendToken).get(
+    path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/december-prn-eligibility`
+  )
 
 export { fetchDecemberPrnEligibility }

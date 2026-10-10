@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
  * @typedef {object} UpdatePrnStatusPayload
@@ -36,23 +36,17 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<UpdatePrnStatusResponse>}
  */
-async function updatePrnStatus(
+const updatePrnStatus = (
   organisationId,
   registrationId,
   accreditationId,
   prnId,
   payload,
   backendToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes/${encodeURIComponent(prnId)}/status`
-
-  return fetchJsonFromBackend(path, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    },
-    body: JSON.stringify(payload)
-  })
-}
+) =>
+  backend(backendToken).post(
+    path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/status`,
+    payload
+  )
 
 export { updatePrnStatus }

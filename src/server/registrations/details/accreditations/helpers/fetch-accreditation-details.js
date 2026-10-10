@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { fetchLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
@@ -38,17 +38,6 @@ import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-p
  */
 
 /**
- * @param {string} backendToken
- * @returns {RequestInit}
- */
-const readAs = (backendToken) => ({
-  method: 'GET',
-  headers: {
-    Authorization: `Bearer ${backendToken}`
-  }
-})
-
-/**
  * @param {{
  *   organisationId: string,
  *   registrationId: string,
@@ -63,11 +52,8 @@ const fetchAccreditation = ({
   accreditationId,
   backendToken
 }) =>
-  /** @type {Promise<AccreditationResource>} */ (
-    fetchJsonFromBackend(
-      `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}`,
-      readAs(backendToken)
-    )
+  backend(backendToken).get(
+    path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
   )
 
 /**
