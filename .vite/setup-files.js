@@ -12,15 +12,15 @@ expect.extend(matchers)
 
 // Set env vars before any imports to ensure config picks them up
 process.env.AWS_EMF_ENVIRONMENT = 'Local'
-process.env.EPR_BACKEND_URL = 'http://epr-backend.test'
-process.env.DEFRA_ID_OIDC_CONFIGURATION_URL =
-  'http://defra-id.auth/.well-known/openid-configuration'
 process.env.DEFRA_ID_CLIENT_ID = 'test-client-id'
 process.env.DEFRA_ID_CLIENT_SECRET = 'test-secret'
+process.env.DEFRA_ID_OIDC_CONFIGURATION_URL =
+  'http://defra-id.auth/.well-known/openid-configuration'
 process.env.DEFRA_ID_SERVICE_ID = 'test-service-id'
-process.env.ENTRA_OIDC_WELL_KNOWN_CONFIGURATION_URL =
-  'http://entra-id.auth/.well-known/openid-configuration'
 process.env.ENTRA_CLIENT_ID = 'test-entra-client-id'
 process.env.ENTRA_CLIENT_SECRET = 'test-entra-secret'
-process.env.WASTE_ORGANISATIONS_API_USE_INMEMORY = 'true'
+process.env.ENTRA_OIDC_WELL_KNOWN_CONFIGURATION_URL =
+  'http://entra-id.auth/.well-known/openid-configuration'
+process.env.EPR_BACKEND_URL = 'http://epr-backend.test'
 process.env.LOG_FORMAT = 'ecs'
+process.env.WASTE_ORGANISATIONS_API_USE_INMEMORY = 'true'
