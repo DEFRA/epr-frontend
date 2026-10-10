@@ -57,23 +57,29 @@ describe('#fetchIdentity', () => {
     expect(result).toStrictEqual({ role: null, scopes: [] })
   })
 
-  it('should reject a response that omits the scopes', async ({ msw }) => {
-    msw.use(identityResponse({ role: 'operator' }))
+  it.for([
+    {
+      description: 'omits the scopes',
+      body: { role: 'operator' },
+      reason: 'scopes: "scopes" is required'
+    },
+    {
+      description: 'has scopes that are not strings',
+      body: { role: 'operator', scopes: [{}] },
+      reason: 'scopes.0: "scopes[0]" must be a string'
+    }
+  ])(
+    'should reject as a bad gateway a response that $description',
+    async ({ body, reason }, { msw }) => {
+      msw.use(identityResponse(body))
 
-    await expect(fetchIdentity(mockBackendToken)).rejects.toThrow(
-      /Invalid identity/
-    )
-  })
-
-  it('should reject a response whose scopes are not strings', async ({
-    msw
-  }) => {
-    msw.use(identityResponse({ role: 'operator', scopes: [{}] }))
-
-    await expect(fetchIdentity(mockBackendToken)).rejects.toThrow(
-      /Invalid identity/
-    )
-  })
+      await expect(fetchIdentity(mockBackendToken)).rejects.toMatchObject({
+        output: { statusCode: 502 },
+        code: 'backend_response_invalid',
+        event: { reason }
+      })
+    }
+  )
 
   it('should throw when the backend refuses the token', async () => {
     await expect(fetchIdentity('invalid-token')).rejects.toMatchObject({

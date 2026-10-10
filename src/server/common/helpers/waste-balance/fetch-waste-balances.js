@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
  * Fetches waste balance data for an organisation from EPR Backend
@@ -16,15 +16,12 @@ async function fetchWasteBalances(
     return {}
   }
 
+  const balancesPath = path`/v1/organisations/${organisationId}/waste-balances`
   const encodedIds = accreditationIds.map(encodeURIComponent).join(',')
-  const path = `/v1/organisations/${organisationId}/waste-balances?accreditationIds=${encodedIds}`
 
-  return fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
+  return backend(backendToken).get(
+    `${balancesPath}?accreditationIds=${encodedIds}`
+  )
 }
 
 export { fetchWasteBalances }

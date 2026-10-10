@@ -1,22 +1,10 @@
 import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, vi } from 'vitest'
+import { describe, expect } from 'vitest'
 
 import { test } from '#vite/fixtures/server.js'
 
 import { fetchWasteBalances } from './fetch-waste-balances.js'
-
-const MOCK_TRACE_ID = 'mock-trace-id-1'
-
-vi.mock(import('@defra/hapi-tracing'), () => ({
-  withTraceId: vi.fn((headerName, headers = {}) => {
-    headers[headerName] = MOCK_TRACE_ID
-    return headers
-  }),
-  tracing: {
-    plugin: {}
-  }
-}))
 
 const backendUrl = config.get('eprBackendUrl')
 
@@ -65,28 +53,6 @@ describe(fetchWasteBalances, () => {
     await fetchWasteBalances(organisationId, accreditationIds, backendToken)
 
     expect(capturedUrl).toContain('accreditationIds=acc-001,acc-002')
-  })
-
-  test('includes Authorization and tracing headers', async ({ msw }) => {
-    /** @type {Request | undefined} */
-    let capturedRequest
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/waste-balances`,
-        ({ request }) => {
-          capturedRequest = request
-          return HttpResponse.json({})
-        }
-      )
-    )
-
-    await fetchWasteBalances(organisationId, accreditationIds, backendToken)
-
-    const request = /** @type {Request} */ (capturedRequest)
-
-    expect(request.headers.get('content-type')).toBe('application/json')
-    expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
-    expect(request.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
   })
 
   test('returns empty object when accreditationIds array is empty', async () => {

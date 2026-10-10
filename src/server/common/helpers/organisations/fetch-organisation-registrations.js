@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /** @import { RegistrationResource } from './registration-resource.js' */
 
@@ -13,18 +13,10 @@ export const fetchOrganisationRegistrations = async (
   organisationId,
   backendToken
 ) => {
-  const { registrations } =
-    /** @type {{ registrations: RegistrationResource[] }} */ (
-      await fetchJsonFromBackend(
-        `/v1/organisations/${encodeURIComponent(organisationId)}/registrations`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${backendToken}`
-          }
-        }
-      )
-    )
+  /** @type {{ registrations: RegistrationResource[] }} */
+  const { registrations } = await backend(backendToken).get(
+    path`/v1/organisations/${organisationId}/registrations`
+  )
 
   return registrations
 }
