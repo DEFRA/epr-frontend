@@ -1,4 +1,4 @@
-import { fetchStreamFromBackend } from '#server/common/helpers/fetch-stream-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 
 import { reportingPeriodNow } from './helpers/reporting-period.js'
 
@@ -34,11 +34,11 @@ export const marketInsightsWorkbookController = ({
     const { year, month } = reportingPeriodNow()
     const query = unredacted ? '?unredacted=true' : ''
 
-    const { body, contentDisposition, contentType } =
-      await fetchStreamFromBackend(
-        `/v1/market-insights/${year}/monthly/${month}/workbook.xlsx${query}`,
-        { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
-      )
+    const { body, contentDisposition, contentType } = await backend(
+      backendToken
+    ).stream(
+      `/v1/market-insights/${year}/monthly/${month}/workbook.xlsx${query}`
+    )
 
     const response = h.response(body).type(contentType ?? DEFAULT_CONTENT_TYPE)
 
