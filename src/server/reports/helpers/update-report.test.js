@@ -1,169 +1,48 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { it } from '#vite/fixtures/server.js'
 
 import { updateReport } from './update-report.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(updateReport, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const year = 2026
-  const cadence = 'quarterly'
-  const period = 1
-  const submissionNumber = 1
-  const backendToken = 'test-token'
-
-  const mockResponse = { ok: true }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('calls fetchJsonFromBackend with correct path and options for supporting information', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updateReport(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      { supportingInformation: 'Supply chain disruption in February' },
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1',
-      {
-        method: 'PATCH',
-        headers: {
-          Authorization: 'Bearer test-token'
-        },
-        body: JSON.stringify({
-          supportingInformation: 'Supply chain disruption in February'
+  it('should patch the fields onto the submission the period names and resolve to the updated report', async ({
+    msw
+  }) => {
+    /** @type {{ method: string, pathname: string, body: string }[]} */
+    const received = []
+    msw.use(
+      http.patch(/\/reports\//, async ({ request }) => {
+        received.push({
+          method: request.method,
+          pathname: new URL(request.url).pathname,
+          body: await request.text()
         })
-      }
-    )
-  })
-
-  it('calls fetchJsonFromBackend with correct path and options for status update', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updateReport(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      { status: 'ready_to_submit' },
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1',
-      {
-        method: 'PATCH',
-        headers: {
-          Authorization: 'Bearer test-token'
-        },
-        body: JSON.stringify({ status: 'ready_to_submit' })
-      }
-    )
-  })
-
-  it('sends empty string for supporting information when blank', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updateReport(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      { supportingInformation: '' },
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        body: JSON.stringify({ supportingInformation: '' })
+        return HttpResponse.json({ id: 'report-1' })
       })
     )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updateReport(
-      {
-        organisationId: 'org/123',
-        registrationId: 'reg&456',
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      { supportingInformation: 'notes' },
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1',
-      expect.any(Object)
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await updateReport(
       {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
+        organisationId: 'org/1',
+        registrationId: 'reg-1',
+        year: 2026,
+        cadence: 'monthly',
+        period: 3,
+        submissionNumber: 1
       },
       { supportingInformation: 'notes' },
-      backendToken
+      'a-token'
     )
 
-    expect(result).toStrictEqual(mockResponse)
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(
-      updateReport(
-        {
-          organisationId,
-          registrationId,
-          year,
-          cadence,
-          period,
-          submissionNumber
-        },
-        { supportingInformation: 'notes' },
-        backendToken
-      )
-    ).rejects.toThrow('Network error')
+    expect(result).toStrictEqual({ id: 'report-1' })
+    expect(received).toStrictEqual([
+      {
+        method: 'PATCH',
+        pathname:
+          '/v1/organisations/org%2F1/registrations/reg-1/reports/2026/monthly/3/submissions/1',
+        body: JSON.stringify({ supportingInformation: 'notes' })
+      }
+    ])
   })
 })

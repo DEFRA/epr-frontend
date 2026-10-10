@@ -1,4 +1,5 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import { reportPath } from './report-backend.js'
 
 /**
  * @typedef {{
@@ -18,7 +19,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} backendToken
  * @returns {Promise<CreateReportResponse>}
  */
-export async function createReport(
+export const createReport = (
   organisationId,
   registrationId,
   year,
@@ -26,11 +27,14 @@ export async function createReport(
   period,
   submissionNumber,
   backendToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
-
-  return fetchJsonFromBackend(path, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${backendToken}` }
-  })
-}
+) =>
+  backend(backendToken).post(
+    reportPath({
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    })
+  )

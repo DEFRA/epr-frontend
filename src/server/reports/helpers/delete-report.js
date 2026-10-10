@@ -1,4 +1,5 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import { reportPath } from './report-backend.js'
 
 /**
  * Deletes a report for a specific period via the backend API.
@@ -11,7 +12,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} backendToken
  * @returns {Promise<void>}
  */
-export async function deleteReport(
+export const deleteReport = (
   organisationId,
   registrationId,
   year,
@@ -19,11 +20,14 @@ export async function deleteReport(
   period,
   submissionNumber,
   backendToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
-
-  return fetchJsonFromBackend(path, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${backendToken}` }
-  })
-}
+) =>
+  backend(backendToken).delete(
+    reportPath({
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    })
+  )
