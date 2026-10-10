@@ -31,7 +31,14 @@ const backendUrl = config.get('eprBackendUrl')
  * @param {'get' | 'post'} method
  */
 const recordRequests = (msw, method) => {
-  /** @type {{ authorization: string | null, body: string, contentType: string | null, traceId: string | null }[]} */
+  /**
+   * @type {{
+   *   authorization: string | null,
+   *   body: string,
+   *   contentType: string | null,
+   *   traceId: string | null
+   * }[]}
+   */
   const requests = []
 
   msw.use(
