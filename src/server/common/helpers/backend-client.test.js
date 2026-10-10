@@ -10,6 +10,10 @@ import { backend, path } from './backend-client.js'
  * @import { SetupServerApi } from 'msw/node'
  */
 
+/**
+ * @typedef {ReturnType<typeof backend>} Backend
+ */
+
 vi.mock(import('@defra/hapi-tracing'), () => ({
   withTraceId: vi.fn((headerName, headers = {}) => {
     headers[headerName] = 'mock-trace-id-1'
@@ -48,117 +52,93 @@ const recordRequests = (msw, method) => {
 describe('backend-client', () => {
   describe(backend, () => {
     describe('requests', () => {
-      it('should get with the token and the trace id, and no body or content-type', async ({
-        msw
-      }) => {
-        const requests = recordRequests(msw, 'get')
+      it.for([
+        {
+          description: 'get with no body or content-type',
+          method: /** @type {const} */ ('get'),
+          call: (/** @type {Backend} */ api) => api.get('/v1/thing'),
+          body: '',
+          contentType: null
+        },
+        {
+          description: 'post the body as json with a json content-type',
+          method: /** @type {const} */ ('post'),
+          call: (/** @type {Backend} */ api) =>
+            api.post('/v1/thing', { name: 'a thing' }),
+          body: '{"name":"a thing"}',
+          contentType: 'application/json'
+        },
+        {
+          description: 'post no body or content-type when none is given',
+          method: /** @type {const} */ ('post'),
+          call: (/** @type {Backend} */ api) => api.post('/v1/thing'),
+          body: '',
+          contentType: null
+        }
+      ])(
+        'should $description, carrying the token and the trace id',
+        async ({ method, call, body, contentType }, { msw }) => {
+          const requests = recordRequests(msw, method)
 
-        await backend('a-token').get('/v1/thing')
+          await call(backend('a-token'))
 
-        expect(requests).toStrictEqual([
-          {
-            authorization: 'Bearer a-token',
-            body: '',
-            contentType: null,
-            traceId: 'mock-trace-id-1'
-          }
-        ])
-      })
-
-      it('should post the body as json with a json content-type', async ({
-        msw
-      }) => {
-        const requests = recordRequests(msw, 'post')
-
-        await backend('a-token').post('/v1/thing', { name: 'a thing' })
-
-        expect(requests).toStrictEqual([
-          {
-            authorization: 'Bearer a-token',
-            body: '{"name":"a thing"}',
-            contentType: 'application/json',
-            traceId: 'mock-trace-id-1'
-          }
-        ])
-      })
-
-      it('should post without a body or content-type when none is given', async ({
-        msw
-      }) => {
-        const requests = recordRequests(msw, 'post')
-
-        await backend('a-token').post('/v1/thing')
-
-        expect(requests).toStrictEqual([
-          {
-            authorization: 'Bearer a-token',
-            body: '',
-            contentType: null,
-            traceId: 'mock-trace-id-1'
-          }
-        ])
-      })
+          expect(requests).toStrictEqual([
+            {
+              authorization: 'Bearer a-token',
+              body,
+              contentType,
+              traceId: 'mock-trace-id-1'
+            }
+          ])
+        }
+      )
     })
 
     describe('responses', () => {
-      it('should resolve to the json body', async ({ msw }) => {
-        msw.use(
-          http.get(`${backendUrl}/v1/thing`, () =>
-            HttpResponse.json({ id: 'thing-1' })
-          )
-        )
+      it.for([
+        {
+          description: 'the json body',
+          response: () => HttpResponse.json({ id: 'thing-1' }),
+          expected: { id: 'thing-1' }
+        },
+        {
+          description: 'undefined when there is no json body',
+          response: () => new HttpResponse(null, { status: 204 }),
+          expected: undefined
+        }
+      ])(
+        'should resolve to $description',
+        async ({ response, expected }, { msw }) => {
+          msw.use(http.get(`${backendUrl}/v1/thing`, response))
 
-        await expect(
-          backend('a-token').get('/v1/thing')
-        ).resolves.toStrictEqual({ id: 'thing-1' })
-      })
+          await expect(
+            backend('a-token').get('/v1/thing')
+          ).resolves.toStrictEqual(expected)
+        }
+      )
 
-      it('should resolve to undefined when there is no json body', async ({
-        msw
-      }) => {
-        msw.use(
-          http.post(
-            `${backendUrl}/v1/thing`,
-            () => new HttpResponse(null, { status: 204 })
-          )
-        )
+      it.for([
+        {
+          description: 'its json body',
+          response: () =>
+            HttpResponse.json({ code: 'thing_stale' }, { status: 409 }),
+          expected: { statusCode: 409, payload: { code: 'thing_stale' } }
+        },
+        {
+          description: 'no body',
+          response: () => new HttpResponse(null, { status: 503 }),
+          expected: { statusCode: 503 }
+        }
+      ])(
+        'should reject with the backend status and $description',
+        async ({ response, expected }, { msw }) => {
+          msw.use(http.get(`${backendUrl}/v1/thing`, response))
 
-        await expect(
-          backend('a-token').post('/v1/thing')
-        ).resolves.toBeUndefined()
-      })
-
-      it('should reject with the backend status and json body', async ({
-        msw
-      }) => {
-        msw.use(
-          http.get(`${backendUrl}/v1/thing`, () =>
-            HttpResponse.json({ code: 'thing_stale' }, { status: 409 })
-          )
-        )
-
-        await expect(backend('a-token').get('/v1/thing')).rejects.toMatchObject(
-          {
-            isBoom: true,
-            output: { statusCode: 409, payload: { code: 'thing_stale' } }
-          }
-        )
-      })
-
-      it('should reject with the backend status when the error has no body', async ({
-        msw
-      }) => {
-        msw.use(
-          http.get(
-            `${backendUrl}/v1/thing`,
-            () => new HttpResponse(null, { status: 503 })
-          )
-        )
-
-        await expect(backend('a-token').get('/v1/thing')).rejects.toMatchObject(
-          { isBoom: true, output: { statusCode: 503 } }
-        )
-      })
+          await expect(
+            backend('a-token').get('/v1/thing')
+          ).rejects.toMatchObject({ isBoom: true, output: expected })
+        }
+      )
 
       it('should reject as an internal fetch failure when the backend is unreachable', async ({
         msw
