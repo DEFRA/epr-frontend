@@ -39,17 +39,16 @@ import { backend, path } from '#server/common/helpers/backend-client.js'
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<CreatePrnResponse>}
  */
-async function createPrn(
+const createPrn = (
   organisationId,
   registrationId,
   accreditationId,
   payload,
   backendToken
-) {
-  return backend(backendToken).post(
+) =>
+  backend(backendToken).post(
     path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`,
     payload
   )
-}
 
 export { createPrn }

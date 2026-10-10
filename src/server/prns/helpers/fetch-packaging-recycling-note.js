@@ -9,17 +9,16 @@ import { backend, path } from '#server/common/helpers/backend-client.js'
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<PackagingRecyclingNote>} The packaging recycling note
  */
-async function fetchPackagingRecyclingNote(
+const fetchPackagingRecyclingNote = (
   organisationId,
   registrationId,
   accreditationId,
   prnId,
   backendToken
-) {
-  return backend(backendToken).get(
+) =>
+  backend(backendToken).get(
     path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}`
   )
-}
 
 export { fetchPackagingRecyclingNote }
 
