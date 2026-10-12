@@ -23,7 +23,7 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 /**
  * @import { DOMWindow } from 'jsdom'
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { ServerFixtures } from '#vite/fixtures/server.js'
  */
 
@@ -65,7 +65,7 @@ const tagOf = (body, name) =>
  * Answers the backend's organisations call with a page built around the given
  * organisations, and hands back what the app asked for so a test can assert on
  * the request as well as the rendering.
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {{ items: object[], page?: number, totalPages?: number }} results
  * @returns {() => URL}
  */
