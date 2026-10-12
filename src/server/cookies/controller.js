@@ -1,25 +1,11 @@
-import { withoutLanguagePrefix } from '#server/common/helpers/language-prefix.js'
-import { BACK_URL_FLASH, localPath } from '#server/cookies/urls.js'
+import { sameSiteReferrer } from '#server/common/helpers/same-site-referrer.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */
 
-const COOKIES_PAGE = '/cookies'
-
-/**
- * The page the visitor followed a link here from, unless that was this page.
- * @param {HapiRequest} request
- */
-const arrivedFrom = (request) => {
-  const path = localPath(request.headers.referer, request.url)
-
-  return path &&
-    withoutLanguagePrefix(new URL(path, request.url).pathname) !== COOKIES_PAGE
-    ? path
-    : null
-}
+export const BACK_URL_FLASH = 'cookiesBackUrl'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const controller = {
@@ -29,7 +15,8 @@ export const controller = {
    */
   handler(request, h) {
     return h.view('cookies/index', {
-      backUrl: request.yar.flash(BACK_URL_FLASH).at(-1) ?? arrivedFrom(request),
+      backUrl:
+        request.yar.flash(BACK_URL_FLASH).at(-1) ?? sameSiteReferrer(request),
       pageTitle: request.t('cookies:pageTitle')
     })
   }

@@ -3,7 +3,7 @@ import {
   ANALYTICS_CONSENT_COOKIE,
   ANALYTICS_CONSENT_FLASH
 } from '#server/common/analytics/consent.js'
-import { BACK_URL_FLASH } from '#server/cookies/urls.js'
+import { BACK_URL_FLASH } from '#server/cookies/controller.js'
 import { getSafeRedirect, isSafeRedirect } from '#utils/get-safe-redirect.js'
 import Joi from 'joi'
 
