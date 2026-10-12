@@ -222,6 +222,38 @@ describe('#deleteController', () => {
 
         expect(backLink?.getAttribute('href')).toBe(reportsListPath)
       })
+
+      it('should fall back to the welsh reports list when the referer is the welsh delete page itself', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/cy${baseUrl}`,
+          auth: mockAuth,
+          headers: { host, referer: refererFor(`/cy${baseUrl}`) }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(`/cy${reportsListPath}`)
+      })
+
+      it('should fall back to the reports list when the referer path would leave the service', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { host, referer: refererFor('//evil.example.com/stolen') }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(reportsListPath)
+      })
     })
 
     it('should display the warning and guidance text', async ({ server }) => {
