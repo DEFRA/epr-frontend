@@ -65,7 +65,6 @@ describe('#authCallbackController', () => {
         linked: {
           id: 'defra-org-uuid',
           name: 'Test Defra Organisation',
-          orgId: 500123,
           linkedBy: {
             email: 'user@example.com',
             id: 'user-123'
@@ -140,7 +139,6 @@ describe('#authCallbackController', () => {
             logout: 'http://test.auth/logout'
           },
           linkedOrganisationId: 'defra-org-uuid',
-          linkedOrganisationNumber: '500123',
           ...sessionIdentity(IDENTITIES.operator)
         }
       )

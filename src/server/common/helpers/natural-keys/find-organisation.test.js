@@ -49,17 +49,20 @@ describe(findOrganisationById, () => {
     }
   )
 
-  it('throws when the backend fails', async ({ msw }) => {
-    msw.use(organisationRefused(statusCodes.internalServerError))
+  it.for([statusCodes.unauthorized, statusCodes.internalServerError])(
+    'throws when the backend answers %i',
+    async (status, { msw }) => {
+      msw.use(organisationRefused(status))
 
-    await expect(findOrganisationById(organisationId, 'token')).rejects.toThrow(
-      expect.objectContaining({
-        output: expect.objectContaining({
-          statusCode: statusCodes.internalServerError
+      await expect(
+        findOrganisationById(organisationId, 'token')
+      ).rejects.toThrow(
+        expect.objectContaining({
+          output: expect.objectContaining({ statusCode: status })
         })
-      })
-    )
-  })
+      )
+    }
+  )
 })
 
 describe('findOrganisationByNumber for an operator', () => {
@@ -72,6 +75,16 @@ describe('findOrganisationByNumber for an operator', () => {
 
     await expect(
       findOrganisationByNumber('500118', operator)
+    ).resolves.toStrictEqual(organisation)
+  })
+
+  it('returns their own organisation by a number with leading zeros', async ({
+    msw
+  }) => {
+    msw.use(organisationHeld())
+
+    await expect(
+      findOrganisationByNumber('0500118', operator)
     ).resolves.toStrictEqual(organisation)
   })
 

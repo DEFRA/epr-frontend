@@ -10,8 +10,11 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  * @import { OrganisationsPage } from '#server/regulators/organisations/helpers/fetch-organisations.js'
  */
 
+const REFUSED = Object.freeze([statusCodes.forbidden, statusCodes.notFound])
+
 /**
- * A 4xx means the user cannot see the record, which is the same as no record.
+ * A 403 or 404 means the user cannot see the record, which is the same as no
+ * record.
  * @template T
  * @param {Promise<T>} lookup
  * @returns {Promise<T | null>}
@@ -20,10 +23,7 @@ const nullWhenRefused = async (lookup) => {
   try {
     return await lookup
   } catch (error) {
-    if (
-      /** @type {Boom} */ (error).output.statusCode <
-      statusCodes.internalServerError
-    ) {
+    if (REFUSED.includes(/** @type {Boom} */ (error).output.statusCode)) {
       return null
     }
 
@@ -89,7 +89,7 @@ export const findOrganisationByNumber = async (
     credentials.backendToken
   )
 
-  return organisation && String(organisation.orgId) === organisationNumber
+  return organisation && organisation.orgId === Number(organisationNumber)
     ? organisation
     : null
 }
