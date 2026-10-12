@@ -5,7 +5,7 @@ import { asHapiRequest } from '#server/common/hapi-types.js'
 import organisationsFixture from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { Mock, TestAPI } from 'vitest'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
@@ -22,7 +22,7 @@ import organisationsFixture from '../../fixtures/waste-organisations/organisatio
 
 /**
  * @typedef {{
- *   msw: SetupServerApi,
+ *   msw: SetupServer,
  *   server: HapiServer & { loggerMocks: LoggerMocks }
  * }} ServerFixtures
  */
@@ -142,7 +142,7 @@ const it = /** @type {TestAPI<ServerFixtures>} */ (
           ...createOidcHandlers('http://defra-id.auth'),
           ...createOidcHandlers(ENTRA_ID_BASE_URL)
         )
-        server.listen({ onUnhandledRequest: 'error' })
+        server.listen({ onUnhandledFrame: 'error' })
 
         await use(server)
 
