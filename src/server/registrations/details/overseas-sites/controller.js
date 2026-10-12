@@ -7,7 +7,7 @@ import { fetchOverseasSites } from './helpers/fetch-overseas-sites.js'
  */
 
 /**
- * @typedef {{ organisationId: string, registrationId: string }} OverseasSitesParams
+ * @typedef {{ organisationNumber: string, registrationNumber: string }} OverseasSitesParams
  */
 
 /**
@@ -19,21 +19,19 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId } = request.params
+    const { organisationNumber, registrationNumber } = request.params
     const { backendToken } = request.auth.credentials
 
-    const { organisation, registration, sites } = await fetchOverseasSites({
-      organisationId,
-      registrationId,
+    const details = await fetchOverseasSites({
+      organisationNumber,
+      registrationNumber,
       backendToken
     })
 
     return h.view(
       'registrations/details/overseas-sites/index',
       buildViewModel({
-        organisation,
-        registration,
-        sites,
+        ...details,
         localise: request.t,
         localiseUrl: request.localiseUrl
       })
