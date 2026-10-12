@@ -1,9 +1,12 @@
 import { capitalize } from 'lodash-es'
 
+import { config } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from './helpers/status-helpers.js'
@@ -15,6 +18,8 @@ import { getStatusClass } from './helpers/status-helpers.js'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
  */
 
@@ -313,6 +318,33 @@ async function getWasteBalanceMap(
 }
 
 /**
+ * The year the page shows: the latest year the backend returns. Behind the navigateAcrossYears flag, and
+ * absent when the years cannot be read, so the page renders as it did before.
+ * @param {OrganisationNumber} orgNumber
+ * @param {string} backendToken
+ * @param {TypedLogger} logger
+ * @returns {Promise<Year | null>}
+ */
+async function getSelectedYear(orgNumber, backendToken, logger) {
+  if (!config.get('featureFlags.navigateAcrossYears')) {
+    return null
+  }
+
+  try {
+    const [latestYear = null] = await fetchOrganisationYears(
+      orgNumber,
+      backendToken
+    )
+    return latestYear
+  } catch (error) {
+    // TODO(PAE-2052): remove with FEATURE_FLAG_NAVIGATE_ACROSS_YEARS; the
+    // backend route may not be deployed yet
+    logger.error({ message: 'Failed to fetch organisation years', err: error })
+    return null
+  }
+}
+
+/**
  * Determines which sites to display and the table title based on available data and active tab
  * @param {object} params
  * @param {Array} params.reprocessorSites - Reprocessor sites
@@ -376,12 +408,19 @@ export const controller = {
     const displayableRegistrations =
       getDisplayableRegistrations(organisationData)
 
-    const wasteBalanceMap = await getWasteBalanceMap(
-      organisationId,
-      displayableRegistrations,
-      session.backendToken,
-      request.logger
-    )
+    const [wasteBalanceMap, selectedYear] = await Promise.all([
+      getWasteBalanceMap(
+        organisationId,
+        displayableRegistrations,
+        session.backendToken,
+        request.logger
+      ),
+      getSelectedYear(
+        organisationNumber(organisationData.orgId),
+        session.backendToken,
+        request.logger
+      )
+    ])
 
     const reprocessorSites = getRegistrationSites(
       request,
@@ -422,6 +461,7 @@ export const controller = {
         `/organisations/${organisationId}/exporting`
       ),
       shouldRenderTabs,
+      selectedYear,
       sites,
       tableTitle,
       tabTypes
