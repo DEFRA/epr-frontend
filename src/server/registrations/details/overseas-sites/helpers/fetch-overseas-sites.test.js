@@ -8,7 +8,7 @@ import { test } from '#vite/fixtures/server.js'
 import { fetchOverseasSites } from './fetch-overseas-sites.js'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { OverseasSitesById } from './fetch-overseas-sites.js'
  */
 
@@ -54,7 +54,7 @@ const sites = {
 /**
  * A registration the organisation does not hold fails the organisation read and
  * the sites read alike, so a status stands in for both.
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {{ sitesStatus?: number, organisationHolds?: object[] }} [overrides]
  */
 const backendHolds = (
