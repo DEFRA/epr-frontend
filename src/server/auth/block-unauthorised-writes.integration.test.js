@@ -16,6 +16,7 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 const backendUrl = config.get('eprBackendUrl')
 const organisationId = 'org-1'
+const organisationNumber = '12345678'
 const linkingUrl = '/account/linking'
 
 const regulatorAuth = buildMockAuth({
@@ -72,7 +73,7 @@ describe('write guard', () => {
               {
                 id: organisationId,
                 name: 'Test Company Ltd',
-                orgId: '12345678'
+                orgId: organisationNumber
               }
             ]
           }
@@ -101,7 +102,7 @@ describe('write guard', () => {
       url: linkingUrl,
       auth: regulatorAuth,
       headers: { cookie },
-      payload: { organisationId, crumb }
+      payload: { organisationNumber, crumb }
     })
 
     expect(statusCode).toBe(statusCodes.forbidden)
@@ -124,7 +125,7 @@ describe('write guard', () => {
       url: linkingUrl,
       auth: supportAuth,
       headers: { cookie },
-      payload: { organisationId, crumb }
+      payload: { organisationNumber, crumb }
     })
 
     expect(statusCode).toBe(statusCodes.forbidden)
@@ -136,7 +137,7 @@ describe('write guard', () => {
     msw
   }) => {
     msw.use(
-      http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () =>
+      http.post(`${backendUrl}/organisations/${organisationNumber}/link`, () =>
         HttpResponse.json({})
       )
     )
@@ -150,11 +151,11 @@ describe('write guard', () => {
       url: linkingUrl,
       auth: operatorAuth,
       headers: { cookie },
-      payload: { organisationId, crumb }
+      payload: { organisationNumber, crumb }
     })
 
     expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(`/organisations/${organisationId}`)
+    expect(headers.location).toBe(`/organisations/${organisationNumber}`)
   })
 
   it('refuses a session the backend granted nothing, in place', async ({
@@ -169,7 +170,7 @@ describe('write guard', () => {
       url: linkingUrl,
       auth: grantedNothingAuth,
       headers: { cookie },
-      payload: { organisationId, crumb }
+      payload: { organisationNumber, crumb }
     })
 
     expect(statusCode).toBe(statusCodes.forbidden)
@@ -256,7 +257,7 @@ describe('write guard', () => {
         url: linkingUrl,
         headers: { cookie },
         auth: grantedNothingAuth,
-        payload: { crumb, organisationId }
+        payload: { crumb, organisationNumber }
       })
 
       expect(statusCode).toBe(statusCodes.forbidden)

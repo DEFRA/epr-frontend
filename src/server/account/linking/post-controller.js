@@ -6,8 +6,25 @@ import { buildLinkingViewData } from './view-data.js'
 
 /**
  * Payload for POST /account/linking, validated by the Joi schema below.
- * @typedef {{ organisationId: string }} LinkingPayload
+ * @typedef {{ organisationNumber: string }} LinkingPayload
  */
+
+/**
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {UserOrganisations} organisations
+ */
+function viewNoSelectionError(request, h, organisations) {
+  const viewData = buildLinkingViewData(request, organisations, {
+    errors: {
+      organisationNumber: {
+        text: request.t('account:linking:errorNoSelection')
+      }
+    }
+  })
+
+  return h.view('account/linking/index', viewData).takeover()
+}
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const controller = {
@@ -15,7 +32,7 @@ export const controller = {
     pre: [provideUserOrganisations],
     validate: {
       payload: Joi.object({
-        organisationId: Joi.string().required()
+        organisationNumber: Joi.string().required()
       }),
       /**
        * @param {HapiRequest} request
@@ -26,41 +43,47 @@ export const controller = {
 
         const organisations = await fetchUserOrganisations(session.backendToken)
 
-        const viewData = buildLinkingViewData(request, organisations, {
-          errors: {
-            organisationId: {
-              text: request.t('account:linking:errorNoSelection')
-            }
-          }
-        })
-
-        return h.view('account/linking/index', viewData).takeover()
+        return viewNoSelectionError(request, h, organisations)
       }
     }
   },
   /**
-   * @param {HapiRequest & { payload: LinkingPayload }} request
+   * @param {HapiRequest & { payload: LinkingPayload, pre: UserOrganisationsPres }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId } = request.payload
+    const { organisationNumber } = request.payload
 
     const session = request.auth.credentials
 
-    await linkOrganisation(session.backendToken, organisationId)
+    const organisations = /** @type {UserOrganisations} */ (
+      request.pre.userOrganisations
+    )
+
+    const organisation = organisations.unlinked.find(
+      (o) => String(o.orgId) === organisationNumber
+    )
+
+    if (!organisation) {
+      return viewNoSelectionError(request, h, organisations)
+    }
+
+    await linkOrganisation(session.backendToken, organisationNumber)
 
     // Store linked organisation ID in session for navigation
     const sessionId = request.state?.userSession?.sessionId
     if (sessionId) {
-      session.linkedOrganisationId = organisationId
+      session.linkedOrganisationId = organisation.id
       await request.server.app.cache.set(sessionId, session)
     }
 
-    return h.redirect(`/organisations/${organisationId}`)
+    return h.redirect(`/organisations/${organisationNumber}`)
   }
 }
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { UserOrganisations } from '#server/auth/types/organisations.js'
+ * @import { UserOrganisationsPres } from './prerequisites/provide-user-organisations.js'
  */

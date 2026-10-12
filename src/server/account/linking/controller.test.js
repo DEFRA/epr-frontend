@@ -51,7 +51,7 @@ describe('#accountLinkingController', () => {
         url: '/account/linking',
         auth: mockAuth,
         payload: {
-          organisationId: 'org-1'
+          organisationNumber: 'FC111111'
         }
       })
 
@@ -72,7 +72,7 @@ describe('#accountLinkingController', () => {
         headers: { cookie },
         payload: {
           crumb: 'invalid-token',
-          organisationId: 'org-1'
+          organisationNumber: 'FC111111'
         }
       })
 
@@ -249,11 +249,29 @@ describe('#accountLinkingController', () => {
         const list = detailsContent.getByRole('list')
         const listItems = within(list).getAllByRole('listitem')
 
-        expect(listItems[0].textContent).toBe('First Company - org-1')
-        expect(listItems[1].textContent).toBe('Second Company - org-2')
-        expect(listItems[2].textContent).toBe('Third Company - org-3')
+        expect(listItems[0].textContent).toBe('First Company - FC111111')
+        expect(listItems[1].textContent).toBe('Second Company - SC222222')
+        expect(listItems[2].textContent).toBe('Third Company - TC333333')
 
         /* eslint-enable vitest/max-expects */
+      })
+
+      it('should post organisation numbers and show no database ids', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/account/linking',
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const radios = getAllByRole(getByRole(body, 'main'), 'radio')
+
+        expect(
+          radios.map((radio) => radio.getAttribute('value'))
+        ).toStrictEqual(['FC111111', 'SC222222', 'TC333333'])
+        expect(body.innerHTML).not.toMatch(/org-[123]/)
       })
     })
   })
