@@ -9,7 +9,6 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import {
   getAllByRole,
@@ -18,20 +17,26 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
+import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 import { fetchOverseasSites } from './helpers/fetch-overseas-sites.js'
 
 /**
- * @import { OverseasSiteDetail, OverseasSitesById, OverseasSitesDetails } from './helpers/fetch-overseas-sites.js'
+ * @import { OverseasSiteView, OverseasSitesByOrsId, OverseasSitesDetails } from './helpers/fetch-overseas-sites.js'
  */
 
 vi.mock(import('./helpers/fetch-overseas-sites.js'))
 
+const backendUrl = config.get('eprBackendUrl')
+
 const organisationId = '6507f1f77bcf86cd79943901'
 const registrationId = '6507f1f77bcf86cd79943902'
 
-const path = `/organisations/${organisationId}/registrations/${registrationId}/overseas-sites`
+const organisationNumber = '500123'
+const registrationNumber = 'R26ER5001180041PL'
+
+const path = `/organisations/${organisationNumber}/registrations/${registrationNumber}/overseas-sites`
 
 const operator = buildMockAuth()
 
@@ -41,11 +46,11 @@ const regulator = buildMockAuth({
   ...sessionIdentity(IDENTITIES.regulator)
 })
 
-/** @type {OverseasSiteDetail} */
+/** @type {OverseasSiteView} */
 const bahiaPlasticos = {
   name: 'Bahia Plásticos',
-  country: 'Brazil',
   address: {
+    country: 'Brazil',
     line1: 'Rua das Palmeiras 12',
     line2: 'Distrito Industrial',
     townOrCity: 'Salvador',
@@ -55,32 +60,23 @@ const bahiaPlasticos = {
   coordinates: '-12.9777, -38.5016'
 }
 
-/** @type {OverseasSitesById} */
-const aResolvedSite = { '007': bahiaPlasticos }
-
 /**
- * @param {{
- *   registrationNumber?: string | null,
- *   sites?: OverseasSitesById
- * }} [overrides]
+ * @param {{ sites?: OverseasSitesByOrsId }} [overrides]
  * @returns {OverseasSitesDetails}
  */
-const overseasSitesDetails = ({
-  registrationNumber = 'R26ER5001180041PL',
-  sites = aResolvedSite
-} = {}) => ({
-  organisation: asOrganisation({
-    id: organisationId,
-    companyDetails: { name: 'Kirkby Plastics Ltd' }
-  }),
-  registration: /** @type {OverseasSitesDetails['registration']} */ ({
-    id: registrationId,
+const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
+  const registration = { material: 'plastic', overseasSites: sites }
+
+  return {
+    organisation: {
+      name: 'Kirkby Plastics Ltd',
+      organisationNumber: 500123,
+      registrations: { [registrationNumber]: registration }
+    },
     registrationNumber,
-    status: 'approved',
-    material: 'plastic'
-  }),
-  sites
-})
+    registration
+  }
+}
 
 /**
  * @param {HapiServer} server
@@ -129,20 +125,6 @@ describe('the overseas reprocessing sites page', () => {
     expect(
       getByRole(documentOf(body), 'heading', { level: 1 }).textContent
     ).toContain('Kirkby Plastics Ltd - R26ER5001180041PL')
-  })
-
-  it('drops the number for a registration that holds none', async ({
-    server
-  }) => {
-    vi.mocked(fetchOverseasSites).mockResolvedValue(
-      overseasSitesDetails({ registrationNumber: null })
-    )
-
-    const { body } = await visit(server, regulator)
-
-    expect(
-      getByRole(documentOf(body), 'heading', { level: 1 }).textContent
-    ).toContain('Kirkby Plastics Ltd')
   })
 
   // The column order is the one the admin service already lists sites in, and
@@ -214,32 +196,6 @@ describe('the overseas reprocessing sites page', () => {
     ).toStrictEqual(['003', '011', '021'])
   })
 
-  // A site the register holds no record of still names an id the registration
-  // reprocesses through, so the row is shown with nothing filled in.
-  it('dashes every value a site the register cannot resolve would carry', async ({
-    server
-  }) => {
-    vi.mocked(fetchOverseasSites).mockResolvedValue(
-      overseasSitesDetails({
-        sites: {
-          '014': {
-            name: null,
-            country: null,
-            address: null,
-            coordinates: null
-          }
-        }
-      })
-    )
-
-    const { body } = await visit(server, regulator)
-    const [, firstRow] = siteRows(body)
-
-    expect(
-      getAllByRole(firstRow, 'cell').map((cell) => cell.textContent?.trim())
-    ).toStrictEqual(['Plastic', '-', '-', '-', '-', '-', '-', '-', '-'])
-  })
-
   it('dashes the parts of an address a site leaves out', async ({ server }) => {
     vi.mocked(fetchOverseasSites).mockResolvedValue(
       overseasSitesDetails({
@@ -247,11 +203,9 @@ describe('the overseas reprocessing sites page', () => {
           '014': {
             ...bahiaPlasticos,
             address: {
+              country: 'Brazil',
               line1: 'Rua das Palmeiras 12',
-              line2: null,
-              townOrCity: 'Salvador',
-              stateOrRegion: null,
-              postcode: null
+              townOrCity: 'Salvador'
             }
           }
         }
@@ -299,8 +253,33 @@ describe('the overseas reprocessing sites page', () => {
     const { body } = await visit(server, regulator)
 
     expect(body).toContain(
-      `/organisations/${organisationId}/registrations/${registrationId}"`
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}"`
     )
+  })
+
+  it('sends a regulator opening it by ids to its numbers', async ({
+    server,
+    msw
+  }) => {
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+        HttpResponse.json({
+          id: organisationId,
+          orgId: 500123,
+          registrations: [{ id: registrationId, registrationNumber }],
+          accreditations: []
+        })
+      )
+    )
+
+    const response = await server.inject({
+      method: 'GET',
+      url: `/organisations/${organisationId}/registrations/${registrationId}/overseas-sites`,
+      auth: regulator
+    })
+
+    expect(response.statusCode).toBe(statusCodes.found)
+    expect(response.headers.location).toBe(path)
   })
 
   it('offers a regulator no control that changes the registration', async ({
