@@ -13,19 +13,9 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 /**
  * @param {HapiServer} server
- * @param {string} [consent]
- */
-const getCookiesPage = async (server, consent) =>
-  getCookiesPageWith(
-    server,
-    consent ? `${ANALYTICS_CONSENT_COOKIE}=${consent}` : undefined
-  )
-
-/**
- * @param {HapiServer} server
  * @param {string} [cookie]
  */
-const getCookiesPageWith = async (server, cookie) => {
+const getCookiesPage = async (server, cookie) => {
   const { result } = await server.inject({
     method: 'GET',
     url: '/cookies',
@@ -149,7 +139,10 @@ describe('#analyticsChoice', () => {
       ['accepted', 'accepted'],
       ['rejected', 'rejected']
     ])('should show %s as the saved choice', async ([consent], { server }) => {
-      const body = await getCookiesPage(server, consent)
+      const body = await getCookiesPage(
+        server,
+        `${ANALYTICS_CONSENT_COOKIE}=${consent}`
+      )
       const checked = body.querySelector('input[name="analytics"][checked]')
 
       expect(checked?.getAttribute('value')).toBe(consent)
@@ -195,7 +188,7 @@ describe('#analyticsChoice', () => {
           analytics,
           returnUrl: '/cookies'
         })
-        const body = await getCookiesPageWith(server, cookie)
+        const body = await getCookiesPage(server, cookie)
 
         expect(getByRole(body, 'alert').textContent).toContain(
           "You've set your cookie preferences."
@@ -210,7 +203,7 @@ describe('#analyticsChoice', () => {
         analytics: 'accepted',
         returnUrl: '/cookies'
       })
-      const body = await getCookiesPageWith(server, cookie)
+      const body = await getCookiesPage(server, cookie)
 
       expect(queryByRole(body, 'region', { name: /cookies on/i })).toBeNull()
     })
@@ -276,7 +269,7 @@ describe('#analyticsChoice', () => {
         backUrl: '/cy/start?page=2',
         returnUrl: '/cookies'
       })
-      const body = await getCookiesPageWith(server, cookie)
+      const body = await getCookiesPage(server, cookie)
 
       expect(backLink(body)?.getAttribute('href')).toBe('/cy/start?page=2')
     })
@@ -289,7 +282,7 @@ describe('#analyticsChoice', () => {
         backUrl: '/start',
         returnUrl: '/cookies'
       })
-      const body = await getCookiesPageWith(server, cookie)
+      const body = await getCookiesPage(server, cookie)
 
       expect(carriedBackUrl(body)).toBe('/start')
     })
@@ -305,7 +298,7 @@ describe('#analyticsChoice', () => {
           backUrl,
           returnUrl: '/cookies'
         })
-        const body = await getCookiesPageWith(server, cookie)
+        const body = await getCookiesPage(server, cookie)
 
         expect(getByRole(body, 'alert')).not.toBeNull()
         expect(backLink(body)).toBeNull()
