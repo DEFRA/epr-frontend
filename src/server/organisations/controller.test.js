@@ -3,6 +3,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchYearsModule from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { year } from '#server/common/helpers/year.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
@@ -1196,7 +1197,7 @@ describe('#organisationController', () => {
       const { payload } = await get(server)
 
       expect(fetchYearsModule.fetchOrganisationYears).not.toHaveBeenCalled()
-      expect(load(payload)('[data-testid="selected-year"]')).toHaveLength(0)
+      expect(payload).not.toMatch(/This is \d+ data/)
     })
 
     describe('when the flag is on', () => {
@@ -1208,7 +1209,8 @@ describe('#organisationController', () => {
         server
       }) => {
         vi.mocked(fetchYearsModule.fetchOrganisationYears).mockResolvedValue([
-          2027, 2026
+          year(2027),
+          year(2026)
         ])
 
         const { payload } = await get(server)
@@ -1217,7 +1219,7 @@ describe('#organisationController', () => {
           asOrganisation(fixtureData).orgId,
           'test-backend-token'
         )
-        expect(load(payload)('[data-testid="selected-year"]').text()).toBe(
+        expect(load(payload)('p.govuk-heading-m').text()).toBe(
           'This is 2027 data'
         )
       })
@@ -1230,7 +1232,7 @@ describe('#organisationController', () => {
         const { payload, statusCode } = await get(server)
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(load(payload)('[data-testid="selected-year"]')).toHaveLength(0)
+        expect(payload).not.toMatch(/This is \d+ data/)
       })
 
       it('should still render the page when the years cannot be read', async ({
@@ -1243,7 +1245,7 @@ describe('#organisationController', () => {
         const { payload, statusCode } = await get(server)
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(load(payload)('[data-testid="selected-year"]')).toHaveLength(0)
+        expect(payload).not.toMatch(/This is \d+ data/)
         expect(load(payload)('h1').text()).toMatch(/ACME ltd/)
       })
     })

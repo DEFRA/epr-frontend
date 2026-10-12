@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { test } from '#vite/fixtures/server.js'
 
 import { fetchOrganisationYears } from './fetch-organisation-years.js'
@@ -16,7 +17,10 @@ describe(fetchOrganisationYears, () => {
       )
     )
 
-    const result = await fetchOrganisationYears(50002, 'test-id-token')
+    const result = await fetchOrganisationYears(
+      organisationNumber(50002),
+      'test-id-token'
+    )
 
     expect(result).toStrictEqual([2027, 2026])
   })
@@ -30,7 +34,7 @@ describe(fetchOrganisationYears, () => {
       })
     )
 
-    await fetchOrganisationYears(50002, 'test-id-token')
+    await fetchOrganisationYears(organisationNumber(50002), 'test-id-token')
 
     expect(authorization).toBe('Bearer test-id-token')
   })

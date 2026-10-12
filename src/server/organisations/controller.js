@@ -3,6 +3,7 @@ import { capitalize } from 'lodash-es'
 import { config } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
@@ -17,6 +18,8 @@ import { getStatusClass } from './helpers/status-helpers.js'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
  */
 
@@ -315,26 +318,27 @@ async function getWasteBalanceMap(
 }
 
 /**
- * The year the page shows: the current year when the organisation has data
- * for it, otherwise its latest year. Behind the navigateAcrossYears flag, and
+ * The year the page shows: the latest year the backend returns. Behind the navigateAcrossYears flag, and
  * absent when the years cannot be read, so the page renders as it did before.
- * @param {number} organisationNumber
+ * @param {OrganisationNumber} orgNumber
  * @param {string} backendToken
  * @param {TypedLogger} logger
- * @returns {Promise<number | null>}
+ * @returns {Promise<Year | null>}
  */
-async function getSelectedYear(organisationNumber, backendToken, logger) {
+async function getSelectedYear(orgNumber, backendToken, logger) {
   if (!config.get('featureFlags.navigateAcrossYears')) {
     return null
   }
 
   try {
     const [latestYear = null] = await fetchOrganisationYears(
-      organisationNumber,
+      orgNumber,
       backendToken
     )
     return latestYear
   } catch (error) {
+    // TODO(PAE-2052): remove with FEATURE_FLAG_NAVIGATE_ACROSS_YEARS; the
+    // backend route may not be deployed yet
     logger.error({ message: 'Failed to fetch organisation years', err: error })
     return null
   }
@@ -412,7 +416,7 @@ export const controller = {
         request.logger
       ),
       getSelectedYear(
-        organisationData.orgId,
+        organisationNumber(organisationData.orgId),
         session.backendToken,
         request.logger
       )
