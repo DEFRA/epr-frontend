@@ -61,7 +61,14 @@ export const takeConfirmedChoice = (request, h) => {
  * sends the visitor back to the page they answered from, and is server-built so
  * it is always a local path.
  * @param {HapiRequest | null} request
- * @returns {{ confirmedChoice: 'accepted' | 'rejected' | null, hasConsented: boolean, hasRejected: boolean, isEnabled: boolean, returnUrl: string, shouldAskConsent: boolean }}
+ * @returns {{
+ *   confirmedChoice: 'accepted' | 'rejected' | null,
+ *   hasConsented: boolean,
+ *   hasRejected: boolean,
+ *   isEnabled: boolean,
+ *   returnUrl: string,
+ *   shouldAskConsent: boolean
+ * }}
  */
 export const analyticsConsent = (request) => {
   const path = request?.url

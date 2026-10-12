@@ -29,7 +29,9 @@ export const consentController = {
     }
   },
   /**
-   * @param {HapiRequest & { payload: { analytics: string, backUrl?: string, returnUrl?: string } }} request
+   * @param {HapiRequest & {
+   *   payload: { analytics: string, backUrl?: string, returnUrl?: string }
+   * }} request
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
