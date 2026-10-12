@@ -89,7 +89,7 @@ export const findOrganisationByNumber = async (
     credentials.backendToken
   )
 
-  return organisation && organisation.orgId === Number(organisationNumber)
+  return organisation?.orgId === Number(organisationNumber)
     ? organisation
     : null
 }
