@@ -4,6 +4,7 @@
  * @import {Policy, PolicyOptions} from '@hapi/catbox'
  * @import {TFunction, i18n} from 'i18next'
  * @import {Metrics} from '@defra/cdp-metrics'
+ * @import {AnalyticsConsent} from './analytics/consent.js'
  * @import {TypedLogger} from './helpers/logging/logger.js'
  * @import {WasteOrganisationsService} from './helpers/waste-organisations/port.js'
  * @import {UserSession} from '../auth/types/session.js'
@@ -93,7 +94,7 @@
  *     TypedLogger; calls like `request.logger.warn({ ...non-allowlisted
  *     fields })` then fail tsc.
  * @typedef {Omit<Request, 'app' | 'auth' | 'logger' | 'server' | 'state' | 'yar'> & {
- *   app: Request['app'] & { analyticsConfirmedChoice?: 'accepted' | 'rejected' | null },
+ *   app: Request['app'] & { analyticsConfirmedChoice?: AnalyticsConsent | null },
  *   auth: RequestAuth,
  *   logger: TypedLogger,
  *   server: HapiServer,

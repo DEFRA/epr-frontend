@@ -9,6 +9,7 @@ import Joi from 'joi'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { AnalyticsConsent } from '#server/common/analytics/consent.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */
 
@@ -31,7 +32,7 @@ export const consentController = {
   },
   /**
    * @param {HapiRequest & {
-   *   payload: { analytics: string, backUrl?: string, returnUrl?: string }
+   *   payload: { analytics: AnalyticsConsent, backUrl?: string, returnUrl?: string }
    * }} request
    * @param {ResponseToolkit} h
    */

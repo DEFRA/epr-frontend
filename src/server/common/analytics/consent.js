@@ -12,11 +12,15 @@ export const ANALYTICS_CONSENT = /** @type {const} */ ({
   rejected: 'rejected'
 })
 
+/**
+ * @typedef {typeof ANALYTICS_CONSENT[keyof typeof ANALYTICS_CONSENT]} AnalyticsConsent
+ */
+
 export const ANALYTICS_CONSENT_FLASH = 'analyticsConsentChoice'
 
 /**
  * @param {unknown} value
- * @returns {'accepted' | 'rejected' | null}
+ * @returns {AnalyticsConsent | null}
  */
 const asConsent = (value) =>
   value === ANALYTICS_CONSENT.accepted || value === ANALYTICS_CONSENT.rejected
@@ -76,7 +80,7 @@ const currentPage = (request) => {
  * it is always a local path.
  * @param {HapiRequest | null} request
  * @returns {{
- *   confirmedChoice: 'accepted' | 'rejected' | null,
+ *   confirmedChoice: AnalyticsConsent | null,
  *   hasConsented: boolean,
  *   hasRejected: boolean,
  *   isEnabled: boolean,
