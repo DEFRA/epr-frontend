@@ -4394,14 +4394,8 @@ describe('summary log check view', () => {
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Row ID: 5. The load date is outside the accreditation period'
-    },
-    {
-      code: 'OUTSIDE_ACCREDITATION_PERIOD',
-      processingType: 'REPROCESSOR_INPUT',
-      wasteRecordType: 'received',
-      expectedBullet:
-        'Row ID: 5. The load date is outside the accreditation period'
+        'Row ID: 5. The load date is outside the accreditation period, ' +
+        'or the accreditation was suspended or cancelled on that date'
     }
   ]
 
