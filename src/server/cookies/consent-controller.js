@@ -3,7 +3,8 @@ import {
   ANALYTICS_CONSENT_COOKIE,
   ANALYTICS_CONSENT_FLASH
 } from '#server/common/analytics/consent.js'
-import { BACK_URL_FLASH, localPath } from '#server/cookies/urls.js'
+import { BACK_URL_FLASH } from '#server/cookies/urls.js'
+import { getSafeRedirect, isSafeRedirect } from '#utils/get-safe-redirect.js'
 import Joi from 'joi'
 
 /**
@@ -35,17 +36,16 @@ export const consentController = {
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
-    const { analytics, returnUrl } = request.payload
-    const backUrl = localPath(request.payload.backUrl, request.url)
+    const { analytics, backUrl, returnUrl } = request.payload
 
     request.yar.flash(ANALYTICS_CONSENT_FLASH, analytics)
 
-    if (backUrl) {
+    if (isSafeRedirect(backUrl)) {
       request.yar.flash(BACK_URL_FLASH, backUrl)
     }
 
     return h
-      .redirect(localPath(returnUrl, request.url) ?? '/')
+      .redirect(getSafeRedirect(returnUrl))
       .state(ANALYTICS_CONSENT_COOKIE, analytics, {
         ttl: CONSENT_MAX_AGE_DAYS * 24 * 60 * 60 * 1000,
         isHttpOnly: false,
