@@ -29,7 +29,7 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  */
 
@@ -378,7 +378,7 @@ describe('/auth/callback/entra - GET integration', async () => {
 
     /**
      * @param {HapiServer} server
-     * @param {SetupServerApi} msw
+     * @param {SetupServer} msw
      * @param {string} secondSignInReferer
      */
     const refusedThenSignedIn = async (server, msw, secondSignInReferer) => {
@@ -525,7 +525,7 @@ describe('/auth/callback/entra - GET integration', async () => {
      * The browser sends everything sign in left it except the session cookie,
      * which expires long before the provider cookie does.
      * @param {HapiServer} server
-     * @param {SetupServerApi} msw
+     * @param {SetupServer} msw
      */
     const cookiesAfterLapse = async (server, msw) => {
       const jar = {}

@@ -11,7 +11,7 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  */
 
@@ -111,7 +111,7 @@ const registerPages = (server) => {
 }
 
 /**
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {object} [held]
  */
 const backendHolds = (msw, held = organisation) =>
@@ -358,7 +358,7 @@ describe('redirecting a page URL to the key form its route wants', () => {
     })
 
     /**
-     * @param {SetupServerApi} msw
+     * @param {SetupServer} msw
      * @param {object[]} items
      */
     const searchFinds = (msw, items) =>
