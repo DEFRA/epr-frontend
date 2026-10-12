@@ -54,6 +54,20 @@ export const takeConfirmedChoice = (request, h) => {
 }
 
 /**
+ * The page being rendered, in the visitor's language.
+ * @param {HapiRequest | null} request
+ */
+const currentPage = (request) => {
+  if (!request?.url) {
+    return '/'
+  }
+
+  const path = `${request.url.pathname}${request.url.search}`
+
+  return request.localiseUrl?.(path) ?? path
+}
+
+/**
  * Whether analytics may run, and whether we still need to ask. Every answer
  * comes from one place so a page cannot show the banner while already tracking,
  * or track while still asking. `hasRejected` is not the negation of
@@ -71,10 +85,7 @@ export const takeConfirmedChoice = (request, h) => {
  * }}
  */
 export const analyticsConsent = (request) => {
-  const path = request?.url
-    ? `${request.url.pathname}${request.url.search}`
-    : '/'
-  const returnUrl = request?.localiseUrl?.(path) ?? path
+  const returnUrl = currentPage(request)
 
   if (!isAnalyticsEnabled()) {
     return {

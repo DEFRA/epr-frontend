@@ -133,6 +133,18 @@ describe('#cookieBanner', () => {
       expect(returnUrl?.getAttribute('value')).toBe('/start')
     })
 
+    it('should return the visitor to an error page served outside the translated routes', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/public/no-such-asset'
+      })
+      const returnUrl = bodyOf(result).querySelector('input[name="returnUrl"]')
+
+      expect(returnUrl?.getAttribute('value')).toBe('/public/no-such-asset')
+    })
+
     it('should return a welsh visitor to the welsh page', async ({
       server
     }) => {
