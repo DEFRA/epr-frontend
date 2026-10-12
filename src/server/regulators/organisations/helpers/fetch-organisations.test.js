@@ -8,12 +8,12 @@ import { fetchOrganisations } from './fetch-organisations.js'
 const backendUrl = config.get('eprBackendUrl')
 const backendToken = 'test-backend-token'
 
-/** @import { SetupServerApi } from 'msw/node' */
+/** @import { SetupServer } from 'msw/node' */
 
 /**
  * Captures the request the helper makes and answers it with an empty page, so
  * a test can assert on what was asked for rather than what came back.
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @returns {() => URL}
  */
 const captureRequest = (msw) => {
