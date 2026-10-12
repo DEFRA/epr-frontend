@@ -14,10 +14,11 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
+    const { t: localise, yar } = request
+
     return h.view('cookies/index', {
-      backUrl:
-        request.yar.flash(BACK_URL_FLASH).at(-1) ?? sameSiteReferrer(request),
-      pageTitle: request.t('cookies:pageTitle')
+      backUrl: yar.flash(BACK_URL_FLASH).at(-1) ?? sameSiteReferrer(request),
+      pageTitle: localise('cookies:pageTitle')
     })
   }
 }
