@@ -80,7 +80,10 @@ const defraIdCallbackController = {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
 
-      await addUserToOrganisation(organisations.linked.id, session.backendToken)
+      await addUserToOrganisation(
+        organisations.linked.orgId,
+        session.backendToken
+      )
 
       const isInitialUser =
         organisations.linked.linkedBy?.id === session.profile.id
@@ -94,7 +97,7 @@ const defraIdCallbackController = {
 
       const redirectUrl = referrerIfPresentElseDefault(
         request,
-        request.localiseUrl(`/organisations/${organisations.linked.id}`)
+        request.localiseUrl(`/organisations/${organisations.linked.orgId}`)
       )
 
       return h.redirect(redirectUrl)
