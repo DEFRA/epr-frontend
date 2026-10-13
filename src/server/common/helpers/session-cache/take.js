@@ -8,7 +8,7 @@
  * @returns {unknown}
  */
 export const take = (yar, key) => {
-  if (yar.id === null) {
+  if (!yar.id) {
     return null
   }
 
