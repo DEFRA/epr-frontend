@@ -3,9 +3,6 @@
  */
 
 /**
- * Reads a value left by the previous request and clears it, touching the
- * session only when there was something to take so a visit that leaves no
- * value does not start one.
  * @param {HapiRequest['yar']} yar
  * @param {string} key
  * @returns {unknown}
