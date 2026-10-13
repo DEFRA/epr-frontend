@@ -107,6 +107,7 @@ describe('account linking POST controller', () => {
     const cached = await server.app.cache.get(sessionId)
 
     expect(cached?.linkedOrganisationId).toBe(organisationId)
+    expect(cached?.linkedOrganisationNumber).toBe(organisationNumber)
   })
 
   it('should re-render with an error and link nothing when the number is not listed', async ({

@@ -70,10 +70,11 @@ export const controller = {
 
     await linkOrganisation(session.backendToken, organisationNumber)
 
-    // Store linked organisation ID in session for navigation
+    // Store linked organisation in session for navigation
     const sessionId = request.state?.userSession?.sessionId
     if (sessionId) {
       session.linkedOrganisationId = organisation.id
+      session.linkedOrganisationNumber = organisation.orgId
       await request.server.app.cache.set(sessionId, session)
     }
 

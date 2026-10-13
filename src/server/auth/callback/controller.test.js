@@ -125,7 +125,7 @@ describe('#authCallbackController', () => {
         asResponseToolkit(mockH)
       )
 
-      // First call stores initial session, second call adds linkedOrganisationId
+      // First call stores initial session, second call adds the linked organisation
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledTimes(2)
       expect(mockRequest.server.app.cache.set).toHaveBeenNthCalledWith(
         2,
@@ -141,6 +141,7 @@ describe('#authCallbackController', () => {
             logout: 'http://test.auth/logout'
           },
           linkedOrganisationId: 'defra-org-uuid',
+          linkedOrganisationNumber: '11111111',
           ...sessionIdentity(IDENTITIES.operator)
         }
       )

@@ -220,9 +220,7 @@ describe('/regulators/home - GET integration', () => {
     expect(
       action?.querySelector('.govuk-visually-hidden')?.textContent?.trim()
     ).toBe('ACME ltd')
-    expect(action?.getAttribute('href')).toBe(
-      '/organisations/6507f1f77bcf86cd79943901'
-    )
+    expect(action?.getAttribute('href')).toBe('/organisations/50002')
   })
 
   it('gives each organisation status its own colour', async ({

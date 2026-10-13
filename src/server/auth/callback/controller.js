@@ -91,8 +91,9 @@ const defraIdCallbackController = {
         await metrics.signIn.successNonInitialUser(OIDC_DEFRA_ID)
       }
 
-      // Store linked organisation ID in session for navigation
+      // Store linked organisation in session for navigation
       session.linkedOrganisationId = organisations.linked.id
+      session.linkedOrganisationNumber = organisations.linked.orgId
       await request.server.app.cache.set(sessionId, session)
 
       const redirectUrl = referrerIfPresentElseDefault(
