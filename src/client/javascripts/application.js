@@ -7,6 +7,7 @@ import {
   createAll,
   ErrorSummary,
   Radios,
+  ServiceNavigation,
   SkipLink,
   Tabs
 } from 'govuk-frontend'
@@ -17,6 +18,7 @@ createAll(CharacterCount)
 createAll(Checkboxes)
 createAll(ErrorSummary)
 createAll(Radios)
+createAll(ServiceNavigation)
 createAll(SkipLink)
 createAll(Tabs)
 
