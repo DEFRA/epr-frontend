@@ -5,6 +5,7 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
@@ -355,10 +356,7 @@ describe('#makeChangesController', () => {
     describe('when requestResubmission fails for another reason', () => {
       it('should propagate the error', async ({ server }) => {
         vi.mocked(requestResubmission).mockRejectedValue(
-          Object.assign(new Error('Backend error'), {
-            isBoom: true,
-            output: { statusCode: 500 }
-          })
+          Boom.internal('Backend error')
         )
 
         const { cookie, crumb } = await getCsrfToken(server, baseUrl, {

@@ -4,6 +4,7 @@ import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
@@ -352,12 +353,7 @@ describe('#deleteController', () => {
 
   describe('when deleteReport fails', () => {
     it('should propagate the error', async ({ server }) => {
-      vi.mocked(deleteReport).mockRejectedValue(
-        Object.assign(new Error('Backend error'), {
-          isBoom: true,
-          output: { statusCode: 500 }
-        })
-      )
+      vi.mocked(deleteReport).mockRejectedValue(Boom.internal('Backend error'))
 
       const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
         auth: mockAuth
