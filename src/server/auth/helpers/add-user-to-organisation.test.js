@@ -8,8 +8,8 @@ import { addUserToOrganisation } from './add-user-to-organisation.js'
 describe('#addUserToOrganisation', () => {
   const backendUrl = config.get('eprBackendUrl')
   const mockBackendToken = 'mock-backend-token-12345'
-  const organisationId = 'org-123'
-  const userEndpoint = `${backendUrl}/v1/organisations/${organisationId}/user`
+  const organisationNumber = '11111111'
+  const userEndpoint = `${backendUrl}/organisations/${organisationNumber}/user`
 
   beforeEach(({ msw }) => {
     msw.use(
@@ -17,20 +17,20 @@ describe('#addUserToOrganisation', () => {
         'put',
         userEndpoint,
         mockBackendToken,
-        () => new HttpResponse(null, { status: 200 })
+        () => new HttpResponse(null, { status: 204 })
       )
     )
   })
 
   it('should add user to organisation successfully with valid token', async () => {
     await expect(
-      addUserToOrganisation(organisationId, mockBackendToken)
+      addUserToOrganisation(organisationNumber, mockBackendToken)
     ).resolves.not.toThrow()
   })
 
   it('should throw error when backend returns 401', async () => {
     await expect(
-      addUserToOrganisation(organisationId, 'invalid-token')
+      addUserToOrganisation(organisationNumber, 'invalid-token')
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -47,7 +47,7 @@ describe('#addUserToOrganisation', () => {
     )
 
     await expect(
-      addUserToOrganisation(organisationId, mockBackendToken)
+      addUserToOrganisation(organisationNumber, mockBackendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -60,7 +60,7 @@ describe('#addUserToOrganisation', () => {
     msw.use(http.put(userEndpoint, () => HttpResponse.error()))
 
     await expect(
-      addUserToOrganisation(organisationId, mockBackendToken)
+      addUserToOrganisation(organisationNumber, mockBackendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
