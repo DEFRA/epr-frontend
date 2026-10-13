@@ -1,8 +1,9 @@
 import { isAnalyticsEnabled } from '#server/common/analytics/enabled.js'
+import { asHapiRequest } from '#server/common/hapi-types.js'
 import { take } from '#server/common/helpers/session-cache/take.js'
 
 /**
- * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { Request, ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
@@ -35,21 +36,25 @@ const readConsent = (request) =>
   asConsent(request?.state?.[ANALYTICS_CONSENT_COOKIE])
 
 /**
- * Vision marks the responses it renders with a variety hapi's typings omit.
+ * Vision marks the responses it renders with a variety hapi's typings omit. An
+ * error is rendered as a page by `catchAll`.
  * @param {HapiRequest['response']} response
  */
-const isView = (response) =>
+const rendersPage = (response) =>
+  'isBoom' in response ||
   /** @type {{ variety?: string }} */ (response).variety === 'view'
 
 /**
  * Consumes the choice made on the previous request so only the next page
  * confirms it. Runs before yar saves the session, which a view's context is
  * built too late to do.
- * @param {HapiRequest} request
+ * @param {Request} r
  * @param {ResponseToolkit} h
  */
-export const takeConfirmedChoice = (request, h) => {
-  if (isView(request.response)) {
+export const takeConfirmedChoice = (r, h) => {
+  const request = asHapiRequest(r)
+
+  if (rendersPage(request.response)) {
     request.app.analyticsConfirmedChoice = asConsent(
       take(request.yar, ANALYTICS_CONSENT_SESSION_KEY)
     )

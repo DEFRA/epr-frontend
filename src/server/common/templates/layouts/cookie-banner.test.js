@@ -5,8 +5,10 @@ import {
   extractCookieValues,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { getByRole, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
@@ -242,6 +244,44 @@ describe('#cookieBanner', () => {
           name: 'Hide cookie message'
         }).getAttribute('href')
       ).toBe('/start')
+    })
+
+    it('should confirm the choice on the error page it was made from', async ({
+      server
+    }) => {
+      server.route({
+        method: 'GET',
+        path: '/not-found',
+        options: { auth: false },
+        handler: () => {
+          throw Boom.notFound()
+        }
+      })
+
+      const { cookie, crumb } = await getCsrfToken(server, '/start')
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: '/cookies/consent',
+        headers: { cookie },
+        payload: { analytics: 'accepted', crumb, returnUrl: '/not-found' }
+      })
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/not-found',
+        headers: {
+          cookie: mergeCookies(
+            cookie,
+            extractCookieValues(headers['set-cookie']).join('; ')
+          )
+        }
+      })
+      const banner = getByRole(bodyOf(result), 'region', {
+        name: /cookies on/i
+      })
+
+      expect(getByRole(banner, 'alert').textContent).toContain(
+        "You've accepted analytics cookies."
+      )
     })
 
     it('should confirm the choice only once', async ({ server }) => {

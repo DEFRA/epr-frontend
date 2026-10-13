@@ -322,6 +322,17 @@ describe('#analyticsChoice', () => {
       expect(names).toContain(ANALYTICS_CONSENT_COOKIE)
     })
 
+    it('should still serve not found for an address no route matches', async ({
+      server
+    }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/no-such-page'
+      })
+
+      expect(statusCode).toBe(404)
+    })
+
     it.for(['/start', '/cookies'])(
       'should not start a session for an anonymous visit to %s',
       async (url, { server }) => {

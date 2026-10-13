@@ -1,4 +1,3 @@
-import { takeConfirmedChoice } from '#server/common/analytics/consent.js'
 import { consentController } from './consent-controller.js'
 import { controller } from './controller.js'
 
@@ -11,8 +10,6 @@ export const cookies = {
   plugin: {
     name: 'cookies',
     register(server) {
-      server.ext('onPostHandler', takeConfirmedChoice)
-
       server.route([
         {
           ...controller,

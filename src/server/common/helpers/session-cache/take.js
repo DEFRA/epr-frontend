@@ -8,6 +8,10 @@
  * @returns {unknown}
  */
 export const take = (yar, key) => {
+  if (yar.id === null) {
+    return null
+  }
+
   const value = yar.get(key)
 
   if (value !== null) {
