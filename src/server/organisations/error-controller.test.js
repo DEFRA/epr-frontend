@@ -5,8 +5,8 @@ import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect } from 'vitest'
 
-const organisationId = 'org-123'
-const errorUrl = `/organisations/${organisationId}/error`
+const organisationNumber = '500123'
+const errorUrl = `/organisations/${organisationNumber}/error`
 
 const mockAuth = buildMockAuth()
 
@@ -40,7 +40,7 @@ describe('#errorController', () => {
     const homeLink = getByText(main, /home page/i)
 
     expect(homeLink.closest('a').getAttribute('href')).toBe(
-      `/organisations/${organisationId}`
+      `/organisations/${organisationNumber}`
     )
   })
 
