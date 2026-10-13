@@ -327,6 +327,6 @@ export const reports = {
  */
 
 /**
- * @typedef {{ options: object, handler: Function }} ReportPageController
+ * @typedef {{ options: object, handler: (request: never, h: never) => unknown }} ReportPageController
  * @typedef {Omit<SubmissionKeys, 'cadence'> & { rest?: string }} MonthlyRedirectParams
  */
