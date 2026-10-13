@@ -15,10 +15,11 @@ import {
   findRegistrationAndAccreditation
 } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchRegistrationDetails } from '#server/registrations/details/helpers/fetch-registration-details.js'
-import { it } from '#vite/fixtures/server.js'
+import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 
@@ -114,7 +115,13 @@ describe('who a registration renders for', () => {
     config.set('featureFlags.regulatorAccess', true)
   })
 
-  beforeEach(() => {
+  beforeEach(({ msw }) => {
+    msw.use(
+      http.get(
+        `${config.get('eprBackendUrl')}/v1/organisations/:organisationId/registrations/:registrationId/accreditations/:accreditationId/packaging-recycling-notes/december-prn-eligibility`,
+        () => HttpResponse.json({ mode: 'pool', windowOpen: false })
+      )
+    )
     vi.mocked(fetchWasteBalances).mockResolvedValue({})
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       findRegistrationAndAccreditation(fixtureData, registrationId)
