@@ -56,9 +56,7 @@ export const controller = {
 
     const session = request.auth.credentials
 
-    const organisations = /** @type {UserOrganisations} */ (
-      request.pre.userOrganisations
-    )
+    const organisations = request.pre.userOrganisations
 
     const organisation = organisations.unlinked.find(
       (o) => String(o.orgId) === organisationNumber
