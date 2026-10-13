@@ -13,11 +13,7 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
-    // The pre method's null branch only fires when credentials are absent;
-    // this route is authenticated so the pre always produces organisations.
-    const organisations = /** @type {UserOrganisations} */ (
-      request.pre.userOrganisations
-    )
+    const organisations = request.pre.userOrganisations
 
     // If there are no unlinked organisations, redirect to email-not-recognised page
     if (!organisations.unlinked || organisations.unlinked.length === 0) {
@@ -33,6 +29,5 @@ export const controller = {
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { UserOrganisations } from '#server/auth/types/organisations.js'
  * @import { UserOrganisationsPres } from './prerequisites/provide-user-organisations.js'
  */
