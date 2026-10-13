@@ -132,9 +132,24 @@ describe('#accountLinkingController', () => {
                 },
                 linked: null,
                 unlinked: [
-                  { id: 'org-1', name: 'First Company', orgId: 'FC111111' },
-                  { id: 'org-2', name: 'Second Company', orgId: 'SC222222' },
-                  { id: 'org-3', name: 'Third Company', orgId: 'TC333333' }
+                  {
+                    id: 'org-1',
+                    name: 'First Company',
+                    orgId: 'FC111111',
+                    refId: 'org-1'
+                  },
+                  {
+                    id: 'org-2',
+                    name: 'Second Company',
+                    orgId: 'SC222222',
+                    refId: 'org-2'
+                  },
+                  {
+                    id: 'org-3',
+                    name: 'Third Company',
+                    orgId: 'TC333333',
+                    refId: 'org-3'
+                  }
                 ]
               }
             })
@@ -249,16 +264,14 @@ describe('#accountLinkingController', () => {
         const list = detailsContent.getByRole('list')
         const listItems = within(list).getAllByRole('listitem')
 
-        expect(listItems[0].textContent).toBe('First Company - FC111111')
-        expect(listItems[1].textContent).toBe('Second Company - SC222222')
-        expect(listItems[2].textContent).toBe('Third Company - TC333333')
+        expect(listItems[0].textContent).toBe('First Company - org-1')
+        expect(listItems[1].textContent).toBe('Second Company - org-2')
+        expect(listItems[2].textContent).toBe('Third Company - org-3')
 
         /* eslint-enable vitest/max-expects */
       })
 
-      it('should post organisation numbers and show no database ids', async ({
-        server
-      }) => {
+      it('should post organisation numbers', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: '/account/linking',
@@ -271,7 +284,6 @@ describe('#accountLinkingController', () => {
         expect(
           radios.map((radio) => radio.getAttribute('value'))
         ).toStrictEqual(['FC111111', 'SC222222', 'TC333333'])
-        expect(body.innerHTML).not.toMatch(/org-[123]/)
       })
     })
   })

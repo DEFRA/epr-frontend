@@ -53,7 +53,7 @@ describe(buildLinkingViewData, () => {
     ])
   })
 
-  it('should carry the organisation number on each unlinked entry', () => {
+  it('should carry the organisation number and reference id on each unlinked entry', () => {
     const mockRequest = {
       t: vi.fn((key) => `translated:${key}`)
     }
@@ -61,14 +61,22 @@ describe(buildLinkingViewData, () => {
     const result = buildLinkingViewData(mockHapiRequest(mockRequest), {
       current: { id: 'defra-org-123', name: 'Test Organisation' },
       linked: null,
-      unlinked: [{ id: 'org-1', name: 'First Company', orgId: 'FC111111' }]
+      unlinked: [
+        {
+          id: 'org-1',
+          name: 'First Company',
+          orgId: 'FC111111',
+          refId: 'org-1'
+        }
+      ]
     })
 
     expect(result.unlinked).toStrictEqual([
       {
         displayName: 'First Company (ID: FC111111)',
         name: 'First Company',
-        organisationNumber: 'FC111111'
+        organisationNumber: 'FC111111',
+        refId: 'org-1'
       }
     ])
   })

@@ -20,7 +20,8 @@ export function buildLinkingViewData(request, organisations, options = {}) {
     .map((o) => ({
       displayName: `${o.name} (ID: ${o.orgId})`,
       name: o.name,
-      organisationNumber: String(o.orgId)
+      organisationNumber: String(o.orgId),
+      refId: o.refId
     }))
 
   const troubleshooting = {

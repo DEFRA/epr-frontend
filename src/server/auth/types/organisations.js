@@ -10,6 +10,7 @@
  *   id: string
  *   name: string
  *   orgId: string
+ *   refId: string
  * }} EprOrganisationSummary
  */
 
