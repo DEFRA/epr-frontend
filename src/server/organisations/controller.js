@@ -301,9 +301,8 @@ async function fetchLatestYear(orgNumber, backendToken, logger) {
   const [selectedYear] = await fetchOrganisationYears(orgNumber, backendToken)
 
   if (!selectedYear) {
-    const organisation = await fetchOrganisation(orgNumber, backendToken)
     return {
-      organisation,
+      organisation: await fetchOrganisation(orgNumber, backendToken),
       selectedYear: null,
       displayedRegistrations: [],
       wasteBalanceMap: {}
