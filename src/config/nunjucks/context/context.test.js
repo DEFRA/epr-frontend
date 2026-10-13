@@ -289,6 +289,7 @@ describe('#context', () => {
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
         analytics: {
+          confirmedChoice: null,
           hasConsented: false,
           hasRejected: false,
           isEnabled: false,
@@ -385,6 +386,7 @@ describe('#context cache', () => {
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
         analytics: {
+          confirmedChoice: null,
           hasConsented: false,
           hasRejected: false,
           isEnabled: false,
