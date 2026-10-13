@@ -136,19 +136,19 @@ describe('#accountLinkingController', () => {
                     id: 'org-1',
                     name: 'First Company',
                     orgId: 'FC111111',
-                    refId: 'org-1'
+                    referenceNumber: 'org-1'
                   },
                   {
                     id: 'org-2',
                     name: 'Second Company',
                     orgId: 'SC222222',
-                    refId: 'org-2'
+                    referenceNumber: 'org-2'
                   },
                   {
                     id: 'org-3',
                     name: 'Third Company',
                     orgId: 'TC333333',
-                    refId: 'org-3'
+                    referenceNumber: 'org-3'
                   }
                 ]
               }

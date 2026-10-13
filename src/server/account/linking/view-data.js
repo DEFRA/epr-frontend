@@ -21,7 +21,7 @@ export function buildLinkingViewData(request, organisations, options = {}) {
       displayName: `${o.name} (ID: ${o.orgId})`,
       name: o.name,
       organisationNumber: String(o.orgId),
-      refId: o.refId
+      referenceNumber: o.referenceNumber
     }))
 
   const troubleshooting = {
