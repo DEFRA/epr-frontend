@@ -501,7 +501,8 @@ describe('#authCallbackController', () => {
           {
             id: 'org-1',
             name: 'Test Company',
-            orgId: '11111111'
+            orgId: '11111111',
+            refId: 'org-1'
           },
           {
             id: 'org-2',
@@ -589,7 +590,8 @@ describe('#authCallbackController', () => {
           {
             id: 'org-1',
             name: 'Test Company',
-            orgId: '11111111'
+            orgId: '11111111',
+            refId: 'org-1'
           }
         ]
       }
@@ -979,12 +981,14 @@ describe('#authCallbackController', () => {
           {
             id: 'unlinked-org-1',
             name: 'Unlinked Organisation 1',
-            orgId: '11111111'
+            orgId: '11111111',
+            refId: 'unlinked-org-1'
           },
           {
             id: 'unlinked-org-2',
             name: 'Unlinked Organisation 2',
-            orgId: '22222222'
+            orgId: '22222222',
+            refId: 'unlinked-org-2'
           }
         ]
       }
