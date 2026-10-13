@@ -142,12 +142,24 @@ const it = /** @type {TestAPI<ServerFixtures>} */ (
           ...createOidcHandlers('http://defra-id.auth'),
           ...createOidcHandlers(ENTRA_ID_BASE_URL)
         )
-        server.listen({ onUnhandledFrame: 'error' })
+        let unhandledFrames = 0
+        server.listen({
+          onUnhandledFrame: ({ defaults }) => {
+            unhandledFrames++
+            defaults.error()
+          }
+        })
 
         await use(server)
 
         server.resetHandlers()
         server.close()
+
+        if (unhandledFrames > 0) {
+          throw new Error(
+            `${unhandledFrames} request(s) had no msw handler, see the [MSW] errors above`
+          )
+        }
       },
       { auto: true }
     ],
