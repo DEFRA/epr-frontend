@@ -1,11 +1,12 @@
 import { sameSiteReferrer } from '#server/common/helpers/same-site-referrer.js'
+import { take } from '#server/common/helpers/session-cache/take.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */
 
-export const BACK_URL_FLASH = 'cookiesBackUrl'
+export const BACK_URL_SESSION_KEY = 'cookiesBackUrl'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const controller = {
@@ -17,7 +18,7 @@ export const controller = {
     const { t: localise, yar } = request
 
     return h.view('cookies/index', {
-      backUrl: yar.flash(BACK_URL_FLASH).at(-1) ?? sameSiteReferrer(request),
+      backUrl: take(yar, BACK_URL_SESSION_KEY) ?? sameSiteReferrer(request),
       pageTitle: localise('cookies:pageTitle')
     })
   }

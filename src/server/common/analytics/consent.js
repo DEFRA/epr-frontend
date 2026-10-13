@@ -1,4 +1,5 @@
 import { isAnalyticsEnabled } from '#server/common/analytics/enabled.js'
+import { take } from '#server/common/helpers/session-cache/take.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -16,7 +17,7 @@ export const ANALYTICS_CONSENT = /** @type {const} */ ({
  * @typedef {typeof ANALYTICS_CONSENT[keyof typeof ANALYTICS_CONSENT]} AnalyticsConsent
  */
 
-export const ANALYTICS_CONSENT_FLASH = 'analyticsConsentChoice'
+export const ANALYTICS_CONSENT_SESSION_KEY = 'analyticsConsentChoice'
 
 /**
  * @param {unknown} value
@@ -50,7 +51,7 @@ const isView = (response) =>
 export const takeConfirmedChoice = (request, h) => {
   if (isView(request.response)) {
     request.app.analyticsConfirmedChoice = asConsent(
-      request.yar.flash(ANALYTICS_CONSENT_FLASH).at(-1)
+      take(request.yar, ANALYTICS_CONSENT_SESSION_KEY)
     )
   }
 

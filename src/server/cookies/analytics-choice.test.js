@@ -48,6 +48,12 @@ const backLink = (body) =>
   })
 
 /**
+ * @param {string | string[] | undefined} setCookie
+ */
+const cookieNamesFrom = (setCookie) =>
+  [setCookie ?? []].flat().map((value) => value.split('=')[0])
+
+/**
  * The table a heading introduces, so a test names the section the way the page
  * does rather than reaching for a selector the page only carries for tests.
  * @param {Awaited<ReturnType<typeof getCookiesPage>>} body
@@ -315,5 +321,16 @@ describe('#analyticsChoice', () => {
 
       expect(names).toContain(ANALYTICS_CONSENT_COOKIE)
     })
+
+    it.for(['/start', '/cookies'])(
+      'should not start a session for an anonymous visit to %s',
+      async (url, { server }) => {
+        const { headers } = await server.inject({ method: 'GET', url })
+
+        expect(cookieNamesFrom(headers['set-cookie'])).not.toContain(
+          config.get('session.cache.name')
+        )
+      }
+    )
   })
 })

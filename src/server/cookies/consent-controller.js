@@ -1,9 +1,9 @@
 import {
   ANALYTICS_CONSENT,
   ANALYTICS_CONSENT_COOKIE,
-  ANALYTICS_CONSENT_FLASH
+  ANALYTICS_CONSENT_SESSION_KEY
 } from '#server/common/analytics/consent.js'
-import { BACK_URL_FLASH } from '#server/cookies/controller.js'
+import { BACK_URL_SESSION_KEY } from '#server/cookies/controller.js'
 import { getSafeRedirect, isSafeRedirect } from '#utils/get-safe-redirect.js'
 import Joi from 'joi'
 
@@ -39,10 +39,10 @@ export const consentController = {
   handler(request, h) {
     const { analytics, backUrl, returnUrl } = request.payload
 
-    request.yar.flash(ANALYTICS_CONSENT_FLASH, analytics)
+    request.yar.set(ANALYTICS_CONSENT_SESSION_KEY, analytics)
 
     if (isSafeRedirect(backUrl)) {
-      request.yar.flash(BACK_URL_FLASH, backUrl)
+      request.yar.set(BACK_URL_SESSION_KEY, backUrl)
     }
 
     return h
