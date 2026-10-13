@@ -337,12 +337,12 @@ describe('#organisationController', () => {
   })
 
   describe('the waste balance it shows', () => {
-    it('shows each accredited registration’s balance', async ({ server }) => {
+    it('shows each accreditation’s balance', async ({ server }) => {
       serve({
         R26ER1: reprocessor({ accreditations: { 2026: approved2026 } })
       })
       vi.mocked(fetchOrganisationWasteBalances).mockResolvedValue({
-        R26ER1: { amount: 1500.5, availableAmount: 1234.56 }
+        A26ER1: { amount: 1500.5, availableAmount: 1234.56 }
       })
 
       const { payload } = await visit(server)

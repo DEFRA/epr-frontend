@@ -11,17 +11,14 @@ import { fetchOrganisationWasteBalances } from './fetch-organisation-waste-balan
 const backendUrl = config.get('eprBackendUrl')
 
 describe(fetchOrganisationWasteBalances, () => {
-  test('keys each balance by its registration number', async ({ msw }) => {
+  test('returns the year’s balances keyed by accreditation number', async ({
+    msw
+  }) => {
     msw.use(
-      http.get(`${backendUrl}/organisations/50002/waste-balances`, () =>
-        HttpResponse.json([
-          {
-            registrationNumber: 'R26ER5001180041PL',
-            year: 2026,
-            amount: 20,
-            availableAmount: 12.5
-          }
-        ])
+      http.get(`${backendUrl}/organisations/50002/waste-balances/2026`, () =>
+        HttpResponse.json({
+          A26ER5001180114PL: { amount: 20, availableAmount: 12.5 }
+        })
       )
     )
 
@@ -32,20 +29,18 @@ describe(fetchOrganisationWasteBalances, () => {
     )
 
     expect(result).toStrictEqual({
-      R26ER5001180041PL: { year: 2026, amount: 20, availableAmount: 12.5 }
+      A26ER5001180114PL: { amount: 20, availableAmount: 12.5 }
     })
   })
 
-  test('asks for the year and sends the backend token', async ({ msw }) => {
-    let search
+  test('sends the backend token as a bearer token', async ({ msw }) => {
     let authorization
     msw.use(
       http.get(
-        `${backendUrl}/organisations/50002/waste-balances`,
+        `${backendUrl}/organisations/50002/waste-balances/2026`,
         ({ request }) => {
-          search = new URL(request.url).search
           authorization = request.headers.get('Authorization')
-          return HttpResponse.json([])
+          return HttpResponse.json({})
         }
       )
     )
@@ -56,7 +51,6 @@ describe(fetchOrganisationWasteBalances, () => {
       'test-id-token'
     )
 
-    expect(search).toBe('?year=2026')
     expect(authorization).toBe('Bearer test-id-token')
   })
 })

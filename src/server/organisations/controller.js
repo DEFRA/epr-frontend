@@ -69,7 +69,7 @@ const createAccreditationTag = (accreditation, localise) =>
  * @param {HapiRequest} request
  * @param {OrganisationNumber} orgNumber
  * @param {DisplayedRegistration} displayed
- * @param {WasteBalanceMap} wasteBalanceMap - Map of registration number to balance data
+ * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditation number to balance data
  * @returns {TableCell[]} - Array of table cells
  */
 function createRow(
@@ -98,7 +98,7 @@ function createRow(
     {
       text: formatWasteBalance(
         accreditation,
-        wasteBalanceMap[number],
+        accreditation && wasteBalanceMap[accreditation.accreditationNumber],
         localise
       ),
       format: 'numeric'
@@ -175,7 +175,7 @@ function addRowToSites(sites, registration, row, localise) {
  * @param {OrganisationNumber} orgNumber
  * @param {DisplayedRegistration[]} displayedRegistrations
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
- * @param {WasteBalanceMap} wasteBalanceMap - Map of registration number to balance data
+ * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditation number to balance data
  * @returns {Array} Array of sites with their materials
  */
 function getRegistrationSites(

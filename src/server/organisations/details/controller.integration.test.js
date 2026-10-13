@@ -97,7 +97,9 @@ const serveBackend = (msw) => {
     http.get(`${backendUrl}${path}/years`, () =>
       HttpResponse.json({ years: [2026, 2025] })
     ),
-    http.get(`${backendUrl}${path}/waste-balances`, () => HttpResponse.json([]))
+    http.get(`${backendUrl}${path}/waste-balances/:year`, () =>
+      HttpResponse.json({})
+    )
   )
 
   return { yearsAskedFor }
