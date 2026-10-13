@@ -1,4 +1,9 @@
 import { fetchReportBackend } from './fetch-report-backend.js'
+import { reportApiPath } from './report-paths.js'
+
+/**
+ * @import { SubmissionKeys } from './report-paths.js'
+ */
 
 /**
  * Requests resubmission on an operator's own submitted report via the
@@ -6,22 +11,12 @@ import { fetchReportBackend } from './fetch-report-backend.js'
  * no longer eligible — unlike {@link fetchReportBackend}'s other callers,
  * the 409 codes here aren't stale reasons, so they propagate as-is rather
  * than becoming a ReportStaleError.
- * @param {{ organisationId: string, registrationId: string, year: number, cadence: string, period: number, submissionNumber: number }} periodParams
+ * @param {SubmissionKeys} keys
  * @param {string} backendToken
  * @returns {Promise<unknown>}
  */
-export async function requestResubmission(periodParams, backendToken) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = periodParams
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}/request-resubmission`
-
-  return fetchReportBackend(path, {
+export async function requestResubmission(keys, backendToken) {
+  return fetchReportBackend(`${reportApiPath(keys)}/request-resubmission`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${backendToken}`

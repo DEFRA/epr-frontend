@@ -10,12 +10,14 @@ const { fetchJsonFromBackend } =
   await import('#server/common/helpers/fetch-json-from-backend.js')
 
 describe(updateReport, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const year = 2026
-  const cadence = 'quarterly'
-  const period = 1
-  const submissionNumber = 1
+  const keys = {
+    organisationNumber: '500001',
+    registrationNumber: 'R25SR500030912PA',
+    year: 2026,
+    cadence: /** @type {const} */ ('quarterly'),
+    period: 1,
+    submissionNumber: 1
+  }
   const backendToken = 'test-token'
 
   const mockResponse = { ok: true }
@@ -24,24 +26,17 @@ describe(updateReport, () => {
     vi.clearAllMocks()
   })
 
-  it('calls fetchJsonFromBackend with correct path and options for supporting information', async () => {
+  it('patches a quarterly report through the registered-only natural-key route', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updateReport(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
+      keys,
       { supportingInformation: 'Supply chain disruption in February' },
       backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1',
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
       {
         method: 'PATCH',
         headers: {
@@ -54,24 +49,17 @@ describe(updateReport, () => {
     )
   })
 
-  it('calls fetchJsonFromBackend with correct path and options for status update', async () => {
+  it('patches a monthly report through the accredited natural-key route', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updateReport(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
+      { ...keys, cadence: 'monthly' },
       { status: 'ready_to_submit' },
       backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1',
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1',
       {
         method: 'PATCH',
         headers: {
@@ -85,18 +73,7 @@ describe(updateReport, () => {
   it('sends empty string for supporting information when blank', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
-    await updateReport(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      { supportingInformation: '' },
-      backendToken
-    )
+    await updateReport(keys, { supportingInformation: '' }, backendToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       expect.any(String),
@@ -106,40 +83,11 @@ describe(updateReport, () => {
     )
   })
 
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updateReport(
-      {
-        organisationId: 'org/123',
-        registrationId: 'reg&456',
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      { supportingInformation: 'notes' },
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1',
-      expect.any(Object)
-    )
-  })
-
   it('returns the response from fetchJsonFromBackend', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await updateReport(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
+      keys,
       { supportingInformation: 'notes' },
       backendToken
     )
@@ -152,18 +100,7 @@ describe(updateReport, () => {
     vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await expect(
-      updateReport(
-        {
-          organisationId,
-          registrationId,
-          year,
-          cadence,
-          period,
-          submissionNumber
-        },
-        { supportingInformation: 'notes' },
-        backendToken
-      )
+      updateReport(keys, { supportingInformation: 'notes' }, backendToken)
     ).rejects.toThrow('Network error')
   })
 })

@@ -1,9 +1,10 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { createReport } from './helpers/create-report.js'
 import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { reportAttempt } from './helpers/report-attempt.js'
+import { reportPath } from './helpers/report-paths.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { isReportDataIncompleteError } from './helpers/report-data-incomplete.js'
@@ -17,37 +18,22 @@ export const createController = {
     }
   },
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { organisationNumber, registrationNumber, cadence } = request.params
     const session = request.auth.credentials
 
     const { registration, accreditation } =
-      await fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.backendToken
+      await fetchRegistrationAndAccreditationByNumber(
+        organisationNumber,
+        registrationNumber,
+        session
       )
 
     validateCadenceForRegistration(cadence, accreditation)
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+    const basePath = reportPath(request.params)
 
     try {
-      await createReport(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        session.backendToken
-      )
+      await createReport(request.params, session.backendToken)
     } catch (error) {
       const boomError = /** @type {Boom} */ (error)
 

@@ -3,13 +3,12 @@ import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { buildActionLinkHtml } from './helpers/build-action-link-html.js'
-import { buildPeriodPath } from './helpers/build-period-path.js'
 import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
 import { buildStatusTagHtml } from './helpers/build-status-tag-html.js'
-import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
+import { fetchReportingPeriodsByNumber } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { formatSubmittedDateTime } from './helpers/format-submitted-date-time.js'
 import {
@@ -19,11 +18,11 @@ import {
   getRowAction,
   REPORT_ACTION
 } from './helpers/report-action.js'
+import { registrationPath, reportPath } from './helpers/report-paths.js'
 
 /**
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
  * @typedef {TableCell[]} TableRow
- * @typedef {{ organisationId: string, registrationId: string }} ReportListParams
  */
 
 /**
@@ -80,7 +79,7 @@ const buildActionCell = ({
  *   canWrite: boolean,
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
- *   organisationId: string,
+ *   keys: RegistrationKeys,
  *   registration: Registration,
  *   reportingPeriods: ReportingPeriod[]
  * }} options
@@ -92,7 +91,7 @@ function buildRows({
   canWrite,
   localise,
   localiseUrl,
-  organisationId,
+  keys,
   registration,
   reportingPeriods
 }) {
@@ -102,11 +101,12 @@ function buildRows({
   const submittedRows = []
 
   for (const period of reportingPeriods) {
-    const periodPath = buildPeriodPath({
-      organisationId,
-      registrationId: registration.id,
-      period,
-      cadence
+    const periodPath = reportPath({
+      ...keys,
+      year: period.year,
+      cadence,
+      period: period.period,
+      submissionNumber: period.submissionNumber
     })
 
     const label = formatPeriodLabelWithComma(period, cadence, localise)
@@ -214,10 +214,10 @@ const buildApprovedPersonBanner = (reportingPeriods, localise) => {
   return count > 0 ? localise('reports:approvedPersonBanner', { count }) : null
 }
 
-/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: ReportListParams }>>} */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: RegistrationKeys }>>} */
 export const listController = {
   async handler(request, h) {
-    const { organisationId, registrationId } = request.params
+    const { organisationNumber, registrationNumber } = request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
@@ -225,16 +225,12 @@ export const listController = {
       { organisationData, registration, accreditation },
       { cadence, reportingPeriods }
     ] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.backendToken
+      fetchRegistrationAndAccreditationByNumber(
+        organisationNumber,
+        registrationNumber,
+        session
       ),
-      fetchReportingPeriods(
-        organisationId,
-        registrationId,
-        session.backendToken
-      )
+      fetchReportingPeriodsByNumber(request.params, session.backendToken)
     ])
 
     const material = getRegistrationMaterialDisplayName(registration)
@@ -247,7 +243,7 @@ export const listController = {
       canWrite: hasWriteScope(session),
       localise,
       localiseUrl: (url) => request.localiseUrl(url),
-      organisationId,
+      keys: request.params,
       registration,
       reportingPeriods
     })
@@ -264,9 +260,7 @@ export const listController = {
         emptyMessage: localise('reports:actionRequiredEmpty')
       },
       approvedPersonBanner,
-      backUrl: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}`
-      ),
+      backUrl: request.localiseUrl(registrationPath(request.params)),
       breadcrumbs: readsAsARegulator(session)
         ? buildReportBreadcrumbs({
             organisation: organisationData,
@@ -297,4 +291,5 @@ export const listController = {
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { CadenceValue } from './constants.js'
  * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
+ * @import { RegistrationKeys } from './helpers/report-paths.js'
  */

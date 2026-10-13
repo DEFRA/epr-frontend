@@ -9,6 +9,9 @@ export const CADENCE = Object.freeze({
 /**
  * @typedef {typeof SUBMISSION_STATUS[keyof typeof SUBMISSION_STATUS]} SubmissionStatusValue
  */
+/** Status the report resource gives a period with no stored report. */
+export const PREVIEW_STATUS = 'not_started'
+
 export const SUBMISSION_STATUS = Object.freeze({
   DUE: 'due',
   OVERDUE: 'overdue',

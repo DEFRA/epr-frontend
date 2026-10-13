@@ -19,22 +19,31 @@ describe('fetchReportBackend', () => {
   it('delegates to fetchJsonFromBackend with the same arguments', async () => {
     mockFetchJson.mockResolvedValue({ id: 'report-1' })
 
-    await fetchReportBackend('/v1/reports/1', {
-      method: 'GET',
-      headers: { Authorization: 'Bearer token' }
-    })
+    await fetchReportBackend(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
+      {
+        method: 'GET',
+        headers: { Authorization: 'Bearer token' }
+      }
+    )
 
-    expect(mockFetchJson).toHaveBeenCalledWith('/v1/reports/1', {
-      method: 'GET',
-      headers: { Authorization: 'Bearer token' }
-    })
+    expect(mockFetchJson).toHaveBeenCalledWith(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
+      {
+        method: 'GET',
+        headers: { Authorization: 'Bearer token' }
+      }
+    )
   })
 
   it('returns the response from fetchJsonFromBackend', async () => {
     const mockResponse = { id: 'report-1' }
     mockFetchJson.mockResolvedValue(mockResponse)
 
-    const result = await fetchReportBackend('/v1/reports/1', { method: 'GET' })
+    const result = await fetchReportBackend(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
+      { method: 'GET' }
+    )
 
     expect(result).toStrictEqual(mockResponse)
   })
@@ -49,7 +58,10 @@ describe('fetchReportBackend', () => {
     mockFetchJson.mockRejectedValue(boom)
 
     await expect(
-      fetchReportBackend('/v1/reports/1', { method: 'GET' })
+      fetchReportBackend(
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
+        { method: 'GET' }
+      )
     ).rejects.toBeInstanceOf(ReportStaleError)
   })
 
@@ -64,9 +76,12 @@ describe('fetchReportBackend', () => {
     }
     mockFetchJson.mockRejectedValue(boom)
 
-    const err = await fetchReportBackend('/v1/reports/1', {
-      method: 'GET'
-    }).catch((e) => e)
+    const err = await fetchReportBackend(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
+      {
+        method: 'GET'
+      }
+    ).catch((e) => e)
 
     expect(err.reasons).toStrictEqual([
       STALE_REASON.SUMMARY_LOG_CHANGED,
@@ -83,9 +98,12 @@ describe('fetchReportBackend', () => {
     }
     mockFetchJson.mockRejectedValue(boom)
 
-    const err = await fetchReportBackend('/v1/reports/1', {
-      method: 'PATCH'
-    }).catch((e) => e)
+    const err = await fetchReportBackend(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
+      {
+        method: 'PATCH'
+      }
+    ).catch((e) => e)
 
     expect(err).toBeInstanceOf(ReportStaleError)
     expect(err.reasons).toStrictEqual([STALE_REASON.SUMMARY_LOG_CHANGED])
@@ -98,7 +116,10 @@ describe('fetchReportBackend', () => {
     mockFetchJson.mockRejectedValue(boom)
 
     await expect(
-      fetchReportBackend('/v1/reports/1', { method: 'PATCH' })
+      fetchReportBackend(
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
+        { method: 'PATCH' }
+      )
     ).rejects.toBe(boom)
   })
 
@@ -109,7 +130,10 @@ describe('fetchReportBackend', () => {
     mockFetchJson.mockRejectedValue(boom)
 
     await expect(
-      fetchReportBackend('/v1/reports/1', { method: 'PATCH' })
+      fetchReportBackend(
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
+        { method: 'PATCH' }
+      )
     ).rejects.toBe(boom)
   })
 
@@ -118,7 +142,10 @@ describe('fetchReportBackend', () => {
     mockFetchJson.mockRejectedValue(networkError)
 
     await expect(
-      fetchReportBackend('/v1/reports/1', { method: 'GET' })
+      fetchReportBackend(
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
+        { method: 'GET' }
+      )
     ).rejects.toThrow('Network error')
   })
 })

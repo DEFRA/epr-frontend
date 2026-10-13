@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
@@ -61,9 +61,8 @@ const reportDetail = {
   endDate: '2026-01-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: { material: 'plastic' },
-  id: 'report-001',
   version: 1,
-  status: { currentStatus: 'in_progress' },
+  status: 'in_progress',
   supportingInformation: null,
   recyclingActivity: {
     totalTonnageReceived: 200,
@@ -73,9 +72,9 @@ const reportDetail = {
   }
 }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/tonnes-recycled`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/tonnes-recycled`
 
 describe('#tonnesRecycledController', () => {
   beforeEach(() => {
@@ -84,7 +83,7 @@ describe('#tonnesRecycledController', () => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -162,11 +161,11 @@ describe('#tonnesRecycledController', () => {
     it('should return 200 for registered-only reprocessor', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyReprocessor
       )
 
-      const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/tonnes-recycled`
+      const quarterlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/tonnes-recycled`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -178,7 +177,7 @@ describe('#tonnesRecycledController', () => {
     })
 
     it('should return 404 for exporter registration', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         exporterRegistration
       )
 
@@ -197,7 +196,7 @@ describe('#tonnesRecycledController', () => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse({
           ...reportDetail,
-          status: { currentStatus: 'ready_to_submit' }
+          status: 'ready_to_submit'
         })
       )
 
@@ -213,7 +212,7 @@ describe('#tonnesRecycledController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -251,7 +250,7 @@ describe('#tonnesRecycledController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/tonnes-not-recycled`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/tonnes-not-recycled`
         )
       })
 
@@ -272,8 +271,8 @@ describe('#tonnesRecycledController', () => {
 
         expect(updateReport).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'monthly',
             period: 1,
@@ -301,7 +300,7 @@ describe('#tonnesRecycledController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
       })
 
@@ -322,7 +321,7 @@ describe('#tonnesRecycledController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
       })
 

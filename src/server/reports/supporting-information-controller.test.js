@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
@@ -48,7 +48,6 @@ const accreditedExporter = /** @type {RegistrationWithAccreditation} */ (
 
 const reportDetailWithoutSupportingInfo = /** @type {ReportDetailResponse} */ (
   /** @type {unknown} */ ({
-    operatorCategory: 'EXPORTER_REGISTERED_ONLY',
     cadence: 'quarterly',
     year: 2026,
     period: 1,
@@ -58,8 +57,6 @@ const reportDetailWithoutSupportingInfo = /** @type {ReportDetailResponse} */ (
       summaryLogId: 'sl-1',
       lastUploadedAt: '2026-02-15T15:09:00.000Z'
     },
-    details: { material: 'plastic' },
-    id: 'report-001',
     version: 1,
     status: 'in_progress',
     supportingInformation: null,
@@ -93,9 +90,9 @@ const reportDetailWithSupportingInfo = /** @type {ReportDetailResponse} */ (
   })
 )
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/supporting-information`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/supporting-information`
 
 describe('#supportingInformationController', () => {
   beforeEach(() => {
@@ -104,7 +101,7 @@ describe('#supportingInformationController', () => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporter
       )
     })
@@ -279,7 +276,7 @@ describe('#supportingInformationController', () => {
         expect(deleteLink).not.toBeNull()
         expect(deleteLink?.textContent).toContain('Delete report')
         expect(deleteLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/delete`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/delete`
         )
       })
 
@@ -299,14 +296,14 @@ describe('#supportingInformationController', () => {
 
         expect(backLink).not.toBeNull()
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/tonnes-not-exported`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/tonnes-not-exported`
         )
       })
 
       it('should display back link to free-prns for accredited reprocessor', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue({
           ...accreditedExporter,
           registration: {
             ...accreditedExporter.registration,
@@ -314,7 +311,7 @@ describe('#supportingInformationController', () => {
           }
         })
 
-        const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/supporting-information`
+        const monthlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/supporting-information`
 
         const { result } = await server.inject({
           method: 'GET',
@@ -328,14 +325,14 @@ describe('#supportingInformationController', () => {
         const backLink = body.querySelector('.govuk-back-link')
 
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/free-prns`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/free-prns`
         )
       })
 
       it('should display back link to tonnes-not-recycled for registered-only reprocessor', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue({
           ...registeredOnlyExporter,
           registration: {
             ...registeredOnlyExporter.registration,
@@ -343,7 +340,7 @@ describe('#supportingInformationController', () => {
           }
         })
 
-        const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/supporting-information`
+        const quarterlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/supporting-information`
 
         const { result } = await server.inject({
           method: 'GET',
@@ -357,18 +354,18 @@ describe('#supportingInformationController', () => {
         const backLink = body.querySelector('.govuk-back-link')
 
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/tonnes-not-recycled`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/tonnes-not-recycled`
         )
       })
 
       it('should display back link to free-perns for accredited exporter', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
           accreditedExporter
         )
 
-        const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/supporting-information`
+        const monthlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/supporting-information`
 
         const { result } = await server.inject({
           method: 'GET',
@@ -383,7 +380,7 @@ describe('#supportingInformationController', () => {
 
         expect(backLink).not.toBeNull()
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/free-perns`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/free-perns`
         )
       })
     })
@@ -418,7 +415,7 @@ describe('#supportingInformationController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -465,7 +462,7 @@ describe('#supportingInformationController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/check-your-answers`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/check-your-answers`
         )
       })
 
@@ -490,8 +487,8 @@ describe('#supportingInformationController', () => {
 
         expect(updateReport).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'quarterly',
             period: 1,
@@ -523,8 +520,8 @@ describe('#supportingInformationController', () => {
 
         expect(updateReport).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'quarterly',
             period: 1,
@@ -558,7 +555,7 @@ describe('#supportingInformationController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
       })
 
@@ -583,8 +580,8 @@ describe('#supportingInformationController', () => {
 
         expect(updateReport).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'quarterly',
             period: 1,
@@ -726,10 +723,10 @@ describe('#supportingInformationController', () => {
   })
 
   describe('resubmission variant (submissionNumber > 1)', () => {
-    const resubmissionUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/2/submissions/2/supporting-information`
+    const resubmissionUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/2/submissions/2/supporting-information`
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -816,7 +813,7 @@ describe('#supportingInformationController', () => {
       it('should include the note-type bullet for an accredited operator', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
           accreditedExporter
         )
 
@@ -884,7 +881,7 @@ describe('#supportingInformationController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/supporting-information`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/invalid/1/submissions/1/supporting-information`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -896,7 +893,7 @@ describe('#supportingInformationController', () => {
     })
 
     it('should return 400 for invalid year', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submissions/1/supporting-information`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2023/quarterly/1/submissions/1/supporting-information`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -908,7 +905,7 @@ describe('#supportingInformationController', () => {
     })
 
     it('should return 400 for invalid period', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submissions/1/supporting-information`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/13/submissions/1/supporting-information`
 
       const { statusCode } = await server.inject({
         method: 'GET',

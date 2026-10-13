@@ -1,11 +1,12 @@
 import Boom from '@hapi/boom'
 
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { isResubmission } from './helpers/resubmission.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -21,8 +22,8 @@ export const createdController = {
    */
   async handler(request, h) {
     const {
-      organisationId,
-      registrationId,
+      organisationNumber,
+      registrationNumber,
       year,
       cadence,
       period,
@@ -31,28 +32,18 @@ export const createdController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+    const reportsUrl = reportsListPath(request.params)
 
     const [{ registration, accreditation }, reportDetail] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.backendToken
+      fetchRegistrationAndAccreditationByNumber(
+        organisationNumber,
+        registrationNumber,
+        session
       ),
-      fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        session.backendToken
-      )
+      fetchReportDetail(request.params, session.backendToken)
     ])
 
-    if (
-      reportDetail.status?.currentStatus !== SUBMISSION_STATUS.READY_TO_SUBMIT
-    ) {
+    if (reportDetail.status !== SUBMISSION_STATUS.READY_TO_SUBMIT) {
       throw Boom.notFound()
     }
 
@@ -67,8 +58,8 @@ export const createdController = {
       ? localise('reports:createdStatusValueResubmission')
       : localise('reports:createdStatusValue')
 
-    const homeUrl = `/organisations/${organisationId}`
-    const viewDraftUrl = `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/view`
+    const homeUrl = `/organisations/${encodeURIComponent(organisationNumber)}`
+    const viewDraftUrl = `${reportPath(request.params)}/view`
 
     return h.view('reports/created', {
       pageTitle: localise('reports:createdPageTitle', {

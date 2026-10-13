@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
@@ -45,9 +45,8 @@ const reportDetail = {
   endDate: '2026-03-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-04-01T10:00:00.000Z' },
   details: { material: 'plastic' },
-  id: 'report-001',
   version: 1,
-  status: { currentStatus: 'in_progress' },
+  status: 'in_progress',
   supportingInformation: null,
   recyclingActivity: {
     totalTonnageReceived: 100,
@@ -67,9 +66,9 @@ const reportDetail = {
   }
 }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/tonnes-not-exported`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const quarterlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/tonnes-not-exported`
 
 describe('#tonnesNotExportedController', () => {
   beforeEach(() => {
@@ -78,7 +77,7 @@ describe('#tonnesNotExportedController', () => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -157,7 +156,7 @@ describe('#tonnesNotExportedController', () => {
       })
 
       expect(result).toContain(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports"`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports"`
       )
     })
 
@@ -167,7 +166,7 @@ describe('#tonnesNotExportedController', () => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse({
           ...reportDetail,
-          status: { currentStatus: 'ready_to_submit' }
+          status: 'ready_to_submit'
         })
       )
 
@@ -181,7 +180,7 @@ describe('#tonnesNotExportedController', () => {
     })
 
     it('should return 404 for accredited exporter', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         asRegistrationWithAccreditation({
           ...registeredOnlyExporter,
           accreditation: { id: 'acc-001', accreditationNumber: 'ACC123' }
@@ -198,7 +197,7 @@ describe('#tonnesNotExportedController', () => {
     })
 
     it('should return 404 for reprocessor', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue({
         ...registeredOnlyExporter,
         registration: {
           ...registeredOnlyExporter.registration,
@@ -218,7 +217,7 @@ describe('#tonnesNotExportedController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -244,7 +243,7 @@ describe('#tonnesNotExportedController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/supporting-information`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/supporting-information`
       )
     })
 
@@ -265,7 +264,7 @@ describe('#tonnesNotExportedController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
       )
     })
 
@@ -286,7 +285,7 @@ describe('#tonnesNotExportedController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
       )
     })
 
@@ -348,8 +347,8 @@ describe('#tonnesNotExportedController', () => {
 
       expect(updateReport).toHaveBeenCalledWith(
         {
-          organisationId,
-          registrationId,
+          organisationNumber,
+          registrationNumber,
           year: 2026,
           cadence: 'quarterly',
           period: 1,

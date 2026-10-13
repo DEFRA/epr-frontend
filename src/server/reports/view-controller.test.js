@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -30,20 +30,28 @@ const regulatorAuth = buildMockAuth({
   ...sessionIdentity(IDENTITIES.regulator)
 })
 
+const registrationPath = '/organisations/500001/registrations/R25SR500030912PA'
+
+/**
+ * @param {string} cadence
+ */
+const periodPath = (cadence) =>
+  cadence === 'monthly'
+    ? `${registrationPath}/accreditations/2026/reports/monthly/1/submissions/1`
+    : `${registrationPath}/reports/2026/quarterly/1/submissions/1`
+
 async function loadPage({
   server,
   registrationAndAccreditation,
   auth = mockAuth,
   cadence = 'monthly'
 }) {
-  vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+  vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
     registrationAndAccreditation
   )
-  const organisationId = registrationAndAccreditation.organisationData?.id
-  const registrationId = registrationAndAccreditation.registration?.id
   return await server.inject({
     method: 'GET',
-    url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/1/submissions/1/view`,
+    url: `${periodPath(cadence)}/view`,
     auth
   })
 }
@@ -165,9 +173,7 @@ describe('#viewController', () => {
 
   describe('for a report that cannot be viewed', () => {
     const reportDetail = /** @type {ReportDetailResponse} */ ({
-      status: {
-        currentStatus: 'in_progress'
-      }
+      status: 'in_progress'
     })
 
     beforeAll(() => {
@@ -186,13 +192,9 @@ describe('#viewController', () => {
 
   describe('for a draft report', () => {
     const reportDetail = /** @type {ReportDetailResponse} */ ({
-      status: {
-        currentStatus: 'ready_to_submit',
-        created: {
-          at: '2026-04-20T15:56:00.000Z',
-          by: { id: 'user-789', name: 'Michael Doran', position: 'Manager' }
-        }
-      },
+      status: 'ready_to_submit',
+      createdAt: '2026-04-20T15:56:00.000Z',
+      createdBy: { name: 'Michael Doran', position: 'Manager' },
       dueDate: '2026-04-21',
       recyclingActivity: {
         totalTonnageReceived: 12.5,
@@ -360,7 +362,6 @@ describe('#viewController', () => {
 
   describe('for a submitted report', () => {
     const reportDetail = /** @type {ReportDetailResponse} */ ({
-      operatorCategory: 'REPROCESSOR',
       cadence: 'monthly',
       year: 2026,
       period: 1,
@@ -370,19 +371,13 @@ describe('#viewController', () => {
         summaryLogId: 'sl-1',
         lastUploadedAt: '2026-02-15T15:09:00.000Z'
       },
-      details: { material: 'plastic' },
-      status: {
-        currentStatus: 'submitted',
-        currentStatusAt: '2026-03-15T14:30:00.000Z',
-        created: {
-          at: '2026-02-15T15:09:00.000Z',
-          by: { id: 'user-456', name: 'Michael Doran', position: 'Manager' }
-        },
-        submitted: {
-          at: '2026-03-15T14:30:00.000Z',
-          by: { id: 'user-456', name: 'Michael Doran', position: 'Manager' }
-        }
-      },
+      status: 'submitted',
+      submissionNumber: 1,
+      canRequestResubmission: false,
+      createdAt: '2026-02-15T15:09:00.000Z',
+      createdBy: { name: 'Michael Doran', position: 'Manager' },
+      submittedAt: '2026-03-15T14:30:00.000Z',
+      submittedBy: { name: 'Michael Doran', position: 'Manager' },
       dueDate: '2026-05-31',
       recyclingActivity: {
         totalTonnageReceived: 12.5,
@@ -486,9 +481,7 @@ describe('#viewController', () => {
       const backLink = body.querySelector('.govuk-back-link')
 
       expect(backLink).not.toBeNull()
-      expect(backLink?.getAttribute('href')).toBe(
-        `/organisations/${mockAccreditedReprocessor.organisationData.id}/registrations/${mockAccreditedReprocessor.registration.id}/reports`
-      )
+      expect(backLink?.getAttribute('href')).toBe(`${registrationPath}/reports`)
     })
 
     describe('for a regulator, who has no report list of their own', () => {
@@ -1879,7 +1872,7 @@ describe('#viewController', () => {
 
           expect(button).toHaveLength(1)
           expect(button[0].getAttribute('href')).toBe(
-            `/organisations/${mockAccreditedReprocessor.organisationData.id}/registrations/${mockAccreditedReprocessor.registration.id}/reports/2026/monthly/1/submissions/1/make-changes`
+            `${periodPath('monthly')}/make-changes`
           )
         })
       })

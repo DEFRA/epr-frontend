@@ -10,33 +10,27 @@ const { fetchJsonFromBackend } =
   await import('#server/common/helpers/fetch-json-from-backend.js')
 
 describe(deleteReport, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const year = 2026
-  const cadence = 'monthly'
-  const period = 1
-  const submissionNumber = 1
+  const keys = {
+    organisationNumber: '500001',
+    registrationNumber: 'R25SR500030912PA',
+    year: 2026,
+    cadence: /** @type {const} */ ('monthly'),
+    period: 1,
+    submissionNumber: 1
+  }
   const backendToken = 'test-token'
 
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('calls fetchJsonFromBackend with correct path and auth header', async () => {
+  it('deletes through the accredited natural-key route for a monthly report', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(undefined)
 
-    await deleteReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      backendToken
-    )
+    await deleteReport(keys, backendToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/monthly/1/submissions/1',
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1',
       {
         method: 'DELETE',
         headers: {
@@ -46,21 +40,13 @@ describe(deleteReport, () => {
     )
   })
 
-  it('encodes URL path parameters with special characters', async () => {
+  it('deletes through the registered-only natural-key route for a quarterly report', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(undefined)
 
-    await deleteReport(
-      'org/123',
-      'reg&456',
-      year,
-      'quarterly',
-      period,
-      submissionNumber,
-      backendToken
-    )
+    await deleteReport({ ...keys, cadence: 'quarterly' }, backendToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1',
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
       expect.any(Object)
     )
   })
@@ -69,16 +55,8 @@ describe(deleteReport, () => {
     const error = new Error('Network error')
     vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
-    await expect(
-      deleteReport(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        backendToken
-      )
-    ).rejects.toThrow('Network error')
+    await expect(deleteReport(keys, backendToken)).rejects.toThrow(
+      'Network error'
+    )
   })
 })
