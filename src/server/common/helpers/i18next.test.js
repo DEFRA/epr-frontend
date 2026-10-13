@@ -61,6 +61,17 @@ describe('#i18nPlugin - integration', () => {
       }
     )
 
+    it('should keep the query string when rewriting a welsh path', async ({
+      server
+    }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/cy/start?page=2'
+      })
+
+      expect(response.request.url.search).toBe('?page=2')
+    })
+
     it('should not treat paths starting with /cy as Welsh when not followed by / or end of path', async ({
       server
     }) => {
