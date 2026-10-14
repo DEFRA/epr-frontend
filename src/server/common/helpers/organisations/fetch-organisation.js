@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /** @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js' */
 /** @import { Year } from '#server/common/helpers/year.js' */
@@ -11,20 +11,12 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {{ year?: Year }} [options]
  * @returns {Promise<OrganisationView>}
  */
-async function fetchOrganisation(
-  organisationNumber,
-  backendToken,
-  { year } = {}
-) {
-  const query = year ? `?year=${year}` : ''
-  const path = `/organisations/${organisationNumber}${query}`
+const fetchOrganisation = (organisationNumber, backendToken, { year } = {}) => {
+  const query = year ? `?${new URLSearchParams({ year: String(year) })}` : ''
 
-  return fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
+  return backend(backendToken).get(
+    `${path`/organisations/${organisationNumber}`}${query}`
+  )
 }
 
 export { fetchOrganisation }

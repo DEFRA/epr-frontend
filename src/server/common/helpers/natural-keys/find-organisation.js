@@ -1,6 +1,6 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
 /**
@@ -51,13 +51,9 @@ const searchByNumber = async (organisationNumber, backendToken) => {
     pageSize: '1'
   })
 
-  const page = /** @type {OrganisationsPage | null} */ (
-    await nullWhenRefused(
-      fetchJsonFromBackend(`/v1/organisations?${query}`, {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${backendToken}` }
-      })
-    )
+  /** @type {OrganisationsPage | null} */
+  const page = await nullWhenRefused(
+    backend(backendToken).get(`/v1/organisations?${query}`)
   )
 
   const [match] = page?.items ?? []
