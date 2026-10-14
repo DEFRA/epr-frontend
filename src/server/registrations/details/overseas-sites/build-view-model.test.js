@@ -4,9 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { buildViewModel } from './build-view-model.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
- * @import { OverseasSitesById } from './helpers/fetch-overseas-sites.js'
+ * @import { OrganisationView, RegistrationView } from './helpers/fetch-overseas-sites.js'
  */
 
 const localise = createMockLocalise({
@@ -15,64 +13,49 @@ const localise = createMockLocalise({
   'registrations:details:overseasSites:heading': 'Overseas reprocessing sites'
 })
 
-const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = '6507f1f77bcf86cd79943902'
+const registrationNumber = 'R26ER5001180041PL'
 
-/**
- * @param {Partial<Organisation['companyDetails']>} [companyDetails]
- * @returns {Organisation}
- */
-const anOrganisation = (companyDetails) =>
-  /** @type {Organisation} */ (
-    /** @type {unknown} */ ({
-      id: organisationId,
-      companyDetails: { name: 'Kirkby Plastics Ltd', ...companyDetails }
-    })
-  )
-
-/**
- * @param {Partial<Registration>} [overrides]
- * @returns {Registration}
- */
-const aRegistration = (overrides) =>
-  /** @type {Registration} */ (
-    /** @type {unknown} */ ({
-      id: registrationId,
-      registrationNumber: 'R26ER5001180041PL',
-      status: 'approved',
-      material: 'plastic',
-      ...overrides
-    })
-  )
-
-/** @type {OverseasSitesById} */
-const oneSite = {
-  '007': {
-    name: 'Bahia Plásticos',
-    country: 'Brazil',
-    address: {
-      line1: 'Rua das Palmeiras 12',
-      line2: 'Distrito Industrial',
-      townOrCity: 'Salvador',
-      stateOrRegion: 'Bahia',
-      postcode: '40000-000'
-    },
-    coordinates: '-12.9777, -38.5016'
+/** @type {RegistrationView} */
+const aRegistration = {
+  material: 'plastic',
+  overseasSites: {
+    '007': {
+      name: 'Bahia Plásticos',
+      address: {
+        country: 'Brazil',
+        line1: 'Rua das Palmeiras 12',
+        line2: 'Distrito Industrial',
+        townOrCity: 'Salvador',
+        stateOrRegion: 'Bahia',
+        postcode: '40000-000'
+      },
+      coordinates: '-12.9777, -38.5016'
+    }
   }
 }
 
 /**
+ * @param {Partial<OrganisationView>} [overrides]
+ * @returns {OrganisationView}
+ */
+const anOrganisation = (overrides) => ({
+  name: 'Kirkby Plastics Ltd',
+  organisationNumber: 500123,
+  registrations: { [registrationNumber]: aRegistration },
+  ...overrides
+})
+
+/**
  * @param {{
- *   organisation?: Organisation,
- *   registration?: Registration,
- *   sites?: OverseasSitesById
+ *   organisation?: OrganisationView,
+ *   registration?: RegistrationView
  * }} [overrides]
  */
-const viewModel = ({ organisation, registration, sites } = {}) =>
+const viewModel = ({ organisation, registration } = {}) =>
   buildViewModel({
     organisation: organisation ?? anOrganisation(),
-    registration: registration ?? aRegistration(),
-    sites: sites ?? oneSite,
+    registrationNumber,
+    registration: registration ?? aRegistration,
     localise,
     localiseUrl: (path) => path
   })
@@ -114,30 +97,32 @@ describe(buildViewModel, () => {
       expect(categoryOf(viewModel())).toBe('Plastic')
     })
 
-    // Glass is recorded coarsely on the registration and resolved by the
-    // process it is recycled through, which is what the registration page above
-    // shows. Both pages have to name it the same way.
     it('names glass by the process it is recycled through', () => {
       const model = viewModel({
-        registration: aRegistration({
-          material: 'glass',
-          glassRecyclingProcess: ['glass_re_melt']
-        })
+        registration: { ...aRegistration, material: 'glass_re_melt' }
       })
 
       expect(categoryOf(model)).toBe('Glass remelt')
     })
   })
 
-  it('walks the records the page sits under, ending on itself', () => {
+  it('lists no sites for a registration that names none', () => {
+    const model = viewModel({ registration: { material: 'plastic' } })
+
+    expect(model.sites.rows).toStrictEqual([])
+  })
+
+  // The two pages above have not moved to natural keys yet, so these links
+  // reach them through the redirect.
+  it('walks the records the page sits under by number, ending on itself', () => {
     const { breadcrumbs } = viewModel()
 
     expect(breadcrumbs).toStrictEqual([
       { text: 'All organisations', href: '/regulators/home' },
-      { text: 'Kirkby Plastics Ltd', href: `/organisations/${organisationId}` },
+      { text: 'Kirkby Plastics Ltd', href: '/organisations/500123' },
       {
         text: 'Registration details',
-        href: `/organisations/${organisationId}/registrations/${registrationId}`
+        href: `/organisations/500123/registrations/${registrationNumber}`
       },
       { text: 'Overseas reprocessing sites' }
     ])
@@ -147,16 +132,5 @@ describe(buildViewModel, () => {
     expect(viewModel().pageTitle).toBe(
       'R26ER5001180041PL: Overseas reprocessing sites'
     )
-  })
-
-  // A registration is numbered when it is approved, so one that is not carries
-  // nothing to name the page by.
-  it('names an unnumbered registration by the page alone', () => {
-    const model = viewModel({
-      registration: aRegistration({ registrationNumber: undefined })
-    })
-
-    expect(model.pageTitle).toBe('Overseas reprocessing sites')
-    expect(model.caption).toBe('Kirkby Plastics Ltd')
   })
 })

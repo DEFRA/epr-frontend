@@ -143,8 +143,19 @@ const journeyMetrics = {
   }
 }
 
+/**
+ * A page URL holding ids, on a page that has moved to natural keys. When this
+ * stops arriving, the redirect can go.
+ * @type {Record<string, () => Promise<void>>}
+ */
+const pageUrl = {
+  oldRequested: () =>
+    writeMetric('OldPageUrlRequested', {}, { replaceDefaults: true })
+}
+
 export const metrics = {
   signIn: orNoop(signIn),
   signOut: orNoop(signOut),
-  journey: orNoop(journeyMetrics)
+  journey: orNoop(journeyMetrics),
+  pageUrl: orNoop(pageUrl)
 }

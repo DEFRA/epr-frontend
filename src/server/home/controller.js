@@ -23,7 +23,7 @@ async function getStartNowHref(request) {
   const organisations = await fetchUserOrganisations(backendToken)
 
   if (organisations.linked) {
-    return request.localiseUrl(`/organisations/${organisations.linked.id}`)
+    return request.localiseUrl(`/organisations/${organisations.linked.orgId}`)
   }
 
   return request.localiseUrl(ACCOUNT_LINKING_PATH)

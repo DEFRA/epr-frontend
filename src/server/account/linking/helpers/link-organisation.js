@@ -2,11 +2,11 @@ import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
  * @param {string} backendToken
- * @param {string} organisationId
+ * @param {string} organisationNumber
  * @returns {Promise<void>}
  */
-export const linkOrganisation = async (backendToken, organisationId) => {
+export const linkOrganisation = async (backendToken, organisationNumber) => {
   await backend(backendToken).post(
-    path`/v1/organisations/${organisationId}/link`
+    path`/organisations/${organisationNumber}/link`
   )
 }

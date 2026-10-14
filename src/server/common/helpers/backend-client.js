@@ -142,8 +142,9 @@ const sendJson = async (token, method, url, body) => {
  * @param {{ onError?: OnError }} [defaults]
  */
 export const backend = (token, defaults = {}) => {
-  /** @param {string} path */
-  const urlOf = (path) => new URL(path, config.get('eprBackendUrl')).href
+  /** @param {string} endpoint */
+  const urlOf = (endpoint) =>
+    new URL(endpoint, config.get('eprBackendUrl')).href
 
   /**
    * @template T
@@ -165,14 +166,14 @@ export const backend = (token, defaults = {}) => {
   /**
    * @template T
    * @param {string} method
-   * @param {string} path
+   * @param {string} endpoint
    * @param {unknown} body
    * @param {CallOptions<T>} options
    * @returns {Promise<T>}
    */
-  const call = (method, path, body, { parse, ...options }) =>
+  const call = (method, endpoint, body, { parse, ...options }) =>
     guarded(options, async () => {
-      const url = urlOf(path)
+      const url = urlOf(endpoint)
       const payload = await sendJson(token, method, url, body)
       return parse ? parse(payload, { url }) : /** @type {T} */ (payload)
     })
@@ -184,31 +185,32 @@ export const backend = (token, defaults = {}) => {
     (method) =>
     /**
      * @template [T=void]
-     * @param {string} path
+     * @param {string} endpoint
      * @param {unknown} [body]
      * @param {CallOptions<T>} [options]
      * @returns {Promise<T>}
      */
-    (path, body, options = {}) =>
-      call(method, path, body, options)
+    (endpoint, body, options = {}) =>
+      call(method, endpoint, body, options)
 
   return {
     /**
      * @template [T=unknown]
-     * @param {string} path
+     * @param {string} endpoint
      * @param {CallOptions<T>} [options]
      * @returns {Promise<T>}
      */
-    get: (path, options = {}) => call('GET', path, undefined, options),
+    get: (endpoint, options = {}) => call('GET', endpoint, undefined, options),
     post: withBody('POST'),
     put: withBody('PUT'),
     patch: withBody('PATCH'),
     /**
      * @template [T=void]
-     * @param {string} path
+     * @param {string} endpoint
      * @param {CallOptions<T>} [options]
      * @returns {Promise<T>}
      */
-    delete: (path, options = {}) => call('DELETE', path, undefined, options)
+    delete: (endpoint, options = {}) =>
+      call('DELETE', endpoint, undefined, options)
   }
 }

@@ -132,12 +132,12 @@ describe('#homeController', () => {
   describe.each([
     {
       lang: 'cy',
-      organisationUrl: '/cy/organisations/linked-org-123',
+      organisationUrl: '/cy/organisations/11111111',
       url: '/cy/start'
     },
     {
       lang: 'en',
-      organisationUrl: '/organisations/linked-org-123',
+      organisationUrl: '/organisations/11111111',
       url: '/start'
     }
   ])(
@@ -159,6 +159,7 @@ describe('#homeController', () => {
                 },
                 linked: {
                   id: 'linked-org-123',
+                  orgId: '11111111',
                   name: 'Linked Organisation',
                   linkedBy: { email: 'test@example.com', id: 'user-1' },
                   linkedAt: '2024-01-01T00:00:00Z'
