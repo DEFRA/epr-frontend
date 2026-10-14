@@ -22,6 +22,15 @@ const hasJsonBody = (response) =>
 
 /**
  * @param {string} url
+ * @param {Error} error
+ */
+const fetchFailed = (url, error) =>
+  internal(`Failed to fetch from url: ${url}`, errorCodes.externalFetchFailed, {
+    event: { action: 'external_fetch', reason: classifierTail(error) }
+  })
+
+/**
+ * @param {string} url
  * @param {RequestInit & { headers: Record<string, string> }} init
  */
 const request = async (url, init) => {
@@ -31,11 +40,20 @@ const request = async (url, init) => {
       headers: withTraceId(getTracingHeaderName(), init.headers)
     })
   } catch (error) {
-    throw internal(
-      `Failed to fetch from url: ${url}`,
-      errorCodes.externalFetchFailed,
-      { event: { action: 'external_fetch', reason: classifierTail(error) } }
-    )
+    throw fetchFailed(url, error)
+  }
+}
+
+/**
+ * @param {string} url
+ * @param {Response} response
+ * @returns {Promise<unknown>}
+ */
+const readJson = async (url, response) => {
+  try {
+    return await response.json()
+  } catch (error) {
+    throw fetchFailed(url, error)
   }
 }
 
@@ -52,7 +70,9 @@ const rejection = async (url, response) => {
   )
 
   if (hasJsonBody(response)) {
-    error.output.payload = await response.json()
+    error.output.payload = /** @type {Boom.Payload} */ (
+      await readJson(url, response)
+    )
   }
 
   return error
@@ -82,7 +102,7 @@ const send = async (token, method, endpoint, body) => {
     throw await rejection(url, response)
   }
 
-  return hasJsonBody(response) ? response.json() : undefined
+  return hasJsonBody(response) ? readJson(url, response) : undefined
 }
 
 /**

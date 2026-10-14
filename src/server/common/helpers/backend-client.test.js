@@ -166,6 +166,39 @@ describe('backend-client', () => {
           }
         )
       })
+
+      it.for([
+        { description: 'an ok response', status: 200 },
+        { description: 'a refusal', status: 409 }
+      ])(
+        'should reject as an internal fetch failure when $description carries malformed json',
+        async ({ status }, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/thing`,
+              () =>
+                new HttpResponse('{', {
+                  status,
+                  headers: { 'content-type': 'application/json' }
+                })
+            )
+          )
+
+          await expect(
+            backend('a-token').get('/v1/thing')
+          ).rejects.toMatchObject({
+            isBoom: true,
+            output: { statusCode: 500 },
+            code: 'external_fetch_failed',
+            message:
+              'Failed to fetch from url: http://epr-backend.test/v1/thing',
+            event: {
+              action: 'external_fetch',
+              reason: 'type=SyntaxError code=unknown'
+            }
+          })
+        }
+      )
     })
   })
 
