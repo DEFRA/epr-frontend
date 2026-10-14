@@ -1,0 +1,128 @@
+import Boom from '@hapi/boom'
+import { withTraceId } from '@defra/hapi-tracing'
+
+import { config } from '#config/config.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { classifierTail, internal } from './logging/cdp-boom.js'
+import { getTracingHeaderName } from './request-tracing.js'
+
+/**
+ * Builds a backend path with every interpolated value URI-encoded.
+ * @param {TemplateStringsArray} strings
+ * @param {...(string | number)} values
+ */
+export const path = (strings, ...values) =>
+  String.raw({ raw: strings }, ...values.map((v) => encodeURIComponent(v)))
+
+/**
+ * @param {Response} response
+ */
+const hasJsonBody = (response) =>
+  response.headers.get('content-type')?.includes('application/json') ?? false
+
+/**
+ * @param {string} url
+ * @param {Error} error
+ */
+const fetchFailed = (url, error) =>
+  internal(`Failed to fetch from url: ${url}`, errorCodes.externalFetchFailed, {
+    event: { action: 'external_fetch', reason: classifierTail(error) }
+  })
+
+/**
+ * @param {string} url
+ * @param {RequestInit & { headers: Record<string, string> }} init
+ */
+const request = async (url, init) => {
+  try {
+    return await fetch(url, {
+      ...init,
+      headers: withTraceId(getTracingHeaderName(), init.headers)
+    })
+  } catch (error) {
+    throw fetchFailed(url, error)
+  }
+}
+
+/**
+ * @param {string} url
+ * @param {Response} response
+ * @returns {Promise<unknown>}
+ */
+const readJson = async (url, response) => {
+  try {
+    return await response.json()
+  } catch (error) {
+    throw fetchFailed(url, error)
+  }
+}
+
+/**
+ * @param {string} url
+ * @param {Response} response
+ */
+const rejection = async (url, response) => {
+  const error = Boom.boomify(
+    new Error(
+      `Failed to fetch from url: ${url}: ${response.status} ${response.statusText}`
+    ),
+    { statusCode: response.status }
+  )
+
+  if (hasJsonBody(response)) {
+    error.output.payload = /** @type {Boom.Payload} */ (
+      await readJson(url, response)
+    )
+  }
+
+  return error
+}
+
+/**
+ * @param {string} token
+ * @param {string} method
+ * @param {string} endpoint
+ * @param {unknown} [body]
+ * @returns {Promise<unknown>}
+ */
+const send = async (token, method, endpoint, body) => {
+  const url = new URL(endpoint, config.get('eprBackendUrl')).href
+  const hasBody = body !== undefined
+
+  const response = await request(url, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(hasBody && { 'Content-Type': 'application/json' })
+    },
+    body: hasBody ? JSON.stringify(body) : undefined
+  })
+
+  if (!response.ok) {
+    throw await rejection(url, response)
+  }
+
+  return hasJsonBody(response) ? readJson(url, response) : undefined
+}
+
+/**
+ * Calls the backend as `token`. Each call answers with the type its caller
+ * declares.
+ * @param {string} token
+ */
+export const backend = (token) => ({
+  /**
+   * @template T
+   * @param {string} endpoint
+   * @returns {Promise<T>}
+   */
+  get: (endpoint) => /** @type {Promise<T>} */ (send(token, 'GET', endpoint)),
+  /**
+   * @template T
+   * @param {string} endpoint
+   * @param {unknown} [body]
+   * @returns {Promise<T>}
+   */
+  post: (endpoint, body) =>
+    /** @type {Promise<T>} */ (send(token, 'POST', endpoint, body))
+})
