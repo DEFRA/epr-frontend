@@ -80,6 +80,31 @@ describe('#analytics switched on end to end', () => {
         'analytics-page-path': '/start'
       })
     })
+
+    it.for([
+      { description: 'only when asked for', preview: 'true', expected: true },
+      { description: 'not otherwise', preview: 'false', expected: false }
+    ])(
+      'should permit the preview console $description',
+      async ({ preview, expected }) => {
+        const server = await serverStartedWith({
+          ...linedUp,
+          ANALYTICS_PREVIEW_ENABLED: preview
+        })
+
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: '/start'
+        })
+        await server.stop()
+
+        expect(
+          String(headers['content-security-policy']).includes(
+            'https://tagmanager.google.com'
+          )
+        ).toBe(expected)
+      }
+    )
   })
 
   describe('when the visitor came from somewhere', () => {
@@ -123,9 +148,10 @@ describe('#analytics switched on end to end', () => {
         { ...linedUp, ANALYTICS_CONTAINER_ID: '' }
       ]
     ])('should record nothing when %s', async ([, env]) => {
-      const server = await serverStartedWith(
-        /** @type {Record<string, string>} */ (env)
-      )
+      const server = await serverStartedWith({
+        .../** @type {Record<string, string>} */ (env),
+        ANALYTICS_PREVIEW_ENABLED: 'true'
+      })
 
       const { headers, result } = await server.inject({
         method: 'GET',

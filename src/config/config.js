@@ -397,6 +397,12 @@ export const config = convict({
       format: String,
       default: '',
       env: 'ANALYTICS_CONTAINER_ID'
+    },
+    previewEnabled: {
+      doc: 'Let the tag manager preview console connect, for checking the container',
+      format: Boolean,
+      default: false,
+      env: 'ANALYTICS_PREVIEW_ENABLED'
     }
   },
   satisfactionSurvey: {
