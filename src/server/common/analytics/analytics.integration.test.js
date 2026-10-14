@@ -82,7 +82,7 @@ describe('#analytics switched on end to end', () => {
       [
         'this service',
         `http://${authority}/organisations/68e68d9c78f83083f0f17a76`,
-        '/organisations/:organisationId'
+        '/organisations/:organisationNumber'
       ],
       ['another site', 'https://www.gov.uk/guidance/packaging-waste', null]
     ])('should publish the step behind %s', async ([, referer, expected]) => {
