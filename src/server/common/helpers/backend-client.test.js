@@ -313,6 +313,11 @@ describe('backend-client', () => {
           search: '?page=1'
         },
         {
+          description: 'keeping an empty string as given',
+          query: { page: 1, search: '' },
+          search: '?page=1&search='
+        },
+        {
           description: 'sending none when every value is undefined',
           query: { year: undefined },
           search: ''
