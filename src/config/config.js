@@ -391,6 +391,12 @@ export const config = convict({
       format: String,
       default: '',
       env: 'ANALYTICS_MEASUREMENT_ID'
+    },
+    containerId: {
+      doc: 'Id of the tag manager container that loads the analytics tag',
+      format: String,
+      default: '',
+      env: 'ANALYTICS_CONTAINER_ID'
     }
   },
   satisfactionSurvey: {
