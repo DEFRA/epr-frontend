@@ -156,7 +156,7 @@ const accreditationDetails = {
   accreditation: {
     accreditationNumber: 'A26ER5001180114PL',
     status: 'approved',
-    statusTimeline: { '2026-07-01': { status: 'approved' } }
+    statusTimeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
   },
   wasteBalance: { amount: 1234.5, availableAmount: 987.25 },
   cadence: 'monthly',

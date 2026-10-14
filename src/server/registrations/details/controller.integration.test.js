@@ -63,7 +63,7 @@ const exporterRegistration = {
 const accreditation = {
   accreditationNumber: 'A26ER5001180114PL',
   status: 'approved',
-  statusTimeline: { '2026-07-01': { status: 'approved' } }
+  statusTimeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
 }
 
 /**
@@ -238,13 +238,15 @@ describe('the registration details page a regulator reads', () => {
             accreditationNumber: 'A25ER5001180097PL',
             status: 'cancelled',
             statusTimeline: {
-              '2025-02-15': { status: 'approved' },
-              '2025-03-31': { status: 'cancelled' }
+              '2025-02-15T09:00:00.000Z': { status: 'approved' },
+              '2025-03-31T09:00:00.000Z': { status: 'cancelled' }
             }
           },
           2026: {
             ...accreditation,
-            statusTimeline: { '2025-12-15': { status: 'approved' } }
+            statusTimeline: {
+              '2025-12-15T09:00:00.000Z': { status: 'approved' }
+            }
           }
         }
       }

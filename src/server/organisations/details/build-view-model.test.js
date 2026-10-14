@@ -138,16 +138,16 @@ describe(buildViewModel, () => {
               accreditationNumber: 'A25ER1',
               status: 'cancelled',
               statusTimeline: {
-                '2025-01-01': { status: 'approved' },
-                '2025-06-01': { status: 'cancelled' }
+                '2025-01-01T09:00:00.000Z': { status: 'approved' },
+                '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
               }
             },
             2026: {
               accreditationNumber: 'A26ER1',
               status: 'suspended',
               statusTimeline: {
-                '2026-01-01': { status: 'approved' },
-                '2026-06-01': { status: 'suspended' }
+                '2026-01-01T09:00:00.000Z': { status: 'approved' },
+                '2026-06-01T09:00:00.000Z': { status: 'suspended' }
               }
             }
           }

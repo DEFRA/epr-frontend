@@ -9,10 +9,15 @@
  */
 
 /**
+ * Statuses keyed by the ISO datetime each took effect.
+ * @typedef {Record<string, { status: string }>} StatusTimeline
+ */
+
+/**
  * @typedef {{
  *   accreditationNumber: string,
  *   status: AccreditationStatus,
- *   statusTimeline: Record<string, { status: string }>
+ *   statusTimeline: StatusTimeline
  * }} AccreditationView
  */
 

@@ -68,7 +68,7 @@ const anExporter = {
 const anAccreditation = (overrides) => ({
   accreditationNumber: 'A26ER5001180114PL',
   status: 'approved',
-  statusTimeline: { '2026-07-01': { status: 'approved' } },
+  statusTimeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } },
   ...overrides
 })
 
@@ -197,7 +197,9 @@ describe(buildViewModel, () => {
           accreditations: {
             2025: anAccreditation({
               accreditationNumber: 'A25ER5001180114PL',
-              statusTimeline: { '2025-03-01': { status: 'approved' } }
+              statusTimeline: {
+                '2025-03-01T09:00:00.000Z': { status: 'approved' }
+              }
             }),
             2026: anAccreditation({})
           }
@@ -226,7 +228,9 @@ describe(buildViewModel, () => {
           ...anExporter,
           accreditations: {
             2026: anAccreditation({
-              statusTimeline: { '2025-12-15': { status: 'approved' } }
+              statusTimeline: {
+                '2025-12-15T09:00:00.000Z': { status: 'approved' }
+              }
             })
           }
         }
@@ -245,8 +249,8 @@ describe(buildViewModel, () => {
             2026: anAccreditation({
               status: 'cancelled',
               statusTimeline: {
-                '2026-02-15': { status: 'approved' },
-                '2026-03-31': { status: 'cancelled' }
+                '2026-02-15T09:00:00.000Z': { status: 'approved' },
+                '2026-03-31T09:00:00.000Z': { status: 'cancelled' }
               }
             })
           }
@@ -307,7 +311,9 @@ describe(buildViewModel, () => {
           ...anExporter,
           accreditations: {
             2026: anAccreditation({
-              statusTimeline: { '2026-01-01': { status: 'approved' } }
+              statusTimeline: {
+                '2026-01-01T09:00:00.000Z': { status: 'approved' }
+              }
             })
           }
         }

@@ -47,7 +47,7 @@ const anOrganisation = (overrides) => ({
 })
 
 /**
- * @param {Record<string, string>} timeline - status by date
+ * @param {Record<string, string>} timeline - status by ISO datetime
  * @returns {AccreditationView}
  */
 const anAccreditation = (timeline) => ({
@@ -191,7 +191,7 @@ describe(buildViewModel, () => {
     expect(
       build({
         registration: aRegistration({
-          2026: anAccreditation({ '2026-03-01': 'approved' })
+          2026: anAccreditation({ '2026-03-01T09:00:00.000Z': 'approved' })
         })
       }).hasData
     ).toBe(true)
@@ -201,7 +201,7 @@ describe(buildViewModel, () => {
     expect(
       build({
         registration: aRegistration({
-          2026: anAccreditation({ '2026-01-01': 'approved' })
+          2026: anAccreditation({ '2026-01-01T09:00:00.000Z': 'approved' })
         })
       }).hasData
     ).toBe(false)
@@ -212,9 +212,9 @@ describe(buildViewModel, () => {
       build({
         registration: aRegistration({
           2026: anAccreditation({
-            '2026-01-01': 'approved',
-            '2026-03-10': 'cancelled',
-            '2026-03-30': 'approved'
+            '2026-01-01T09:00:00.000Z': 'approved',
+            '2026-03-10T09:00:00.000Z': 'cancelled',
+            '2026-03-30T09:00:00.000Z': 'approved'
           })
         })
       }).hasData
@@ -226,8 +226,8 @@ describe(buildViewModel, () => {
       build({
         registration: aRegistration({
           2026: anAccreditation({
-            '2026-01-01': 'approved',
-            '2026-03-10': 'suspended'
+            '2026-01-01T09:00:00.000Z': 'approved',
+            '2026-03-10T09:00:00.000Z': 'suspended'
           })
         })
       }).hasData

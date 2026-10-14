@@ -66,14 +66,14 @@ const organisation = {
           accreditationNumber: 'A25ER5001180114GR',
           status: 'cancelled',
           statusTimeline: {
-            '2025-01-01': { status: 'approved' },
-            '2025-06-01': { status: 'cancelled' }
+            '2025-01-01T09:00:00.000Z': { status: 'approved' },
+            '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
           }
         },
         2026: {
           accreditationNumber: 'A26ER5001180114GR',
           status: 'approved',
-          statusTimeline: { '2026-01-01': { status: 'approved' } }
+          statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
         }
       }
     },

@@ -66,7 +66,7 @@ const regulatorWithoutLedgerScope = buildMockAuth({
 const anAccreditation = (approvedOn) => ({
   accreditationNumber: 'A26ER5001180114PL',
   status: 'approved',
-  statusTimeline: { [approvedOn]: { status: 'approved' } }
+  statusTimeline: { [`${approvedOn}T09:00:00.000Z`]: { status: 'approved' } }
 })
 
 /**

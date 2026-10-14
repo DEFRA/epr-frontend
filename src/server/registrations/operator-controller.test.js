@@ -44,7 +44,9 @@ const reprocessor = {
     [year]: {
       accreditationNumber,
       status: 'approved',
-      statusTimeline: { [`${year}-01-01`]: { status: 'approved' } }
+      statusTimeline: {
+        [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' }
+      }
     }
   }
 }
@@ -318,7 +320,7 @@ describe("the operator's registration page for a year", () => {
             accreditationNumber,
             status: 'cancelled',
             statusTimeline: {
-              [`${year}-01-01`]: { status: 'approved' },
+              [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' },
               [`${year}-03-01`]: { status: 'cancelled' }
             }
           }
@@ -438,7 +440,7 @@ describe("the operator's registration page with no year", () => {
             accreditationNumber: 'A25ER5001180114GL',
             status: 'approved',
             statusTimeline: {
-              [`${thisYear - 1}-01-01`]: { status: 'approved' }
+              [`${thisYear - 1}-01-01T09:00:00.000Z`]: { status: 'approved' }
             }
           },
           .../** @type {object} */ (reprocessor.accreditations)
@@ -494,7 +496,7 @@ describe("the operator's registration page with no year", () => {
             accreditationNumber,
             status: 'cancelled',
             statusTimeline: {
-              [`${year}-01-01`]: { status: 'approved' },
+              [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' },
               [`${year}-03-01`]: { status: 'cancelled' }
             }
           }

@@ -4,6 +4,7 @@ import { registeredOnlyStretches } from './registered-only.js'
 import {
   accreditedDateRange,
   accreditedStretches,
+  dailyTimeline,
   registrationAccreditedStretches,
   registrationDateRange
 } from './timeline-dates.js'
@@ -13,7 +14,7 @@ import {
  */
 
 /**
- * @param {Record<string, string>} timeline - status by date
+ * @param {Record<string, string>} timeline - status by ISO datetime
  * @returns {AccreditationView}
  */
 const anAccreditation = (timeline) => ({
@@ -40,29 +41,109 @@ const aRegistration = (validFrom, accreditations = {}) => ({
 
 // Cancelled, then approved again, then suspended.
 const reinstated = anAccreditation({
-  '2025-12-15': 'approved',
-  '2026-03-10': 'cancelled',
-  '2026-03-30': 'approved',
-  '2026-06-01': 'suspended'
+  '2025-12-15T09:00:00.000Z': 'approved',
+  '2026-03-10T09:00:00.000Z': 'cancelled',
+  '2026-03-30T09:00:00.000Z': 'approved',
+  '2026-06-01T09:00:00.000Z': 'suspended'
 })
 
 // Cancelled the year before, then approved again.
 const cancelledLastYear = anAccreditation({
-  '2025-06-01': 'approved',
-  '2025-11-01': 'cancelled',
-  '2026-02-01': 'approved'
+  '2025-06-01T09:00:00.000Z': 'approved',
+  '2025-11-01T09:00:00.000Z': 'cancelled',
+  '2026-02-01T09:00:00.000Z': 'approved'
+})
+
+describe(dailyTimeline, () => {
+  it('keys each status by its UTC day', () => {
+    expect(
+      dailyTimeline({ '2026-03-01T09:00:00.000Z': { status: 'approved' } })
+    ).toStrictEqual({ '2026-03-01': { status: 'approved' } })
+  })
+
+  it('keeps the last status on a day with several transitions', () => {
+    expect(
+      dailyTimeline({
+        '2026-03-01T15:00:00.000Z': { status: 'cancelled' },
+        '2026-03-01T09:00:00.000Z': { status: 'approved' },
+        '2026-02-01T09:00:00.000Z': { status: 'created' }
+      })
+    ).toStrictEqual({
+      '2026-02-01': { status: 'created' },
+      '2026-03-01': { status: 'cancelled' }
+    })
+  })
+
+  it('orders the days chronologically whatever order the keys arrive in', () => {
+    expect(
+      Object.keys(
+        dailyTimeline({
+          '2026-06-01T09:00:00.000Z': { status: 'suspended' },
+          '2026-02-01T09:00:00.000Z': { status: 'approved' }
+        })
+      )
+    ).toStrictEqual(['2026-02-01', '2026-06-01'])
+  })
 })
 
 describe(accreditedStretches, () => {
+  it('counts a day approved then cancelled as cancelled from that day', () => {
+    expect(
+      accreditedStretches(
+        anAccreditation({
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2026-05-01T09:00:00.000Z': 'approved',
+          '2026-05-01T15:00:00.000Z': 'cancelled'
+        }),
+        '2026'
+      )
+    ).toStrictEqual([{ from: '2026-02-01', to: '2026-04-30' }])
+  })
+
+  it('counts a day cancelled then approved again as approved', () => {
+    expect(
+      accreditedStretches(
+        anAccreditation({
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2026-03-01T09:00:00.000Z': 'cancelled',
+          '2026-05-01T09:00:00.000Z': 'cancelled',
+          '2026-05-01T15:00:00.000Z': 'approved'
+        }),
+        '2026'
+      )
+    ).toStrictEqual([
+      { from: '2026-02-01', to: '2026-02-28' },
+      { from: '2026-05-01', to: '2026-12-31' }
+    ])
+  })
+
+  it('reads keys out of order chronologically', () => {
+    expect(
+      accreditedStretches(
+        anAccreditation({
+          '2026-09-30T09:00:00.000Z': 'cancelled',
+          '2026-02-01T09:00:00.000Z': 'approved'
+        }),
+        '2026'
+      )
+    ).toStrictEqual([{ from: '2026-02-01', to: '2026-09-29' }])
+  })
+
   it('runs from the first approval to 31 December', () => {
     expect(
-      accreditedStretches(anAccreditation({ '2026-03-01': 'approved' }), '2026')
+      accreditedStretches(
+        anAccreditation({ '2026-03-01T09:00:00.000Z': 'approved' }),
+        '2026'
+      )
     ).toStrictEqual([{ from: '2026-03-01', to: '2026-12-31' }])
   })
 
   it('starts on 1 January when the first approval was in an earlier year', () => {
     expect(
-      accreditedStretches(anAccreditation({ '2025-12-15': 'approved' }), '2026')
+      accreditedStretches(
+        anAccreditation({ '2025-12-15T09:00:00.000Z': 'approved' }),
+        '2026'
+      )
     ).toStrictEqual([{ from: '2026-01-01', to: '2026-12-31' }])
   })
 
@@ -76,8 +157,8 @@ describe(accreditedStretches, () => {
     expect(
       accreditedStretches(
         anAccreditation({
-          '2026-02-01': 'approved',
-          '2026-09-30': 'cancelled'
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2026-09-30T09:00:00.000Z': 'cancelled'
         }),
         '2026'
       )
@@ -95,9 +176,9 @@ describe(accreditedStretches, () => {
     expect(
       accreditedStretches(
         anAccreditation({
-          '2026-02-01': 'approved',
-          '2026-03-01': 'suspended',
-          '2026-04-01': 'approved'
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2026-03-01T09:00:00.000Z': 'suspended',
+          '2026-04-01T09:00:00.000Z': 'approved'
         }),
         '2026'
       )
@@ -108,8 +189,8 @@ describe(accreditedStretches, () => {
     expect(
       accreditedStretches(
         anAccreditation({
-          '2026-01-10': 'created',
-          '2026-02-01': 'approved'
+          '2026-01-10T09:00:00.000Z': 'created',
+          '2026-02-01T09:00:00.000Z': 'approved'
         }),
         '2026'
       )
@@ -120,9 +201,9 @@ describe(accreditedStretches, () => {
     expect(
       accreditedStretches(
         anAccreditation({
-          '2026-01-10': 'created',
-          '2026-01-20': 'cancelled',
-          '2026-02-01': 'approved'
+          '2026-01-10T09:00:00.000Z': 'created',
+          '2026-01-20T09:00:00.000Z': 'cancelled',
+          '2026-02-01T09:00:00.000Z': 'approved'
         }),
         '2026'
       )
@@ -131,6 +212,19 @@ describe(accreditedStretches, () => {
 })
 
 describe(accreditedDateRange, () => {
+  it('ends on the day of a cancellation that follows an earlier transition that day', () => {
+    expect(
+      accreditedDateRange(
+        anAccreditation({
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2026-09-30T15:00:00.000Z': 'cancelled',
+          '2026-09-30T09:00:00.000Z': 'suspended'
+        }),
+        '2026'
+      )
+    ).toStrictEqual({ validFrom: '2026-02-01', validTo: '2026-09-30' })
+  })
+
   it('runs from the first stretch to 31 December', () => {
     expect(accreditedDateRange(reinstated, '2026')).toStrictEqual({
       validFrom: '2026-01-01',
@@ -149,8 +243,8 @@ describe(accreditedDateRange, () => {
     expect(
       accreditedDateRange(
         anAccreditation({
-          '2026-02-01': 'approved',
-          '2026-09-30': 'cancelled'
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2026-09-30T09:00:00.000Z': 'cancelled'
         }),
         '2026'
       )
@@ -171,7 +265,7 @@ describe(registrationAccreditedStretches, () => {
     expect(
       registrationAccreditedStretches(
         aRegistration('2025-01-01', {
-          2025: anAccreditation({ '2025-03-01': 'approved' }),
+          2025: anAccreditation({ '2025-03-01T09:00:00.000Z': 'approved' }),
           2026: reinstated
         })
       )
@@ -209,8 +303,8 @@ describe('registered-only time from timelines', () => {
       registeredOnly(
         aRegistration('2026-01-01', {
           2026: anAccreditation({
-            '2025-12-01': 'approved',
-            '2026-09-30': 'cancelled'
+            '2025-12-01T09:00:00.000Z': 'approved',
+            '2026-09-30T09:00:00.000Z': 'cancelled'
           })
         })
       )
@@ -228,8 +322,8 @@ describe('registered-only time from timelines', () => {
       registeredOnly(
         aRegistration('2026-01-01', {
           2026: anAccreditation({
-            '2026-03-01': 'approved',
-            '2026-05-01': 'suspended'
+            '2026-03-01T09:00:00.000Z': 'approved',
+            '2026-05-01T09:00:00.000Z': 'suspended'
           })
         })
       )
@@ -240,7 +334,7 @@ describe('registered-only time from timelines', () => {
     expect(
       registeredOnly(
         aRegistration('2024-01-01', {
-          2024: anAccreditation({ '2024-01-01': 'approved' })
+          2024: anAccreditation({ '2024-01-01T09:00:00.000Z': 'approved' })
         })
       )
     ).toStrictEqual([{ from: '2026-01-01', to: '2026-12-31' }])

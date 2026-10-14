@@ -16,13 +16,13 @@ import {
 const accreditation2025 = /** @type {const} */ ({
   accreditationNumber: 'A25ER5001180114PL',
   status: 'approved',
-  statusTimeline: { '2025-01-01': { status: 'approved' } }
+  statusTimeline: { '2025-01-01T09:00:00.000Z': { status: 'approved' } }
 })
 
 const accreditation2026 = /** @type {const} */ ({
   accreditationNumber: 'A26ER5001180114PL',
   status: 'approved',
-  statusTimeline: { '2026-01-01': { status: 'approved' } }
+  statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
 })
 
 const registration = /** @type {RegistrationView} */ ({
