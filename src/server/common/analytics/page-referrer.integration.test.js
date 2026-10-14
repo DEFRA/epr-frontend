@@ -33,7 +33,7 @@ describe('#analyticsPageReferrer against the running server', () => {
   it.for([
     [
       `http://${authority}/organisations/${organisationId}`,
-      '/organisations/:organisationId'
+      '/organisations/:organisationNumber'
     ],
     [
       `http://${authority}/organisations/${organisationId}/registrations/${registrationId}`,
