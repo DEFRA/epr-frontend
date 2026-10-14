@@ -1,26 +1,23 @@
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
+import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import {
   buildMockAuth,
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
-import fixtureData from '../../../../../fixtures/organisation/organisationData.json' with { type: 'json' }
-
+vi.mock(import('#server/common/helpers/organisations/fetch-organisation.js'))
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
+  import('#server/common/helpers/organisations/fetch-organisation-years.js')
 )
-vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 
-const ORGANISATION_URL = '/organisations/6507f1f77bcf86cd79943901'
+const ORGANISATION_URL = '/organisations/500123'
 
 const operatorAuth = buildMockAuth({ linkedOrganisationId: 'org-123' })
 
@@ -70,10 +67,12 @@ const navigationLabels = (body) =>
 describe('the chrome around an organisation page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchOrganisationModule.fetchOrganisationById).mockResolvedValue(
-      asOrganisation(fixtureData)
-    )
-    vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({})
+    vi.mocked(fetchOrganisation).mockResolvedValue({
+      organisationNumber: 500123,
+      name: 'ACME ltd',
+      registrations: {}
+    })
+    vi.mocked(fetchOrganisationYears).mockResolvedValue([])
   })
 
   describe('for a regulator', () => {
