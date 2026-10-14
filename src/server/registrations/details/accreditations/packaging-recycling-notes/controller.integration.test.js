@@ -15,7 +15,7 @@ import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
-import organisationData from '../../../../../../fixtures/organisation/organisationData.json' with { type: 'json' }
+import organisationData from '#fixtures/organisation/organisationData.json' with { type: 'json' }
 
 import { fetchPrnListDetails } from './helpers/fetch-prn-list-details.js'
 

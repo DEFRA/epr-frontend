@@ -21,7 +21,7 @@ import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
-import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
+import fixtureData from '#fixtures/organisation/organisationData.json' with { type: 'json' }
 
 /**
  * @import { RegistrationDetails } from './details/helpers/fetch-registration-details.js'

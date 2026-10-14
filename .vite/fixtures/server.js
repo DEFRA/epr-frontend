@@ -2,7 +2,7 @@ import { http, HttpHandler, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { test, vi } from 'vitest'
 import { asHapiRequest } from '#server/common/hapi-types.js'
-import organisationsFixture from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
+import organisationsFixture from '#fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 /**
  * @import { SetupServer } from 'msw/node'
