@@ -4,6 +4,7 @@ import { CADENCE } from '../constants.js'
 
 /**
  * @typedef {{ organisationNumber: string, registrationNumber: string }} RegistrationKeys
+ * @typedef {RegistrationKeys & { year: string }} AccreditationKeys
  * @typedef {RegistrationKeys & { year: number, cadence: CadenceValue, period: number, submissionNumber: number }} SubmissionKeys
  */
 
@@ -14,6 +15,14 @@ import { CADENCE } from '../constants.js'
  */
 export const registrationPath = ({ organisationNumber, registrationNumber }) =>
   `/organisations/${encodeURIComponent(organisationNumber)}/registrations/${encodeURIComponent(registrationNumber)}`
+
+/**
+ * The accreditation's natural-key address.
+ * @param {AccreditationKeys} keys
+ * @returns {string}
+ */
+export const accreditationPath = ({ year, ...keys }) =>
+  `${registrationPath(keys)}/accreditations/${encodeURIComponent(year)}`
 
 /**
  * The report list page for a registration.
@@ -36,7 +45,7 @@ export const reportPath = ({
 }) => {
   const reports =
     cadence === CADENCE.MONTHLY
-      ? `${registrationPath(keys)}/accreditations/${year}/reports`
+      ? `${accreditationPath({ ...keys, year: String(year) })}/reports`
       : `${reportsListPath(keys)}/${year}`
 
   return `${reports}/${cadence}/${period}/submissions/${submissionNumber}`

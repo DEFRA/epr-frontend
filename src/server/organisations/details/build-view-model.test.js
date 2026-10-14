@@ -134,8 +134,22 @@ describe(buildViewModel, () => {
       registrations: {
         R26ER1: aReprocessor({
           accreditations: {
-            2025: { accreditationNumber: 'A25ER1', status: 'cancelled' },
-            2026: { accreditationNumber: 'A26ER1', status: 'suspended' }
+            2025: {
+              accreditationNumber: 'A25ER1',
+              status: 'cancelled',
+              statusTimeline: {
+                '2025-01-01': { status: 'approved' },
+                '2025-06-01': { status: 'cancelled' }
+              }
+            },
+            2026: {
+              accreditationNumber: 'A26ER1',
+              status: 'suspended',
+              statusTimeline: {
+                '2026-01-01': { status: 'approved' },
+                '2026-06-01': { status: 'suspended' }
+              }
+            }
           }
         })
       }

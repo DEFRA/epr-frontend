@@ -6,14 +6,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { buildViewModel } from './build-view-model.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod, ReportListItem } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
- * @import { AccreditationResource } from '../helpers/types.js'
  * @import { TableRow } from './build-view-model.js'
  */
 
@@ -69,46 +67,45 @@ const localise = createMockLocalise({
 /** @type {(path: string) => string} */
 const localiseUrl = (path) => path
 
-const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = 'reg-001'
-const accreditationId = 'acc-001'
+const keys = {
+  organisationNumber: '500118',
+  registrationNumber: 'R26ER5001180041PL',
+  year: '2026'
+}
+const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
+const accreditationPath = `${registrationPath}/accreditations/2026`
 
-const organisation = /** @type {Organisation} */ (
-  /** @type {unknown} */ ({
-    id: organisationId,
-    companyDetails: { name: 'Kirkby Plastics Ltd' }
-  })
-)
+/** @type {OrganisationView} */
+const organisation = {
+  organisationNumber: 500118,
+  name: 'Kirkby Plastics Ltd',
+  registrations: {}
+}
 
 /**
- * @param {Partial<Registration>} [overrides]
- * @returns {Registration}
+ * @param {Partial<RegistrationView>} [overrides]
+ * @returns {RegistrationView}
  */
 const aRegistration = (overrides) =>
-  /** @type {Registration} */ (
+  /** @type {RegistrationView} */ (
     /** @type {unknown} */ ({
-      id: registrationId,
-      registrationNumber: 'R26ER5001180041PL',
+      status: 'approved',
+      validFrom: '2026-01-01',
+      material: 'plastic',
+      wasteProcessingType: 'reprocessor',
+      accreditations: {},
       ...overrides
     })
   )
 
 /**
- * @param {Partial<AccreditationResource>} [overrides]
- * @returns {AccreditationResource}
+ * @param {Partial<AccreditationView>} [overrides]
+ * @returns {AccreditationView}
  */
 const anAccreditation = (overrides) => ({
-  id: accreditationId,
   accreditationNumber: 'A26ER5001180114PL',
   status: 'approved',
-  reprocessingType: 'input',
-  dateRange: { validFrom: '2026-07-01', validTo: '2026-12-31' },
-  application: {
-    orgName: 'Kirkby Plastics',
-    submittedToRegulator: 'ea',
-    material: 'plastic',
-    wasteProcessingType: 'reprocessor'
-  },
+  statusTimeline: { '2026-07-01': { status: 'approved' } },
   ...overrides
 })
 
@@ -161,8 +158,8 @@ const summaryLogSubmitted = {
 }
 
 /**
- * @param {Partial<AccreditationResource>} [accreditationOverrides]
- * @param {Partial<Registration>} [registrationOverrides]
+ * @param {Partial<AccreditationView>} [accreditationOverrides]
+ * @param {Partial<RegistrationView>} [registrationOverrides]
  * @param {WasteBalance | null} [wasteBalance]
  * @param {{ cadence: CadenceValue | null, reportingPeriods: ReportingPeriod[] }} [calendar]
  * @param {LedgerEvent[] | null} [ledgerEvents]
@@ -177,6 +174,7 @@ const build = (
   packagingRecyclingNotes = []
 ) =>
   buildViewModel({
+    keys,
     organisation,
     registration: aRegistration(registrationOverrides),
     accreditation: anAccreditation(accreditationOverrides),
@@ -215,7 +213,7 @@ const prnsOf = (notes) =>
 
 /**
  * @param {LedgerEvent[] | null} ledgerEvents
- * @param {Partial<Registration>} [registrationOverrides]
+ * @param {Partial<RegistrationView>} [registrationOverrides]
  */
 const ledgerOf = (ledgerEvents, registrationOverrides) =>
   build(
@@ -242,23 +240,10 @@ describe('the accreditation details view model', () => {
     )
   })
 
-  it('leaves a missing number out of the caption rather than showing it empty', () => {
-    expect(build({ accreditationNumber: null }).caption).toBe(
-      'Kirkby Plastics Ltd - R26ER5001180041PL'
-    )
-  })
-
   it('knows an organisation by its trading name where it has one', () => {
     const model = buildViewModel({
-      organisation: /** @type {Organisation} */ (
-        /** @type {unknown} */ ({
-          id: organisationId,
-          companyDetails: {
-            name: 'Kirkby Plastics Ltd',
-            tradingName: 'Kirkby Recycling'
-          }
-        })
-      ),
+      keys,
+      organisation: { ...organisation, tradingName: 'Kirkby Recycling' },
       registration: aRegistration(),
       accreditation: anAccreditation(),
       wasteBalance: aWasteBalance,
@@ -277,20 +262,39 @@ describe('the accreditation details view model', () => {
     expect(build().heading).toBe('Accreditation')
   })
 
-  it('names the validity period beneath the heading', () => {
+  it('starts the period on the date it was first approved in its year, ending it on 31 December', () => {
     expect(build().period).toBe('1 July to 31 December 2026')
   })
 
-  it('reads an accreditation with no end date as current', () => {
+  it('starts the period on 1 January when it was approved the year before', () => {
     expect(
-      build({ dateRange: { validFrom: '2026-07-01', validTo: null } }).period
-    ).toBe('1 July 2026 to Current')
+      build({ statusTimeline: { '2025-12-15': { status: 'approved' } } }).period
+    ).toBe('1 January to 31 December 2026')
   })
 
-  it('names no period for an accreditation that has not been approved', () => {
+  it('ends the period on the cancellation date when it was last cancelled', () => {
     expect(
-      build({ dateRange: { validFrom: null, validTo: null } }).period
-    ).toBe('')
+      build({
+        status: 'cancelled',
+        statusTimeline: {
+          '2026-07-01': { status: 'approved' },
+          '2026-09-10': { status: 'cancelled' }
+        }
+      }).period
+    ).toBe('1 July to 10 September 2026')
+  })
+
+  it('ends the period on 31 December when reinstated after a cancellation', () => {
+    expect(
+      build({
+        statusTimeline: {
+          '2026-03-01': { status: 'approved' },
+          '2026-05-10': { status: 'cancelled' },
+          '2026-06-01': { status: 'approved' },
+          '2026-08-01': { status: 'suspended' }
+        }
+      }).period
+    ).toBe('1 March to 31 December 2026')
   })
 
   it('shows the status as a tag, then the number, then the available balance, then the latest summary log', () => {
@@ -317,7 +321,7 @@ describe('the accreditation details view model', () => {
         .summaryRows[3]
     ).toStrictEqual({
       key: 'Latest summary log',
-      html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-2/download" class="govuk-link">Download</a>`
+      html: `<a href="${registrationPath}/summary-logs/files/log-2/download" class="govuk-link">Download</a>`
     })
   })
 
@@ -326,13 +330,6 @@ describe('the accreditation details view model', () => {
       build(undefined, undefined, aWasteBalance, noCalendar, [prnIssued])
         .summaryRows[3]
     ).toStrictEqual({ key: 'Latest summary log', value: '' })
-  })
-
-  it('shows an empty number for an accreditation that never got one', () => {
-    expect(build({ accreditationNumber: null }).summaryRows[1]).toStrictEqual({
-      key: 'Accreditation number',
-      value: ''
-    })
   })
 
   it('shows a balance of nothing as zero rather than as blank', () => {
@@ -370,7 +367,7 @@ describe('the accreditation details view model', () => {
     it('offers the latest waste records beneath the latest summary log', () => {
       expect(build().summaryRows.at(4)).toStrictEqual({
         key: 'Latest waste record CSV',
-        html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv" class="govuk-link">Download</a>`
+        html: `<a href="${registrationPath}/waste-records/download.csv" class="govuk-link">Download</a>`
       })
     })
 
@@ -391,28 +388,19 @@ describe('the accreditation details view model', () => {
   it('walks back to the registration and the organisation', () => {
     expect(build().breadcrumbs).toStrictEqual([
       { text: 'All organisations', href: '/regulators/home' },
-      { text: 'Kirkby Plastics Ltd', href: `/organisations/${organisationId}` },
-      {
-        text: 'Registration details',
-        href: `/organisations/${organisationId}/registrations/${registrationId}`
-      },
+      { text: 'Kirkby Plastics Ltd', href: '/organisations/500118' },
+      { text: 'Registration details', href: registrationPath },
       { text: 'Accreditation details' }
     ])
   })
 
-  it('titles the page by the accreditation number where there is one', () => {
+  it('titles the page by the accreditation number', () => {
     expect(build().pageTitle).toBe('A26ER5001180114PL: Accreditation details')
-  })
-
-  it('falls back to the page name when there is no number', () => {
-    expect(build({ accreditationNumber: null }).pageTitle).toBe(
-      'Accreditation details'
-    )
   })
 })
 
 describe('the reports table on the accreditation details view model', () => {
-  const viewPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+  const viewPath = `${registrationPath}/accreditations/2026/reports`
 
   it('names the five columns the design asks for, sizing the four data columns and hugging the actions', () => {
     expect(build().reports.head).toStrictEqual([
@@ -434,7 +422,7 @@ describe('the reports table on the accreditation details view model', () => {
           html: '<strong class="govuk-tag govuk-tag--green">Submitted</strong>'
         },
         {
-          html: `<a href="${viewPath}/2026/monthly/8/submissions/1/view" class="govuk-link">View <span class="govuk-visually-hidden">August, 2026</span></a>`,
+          html: `<a href="${viewPath}/monthly/8/submissions/1/view" class="govuk-link">View <span class="govuk-visually-hidden">August, 2026</span></a>`,
           classes: 'govuk-!-text-align-right'
         }
       ]
@@ -554,6 +542,7 @@ describe('the reports table on the accreditation details view model', () => {
 
   it("points its full list at the accreditation's reports, in the reader's language", () => {
     const { reports } = buildViewModel({
+      keys,
       organisation,
       registration: aRegistration(),
       accreditation: anAccreditation(),
@@ -566,14 +555,12 @@ describe('the reports table on the accreditation details view model', () => {
       localiseUrl: (path) => `/cy${path}`
     })
 
-    expect(reports.href).toBe(
-      `/cy/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reports`
-    )
+    expect(reports.href).toBe(`/cy${accreditationPath}/reports`)
   })
 })
 
 describe('the waste balance ledger on the accreditation details view model', () => {
-  const ledgerPath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`
+  const ledgerPath = `${accreditationPath}/waste-balance-ledger`
 
   /**
    * The backend answers a ledger in append order, so the last is the newest.
@@ -627,6 +614,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
 
   it("points its full list at the accreditation's ledger, in the reader's language", () => {
     const { ledger } = buildViewModel({
+      keys,
       organisation,
       registration: aRegistration(),
       accreditation: anAccreditation(),
@@ -651,7 +639,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
         { text: '87.50', format: 'numeric' },
         { text: 'Ada Lovelace (ada@example.com)' },
         {
-          html: `<a href="/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-001/view" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
+          html: `<a href="${accreditationPath}/packaging-recycling-notes/prn-001/view" class="govuk-link">View <span class="govuk-visually-hidden">240000123</span></a>`,
           classes: 'govuk-!-text-align-right'
         }
       ],
@@ -662,7 +650,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
         { text: '100.00', format: 'numeric' },
         { text: 'System' },
         {
-          html: `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a><br>\n<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
+          html: `<a href="${registrationPath}/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a><br>\n<a href="${registrationPath}/summary-logs/files/log-1/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
           classes: 'govuk-!-text-align-right'
         }
       ]
@@ -675,7 +663,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
     config.set('featureFlags.wasteRecordsDownload', true)
 
     expect(cell).toStrictEqual({
-      html: `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
+      html: `<a href="${registrationPath}/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 January 2026, 9:00am</span></a>`,
       classes: 'govuk-!-text-align-right'
     })
   })
@@ -691,7 +679,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
   })
 
   describe('the PRNs section', () => {
-    const notesPath = `/organisations/${organisationId}/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes`
+    const notesPath = `${accreditationPath}/packaging-recycling-notes`
 
     it('points its detailed view at the notes the accreditation has issued', () => {
       expect(prnsOf([]).href).toBe(notesPath)

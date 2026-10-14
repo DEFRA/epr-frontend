@@ -5,12 +5,10 @@ import { describe, expect, it } from 'vitest'
 import { buildViewModel } from './build-view-model.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { AccreditationResource } from '../../helpers/types.js'
  */
 
 const localise = createMockLocalise({
@@ -40,38 +38,31 @@ const request = /** @type {HapiRequest} */ (
   })
 )
 
-const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = 'reg-001'
-const accreditationId = 'acc-001'
-const accreditationPath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
-
-const organisation = /** @type {Organisation} */ (
-  /** @type {unknown} */ ({
-    id: organisationId,
-    companyDetails: { name: 'Kirkby Plastics Ltd' }
-  })
-)
-
-const registration = /** @type {Registration} */ (
-  /** @type {unknown} */ ({
-    id: registrationId,
-    registrationNumber: 'R26ER5001180041PL'
-  })
-)
+const keys = {
+  organisationNumber: '500118',
+  registrationNumber: 'R26ER5001180041PL',
+  year: '2026'
+}
+const registrationPath = `/organisations/500118/registrations/R26ER5001180041PL`
+const accreditationPath = `${registrationPath}/accreditations/2026`
 
 /**
- * @param {Partial<AccreditationResource>} [overrides]
- * @returns {AccreditationResource}
+ * @param {Partial<OrganisationView>} [overrides]
+ * @returns {OrganisationView}
  */
-const anAccreditation = (overrides) =>
-  /** @type {AccreditationResource} */ (
-    /** @type {unknown} */ ({
-      id: accreditationId,
-      accreditationNumber: 'A26ER5001180114PL',
-      status: 'approved',
-      ...overrides
-    })
-  )
+const anOrganisation = (overrides) => ({
+  organisationNumber: 500118,
+  name: 'Kirkby Plastics Ltd',
+  registrations: {},
+  ...overrides
+})
+
+/** @type {AccreditationView} */
+const accreditation = {
+  accreditationNumber: 'A26ER5001180114PL',
+  status: 'approved',
+  statusTimeline: { '2026-01-01': { status: 'approved' } }
+}
 
 /**
  * @param {number} period
@@ -91,21 +82,21 @@ const aPeriod = (period) =>
 
 /**
  * @param {{
- *   accreditation?: Partial<AccreditationResource>,
+ *   organisation?: OrganisationView,
  *   cadence?: CadenceValue,
  *   reportingPeriods?: ReportingPeriod[]
  * }} [overrides]
  */
 const build = ({
-  accreditation,
+  organisation = anOrganisation(),
   cadence = CADENCE.MONTHLY,
   reportingPeriods = []
 } = {}) =>
   buildViewModel({
     request,
+    keys,
     organisation,
-    registration,
-    accreditation: anAccreditation(accreditation),
+    accreditation,
     cadence,
     reportingPeriods
   })
@@ -121,30 +112,23 @@ describe('the accreditation reports view model', () => {
     )
   })
 
-  it('leaves a missing number out of the caption rather than showing it empty', () => {
+  it('names the organisation by its trading name where it holds one', () => {
     expect(
-      build({ accreditation: { accreditationNumber: null } }).caption
-    ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
+      build({
+        organisation: anOrganisation({ tradingName: 'Kirkby Recycling' })
+      }).caption
+    ).toBe('Kirkby Recycling - R26ER5001180041PL - A26ER5001180114PL')
   })
 
-  it('titles the page by the accreditation number where there is one', () => {
+  it('titles the page by the accreditation number', () => {
     expect(build().pageTitle).toBe('A26ER5001180114PL: Reports')
   })
 
-  it('falls back to the heading when there is no number', () => {
-    expect(
-      build({ accreditation: { accreditationNumber: null } }).pageTitle
-    ).toBe('Reports')
-  })
-
-  it('walks back through the accreditation, ending on this page unlinked', () => {
+  it('walks back through the accreditation by number, ending on this page unlinked', () => {
     expect(build().breadcrumbs).toStrictEqual([
       { text: 'All organisations', href: '/regulators/home' },
-      { text: 'Kirkby Plastics Ltd', href: `/organisations/${organisationId}` },
-      {
-        text: 'Registration details',
-        href: `/organisations/${organisationId}/registrations/${registrationId}`
-      },
+      { text: 'Kirkby Plastics Ltd', href: '/organisations/500118' },
+      { text: 'Registration details', href: registrationPath },
       { text: 'Accreditation details', href: accreditationPath },
       { text: 'Reports' }
     ])
@@ -159,6 +143,15 @@ describe('the accreditation reports view model', () => {
       href: accreditationPath
     })
     expect(model.breadcrumbs.at(-1)).toStrictEqual({ text: 'Reports' })
+  })
+
+  it('links a submitted month to its report under the accreditation', () => {
+    const [row] = build({ reportingPeriods: [aPeriod(8)] }).reports.rows
+    const action = row?.[4]
+
+    expect(action && 'html' in action ? action.html : '').toContain(
+      `href="${accreditationPath}/reports/monthly/8/submissions/1/view"`
+    )
   })
 
   it('heads the five columns the accreditation page does', () => {

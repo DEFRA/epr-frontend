@@ -8,9 +8,9 @@ import { fetchReportListDetails } from './helpers/fetch-report-list-details.js'
 
 /**
  * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string
+ *   organisationNumber: string,
+ *   registrationNumber: string,
+ *   year: string
  * }} AccreditationParams
  */
 
@@ -24,19 +24,15 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
+    const { organisationNumber, registrationNumber, year } = request.params
+    const keys = { organisationNumber, registrationNumber, year }
     const { backendToken } = request.auth.credentials
 
-    const details = await fetchReportListDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
-    })
+    const details = await fetchReportListDetails({ ...keys, backendToken })
 
     return h.view(
       'registrations/details/accreditations/reports/index',
-      buildViewModel({ ...details, request })
+      buildViewModel({ ...details, keys, request })
     )
   }
 }

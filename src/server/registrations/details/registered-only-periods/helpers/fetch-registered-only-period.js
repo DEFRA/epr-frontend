@@ -1,14 +1,19 @@
-import { fetchLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
-import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
+import Boom from '@hapi/boom'
 
-import { fetchRegistrationDetails } from '../../helpers/fetch-registration-details.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
+import { registrationIn } from '#server/common/helpers/organisations/registration-in-view.js'
+import { fetchRegisteredOnlyLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { RegistrationDetails } from '../../helpers/fetch-registration-details.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
@@ -19,9 +24,20 @@ import { fetchRegistrationDetails } from '../../helpers/fetch-registration-detai
  */
 
 /**
- * @typedef {RegistrationDetails & ReportingCalendar & {
+ * @typedef {ReportingCalendar & {
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
  *   ledgerEvents: LedgerEvent[] | null
  * }} RegisteredOnlyPeriodDetails
+ */
+
+/**
+ * @typedef {RegistrationKeys & {
+ *   year: number,
+ *   backendToken: string,
+ *   canReadLedger: boolean,
+ *   logger: TypedLogger
+ * }} RegisteredOnlyPeriodRequest
  */
 
 /**
@@ -30,34 +46,20 @@ import { fetchRegistrationDetails } from '../../helpers/fetch-registration-detai
  * backend's to decide, and one endpoint answering both audiences is what keeps
  * a regulator seeing what the operator sees.
  *
- * `fetchReportingPeriods` raises rather than answering a failure, and the catch
- * belongs here rather than in it: the operator's own page shares that helper,
- * and a swallowed error there would silently empty their table. A calendar this
- * page could not read renders as no periods, so downstream has one empty case to
- * build and to test rather than two.
- * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   backendToken: string,
- *   logger: TypedLogger
- * }} params
+ * `fetchReportingPeriodsByNumber` raises rather than answering a failure, and
+ * the catch belongs here rather than in it: the operator's own page shares that
+ * helper, and a swallowed error there would silently empty their table. A
+ * calendar this page could not read renders as no periods, so downstream has
+ * one empty case to build and to test rather than two.
+ * @param {{ keys: RegistrationKeys, backendToken: string, logger: TypedLogger }} params
  * @returns {Promise<ReportingCalendar>}
  */
-const fetchCalendar = async ({
-  organisationId,
-  registrationId,
-  backendToken,
-  logger
-}) => {
+const fetchCalendar = async ({ keys, backendToken, logger }) => {
   try {
-    return await fetchReportingPeriods(
-      organisationId,
-      registrationId,
-      backendToken
-    )
+    return await fetchReportingPeriodsByNumber(keys, backendToken)
   } catch (error) {
     logger.error({
-      message: `Failed to fetch the reporting calendar for organisation ${organisationId} registration ${registrationId}`,
+      message: `Failed to fetch the reporting calendar for organisation ${keys.organisationNumber} registration ${keys.registrationNumber}`,
       err: error
     })
 
@@ -66,45 +68,70 @@ const fetchCalendar = async ({
 }
 
 /**
- * The registered-only ledger, read from the address naming no accreditation,
- * or null for a session the backend would refuse anyway.
+ * The year's registered-only ledger: null without the read scope, empty for a year never approved.
  * @param {{
- *   organisationId: string,
- *   registrationId: string,
+ *   keys: RegistrationKeys,
+ *   year: number,
  *   backendToken: string,
  *   canReadLedger: boolean
  * }} params
  * @returns {Promise<LedgerEvent[] | null>}
  */
-const fetchLedger = ({
-  canReadLedger,
-  organisationId,
-  registrationId,
-  backendToken
-}) =>
-  canReadLedger
-    ? fetchLedgerEvents({ organisationId, registrationId, backendToken })
-    : Promise.resolve(null)
+const fetchLedger = async ({ keys, year, backendToken, canReadLedger }) => {
+  if (!canReadLedger) {
+    return null
+  }
+
+  try {
+    return await fetchRegisteredOnlyLedgerEvents(
+      { ...keys, year: String(year) },
+      backendToken
+    )
+  } catch (error) {
+    if (Boom.isBoom(error, statusCodes.notFound)) {
+      return []
+    }
+
+    throw error
+  }
+}
+
+/**
+ * The registration from the organisation read model.
+ * @param {{ keys: RegistrationKeys, backendToken: string }} params
+ * @returns {Promise<{ organisation: OrganisationView, registration: RegistrationView }>}
+ */
+const fetchRegistration = async ({ keys, backendToken }) => {
+  const organisation = await fetchOrganisation(
+    organisationNumber(Number(keys.organisationNumber)),
+    backendToken
+  )
+
+  return {
+    organisation,
+    registration: registrationIn(organisation, keys.registrationNumber)
+  }
+}
 
 /**
  * The registration, the reporting calendar and the ledger, read together.
  *
  * Unlike the calendar, a failed ledger read is not caught: it is the record the
  * page exists to show.
- * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   backendToken: string,
- *   canReadLedger: boolean,
- *   logger: TypedLogger
- * }} params
+ * @param {RegisteredOnlyPeriodRequest} params
  * @returns {Promise<RegisteredOnlyPeriodDetails>}
  */
-export const fetchRegisteredOnlyPeriod = async (params) => {
+export const fetchRegisteredOnlyPeriod = async ({
+  year,
+  backendToken,
+  canReadLedger,
+  logger,
+  ...keys
+}) => {
   const [details, calendar, ledgerEvents] = await Promise.all([
-    fetchRegistrationDetails(params),
-    fetchCalendar(params),
-    fetchLedger(params)
+    fetchRegistration({ keys, backendToken }),
+    fetchCalendar({ keys, backendToken, logger }),
+    fetchLedger({ keys, year, backendToken, canReadLedger })
   ])
 
   return { ...details, ...calendar, ledgerEvents }

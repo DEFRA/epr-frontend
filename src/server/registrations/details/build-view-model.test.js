@@ -10,6 +10,7 @@ const localise = createMockLocalise({
   'registrations:details:current': 'Current',
   'registrations:details:period': '{{from}} to {{to}}',
   'registrations:details:heading': 'Registration details',
+  'registrations:details:allOrganisations': 'All organisations',
   'registrations:details:summary:material': 'Material',
   'registrations:details:summary:overseasSites': 'Overseas reprocessing site',
   'registrations:details:summary:overseasSitesView': 'View',
@@ -19,102 +20,74 @@ const localise = createMockLocalise({
 })
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { AccreditationResource } from './helpers/types.js'
- * @import { RegistrationResource, SiteAddress } from '#server/common/helpers/organisations/registration-resource.js'
+ * @import { AccreditationView, OrganisationView, RegistrationView, ReprocessorRegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
-const organisationId = '6507f1f77bcf86cd79943901'
-const organisation = /** @type {Organisation} */ (
-  /** @type {unknown} */ ({
-    id: organisationId,
-    companyDetails: { name: 'Kirkby Plastics Ltd' }
-  })
-)
+const keys = {
+  organisationNumber: '500118',
+  registrationNumber: 'R26ER5001180041PL'
+}
+const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
+
+/** @type {OrganisationView} */
+const organisation = {
+  organisationNumber: 500118,
+  name: 'Kirkby Plastics Ltd',
+  registrations: {}
+}
 
 /**
- * @param {SiteAddress | null} address
- * @returns {RegistrationResource}
+ * @param {ReprocessorRegistrationView['site']['address']} address
+ * @returns {RegistrationView}
  */
-const aRegistrationWithSite = (address) => ({
-  id: 'reg-001',
-  organisation: { id: organisationId },
-  registrationNumber: 'R26ER5001180041PL',
+const aReprocessorAt = (address) => ({
   status: 'approved',
+  validFrom: '2026-01-01',
   material: 'plastic',
+  submittedToRegulator: { code: 'ea' },
+  wasteProcessingType: 'reprocessor',
   reprocessingType: 'input',
-  dateRange: { validFrom: '2026-01-01' },
-  accreditations: [],
-  application: {
-    orgName: 'Kirkby Plastics',
-    submittedToRegulator: 'ea',
-    material: 'plastic',
-    wasteProcessingType: 'reprocessor',
-    site: address === null ? null : { address }
-  }
+  site: { address },
+  accreditations: {}
 })
 
+/** @type {RegistrationView} */
+const anExporter = {
+  status: 'approved',
+  validFrom: '2026-01-01',
+  material: 'plastic',
+  submittedToRegulator: { code: 'ea' },
+  wasteProcessingType: 'exporter',
+  accreditations: {}
+}
+
 /**
- * @param {Partial<AccreditationResource>} overrides
- * @returns {AccreditationResource}
+ * @param {Partial<AccreditationView>} overrides
+ * @returns {AccreditationView}
  */
 const anAccreditation = (overrides) => ({
-  id: 'acc-001',
   accreditationNumber: 'A26ER5001180114PL',
   status: 'approved',
-  reprocessingType: 'input',
-  dateRange: { validFrom: '2026-07-01', validTo: null },
-  application: {
-    orgName: 'Kirkby Plastics',
-    submittedToRegulator: 'ea',
-    material: 'plastic',
-    wasteProcessingType: 'reprocessor'
-  },
+  statusTimeline: { '2026-07-01': { status: 'approved' } },
   ...overrides
 })
 
 /**
  * @param {{
- *   registration?: RegistrationResource,
- *   accreditations?: AccreditationResource[]
+ *   registration?: RegistrationView,
+ *   organisation?: OrganisationView
  * }} [overrides]
  */
-const build = ({ registration, accreditations } = {}) =>
+const build = (overrides = {}) =>
   buildViewModel({
-    organisation,
-    registration: registration ?? aRegistrationWithSite({ line1: 'Unit 4' }),
-    accreditations: accreditations ?? [],
+    keys,
+    organisation: overrides.organisation ?? organisation,
+    registration:
+      overrides.registration ??
+      aReprocessorAt({ line1: 'Unit 4', town: 'Leeds', postcode: 'LS10 1AB' }),
     localise,
     localiseUrl: (path) => path
   })
-
-/**
- * @param {ReturnType<typeof build>} viewModel
- * @param {number} index
- */
-const accreditedPeriod = (viewModel, index) => {
-  const period = viewModel.accreditedPeriods[index]
-
-  if (!period) {
-    throw new Error(`expected an accredited period at ${index}`)
-  }
-
-  return period
-}
-
-/**
- * @param {ReturnType<typeof build>} viewModel
- * @param {number} index
- */
-const breadcrumb = (viewModel, index) => {
-  const crumb = viewModel.breadcrumbs[index]
-
-  if (!crumb) {
-    throw new Error(`expected a breadcrumb at ${index}`)
-  }
-
-  return crumb
-}
 
 /**
  * @param {ReturnType<typeof build>} viewModel
@@ -137,10 +110,10 @@ const summaryLink = (viewModel, key) => {
 }
 
 describe(buildViewModel, () => {
-  describe('the site line', () => {
-    it('joins the parts the address holds', () => {
+  describe('the summary rows', () => {
+    it('show a reprocessor its status, processing type, material and site', () => {
       const viewModel = build({
-        registration: aRegistrationWithSite({
+        registration: aReprocessorAt({
           line1: 'Unit 4 Mill Road',
           line2: 'Hunslet',
           town: 'Leeds',
@@ -149,16 +122,20 @@ describe(buildViewModel, () => {
         })
       })
 
-      expect(summaryValue(viewModel, 'Site')).toBe(
-        'Unit 4 Mill Road, Hunslet, Leeds, West Yorkshire, LS10 1AB'
-      )
+      expect(viewModel.summaryRows).toStrictEqual([
+        { key: 'Status', status: toStatusTag('approved') },
+        { key: 'Processing type', value: 'Reprocessor (input)' },
+        { key: 'Material', value: 'Plastic' },
+        {
+          key: 'Site',
+          value: 'Unit 4 Mill Road, Hunslet, Leeds, West Yorkshire, LS10 1AB'
+        }
+      ])
     })
 
-    it('prefers the address the backend already wrote out', () => {
+    it('show the address the backend already wrote out', () => {
       const viewModel = build({
-        registration: aRegistrationWithSite({
-          line1: 'Unit 4 Mill Road',
-          town: 'Leeds',
+        registration: aReprocessorAt({
           fullAddress: 'Unit 4 Mill Road, Leeds LS10 1AB'
         })
       })
@@ -168,162 +145,127 @@ describe(buildViewModel, () => {
       )
     })
 
-    it('leaves out a part the address holds as blank', () => {
+    it('leave out a part the address holds as blank', () => {
       const viewModel = build({
-        registration: aRegistrationWithSite({
+        registration: aReprocessorAt({
           line1: 'Unit 4 Mill Road',
           line2: '   ',
-          town: 'Leeds'
+          town: 'Leeds',
+          postcode: ''
         })
       })
 
       expect(summaryValue(viewModel, 'Site')).toBe('Unit 4 Mill Road, Leeds')
     })
 
-    it('falls back to the parts when the written address is blank', () => {
-      const viewModel = build({
-        registration: aRegistrationWithSite({
-          line1: 'Unit 4 Mill Road',
-          fullAddress: '  '
-        })
-      })
-
-      expect(summaryValue(viewModel, 'Site')).toBe('Unit 4 Mill Road')
-    })
-  })
-
-  describe('the date range of an accredited period', () => {
-    it('names the present where the accreditation is still running', () => {
-      const viewModel = build({
-        accreditations: [
-          anAccreditation({
-            dateRange: { validFrom: '2026-07-01', validTo: null }
-          })
-        ]
-      })
-
-      expect(accreditedPeriod(viewModel, 0).dateRange).toBe(
-        '1 July 2026 to Current'
-      )
-    })
-
-    it('is empty where the accreditation never carried dates', () => {
-      const viewModel = build({
-        accreditations: [
-          anAccreditation({ dateRange: { validFrom: null, validTo: null } })
-        ]
-      })
-
-      expect(accreditedPeriod(viewModel, 0).dateRange).toBe('')
-    })
-  })
-
-  describe('the material', () => {
-    it('is the one the registration resolved to', () => {
-      const registration = aRegistrationWithSite({ line1: 'Unit 4' })
+    it('show the material the registration resolved to', () => {
       const viewModel = build({
         registration: {
-          ...registration,
-          material: 'glass_re_melt',
-          application: { ...registration.application, material: 'glass' }
+          ...aReprocessorAt({ fullAddress: 'Leeds' }),
+          material: 'glass_re_melt'
         }
       })
 
       expect(summaryValue(viewModel, 'Material')).toBe('Glass remelt')
     })
 
-    it('is what was applied for where the registration resolved to none', () => {
-      const { material: _material, ...unresolved } = aRegistrationWithSite({
-        line1: 'Unit 4'
-      })
+    it('show an exporter no site, and open the overseas sites it sends to', () => {
+      const viewModel = build({ registration: anExporter })
+
+      expect(viewModel.summaryRows).toStrictEqual([
+        { key: 'Status', status: toStatusTag('approved') },
+        { key: 'Processing type', value: 'Exporter' },
+        { key: 'Material', value: 'Plastic' },
+        {
+          key: 'Overseas reprocessing site',
+          link: { href: `${registrationPath}/overseas-sites`, text: 'View' }
+        }
+      ])
+    })
+
+    it('offer a reprocessor no overseas sites', () => {
+      expect(summaryLink(build(), 'Overseas reprocessing site')).toBeUndefined()
+    })
+  })
+
+  describe('the accredited periods', () => {
+    it('list one row per year, newest first, each opening its year', () => {
       const viewModel = build({
         registration: {
-          ...unresolved,
-          application: { ...unresolved.application, material: 'glass' }
+          ...anExporter,
+          validFrom: '2025-01-01',
+          accreditations: {
+            2025: anAccreditation({
+              accreditationNumber: 'A25ER5001180114PL',
+              statusTimeline: { '2025-03-01': { status: 'approved' } }
+            }),
+            2026: anAccreditation({})
+          }
         }
       })
 
-      expect(summaryValue(viewModel, 'Material')).toBe('Glass')
+      expect(viewModel.accreditedPeriods).toStrictEqual([
+        {
+          number: 'A26ER5001180114PL',
+          dateRange: '1 July to 31 December 2026',
+          status: toStatusTag('approved'),
+          href: `${registrationPath}/accreditations/2026`
+        },
+        {
+          number: 'A25ER5001180114PL',
+          dateRange: '1 March to 31 December 2025',
+          status: toStatusTag('approved'),
+          href: `${registrationPath}/accreditations/2025`
+        }
+      ])
     })
-  })
 
-  describe('the organisation', () => {
-    it('is named by its own name where it trades under none', () => {
-      expect(breadcrumb(build(), 1).text).toBe('Kirkby Plastics Ltd')
-    })
-
-    it('is named by its own name where the trading name is blank', () => {
-      const viewModel = buildViewModel({
-        organisation: /** @type {Organisation} */ (
-          /** @type {unknown} */ ({
-            id: organisationId,
-            companyDetails: { name: 'Kirkby Plastics Ltd', tradingName: '  ' }
-          })
-        ),
-        registration: aRegistrationWithSite({ line1: 'Unit 4' }),
-        accreditations: [],
-        localise,
-        localiseUrl: (path) => path
-      })
-
-      expect(breadcrumb(viewModel, 1).text).toBe('Kirkby Plastics Ltd')
-    })
-  })
-
-  describe('a registration that was never approved', () => {
-    it('is captioned by the organisation alone', () => {
-      const registration = aRegistrationWithSite({ line1: 'Unit 4' })
+    it('start on 1 January for an accreditation approved the year before', () => {
       const viewModel = build({
         registration: {
-          ...registration,
-          registrationNumber: null,
-          status: 'created'
+          ...anExporter,
+          accreditations: {
+            2026: anAccreditation({
+              statusTimeline: { '2025-12-15': { status: 'approved' } }
+            })
+          }
         }
       })
 
-      expect(viewModel.caption).toBe('Kirkby Plastics Ltd')
-      expect(viewModel.pageTitle).toBe('Registration details')
-    })
-  })
-
-  it('sorts an accreditation that never started last', () => {
-    const viewModel = build({
-      accreditations: [
-        anAccreditation({
-          id: 'acc-none',
-          accreditationNumber: 'A26ER5001180001PL',
-          dateRange: { validFrom: null, validTo: null }
-        }),
-        anAccreditation({
-          id: 'acc-dated',
-          accreditationNumber: 'A26ER5001180114PL',
-          dateRange: { validFrom: '2026-07-01', validTo: null }
-        })
-      ]
+      expect(viewModel.accreditedPeriods[0]?.dateRange).toBe(
+        '1 January to 31 December 2026'
+      )
     })
 
-    expect(
-      viewModel.accreditedPeriods.map(({ number }) => number)
-    ).toStrictEqual(['A26ER5001180114PL', 'A26ER5001180001PL'])
-  })
+    it('end on the cancellation date for a cancelled accreditation', () => {
+      const viewModel = build({
+        registration: {
+          ...anExporter,
+          accreditations: {
+            2026: anAccreditation({
+              status: 'cancelled',
+              statusTimeline: {
+                '2026-02-15': { status: 'approved' },
+                '2026-03-31': { status: 'cancelled' }
+              }
+            })
+          }
+        }
+      })
 
-  it('keeps every accreditation that never started', () => {
-    const viewModel = build({
-      accreditations: [
-        anAccreditation({
-          id: 'acc-a',
-          accreditationNumber: 'A26ER5001180001PL',
-          dateRange: { validFrom: null, validTo: null }
-        }),
-        anAccreditation({
-          id: 'acc-b',
-          accreditationNumber: 'A26ER5001180002PL',
-          dateRange: { validFrom: null, validTo: null }
-        })
-      ]
+      expect(viewModel.accreditedPeriods).toStrictEqual([
+        {
+          number: 'A26ER5001180114PL',
+          dateRange: '15 February to 31 March 2026',
+          status: toStatusTag('cancelled'),
+          href: `${registrationPath}/accreditations/2026`
+        }
+      ])
     })
 
-    expect(viewModel.accreditedPeriods).toHaveLength(2)
+    it('are none for a registration holding no accreditation', () => {
+      expect(build().accreditedPeriods).toStrictEqual([])
+    })
   })
 
   describe('registered-only periods', () => {
@@ -338,149 +280,72 @@ describe(buildViewModel, () => {
       vi.useRealTimers()
     })
 
-    it('offers a year per year the registration has run, most recent first', () => {
+    it('offer a year per year the registration has run, most recent first', () => {
       const viewModel = build({
-        registration: {
-          ...aRegistrationWithSite({ line1: 'Unit 4' }),
-          dateRange: { validFrom: '2024-06-01' }
-        }
+        registration: { ...anExporter, validFrom: '2024-06-01' }
       })
 
       expect(viewModel.registeredOnlyPeriods).toStrictEqual([
         {
           year: '2026',
-          href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/registered-only-periods/2026'
+          href: `${registrationPath}/registered-only-periods/2026`
         },
         {
           year: '2025',
-          href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/registered-only-periods/2025'
+          href: `${registrationPath}/registered-only-periods/2025`
         },
         {
           year: '2024',
-          href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/registered-only-periods/2024'
+          href: `${registrationPath}/registered-only-periods/2024`
         }
       ])
     })
 
-    it('offers no year for a registration that was never approved', () => {
+    it('offer a year the registration held an accreditation for throughout', () => {
       const viewModel = build({
         registration: {
-          ...aRegistrationWithSite({ line1: 'Unit 4' }),
-          dateRange: { validFrom: null }
-        }
-      })
-
-      expect(viewModel.registeredOnlyPeriods).toStrictEqual([])
-    })
-
-    // A year the accreditation covered entirely still gets a row. The page it
-    // opens is what says the period holds nothing.
-    it('offers a year the registration held an accreditation for throughout', () => {
-      const viewModel = build({
-        registration: {
-          ...aRegistrationWithSite({ line1: 'Unit 4' }),
-          dateRange: { validFrom: '2026-01-01' }
-        },
-        accreditations: [
-          anAccreditation({
-            dateRange: { validFrom: '2026-01-01', validTo: null }
-          })
-        ]
-      })
-
-      expect(
-        viewModel.registeredOnlyPeriods.map(({ year }) => year)
-      ).toStrictEqual(['2026'])
-    })
-
-    // Registrations do not expire, so an end date the backend still sends must
-    // not offer a regulator a year that has not started.
-    it('ignores a registration validTo in the future', () => {
-      const viewModel = build({
-        registration: {
-          ...aRegistrationWithSite({ line1: 'Unit 4' }),
-          dateRange: { validFrom: '2026-01-01' }
+          ...anExporter,
+          accreditations: {
+            2026: anAccreditation({
+              statusTimeline: { '2026-01-01': { status: 'approved' } }
+            })
+          }
         }
       })
 
       expect(
         viewModel.registeredOnlyPeriods.map(({ year }) => year)
       ).toStrictEqual(['2026'])
-    })
-
-    // The accredited table is what a regulator already reads here, so adding a
-    // second one beside it has to leave the first untouched.
-    it('leaves the accredited periods exactly as they were', () => {
-      const viewModel = build({
-        registration: {
-          ...aRegistrationWithSite({ line1: 'Unit 4' }),
-          dateRange: { validFrom: '2026-01-01' }
-        },
-        accreditations: [
-          anAccreditation({
-            accreditationNumber: 'A26ER5001180114PL',
-            dateRange: { validFrom: '2026-03-01', validTo: null }
-          })
-        ]
-      })
-
-      expect(viewModel.accreditedPeriods).toStrictEqual([
-        {
-          number: 'A26ER5001180114PL',
-          dateRange: '1 March 2026 to Current',
-          status: toStatusTag('approved'),
-          href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/accreditations/acc-001'
-        }
-      ])
     })
   })
 
-  describe('the overseas reprocessing sites row', () => {
-    /** @returns {RegistrationResource} */
-    const anExporter = () => {
-      const registration = aRegistrationWithSite(null)
-
-      return {
-        ...registration,
-        application: {
-          ...registration.application,
-          wasteProcessingType: 'exporter'
-        }
-      }
-    }
-
-    it('opens the sites the exporter sends to', () => {
-      const viewModel = build({ registration: anExporter() })
-
-      expect(
-        summaryLink(viewModel, 'Overseas reprocessing site')
-      ).toStrictEqual({
-        href: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/overseas-sites',
-        text: 'View'
-      })
-    })
-
-    // Only an exporter sends waste overseas, so a reprocessor is offered no
-    // page that would only ever be empty.
-    it('is absent for a reprocessor', () => {
+  describe('the organisation', () => {
+    it('is named by its trading name where it holds one', () => {
       const viewModel = build({
-        registration: aRegistrationWithSite({ line1: 'Unit 4' })
+        organisation: { ...organisation, tradingName: 'Kirkby Recycling' }
       })
 
-      expect(
-        summaryLink(viewModel, 'Overseas reprocessing site')
-      ).toBeUndefined()
+      expect(viewModel.caption).toBe('Kirkby Recycling - R26ER5001180041PL')
     })
 
-    it('follows the rows the registration already showed', () => {
-      const viewModel = build({ registration: anExporter() })
+    it('is named by its own name where the trading name is blank', () => {
+      const viewModel = build({
+        organisation: { ...organisation, tradingName: '  ' }
+      })
 
-      expect(viewModel.summaryRows.map(({ key }) => key)).toStrictEqual([
-        'Status',
-        'Processing type',
-        'Material',
-        'Overseas reprocessing site'
-      ])
+      expect(viewModel.caption).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
     })
+  })
+
+  it('walks back to the organisation by number', () => {
+    expect(build().breadcrumbs).toStrictEqual([
+      { text: 'All organisations', href: '/regulators/home' },
+      { text: 'Kirkby Plastics Ltd', href: '/organisations/500118' },
+      { text: 'Registration details' }
+    ])
+  })
+
+  it('titles the page by the registration number', () => {
+    expect(build().pageTitle).toBe('R26ER5001180041PL: Registration details')
   })
 })

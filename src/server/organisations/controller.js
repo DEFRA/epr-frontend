@@ -9,6 +9,10 @@ import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-or
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
+import {
+  accreditationPath,
+  registrationPath
+} from '#server/reports/helpers/report-paths.js'
 import { getStatusClass } from './helpers/status-helpers.js'
 
 /** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
@@ -20,6 +24,7 @@ import { getStatusClass } from './helpers/status-helpers.js'
  * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
@@ -65,22 +70,43 @@ const createAccreditationTag = (accreditation, localise) =>
   )
 
 /**
+ * The registration's page: its accreditation for the year where it holds one, whatever its status.
+ * @param {RegistrationView} registration
+ * @param {RegistrationKeys} keys
+ * @param {Year | null} selectedYear
+ * @returns {string}
+ */
+const registrationRowPath = (registration, keys, selectedYear) => {
+  const year = String(selectedYear)
+
+  return Object.hasOwn(registration.accreditations, year)
+    ? accreditationPath({ ...keys, year })
+    : registrationPath(keys)
+}
+
+/**
  * Creates a row for a given registration
  * @param {HapiRequest} request
  * @param {OrganisationNumber} orgNumber
  * @param {DisplayedRegistration} displayed
  * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditation number to balance data
+ * @param {Year | null} selectedYear
  * @returns {TableCell[]} - Array of table cells
  */
 function createRow(
   request,
   orgNumber,
   { number, registration, accreditation },
-  wasteBalanceMap
+  wasteBalanceMap,
+  selectedYear
 ) {
   const { t: localise } = request
   const registrationUrl = request.localiseUrl(
-    `/organisations/${orgNumber}/registrations/${number}`
+    registrationRowPath(
+      registration,
+      { organisationNumber: String(orgNumber), registrationNumber: number },
+      selectedYear
+    )
   )
 
   /** @type {TableCell[]} */
@@ -176,6 +202,7 @@ function addRowToSites(sites, registration, row, localise) {
  * @param {DisplayedRegistration[]} displayedRegistrations
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
  * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditation number to balance data
+ * @param {Year | null} selectedYear
  * @returns {Array} Array of sites with their materials
  */
 function getRegistrationSites(
@@ -183,7 +210,8 @@ function getRegistrationSites(
   orgNumber,
   displayedRegistrations,
   wasteProcessingType,
-  wasteBalanceMap
+  wasteBalanceMap,
+  selectedYear
 ) {
   const { t: localise } = request
 
@@ -193,7 +221,13 @@ function getRegistrationSites(
   )
 
   return filtered.reduce((sites, displayed) => {
-    const row = createRow(request, orgNumber, displayed, wasteBalanceMap)
+    const row = createRow(
+      request,
+      orgNumber,
+      displayed,
+      wasteBalanceMap,
+      selectedYear
+    )
     return addRowToSites(sites, displayed.registration, row, localise)
   }, [])
 }
@@ -353,7 +387,8 @@ export const controller = {
       orgNumber,
       displayedRegistrations,
       'reprocessor',
-      wasteBalanceMap
+      wasteBalanceMap,
+      selectedYear
     )
 
     const exporterSites = getRegistrationSites(
@@ -361,7 +396,8 @@ export const controller = {
       orgNumber,
       displayedRegistrations,
       'exporter',
-      wasteBalanceMap
+      wasteBalanceMap,
+      selectedYear
     )
 
     const { sites, tableTitle, shouldRenderTabs } = getActiveSitesAndTitle({

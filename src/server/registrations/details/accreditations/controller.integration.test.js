@@ -9,9 +9,9 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchAccreditationDetails } from './helpers/fetch-accreditation-details.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import {
   getAllByRole,
   getByRole,
@@ -29,10 +29,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(import('./helpers/fetch-accreditation-details.js'))
 
-const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = 'reg-001'
-const accreditationId = 'acc-001'
-const path = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
+const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
+const path = `${registrationPath}/accreditations/2026`
 
 const operator = buildMockAuth()
 
@@ -139,28 +137,24 @@ const packagingRecyclingNotes = [
 
 /** @type {AccreditationDetails} */
 const accreditationDetails = {
-  organisation: asOrganisation({
-    id: organisationId,
-    companyDetails: { name: 'Kirkby Plastics Ltd' }
-  }),
+  organisation: {
+    organisationNumber: 500118,
+    name: 'Kirkby Plastics Ltd',
+    registrations: {}
+  },
   registration: /** @type {AccreditationDetails['registration']} */ (
     /** @type {unknown} */ ({
-      id: registrationId,
-      registrationNumber: 'R26ER5001180041PL'
+      status: 'approved',
+      validFrom: '2026-01-01',
+      material: 'plastic',
+      wasteProcessingType: 'reprocessor',
+      accreditations: {}
     })
   ),
   accreditation: {
-    id: accreditationId,
     accreditationNumber: 'A26ER5001180114PL',
     status: 'approved',
-    reprocessingType: 'input',
-    dateRange: { validFrom: '2026-07-01', validTo: '2026-12-31' },
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'ea',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor'
-    }
+    statusTimeline: { '2026-07-01': { status: 'approved' } }
   },
   wasteBalance: { amount: 1234.5, availableAmount: 987.25 },
   cadence: 'monthly',
@@ -283,6 +277,20 @@ describe('the accreditation details page', () => {
     expect(body).toContain('A26ER5001180114PL')
   })
 
+  it('reads the details by the numbers and year in the address', async ({
+    server
+  }) => {
+    await visit(server, regulator)
+
+    expect(fetchAccreditationDetails).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organisationNumber: '500118',
+        registrationNumber: 'R26ER5001180041PL',
+        year: '2026'
+      })
+    )
+  })
+
   it('shows the balance still available, and not the total behind it', async ({
     server
   }) => {
@@ -291,6 +299,47 @@ describe('the accreditation details page', () => {
     expect(body).toContain('Waste balance available (tonnes)')
     expect(body).toContain('987.25')
     expect(body).not.toContain('1,234.50')
+  })
+
+  it('leaves the balance blank where it could not be read', async ({
+    server
+  }) => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+      ...accreditationDetails,
+      wasteBalance: null
+    })
+
+    const { statusCode, body } = await visit(server, regulator)
+    const row = [
+      ...documentOf(body).querySelectorAll('.govuk-summary-list__row')
+    ].find((summary) =>
+      summary.textContent?.includes('Waste balance available (tonnes)')
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(
+      row?.querySelector('.govuk-summary-list__value')?.textContent?.trim()
+    ).toBe('')
+  })
+
+  it('is not found for a number or year that names no accreditation', async ({
+    server
+  }) => {
+    vi.mocked(fetchAccreditationDetails).mockRejectedValue(Boom.notFound())
+
+    const { statusCode } = await visit(server, regulator)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  it('fails where the ids could not be looked up', async ({ server }) => {
+    vi.mocked(fetchAccreditationDetails).mockRejectedValue(
+      Boom.badImplementation()
+    )
+
+    const { statusCode } = await visit(server, regulator)
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
   })
 
   it('offers the latest waste records at the foot of the summary', async ({
@@ -303,9 +352,7 @@ describe('the accreditation details page', () => {
 
     expect(
       within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
-    ).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv`
-    )
+    ).toBe(`${registrationPath}/waste-records/download.csv`)
   })
 
   it('offers the latest summary log workbook in the summary', async ({
@@ -316,9 +363,7 @@ describe('the accreditation details page', () => {
 
     expect(
       within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
-    ).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download`
-    )
+    ).toBe(`${registrationPath}/summary-logs/files/log-1/download`)
   })
 
   it('names no waste records while the download is dark', async ({
@@ -374,9 +419,7 @@ describe('the accreditation details page', () => {
       'Submitted',
       'View August, 2026'
     ])
-    expect(body).toContain(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/8/submissions/1/view`
-    )
+    expect(body).toContain(`${path}/reports/monthly/8/submissions/1/view`)
   })
 
   it('says why the table is empty rather than showing an empty table', async ({
@@ -631,7 +674,7 @@ describe('the accreditation details page', () => {
         'govuk-!-display-inline-block'
       )
       expect(link.getAttribute('href')).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+        `${path}/packaging-recycling-notes`
       )
     })
 
@@ -752,27 +795,34 @@ describe('the accreditation details page', () => {
     })
   })
 
-  it('offers a way back to the registration', async ({ server }) => {
+  it('walks back to the organisation and the registration by number', async ({
+    server
+  }) => {
     const { body } = await visit(server, regulator)
+    const crumbs = [
+      ...documentOf(body).querySelectorAll('.govuk-breadcrumbs__list-item a')
+    ]
 
-    expect(body).toContain(
-      `/organisations/${organisationId}/registrations/${registrationId}`
-    )
+    expect(crumbs.map((crumb) => crumb.getAttribute('href'))).toStrictEqual([
+      '/regulators/home',
+      '/organisations/500118',
+      registrationPath
+    ])
   })
 
-  it('does not exist for an operator', async ({ server }) => {
-    const { statusCode } = await visit(server, operator)
+  it('is not the page an operator gets', async ({ server }) => {
+    await visit(server, operator)
 
-    expect(statusCode).toBe(statusCodes.notFound)
+    expect(fetchAccreditationDetails).not.toHaveBeenCalled()
   })
 
-  it('does not exist for a regulator while the surface is off', async ({
+  it('is not the page a regulator gets while the surface is off', async ({
     server
   }) => {
     config.set('featureFlags.regulatorAccess', false)
-    const { statusCode } = await visit(server, regulator)
+    await visit(server, regulator)
     config.set('featureFlags.regulatorAccess', true)
 
-    expect(statusCode).toBe(statusCodes.notFound)
+    expect(fetchAccreditationDetails).not.toHaveBeenCalled()
   })
 })

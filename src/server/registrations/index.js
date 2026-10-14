@@ -1,9 +1,12 @@
-import { controller } from './controller.js'
 import { controller as accreditationController } from './details/accreditations/controller.js'
 import { controller as reportsController } from './details/accreditations/reports/controller.js'
 import { controller as detailsController } from './details/controller.js'
 import { controller as overseasSitesController } from './details/overseas-sites/controller.js'
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
+import {
+  controller as operatorController,
+  registrationController as operatorRegistrationController
+} from './operator-controller.js'
 import {
   wasteRecordsCsvDownloadController,
   wasteRecordsCsvDownloadPath
@@ -16,11 +19,10 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { RegistrationParams } from './details/controller.js'
  * @import { OverseasSitesParams } from './details/overseas-sites/controller.js'
- */
-
-/**
- * @typedef {{ organisationId: string, registrationId: string }} RegistrationParams
+ * @import { AccreditationParams } from './details/accreditations/controller.js'
+ * @import { AccreditationParams as AccreditationReportsParams } from './details/accreditations/reports/controller.js'
  */
 
 /**
@@ -34,22 +36,13 @@ const registrationController = {
   handler(request, h) {
     return readsAsARegulator(request.auth.credentials)
       ? detailsController.handler(request, h)
-      : controller.handler(request, h)
+      : operatorRegistrationController.handler(request, h)
   }
 }
 
 /**
- * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string
- * }} AccreditationParams
- */
-
-/**
- * Unlike the registration above it, this address has no operator page to fall
- * through to, so a caller who does not read as a regulator is told there is no
- * such accreditation rather than handed a second controller.
+ * A regulator gets the accreditation page; anyone else gets their registration
+ * page for that year's accreditation.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const accreditationRoute = {
@@ -58,31 +51,20 @@ const accreditationRoute = {
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
-    if (!readsAsARegulator(request.auth.credentials)) {
-      throw notFound(
-        'Accreditation not found',
-        errorCodes.accreditationNotFound,
-        {
-          event: {
-            action: 'fetch_accreditation',
-            reason: 'caller does not read as a regulator'
-          }
-        }
-      )
-    }
-
-    return accreditationController.handler(request, h)
+    return readsAsARegulator(request.auth.credentials)
+      ? accreditationController.handler(request, h)
+      : operatorController.handler(request, h)
   }
 }
 
 /**
- * Gated the same way as the accreditation above it: there is no operator page
- * at this address to fall through to.
+ * Answers nothing to a caller who does not read as a regulator: there is no
+ * operator page at this address to fall through to.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const reportsRoute = {
   /**
-   * @param {HapiRequest & { params: AccreditationParams }} request
+   * @param {HapiRequest & { params: AccreditationReportsParams }} request
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
@@ -105,7 +87,7 @@ const reportsRoute = {
 
 /**
  * Answers nothing to a session that may not read this organisation, and for
- * the same reason as the accreditation above it: there is no operator page at
+ * the same reason as the reports above it: there is no operator page at
  * this address to fall through to.
  *
  * The scope decides rather than the role that usually carries it, and it is
@@ -143,14 +125,14 @@ const overseasSitesRoute = {
 
 /**
  * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
+ *   organisationNumber: string,
+ *   registrationNumber: string,
  *   year: number
  * }} RegisteredOnlyPeriodParams
  */
 
 /**
- * Gated the same way as the accreditation above it, and for the same reason:
+ * Gated the same way as the reports above it, and for the same reason:
  * there is no operator page at this address to fall through to.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
@@ -190,17 +172,17 @@ export const registrations = {
         {
           ...registrationController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}'
         },
         {
           ...accreditationRoute,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}'
         },
         {
           ...reportsRoute,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/reports'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/reports'
         },
         {
           ...overseasSitesRoute,
@@ -210,7 +192,7 @@ export const registrations = {
         {
           ...registeredOnlyPeriodRoute,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/registered-only-periods/{year}'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/registered-only-periods/{year}'
         },
         {
           ...wasteRecordsCsvDownloadController,

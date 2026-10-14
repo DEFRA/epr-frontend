@@ -2,7 +2,6 @@ import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { SUBMISSION_STATUS } from '#server/reports/constants.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
-import { buildPeriodPath } from '#server/reports/helpers/build-period-path.js'
 import { buildStatusTagHtml } from '#server/reports/helpers/build-status-tag-html.js'
 import { formatPeriodLabelWithComma } from '#server/reports/helpers/format-period-label.js'
 import { formatSubmittedDateTime } from '#server/reports/helpers/format-submitted-date-time.js'
@@ -60,32 +59,20 @@ const mostRecentFirst = (a, b) => b.year - a.year || b.period - a.period
  * cell is empty rather than linking at nothing. The link carries the period it
  * belongs to, so a page of otherwise identical links stays distinguishable.
  * @param {{
- *   cadence: CadenceValue,
  *   label: string,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   organisationId: string,
  *   period: ReportingPeriod,
- *   registrationId: string
+ *   periodPath: (period: ReportingPeriod) => string
  * }} params
  * @returns {TableCell}
  */
-const toActionCell = ({
-  cadence,
-  label,
-  localise,
-  localiseUrl,
-  organisationId,
-  period,
-  registrationId
-}) => {
+const toActionCell = ({ label, localise, localiseUrl, period, periodPath }) => {
   if (period.periodStatus !== SUBMISSION_STATUS.SUBMITTED) {
     return { text: '', classes: cssClasses.textAlign.right }
   }
 
-  const url = localiseUrl(
-    `${buildPeriodPath({ organisationId, registrationId, period, cadence })}/view`
-  )
+  const url = localiseUrl(`${periodPath(period)}/view`)
 
   return {
     html: buildActionLinkHtml(localise('reports:actionView'), url, label),
@@ -100,8 +87,7 @@ const toActionCell = ({
  *   cadence: CadenceValue,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   organisationId: string,
- *   registrationId: string,
+ *   periodPath: (period: ReportingPeriod) => string,
  *   reportingPeriods: ReportingPeriod[]
  * }} params
  * @returns {TableRow[]}
@@ -110,8 +96,7 @@ export const toReportRows = ({
   cadence,
   localise,
   localiseUrl,
-  organisationId,
-  registrationId,
+  periodPath,
   reportingPeriods
 }) =>
   [...reportingPeriods].sort(mostRecentFirst).map((period) => {
@@ -128,14 +113,6 @@ export const toReportRows = ({
           period.submissionNumber
         )
       },
-      toActionCell({
-        cadence,
-        label,
-        localise,
-        localiseUrl,
-        organisationId,
-        period,
-        registrationId
-      })
+      toActionCell({ label, localise, localiseUrl, period, periodPath })
     ]
   })

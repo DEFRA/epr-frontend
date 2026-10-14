@@ -12,6 +12,7 @@ import {
   toAccreditationChildPage,
   toRegistrationTrail
 } from '#server/registrations/details/helpers/accreditation-child-page.js'
+import { organisationName } from '#server/registrations/details/helpers/caption.js'
 
 /**
  * @typedef {{
@@ -60,25 +61,39 @@ export const controller = {
     const { t: localise } = request
     const { noteType } = getNoteTypeDisplayNames(registration)
     const heading = localise('waste-balance-ledger:heading')
+    const name = organisationName(organisationData)
+    const organisationPath = `/organisations/${organisationId}`
+    const registrationPath = `${organisationPath}/registrations/${registrationId}`
+    const accreditationPath = accreditationId
+      ? `${registrationPath}/accreditations/${accreditationId}`
+      : undefined
+    const recordPaths = {
+      organisation: organisationPath,
+      registration: registrationPath
+    }
 
     // The registered-only partition sits under no accreditation, so its trail
     // stops at the registration and its caption names the phase instead.
     const page = accreditation
       ? toAccreditationChildPage({
-          accreditation,
           heading,
           localise,
           localiseUrl: request.localiseUrl,
-          organisation: organisationData,
-          registration
+          organisationName: name,
+          registrationNumber: registration.registrationNumber,
+          accreditationNumber: accreditation.accreditationNumber,
+          paths: {
+            ...recordPaths,
+            accreditation: /** @type {string} */ (accreditationPath)
+          }
         })
       : {
           breadcrumbs: [
             ...toRegistrationTrail({
               localise,
               localiseUrl: request.localiseUrl,
-              organisation: organisationData,
-              registration
+              organisationName: name,
+              paths: recordPaths
             }),
             { text: heading }
           ],
@@ -90,7 +105,7 @@ export const controller = {
     return h.view('waste-balance-ledger/index', {
       ...page,
       ledgerRows: buildLedgerRows({
-        accreditationId,
+        accreditationPath,
         events,
         localise,
         localiseUrl: request.localiseUrl,
@@ -98,8 +113,7 @@ export const controller = {
         offersCsvDownloads: readsWasteRecordsDownloads(session),
         // An operator reaches this page too, and may not fetch the file.
         offersDownloads: readsAsARegulator(session),
-        organisationId,
-        registrationId
+        registrationPath
       })
     })
   }

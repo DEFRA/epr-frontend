@@ -3,17 +3,23 @@
  *   AccreditationStatus,
  *   Material,
  *   RegistrationStatus,
- *   RegulatorValue
+ *   RegulatorValue,
+ *   ReprocessingType
  * } from '#domain/organisations/model.js'
  */
 
 /**
- * @typedef {{ accreditationNumber: string, status: AccreditationStatus }} AccreditationView
+ * @typedef {{
+ *   accreditationNumber: string,
+ *   status: AccreditationStatus,
+ *   statusTimeline: Record<string, { status: string }>
+ * }} AccreditationView
  */
 
 /**
  * @typedef {{
  *   status: RegistrationStatus,
+ *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },
  *   accreditations: Record<string, AccreditationView>
@@ -23,7 +29,12 @@
 /**
  * @typedef {RegistrationViewCommon & {
  *   wasteProcessingType: 'reprocessor',
- *   site: { address: { line1: string } | { fullAddress: string } }
+ *   reprocessingType: ReprocessingType,
+ *   site: {
+ *     address:
+ *       | { line1: string, line2?: string, town: string, county?: string, postcode: string }
+ *       | { fullAddress: string }
+ *   }
  * }} ReprocessorRegistrationView
  */
 

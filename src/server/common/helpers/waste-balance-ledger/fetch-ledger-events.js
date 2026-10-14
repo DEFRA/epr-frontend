@@ -1,4 +1,10 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import {
+  accreditationPath,
+  registrationPath
+} from '#server/reports/helpers/report-paths.js'
+
+/** @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js' */
 
 /**
  * What every entry of a waste balance ledger states, whichever thing it
@@ -53,6 +59,25 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  */
 
 /**
+ * Reads the events of the ledger at a backend path.
+ * @param {string} path
+ * @param {string} backendToken
+ * @returns {Promise<LedgerEvent[]>}
+ */
+const readEvents = async (path, backendToken) => {
+  const { events } = /** @type {{ events: LedgerEvent[] }} */ (
+    await fetchJsonFromBackend(path, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${backendToken}`
+      }
+    })
+  )
+
+  return events
+}
+
+/**
  * Reads the events of one waste balance ledger, in the order the backend
  * appended them.
  *
@@ -75,19 +100,34 @@ export const fetchLedgerEvents = async ({
   accreditationId,
   backendToken
 }) => {
-  const registrationPath = `/v1/organisations/${organisationId}/registrations/${registrationId}`
+  const registrationIdPath = `/v1/organisations/${organisationId}/registrations/${registrationId}`
   const ledgerPath = accreditationId
-    ? `${registrationPath}/accreditations/${accreditationId}/waste-balance-ledger`
-    : `${registrationPath}/waste-balance-ledger`
+    ? `${registrationIdPath}/accreditations/${accreditationId}/waste-balance-ledger`
+    : `${registrationIdPath}/waste-balance-ledger`
 
-  const { events } = /** @type {{ events: LedgerEvent[] }} */ (
-    await fetchJsonFromBackend(ledgerPath, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${backendToken}`
-      }
-    })
-  )
-
-  return events
+  return readEvents(ledgerPath, backendToken)
 }
+
+/**
+ * Reads the accreditation's ledger by natural key.
+ * @param {AccreditationKeys} keys
+ * @param {string} backendToken
+ * @returns {Promise<LedgerEvent[]>}
+ */
+export const fetchAccreditationLedgerEvents = async (keys, backendToken) =>
+  readEvents(`${accreditationPath(keys)}/ledger`, backendToken)
+
+/**
+ * Reads the registered-only ledger events in a year by natural key.
+ * @param {AccreditationKeys} keys
+ * @param {string} backendToken
+ * @returns {Promise<LedgerEvent[]>}
+ */
+export const fetchRegisteredOnlyLedgerEvents = async (
+  { year, ...keys },
+  backendToken
+) =>
+  readEvents(
+    `${registrationPath(keys)}/ledger/${encodeURIComponent(year)}`,
+    backendToken
+  )

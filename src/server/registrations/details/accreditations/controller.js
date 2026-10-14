@@ -10,9 +10,9 @@ import { fetchAccreditationDetails } from './helpers/fetch-accreditation-details
 
 /**
  * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string
+ *   organisationNumber: string,
+ *   registrationNumber: string,
+ *   year: string
  * }} AccreditationParams
  */
 
@@ -28,23 +28,12 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
-    const { backendToken } = request.auth.credentials
+    const { organisationNumber, registrationNumber, year } = request.params
+    const keys = { organisationNumber, registrationNumber, year }
 
-    const {
-      organisation,
-      registration,
-      accreditation,
-      wasteBalance,
-      reportingPeriods,
-      cadence,
-      ledgerEvents,
-      packagingRecyclingNotes
-    } = await fetchAccreditationDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken,
+    const details = await fetchAccreditationDetails({
+      ...keys,
+      credentials: request.auth.credentials,
       canReadLedger: hasLedgerReadScope(request.auth.credentials),
       logger: request.logger
     })
@@ -52,14 +41,8 @@ export const controller = {
     return h.view(
       'registrations/details/accreditations/index',
       buildViewModel({
-        organisation,
-        registration,
-        accreditation,
-        wasteBalance,
-        reportingPeriods,
-        cadence,
-        ledgerEvents,
-        packagingRecyclingNotes,
+        ...details,
+        keys,
         localise: request.t,
         localiseUrl: request.localiseUrl
       })

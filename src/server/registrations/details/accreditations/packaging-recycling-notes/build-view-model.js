@@ -3,6 +3,7 @@ import { toNoteRows } from '#server/prns/helpers/note-rows.js'
 import { buildListViewData } from '#server/prns/list-view-data.js'
 
 import { toAccreditationChildPage } from '../../helpers/accreditation-child-page.js'
+import { organisationName } from '../../helpers/caption.js'
 
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
@@ -40,6 +41,8 @@ export const buildViewModel = ({
   const { t: localise, localiseUrl } = request
   const { noteTypePlural } = getNoteTypeDisplayNames(registration)
   const heading = localise(`${KEY}:listHeading`, { noteTypePlural })
+  const organisationPath = `/organisations/${organisation.id}`
+  const registrationPath = `${organisationPath}/registrations/${registration.id}`
 
   const list = buildListViewData(request, {
     organisationId: organisation.id,
@@ -54,12 +57,17 @@ export const buildViewModel = ({
     // Regulator pages walk back by breadcrumbs, so the operator's link goes.
     backUrl: null,
     ...toAccreditationChildPage({
-      accreditation,
       heading,
       localise,
       localiseUrl,
-      organisation,
-      registration
+      organisationName: organisationName(organisation),
+      registrationNumber: registration.registrationNumber,
+      accreditationNumber: accreditation.accreditationNumber,
+      paths: {
+        organisation: organisationPath,
+        registration: registrationPath,
+        accreditation: `${registrationPath}/accreditations/${accreditation.id}`
+      }
     }),
     // Three strings in the operator's set address the person who created the
     // notes, so a regulator gets their own. Everything else is shared.
