@@ -26,14 +26,14 @@
           {% set radioItems = [] %}
           {% for org in unlinked %}
             {% set radioItems = (radioItems.push({
-              value: org.id,
+              value: org.organisationNumber,
               text: org.displayName
             }), radioItems) %}
           {% endfor %}
 
           {{ govukRadios({
-            name: "organisationId",
-            idPrefix: "organisation-id",
+            name: "organisationNumber",
+            idPrefix: "organisation-number",
             fieldset: {
               legend: {
                 text: localise('account:linking:subheading', { serviceName: organisationName }),
@@ -42,7 +42,7 @@
               }
             },
             items: radioItems,
-            errorMessage: errors.organisationId if errors and errors.organisationId
+            errorMessage: errors.organisationNumber if errors and errors.organisationNumber
           }) }}
 
           {{ govukButton({
@@ -53,7 +53,7 @@
           {% set unlinkedOrgsList %}
             <ul class="govuk-list">
               {% for org in unlinked %}
-                <li>{{ org.name }} - <strong>{{ org.id }}</strong></li>
+                <li>{{ org.name }} - <strong>{{ org.referenceNumber }}</strong></li>
               {% endfor %}
             </ul>
           {% endset %}

@@ -1,66 +1,38 @@
 import { capitalize } from 'lodash-es'
 
+import { config } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
-import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
+import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
+import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
 import { getStatusClass } from './helpers/status-helpers.js'
 
 /** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
  */
 
 /**
- * @typedef {{ organisationId: string }} OrganisationParams
+ * @typedef {{ organisationNumber: string }} OrganisationParams
  */
 
 /**
  * @typedef {{ text: string, classes?: string, format?: string } | { html: string, classes?: string }} TableCell
  */
 
-const EXCLUDED_REGISTRATION_STATUSES = new Set(['created', 'rejected'])
-
 /**
- * @param {string} [status]
- * @returns {boolean}
+ * @typedef {{ number: string, registration: RegistrationView, accreditation: AccreditationView | undefined }} DisplayedRegistration
  */
-const isRegistrationExcluded = (status) =>
-  !status || EXCLUDED_REGISTRATION_STATUSES.has(status)
-
-/**
- * @param {Accreditation | undefined} accreditation
- * @returns {boolean}
- */
-const excludeAccreditation = (accreditation) =>
-  accreditation !== undefined && !isAccreditationActive(accreditation)
-
-/**
- * Determines whether a site should be rendered based on its registration
- * and accreditation statuses
- * @param {Registration} registration - Registration data
- * @param {Accreditation | undefined} accreditation - Accreditation data (may be absent)
- * @param {string} wasteProcessingType - The waste processing type to filter by
- * @returns {boolean} Whether the site should be rendered
- */
-function shouldRenderSite(registration, accreditation, wasteProcessingType) {
-  const isCorrectWasteProcessingType =
-    registration.wasteProcessingType === wasteProcessingType
-
-  const isRegExcluded = isRegistrationExcluded(registration.status)
-  const isAccreditationExcluded = excludeAccreditation(accreditation)
-
-  return (
-    isCorrectWasteProcessingType && !isRegExcluded && !isAccreditationExcluded
-  )
-}
 
 /**
  *
@@ -72,7 +44,7 @@ function createTag(status) {
 }
 
 /**
- * @param {Accreditation | undefined} accreditation
+ * @param {AccreditationView | undefined} accreditation
  * @param {{ availableAmount?: number } | undefined} wasteBalance
  * @param {(key: string) => string} localise
  * @returns {string}
@@ -83,7 +55,7 @@ const formatWasteBalance = (accreditation, wasteBalance, localise) =>
     : localise('organisations:table:notApplicable')
 
 /**
- * @param {Accreditation | undefined} accreditation
+ * @param {AccreditationView | undefined} accreditation
  * @param {(key: string) => string} localise
  * @returns {string}
  */
@@ -95,27 +67,26 @@ const createAccreditationTag = (accreditation, localise) =>
 /**
  * Creates a row for a given registration
  * @param {HapiRequest} request
- * @param {string} id - Organisation ID
- * @param {Registration} registration - Registration data
- * @param {Accreditation | undefined} accreditation - Accreditation data (may be absent)
- * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditationId to balance data
+ * @param {OrganisationNumber} orgNumber
+ * @param {DisplayedRegistration} displayed
+ * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditation number to balance data
  * @returns {TableCell[]} - Array of table cells
  */
-function createRow(request, id, registration, accreditation, wasteBalanceMap) {
+function createRow(
+  request,
+  orgNumber,
+  { number, registration, accreditation },
+  wasteBalanceMap
+) {
   const { t: localise } = request
   const registrationUrl = request.localiseUrl(
-    `/organisations/${id}/registrations/${registration.id}`
+    `/organisations/${orgNumber}/registrations/${number}`
   )
-
-  const accreditationId = registration.accreditationId
-  const wasteBalance = accreditationId
-    ? wasteBalanceMap?.[accreditationId]
-    : undefined
 
   /** @type {TableCell[]} */
   const cells = [
     {
-      text: getRegistrationMaterialDisplayName(registration),
+      text: getMaterialDisplayName(registration.material),
       classes: 'govuk-!-width-one-quarter'
     },
     {
@@ -125,7 +96,11 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
       html: createAccreditationTag(accreditation, localise)
     },
     {
-      text: formatWasteBalance(accreditation, wasteBalance, localise),
+      text: formatWasteBalance(
+        accreditation,
+        accreditation && wasteBalanceMap[accreditation.accreditationNumber],
+        localise
+      ),
       format: 'numeric'
     },
     {
@@ -165,32 +140,15 @@ function createTableHeaders(localise) {
 }
 
 /**
- * Gets the site name for a registration
- * @param {object} registration - Registration data
- * @param {(key: string) => string} localise - Translation function
- * @returns {string | null} Site name or null for exporters
- */
-function getSiteName(registration, localise) {
-  if (isExporterRegistration(registration)) {
-    return null
-  }
-
-  return (
-    registration.site?.address?.line1 ??
-    localise('organisations:table:site:unknown')
-  )
-}
-
-/**
  * Adds a row to an existing site or creates a new site entry
  * @param {Array} sites - Current sites array
- * @param {object} registration - Registration data
+ * @param {RegistrationView} registration - Registration data
  * @param {Array} row - Row data to add
  * @param {(key: string) => string} localise - Translation function
  * @returns {Array} Updated sites array
  */
 function addRowToSites(sites, registration, row, localise) {
-  const siteName = getSiteName(registration, localise)
+  const siteName = siteNameOf(registration)
   const existingSite = sites.find(({ name }) => name === siteName)
 
   if (existingSite) {
@@ -214,35 +172,29 @@ function addRowToSites(sites, registration, row, localise) {
 /**
  * Organises registrations by site for a given waste processing type
  * @param {HapiRequest} request
- * @param {string} organisationId - The organisation ID
- * @param {Array<{registration: Registration, accreditation: Accreditation | undefined}>} registrationsWithAccreditations - Pre-joined registration and accreditation data
+ * @param {OrganisationNumber} orgNumber
+ * @param {DisplayedRegistration[]} displayedRegistrations
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
- * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditationId to balance data
+ * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditation number to balance data
  * @returns {Array} Array of sites with their materials
  */
 function getRegistrationSites(
   request,
-  organisationId,
-  registrationsWithAccreditations,
+  orgNumber,
+  displayedRegistrations,
   wasteProcessingType,
   wasteBalanceMap
 ) {
   const { t: localise } = request
 
-  const filtered = registrationsWithAccreditations.filter(
+  const filtered = displayedRegistrations.filter(
     ({ registration }) =>
       registration.wasteProcessingType === wasteProcessingType
   )
 
-  return filtered.reduce((sites, { registration, accreditation }) => {
-    const row = createRow(
-      request,
-      organisationId,
-      registration,
-      accreditation,
-      wasteBalanceMap
-    )
-    return addRowToSites(sites, registration, row, localise)
+  return filtered.reduce((sites, displayed) => {
+    const row = createRow(request, orgNumber, displayed, wasteBalanceMap)
+    return addRowToSites(sites, displayed.registration, row, localise)
   }, [])
 }
 
@@ -252,58 +204,42 @@ const tabTypes = Object.freeze({
 })
 
 /**
- * Filters registrations that should be displayed and joins with accreditations
- * @param {object} organisationData - Organisation data from backend
- * @returns {Array<{registration: object, accreditation: object | undefined}>}
+ * Each registration with the year's accreditation, if it is live
+ * @param {Record<string, RegistrationView>} registrations
+ * @param {Year} selectedYear
+ * @returns {DisplayedRegistration[]}
  */
-function getDisplayableRegistrations(organisationData) {
-  const accreditationById = new Map(
-    organisationData.accreditations.map((acc) => [acc.id, acc])
-  )
-
-  return organisationData.registrations
-    .map((registration) => {
-      const accreditation = accreditationById.get(registration.accreditationId)
-      return {
-        registration,
-        accreditation: isAccreditationActive(accreditation)
-          ? accreditation
-          : undefined
-      }
-    })
-    .filter(
-      ({ registration, accreditation }) =>
-        shouldRenderSite(registration, accreditation, 'reprocessor') ||
-        shouldRenderSite(registration, accreditation, 'exporter')
-    )
+function getDisplayedRegistrations(registrations, selectedYear) {
+  return Object.entries(registrations).map(([number, registration]) => {
+    const accreditation = registration.accreditations[selectedYear]
+    return {
+      number,
+      registration,
+      accreditation: isAccreditationActive(accreditation)
+        ? accreditation
+        : undefined
+    }
+  })
 }
 
 /**
- * Fetches waste balances for displayable registrations
- * @param {string} organisationId - Organisation ID
- * @param {Array<{registration: object}>} displayableRegistrations - Filtered registrations
+ * Fetches the year's waste balances. A failure leaves the page without them.
+ * @param {OrganisationNumber} orgNumber
+ * @param {Year} selectedYear
  * @param {string} backendToken - JWT token
  * @param {TypedLogger} logger - Request logger
  * @returns {Promise<WasteBalanceMap>}
  */
 async function getWasteBalanceMap(
-  organisationId,
-  displayableRegistrations,
+  orgNumber,
+  selectedYear,
   backendToken,
   logger
 ) {
-  if (displayableRegistrations.length === 0) {
-    return {}
-  }
-
-  const accreditationIds = displayableRegistrations
-    .map(({ registration }) => registration.accreditationId)
-    .filter(Boolean)
-
   try {
-    return await fetchWasteBalances(
-      organisationId,
-      accreditationIds,
+    return await fetchOrganisationWasteBalances(
+      orgNumber,
+      selectedYear,
       backendToken
     )
   } catch (error) {
@@ -354,6 +290,41 @@ function getActiveSitesAndTitle({
   return { sites: [], tableTitle: '', shouldRenderTabs }
 }
 
+/**
+ * The organisation as it stood in its latest approved year. An organisation
+ * with no approved year has no registrations to show.
+ * @param {OrganisationNumber} orgNumber
+ * @param {string} backendToken
+ * @param {TypedLogger} logger
+ */
+async function fetchLatestYear(orgNumber, backendToken, logger) {
+  const [selectedYear] = await fetchOrganisationYears(orgNumber, backendToken)
+
+  if (!selectedYear) {
+    return {
+      organisation: await fetchOrganisation(orgNumber, backendToken),
+      selectedYear: null,
+      displayedRegistrations: [],
+      wasteBalanceMap: {}
+    }
+  }
+
+  const [organisation, wasteBalanceMap] = await Promise.all([
+    fetchOrganisation(orgNumber, backendToken, { year: selectedYear }),
+    getWasteBalanceMap(orgNumber, selectedYear, backendToken, logger)
+  ])
+
+  return {
+    organisation,
+    selectedYear,
+    displayedRegistrations: getDisplayedRegistrations(
+      organisation.registrations,
+      selectedYear
+    ),
+    wasteBalanceMap
+  }
+}
+
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const controller = {
   /**
@@ -362,39 +333,33 @@ export const controller = {
    */
   async handler(request, h) {
     const { t: localise } = request
-    const { organisationId } = request.params
+    const orgNumber = organisationNumber(
+      Number(request.params.organisationNumber)
+    )
     const session = request.auth.credentials
 
     const isExporterTab = request.path.endsWith('/exporting')
     const activeTab = isExporterTab ? tabTypes.EXPORTER : tabTypes.REPROCESSOR
 
-    const organisationData = await fetchOrganisationById(
-      organisationId,
-      session.backendToken
-    )
-
-    const displayableRegistrations =
-      getDisplayableRegistrations(organisationData)
-
-    const wasteBalanceMap = await getWasteBalanceMap(
-      organisationId,
-      displayableRegistrations,
-      session.backendToken,
-      request.logger
-    )
+    const {
+      organisation,
+      selectedYear,
+      displayedRegistrations,
+      wasteBalanceMap
+    } = await fetchLatestYear(orgNumber, session.backendToken, request.logger)
 
     const reprocessorSites = getRegistrationSites(
       request,
-      organisationData.id,
-      displayableRegistrations,
+      orgNumber,
+      displayedRegistrations,
       'reprocessor',
       wasteBalanceMap
     )
 
     const exporterSites = getRegistrationSites(
       request,
-      organisationData.id,
-      displayableRegistrations,
+      orgNumber,
+      displayedRegistrations,
       'exporter',
       wasteBalanceMap
     )
@@ -407,21 +372,20 @@ export const controller = {
     })
 
     const organisationName =
-      organisationData.companyDetails.tradingName?.trim() ||
-      organisationData.companyDetails.name
+      organisation.tradingName?.trim() || organisation.name
 
     return h.view('organisations/index', {
       pageTitle: localise('organisations:pageTitle', {
         name: organisationName
       }),
       organisationName,
-      organisationId,
       activeTab,
-      reprocessorUrl: request.localiseUrl(`/organisations/${organisationId}`),
-      exporterUrl: request.localiseUrl(
-        `/organisations/${organisationId}/exporting`
-      ),
+      reprocessorUrl: request.localiseUrl(`/organisations/${orgNumber}`),
+      exporterUrl: request.localiseUrl(`/organisations/${orgNumber}/exporting`),
       shouldRenderTabs,
+      selectedYear: config.get('featureFlags.navigateAcrossYears')
+        ? selectedYear
+        : null,
       sites,
       tableTitle,
       tabTypes

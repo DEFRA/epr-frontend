@@ -173,6 +173,20 @@ describe('#buildNavigation', () => {
       })
     })
 
+    it('links home by organisation number when the session holds it', () => {
+      const request = mockRequest({
+        auth: {
+          credentials: {
+            ...credentials.authedWithLinkedOrg,
+            linkedOrganisationNumber: '500123'
+          }
+        }
+      })
+      const [home] = buildNavigation(request)
+
+      expect(home.href).toBe('/organisations/500123')
+    })
+
     it('should not include home link when user has no linked organisation', () => {
       const request = mockRequest({
         auth: { credentials: credentials.authedWithoutLinkedOrg }

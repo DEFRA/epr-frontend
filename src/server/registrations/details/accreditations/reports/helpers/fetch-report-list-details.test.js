@@ -6,7 +6,7 @@ import { beforeEach, it } from '#vite/fixtures/server.js'
 import { fetchReportListDetails } from './fetch-report-list-details.js'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { ReportListDetails } from './fetch-report-list-details.js'
@@ -61,7 +61,7 @@ describe(fetchReportListDetails, () => {
   ]
 
   /**
-   * @param {SetupServerApi} msw
+   * @param {SetupServer} msw
    * @param {() => Response} [answer]
    */
   const backendAnswers = (

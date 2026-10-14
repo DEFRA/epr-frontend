@@ -1,4 +1,5 @@
 import { defraIdCallbackController } from '#server/auth/callback/controller.js'
+import * as addUserToOrganisationModule from '#server/auth/helpers/add-user-to-organisation.js'
 import * as fetchIdentityModule from '#server/auth/helpers/fetch-identity.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
 import {
@@ -64,6 +65,7 @@ describe('#authCallbackController', () => {
         },
         linked: {
           id: 'defra-org-uuid',
+          orgId: '11111111',
           name: 'Test Defra Organisation',
           linkedBy: {
             email: 'user@example.com',
@@ -123,7 +125,7 @@ describe('#authCallbackController', () => {
         asResponseToolkit(mockH)
       )
 
-      // First call stores initial session, second call adds linkedOrganisationId
+      // First call stores initial session, second call adds the linked organisation
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledTimes(2)
       expect(mockRequest.server.app.cache.set).toHaveBeenNthCalledWith(
         2,
@@ -139,6 +141,7 @@ describe('#authCallbackController', () => {
             logout: 'http://test.auth/logout'
           },
           linkedOrganisationId: 'defra-org-uuid',
+          linkedOrganisationNumber: '11111111',
           ...sessionIdentity(IDENTITIES.operator)
         }
       )
@@ -162,6 +165,7 @@ describe('#authCallbackController', () => {
           current: { id: 'defra-org-uuid', name: 'Test Defra Organisation' },
           linked: {
             id: 'defra-org-uuid',
+            orgId: '11111111',
             name: 'Test Defra Organisation',
             linkedBy: { email: 'user@example.com', id: 'user-123' },
             linkedAt: '2025-12-10T09:00:00.000Z'
@@ -225,6 +229,7 @@ describe('#authCallbackController', () => {
         current: { id: 'defra-org-uuid', name: 'Test Organisation' },
         linked: {
           id: 'defra-org-uuid',
+          orgId: '11111111',
           name: 'Test Organisation',
           linkedBy: { email: 'user@example.com', id: 'user-456' },
           linkedAt: '2025-12-10T09:00:00.000Z'
@@ -322,6 +327,7 @@ describe('#authCallbackController', () => {
           },
           linked: {
             id: 'linked-org-uuid',
+            orgId: '11111111',
             name: 'Test Defra Organisation',
             linkedBy: {
               email: 'user@example.com',
@@ -377,8 +383,8 @@ describe('#authCallbackController', () => {
         )
 
         const expectedRedirect = isWelsh
-          ? '/cy/organisations/linked-org-uuid'
-          : '/organisations/linked-org-uuid'
+          ? '/cy/organisations/11111111'
+          : '/organisations/11111111'
 
         expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(expectedRedirect)
         expect(result).toBe('redirect-response')
@@ -398,6 +404,7 @@ describe('#authCallbackController', () => {
         },
         linked: {
           id: 'linked-org-uuid',
+          orgId: '11111111',
           name: 'Test Defra Organisation',
           linkedBy: {
             email: 'user@example.com',
@@ -457,11 +464,14 @@ describe('#authCallbackController', () => {
         asResponseToolkit(mockH)
       )
 
+      expect(
+        addUserToOrganisationModule.addUserToOrganisation
+      ).toHaveBeenCalledExactlyOnceWith('11111111', 'mock-backend-token')
       expect(mockRequest.localiseUrl).toHaveBeenCalledExactlyOnceWith(
-        '/organisations/linked-org-uuid'
+        '/organisations/11111111'
       )
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
-        '/organisations/linked-org-uuid'
+        '/organisations/11111111'
       )
       expect(result).toBe('redirect-response')
     })
@@ -480,6 +490,7 @@ describe('#authCallbackController', () => {
         },
         linked: {
           id: 'linked-org-id',
+          orgId: '11111111',
           name: 'Linked Organisation',
           linkedBy: {
             email: 'user@example.com',
@@ -491,7 +502,8 @@ describe('#authCallbackController', () => {
           {
             id: 'org-1',
             name: 'Test Company',
-            orgId: '11111111'
+            orgId: '11111111',
+            referenceNumber: 'org-1'
           },
           {
             id: 'org-2',
@@ -579,7 +591,8 @@ describe('#authCallbackController', () => {
           {
             id: 'org-1',
             name: 'Test Company',
-            orgId: '11111111'
+            orgId: '11111111',
+            referenceNumber: 'org-1'
           }
         ]
       }
@@ -882,6 +895,7 @@ describe('#authCallbackController', () => {
         },
         linked: {
           id: 'defra-org-uuid',
+          orgId: '11111111',
           name: 'Defra Registered Company Ltd',
           linkedBy: {
             email: 'admin@example.com',
@@ -968,12 +982,14 @@ describe('#authCallbackController', () => {
           {
             id: 'unlinked-org-1',
             name: 'Unlinked Organisation 1',
-            orgId: '11111111'
+            orgId: '11111111',
+            referenceNumber: 'unlinked-org-1'
           },
           {
             id: 'unlinked-org-2',
             name: 'Unlinked Organisation 2',
-            orgId: '22222222'
+            orgId: '22222222',
+            referenceNumber: 'unlinked-org-2'
           }
         ]
       }

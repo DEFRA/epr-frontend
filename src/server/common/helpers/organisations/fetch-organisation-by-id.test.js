@@ -1,91 +1,37 @@
-import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
-import { test } from '#vite/fixtures/server.js'
+import { it } from '#vite/fixtures/server.js'
 
 import { fetchOrganisationById } from './fetch-organisation-by-id.js'
 
-const backendUrl = config.get('eprBackendUrl')
-
 describe(fetchOrganisationById, () => {
-  const organisationId = 'org-123'
-  const backendToken = 'test-id-token'
-
-  test('returns organisation data when backend responds successfully', async ({
+  it('should get the organisation the id names and resolve to it', async ({
     msw
   }) => {
-    const mockOrganisationData = {
-      orgId: organisationId,
-      companyDetails: {
-        tradingName: 'Test Company'
-      },
+    const organisation = {
+      id: 'org/1',
+      orgId: 50001,
       accreditations: [],
       registrations: []
     }
-
+    /** @type {string[]} */
+    const pathnames = []
     msw.use(
-      http.get(`${backendUrl}/v1/organisations/org-123`, () =>
-        HttpResponse.json(mockOrganisationData)
-      )
-    )
-
-    const result = await fetchOrganisationById(organisationId, backendToken)
-
-    expect(result).toStrictEqual(mockOrganisationData)
-  })
-
-  test('calls backend with correct path including organisation ID', async ({
-    msw
-  }) => {
-    let capturedUrl
-    msw.use(
-      http.get(`${backendUrl}/v1/organisations/org-123`, ({ request }) => {
-        capturedUrl = request.url
-        return HttpResponse.json({})
+      http.get(/\/v1\/organisations\/[^/]+$/, ({ request }) => {
+        pathnames.push(new URL(request.url).pathname)
+        return HttpResponse.json(organisation)
       })
     )
 
-    await fetchOrganisationById(organisationId, backendToken)
+    const result = await fetchOrganisationById('org/1', 'a-token')
 
-    expect(capturedUrl).toMatch(/\/v1\/organisations\/org-123$/)
-  })
-
-  test('throws Boom notFound error when backend returns 404', async ({
-    msw
-  }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123`,
-        () => new HttpResponse(null, { status: 404, statusText: 'Not Found' })
-      )
-    )
-
-    await expect(
-      fetchOrganisationById(organisationId, backendToken)
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 404 }
+    expect(result).toStrictEqual({
+      id: 'org/1',
+      orgId: 50001,
+      accreditations: [],
+      registrations: []
     })
-  })
-
-  test('throws Boom error when backend returns 500', async ({ msw }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123`,
-        () =>
-          new HttpResponse(null, {
-            status: 500,
-            statusText: 'Internal Server Error'
-          })
-      )
-    )
-
-    await expect(
-      fetchOrganisationById(organisationId, backendToken)
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 500 }
-    })
+    expect(pathnames).toStrictEqual(['/v1/organisations/org%2F1'])
   })
 })

@@ -4080,10 +4080,6 @@ describe('summary log check view', () => {
   it('renders an unmapped exclusion code verbatim as the reason', async ({
     server
   }) => {
-    // OUTSIDE_ACCREDITATION_PERIOD is filtered out upstream and should never
-    // reach the frontend; if any unmapped code does, the raw backend const is
-    // shown as the reason rather than dropped, so nothing the operator should
-    // see is hidden.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'EXPORTER',
@@ -4097,7 +4093,7 @@ describe('summary log check view', () => {
                 {
                   rowId: '6',
                   wasteRecordType: 'exported',
-                  exclusionReasons: ['OUTSIDE_ACCREDITATION_PERIOD'],
+                  exclusionReasons: ['SOME_FUTURE_REASON'],
                   tonnageDelta: 0
                 }
               ]
@@ -4112,9 +4108,7 @@ describe('summary log check view', () => {
     const { main } = await renderMain(server)
 
     // Exact-text match: the raw const is appended after the row id full stop.
-    expect(
-      queryByText(main, 'Row ID: 6. OUTSIDE_ACCREDITATION_PERIOD')
-    ).not.toBeNull()
+    expect(queryByText(main, 'Row ID: 6. SOME_FUTURE_REASON')).not.toBeNull()
   })
 
   // The single source of truth for where an exclusion reason surfaces: on NEW
@@ -4399,7 +4393,9 @@ describe('summary log check view', () => {
       code: 'OUTSIDE_ACCREDITATION_PERIOD',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      expectedBullet: 'Row ID: 5. OUTSIDE_ACCREDITATION_PERIOD'
+      expectedBullet:
+        'Row ID: 5. The load date is outside of the accreditation period, ' +
+        'or the accreditation was suspended or cancelled for that date'
     }
   ]
 

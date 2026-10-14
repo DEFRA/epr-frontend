@@ -11,35 +11,38 @@ describe(linkOrganisation, () => {
   it('should successfully link organisation with correct auth token', async ({
     msw
   }) => {
-    const organisationId = 'org-123'
+    const organisationNumber = 'org-123'
     const backendToken = 'valid-id-token'
 
     msw.use(
       bearerAuthHandler(
         'post',
-        `${backendUrl}/v1/organisations/${organisationId}/link`,
+        `${backendUrl}/organisations/${organisationNumber}/link`,
         backendToken,
         () => HttpResponse.json({})
       )
     )
 
     await expect(
-      linkOrganisation(backendToken, organisationId)
+      linkOrganisation(backendToken, organisationNumber)
     ).resolves.toBeUndefined()
   })
 
   it('should throw error when backend returns 401', async ({ msw }) => {
-    const organisationId = 'org-456'
+    const organisationNumber = 'org-456'
     const backendToken = 'invalid-token'
 
     msw.use(
-      http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
-        return HttpResponse.json({ error: 'Unauthorised' }, { status: 401 })
-      })
+      http.post(
+        `${backendUrl}/organisations/${organisationNumber}/link`,
+        () => {
+          return HttpResponse.json({ error: 'Unauthorised' }, { status: 401 })
+        }
+      )
     )
 
     await expect(
-      linkOrganisation(backendToken, organisationId)
+      linkOrganisation(backendToken, organisationNumber)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -49,20 +52,23 @@ describe(linkOrganisation, () => {
   })
 
   it('should throw error when backend returns 404', async ({ msw }) => {
-    const organisationId = 'non-existent-org'
+    const organisationNumber = 'non-existent-org'
     const backendToken = 'valid-token'
 
     msw.use(
-      http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
-        return HttpResponse.json(
-          { error: 'Organisation not found' },
-          { status: 404 }
-        )
-      })
+      http.post(
+        `${backendUrl}/organisations/${organisationNumber}/link`,
+        () => {
+          return HttpResponse.json(
+            { error: 'Organisation not found' },
+            { status: 404 }
+          )
+        }
+      )
     )
 
     await expect(
-      linkOrganisation(backendToken, organisationId)
+      linkOrganisation(backendToken, organisationNumber)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -72,20 +78,23 @@ describe(linkOrganisation, () => {
   })
 
   it('should throw error when backend returns 500', async ({ msw }) => {
-    const organisationId = 'org-789'
+    const organisationNumber = 'org-789'
     const backendToken = 'valid-token'
 
     msw.use(
-      http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
-        return HttpResponse.json(
-          { error: 'Internal server error' },
-          { status: 500 }
-        )
-      })
+      http.post(
+        `${backendUrl}/organisations/${organisationNumber}/link`,
+        () => {
+          return HttpResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+          )
+        }
+      )
     )
 
     await expect(
-      linkOrganisation(backendToken, organisationId)
+      linkOrganisation(backendToken, organisationNumber)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {

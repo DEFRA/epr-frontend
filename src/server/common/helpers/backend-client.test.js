@@ -8,7 +8,7 @@ import { it } from '#vite/fixtures/server.js'
 import { backend, path, strictly } from './backend-client.js'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  */
 
 /**
@@ -28,7 +28,7 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 const backendUrl = config.get('eprBackendUrl')
 
 /**
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {'get' | 'post' | 'put' | 'patch' | 'delete'} method
  */
 const recordRequests = (msw, method) => {
@@ -194,6 +194,40 @@ describe('backend-client', () => {
           }
         )
       })
+
+      it.for([
+        { description: 'an ok response', status: 200 },
+        { description: 'a refusal', status: 409 }
+      ])(
+        'should reject as an internal fetch failure when $description carries malformed json',
+        async ({ status }, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/thing`,
+              () =>
+                new HttpResponse('{', {
+                  status,
+                  headers: { 'content-type': 'application/json' }
+                })
+            )
+          )
+
+          await expect(
+            backend('a-token').get('/v1/thing')
+          ).rejects.toMatchObject({
+            isBoom: true,
+            output: { statusCode: 500 },
+            code: 'external_fetch_failed',
+            message:
+              'Failed to fetch from url: http://epr-backend.test/v1/thing',
+            event: {
+              action: 'external_fetch',
+              reason: 'type=SyntaxError code=unknown'
+            },
+            cause: expect.any(SyntaxError)
+          })
+        }
+      )
     })
 
     describe('options', () => {
@@ -300,6 +334,45 @@ describe('backend-client', () => {
         ).returns.resolves.toBeVoid()
         expectTypeOf(() => api.delete('/v1/thing')).returns.resolves.toBeVoid()
       })
+
+      it.for([
+        {
+          description: 'encoding each value',
+          query: { page: 2, search: 'acme & co' },
+          search: '?page=2&search=acme+%26+co'
+        },
+        {
+          description: 'leaving out undefined values',
+          query: { page: 1, search: undefined },
+          search: '?page=1'
+        },
+        {
+          description: 'keeping an empty string as given',
+          query: { page: 1, search: '' },
+          search: '?page=1&search='
+        },
+        {
+          description: 'sending none when every value is undefined',
+          query: { year: undefined },
+          search: ''
+        }
+      ])(
+        'should send the query, $description',
+        async ({ query, search }, { msw }) => {
+          /** @type {string[]} */
+          const searches = []
+          msw.use(
+            http.get(`${backendUrl}/v1/thing`, ({ request }) => {
+              searches.push(new URL(request.url).search)
+              return new HttpResponse(null, { status: 204 })
+            })
+          )
+
+          await backend('a-token').get('/v1/thing', { query })
+
+          expect(searches).toStrictEqual([search])
+        }
+      )
 
       it('should map a parse failure through onError', async ({ msw }) => {
         msw.use(http.get(`${backendUrl}/v1/thing`, () => HttpResponse.json({})))

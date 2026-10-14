@@ -6,7 +6,7 @@ import { beforeEach, it } from '#vite/fixtures/server.js'
 import { fetchPrnListDetails } from './fetch-prn-list-details.js'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { PrnListDetails } from './fetch-prn-list-details.js'
@@ -64,7 +64,7 @@ describe(fetchPrnListDetails, () => {
   ]
 
   /**
-   * @param {SetupServerApi} msw
+   * @param {SetupServer} msw
    * @param {() => Response} [answer]
    */
   const backendAnswers = (msw, answer = () => HttpResponse.json(notes)) => {

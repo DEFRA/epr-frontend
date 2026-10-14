@@ -7,10 +7,10 @@ export const errorController = {
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
-    const { organisationId } = request.params
+    const { organisationNumber } = request.params
     const { t: localise } = request
 
-    const homeUrl = request.localiseUrl(`/organisations/${organisationId}`)
+    const homeUrl = request.localiseUrl(`/organisations/${organisationNumber}`)
 
     return h.view('error/generic', genericErrorViewModel(localise, homeUrl))
   }

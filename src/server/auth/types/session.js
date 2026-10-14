@@ -34,6 +34,7 @@
  * @typedef {Omit<BellCredentials, 'expiresIn' | 'token'> & {
  *   profile: UserProfile
  *   linkedOrganisationId?: string
+ *   linkedOrganisationNumber?: string
  *   expiresAt: string
  *   idToken: string
  *   backendToken: string

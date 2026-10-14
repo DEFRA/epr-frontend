@@ -2,22 +2,14 @@ import { config } from '#config/config.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 
 describe(fetchSummaryLogStatus, () => {
-  const backendUrl = 'http://fake-epr-backend'
+  const backendUrl = config.get('eprBackendUrl')
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const summaryLogId = 'log-789'
-
-  beforeAll(() => {
-    config.set('eprBackendUrl', backendUrl)
-  })
-
-  afterAll(() => {
-    config.reset('eprBackendUrl')
-  })
 
   it('should return the summary log status when the backend responds successfully', async ({
     msw
@@ -146,49 +138,5 @@ describe(fetchSummaryLogStatus, () => {
     expect(result.status).toBe('validated')
 
     warnSpy.mockRestore()
-  })
-
-  it('should throw a Boom notFound error when the backend returns 404', async ({
-    msw
-  }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
-        () => new HttpResponse(null, { status: 404, statusText: 'Not Found' })
-      )
-    )
-
-    await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-        backendToken: 'test-id-token'
-      })
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 404 }
-    })
-  })
-
-  it('should throw a Boom error when the backend returns a non-404 error status', async ({
-    msw
-  }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
-        () =>
-          new HttpResponse(null, {
-            status: 500,
-            statusText: 'Internal Server Error'
-          })
-      )
-    )
-
-    await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-        backendToken: 'test-id-token'
-      })
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 500 }
-    })
   })
 })

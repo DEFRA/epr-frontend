@@ -7,6 +7,7 @@ import {
   STALE_REASON
 } from '#server/reports/helpers/stale.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 /**
@@ -107,10 +108,7 @@ describe('reports plugin onPreResponse lifecycle', () => {
 
   it('does not redirect for unrelated errors', async ({ server }) => {
     vi.mocked(fetchReportDetail).mockRejectedValue(
-      Object.assign(new Error('Server error'), {
-        isBoom: true,
-        output: { statusCode: 500 }
-      })
+      Boom.internal('Server error')
     )
 
     const { statusCode } = await server.inject({
