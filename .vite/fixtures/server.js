@@ -2,7 +2,7 @@ import { http, HttpHandler, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { test, vi } from 'vitest'
 import { asHapiRequest } from '#server/common/hapi-types.js'
-import organisationsFixture from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
+import organisationsFixture from '#fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 /**
  * @import { SetupServer } from 'msw/node'
@@ -142,12 +142,24 @@ const it = /** @type {TestAPI<ServerFixtures>} */ (
           ...createOidcHandlers('http://defra-id.auth'),
           ...createOidcHandlers(ENTRA_ID_BASE_URL)
         )
-        server.listen({ onUnhandledFrame: 'error' })
+        let unhandledFrames = 0
+        server.listen({
+          onUnhandledFrame: ({ defaults }) => {
+            unhandledFrames++
+            defaults.error()
+          }
+        })
 
         await use(server)
 
         server.resetHandlers()
         server.close()
+
+        if (unhandledFrames > 0) {
+          throw new Error(
+            `${unhandledFrames} request(s) had no msw handler, see the [MSW] errors above`
+          )
+        }
       },
       { auto: true }
     ],

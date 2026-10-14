@@ -19,7 +19,7 @@ import { http, HttpResponse } from 'msw'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
-import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
+import fixtureData from '#fixtures/organisation/organisationData.json' with { type: 'json' }
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')

@@ -27,8 +27,8 @@ import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
-import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
-import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
+import fixtureExportingOnly from '#fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
+import fixtureData from '#fixtures/organisation/organisationData.json' with { type: 'json' }
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')

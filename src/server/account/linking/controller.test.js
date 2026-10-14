@@ -12,7 +12,7 @@ import {
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
@@ -24,15 +24,7 @@ const mockAuth = {
 }
 
 describe('#accountLinkingController', () => {
-  const backendUrl = 'http://test-backend'
-
-  beforeAll(() => {
-    config.set('eprBackendUrl', backendUrl)
-  })
-
-  afterAll(() => {
-    config.reset('eprBackendUrl')
-  })
+  const backendUrl = config.get('eprBackendUrl')
 
   describe('csrf protection', () => {
     beforeEach(({ msw }) => {
