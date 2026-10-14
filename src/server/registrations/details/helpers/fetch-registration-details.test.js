@@ -8,7 +8,7 @@ import { test } from '#vite/fixtures/server.js'
 import { fetchRegistrationDetails } from './fetch-registration-details.js'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { AccreditationResource } from './types.js'
  * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
  */
@@ -74,7 +74,7 @@ const accreditations = [
 /**
  * The backend answers the registration and its accreditations from one lookup,
  * so a registration it does not hold fails both reads rather than one.
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {{ registrationStatus?: number }} [overrides]
  */
 const backendHolds = (msw, { registrationStatus } = {}) => {

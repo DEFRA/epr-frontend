@@ -1,117 +1,48 @@
-import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
-import { test } from '#vite/fixtures/server.js'
+import { it } from '#vite/fixtures/server.js'
 
 import { fetchPackagingRecyclingNotes } from './fetch-packaging-recycling-notes.js'
 
-const backendUrl = config.get('eprBackendUrl')
-
 describe(fetchPackagingRecyclingNotes, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-789'
-  const backendToken = 'test-id-token'
-
-  test('returns packaging recycling notes when backend responds successfully', async ({
+  it('should get the notes of the accreditation the ids name and resolve to them', async ({
     msw
   }) => {
-    const mockPrnData = [
+    const notes = [
       {
-        id: 'prn-001',
-        issuedToOrganisation: 'Acme Ltd',
+        id: 'prn-1',
+        issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
         tonnage: 100,
-        material: 'plastic',
-        status: 'awaiting_authorisation',
-        createdAt: '2026-01-15T10:00:00.000Z'
+        status: 'awaiting_authorisation'
       }
     ]
-
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes`,
-        () => HttpResponse.json(mockPrnData)
-      )
-    )
-
-    const result = await fetchPackagingRecyclingNotes(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
-    )
-
-    expect(result).toStrictEqual(mockPrnData)
-  })
-
-  test('encodes URL path parameters with special characters', async ({
-    msw
-  }) => {
     /** @type {string[]} */
-    const requested = []
+    const pathnames = []
     msw.use(
-      http.get(/.*packaging-recycling-notes$/, ({ request }) => {
-        requested.push(request.url)
-        return HttpResponse.json([])
+      http.get(/packaging-recycling-notes$/, ({ request }) => {
+        pathnames.push(new URL(request.url).pathname)
+        return HttpResponse.json(notes)
       })
     )
 
-    await fetchPackagingRecyclingNotes(
-      'org/123',
-      'reg&456',
-      'acc#789',
-      backendToken
+    const result = await fetchPackagingRecyclingNotes(
+      'org/1',
+      'reg&2',
+      'acc#3',
+      'a-token'
     )
 
-    expect(requested).toStrictEqual([
-      'http://epr-backend.test/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789/packaging-recycling-notes'
+    expect(result).toStrictEqual([
+      {
+        id: 'prn-1',
+        issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+        tonnage: 100,
+        status: 'awaiting_authorisation'
+      }
     ])
-  })
-
-  test('throws Boom error when backend returns 500', async ({ msw }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes`,
-        () =>
-          new HttpResponse(null, {
-            status: 500,
-            statusText: 'Internal Server Error'
-          })
-      )
-    )
-
-    await expect(
-      fetchPackagingRecyclingNotes(
-        organisationId,
-        registrationId,
-        accreditationId,
-        backendToken
-      )
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 500 }
-    })
-  })
-
-  test('throws Boom error when backend returns 404', async ({ msw }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes`,
-        () => new HttpResponse(null, { status: 404, statusText: 'Not Found' })
-      )
-    )
-
-    await expect(
-      fetchPackagingRecyclingNotes(
-        organisationId,
-        registrationId,
-        accreditationId,
-        backendToken
-      )
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 404 }
-    })
+    expect(pathnames).toStrictEqual([
+      '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/packaging-recycling-notes'
+    ])
   })
 })

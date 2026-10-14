@@ -6,6 +6,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/cookie-banner/macro.njk" import govukCookieBanner %}
 {% from "govuk/components/phase-banner/macro.njk" import govukPhaseBanner %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
@@ -61,18 +62,34 @@
         }]
       }) }}
     </form>
+  {% elif analytics.confirmedChoice %}
+    {% block cookieBannerConfirmation %}
+      {% set changeSettings %}<a class="govuk-link" href="{{ localiseUrl('/cookies') }}">{{ localise('common:cookieBanner:changeSettings') }}</a>{% endset %}
+      {{ govukCookieBanner({
+        ariaLabel: localise('common:cookieBanner:heading', { serviceName: serviceName }),
+        messages: [{
+          role: 'alert',
+          html: '<p class="govuk-body">' + localise('common:cookieBanner:confirmation:' + analytics.confirmedChoice, { changeSettings: changeSettings }) + '</p>',
+          actions: [{
+            text: localise('common:cookieBanner:hide'),
+            type: 'button',
+            href: analytics.returnUrl
+          }]
+        }]
+      }) }}
+    {% endblock %}
   {% endif %}
 {% endblock %}
 
-{% block header %}
+{% block govukHeader %}
   {{ govukHeader({
     homepageUrl: "https://www.gov.uk/",
     classes: "app-header",
-    containerClasses: "govuk-width-container",
-    serviceUrl: serviceUrl,
-    useTudorCrown: true
+    containerClasses: "govuk-width-container"
   }) }}
+{% endblock %}
 
+{% block govukServiceNavigation %}
   {{ govukServiceNavigation({
     serviceName: serviceName,
     serviceUrl: localiseUrl(serviceUrl),
@@ -80,15 +97,18 @@
   }) }}
 {% endblock %}
 
-{% block pageTitle %}{{ pageTitle }} | {{ serviceName }}{% endblock %}
-
-{% block beforeContent %}
+{% block headerEnd %}
   {{ govukPhaseBanner({
     tag: {
       text: "Beta"
     },
     html: 'This is a new service. Help us improve it and <a class="govuk-link" href="mailto:eprcustomerservice@defra.gov.uk">give your feedback by email</a>.'
   }) }}
+{% endblock %}
+
+{% block pageTitle %}{{ pageTitle }} | {{ serviceName }}{% endblock %}
+
+{% block beforeContent %}
   {% if breadcrumbs.length > 1 %}
     {{ govukBreadcrumbs({
       items: breadcrumbs

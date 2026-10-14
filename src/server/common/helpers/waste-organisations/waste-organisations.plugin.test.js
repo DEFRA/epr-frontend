@@ -5,7 +5,7 @@ import { afterEach, describe, expect } from 'vitest'
 
 import hapi from '@hapi/hapi'
 
-import fixture from '../../../../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
+import fixture from '#fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 import { createWasteOrganisationsPlugin } from './waste-organisations.plugin.js'
 

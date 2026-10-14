@@ -404,7 +404,8 @@ describe('#submitController', () => {
 
       it('should display status tag as Ready to submit', async ({ server }) => {
         const body = await getBody(server)
-        const tag = body.querySelector('.govuk-tag')
+        const main = getByRole(body, 'main')
+        const tag = main.querySelector('.govuk-tag')
 
         expect(tag).not.toBeNull()
         expect(tag.textContent.trim()).toBe('Ready to submit')
@@ -1648,7 +1649,8 @@ describe('#submitController', () => {
           auth: mockAuth
         })
         const body = new JSDOM(result).window.document.body
-        const tag = body.querySelector('.govuk-tag')
+        const main = getByRole(body, 'main')
+        const tag = main.querySelector('.govuk-tag')
 
         expect(tag?.textContent?.trim()).toBe('Requires resubmission')
         expect(tag?.classList.contains('govuk-tag--purple')).toBe(true)
@@ -1751,7 +1753,8 @@ describe('#submitController', () => {
           payload: { crumb, version: 1, submissionDeclaredBy: '' }
         })
         const body = new JSDOM(result).window.document.body
-        const tag = body.querySelector('.govuk-tag')
+        const main = getByRole(body, 'main')
+        const tag = main.querySelector('.govuk-tag')
 
         expect(statusCode).toBe(statusCodes.ok)
         getByRole(body, 'heading', {

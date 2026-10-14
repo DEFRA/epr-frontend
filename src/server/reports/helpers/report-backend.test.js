@@ -8,7 +8,7 @@ import { reportBackend, reportPath } from './report-backend.js'
 import { ReportStaleError, STALE_REASON } from './stale.js'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -33,7 +33,7 @@ describe('report-backend', () => {
 
   describe(reportBackend, () => {
     /**
-     * @param {SetupServerApi} msw
+     * @param {SetupServer} msw
      * @param {Response} response
      */
     const backendAnswers = (msw, response) =>

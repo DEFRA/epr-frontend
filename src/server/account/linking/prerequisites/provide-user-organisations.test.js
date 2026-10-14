@@ -37,16 +37,20 @@ describe('#provideUserOrganisations', () => {
     expect(result).toStrictEqual(mockOrganisations)
   })
 
-  it('should return null when credentials is null', async () => {
+  it('should throw Boom.unauthorized when credentials is null', async () => {
     const mockRequest = {
       auth: {
         credentials: null
       }
     }
 
-    const result = await provideUserOrganisations.method(mockRequest)
-
-    expect(result).toBeNull()
+    await expect(
+      provideUserOrganisations.method(mockRequest)
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: { statusCode: 401 },
+      message: 'User session is required to fetch organisations'
+    })
   })
 
   it('should throw error when backend returns 401 unauthorized', async ({
