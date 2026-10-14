@@ -9,8 +9,8 @@ import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { CADENCE } from '#server/reports/constants.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
 import {
-  accreditationPath,
-  registrationPath,
+  accreditationPath as toAccreditationPath,
+  registrationPath as toRegistrationPath,
   reportPath
 } from '#server/reports/helpers/report-paths.js'
 
@@ -318,7 +318,7 @@ const toReportsSummary = ({
       localise,
       namespace: 'registrations:details:accreditation:reports'
     }),
-    href: localiseUrl(`${accreditationPath(keys)}/reports`),
+    href: localiseUrl(`${toAccreditationPath(keys)}/reports`),
     rows
   }
 }
@@ -404,8 +404,8 @@ export const buildViewModel = ({
   const pageName = localise('registrations:details:accreditation:breadcrumb')
   const paths = {
     organisation: `/organisations/${encodeURIComponent(keys.organisationNumber)}`,
-    registration: registrationPath(keys),
-    accreditation: accreditationPath(keys)
+    registration: toRegistrationPath(keys),
+    accreditation: toAccreditationPath(keys)
   }
 
   return {

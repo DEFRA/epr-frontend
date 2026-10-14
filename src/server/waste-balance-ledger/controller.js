@@ -87,20 +87,13 @@ export const controller = {
             accreditation: /** @type {string} */ (accreditationPath)
           }
         })
-      : {
-          breadcrumbs: [
-            ...toRegistrationTrail({
-              localise,
-              localiseUrl: request.localiseUrl,
-              organisationName: name,
-              paths: recordPaths
-            }),
-            { text: heading }
-          ],
-          caption: localise('waste-balance-ledger:registeredOnlyCaption'),
+      : toRegisteredOnlyPage({
           heading,
-          pageTitle: localise('waste-balance-ledger:pageTitle')
-        }
+          localise,
+          localiseUrl: request.localiseUrl,
+          organisationName: name,
+          paths: recordPaths
+        })
 
     return h.view('waste-balance-ledger/index', {
       ...page,
@@ -116,6 +109,38 @@ export const controller = {
         registrationPath
       })
     })
+  }
+}
+
+/**
+ * @param {{
+ *   heading: string,
+ *   localise: HapiRequest['t'],
+ *   localiseUrl: HapiRequest['localiseUrl'],
+ *   organisationName: string,
+ *   paths: { organisation: string, registration: string }
+ * }} params
+ */
+function toRegisteredOnlyPage({
+  heading,
+  localise,
+  localiseUrl,
+  organisationName,
+  paths
+}) {
+  return {
+    breadcrumbs: [
+      ...toRegistrationTrail({
+        localise,
+        localiseUrl,
+        organisationName,
+        paths
+      }),
+      { text: heading }
+    ],
+    caption: localise('waste-balance-ledger:registeredOnlyCaption'),
+    heading,
+    pageTitle: localise('waste-balance-ledger:pageTitle')
   }
 }
 

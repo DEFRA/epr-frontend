@@ -33,7 +33,10 @@ export const accreditedStretches = (accreditation, year) => {
   for (const [date, { status }] of timelineEntries(accreditation)) {
     if (status === ACCREDITATION_STATUS.APPROVED && from === null) {
       from = calendarDate(date)
-    } else if (status === ACCREDITATION_STATUS.CANCELLED && from !== null) {
+      continue
+    }
+
+    if (status === ACCREDITATION_STATUS.CANCELLED && from !== null) {
       stretches.push({ from, to: shiftDay(calendarDate(date), -1) })
       from = null
     }

@@ -6,7 +6,7 @@ import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/bui
 import { paths } from '#server/paths.js'
 import { CADENCE } from '#server/reports/constants.js'
 import {
-  registrationPath,
+  registrationPath as toRegistrationPath,
   reportPath
 } from '#server/reports/helpers/report-paths.js'
 
@@ -85,6 +85,46 @@ const toLedger = ({
 
 /**
  * @param {{
+ *   keys: RegistrationKeys,
+ *   name: string,
+ *   registrationAddress: string,
+ *   year: number,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string
+ * }} params
+ * @returns {Crumb[]}
+ */
+const toBreadcrumbs = ({
+  keys,
+  name,
+  registrationAddress,
+  year,
+  localise,
+  localiseUrl
+}) => [
+  {
+    text: localise('registrations:details:allOrganisations'),
+    href: localiseUrl(paths.regulators.home)
+  },
+  {
+    text: name,
+    href: localiseUrl(
+      `/organisations/${encodeURIComponent(keys.organisationNumber)}`
+    )
+  },
+  {
+    text: localise('registrations:details:heading'),
+    href: localiseUrl(registrationAddress)
+  },
+  {
+    text: localise('registrations:details:registeredOnlyPeriod:breadcrumb', {
+      year: String(year)
+    })
+  }
+]
+
+/**
+ * @param {{
  *   organisation: OrganisationView,
  *   registration: RegistrationView,
  *   keys: RegistrationKeys,
@@ -109,8 +149,7 @@ export const buildViewModel = ({
   localiseUrl
 }) => {
   const name = organisationViewName(organisation)
-  const organisationPath = `/organisations/${encodeURIComponent(keys.organisationNumber)}`
-  const registrationAddress = registrationPath(keys)
+  const registrationAddress = toRegistrationPath(keys)
   const heading = localise(
     'registrations:details:registeredOnlyPeriod:heading',
     {
@@ -130,23 +169,14 @@ export const buildViewModel = ({
   const quarterlyPeriods = cadence === CADENCE.QUARTERLY ? reportingPeriods : []
 
   return {
-    breadcrumbs: [
-      {
-        text: localise('registrations:details:allOrganisations'),
-        href: localiseUrl(paths.regulators.home)
-      },
-      { text: name, href: localiseUrl(organisationPath) },
-      {
-        text: localise('registrations:details:heading'),
-        href: localiseUrl(registrationAddress)
-      },
-      {
-        text: localise(
-          'registrations:details:registeredOnlyPeriod:breadcrumb',
-          { year: String(year) }
-        )
-      }
-    ],
+    breadcrumbs: toBreadcrumbs({
+      keys,
+      name,
+      registrationAddress,
+      year,
+      localise,
+      localiseUrl
+    }),
     caption: toCaption([name, keys.registrationNumber]),
     // A year holding no registered-only time is the page's whole subject, so
     // the answer is carried rather than the stretches that produced it.

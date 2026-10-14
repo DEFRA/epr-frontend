@@ -50,4 +50,6 @@ export const accreditationIn = (registration, year) => {
  * @returns {string | undefined}
  */
 export const latestAccreditationYear = (registration) =>
-  Object.keys(registration.accreditations).sort().at(-1)
+  Object.keys(registration.accreditations)
+    .sort((one, other) => one.localeCompare(other))
+    .at(-1)

@@ -6,7 +6,7 @@ import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 import {
   accreditationPath,
-  registrationPath
+  registrationPath as toRegistrationPath
 } from '#server/reports/helpers/report-paths.js'
 
 import { organisationViewName, toCaption } from './helpers/caption.js'
@@ -189,7 +189,7 @@ export const buildViewModel = ({
   localiseUrl
 }) => {
   const name = organisationViewName(organisation)
-  const path = registrationPath(keys)
+  const path = toRegistrationPath(keys)
   const heading = localise('registrations:details:heading')
 
   return {
