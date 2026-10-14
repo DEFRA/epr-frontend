@@ -1,3 +1,5 @@
+const TAG_MANAGER = 'https://www.googletagmanager.com'
+
 /**
  * Where GA4 lives. The container and the measurement library it loads are both
  * served from googletagmanager.com, which the library also beacons diagnostics
@@ -9,11 +11,11 @@ export const analyticsOrigins = {
   connect: [
     'https://*.google-analytics.com',
     'https://*.analytics.google.com',
-    'https://www.googletagmanager.com'
+    TAG_MANAGER
   ],
   font: [],
   img: ['https://*.google-analytics.com'],
-  script: ['https://www.googletagmanager.com'],
+  script: [TAG_MANAGER],
   style: []
 }
 
@@ -24,14 +26,10 @@ export const analyticsOrigins = {
 export const previewOrigins = {
   connect: [],
   font: ['https://fonts.gstatic.com'],
-  img: [
-    'https://www.googletagmanager.com',
-    'https://ssl.gstatic.com',
-    'https://www.gstatic.com'
-  ],
+  img: [TAG_MANAGER, 'https://ssl.gstatic.com', 'https://www.gstatic.com'],
   script: ['https://tagmanager.google.com'],
   style: [
-    'https://www.googletagmanager.com',
+    TAG_MANAGER,
     'https://tagmanager.google.com',
     'https://fonts.googleapis.com'
   ]
