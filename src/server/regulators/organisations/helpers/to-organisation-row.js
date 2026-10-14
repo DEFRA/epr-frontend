@@ -41,7 +41,7 @@ import { toStatusTag } from './to-status-tag.js'
  * @returns {OrganisationRow}
  */
 export const toOrganisationRow = (
-  { id, orgId, companyDetails, status, submittedToRegulator },
+  { orgId, companyDetails, status, submittedToRegulator },
   localiseUrl,
   localise
 ) => ({
@@ -49,5 +49,5 @@ export const toOrganisationRow = (
   organisationId: String(orgId),
   regulator: submittedToRegulator?.toUpperCase() ?? '',
   status: toStatusTag(status, localise),
-  href: localiseUrl(`/organisations/${id}`)
+  href: localiseUrl(`/organisations/${orgId}`)
 })

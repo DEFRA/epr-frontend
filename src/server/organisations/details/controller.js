@@ -1,14 +1,11 @@
-import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { fetchOrganisationRegistrations } from '#server/common/helpers/organisations/fetch-organisation-registrations.js'
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { buildViewModel } from './build-view-model.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- */
-
-/**
- * @typedef {{ organisationId: string }} OrganisationParams
+ * @import { OrganisationParams } from '../index.js'
  */
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -18,19 +15,17 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId } = request.params
     const { backendToken } = request.auth.credentials
 
-    const [organisation, registrations] = await Promise.all([
-      fetchOrganisationById(organisationId, backendToken),
-      fetchOrganisationRegistrations(organisationId, backendToken)
-    ])
+    const organisation = await fetchOrganisation(
+      organisationNumber(Number(request.params.organisationNumber)),
+      backendToken
+    )
 
     return h.view(
       'organisations/details/index',
       buildViewModel({
         organisation,
-        registrations,
         activeTab: request.path.endsWith('/exporting')
           ? 'EXPORTER'
           : 'REPROCESSOR',

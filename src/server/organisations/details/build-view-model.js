@@ -1,11 +1,11 @@
-import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 
 /**
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
- * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
 /**
@@ -13,14 +13,12 @@ import { paths } from '#server/paths.js'
  * @typedef {'REPROCESSOR' | 'EXPORTER'} Tab
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{
- *   id: string,
- *   number: string | null,
+ *   number: string,
  *   status: StatusTag,
  *   material: string,
  *   regulator: string,
  *   accreditations: StatusTag[],
- *   href: string,
- *   linkName: string
+ *   href: string
  * }} RegistrationRow
  * @typedef {{ name: string | null, registrations: RegistrationRow[] }} SiteTable
  * @typedef {{
@@ -36,54 +34,40 @@ import { paths } from '#server/paths.js'
  */
 
 /**
- * A registration that has resolved to no material of its own has only what the
- * applicant applied for to show, which is the coarse answer they gave.
- * @param {RegistrationResource} registration
- * @returns {string}
+ * Every year's accreditation, newest first.
+ * @param {RegistrationView['accreditations']} accreditations
+ * @returns {StatusTag[]}
  */
-const toMaterialName = ({ material, application }) =>
-  getMaterialDisplayName(material ?? application.material)
-
-/**
- * An exporter reprocesses nowhere this service records, so it heads no site.
- * @param {RegistrationResource} registration
- * @param {Localise} localise
- * @returns {string | null}
- */
-const toSiteName = ({ application }, localise) =>
-  application.wasteProcessingType === WASTE_PROCESSING_TYPE.EXPORTER
-    ? null
-    : (application.site?.address?.line1 ??
-      localise('organisations:details:table:unknownSite'))
+const toAccreditationTags = (accreditations) =>
+  Object.entries(accreditations)
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([year, { status }]) => {
+      const tag = toStatusTag(status)
+      return { ...tag, text: `${year}: ${tag.text}` }
+    })
 
 /**
  * @param {{
- *   registration: RegistrationResource,
- *   organisationId: string,
+ *   number: string,
+ *   registration: RegistrationView,
+ *   organisationPath: string,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {RegistrationRow}
  */
-const toRegistrationRow = ({ registration, organisationId, localiseUrl }) => {
-  const number = registration.registrationNumber
-  const status = toStatusTag(registration.status)
-  const material = toMaterialName(registration)
-
-  return {
-    id: registration.id,
-    number,
-    status,
-    material,
-    regulator: registration.application.submittedToRegulator.toUpperCase(),
-    accreditations: registration.accreditations.map(({ status: held }) =>
-      toStatusTag(held)
-    ),
-    href: localiseUrl(
-      `/organisations/${organisationId}/registrations/${registration.id}`
-    ),
-    linkName: number ?? `${material}, ${status.text}`
-  }
-}
+const toRegistrationRow = ({
+  number,
+  registration,
+  organisationPath,
+  localiseUrl
+}) => ({
+  number,
+  status: toStatusTag(registration.status),
+  material: getMaterialDisplayName(registration.material),
+  regulator: registration.submittedToRegulator.code.toUpperCase(),
+  accreditations: toAccreditationTags(registration.accreditations),
+  href: localiseUrl(`${organisationPath}/registrations/${number}`)
+})
 
 /**
  * @param {SiteTable[]} tables
@@ -104,24 +88,23 @@ const addToSite = (tables, { name, row }) => {
 
 /**
  * @param {{
- *   registrations: RegistrationResource[],
- *   organisationId: string,
- *   localise: Localise,
+ *   registrations: Array<[string, RegistrationView]>,
+ *   organisationPath: string,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {SiteTable[]}
  */
-const toSiteTables = ({
-  registrations,
-  organisationId,
-  localise,
-  localiseUrl
-}) =>
+const toSiteTables = ({ registrations, organisationPath, localiseUrl }) =>
   registrations.reduce(
-    (tables, registration) =>
+    (tables, [number, registration]) =>
       addToSite(tables, {
-        name: toSiteName(registration, localise),
-        row: toRegistrationRow({ registration, organisationId, localiseUrl })
+        name: siteNameOf(registration),
+        row: toRegistrationRow({
+          number,
+          registration,
+          organisationPath,
+          localiseUrl
+        })
       }),
     /** @type {SiteTable[]} */ ([])
   )
@@ -151,11 +134,8 @@ const toTabWithRegistrations = ({
 }
 
 /**
- * The organisation is read for its own name alone. Everything the page says
- * about registrations comes from the registrations collection.
  * @param {{
- *   organisation: { id: string, companyDetails: { name: string } },
- *   registrations: RegistrationResource[],
+ *   organisation: OrganisationView,
  *   activeTab: Tab,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
@@ -164,33 +144,29 @@ const toTabWithRegistrations = ({
  */
 export const buildViewModel = ({
   organisation,
-  registrations,
   activeTab,
   localise,
   localiseUrl
 }) => {
-  const name = organisation.companyDetails.name
+  const { name } = organisation
   const heading = localise('organisations:details:heading')
-  const organisationPath = `/organisations/${organisation.id}`
+  const organisationPath = `/organisations/${organisation.organisationNumber}`
+  const registrations = Object.entries(organisation.registrations)
 
   const tablesOf = (
-    /** @type {(registration: RegistrationResource) => boolean} */ includes
+    /** @type {RegistrationView['wasteProcessingType']} */ wasteProcessingType
   ) =>
     toSiteTables({
-      registrations: registrations.filter(includes),
-      organisationId: organisation.id,
-      localise,
+      registrations: registrations.filter(
+        ([, registration]) =>
+          registration.wasteProcessingType === wasteProcessingType
+      ),
+      organisationPath,
       localiseUrl
     })
 
-  const reprocessorTables = tablesOf(
-    ({ application }) =>
-      application.wasteProcessingType === WASTE_PROCESSING_TYPE.REPROCESSOR
-  )
-  const exporterTables = tablesOf(
-    ({ application }) =>
-      application.wasteProcessingType === WASTE_PROCESSING_TYPE.EXPORTER
-  )
+  const reprocessorTables = tablesOf('reprocessor')
+  const exporterTables = tablesOf('exporter')
 
   const holdsBoth = reprocessorTables.length > 0 && exporterTables.length > 0
   const tab = toTabWithRegistrations({

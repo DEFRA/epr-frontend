@@ -177,6 +177,7 @@ describe('/auth/callback - GET integration', async () => {
         current: { id: 'organisation-id', name: 'company-name' },
         linked: {
           id: 'linked-org-id',
+          orgId: '11111111',
           name: 'Linked Company',
           linkedBy: { id: 'user-id', email: 'user@email.com' },
           linkedAt: '2025-01-01T00:00:00.000Z'
@@ -193,8 +194,8 @@ describe('/auth/callback - GET integration', async () => {
           return HttpResponse.json(userOrganisationsResponse)
         }),
         http.put(
-          `${backendUrl}/v1/organisations/:organisationId/user`,
-          () => new HttpResponse(null, { status: 200 })
+          `${backendUrl}/organisations/:organisationNumber/user`,
+          () => new HttpResponse(null, { status: 204 })
         )
       )
     })
@@ -203,7 +204,7 @@ describe('/auth/callback - GET integration', async () => {
       const response = await performSignInFlow(server, msw, idTokenAndPublicKey)
 
       expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers['location']).toBe('/organisations/linked-org-id')
+      expect(response.headers['location']).toBe('/organisations/11111111')
     })
 
     it('forgets that this browser signed in as a regulator', async ({
@@ -218,29 +219,29 @@ describe('/auth/callback - GET integration', async () => {
       expect(signInProviderCookieFrom(response)).toContain('Max-Age=0')
     })
 
-    it('calls add user to organisation API with the linked organisation id', async ({
+    it('calls add user to organisation API with the linked organisation number', async ({
       server,
       msw
     }) => {
       const backendUrl = config.get('eprBackendUrl')
-      let capturedOrganisationId
+      let capturedOrganisationNumber
 
       msw.use(
         http.get(`${backendUrl}/v1/me/organisations`, () => {
           return HttpResponse.json(userOrganisationsResponse)
         }),
         http.put(
-          `${backendUrl}/v1/organisations/:organisationId/user`,
+          `${backendUrl}/organisations/:organisationNumber/user`,
           ({ params }) => {
-            capturedOrganisationId = params.organisationId
-            return new HttpResponse(null, { status: 200 })
+            capturedOrganisationNumber = params.organisationNumber
+            return new HttpResponse(null, { status: 204 })
           }
         )
       )
 
       await performSignInFlow(server, msw, idTokenAndPublicKey)
 
-      expect(capturedOrganisationId).toBe('linked-org-id')
+      expect(capturedOrganisationNumber).toBe('11111111')
     })
 
     it('records sign in success metric', async ({ server, msw }) => {
@@ -326,6 +327,7 @@ describe('/auth/callback - GET integration', async () => {
               current: { id: 'organisation-id', name: 'company-name' },
               linked: {
                 id: 'linked-org-id',
+                orgId: '11111111',
                 name: 'Linked Company',
                 linkedBy: {
                   id: 'original-linker-id',
@@ -338,8 +340,8 @@ describe('/auth/callback - GET integration', async () => {
           })
         }),
         http.put(
-          `${backendUrl}/v1/organisations/:organisationId/user`,
-          () => new HttpResponse(null, { status: 200 })
+          `${backendUrl}/organisations/:organisationNumber/user`,
+          () => new HttpResponse(null, { status: 204 })
         )
       )
 
@@ -368,6 +370,7 @@ describe('/auth/callback - GET integration', async () => {
               current: { id: 'organisation-id', name: 'company-name' },
               linked: {
                 id: 'linked-org-id',
+                orgId: '11111111',
                 name: 'Linked Company',
                 linkedBy: { id: 'linker-user-id', email: 'linker@email.com' },
                 linkedAt: '2025-01-01T00:00:00.000Z'
@@ -377,8 +380,8 @@ describe('/auth/callback - GET integration', async () => {
           })
         }),
         http.put(
-          `${backendUrl}/v1/organisations/:organisationId/user`,
-          () => new HttpResponse(null, { status: 200 })
+          `${backendUrl}/organisations/:organisationNumber/user`,
+          () => new HttpResponse(null, { status: 204 })
         )
       )
 

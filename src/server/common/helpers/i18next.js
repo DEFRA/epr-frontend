@@ -31,7 +31,7 @@ export const i18nPlugin = {
 
         if (isWelshPath(path)) {
           await request.i18n.changeLanguage(languages.WELSH)
-          request.setUrl(withoutLanguagePrefix(path))
+          request.setUrl(`${withoutLanguagePrefix(path)}${request.url.search}`)
         } else {
           await request.i18n.changeLanguage(languages.ENGLISH)
         }

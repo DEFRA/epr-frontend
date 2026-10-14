@@ -51,7 +51,7 @@ describe('#accountLinkingController', () => {
         url: '/account/linking',
         auth: mockAuth,
         payload: {
-          organisationId: 'org-1'
+          organisationNumber: 'FC111111'
         }
       })
 
@@ -72,7 +72,7 @@ describe('#accountLinkingController', () => {
         headers: { cookie },
         payload: {
           crumb: 'invalid-token',
-          organisationId: 'org-1'
+          organisationNumber: 'FC111111'
         }
       })
 
@@ -132,9 +132,24 @@ describe('#accountLinkingController', () => {
                 },
                 linked: null,
                 unlinked: [
-                  { id: 'org-1', name: 'First Company', orgId: 'FC111111' },
-                  { id: 'org-2', name: 'Second Company', orgId: 'SC222222' },
-                  { id: 'org-3', name: 'Third Company', orgId: 'TC333333' }
+                  {
+                    id: 'org-1',
+                    name: 'First Company',
+                    orgId: 'FC111111',
+                    referenceNumber: 'org-1'
+                  },
+                  {
+                    id: 'org-2',
+                    name: 'Second Company',
+                    orgId: 'SC222222',
+                    referenceNumber: 'org-2'
+                  },
+                  {
+                    id: 'org-3',
+                    name: 'Third Company',
+                    orgId: 'TC333333',
+                    referenceNumber: 'org-3'
+                  }
                 ]
               }
             })
@@ -254,6 +269,21 @@ describe('#accountLinkingController', () => {
         expect(listItems[2].textContent).toBe('Third Company - org-3')
 
         /* eslint-enable vitest/max-expects */
+      })
+
+      it('should post organisation numbers', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/account/linking',
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const radios = getAllByRole(getByRole(body, 'main'), 'radio')
+
+        expect(
+          radios.map((radio) => radio.getAttribute('value'))
+        ).toStrictEqual(['FC111111', 'SC222222', 'TC333333'])
       })
     })
   })

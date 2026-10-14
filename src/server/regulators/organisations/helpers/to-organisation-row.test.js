@@ -29,13 +29,13 @@ describe(toOrganisationRow, () => {
         text: 'translated:regulators:organisations:status:active',
         classes: 'govuk-tag--green'
       },
-      href: '/en/organisations/6507f1f77bcf86cd79943901'
+      href: '/en/organisations/50002'
     })
   })
 
   it('keeps the language the regulator is reading in', () => {
     expect(toOrganisationRow(acme, (path) => `/cy${path}`, asKey).href).toBe(
-      '/cy/organisations/6507f1f77bcf86cd79943901'
+      '/cy/organisations/50002'
     )
   })
 
