@@ -118,14 +118,10 @@ export const naturalKeyRedirect = async (rawRequest, h) => {
     pathSegments[index] = swapped[FIELDS[route.form][record]]
   }
 
-  // The i18n step drops the query when it strips `/cy`, so read the original
-  const { search } = new URL(
-    /** @type {string} */ (request.raw.req.url),
-    'http://localhost'
-  )
-
   return h
-    .redirect(request.localiseUrl(`${pathSegments.join('/')}${search}`))
+    .redirect(
+      request.localiseUrl(`${pathSegments.join('/')}${request.url.search}`)
+    )
     .code(
       READ_METHODS.includes(request.method)
         ? statusCodes.found

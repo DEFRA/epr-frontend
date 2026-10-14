@@ -8,7 +8,13 @@
     "analytics": "We'd also like to use analytics cookies so we can understand how you use the service and make improvements.",
     "accept": "Accept analytics cookies",
     "reject": "Reject analytics cookies",
-    "viewCookies": "View cookies"
+    "viewCookies": "View cookies",
+    "confirmation": {
+      "accepted": "You've accepted analytics cookies. You can {{- changeSettings }} at any time.",
+      "rejected": "You've rejected analytics cookies. You can {{- changeSettings }} at any time."
+    },
+    "changeSettings": "change your cookie settings",
+    "hide": "Hide cookie message"
   },
   "errorSummaryTitle": "There is a problem",
   "footer": {

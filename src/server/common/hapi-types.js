@@ -4,6 +4,7 @@
  * @import {Policy, PolicyOptions} from '@hapi/catbox'
  * @import {TFunction, i18n} from 'i18next'
  * @import {Metrics} from '@defra/cdp-metrics'
+ * @import {AnalyticsConsent} from './analytics/consent.js'
  * @import {TypedLogger} from './helpers/logging/logger.js'
  * @import {WasteOrganisationsService} from './helpers/waste-organisations/port.js'
  * @import {UserSession} from '../auth/types/session.js'
@@ -64,6 +65,8 @@
  * module augmentation; since we don't write TypeScript, we add the keys we
  * use here as extra overloads layered on top of yar's own typings.
  * @typedef {{
+ *   (type: 'analyticsConsentChoice'): string[]
+ *   (type: 'cookiesBackUrl'): string[]
  *   (type: 'referrer'): string[]
  * } & Yar['flash']} HapiYarFlash
  */
@@ -85,10 +88,13 @@
  *   - `state.userSession` narrowed to the cookie state written by the
  *     session strategy
  *   - `yar.flash` extended with the flash keys the app uses
+ *   - `app.analyticsConfirmedChoice` set for a view that confirms a cookie
+ *     choice
  *   - `logger` replaces hapi-pino's augmented `pino.Logger` with our
  *     TypedLogger; calls like `request.logger.warn({ ...non-allowlisted
  *     fields })` then fail tsc.
- * @typedef {Omit<Request, 'auth' | 'logger' | 'server' | 'state' | 'yar'> & {
+ * @typedef {Omit<Request, 'app' | 'auth' | 'logger' | 'server' | 'state' | 'yar'> & {
+ *   app: Request['app'] & { analyticsConfirmedChoice?: AnalyticsConsent | null },
  *   auth: RequestAuth,
  *   logger: TypedLogger,
  *   server: HapiServer,
