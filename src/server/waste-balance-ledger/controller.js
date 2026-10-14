@@ -91,7 +91,7 @@ export const controller = {
           heading,
           localise,
           localiseUrl: request.localiseUrl,
-          organisationName: name,
+          name,
           paths: recordPaths
         })
 
@@ -117,23 +117,17 @@ export const controller = {
  *   heading: string,
  *   localise: HapiRequest['t'],
  *   localiseUrl: HapiRequest['localiseUrl'],
- *   organisationName: string,
+ *   name: string,
  *   paths: { organisation: string, registration: string }
  * }} params
  */
-function toRegisteredOnlyPage({
-  heading,
-  localise,
-  localiseUrl,
-  organisationName,
-  paths
-}) {
+function toRegisteredOnlyPage({ heading, localise, localiseUrl, name, paths }) {
   return {
     breadcrumbs: [
       ...toRegistrationTrail({
         localise,
         localiseUrl,
-        organisationName,
+        organisationName: name,
         paths
       }),
       { text: heading }
