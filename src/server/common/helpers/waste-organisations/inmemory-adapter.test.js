@@ -1,6 +1,6 @@
 import { it as base, describe, expect } from 'vitest'
 
-import fixture from '../../../../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
+import fixture from '#fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 import { createInMemoryWasteOrganisationsService } from './inmemory-adapter.js'
 import { testWasteOrganisationsServiceContract } from './port.contract.js'

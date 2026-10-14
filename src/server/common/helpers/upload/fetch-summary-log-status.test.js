@@ -2,22 +2,14 @@ import { config } from '#config/config.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 
 describe(fetchSummaryLogStatus, () => {
-  const backendUrl = 'http://fake-epr-backend'
+  const backendUrl = config.get('eprBackendUrl')
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const summaryLogId = 'log-789'
-
-  beforeAll(() => {
-    config.set('eprBackendUrl', backendUrl)
-  })
-
-  afterAll(() => {
-    config.reset('eprBackendUrl')
-  })
 
   it('should return the summary log status when the backend responds successfully', async ({
     msw
