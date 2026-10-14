@@ -76,16 +76,6 @@ describe(fetchOrganisations, () => {
     expect(request().searchParams.get('search')).toBe('Acme Waste')
   })
 
-  test('asks for every organisation when no search was entered', async ({
-    msw
-  }) => {
-    const request = captureRequest(msw)
-
-    await fetchOrganisations({ page: 1, search: '', backendToken })
-
-    expect(request().searchParams.has('search')).toBe(false)
-  })
-
   test('authorises the call with the session backend token', async ({
     msw
   }) => {

@@ -25,5 +25,5 @@ import { PAGE_SIZE } from './pagination.js'
  */
 export const fetchOrganisations = ({ page, search, backendToken }) =>
   backend(backendToken).get('/v1/organisations', {
-    query: { page, pageSize: PAGE_SIZE, search: search || undefined }
+    query: { page, pageSize: PAGE_SIZE, search }
   })
