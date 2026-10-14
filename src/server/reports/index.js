@@ -1,8 +1,8 @@
 import Boom from '@hapi/boom'
 import Joi from 'joi'
 
-import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHapiRequest } from '#server/common/hapi-types.js'
+import { redirectPreservingMethod } from '#server/common/helpers/natural-keys/redirect-preserving-method.js'
 
 import { checkGetController, checkPostController } from './check-controller.js'
 import { createController } from './create-controller.js'
@@ -61,8 +61,6 @@ import { ReportStaleError } from './helpers/stale.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { reportPath } from './helpers/report-paths.js'
 import { CADENCE } from './constants.js'
-
-const READ_METHODS = Object.freeze(['get', 'head'])
 
 const registrationBase =
   '/organisations/{organisationNumber}/registrations/{registrationNumber}'
@@ -264,15 +262,7 @@ const monthlyToAccreditedRoute = {
     const suffix = rest ? `/${rest}` : ''
     const accreditedPath = reportPath({ ...keys, cadence: CADENCE.MONTHLY })
 
-    return h
-      .redirect(
-        request.localiseUrl(`${accreditedPath}${suffix}${request.url.search}`)
-      )
-      .code(
-        READ_METHODS.includes(request.method)
-          ? statusCodes.found
-          : statusCodes.temporaryRedirect
-      )
+    return redirectPreservingMethod(request, h, `${accreditedPath}${suffix}`)
   }
 }
 

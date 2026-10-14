@@ -1,4 +1,3 @@
-import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { asHapiRequest } from '#server/common/hapi-types.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
@@ -8,6 +7,7 @@ import {
   findOrganisationByNumber
 } from './find-organisation.js'
 import { routeKeyForm, urlKeyForm } from './key-form.js'
+import { redirectPreservingMethod } from './redirect-preserving-method.js'
 import { toIds, toNaturalKeys } from './swap-keys.js'
 
 /**
@@ -16,8 +16,6 @@ import { toIds, toNaturalKeys } from './swap-keys.js'
  * @import { KeyForm, KeyedRecord, KeyedSegment } from './key-form.js'
  * @import { NaturalKeys, RecordIds } from './types.js'
  */
-
-const READ_METHODS = Object.freeze(['get', 'head'])
 
 /** @type {Record<KeyForm, Record<KeyedRecord, string>>} */
 const FIELDS = {
@@ -118,14 +116,5 @@ export const naturalKeyRedirect = async (rawRequest, h) => {
     pathSegments[index] = swapped[FIELDS[route.form][record]]
   }
 
-  return h
-    .redirect(
-      request.localiseUrl(`${pathSegments.join('/')}${request.url.search}`)
-    )
-    .code(
-      READ_METHODS.includes(request.method)
-        ? statusCodes.found
-        : statusCodes.temporaryRedirect
-    )
-    .takeover()
+  return redirectPreservingMethod(request, h, pathSegments.join('/')).takeover()
 }
