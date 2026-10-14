@@ -11,7 +11,6 @@
       "number": "Registration number",
       "registrationStatus": "Registration status",
       "regulator": "Regulator",
-      "unknownSite": "Unknown site",
       "view": "View"
     },
     "tabs": {
@@ -27,7 +26,6 @@
     "notAccredited": "Not accredited",
     "notApplicable": "Not applicable",
     "site": {
-      "unknown": "Unknown site",
       "headings": {
         "materials": "Material",
         "registrationStatuses": "Registration",

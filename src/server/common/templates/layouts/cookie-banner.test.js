@@ -1,7 +1,14 @@
 import { config } from '#config/config.js'
 import { ANALYTICS_CONSENT_COOKIE } from '#server/common/analytics/consent.js'
+import { chooseAnalytics } from '#server/common/test-helpers/consent-helper.js'
+import {
+  extractCookieValues,
+  mergeCookies
+} from '#server/common/test-helpers/cookie-helper.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { getByRole, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
@@ -17,14 +24,23 @@ const bodyOf = (result) => new JSDOM(asHtml(result)).window.document.body
 
 /**
  * @param {{ server: HapiServer }} fixtures
- * @param {string} [consent]
+ * @param {string} [cookie]
  */
-const getStartPage = async ({ server }, consent) =>
+const getStartPage = async ({ server }, cookie) =>
   server.inject({
     method: 'GET',
     url: '/start',
-    headers: consent ? { cookie: `${ANALYTICS_CONSENT_COOKIE}=${consent}` } : {}
+    headers: cookie ? { cookie } : {}
   })
+
+/**
+ * @param {{ server: HapiServer }} fixtures
+ * @param {string} analytics
+ * @returns {Promise<{ cookie: string }>}
+ */
+const answerBanner = async ({ server }, analytics) => ({
+  cookie: await chooseAnalytics(server, { analytics, returnUrl: '/start' })
+})
 
 describe('#cookieBanner', () => {
   describe('when analytics is disabled', () => {
@@ -119,6 +135,30 @@ describe('#cookieBanner', () => {
       expect(returnUrl?.getAttribute('value')).toBe('/start')
     })
 
+    it('should return the visitor to an error page served outside the translated routes', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/public/no-such-asset'
+      })
+      const returnUrl = bodyOf(result).querySelector('input[name="returnUrl"]')
+
+      expect(returnUrl?.getAttribute('value')).toBe('/public/no-such-asset')
+    })
+
+    it('should return a welsh visitor to the welsh page', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/cy/start?page=2'
+      })
+      const returnUrl = bodyOf(result).querySelector('input[name="returnUrl"]')
+
+      expect(returnUrl?.getAttribute('value')).toBe('/cy/start?page=2')
+    })
+
     it('should name the buttons so the choice reaches the server', async ({
       server
     }) => {
@@ -144,6 +184,123 @@ describe('#cookieBanner', () => {
     })
   })
 
+  describe('when a choice has just been made from the banner', () => {
+    beforeAll(() => {
+      config.set('analytics.isEnabled', true)
+      config.set('analytics.measurementId', 'G-TESTONLY01')
+    })
+
+    afterAll(() => {
+      config.set('analytics.isEnabled', false)
+      config.set('analytics.measurementId', '')
+    })
+
+    it.for([
+      { consent: 'accepted', message: "You've accepted analytics cookies." },
+      { consent: 'rejected', message: "You've rejected analytics cookies." }
+    ])(
+      'should confirm the choice having $consent',
+      async ({ consent, message }, { server }) => {
+        const { cookie } = await answerBanner({ server }, consent)
+        const banner = getByRole(
+          bodyOf((await getStartPage({ server }, cookie)).result),
+          'region',
+          { name: /cookies on/i }
+        )
+
+        expect(getByRole(banner, 'alert').textContent).toContain(
+          `${message} You can change your cookie settings at any time.`
+        )
+      }
+    )
+
+    it('should link to the cookies page to change the choice', async ({
+      server
+    }) => {
+      const { cookie } = await answerBanner({ server }, 'accepted')
+      const banner = getByRole(
+        bodyOf((await getStartPage({ server }, cookie)).result),
+        'region',
+        { name: /cookies on/i }
+      )
+
+      expect(
+        getByRole(banner, 'link', {
+          name: 'change your cookie settings'
+        }).getAttribute('href')
+      ).toBe('/cookies')
+    })
+
+    it('should let the visitor hide the message', async ({ server }) => {
+      const { cookie } = await answerBanner({ server }, 'accepted')
+      const banner = getByRole(
+        bodyOf((await getStartPage({ server }, cookie)).result),
+        'region',
+        { name: /cookies on/i }
+      )
+
+      expect(
+        getByRole(banner, 'button', {
+          name: 'Hide cookie message'
+        }).getAttribute('href')
+      ).toBe('/start')
+    })
+
+    it('should confirm the choice on the error page it was made from', async ({
+      server
+    }) => {
+      server.route({
+        method: 'GET',
+        path: '/not-found',
+        options: { auth: false },
+        handler: () => {
+          throw Boom.notFound()
+        }
+      })
+
+      const { cookie, crumb } = await getCsrfToken(server, '/start')
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: '/cookies/consent',
+        headers: { cookie },
+        payload: { analytics: 'accepted', crumb, returnUrl: '/not-found' }
+      })
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/not-found',
+        headers: {
+          cookie: mergeCookies(
+            cookie,
+            extractCookieValues(headers['set-cookie']).join('; ')
+          )
+        }
+      })
+      const banner = getByRole(bodyOf(result), 'region', {
+        name: /cookies on/i
+      })
+
+      expect(getByRole(banner, 'alert').textContent).toContain(
+        "You've accepted analytics cookies."
+      )
+    })
+
+    it('should confirm the choice only once', async ({ server }) => {
+      const { cookie } = await answerBanner({ server }, 'accepted')
+      const { headers } = await getStartPage({ server }, cookie)
+      const { result } = await getStartPage(
+        { server },
+        mergeCookies(
+          cookie,
+          extractCookieValues(headers['set-cookie']).join('; ')
+        )
+      )
+
+      expect(
+        queryByRole(bodyOf(result), 'region', { name: /cookies on/i })
+      ).toBeNull()
+    })
+  })
+
   describe('when a choice has already been made', () => {
     beforeAll(() => {
       config.set('analytics.isEnabled', true)
@@ -158,7 +315,10 @@ describe('#cookieBanner', () => {
     it.for(['accepted', 'rejected'])(
       'should not render the banner having %s',
       async (consent, { server }) => {
-        const { result } = await getStartPage({ server }, consent)
+        const { result } = await getStartPage(
+          { server },
+          `${ANALYTICS_CONSENT_COOKIE}=${consent}`
+        )
         const banner = queryByRole(bodyOf(result), 'region', {
           name: /cookies on/i
         })

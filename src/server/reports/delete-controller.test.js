@@ -4,6 +4,7 @@ import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
@@ -222,6 +223,38 @@ describe('#deleteController', () => {
 
         expect(backLink?.getAttribute('href')).toBe(reportsListPath)
       })
+
+      it('should fall back to the welsh reports list when the referer is the welsh delete page itself', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/cy${baseUrl}`,
+          auth: mockAuth,
+          headers: { host, referer: refererFor(`/cy${baseUrl}`) }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(`/cy${reportsListPath}`)
+      })
+
+      it('should fall back to the reports list when the referer path would leave the service', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { host, referer: refererFor('//evil.example.com/stolen') }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(reportsListPath)
+      })
     })
 
     it('should display the warning and guidance text', async ({ server }) => {
@@ -322,12 +355,7 @@ describe('#deleteController', () => {
 
   describe('when deleteReport fails', () => {
     it('should propagate the error', async ({ server }) => {
-      vi.mocked(deleteReport).mockRejectedValue(
-        Object.assign(new Error('Backend error'), {
-          isBoom: true,
-          output: { statusCode: 500 }
-        })
-      )
+      vi.mocked(deleteReport).mockRejectedValue(Boom.internal('Backend error'))
 
       const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
         auth: mockAuth

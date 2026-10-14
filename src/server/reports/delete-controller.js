@@ -2,6 +2,7 @@ import Joi from 'joi'
 
 import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { sameSiteReferrer } from '#server/common/helpers/same-site-referrer.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { reportAttempt } from './helpers/report-attempt.js'
@@ -18,29 +19,10 @@ const payloadSchema = Joi.object({
  * @param {HapiRequest & { params: PeriodParams }} request
  */
 function resolveBackUrl(request) {
-  const fallback = request.localiseUrl(reportsListPath(request.params))
-
-  const { referrer } = request.info
-  if (!referrer) {
-    return fallback
-  }
-
-  let refererUrl
-  try {
-    refererUrl = new URL(referrer)
-  } catch {
-    return fallback
-  }
-
-  if (refererUrl.host !== request.info.host) {
-    return fallback
-  }
-
-  if (refererUrl.pathname === request.path) {
-    return fallback
-  }
-
-  return refererUrl.pathname + refererUrl.search
+  return (
+    sameSiteReferrer(request) ??
+    request.localiseUrl(reportsListPath(request.params))
+  )
 }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
