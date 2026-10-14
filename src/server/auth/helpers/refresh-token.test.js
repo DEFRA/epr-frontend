@@ -1,4 +1,4 @@
-/** @import { SetupServerApi } from 'msw/node'; */
+/** @import { SetupServer } from 'msw/node'; */
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { refreshIdToken } from '#server/auth/helpers/refresh-token.js'
 import { it } from '#vite/fixtures/server.js'
@@ -37,7 +37,7 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 
 describe('refresh token', () => {
   /**
-   * @param {SetupServerApi} msw
+   * @param {SetupServer} msw
    * @returns {() => Request | undefined}
    */
   const captureTokenRequest = (msw) => {

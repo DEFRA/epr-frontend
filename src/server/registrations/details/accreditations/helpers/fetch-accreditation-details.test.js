@@ -6,7 +6,7 @@ import { beforeEach, it } from '#vite/fixtures/server.js'
 import { fetchAccreditationDetails } from './fetch-accreditation-details.js'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
@@ -103,7 +103,7 @@ describe(fetchAccreditationDetails, () => {
   const unavailable = () => new HttpResponse(null, { status: 503 })
 
   /**
-   * @param {SetupServerApi} msw
+   * @param {SetupServer} msw
    * @param {{
    *   calendar?: () => Response,
    *   ledger?: () => Response,

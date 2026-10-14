@@ -22,7 +22,7 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 /**
  * @import { DOMWindow } from 'jsdom'
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { AccreditationResource } from './helpers/types.js'
  * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
  */
@@ -122,7 +122,7 @@ const registrationLinking = ({ id, accreditationNumber, status }) => ({
 })
 
 /**
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {{
  *   registration?: RegistrationResource,
  *   accreditations?: AccreditationResource[],

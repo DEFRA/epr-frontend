@@ -1,12 +1,14 @@
 import Boom from '@hapi/boom'
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { it } from '#vite/fixtures/server.js'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, it } from '#vite/fixtures/server.js'
+import { http, HttpResponse } from 'msw'
+import { describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/summary-log/submit-summary-log.js'),
@@ -35,8 +37,18 @@ describe('#submitSummaryLogController', () => {
   const summaryLogId = '789'
   const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
 
-  beforeEach(() => {
+  beforeEach(({ msw }) => {
     vi.clearAllMocks()
+    msw.use(
+      http.get(
+        `${config.get('eprBackendUrl')}/v1/organisations/${organisationId}`,
+        () =>
+          HttpResponse.json({
+            id: organisationId,
+            registrations: [{ id: registrationId }]
+          })
+      )
+    )
   })
 
   it('should submit summary log, store response in session, and redirect to GET route', async ({

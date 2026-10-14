@@ -16,6 +16,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { OverseasSitesParams } from './details/overseas-sites/controller.js'
  */
 
 /**
@@ -119,7 +120,7 @@ const reportsRoute = {
  */
 const overseasSitesRoute = {
   /**
-   * @param {HapiRequest & { params: RegistrationParams }} request
+   * @param {HapiRequest & { params: OverseasSitesParams }} request
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
@@ -204,7 +205,7 @@ export const registrations = {
         {
           ...overseasSitesRoute,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/overseas-sites'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/overseas-sites'
         },
         {
           ...registeredOnlyPeriodRoute,

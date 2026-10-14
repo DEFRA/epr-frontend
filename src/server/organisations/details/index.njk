@@ -16,12 +16,12 @@
   {% set registrationRows = [] %}
   {% for registration in site.registrations %}
     {% set registrationRows = registrationRows.concat([[
-      { text: registration.number or localise('organisations:details:table:notApplicable') },
+      { text: registration.number },
       { html: govukTag({ text: registration.status.text, classes: registration.status.classes }) },
       { text: registration.material },
       { text: registration.regulator },
       { html: accreditationCell(registration.accreditations) },
-      { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (registration.href | escape) ~ '">' ~ localise('organisations:details:table:view') ~ '<span class="govuk-visually-hidden"> ' ~ (registration.linkName | escape) ~ '</span></a>' }
+      { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (registration.href | escape) ~ '">' ~ localise('organisations:details:table:view') ~ '<span class="govuk-visually-hidden"> ' ~ (registration.number | escape) ~ '</span></a>' }
     ]]) %}
   {% endfor %}
 

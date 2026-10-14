@@ -9,7 +9,7 @@ import { errorController } from './error-controller.js'
  */
 
 /**
- * @typedef {{ organisationId: string }} OrganisationParams
+ * @typedef {{ organisationNumber: string }} OrganisationParams
  */
 
 /**
@@ -40,17 +40,17 @@ export const organisations = {
         {
           ...organisationController,
           method: 'GET',
-          path: '/organisations/{organisationId}'
+          path: '/organisations/{organisationNumber}'
         },
         {
           ...organisationController,
           method: 'GET',
-          path: '/organisations/{organisationId}/exporting'
+          path: '/organisations/{organisationNumber}/exporting'
         },
         {
           ...errorController,
           method: 'GET',
-          path: '/organisations/{organisationId}/error'
+          path: '/organisations/{organisationNumber}/error'
         }
       ])
     }

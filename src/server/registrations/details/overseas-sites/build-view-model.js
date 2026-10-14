@@ -1,11 +1,9 @@
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { paths } from '#server/paths.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
  * @import { Localise } from '../helpers/types.js'
- * @import { OverseasSitesById } from './helpers/fetch-overseas-sites.js'
+ * @import { OrganisationView, RegistrationView } from './helpers/fetch-overseas-sites.js'
  */
 
 /**
@@ -22,10 +20,6 @@ import { paths } from '#server/paths.js'
  * }} OverseasSitesViewModel
  */
 
-/**
- * A site the stored record could not be found for carries nulls rather than
- * being left out, so every column has a value to fall back to.
- */
 const NO_VALUE = '-'
 
 /**
@@ -49,23 +43,13 @@ const COLUMNS = Object.freeze([
 /**
  * An organisation trading under another name is known by it, so that is the
  * name the regulator is shown. Matches the two pages above.
- * @param {Organisation} organisation
+ * @param {OrganisationView} organisation
  * @returns {string}
  */
-const organisationName = ({ companyDetails }) =>
-  companyDetails.tradingName?.trim() || companyDetails.name
+const organisationName = ({ name, tradingName }) => tradingName?.trim() || name
 
 /**
- * The records the page sits under, in the order the breadcrumbs walk them. A
- * record holding no number has nothing to name it by, so it is left out rather
- * than shown as an empty gap between two dashes.
- * @param {(string | null | undefined)[]} parts
- * @returns {string}
- */
-const toCaption = (parts) => parts.filter(Boolean).join(' - ')
-
-/**
- * @param {string | null | undefined} value
+ * @param {string | undefined} value
  * @returns {TableCell}
  */
 const toCell = (value) => ({ text: value?.trim() || NO_VALUE })
@@ -75,31 +59,24 @@ const toCell = (value) => ({ text: value?.trim() || NO_VALUE })
  * later lists them the same way. The packaging waste category is the
  * registration's own material rather than anything the site carries: a
  * registration covers one material, and every site under it reprocesses that.
- *
- * Glass is named by the process it is recycled through, as every other page
- * reading a stored registration names it, so a glass exporter is not told
- * "Glass remelt" on the registration and "Glass" on the page beneath it.
- * @param {{
- *   registration: Registration,
- *   sites: OverseasSitesById
- * }} params
+ * @param {RegistrationView} registration
  * @returns {TableRow[]}
  */
-const toSiteRows = ({ registration, sites }) => {
-  const material = getRegistrationMaterialDisplayName(registration)
+const toSiteRows = ({ material, overseasSites = {} }) => {
+  const category = getMaterialDisplayName(material)
 
-  return Object.entries(sites)
+  return Object.entries(overseasSites)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([orsId, { name, country, address, coordinates }]) => [
+    .map(([orsId, { name, address, coordinates }]) => [
       toCell(orsId),
-      toCell(material),
-      toCell(country),
+      toCell(category),
+      toCell(address.country),
       toCell(name),
-      toCell(address?.line1),
-      toCell(address?.line2),
-      toCell(address?.townOrCity),
-      toCell(address?.stateOrRegion),
-      toCell(address?.postcode),
+      toCell(address.line1),
+      toCell(address.line2),
+      toCell(address.townOrCity),
+      toCell(address.stateOrRegion),
+      toCell(address.postcode),
       toCell(coordinates)
     ])
 }
@@ -115,9 +92,9 @@ const toSitesHead = (localise) =>
 
 /**
  * @param {{
- *   organisation: Organisation,
- *   registration: Registration,
- *   sites: OverseasSitesById,
+ *   organisation: OrganisationView,
+ *   registrationNumber: string,
+ *   registration: RegistrationView,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
@@ -125,13 +102,14 @@ const toSitesHead = (localise) =>
  */
 export const buildViewModel = ({
   organisation,
+  registrationNumber,
   registration,
-  sites,
   localise,
   localiseUrl
 }) => {
   const name = organisationName(organisation)
   const pageName = localise('registrations:details:overseasSites:heading')
+  const organisationPath = `/organisations/${organisation.organisationNumber}`
 
   return {
     breadcrumbs: [
@@ -139,23 +117,21 @@ export const buildViewModel = ({
         text: localise('registrations:details:allOrganisations'),
         href: localiseUrl(paths.regulators.home)
       },
-      { text: name, href: localiseUrl(`/organisations/${organisation.id}`) },
+      { text: name, href: localiseUrl(organisationPath) },
       {
         text: localise('registrations:details:heading'),
         href: localiseUrl(
-          `/organisations/${organisation.id}/registrations/${registration.id}`
+          `${organisationPath}/registrations/${registrationNumber}`
         )
       },
       { text: pageName }
     ],
-    caption: toCaption([name, registration.registrationNumber]),
+    caption: `${name} - ${registrationNumber}`,
     heading: pageName,
-    pageTitle: registration.registrationNumber
-      ? `${registration.registrationNumber}: ${pageName}`
-      : pageName,
+    pageTitle: `${registrationNumber}: ${pageName}`,
     sites: {
       head: toSitesHead(localise),
-      rows: toSiteRows({ registration, sites })
+      rows: toSiteRows(registration)
     }
   }
 }

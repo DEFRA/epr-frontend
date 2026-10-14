@@ -91,7 +91,8 @@
       "WASTE_REFUSED": "The waste was refused by the recipient destination",
       "WASTE_STOPPED": "The waste was stopped during the course of export",
       "PRN_ISSUED": "A PRN was already issued for this load",
-      "PERN_ISSUED": "A PERN was already issued for this load"
+      "PERN_ISSUED": "A PERN was already issued for this load",
+      "OUTSIDE_ACCREDITATION_PERIOD": "The load date is outside of the accreditation period, or the accreditation was suspended or cancelled for that date"
     },
     "worksheet": {
       "REPROCESSOR_INPUT": {

@@ -426,6 +426,12 @@ export const config = convict({
       default: false,
       env: 'FEATURE_FLAG_MARKET_INSIGHTS'
     },
+    navigateAcrossYears: {
+      doc: 'Feature Flag: Show the year an operator is viewing on their home page',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_NAVIGATE_ACROSS_YEARS'
+    },
     regulatorAccess: {
       doc: 'Feature Flag: Enable Entra ID login for regulators',
       format: Boolean,
