@@ -7,7 +7,7 @@ import { it } from '#vite/fixtures/server.js'
 import { backend, path } from './backend-client.js'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  */
 
 /**
@@ -27,7 +27,7 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 const backendUrl = config.get('eprBackendUrl')
 
 /**
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {'get' | 'post'} method
  */
 const recordRequests = (msw, method) => {
