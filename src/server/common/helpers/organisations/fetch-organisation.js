@@ -11,12 +11,9 @@ import { backend, path } from '#server/common/helpers/backend-client.js'
  * @param {{ year?: Year }} [options]
  * @returns {Promise<OrganisationView>}
  */
-const fetchOrganisation = (organisationNumber, backendToken, { year } = {}) => {
-  const query = year ? `?${new URLSearchParams({ year: String(year) })}` : ''
-
-  return backend(backendToken).get(
-    `${path`/organisations/${organisationNumber}`}${query}`
-  )
-}
+const fetchOrganisation = (organisationNumber, backendToken, { year } = {}) =>
+  backend(backendToken).get(path`/organisations/${organisationNumber}`, {
+    query: { year }
+  })
 
 export { fetchOrganisation }

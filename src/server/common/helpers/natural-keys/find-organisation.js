@@ -45,15 +45,11 @@ export const findOrganisationById = async (organisationId, backendToken) =>
  * @returns {Promise<Organisation | null>}
  */
 const searchByNumber = async (organisationNumber, backendToken) => {
-  const query = new URLSearchParams({
-    orgId: organisationNumber,
-    page: '1',
-    pageSize: '1'
-  })
-
   /** @type {OrganisationsPage | null} */
   const page = await nullWhenRefused(
-    backend(backendToken).get(`/v1/organisations?${query}`)
+    backend(backendToken).get('/v1/organisations', {
+      query: { orgId: organisationNumber, page: 1, pageSize: 1 }
+    })
   )
 
   const [match] = page?.items ?? []

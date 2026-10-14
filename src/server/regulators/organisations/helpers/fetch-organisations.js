@@ -23,15 +23,7 @@ import { PAGE_SIZE } from './pagination.js'
  * @param {{ page: number, search?: string, backendToken: string }} query
  * @returns {Promise<OrganisationsPage>}
  */
-export const fetchOrganisations = async ({ page, search, backendToken }) => {
-  const params = new URLSearchParams({
-    page: String(page),
-    pageSize: String(PAGE_SIZE)
+export const fetchOrganisations = ({ page, search, backendToken }) =>
+  backend(backendToken).get('/v1/organisations', {
+    query: { page, pageSize: PAGE_SIZE, search: search || undefined }
   })
-
-  if (search) {
-    params.set('search', search)
-  }
-
-  return backend(backendToken).get(`/v1/organisations?${params}`)
-}
