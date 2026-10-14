@@ -9,10 +9,13 @@ import {
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
-import { it } from '#vite/fixtures/server.js'
+import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+
+import organisationData from '#fixtures/organisation/organisationData.json' with { type: 'json' }
 
 import { fetchPrnListDetails } from './helpers/fetch-prn-list-details.js'
 
@@ -23,8 +26,8 @@ import { fetchPrnListDetails } from './helpers/fetch-prn-list-details.js'
 vi.mock(import('./helpers/fetch-prn-list-details.js'))
 
 const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = 'reg-001'
-const accreditationId = 'acc-001'
+const registrationId = 'reg-001-glass-approved'
+const accreditationId = 'acc-001-glass-approved'
 const accreditationPath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
 const path = `${accreditationPath}/packaging-recycling-notes`
 
@@ -292,9 +295,29 @@ describe('the regulator PRNs detailed view', () => {
   })
 
   describe('the fork with the operator list', () => {
-    it('leaves an operator on their own list', async ({ server }) => {
-      const { body } = await visit(server, operator)
+    beforeEach(({ msw }) => {
+      const organisationUrl = `${config.get('eprBackendUrl')}/v1/organisations/${organisationId}`
+      const accreditationUrl = `${organisationUrl}/registrations/${registrationId}/accreditations/${accreditationId}`
 
+      msw.use(
+        http.get(organisationUrl, () => HttpResponse.json(organisationData)),
+        http.get(`${organisationUrl}/waste-balances`, () =>
+          HttpResponse.json({})
+        ),
+        http.get(`${accreditationUrl}/packaging-recycling-notes`, () =>
+          HttpResponse.json([])
+        ),
+        http.get(
+          `${accreditationUrl}/packaging-recycling-notes/december-prn-eligibility`,
+          () => HttpResponse.json({ mode: 'pool', windowOpen: false })
+        )
+      )
+    })
+
+    it('leaves an operator on their own list', async ({ server }) => {
+      const { statusCode, body } = await visit(server, operator)
+
+      expect(statusCode).toBe(statusCodes.ok)
       expect(body).not.toContain('data-testid="prns-detailed-view"')
       expect(fetchPrnListDetails).not.toHaveBeenCalled()
     })
@@ -304,8 +327,9 @@ describe('the regulator PRNs detailed view', () => {
     }) => {
       config.set('featureFlags.regulatorAccess', false)
 
-      const { body } = await visit(server, regulator)
+      const { statusCode, body } = await visit(server, regulator)
 
+      expect(statusCode).toBe(statusCodes.ok)
       expect(body).not.toContain('data-testid="prns-detailed-view"')
       expect(fetchPrnListDetails).not.toHaveBeenCalled()
 

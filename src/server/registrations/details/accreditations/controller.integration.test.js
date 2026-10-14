@@ -21,9 +21,11 @@ import {
   within
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
+import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 /**
+ * @import { SetupServer } from 'msw/node'
  * @import { AccreditationDetails } from './helpers/fetch-accreditation-details.js'
  */
 
@@ -810,15 +812,27 @@ describe('the accreditation details page', () => {
     ])
   })
 
-  it('is not the page an operator gets', async ({ server }) => {
+  /** @param {SetupServer} msw */
+  const answerTheOtherPage = (msw) =>
+    msw.use(
+      http.get(
+        `${config.get('eprBackendUrl')}/organisations/:organisationNumber`,
+        () => new HttpResponse(null, { status: statusCodes.notFound })
+      )
+    )
+
+  it('is not the page an operator gets', async ({ server, msw }) => {
+    answerTheOtherPage(msw)
     await visit(server, operator)
 
     expect(fetchAccreditationDetails).not.toHaveBeenCalled()
   })
 
   it('is not the page a regulator gets while the surface is off', async ({
-    server
+    server,
+    msw
   }) => {
+    answerTheOtherPage(msw)
     config.set('featureFlags.regulatorAccess', false)
     await visit(server, regulator)
     config.set('featureFlags.regulatorAccess', true)
