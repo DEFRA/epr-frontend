@@ -151,7 +151,7 @@ describe("the operator's registration page for a year", () => {
     config.set('reapplyAccreditation.baseUrl', configuredWindow.baseUrl)
   })
 
-  it("shows the year's accreditation, its balance and the site and material", async ({
+  it("shows the year's accreditation and the site and material", async ({
     server,
     msw
   }) => {
@@ -166,6 +166,13 @@ describe("the operator's registration page for a year", () => {
     expect(body.textContent).toContain('Unit 4 Mill Road')
     expect(body.textContent).toContain(registrationNumber)
     expect(body.textContent).toContain(accreditationNumber)
+  })
+
+  it("shows the year's balance", async ({ server, msw }) => {
+    backendHolds(msw)
+
+    const { body } = await visit(server)
+
     expect(queryByTestId(body, 'waste-balance-amount')?.textContent).toContain(
       '1,234.50'
     )
@@ -504,7 +511,7 @@ describe("the operator's registration page with no year", () => {
     expect(response.headers.location).toBe(accreditationPath)
   })
 
-  it('shows a registered-only operator their registration, with no accreditation, balance or notes', async ({
+  it('shows a registered-only operator their registration', async ({
     server,
     msw
   }) => {
@@ -517,6 +524,16 @@ describe("the operator's registration page with no year", () => {
       'Glass remelt'
     )
     expect(body.textContent).toContain(registrationNumber)
+  })
+
+  it('shows a registered-only operator no accreditation, balance or notes', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body } = await visit(server, { url: registrationPath })
+
     expect(body.textContent).not.toContain(accreditationNumber)
     expect(queryByTestId(body, 'waste-balance-amount')).toBeNull()
     expect(queryByRole(body, 'link', { name: 'Create new PRN' })).toBeNull()

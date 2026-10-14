@@ -31,9 +31,7 @@
  *   wasteProcessingType: 'reprocessor',
  *   reprocessingType: ReprocessingType,
  *   site: {
- *     address:
- *       | { line1: string, line2?: string, town: string, county?: string, postcode: string }
- *       | { fullAddress: string }
+ *     address: { line1: string, line2?: string, town: string, county?: string, postcode: string } | { fullAddress: string }
  *   }
  * }} ReprocessorRegistrationView
  */
