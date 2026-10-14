@@ -55,33 +55,74 @@ const reportedPage = () => {
 }
 
 /**
- * Everything the container does on the page asks this first. It may report
- * page views to the property the page names and nothing else: no other tag, no
- * reading the address or the page, no listening for clicks, forms or scrolling,
- * and nothing it has not asked for before.
+ * What the container's built-in triggers, variables and the measurement tag
+ * need to watch the page. What they record is the analytics owner's call.
+ */
+const OBSERVING = new Set([
+  'access_template_storage',
+  'detect_click_events',
+  'detect_element_visibility_events',
+  'detect_form_interaction_events',
+  'detect_form_submit_events',
+  'detect_history_change_events',
+  'detect_link_click_events',
+  'detect_scroll_events',
+  'detect_timer_events',
+  'get_referrer',
+  'get_url',
+  'listen_data_layer',
+  'logging',
+  'read_container_data',
+  'read_data_layer',
+  'read_dom_elements',
+  'read_event_data',
+  'read_event_metadata',
+  'read_title'
+])
+
+const GOOGLE_TAG_PERMISSIONS = new Set([
+  'configure_google_tags',
+  'load_google_tags'
+])
+
+/**
+ * Thrown rather than returned, so the reason shows in the tag manager's
+ * preview console instead of a tag silently not firing.
+ * @param {string} reason
+ * @returns {never}
+ */
+const refuse = (reason) => {
+  throw new Error(`Refused by the page: ${reason}`)
+}
+
+/**
+ * Everything the container does on the page asks this first. It may watch the
+ * page and report to the property the page names. It may not run code of its
+ * own, add pixels, frames or cookies, report anywhere else, or do anything it
+ * has not asked for before.
  * @param {{ containerId: string, measurementId: string }} published
- * @returns {(requestedBy: string, permission: string, data?: { key?: string, tagId?: string }) => boolean}
+ * @returns {(requestedBy: string, permission: string, data?: { tagId?: string }) => true}
  */
 export const tagPolicy =
   ({ containerId, measurementId }) =>
   (requestedBy, permission, data) => {
     if (requestedBy !== containerId && requestedBy !== measurementId) {
-      return false
+      return refuse(`${permission} from ${requestedBy}`)
     }
 
-    switch (permission) {
-      case 'read_event_data':
-      case 'read_container_data':
-      case 'access_template_storage':
-        return true
-      case 'read_data_layer':
-        return data?.key?.startsWith('gtm.') ?? false
-      case 'load_google_tags':
-      case 'configure_google_tags':
-        return data?.tagId === undefined || data.tagId === measurementId
-      default:
-        return false
+    if (OBSERVING.has(permission)) {
+      return true
     }
+
+    if (GOOGLE_TAG_PERMISSIONS.has(permission)) {
+      const tagId = data?.tagId
+
+      return tagId === undefined || tagId === measurementId
+        ? true
+        : refuse(`${permission} for ${tagId}`)
+    }
+
+    return refuse(permission)
   }
 
 /**

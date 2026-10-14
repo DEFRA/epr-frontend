@@ -180,29 +180,33 @@ describe('#analytics', () => {
   })
 
   describe('#tagPolicy', () => {
-    const allows = tagPolicy({ containerId, measurementId })
+    const decide = tagPolicy({ containerId, measurementId })
 
     it.for([
-      {
-        description: 'reading the event being processed',
-        request: [containerId, 'read_event_data', { key: 'event' }]
-      },
-      {
-        description: 'reading container data',
-        request: [measurementId, 'read_container_data', {}]
-      },
-      {
-        description: 'the tag keeping its own storage',
-        request: [measurementId, 'access_template_storage', {}]
-      },
-      {
-        description: 'reading tag manager keys from the queue',
-        request: [
-          measurementId,
-          'read_data_layer',
-          { key: 'gtm.configContainerId' }
-        ]
-      },
+      'access_template_storage',
+      'detect_click_events',
+      'detect_element_visibility_events',
+      'detect_form_interaction_events',
+      'detect_form_submit_events',
+      'detect_history_change_events',
+      'detect_link_click_events',
+      'detect_scroll_events',
+      'detect_timer_events',
+      'get_referrer',
+      'get_url',
+      'listen_data_layer',
+      'logging',
+      'read_container_data',
+      'read_data_layer',
+      'read_dom_elements',
+      'read_event_data',
+      'read_event_metadata',
+      'read_title'
+    ])('should let the container observe the page through %s', (permission) => {
+      expect(decide(measurementId, permission, {})).toBe(true)
+    })
+
+    it.for([
       {
         description: 'loading the published measurement tag',
         request: [containerId, 'load_google_tags', { tagId: measurementId }]
@@ -218,19 +222,25 @@ describe('#analytics', () => {
       {
         description: 'configuring before a tag is named',
         request: [measurementId, 'configure_google_tags', {}]
+      },
+      {
+        description: 'configuring without any details',
+        request: [measurementId, 'configure_google_tags']
       }
     ])('should allow $description', ({ request }) => {
-      expect(allows(...request)).toBe(true)
+      expect(decide(...request)).toBe(true)
     })
 
     it.for([
       {
         description: 'anything from another container',
-        request: ['GTM-SOMEONEELSE', 'read_event_data', { key: 'event' }]
+        request: ['GTM-SOMEONEELSE', 'read_event_data', { key: 'event' }],
+        refused: 'read_event_data from GTM-SOMEONEELSE'
       },
       {
         description: 'loading another measurement tag',
-        request: [containerId, 'load_google_tags', { tagId: 'AW-123456789' }]
+        request: [containerId, 'load_google_tags', { tagId: 'AW-123456789' }],
+        refused: 'load_google_tags for AW-123456789'
       },
       {
         description: 'configuring another measurement tag',
@@ -238,43 +248,8 @@ describe('#analytics', () => {
           measurementId,
           'configure_google_tags',
           { tagId: 'G-ELSEWHERE1' }
-        ]
-      },
-      {
-        description: 'reading our own keys from the queue',
-        request: [measurementId, 'read_data_layer', { key: 'user' }]
-      },
-      {
-        description: 'reading the address',
-        request: [
-          measurementId,
-          'get_url',
-          { component: 'query', queryKey: 'q' }
-        ]
-      },
-      {
-        description: 'reading the referrer',
-        request: [measurementId, 'get_referrer', { component: 'url' }]
-      },
-      {
-        description: 'listening for link clicks',
-        request: [measurementId, 'detect_link_click_events', {}]
-      },
-      {
-        description: 'listening for form use',
-        request: [measurementId, 'detect_form_interaction_events', {}]
-      },
-      {
-        description: 'listening for scrolling',
-        request: [measurementId, 'detect_scroll_events', {}]
-      },
-      {
-        description: 'reading the page itself',
-        request: [
-          measurementId,
-          'read_dom_elements',
-          { type: 'css', value: 'a' }
-        ]
+        ],
+        refused: 'configure_google_tags for G-ELSEWHERE1'
       },
       {
         description: 'injecting a script',
@@ -282,7 +257,17 @@ describe('#analytics', () => {
           containerId,
           'inject_script',
           { url: 'https://example.com/x.js' }
-        ]
+        ],
+        refused: 'inject_script'
+      },
+      {
+        description: 'injecting an iframe',
+        request: [
+          containerId,
+          'inject_hidden_iframe',
+          { url: 'https://example.com/f.html' }
+        ],
+        refused: 'inject_hidden_iframe'
       },
       {
         description: 'sending a pixel',
@@ -290,18 +275,36 @@ describe('#analytics', () => {
           containerId,
           'send_pixel',
           { url: 'https://example.com/p.gif' }
-        ]
+        ],
+        refused: 'send_pixel'
+      },
+      {
+        description: 'setting cookies',
+        request: [containerId, 'set_cookies', { name: '_fbp' }],
+        refused: 'set_cookies'
+      },
+      {
+        description: 'reaching into page globals',
+        request: [containerId, 'access_globals', { key: 'fbq' }],
+        refused: 'access_globals'
+      },
+      {
+        description: 'watching for video, which the service has none of',
+        request: [measurementId, 'detect_youtube_activity_events', {}],
+        refused: 'detect_youtube_activity_events'
       },
       {
         description: 'a permission it does not name',
-        request: [containerId, 'unknown', {}]
-      },
-      {
-        description: 'reading the queue without naming a key',
-        request: [measurementId, 'read_data_layer']
+        request: [containerId, 'unknown', {}],
+        refused: 'unknown'
       }
-    ])('should refuse $description', ({ request }) => {
-      expect(allows(...request)).toBe(false)
-    })
+    ])(
+      'should refuse $description, saying so in preview',
+      ({ request, refused }) => {
+        expect(() => decide(...request)).toThrow(
+          `Refused by the page: ${refused}`
+        )
+      }
+    )
   })
 })
