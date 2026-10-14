@@ -301,6 +301,40 @@ describe('backend-client', () => {
         expectTypeOf(() => api.delete('/v1/thing')).returns.resolves.toBeVoid()
       })
 
+      it.for([
+        {
+          description: 'encoding each value',
+          query: { page: 2, search: 'acme & co' },
+          search: '?page=2&search=acme+%26+co'
+        },
+        {
+          description: 'leaving out undefined values',
+          query: { page: 1, search: undefined },
+          search: '?page=1'
+        },
+        {
+          description: 'sending none when every value is undefined',
+          query: { year: undefined },
+          search: ''
+        }
+      ])(
+        'should send the query, $description',
+        async ({ query, search }, { msw }) => {
+          /** @type {string[]} */
+          const searches = []
+          msw.use(
+            http.get(`${backendUrl}/v1/thing`, ({ request }) => {
+              searches.push(new URL(request.url).search)
+              return new HttpResponse(null, { status: 204 })
+            })
+          )
+
+          await backend('a-token').get('/v1/thing', { query })
+
+          expect(searches).toStrictEqual([search])
+        }
+      )
+
       it('should map a parse failure through onError', async ({ msw }) => {
         msw.use(http.get(`${backendUrl}/v1/thing`, () => HttpResponse.json({})))
 

@@ -20,8 +20,12 @@ import { getTracingHeaderName } from './request-tracing.js'
  */
 
 /**
+ * @typedef {Record<string, string | number | undefined>} Query
+ */
+
+/**
  * @template T
- * @typedef {{ onError?: OnError, parse?: Parse<T> }} CallOptions
+ * @typedef {{ onError?: OnError, parse?: Parse<T>, query?: Query }} CallOptions
  */
 
 /**
@@ -142,9 +146,19 @@ const sendJson = async (token, method, url, body) => {
  * @param {{ onError?: OnError }} [defaults]
  */
 export const backend = (token, defaults = {}) => {
-  /** @param {string} endpoint */
-  const urlOf = (endpoint) =>
-    new URL(endpoint, config.get('eprBackendUrl')).href
+  /**
+   * @param {string} endpoint
+   * @param {Query} [query]
+   */
+  const urlOf = (endpoint, query = {}) => {
+    const url = new URL(endpoint, config.get('eprBackendUrl'))
+
+    Object.entries(query)
+      .filter(([, value]) => value !== undefined)
+      .forEach(([key, value]) => url.searchParams.append(key, String(value)))
+
+    return url.href
+  }
 
   /**
    * @template T
@@ -171,9 +185,9 @@ export const backend = (token, defaults = {}) => {
    * @param {CallOptions<T>} options
    * @returns {Promise<T>}
    */
-  const call = (method, endpoint, body, { parse, ...options }) =>
+  const call = (method, endpoint, body, { parse, query, ...options }) =>
     guarded(options, async () => {
-      const url = urlOf(endpoint)
+      const url = urlOf(endpoint, query)
       const payload = await sendJson(token, method, url, body)
       return parse ? parse(payload, { url }) : /** @type {T} */ (payload)
     })
