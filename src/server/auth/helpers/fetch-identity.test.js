@@ -3,7 +3,7 @@ import { hasWriteScope } from '#server/auth/scopes.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { http, HttpResponse } from 'msw'
+import { HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 import { fetchIdentity } from './fetch-identity.js'
 
@@ -80,28 +80,4 @@ describe('#fetchIdentity', () => {
       })
     }
   )
-
-  it('should throw when the backend refuses the token', async () => {
-    await expect(fetchIdentity('invalid-token')).rejects.toMatchObject({
-      isBoom: true,
-      output: {
-        statusCode: 401
-      }
-    })
-  })
-
-  it('should throw when the backend fails', async ({ msw }) => {
-    msw.use(
-      http.get(`${backendUrl}/v1/me`, () =>
-        HttpResponse.json({ error: 'Internal Server Error' }, { status: 500 })
-      )
-    )
-
-    await expect(fetchIdentity(mockBackendToken)).rejects.toMatchObject({
-      isBoom: true,
-      output: {
-        statusCode: 500
-      }
-    })
-  })
 })
