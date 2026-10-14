@@ -1,3 +1,5 @@
+import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
+
 /** @import { RegistrationView } from './organisation-view.js' */
 
 /**
@@ -6,7 +8,7 @@
  * @returns {string | null}
  */
 export const siteNameOf = (registration) => {
-  if (registration.wasteProcessingType === 'exporter') {
+  if (registration.wasteProcessingType === WASTE_PROCESSING_TYPE.EXPORTER) {
     return null
   }
 
