@@ -61,12 +61,12 @@ const rejection = async (url, response) => {
 /**
  * @param {string} token
  * @param {string} method
- * @param {string} path
+ * @param {string} endpoint
  * @param {unknown} [body]
  * @returns {Promise<unknown>}
  */
-const send = async (token, method, path, body) => {
-  const url = new URL(path, config.get('eprBackendUrl')).href
+const send = async (token, method, endpoint, body) => {
+  const url = new URL(endpoint, config.get('eprBackendUrl')).href
   const hasBody = body !== undefined
 
   const response = await request(url, {
@@ -93,16 +93,16 @@ const send = async (token, method, path, body) => {
 export const backend = (token) => ({
   /**
    * @template T
-   * @param {string} path
+   * @param {string} endpoint
    * @returns {Promise<T>}
    */
-  get: (path) => /** @type {Promise<T>} */ (send(token, 'GET', path)),
+  get: (endpoint) => /** @type {Promise<T>} */ (send(token, 'GET', endpoint)),
   /**
    * @template T
-   * @param {string} path
+   * @param {string} endpoint
    * @param {unknown} [body]
    * @returns {Promise<T>}
    */
-  post: (path, body) =>
-    /** @type {Promise<T>} */ (send(token, 'POST', path, body))
+  post: (endpoint, body) =>
+    /** @type {Promise<T>} */ (send(token, 'POST', endpoint, body))
 })
