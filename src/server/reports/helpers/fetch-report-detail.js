@@ -1,40 +1,23 @@
-import { reportBackend, reportPath } from './report-backend.js'
+import { reportBackend } from './report-backend.js'
+import { reportApiPath } from './report-paths.js'
 import { ReportStaleError, staleReasons } from './stale.js'
+
+/**
+ * @import { SubmissionKeys } from './report-paths.js'
+ */
 
 /**
  * Fetches aggregated report detail for a specific period from the backend.
  * Throws {@link ReportStaleError} if the report is stale so callers get
  * a consistent error type regardless of whether staleness came from a GET 200
  * (stale field) or a PATCH/POST 409.
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
- * @param {string} cadence
- * @param {number} period
- * @param {number} submissionNumber
+ * @param {SubmissionKeys} keys
  * @param {string} backendToken
  * @returns {Promise<ReportDetailResponse>}
  */
-export async function fetchReportDetail(
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period,
-  submissionNumber,
-  backendToken
-) {
+export async function fetchReportDetail(keys, backendToken) {
   /** @type {ReportDetailResponse} */
-  const report = await reportBackend(backendToken).get(
-    reportPath({
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    })
-  )
+  const report = await reportBackend(backendToken).get(reportApiPath(keys))
 
   const reasons = staleReasons(report.stale)
   if (reasons.length > 0) {
@@ -82,33 +65,31 @@ export async function fetchReportDetail(
  */
 
 /**
+ * @typedef {{ name?: string, position: string }} ReportPerson
+ */
+
+/**
+ * The natural-key report resource; `status` is `not_started` for a preview.
  * @typedef {{
- *   operatorCategory: string,
  *   cadence: string,
  *   year: number,
  *   period: number,
+ *   submissionNumber: number,
  *   startDate: string,
  *   endDate: string,
- *   dueDate: string,
- *   source: { summaryLogId: string | null, lastUploadedAt: string | null },
- *   details: {
- *     material: string,
- *     site?: { address: { line1: string, town: string, postcode: string } }
- *   },
- *   id?: string,
+ *   dueDate?: string,
+ *   source?: { summaryLogId: string, lastUploadedAt: string | null },
+ *   status: string,
+ *   createdAt?: string,
+ *   createdBy?: ReportPerson,
+ *   submittedAt?: string,
+ *   submittedBy?: ReportPerson,
  *   version?: number,
- *   status?: {
- *     currentStatus: string,
- *     currentStatusAt: string,
- *     created: { at: string, by: { id: string, name: string, position: string } },
- *     ready?: { at: string, by: { id: string, name: string, position: string } },
- *     submitted?: { at: string, by: { id: string, name: string, position: string } }
- *   },
  *   stale?: {
- *     summaryLogChanged?: { uploadedAt: string, summaryLogId: string },
- *     prnCancelled?: { occurredAt: string, prnId: string }
+ *     summaryLogChanged?: { uploadedAt: string },
+ *     prnCancelled?: { occurredAt: string }
  *   },
- *   canRequestResubmission?: boolean,
+ *   canRequestResubmission: boolean,
  *   incompleteSummaryLogRows?: {
  *     total: number,
  *     issues: { sheet: string, rowId: string, field: string }[]
@@ -116,9 +97,9 @@ export async function fetchReportDetail(
  *   resubmissionRequired?: {
  *     operatorRequested?: {
  *       requestedAt: string,
- *       requestedBy: { id: string, name: string, position: string }
+ *       requestedBy: ReportPerson
  *     },
- *     closedPeriodRestated?: { uploadedAt: string, summaryLogId: string }
+ *     closedPeriodRestated?: { uploadedAt: string }
  *   },
  *   supportingInformation?: string,
  *   prn?: {

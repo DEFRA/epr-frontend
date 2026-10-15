@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
@@ -52,7 +52,6 @@ const accreditedReprocessorWithSite =
 
 const mockReportDetail = /** @type {ReportDetailResponse} */ (
   /** @type {unknown} */ ({
-    operatorCategory: 'EXPORTER_REGISTERED_ONLY',
     cadence: 'quarterly',
     year: 2026,
     period: 1,
@@ -63,10 +62,8 @@ const mockReportDetail = /** @type {ReportDetailResponse} */ (
       summaryLogId: 'sl-1',
       lastUploadedAt: '2026-02-15T15:09:00.000Z'
     },
-    details: { material: 'plastic' },
-    id: 'report-001',
     version: 1,
-    status: { currentStatus: 'ready_to_submit' },
+    status: 'ready_to_submit',
     supportingInformation: null,
     recyclingActivity: {
       totalTonnageReceived: 80.25,
@@ -84,31 +81,16 @@ const mockReportDetail = /** @type {ReportDetailResponse} */ (
   })
 )
 
-/**
- * Builds a full report status with the given currentStatus. The created-page
- * guard only reads currentStatus; the sibling fields satisfy the type.
- * @param {string} currentStatus
- * @returns {ReportDetailResponse['status']}
- */
-const buildStatus = (currentStatus) => ({
-  currentStatus,
-  currentStatusAt: '2026-04-01T09:00:00.000Z',
-  created: {
-    at: '2026-04-01T09:00:00.000Z',
-    by: { id: 'user-123', name: 'Test User', position: 'Director' }
-  }
-})
-
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const basePeriodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const basePeriodPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 const createdUrl = `${basePeriodPath}/created`
-const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+const listUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
 
 describe('#createdController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       mockRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(mockReportDetail)
@@ -320,7 +302,7 @@ describe('#createdController', () => {
 
       expect(returnLink).toBeDefined()
       expect(returnLink.getAttribute('href')).toBe(
-        `/organisations/${organisationId}`
+        `/organisations/${organisationNumber}`
       )
     })
 
@@ -356,7 +338,7 @@ describe('#createdController', () => {
 
   describe('accredited reprocessor with a site', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedReprocessorWithSite
       )
     })
@@ -394,7 +376,7 @@ describe('#createdController', () => {
   })
 
   describe('resubmission variant (submissionNumber > 1)', () => {
-    const resubmissionCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/created`
+    const resubmissionCreatedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/2/created`
 
     it('should show Requires resubmission status in the confirmation panel', async ({
       server
@@ -418,7 +400,7 @@ describe('#createdController', () => {
     it('should return 404 when status is in_progress', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: buildStatus('in_progress')
+        status: 'in_progress'
       })
 
       const { statusCode } = await server.inject({
@@ -433,7 +415,7 @@ describe('#createdController', () => {
     it('should return 404 when status is submitted', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: buildStatus('submitted')
+        status: 'submitted'
       })
 
       const { statusCode } = await server.inject({
@@ -448,7 +430,7 @@ describe('#createdController', () => {
     it('should return 404 when status is due', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: buildStatus('due')
+        status: 'due'
       })
 
       const { statusCode } = await server.inject({
@@ -465,7 +447,7 @@ describe('#createdController', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/created`,
+        url: `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/invalid/1/submissions/1/created`,
         auth: mockAuth
       })
 
@@ -475,7 +457,7 @@ describe('#createdController', () => {
     it('should return 400 for invalid year', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submissions/1/created`,
+        url: `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2023/quarterly/1/submissions/1/created`,
         auth: mockAuth
       })
 
@@ -485,7 +467,7 @@ describe('#createdController', () => {
     it('should return 400 for invalid period', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submissions/1/created`,
+        url: `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/13/submissions/1/created`,
         auth: mockAuth
       })
 

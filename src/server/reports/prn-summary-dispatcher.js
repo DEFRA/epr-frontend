@@ -1,4 +1,4 @@
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { isReprocessorRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import {
   exporterPrnSummaryGetController,
@@ -15,13 +15,12 @@ import {
  * @returns {Promise<boolean>}
  */
 async function isReprocessor(request) {
-  const { organisationId, registrationId } = request.params
-  const session = request.auth.credentials
+  const { organisationNumber, registrationNumber } = request.params
 
-  const { registration } = await fetchRegistrationAndAccreditation(
-    organisationId,
-    registrationId,
-    session.backendToken
+  const { registration } = await fetchRegistrationAndAccreditationByNumber(
+    organisationNumber,
+    registrationNumber,
+    request.auth.credentials
   )
 
   return isReprocessorRegistration(registration)

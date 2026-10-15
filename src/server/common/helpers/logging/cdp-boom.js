@@ -39,6 +39,15 @@ export const badRequest = (message, code, enrichment) =>
   enrich(Boom.badRequest(message), code, enrichment)
 
 /**
+ * Builds a 403 Boom enriched with CDP-indexed `code` and `event` fields.
+ * @param {string} message
+ * @param {string} code
+ * @param {CdpBoomEnrichment} enrichment
+ */
+export const forbidden = (message, code, enrichment) =>
+  enrich(Boom.forbidden(message), code, enrichment)
+
+/**
  * Builds a 404 Boom enriched with CDP-indexed `code` and `event` fields.
  * @param {string} message
  * @param {string} code

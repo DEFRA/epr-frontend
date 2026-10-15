@@ -16,22 +16,22 @@ vi.mock(
 vi.mock(import('./helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/create-report.js'))
 
-const { fetchRegistrationAndAccreditation } =
+const { fetchRegistrationAndAccreditationByNumber } =
   await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 const { fetchReportDetail } = await import('./helpers/fetch-report-detail.js')
 const { createReport } = await import('./helpers/create-report.js')
 
 const mockAuth = buildMockAuth()
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const periodUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const periodUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 const baseUrl = `${periodUrl}/report-data-incomplete`
 
 const exporterRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: organisationId },
+  organisationData: { id: 'org-123' },
   registration: {
-    id: registrationId,
+    id: 'reg-001',
     material: 'plastic',
     wasteProcessingType: 'exporter',
     registrationNumber: 'REG001234'
@@ -40,14 +40,12 @@ const exporterRegistration = asRegistrationWithAccreditation({
 })
 
 const reportDetail = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  source: { summaryLogId: null, lastUploadedAt: null },
-  details: { material: 'plastic', site: { address: {} } },
+  status: 'not_started',
   recyclingActivity: {
     totalTonnageReceived: 0,
     suppliers: [],
@@ -117,7 +115,7 @@ const twoIssues = {
 describe('#reportDataIncompleteController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       exporterRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -235,7 +233,7 @@ describe('#reportDataIncompleteController', () => {
     const backLink = dom.window.document.querySelector('.govuk-back-link')
 
     expect(backLink?.getAttribute('href')).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports`
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
     )
   })
 
@@ -257,7 +255,7 @@ describe('#reportDataIncompleteController', () => {
     })
 
     expect(link.getAttribute('href')).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+      '/organisations/org-123/registrations/reg-001/summary-logs/upload'
     )
   })
 
@@ -399,7 +397,7 @@ describe('#reportDataIncompleteController', () => {
     })
 
     expect(button.getAttribute('href')).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports`
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
     )
     expect(button.classList.contains('govuk-button--secondary')).toBe(true)
   })
@@ -422,7 +420,7 @@ describe('#reportDataIncompleteController', () => {
     })
 
     expect(button.getAttribute('href')).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+      '/organisations/org-123/registrations/reg-001/summary-logs/upload'
     )
   })
 
@@ -437,7 +435,7 @@ describe('#reportDataIncompleteController', () => {
 
     expect(statusCode).toBe(statusCodes.found)
     expect(headers.location).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports`
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
     )
   })
 

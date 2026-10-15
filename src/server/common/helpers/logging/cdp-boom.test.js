@@ -3,6 +3,7 @@ import {
   badImplementation,
   badRequest,
   classifierTail,
+  forbidden,
   internal,
   notFound
 } from './cdp-boom.js'
@@ -34,6 +35,7 @@ describe('cdp-boom', () => {
     it.each(
       /** @type {Array<{ name: string, factory: typeof badRequest, status: number }>} */ ([
         { name: 'badRequest', factory: badRequest, status: 400 },
+        { name: 'forbidden', factory: forbidden, status: 403 },
         { name: 'notFound', factory: notFound, status: 404 },
         { name: 'internal', factory: internal, status: 500 },
         { name: 'badImplementation', factory: badImplementation, status: 500 }
