@@ -9,6 +9,7 @@ import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 import { CADENCE } from '#server/reports/constants.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
+import { buildPeriodPath } from '#server/reports/helpers/build-period-path.js'
 
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 
@@ -152,8 +153,7 @@ const toLatestSummaryLogRow = ({
     key,
     html: `<a href="${localiseUrl(
       buildSummaryLogDownloadPath({
-        organisationId,
-        registrationId,
+        registrationPath: `/organisations/${organisationId}/registrations/${registrationId}`,
         fileId: latest.summaryLog.id
       })
     )}" class="govuk-link">${escapeHtml(
@@ -323,8 +323,13 @@ const toReportsSummary = ({
     cadence: CADENCE.MONTHLY,
     localise,
     localiseUrl,
-    organisationId,
-    registrationId,
+    periodPath: (period) =>
+      buildPeriodPath({
+        organisationId,
+        registrationId,
+        period,
+        cadence: CADENCE.MONTHLY
+      }),
     reportingPeriods: monthlyPeriods
   }).slice(0, MOST_RECENT)
 
@@ -368,10 +373,15 @@ const toLedger = ({
   }
 
   const { noteType } = getNoteTypeDisplayNames(registration)
+  const accreditationPath = toAccreditationPath({
+    accreditationId,
+    organisationId,
+    registrationId: registration.id
+  })
 
   // The rows are already newest first, so the slice keeps the newest.
   const rows = buildLedgerRows({
-    accreditationId,
+    accreditationPath,
     events: ledgerEvents,
     localise,
     localiseUrl,
@@ -379,15 +389,12 @@ const toLedger = ({
     // The page is regulator-only, so the flag is the whole question here.
     offersCsvDownloads: offersWasteRecordsDownloads(),
     offersDownloads: true,
-    organisationId,
-    registrationId: registration.id
+    registrationPath: `/organisations/${organisationId}/registrations/${registration.id}`
   }).slice(0, MOST_RECENT)
 
   return {
     count: rows.length,
-    href: localiseUrl(
-      `${toAccreditationPath({ accreditationId, organisationId, registrationId: registration.id })}/waste-balance-ledger`
-    ),
+    href: localiseUrl(`${accreditationPath}/waste-balance-ledger`),
     rows
   }
 }
