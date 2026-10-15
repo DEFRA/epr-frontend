@@ -3,7 +3,7 @@ import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { createReport } from '#server/reports/helpers/create-report.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
@@ -72,19 +72,12 @@ const accreditedExporterRegistration = asRegistrationWithAccreditation({
 })
 
 const reportDetail = {
-  operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  source: { summaryLogId: null, lastUploadedAt: null },
-  details: {
-    material: 'plastic',
-    site: {
-      address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
-    }
-  },
+  status: 'not_started',
   recyclingActivity: {
     totalTonnageReceived: 0,
     suppliers: [],
@@ -100,7 +93,7 @@ const reportDetail = {
 }
 
 const detailUrl =
-  '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1'
+  '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1'
 
 describe('#createReportController', () => {
   beforeEach(() => {
@@ -109,14 +102,13 @@ describe('#createReportController', () => {
 
   describe('successful report creation', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse(reportDetail)
       )
       vi.mocked(createReport).mockResolvedValue({
-        id: 'report-001',
         status: 'in_progress'
       })
     })
@@ -137,12 +129,14 @@ describe('#createReportController', () => {
       })
 
       expect(createReport).toHaveBeenCalledWith(
-        'org-123',
-        'reg-001',
-        2026,
-        'quarterly',
-        1,
-        1,
+        {
+          organisationNumber: '500001',
+          registrationNumber: 'R25SR500030912PA',
+          year: 2026,
+          cadence: 'quarterly',
+          period: 1,
+          submissionNumber: 1
+        },
         'mock-backend-token'
       )
     })
@@ -164,17 +158,17 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1/tonnes-recycled'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1/tonnes-recycled'
       )
     })
   })
 
   describe('for accredited exporter with monthly cadence', () => {
     const monthlyDetailUrl =
-      '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1'
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1'
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedExporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -185,7 +179,6 @@ describe('#createReportController', () => {
         })
       )
       vi.mocked(createReport).mockResolvedValue({
-        id: 'report-001',
         status: 'in_progress'
       })
     })
@@ -207,7 +200,7 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/prn-summary'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/prn-summary'
       )
     })
   })
@@ -216,7 +209,7 @@ describe('#createReportController', () => {
     it('should return 404 when accredited registration uses quarterly cadence', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedExporterRegistration
       )
 
@@ -238,7 +231,7 @@ describe('#createReportController', () => {
     it('should not call createReport when cadence mismatches', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedExporterRegistration
       )
 
@@ -261,9 +254,9 @@ describe('#createReportController', () => {
       server
     }) => {
       const monthlyUrl =
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1'
 
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         reprocessorRegistration
       )
 
@@ -285,7 +278,7 @@ describe('#createReportController', () => {
 
   describe('for accredited reprocessor with monthly cadence', () => {
     const monthlyDetailUrl =
-      '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1'
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1'
 
     const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
       ...reprocessorRegistration,
@@ -296,7 +289,7 @@ describe('#createReportController', () => {
     })
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedReprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -307,7 +300,6 @@ describe('#createReportController', () => {
         })
       )
       vi.mocked(createReport).mockResolvedValue({
-        id: 'report-001',
         status: 'in_progress'
       })
     })
@@ -327,21 +319,20 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/tonnes-recycled'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/tonnes-recycled'
       )
     })
   })
 
   describe('for registered-only exporter', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse(reportDetail)
       )
       vi.mocked(createReport).mockResolvedValue({
-        id: 'report-001',
         status: 'in_progress'
       })
     })
@@ -361,14 +352,14 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1/tonnes-not-exported'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1/tonnes-not-exported'
       )
     })
   })
 
   describe('for unknown wasteProcessingType (fallback branch)', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue({
         ...registeredOnlyExporterRegistration,
         registration: {
           ...registeredOnlyExporterRegistration.registration,
@@ -379,7 +370,6 @@ describe('#createReportController', () => {
         asReportDetailResponse(reportDetail)
       )
       vi.mocked(createReport).mockResolvedValue({
-        id: 'report-001',
         status: 'in_progress'
       })
     })
@@ -399,14 +389,14 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1/supporting-information'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1/supporting-information'
       )
     })
   })
 
   describe('when backend returns 409 conflict', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -434,14 +424,14 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1/tonnes-recycled'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1/tonnes-recycled'
       )
     })
   })
 
   describe('when backend returns a non-409 error', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -471,7 +461,7 @@ describe('#createReportController', () => {
 
   describe('when backend returns report_data_incomplete 400', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -529,11 +519,10 @@ describe('#createReportController', () => {
 
   describe('journey events', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(createReport).mockResolvedValue({
-        id: 'report-001',
         status: 'in_progress'
       })
     })
@@ -556,7 +545,7 @@ describe('#createReportController', () => {
       expect(metrics.journey.start).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.createReport,
-        'reg-001/2026/quarterly/1/1'
+        'R25SR500030912PA/2026/quarterly/1/1'
       )
     })
   })

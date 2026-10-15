@@ -2,11 +2,12 @@ import Boom from '@hapi/boom'
 import Joi from 'joi'
 import { StatusCodes } from 'http-status-codes'
 
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportPath, summaryLogUploadPath } from './helpers/report-paths.js'
 import { requestResubmission } from './helpers/request-resubmission.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
@@ -18,16 +19,8 @@ const payloadSchema = Joi.object({
  * @param {HapiRequest & { params: PeriodParams }} request
  */
 function buildPaths(request) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = request.params
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-  const periodPath = `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+  const { submissionNumber } = request.params
+  const periodPath = reportPath(request.params)
 
   return {
     viewPath: `${periodPath}/view`,
@@ -37,7 +30,10 @@ function buildPaths(request) {
     // lazily the same way the resubmission-explainer flow creates it — by
     // GETting its period path, which detailController renders for a report
     // that doesn't exist yet.
-    nextSubmissionPeriodPath: `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber + 1}`
+    nextSubmissionPeriodPath: reportPath({
+      ...request.params,
+      submissionNumber: submissionNumber + 1
+    })
   }
 }
 
@@ -107,36 +103,24 @@ export const makeChangesGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { organisationNumber, registrationNumber, year, cadence, period } =
+      request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration, accreditation }, reportDetail] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.backendToken
-      ),
-      fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        session.backendToken
+    const { organisationData, registration, accreditation } =
+      await fetchRegistrationAndAccreditationByNumber(
+        organisationNumber,
+        registrationNumber,
+        session
       )
-    ])
+    const reportDetail = await fetchReportDetail(
+      request.params,
+      session.backendToken
+    )
 
     if (
-      reportDetail.status?.currentStatus !== SUBMISSION_STATUS.SUBMITTED ||
+      reportDetail.status !== SUBMISSION_STATUS.SUBMITTED ||
       !reportDetail.canRequestResubmission
     ) {
       throw Boom.notFound()
@@ -164,7 +148,10 @@ export const makeChangesGetController = {
       ...dataUpdateCopy,
       backUrl: request.localiseUrl(viewPath),
       uploadUrl: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+        summaryLogUploadPath({
+          organisationId: organisationData.id,
+          registrationId: registration.id
+        })
       )
     })
   }
@@ -183,29 +170,11 @@ export const makeChangesPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
     const session = request.auth.credentials
     const { nextSubmissionPeriodPath, viewPath } = buildPaths(request)
 
     try {
-      await requestResubmission(
-        {
-          organisationId,
-          registrationId,
-          year,
-          cadence,
-          period,
-          submissionNumber
-        },
-        session.backendToken
-      )
+      await requestResubmission(request.params, session.backendToken)
     } catch (error) {
       const boomError = /** @type {BoomError} */ (error)
       const isConflict =

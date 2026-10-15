@@ -1,5 +1,6 @@
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { buildReportDataIncompleteView } from './helpers/report-data-incomplete.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 
 /**
  * Renders the exporter validation-error screen (PAE-1420) when report creation
@@ -24,19 +25,9 @@ export const reportDataIncompleteGetController = {
    */
   handler(request, h) {
     const { t: localise } = request
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
 
-    const reportsUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports`
-    )
-    const periodBase = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+    const reportsUrl = request.localiseUrl(reportsListPath(request.params))
+    const periodBase = reportPath(request.params)
 
     const context = /** @type {ReportDataIncompleteContext | undefined} */ (
       request.yar.get('reportDataIncompleteContext')
@@ -45,9 +36,7 @@ export const reportDataIncompleteGetController = {
       return h.redirect(reportsUrl)
     }
 
-    const uploadUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-    )
+    const uploadUrl = request.localiseUrl(context.uploadPath)
 
     const { heading, countLine, worksheets, helpLine } =
       buildReportDataIncompleteView(context.payload, localise)
@@ -78,5 +67,5 @@ export const reportDataIncompleteGetController = {
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { ReportDataIncompletePayload } from './helpers/report-data-incomplete.js'
- * @typedef {{ periodPath: string, payload: ReportDataIncompletePayload }} ReportDataIncompleteContext
+ * @typedef {{ periodPath: string, uploadPath: string, payload: ReportDataIncompletePayload }} ReportDataIncompleteContext
  */

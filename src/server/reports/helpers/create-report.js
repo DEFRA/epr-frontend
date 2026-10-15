@@ -1,40 +1,16 @@
 import { backend } from '#server/common/helpers/backend-client.js'
-import { reportPath } from './report-backend.js'
+
+import { reportApiPath } from './report-paths.js'
 
 /**
- * @typedef {{
- *   id: string,
- *   status: string
- * }} CreateReportResponse
+ * @import { SubmissionKeys } from './report-paths.js'
  */
 
 /**
  * Creates an in-progress report for a specific period via the backend API.
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
- * @param {string} cadence
- * @param {number} period
- * @param {number} submissionNumber
+ * @param {SubmissionKeys} keys
  * @param {string} backendToken
- * @returns {Promise<CreateReportResponse>}
+ * @returns {Promise<unknown>}
  */
-export const createReport = (
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period,
-  submissionNumber,
-  backendToken
-) =>
-  backend(backendToken).post(
-    reportPath({
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    })
-  )
+export const createReport = (keys, backendToken) =>
+  backend(backendToken).post(reportApiPath(keys))

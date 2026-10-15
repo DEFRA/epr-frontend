@@ -31,13 +31,23 @@ describe(fetchReportDetail, () => {
   const backendAnswers = (msw, body) =>
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-1/registrations/reg-1/reports/2026/monthly/3/submissions/1`,
+        `${backendUrl}/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/3/submissions/1`,
         () => HttpResponse.json(body)
       )
     )
 
   const fetchDetail = () =>
-    fetchReportDetail('org-1', 'reg-1', 2026, 'monthly', 3, 1, 'a-token')
+    fetchReportDetail(
+      {
+        organisationNumber: '500001',
+        registrationNumber: 'R25SR500030912PA',
+        year: 2026,
+        cadence: 'monthly',
+        period: 3,
+        submissionNumber: 1
+      },
+      'a-token'
+    )
 
   it.for([
     {

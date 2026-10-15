@@ -24,8 +24,8 @@ describe(updateReportStatus, () => {
 
     const result = await updateReportStatus(
       {
-        organisationId: 'org/1',
-        registrationId: 'reg-1',
+        organisationNumber: '500001',
+        registrationNumber: 'R25/1',
         year: 2026,
         cadence: 'monthly',
         period: 3,
@@ -40,7 +40,7 @@ describe(updateReportStatus, () => {
       {
         method: 'POST',
         pathname:
-          '/v1/organisations/org%2F1/registrations/reg-1/reports/2026/monthly/3/submissions/1/status',
+          '/organisations/500001/registrations/R25%2F1/accreditations/2026/reports/monthly/3/submissions/1/status',
         body: JSON.stringify({ status: 'submitted', version: 1 })
       }
     ])

@@ -21,12 +21,14 @@ describe(deleteReport, () => {
     )
 
     const result = await deleteReport(
-      'org/1',
-      'reg-1',
-      2026,
-      'monthly',
-      3,
-      1,
+      {
+        organisationNumber: '500001',
+        registrationNumber: 'R25/1',
+        year: 2026,
+        cadence: 'monthly',
+        period: 3,
+        submissionNumber: 1
+      },
       'a-token'
     )
 
@@ -35,7 +37,7 @@ describe(deleteReport, () => {
       {
         method: 'DELETE',
         pathname:
-          '/v1/organisations/org%2F1/registrations/reg-1/reports/2026/monthly/3/submissions/1',
+          '/organisations/500001/registrations/R25%2F1/accreditations/2026/reports/monthly/3/submissions/1',
         body: ''
       }
     ])

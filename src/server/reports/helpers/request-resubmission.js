@@ -1,7 +1,8 @@
-import { reportBackend, reportPath } from './report-backend.js'
+import { reportBackend } from './report-backend.js'
+import { reportApiPath } from './report-paths.js'
 
 /**
- * @import { ReportAddress } from './report-backend.js'
+ * @import { SubmissionKeys } from './report-paths.js'
  */
 
 /**
@@ -10,11 +11,11 @@ import { reportBackend, reportPath } from './report-backend.js'
  * no longer eligible — unlike {@link reportBackend}'s other callers,
  * the 409 codes here aren't stale reasons, so they propagate as-is rather
  * than becoming a ReportStaleError.
- * @param {ReportAddress} periodParams
+ * @param {SubmissionKeys} keys
  * @param {string} backendToken
  * @returns {Promise<unknown>}
  */
-export const requestResubmission = (periodParams, backendToken) =>
+export const requestResubmission = (keys, backendToken) =>
   reportBackend(backendToken).post(
-    `${reportPath(periodParams)}/request-resubmission`
+    `${reportApiPath(keys)}/request-resubmission`
   )

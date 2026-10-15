@@ -4,7 +4,7 @@ import { describe, expect } from 'vitest'
 import { config } from '#config/config.js'
 import { it } from '#vite/fixtures/server.js'
 
-import { reportBackend, reportPath } from './report-backend.js'
+import { reportBackend } from './report-backend.js'
 import { ReportStaleError, STALE_REASON } from './stale.js'
 
 /**
@@ -14,23 +14,6 @@ import { ReportStaleError, STALE_REASON } from './stale.js'
 const backendUrl = config.get('eprBackendUrl')
 
 describe('report-backend', () => {
-  describe(reportPath, () => {
-    it('should address the submission with every id encoded', () => {
-      expect(
-        reportPath({
-          organisationId: 'org/1',
-          registrationId: 'reg&2',
-          year: 2026,
-          cadence: 'monthly',
-          period: 3,
-          submissionNumber: 1
-        })
-      ).toBe(
-        '/v1/organisations/org%2F1/registrations/reg%262/reports/2026/monthly/3/submissions/1'
-      )
-    })
-  })
-
   describe(reportBackend, () => {
     /**
      * @param {SetupServer} msw
