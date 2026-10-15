@@ -1,33 +1,16 @@
 import { backend } from '#server/common/helpers/backend-client.js'
-import { reportPath } from './report-backend.js'
+
+import { reportApiPath } from './report-paths.js'
+
+/**
+ * @import { SubmissionKeys } from './report-paths.js'
+ */
 
 /**
  * Deletes a report for a specific period via the backend API.
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
- * @param {string} cadence
- * @param {number} period
- * @param {number} submissionNumber
+ * @param {SubmissionKeys} keys
  * @param {string} backendToken
  * @returns {Promise<void>}
  */
-export const deleteReport = (
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period,
-  submissionNumber,
-  backendToken
-) =>
-  backend(backendToken).delete(
-    reportPath({
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    })
-  )
+export const deleteReport = (keys, backendToken) =>
+  backend(backendToken).delete(reportApiPath(keys))

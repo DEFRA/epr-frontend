@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
@@ -43,14 +43,14 @@ const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = { strategy: 'session', credentials: mockCredentials }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
 
 describe.each(subtrees)('$name free tonnage page', (subtree) => {
   const accreditedOperator = asRegistrationWithAccreditation({
-    organisationData: { id: organisationId },
+    organisationData: { id: 'org-123' },
     registration: {
-      id: registrationId,
+      id: 'reg-001',
       material: 'plastic',
       wasteProcessingType: subtree.registrationType,
       registrationNumber: 'REG001234'
@@ -78,9 +78,8 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
       lastUploadedAt: '2026-02-15T15:09:00.000Z'
     },
     details: { material: 'plastic' },
-    id: 'report-001',
     version: 1,
-    status: { currentStatus: 'in_progress' },
+    status: 'in_progress',
     supportingInformation: null,
     recyclingActivity: {
       totalTonnageReceived: 200,
@@ -101,7 +100,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
     prn: { ...reportDetail.prn, freeTonnage: 5 }
   }
 
-  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/${subtree.urlSlug}`
+  const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/${subtree.urlSlug}`
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -109,7 +108,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedOperator
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -229,7 +228,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
     it(`should return 404 for ${subtree.registeredOnlyDescription}`, async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyOperator
       )
 
@@ -243,7 +242,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
     })
 
     it('should return 404 for quarterly cadence', async ({ server }) => {
-      const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/${subtree.urlSlug}`
+      const quarterlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/${subtree.urlSlug}`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -277,7 +276,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse({
           ...reportDetail,
-          status: { currentStatus: 'ready_to_submit' }
+          status: 'ready_to_submit'
         })
       )
 
@@ -293,7 +292,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedOperator
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -331,7 +330,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/supporting-information`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/supporting-information`
         )
       })
 
@@ -350,8 +349,8 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
         expect(updateReport).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'monthly',
             period: 1,
@@ -379,7 +378,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
       })
 
@@ -400,7 +399,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
       })
 

@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
@@ -86,14 +86,14 @@ const noteTypeSectionScenarios = [
   ...registeredOnlyScenarios
 ]
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/make-changes`
-const viewPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/view`
-const nextSubmissionPeriodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/make-changes`
+const viewPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/view`
+const nextSubmissionPeriodPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/2`
 
 /**
- * @param {Partial<ReportDetailResponse['status']>} status
+ * @param {ReportDetailResponse['status']} status
  * @param {boolean} canRequestResubmission
  * @returns {ReportDetailResponse}
  */
@@ -104,15 +104,12 @@ function buildReportDetail(status, canRequestResubmission) {
   })
 }
 
-const submittedEligibleReportDetail = buildReportDetail(
-  { currentStatus: 'submitted' },
-  true
-)
+const submittedEligibleReportDetail = buildReportDetail('submitted', true)
 
 describe('#makeChangesController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       registeredOnlyExporter
     )
   })
@@ -184,7 +181,7 @@ describe('#makeChangesController', () => {
       })
 
       expect(uploadLink.getAttribute('href')).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+        '/organisations/org-123/registrations/reg-001/summary-logs/upload'
       )
     })
 
@@ -195,9 +192,9 @@ describe('#makeChangesController', () => {
           { registration, heading, bodyText, summaryLogText },
           { server }
         ) => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            registration
-          )
+          vi.mocked(
+            fetchRegistrationAndAccreditationByNumber
+          ).mockResolvedValue(registration)
 
           const { result } = await server.inject({
             method: 'GET',
@@ -219,7 +216,7 @@ describe('#makeChangesController', () => {
       server
     }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
-        buildReportDetail({ currentStatus: 'in_progress' }, true)
+        buildReportDetail('in_progress', true)
       )
 
       const { statusCode } = await server.inject({
@@ -235,7 +232,7 @@ describe('#makeChangesController', () => {
       server
     }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
-        buildReportDetail({ currentStatus: 'submitted' }, false)
+        buildReportDetail('submitted', false)
       )
 
       const { statusCode } = await server.inject({
@@ -310,8 +307,8 @@ describe('#makeChangesController', () => {
 
         expect(requestResubmission).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'quarterly',
             period: 1,
@@ -378,7 +375,7 @@ describe('#makeChangesController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/make-changes`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/invalid/1/submissions/1/make-changes`
 
       const { statusCode } = await server.inject({
         method: 'GET',

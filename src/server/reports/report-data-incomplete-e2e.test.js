@@ -6,7 +6,7 @@ import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
-// Setup-only mock: fetchRegistrationAndAccreditation supplies the registration
+// Setup-only mock: fetchRegistrationAndAccreditationByNumber supplies the registration
 // the detail page needs. fetchReportDetail is deliberately NOT mocked — this
 // test drives the real fetch-report-detail -> report-backend client stack
 // against an MSW-stubbed backend, so the whole wire contract runs: a real 200
@@ -18,21 +18,21 @@ vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 
-const { fetchRegistrationAndAccreditation } =
+const { fetchRegistrationAndAccreditationByNumber } =
   await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 
 const backendUrl = config.get('eprBackendUrl')
 const mockAuth = buildMockAuth()
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const periodUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
-const backendPath = `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const periodUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
+const backendPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 
 const exporterRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: organisationId },
+  organisationData: { id: 'org-123' },
   registration: {
-    id: registrationId,
+    id: 'reg-001',
     material: 'plastic',
     wasteProcessingType: 'exporter',
     registrationNumber: 'REG001234'
@@ -41,20 +41,17 @@ const exporterRegistration = asRegistrationWithAccreditation({
 })
 
 const incompletePreview = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
+  submissionNumber: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  dueDate: '2026-05-31',
-  source: { summaryLogId: null, lastUploadedAt: null },
-  details: { material: 'plastic' },
+  status: 'not_started',
+  canRequestResubmission: false,
   recyclingActivity: {
     totalTonnageReceived: 0,
-    suppliers: [],
-    tonnageRecycled: null,
-    tonnageNotRecycled: null
+    suppliers: []
   },
   wasteSent: {
     tonnageSentToReprocessor: 0,
@@ -106,7 +103,7 @@ async function createDraftAgainstIncompleteBackend(server, msw) {
 describe('report-data-incomplete (end to end via real backend client)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       exporterRegistration
     )
   })

@@ -1,12 +1,13 @@
-import { reportBackend, reportPath } from './report-backend.js'
+import { reportBackend } from './report-backend.js'
+import { reportApiPath } from './report-paths.js'
 
 /**
- * @import { ReportAddress } from './report-backend.js'
+ * @import { SubmissionKeys } from './report-paths.js'
  */
 
 /**
  * Transitions a report's status via the backend POST endpoint.
- * @param {ReportAddress} periodParams
+ * @param {SubmissionKeys} keys
  * @param {{
  *   status: string,
  *   submissionDeclaredBy?: string,
@@ -15,8 +16,5 @@ import { reportBackend, reportPath } from './report-backend.js'
  * @param {string} backendToken
  * @returns {Promise<unknown>}
  */
-export const updateReportStatus = (periodParams, transition, backendToken) =>
-  reportBackend(backendToken).post(
-    `${reportPath(periodParams)}/status`,
-    transition
-  )
+export const updateReportStatus = (keys, transition, backendToken) =>
+  reportBackend(backendToken).post(`${reportApiPath(keys)}/status`, transition)

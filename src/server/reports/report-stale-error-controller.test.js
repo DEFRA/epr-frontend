@@ -18,15 +18,15 @@ vi.mock(
 const { deleteReport } = await import('./helpers/delete-report.js')
 const { fetchReportDetail } = await import('./helpers/fetch-report-detail.js')
 const { ReportStaleError, STALE_REASON } = await import('./helpers/stale.js')
-const { fetchRegistrationAndAccreditation } =
+const { fetchRegistrationAndAccreditationByNumber } =
   await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 
 const mockAuth = buildMockAuth()
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/report-stale-error`
-const periodUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/report-stale-error`
+const periodUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 
 /**
  * Trigger the onPreResponse redirect to the error page, returning the
@@ -59,7 +59,7 @@ function refreshedCookie(setCookies) {
 describe('#reportStaleErrorController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       /** @type {RegistrationWithAccreditation} */ (
         /** @type {unknown} */ ({
           registration: { wasteProcessingType: 'reprocessor' },
@@ -170,7 +170,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(button).toBeDefined()
         expect(button.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
         expect(button.classList.contains('govuk-button--secondary')).toBe(true)
       })
@@ -186,7 +186,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
       })
 
@@ -275,7 +275,7 @@ describe('#reportStaleErrorController', () => {
       })
 
       it('names the note type as PERN for an exporter', async ({ server }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
           /** @type {RegistrationWithAccreditation} */ (
             /** @type {unknown} */ ({
               registration: { wasteProcessingType: 'exporter' },
@@ -362,7 +362,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(button).toBeDefined()
         expect(button.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
         expect(button.classList.contains('govuk-button--secondary')).toBe(true)
       })
@@ -474,7 +474,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(button).toBeDefined()
         expect(button.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
         expect(button.classList.contains('govuk-button--secondary')).toBe(true)
       })
@@ -514,12 +514,14 @@ describe('#reportStaleErrorController', () => {
       })
 
       expect(deleteReport).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        2026,
-        'quarterly',
-        1,
-        1,
+        {
+          organisationNumber,
+          registrationNumber,
+          year: 2026,
+          cadence: 'quarterly',
+          period: 1,
+          submissionNumber: 1
+        },
         'mock-backend-token'
       )
     })
@@ -539,7 +541,7 @@ describe('#reportStaleErrorController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
       )
     })
   })

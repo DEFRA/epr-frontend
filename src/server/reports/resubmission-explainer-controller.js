@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { isResubmission } from './helpers/resubmission.js'
 
 /**
@@ -37,14 +38,7 @@ export const resubmissionExplainerController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { year, cadence, period, submissionNumber } = request.params
     const { t: localise } = request
 
     if (!isResubmission(submissionNumber)) {
@@ -61,12 +55,7 @@ export const resubmissionExplainerController = {
     let resubmissionRequired
     try {
       const report = await fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber - 1,
+        { ...request.params, submissionNumber: submissionNumber - 1 },
         request.auth.credentials.backendToken
       )
       resubmissionRequired = report.resubmissionRequired
@@ -87,8 +76,8 @@ export const resubmissionExplainerController = {
       localise
     )
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-    const periodPath = `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+    const basePath = reportsListPath(request.params)
+    const periodPath = reportPath(request.params)
 
     // The page title and heading are the same string on this page.
     const title = localise(`${keyPrefix}Heading`, { periodLabel })
