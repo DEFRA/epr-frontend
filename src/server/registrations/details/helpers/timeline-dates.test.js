@@ -334,6 +334,31 @@ describe(accreditedDateRange, () => {
       )
     ).toStrictEqual({ validFrom: '2026-02-01', validTo: '2026-09-30' })
   })
+
+  it('starts on the approval day when it was suspended later that day', () => {
+    expect(
+      accreditedDateRange(
+        anAccreditation({
+          '2026-01-19T09:00:00.000Z': 'created',
+          '2026-01-19T10:00:00.000Z': 'approved',
+          '2026-01-19T11:00:00.000Z': 'suspended'
+        }),
+        '2026'
+      )
+    ).toStrictEqual({ validFrom: '2026-01-19', validTo: '2026-12-31' })
+  })
+
+  it('starts and ends on the day it was approved and cancelled', () => {
+    expect(
+      accreditedDateRange(
+        anAccreditation({
+          '2026-03-04T09:00:00.000Z': 'approved',
+          '2026-03-04T15:00:00.000Z': 'cancelled'
+        }),
+        '2026'
+      )
+    ).toStrictEqual({ validFrom: '2026-03-04', validTo: '2026-03-04' })
+  })
 })
 
 describe(registeredYears, () => {

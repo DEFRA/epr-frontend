@@ -99,19 +99,49 @@ export const accreditedStretches = ({ statusTimeline }, year) =>
   })
 
 /**
+ * 1 January if accredited going into the year, else the first approval in it.
+ * Reads every entry, so an approval superseded the same day still counts.
+ * @param {StatusTimeline} statusTimeline
+ * @param {CalendarDate} yearStart
+ * @returns {CalendarDate}
+ */
+const accreditedFrom = (statusTimeline, yearStart) => {
+  const liveAtYearStart = liveRuns(statusTimeline, ACCREDITED_STATUSES).some(
+    ({ from, to }) =>
+      from.localeCompare(yearStart) < 0 &&
+      (to === null || to.localeCompare(yearStart) >= 0)
+  )
+
+  if (liveAtYearStart) {
+    return yearStart
+  }
+
+  const approvedAt = /** @type {string} */ (
+    Object.keys(statusTimeline)
+      .sort((one, other) => one.localeCompare(other))
+      .find(
+        (at) =>
+          statusTimeline[at].status === ACCREDITATION_STATUS.APPROVED &&
+          calendarDate(at).localeCompare(yearStart) >= 0
+      )
+  )
+
+  return calendarDate(approvedAt)
+}
+
+/**
  * The period an accreditation is shown as covering within its year.
  * @param {AccreditationView} accreditation
  * @param {string} year
  * @returns {{ validFrom: string, validTo: string }}
  */
-export const accreditedDateRange = (accreditation, year) => {
-  const [first] = accreditedStretches(accreditation, year)
+export const accreditedDateRange = ({ statusTimeline }, year) => {
   const [lastDate, { status }] = /** @type {[string, { status: string }]} */ (
-    Object.entries(dailyTimeline(accreditation.statusTimeline)).at(-1)
+    Object.entries(dailyTimeline(statusTimeline)).at(-1)
   )
 
   return {
-    validFrom: first.from,
+    validFrom: accreditedFrom(statusTimeline, firstDayOf(Number(year))),
     validTo:
       status === ACCREDITATION_STATUS.CANCELLED
         ? lastDate
