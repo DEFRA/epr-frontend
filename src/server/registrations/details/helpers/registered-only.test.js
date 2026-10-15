@@ -1,3 +1,4 @@
+import { calendarDate } from '#server/common/helpers/calendar-date.js'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -6,32 +7,12 @@ import {
 } from './registered-only.js'
 
 /**
- * @import { AccreditationResource } from './types.js'
+ * @import { Stretch } from './registered-only.js'
  */
 
 // Every test pins the clock. The helpers run to "today", so a test reading the
 // real one would start failing on 1 January.
 const now = new Date('2026-06-15T00:00:00Z')
-
-/**
- * @param {string | null} validFrom
- * @param {string | null} [validTo]
- * @returns {AccreditationResource}
- */
-const anAccreditation = (validFrom, validTo = null) =>
-  /** @type {AccreditationResource} */ ({
-    id: 'acc-001',
-    accreditationNumber: 'A26ER5001180114PL',
-    status: 'approved',
-    reprocessingType: 'input',
-    dateRange: { validFrom, validTo },
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'ea',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor'
-    }
-  })
 
 describe(registrationYears, () => {
   it('names no year for a registration that was never approved', () => {
@@ -84,87 +65,65 @@ describe(registrationYears, () => {
 
 describe(registeredOnlyStretches, () => {
   /**
+   * @param {string} from
+   * @param {string} to
+   * @returns {Stretch}
+   */
+  const accreditedOver = (from, to) => ({
+    from: calendarDate(from),
+    to: calendarDate(to)
+  })
+
+  /**
    * @param {{
-   *   validFrom?: string | null,
-   *   accreditations?: AccreditationResource[],
+   *   validFrom?: string,
+   *   accredited?: Stretch[],
    *   year?: number
    * }} [overrides]
    */
   const stretches = ({
     validFrom = '2026-01-01',
-    accreditations = [],
+    accredited = [],
     year = 2026
   } = {}) =>
     registeredOnlyStretches({
       dateRange: { validFrom },
-      accreditations,
+      accredited,
       year,
       now
     })
 
   it('holds no registered-only time when the accreditation covered the whole year', () => {
     expect(
-      stretches({ accreditations: [anAccreditation('2025-01-01')] })
+      stretches({ accredited: [accreditedOver('2025-01-01', '2026-12-31')] })
     ).toStrictEqual([])
   })
 
   it('leaves the days before an accreditation that started late', () => {
     expect(
-      stretches({ accreditations: [anAccreditation('2026-03-01')] })
+      stretches({ accredited: [accreditedOver('2026-03-01', '2026-12-31')] })
     ).toStrictEqual([{ from: '2026-01-01', to: '2026-02-28' }])
   })
 
   it('leaves the days after an accreditation that ended early', () => {
     expect(
-      stretches({
-        accreditations: [anAccreditation('2025-01-01', '2026-03-31')]
-      })
+      stretches({ accredited: [accreditedOver('2025-01-01', '2026-03-31')] })
     ).toStrictEqual([{ from: '2026-04-01', to: '2026-06-15' }])
   })
 
   // Two stretches in one year is why this answers a list rather than a pair.
   it('leaves the days either side of an accreditation inside the registration', () => {
     expect(
-      stretches({
-        accreditations: [anAccreditation('2026-03-01', '2026-04-30')]
-      })
+      stretches({ accredited: [accreditedOver('2026-03-01', '2026-04-30')] })
     ).toStrictEqual([
       { from: '2026-01-01', to: '2026-02-28' },
       { from: '2026-05-01', to: '2026-06-15' }
     ])
   })
 
-  it('treats an accreditation that never started as occupying nothing', () => {
-    expect(
-      stretches({ accreditations: [anAccreditation(null)] })
-    ).toStrictEqual([{ from: '2026-01-01', to: '2026-06-15' }])
-  })
-
-  // A cancelled accreditation keeps its dates and did run over them, so the
-  // operator was not registered-only then. Keying on current status instead
-  // would rewrite history the moment one was cancelled.
-  it('counts a cancelled accreditation over the period it names', () => {
-    const cancelled = /** @type {AccreditationResource} */ ({
-      ...anAccreditation('2026-01-01', '2026-03-31'),
-      status: 'cancelled'
-    })
-
-    expect(stretches({ accreditations: [cancelled] })).toStrictEqual([
-      { from: '2026-04-01', to: '2026-06-15' }
-    ])
-  })
-
-  it('runs an accreditation with no end date up to today', () => {
-    expect(
-      stretches({ accreditations: [anAccreditation('2026-03-01', null)] })
-    ).toStrictEqual([{ from: '2026-01-01', to: '2026-02-28' }])
-  })
-
   it('subtracts nothing for an accreditation that ran in another year', () => {
     expect(
-      stretches({
-        accreditations: [anAccreditation('2024-01-01', '2024-12-31')]
-      })
+      stretches({ accredited: [accreditedOver('2024-01-01', '2024-12-31')] })
     ).toStrictEqual([{ from: '2026-01-01', to: '2026-06-15' }])
   })
 
@@ -174,9 +133,9 @@ describe(registeredOnlyStretches, () => {
   it('leaves no phantom gap between overlapping accreditations', () => {
     expect(
       stretches({
-        accreditations: [
-          anAccreditation('2026-02-01', '2026-04-30'),
-          anAccreditation('2026-03-01', '2026-05-31')
+        accredited: [
+          accreditedOver('2026-02-01', '2026-04-30'),
+          accreditedOver('2026-03-01', '2026-05-31')
         ]
       })
     ).toStrictEqual([
@@ -190,9 +149,9 @@ describe(registeredOnlyStretches, () => {
   it('leaves no one-day gap between abutting accreditations', () => {
     expect(
       stretches({
-        accreditations: [
-          anAccreditation('2026-02-01', '2026-03-31'),
-          anAccreditation('2026-04-01', '2026-05-31')
+        accredited: [
+          accreditedOver('2026-02-01', '2026-03-31'),
+          accreditedOver('2026-04-01', '2026-05-31')
         ]
       })
     ).toStrictEqual([
@@ -217,10 +176,6 @@ describe(registeredOnlyStretches, () => {
     expect(stretches({ validFrom: '2026-01-01', year: 2025 })).toStrictEqual([])
   })
 
-  it('holds nothing for a registration that was never approved', () => {
-    expect(stretches({ validFrom: null })).toStrictEqual([])
-  })
-
   // Older persisted records carry a full ISO datetime where newer ones carry a
   // bare date, and a datetime sorts after the bare date for the same day. Left
   // unnormalised that reads as "the registration starts after today", and the
@@ -235,15 +190,7 @@ describe(registeredOnlyStretches, () => {
     expect(
       stretches({
         validFrom: '2026-01-01T00:00:00.000Z',
-        accreditations: [anAccreditation('2026-03-01')]
-      })
-    ).toStrictEqual([{ from: '2026-01-01', to: '2026-02-28' }])
-  })
-
-  it('reads an accreditation stored as a full ISO datetime the same way', () => {
-    expect(
-      stretches({
-        accreditations: [anAccreditation('2026-03-01T00:00:00.000Z')]
+        accredited: [accreditedOver('2026-03-01', '2026-12-31')]
       })
     ).toStrictEqual([{ from: '2026-01-01', to: '2026-02-28' }])
   })

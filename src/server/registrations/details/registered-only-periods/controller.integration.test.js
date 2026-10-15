@@ -9,7 +9,6 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import {
   getAllByRole,
@@ -19,29 +18,29 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
-
-import { fetchRegisteredOnlyPeriod } from './helpers/fetch-registered-only-period.js'
+import { http, HttpResponse } from 'msw'
+import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 /**
- * @import { RegisteredOnlyPeriodDetails } from './helpers/fetch-registered-only-period.js'
+ * @import { SetupServer } from 'msw/node'
+ * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { AccreditationResource } from '../helpers/types.js'
  */
 
-vi.mock(import('./helpers/fetch-registered-only-period.js'))
+const backendUrl = config.get('eprBackendUrl')
 
-const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = 'reg-001'
+const organisationNumber = '500118'
+const registrationNumber = 'R26ER5001180041PL'
+const registrationPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
 
 // The fixture registration starts on this date and never ends, so this year is
 // one it has run over whatever year the suite runs in. Fake timers are not used
 // here: they stall `server.inject`.
 const YEAR = 2026
 const pathFor = (/** @type {number | string} */ year) =>
-  `/organisations/${organisationId}/registrations/${registrationId}/registered-only-periods/${year}`
+  `${registrationPath}/registered-only-periods/${year}`
 
 const operator = buildMockAuth()
 
@@ -60,24 +59,15 @@ const regulatorWithoutLedgerScope = buildMockAuth({
 })
 
 /**
- * @param {string | null} validFrom
- * @param {string | null} [validTo]
- * @returns {AccreditationResource}
+ * An accreditation approved on `approvedOn` and never cancelled.
+ * @param {string} approvedOn
+ * @returns {AccreditationView}
  */
-const anAccreditation = (validFrom, validTo = null) =>
-  /** @type {AccreditationResource} */ ({
-    id: 'acc-001',
-    accreditationNumber: 'A26ER5001180114PL',
-    status: 'approved',
-    reprocessingType: 'input',
-    dateRange: { validFrom, validTo },
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'ea',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor'
-    }
-  })
+const anAccreditation = (approvedOn) => ({
+  accreditationNumber: 'A26ER5001180114PL',
+  status: 'approved',
+  statusTimeline: { [`${approvedOn}T09:00:00.000Z`]: { status: 'approved' } }
+})
 
 /**
  * The first quarter of the page's year, reported. The seeded accreditation
@@ -114,61 +104,86 @@ const aLedgerEvent = (createdAt = `${YEAR}-05-04T09:00:00.000Z`) => ({
 
 /**
  * @param {{
- *   accreditations?: AccreditationResource[],
- *   cadence?: CadenceValue | null,
- *   ledgerEvents?: LedgerEvent[] | null,
- *   registrationNumber?: string | null,
- *   reportingPeriods?: ReportingPeriod[],
- *   validFrom?: string | null
+ *   accreditations?: Record<string, AccreditationView>,
+ *   validFrom?: string
  * }} [overrides]
- * @returns {RegisteredOnlyPeriodDetails}
+ * @returns {OrganisationView}
  */
-const registrationDetails = ({
-  accreditations = [],
-  cadence = 'quarterly',
-  ledgerEvents = [aLedgerEvent()],
-  registrationNumber = 'R26ER5001180041PL',
-  reportingPeriods = [],
+const anOrganisation = ({
+  accreditations = {},
   validFrom = '2026-01-01'
 } = {}) => ({
-  cadence,
-  reportingPeriods,
-  ledgerEvents,
-  organisation: asOrganisation({
-    id: organisationId,
-    companyDetails: { name: 'Kirkby Plastics Ltd' }
-  }),
-  registration: /** @type {RegisteredOnlyPeriodDetails['registration']} */ ({
-    id: registrationId,
-    organisation: { id: organisationId },
-    registrationNumber,
-    status: 'approved',
-    material: 'plastic',
-    reprocessingType: 'input',
-    dateRange: { validFrom },
-    accreditations: [],
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'ea',
+  organisationNumber: 500118,
+  name: 'Kirkby Plastics Ltd',
+  registrations: {
+    [registrationNumber]: {
+      status: 'approved',
+      validFrom,
       material: 'plastic',
+      submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'reprocessor',
-      site: null
+      site: { address: { fullAddress: 'North Road, Leeds' } },
+      accreditations
     }
-  }),
-  accreditations
+  }
 })
+
+/**
+ * Answers the read model, the calendar and the year's ledger by number.
+ * @param {SetupServer} msw
+ * @param {{
+ *   accreditations?: Record<string, AccreditationView>,
+ *   cadence?: CadenceValue,
+ *   reportingPeriods?: ReportingPeriod[],
+ *   calendarStatus?: number,
+ *   ledgerEvents?: LedgerEvent[],
+ *   ledgerStatus?: number
+ * }} [overrides]
+ * @returns {{ ledgerRequests: () => number }}
+ */
+const backendHolds = (
+  msw,
+  {
+    accreditations,
+    cadence = 'quarterly',
+    reportingPeriods = [],
+    calendarStatus = statusCodes.ok,
+    ledgerEvents = [aLedgerEvent()],
+    ledgerStatus = statusCodes.ok
+  } = {}
+) => {
+  let ledgerRequests = 0
+
+  msw.use(
+    http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
+      HttpResponse.json(anOrganisation({ accreditations }))
+    ),
+    http.get(`${backendUrl}${registrationPath}/reports/calendar`, () =>
+      HttpResponse.json(
+        { cadence, reportingPeriods },
+        { status: calendarStatus }
+      )
+    ),
+    http.get(`${backendUrl}${registrationPath}/ledger/${YEAR}`, () => {
+      ledgerRequests += 1
+      return HttpResponse.json(
+        { events: ledgerEvents },
+        { status: ledgerStatus }
+      )
+    })
+  )
+
+  return { ledgerRequests: () => ledgerRequests }
+}
 
 /**
  * @param {HapiServer} server
  * @param {ReturnType<typeof buildMockAuth>} auth
  * @param {number | string} [year]
+ * @param {string} [path]
  */
-const visit = async (server, auth, year = YEAR) => {
-  const response = await server.inject({
-    method: 'GET',
-    url: pathFor(year),
-    auth
-  })
+const visit = async (server, auth, year = YEAR, path = pathFor(year)) => {
+  const response = await server.inject({ method: 'GET', url: path, auth })
 
   return { statusCode: response.statusCode, body: asHtml(response.result) }
 }
@@ -182,18 +197,14 @@ describe('the registered-only period page', () => {
     config.set('featureFlags.wasteRecordsDownload', true)
   })
 
-  beforeEach(() => {
-    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
-      registrationDetails()
-    )
-  })
-
   afterAll(() => {
     config.set('featureFlags.regulatorAccess', false)
     config.set('featureFlags.wasteRecordsDownload', false)
   })
 
-  it('names the year it covers in the heading', async ({ server }) => {
+  it('names the year it covers in the heading', async ({ server, msw }) => {
+    backendHolds(msw)
+
     const { statusCode, body } = await visit(server, regulator)
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -206,8 +217,11 @@ describe('the registered-only period page', () => {
   })
 
   it('names the organisation and the registration above the heading', async ({
-    server
+    server,
+    msw
   }) => {
+    backendHolds(msw)
+
     const { body } = await visit(server, regulator)
 
     expect(
@@ -215,28 +229,15 @@ describe('the registered-only period page', () => {
     ).toContain('Kirkby Plastics Ltd - R26ER5001180041PL')
   })
 
-  it('drops the number for a registration that holds none', async ({
-    server
-  }) => {
-    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
-      registrationDetails({ registrationNumber: null })
-    )
-
-    const { body } = await visit(server, regulator)
-
-    expect(
-      getByRole(documentOf(body), 'heading', { level: 1 }).textContent
-    ).toContain('Kirkby Plastics Ltd')
-  })
-
   // The two sentences are alternatives to the page's content, so a year that
   // holds data must show neither.
   it('says the period holds nothing where the accreditation ran from the start', async ({
-    server
+    server,
+    msw
   }) => {
-    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
-      registrationDetails({ accreditations: [anAccreditation('2026-01-01')] })
-    )
+    backendHolds(msw, {
+      accreditations: { 2026: anAccreditation('2026-01-01') }
+    })
 
     const { body } = await visit(server, regulator)
     const document = documentOf(body)
@@ -250,11 +251,12 @@ describe('the registered-only period page', () => {
   })
 
   it('says nothing of the sort where the year holds registered-only time', async ({
-    server
+    server,
+    msw
   }) => {
-    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
-      registrationDetails({ accreditations: [anAccreditation('2026-03-01')] })
-    )
+    backendHolds(msw, {
+      accreditations: { 2026: anAccreditation('2026-03-01') }
+    })
 
     const { body } = await visit(server, regulator)
     const document = documentOf(body)
@@ -270,14 +272,13 @@ describe('the registered-only period page', () => {
   // The quarters a registered-only operator owed are the point of the page, so
   // the real copy is asserted here rather than against a mocked localiser.
   it('lists the quarters the operator owed while registered-only', async ({
-    server
+    server,
+    msw
   }) => {
-    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
-      registrationDetails({
-        accreditations: [anAccreditation('2026-07-01')],
-        reportingPeriods: [aSubmittedFirstQuarter]
-      })
-    )
+    backendHolds(msw, {
+      accreditations: { 2026: anAccreditation('2026-07-01') },
+      reportingPeriods: [aSubmittedFirstQuarter]
+    })
 
     const { body } = await visit(server, regulator)
     const document = documentOf(body)
@@ -295,13 +296,14 @@ describe('the registered-only period page', () => {
     expect(table?.textContent).toContain('Submitted')
   })
 
-  it('opens a submitted quarter at the report it holds', async ({ server }) => {
-    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
-      registrationDetails({
-        accreditations: [anAccreditation('2026-07-01')],
-        reportingPeriods: [aSubmittedFirstQuarter]
-      })
-    )
+  it('opens a submitted quarter at the report it holds, by number', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      accreditations: { 2026: anAccreditation('2026-07-01') },
+      reportingPeriods: [aSubmittedFirstQuarter]
+    })
 
     const { body } = await visit(server, regulator)
 
@@ -309,17 +311,14 @@ describe('the registered-only period page', () => {
       getByRole(documentOf(body), 'link', {
         name: /^View\s*Quarter 1, 2026$/
       }).getAttribute('href')
-    ).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/view`
-    )
+    ).toBe(`${registrationPath}/reports/2026/quarterly/1/submissions/1/view`)
   })
 
   it('says so where the year holds registered-only time but no ended period', async ({
-    server
+    server,
+    msw
   }) => {
-    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
-      registrationDetails({ reportingPeriods: [] })
-    )
+    backendHolds(msw)
 
     const { body } = await visit(server, regulator)
 
@@ -331,13 +330,31 @@ describe('the registered-only period page', () => {
     ).not.toBeNull()
   })
 
+  it('still renders where the calendar could not be read', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { calendarStatus: statusCodes.internalServerError })
+
+    const { statusCode, body } = await visit(server, regulator)
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(
+      queryByText(
+        documentOf(body),
+        /There are no reporting periods for this registered-only period yet/
+      )
+    ).not.toBeNull()
+  })
+
   // The empty state replaces the page's content rather than sitting above it.
   it('shows no reports section at all where the period holds nothing', async ({
-    server
+    server,
+    msw
   }) => {
-    vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
-      registrationDetails({ accreditations: [anAccreditation('2026-01-01')] })
-    )
+    backendHolds(msw, {
+      accreditations: { 2026: anAccreditation('2026-01-01') }
+    })
 
     const { body } = await visit(server, regulator)
     const document = documentOf(body)
@@ -347,17 +364,24 @@ describe('the registered-only period page', () => {
     ).toBeNull()
   })
 
-  it('offers a way back to the registration', async ({ server }) => {
+  it('offers a way back to the organisation and the registration, by number', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
     const { body } = await visit(server, regulator)
 
-    expect(body).toContain(
-      `/organisations/${organisationId}/registrations/${registrationId}"`
-    )
+    expect(body).toContain(`href="/organisations/${organisationNumber}"`)
+    expect(body).toContain(`href="${registrationPath}"`)
   })
 
   it('offers a regulator no control that changes the registration', async ({
-    server
+    server,
+    msw
   }) => {
+    backendHolds(msw)
+
     const { body } = await visit(server, regulator)
     const document = documentOf(body)
 
@@ -367,8 +391,16 @@ describe('the registered-only period page', () => {
   })
 
   it('does not exist for a year the registration never ran over', async ({
-    server
+    server,
+    msw
   }) => {
+    backendHolds(msw)
+    msw.use(
+      http.get(`${backendUrl}${registrationPath}/ledger/2024`, () =>
+        HttpResponse.json({ events: [] }, { status: statusCodes.notFound })
+      )
+    )
+
     const { statusCode } = await visit(server, regulator, 2024)
 
     expect(statusCode).toBe(statusCodes.notFound)
@@ -384,6 +416,59 @@ describe('the registered-only period page', () => {
 
   it('does not exist for a year that is not a number', async ({ server }) => {
     const { statusCode } = await visit(server, regulator, 'last-year')
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  it('does not exist for an organisation number the backend does not know', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+    const unknown = `/organisations/500999/registrations/${registrationNumber}`
+    msw.use(
+      http.get(`${backendUrl}/organisations/500999`, () =>
+        HttpResponse.json({}, { status: statusCodes.notFound })
+      ),
+      http.get(`${backendUrl}${unknown}/reports/calendar`, () =>
+        HttpResponse.json({}, { status: statusCodes.notFound })
+      ),
+      http.get(`${backendUrl}${unknown}/ledger/${YEAR}`, () =>
+        HttpResponse.json({}, { status: statusCodes.notFound })
+      )
+    )
+
+    const { statusCode } = await visit(
+      server,
+      regulator,
+      YEAR,
+      `${unknown}/registered-only-periods/${YEAR}`
+    )
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  it('does not exist for a registration number the organisation does not hold', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+    const unknown = `/organisations/${organisationNumber}/registrations/R26ER5009990041PL`
+    msw.use(
+      http.get(`${backendUrl}${unknown}/reports/calendar`, () =>
+        HttpResponse.json({}, { status: statusCodes.notFound })
+      ),
+      http.get(`${backendUrl}${unknown}/ledger/${YEAR}`, () =>
+        HttpResponse.json({}, { status: statusCodes.notFound })
+      )
+    )
+
+    const { statusCode } = await visit(
+      server,
+      regulator,
+      YEAR,
+      `${unknown}/registered-only-periods/${YEAR}`
+    )
 
     expect(statusCode).toBe(statusCodes.notFound)
   })
@@ -418,21 +503,12 @@ describe('the registered-only period page', () => {
   })
 
   describe('the waste balance ledger', () => {
-    /**
-     * Answers a ledger only where the session may read one.
-     */
-    const detailsForTheSession = () =>
-      vi
-        .mocked(fetchRegisteredOnlyPeriod)
-        .mockImplementation(async ({ canReadLedger }) =>
-          registrationDetails({
-            ledgerEvents: canReadLedger ? [aLedgerEvent()] : null
-          })
-        )
-
     it('lists the ledger beneath the reports, under its four headings', async ({
-      server
+      server,
+      msw
     }) => {
+      backendHolds(msw)
+
       const { body } = await visit(server, regulator)
       const document = documentOf(body)
 
@@ -451,8 +527,11 @@ describe('the registered-only period page', () => {
     })
 
     it('states who submitted what, and nothing of a balance', async ({
-      server
+      server,
+      msw
     }) => {
+      backendHolds(msw)
+
       const { body } = await visit(server, regulator)
       const [, firstRow] = getAllByRole(
         getByTestId(documentOf(body), 'waste-balance-ledger-table'),
@@ -468,37 +547,42 @@ describe('the registered-only period page', () => {
       ])
     })
 
-    it('offers the submission itself, at its own address', async ({
-      server
+    it('offers the submission itself, at its address by number', async ({
+      server,
+      msw
     }) => {
+      backendHolds(msw)
+
       const { body } = await visit(server, regulator)
 
       expect(
         getByRole(documentOf(body), 'link', {
           name: 'Download XLSX 4 May 2026, 10:00am'
         }).getAttribute('href')
-      ).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download`
-      )
+      ).toBe(`${registrationPath}/summary-logs/files/log-1/download`)
     })
 
-    it('offers the submission as records too, at its own address', async ({
-      server
+    it('offers the submission as records too, at its address by number', async ({
+      server,
+      msw
     }) => {
+      backendHolds(msw)
+
       const { body } = await visit(server, regulator)
 
       expect(
         getByRole(documentOf(body), 'link', {
           name: 'Download CSV 4 May 2026, 10:00am'
         }).getAttribute('href')
-      ).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/log-1/download.csv`
-      )
+      ).toBe(`${registrationPath}/summary-logs/files/log-1/download.csv`)
     })
 
     it('offers no records link while the download is dark', async ({
-      server
+      server,
+      msw
     }) => {
+      backendHolds(msw)
+
       config.set('featureFlags.wasteRecordsDownload', false)
       const { body } = await visit(server, regulator)
       config.set('featureFlags.wasteRecordsDownload', true)
@@ -510,7 +594,12 @@ describe('the registered-only period page', () => {
       ).toBeNull()
     })
 
-    it('names no waste balance anywhere on the page', async ({ server }) => {
+    it('names no waste balance anywhere on the page', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
       const { body } = await visit(server, regulator)
 
       expect(body).not.toContain('Waste balance available')
@@ -518,11 +607,10 @@ describe('the registered-only period page', () => {
     })
 
     it('says nothing has moved the balance where the ledger holds no events', async ({
-      server
+      server,
+      msw
     }) => {
-      vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
-        registrationDetails({ ledgerEvents: [] })
-      )
+      backendHolds(msw, { ledgerEvents: [] })
 
       const { body } = await visit(server, regulator)
 
@@ -535,14 +623,43 @@ describe('the registered-only period page', () => {
       ).not.toBeNull()
     })
 
-    it('shows no ledger at all where the year holds no registered-only time', async ({
-      server
+    // The backend 404s a year the registration was never approved in, though
+    // the page lists every year from the registration's start.
+    it('says nothing has moved the balance where the backend has no ledger for the year', async ({
+      server,
+      msw
     }) => {
-      vi.mocked(fetchRegisteredOnlyPeriod).mockResolvedValue(
-        registrationDetails({
-          accreditations: [anAccreditation('2026-01-01')]
-        })
-      )
+      backendHolds(msw, { ledgerStatus: statusCodes.notFound })
+
+      const { statusCode, body } = await visit(server, regulator)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(
+        queryByText(
+          documentOf(body),
+          'Nothing has changed this waste balance yet.'
+        )
+      ).not.toBeNull()
+    })
+
+    it('fails the page where the ledger could not be read', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw, { ledgerStatus: statusCodes.internalServerError })
+
+      const { statusCode } = await visit(server, regulator)
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    it('shows no ledger at all where the year holds no registered-only time', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw, {
+        accreditations: { 2026: anAccreditation('2026-01-01') }
+      })
 
       const { body } = await visit(server, regulator)
 
@@ -552,23 +669,27 @@ describe('the registered-only period page', () => {
     })
 
     it('reads no ledger, and shows none, for a regulator granted no ledger scope', async ({
-      server
+      server,
+      msw
     }) => {
-      detailsForTheSession()
+      const { ledgerRequests } = backendHolds(msw)
 
       const { body } = await visit(server, regulatorWithoutLedgerScope)
 
+      expect(ledgerRequests()).toBe(0)
       expect(body).not.toContain('Waste balance ledger')
       expect(body).not.toContain('data-testid="waste-balance-ledger-table"')
     })
 
     it('reads the ledger for a regulator holding the ledger scope', async ({
-      server
+      server,
+      msw
     }) => {
-      detailsForTheSession()
+      const { ledgerRequests } = backendHolds(msw)
 
       const { body } = await visit(server, regulator)
 
+      expect(ledgerRequests()).toBe(1)
       expect(body).toContain('data-testid="waste-balance-ledger-table"')
     })
   })

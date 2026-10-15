@@ -53,17 +53,30 @@ const organisation = {
   registrations: {
     R26ER5001180041PL: {
       status: 'approved',
+      validFrom: '2025-01-01',
       material: 'glass_re_melt',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'reprocessor',
       site: { address: { line1: 'Site name A' } },
       accreditations: {
-        2025: { accreditationNumber: 'A25ER5001180114GR', status: 'cancelled' },
-        2026: { accreditationNumber: 'A26ER5001180114GR', status: 'approved' }
+        2025: {
+          accreditationNumber: 'A25ER5001180114GR',
+          status: 'cancelled',
+          statusTimeline: {
+            '2025-01-01T09:00:00.000Z': { status: 'approved' },
+            '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+          }
+        },
+        2026: {
+          accreditationNumber: 'A26ER5001180114GR',
+          status: 'approved',
+          statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+        }
       }
     },
     R26ER5001180042AL: {
       status: 'cancelled',
+      validFrom: '2025-01-01',
       material: 'aluminium',
       submittedToRegulator: { code: 'sepa' },
       wasteProcessingType: 'reprocessor',
@@ -72,6 +85,7 @@ const organisation = {
     },
     R26EX5001180041PA: {
       status: 'approved',
+      validFrom: '2025-01-01',
       material: 'paper',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'exporter',

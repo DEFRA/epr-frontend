@@ -1,4 +1,5 @@
 import { CADENCE } from '#server/reports/constants.js'
+import { buildPeriodPath } from '#server/reports/helpers/build-period-path.js'
 
 import { toAccreditationChildPage } from '../../helpers/accreditation-child-page.js'
 import { toReportRows, toReportsHead } from '../../helpers/report-rows.js'
@@ -59,8 +60,13 @@ export const buildViewModel = ({
         cadence: CADENCE.MONTHLY,
         localise,
         localiseUrl,
-        organisationId: organisation.id,
-        registrationId: registration.id,
+        periodPath: (period) =>
+          buildPeriodPath({
+            organisationId: organisation.id,
+            registrationId: registration.id,
+            period,
+            cadence: CADENCE.MONTHLY
+          }),
         // Same rule as the accreditation page: quarterly periods are not its.
         reportingPeriods: cadence === CADENCE.MONTHLY ? reportingPeriods : []
       })

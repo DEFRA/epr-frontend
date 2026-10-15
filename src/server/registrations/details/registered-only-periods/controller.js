@@ -12,6 +12,7 @@ import {
 
 import { fetchRegisteredOnlyPeriod } from './helpers/fetch-registered-only-period.js'
 import { registrationYears } from '../helpers/registered-only.js'
+import { registrationDateRange } from '../helpers/timeline-dates.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -20,8 +21,8 @@ import { registrationYears } from '../helpers/registered-only.js'
 
 /**
  * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
+ *   organisationNumber: string,
+ *   registrationNumber: string,
  *   year: number
  * }} RegisteredOnlyPeriodParams
  */
@@ -31,8 +32,8 @@ import { registrationYears } from '../helpers/registered-only.js'
  * year one accepts is not one another rejects.
  */
 const paramsSchema = Joi.object({
-  organisationId: Joi.string().required(),
-  registrationId: Joi.string().required(),
+  organisationNumber: Joi.string().required(),
+  registrationNumber: Joi.string().required(),
   year: Joi.number().integer().min(MIN_YEAR).max(MAX_YEAR).required()
 })
 
@@ -68,19 +69,19 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year } = request.params
+    const { organisationNumber, registrationNumber, year } = request.params
     const { backendToken } = request.auth.credentials
 
     const {
       organisation,
       registration,
-      accreditations,
       cadence,
       reportingPeriods,
       ledgerEvents
     } = await fetchRegisteredOnlyPeriod({
-      organisationId,
-      registrationId,
+      organisationNumber,
+      registrationNumber,
+      year,
       backendToken,
       canReadLedger: hasLedgerReadScope(request.auth.credentials),
       logger: request.logger
@@ -89,10 +90,12 @@ export const controller = {
     // A well-formed year the registration never ran over is a page about
     // nothing, so it is not found rather than rendered empty.
     if (
-      !registrationYears({ dateRange: registration.dateRange }).includes(year)
+      !registrationYears({
+        dateRange: registrationDateRange(registration)
+      }).includes(year)
     ) {
       noSuchPeriod(
-        `organisationId=${organisationId} registrationId=${registrationId} year=${year}`
+        `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber} year=${year}`
       )
     }
 
@@ -101,7 +104,7 @@ export const controller = {
       buildViewModel({
         organisation,
         registration,
-        accreditations,
+        keys: { organisationNumber, registrationNumber },
         cadence,
         reportingPeriods,
         ledgerEvents,

@@ -6,7 +6,6 @@ import {
 /**
  * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
  * @import { RegistrationDateRange } from '#server/common/helpers/organisations/registration-resource.js'
- * @import { AccreditationResource } from './types.js'
  */
 
 /**
@@ -42,7 +41,7 @@ const isAfter = (day, other) => day.localeCompare(other) > 0
  * @param {CalendarDate} other
  * @returns {CalendarDate}
  */
-const later = (day, other) => (isAfter(day, other) ? day : other)
+export const later = (day, other) => (isAfter(day, other) ? day : other)
 
 /**
  * @param {CalendarDate} day
@@ -62,21 +61,21 @@ const yearOf = (day) => new Date(day).getUTCFullYear()
  * @param {number} year
  * @returns {CalendarDate}
  */
-const firstDayOf = (year) => calendarDate(`${year}-01-01`)
+export const firstDayOf = (year) => calendarDate(`${year}-01-01`)
 
 /**
  * The last day of a year, as a calendar date.
  * @param {number} year
  * @returns {CalendarDate}
  */
-const lastDayOf = (year) => calendarDate(`${year}-12-31`)
+export const lastDayOf = (year) => calendarDate(`${year}-12-31`)
 
 /**
  * @param {CalendarDate} day
  * @param {number} days
  * @returns {CalendarDate}
  */
-const shiftDay = (day, days) => {
+export const shiftDay = (day, days) => {
   const shifted = new Date(day)
   shifted.setUTCDate(shifted.getUTCDate() + days)
   return utcCalendarDate(shifted)
@@ -128,30 +127,6 @@ const registeredStretch = ({ validFrom, year, today }) => {
 }
 
 /**
- * The stretches an accreditation occupied, clipped to nothing outside itself.
- *
- * Its `validFrom` is what says it occupied time, not its status: the dates are
- * recorded at approval, so an accreditation that never got them never ran. One
- * that was later **cancelled** keeps both, and did run over the period it
- * names — which is why this cannot key on the current status the way
- * `isRegistrationAccredited` does.
- * @param {AccreditationResource[]} accreditations
- * @param {CalendarDate} today
- * @returns {Stretch[]}
- */
-const accreditedStretches = (accreditations, today) =>
-  accreditations.flatMap(({ dateRange }) =>
-    dateRange.validFrom
-      ? [
-          {
-            from: calendarDate(dateRange.validFrom),
-            to: dateRange.validTo ? calendarDate(dateRange.validTo) : today
-          }
-        ]
-      : []
-  )
-
-/**
  * Whether two stretches share at least one day.
  * @param {Stretch} one
  * @param {Stretch} other
@@ -196,8 +171,8 @@ const subtract = (remaining, occupied) =>
  * holds no registered-only time at all, which is what a page shows the "this
  * period holds no data" message for.
  * @param {{
- *   dateRange: RegistrationDateRange,
- *   accreditations: AccreditationResource[],
+ *   dateRange: { validFrom: string },
+ *   accredited: Stretch[],
  *   year: number,
  *   now?: Date
  * }} params
@@ -205,19 +180,13 @@ const subtract = (remaining, occupied) =>
  */
 export const registeredOnlyStretches = ({
   dateRange,
-  accreditations,
+  accredited,
   year,
   now = new Date()
 }) => {
-  const { validFrom } = dateRange
-
-  if (!validFrom) {
-    return []
-  }
-
   const today = utcCalendarDate(now)
   const registered = registeredStretch({
-    validFrom: calendarDate(validFrom),
+    validFrom: calendarDate(dateRange.validFrom),
     year,
     today
   })
@@ -228,7 +197,7 @@ export const registeredOnlyStretches = ({
 
   // Wrapped rather than passed directly: `reduce` also hands the callback the
   // index and the array, and `subtract` takes two arguments.
-  return accreditedStretches(accreditations, today).reduce(
+  return accredited.reduce(
     (remaining, occupied) => subtract(remaining, occupied),
     [registered]
   )
