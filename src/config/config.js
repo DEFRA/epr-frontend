@@ -387,10 +387,22 @@ export const config = convict({
       env: 'ANALYTICS_ENABLED'
     },
     measurementId: {
-      doc: 'Measurement id of the analytics property to report to',
+      doc: 'Measurement id of the analytics property to report to. Must match the Google tag in the container: the page refuses any other, so repointing the tag in Tag Manager stops reporting until this changes',
       format: String,
       default: '',
       env: 'ANALYTICS_MEASUREMENT_ID'
+    },
+    containerId: {
+      doc: 'Id of the tag manager container that loads the analytics tag',
+      format: String,
+      default: '',
+      env: 'ANALYTICS_CONTAINER_ID'
+    },
+    previewEnabled: {
+      doc: 'Let the tag manager preview console connect, for checking the container',
+      format: Boolean,
+      default: false,
+      env: 'ANALYTICS_PREVIEW_ENABLED'
     }
   },
   satisfactionSurvey: {

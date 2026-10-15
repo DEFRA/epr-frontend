@@ -1,7 +1,10 @@
 import Blankie from 'blankie'
 import { config } from '#config/config.js'
 import { isAnalyticsEnabled } from '#server/common/analytics/enabled.js'
-import { analyticsOrigins } from '#server/common/analytics/origins.js'
+import {
+  analyticsOrigins,
+  previewOrigins
+} from '#server/common/analytics/origins.js'
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
@@ -35,37 +38,39 @@ export function cspFormAction({ isProduction }) {
 }
 
 /**
- * Neither frameSrc nor generateNonces widen for analytics: the frame source
- * exists for a Tag Manager noscript iframe, and nonce propagation for tags
- * injected at runtime. Both are Tag Manager costs, and gtag.js alone incurs
- * neither.
- * @param {{ allowAnalytics: boolean, isProduction: boolean }} options
+ * Neither frameSrc nor generateNonces ever widen for analytics. The frame source
+ * would only serve the container's noscript iframe, which runs without any of
+ * the page's controls on the container. A nonce would be passed on by the
+ * container to every script it injects, and vouch for all of them. Preview only
+ * widens anything when analytics itself is on.
+ * @param {{ allowAnalytics: boolean, allowPreview: boolean, isProduction: boolean }} options
  * @returns {BlankieOptions}
  */
-export const cspOptions = ({ allowAnalytics, isProduction }) => ({
-  defaultSrc: ['self'],
-  fontSrc: ['self', 'data:'],
-  connectSrc: [
-    'self',
-    'wss',
-    'data:',
-    ...(allowAnalytics ? analyticsOrigins.connect : [])
-  ],
-  mediaSrc: ['self'],
-  styleSrc: ['self'],
-  scriptSrc: [
-    'self',
-    govukInlineScriptHash,
-    ...(allowAnalytics ? analyticsOrigins.script : [])
-  ],
-  imgSrc: ['self', 'data:', ...(allowAnalytics ? analyticsOrigins.img : [])],
-  frameSrc: ['self', 'data:'],
-  objectSrc: ['none'],
-  frameAncestors: ['none'],
-  formAction: cspFormAction({ isProduction }),
-  manifestSrc: ['self'],
-  generateNonces: false
-})
+export const cspOptions = ({ allowAnalytics, allowPreview, isProduction }) => {
+  /**
+   * @param {keyof typeof analyticsOrigins} directive
+   */
+  const granted = (directive) => [
+    ...(allowAnalytics ? analyticsOrigins[directive] : []),
+    ...(allowAnalytics && allowPreview ? previewOrigins[directive] : [])
+  ]
+
+  return {
+    defaultSrc: ['self'],
+    fontSrc: ['self', 'data:', ...granted('font')],
+    connectSrc: ['self', 'wss', 'data:', ...granted('connect')],
+    mediaSrc: ['self'],
+    styleSrc: ['self', ...granted('style')],
+    scriptSrc: ['self', govukInlineScriptHash, ...granted('script')],
+    imgSrc: ['self', 'data:', ...granted('img')],
+    frameSrc: ['self', 'data:'],
+    objectSrc: ['none'],
+    frameAncestors: ['none'],
+    formAction: cspFormAction({ isProduction }),
+    manifestSrc: ['self'],
+    generateNonces: false
+  }
+}
 
 /**
  * Manage content security policies.
@@ -75,6 +80,7 @@ const contentSecurityPolicy = {
   plugin: Blankie,
   options: cspOptions({
     allowAnalytics: isAnalyticsEnabled(),
+    allowPreview: config.get('analytics.previewEnabled'),
     isProduction: config.get('isProduction')
   })
 }
