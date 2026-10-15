@@ -288,7 +288,12 @@ describe(buildViewModel, () => {
 
     it('offer a year per year the registration has run, most recent first', () => {
       const viewModel = build({
-        registration: { ...anExporter, validFrom: '2024-06-01' }
+        registration: {
+          ...anExporter,
+          statusTimeline: {
+            '2024-06-01T00:00:00.000Z': { status: 'approved' }
+          }
+        }
       })
 
       expect(viewModel.registeredOnlyPeriods).toStrictEqual([
@@ -324,6 +329,22 @@ describe(buildViewModel, () => {
       expect(
         viewModel.registeredOnlyPeriods.map(({ year }) => year)
       ).toStrictEqual(['2026'])
+    })
+
+    it('stop at the year the registration was cancelled in', () => {
+      const viewModel = build({
+        registration: {
+          ...anExporter,
+          statusTimeline: {
+            '2025-01-01T00:00:00.000Z': { status: 'approved' },
+            '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+          }
+        }
+      })
+
+      expect(
+        viewModel.registeredOnlyPeriods.map(({ year }) => year)
+      ).toStrictEqual(['2025'])
     })
   })
 

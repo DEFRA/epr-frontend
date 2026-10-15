@@ -5,7 +5,6 @@ import {
 
 /**
  * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
- * @import { RegistrationDateRange } from '#server/common/helpers/organisations/registration-resource.js'
  */
 
 /**
@@ -79,27 +78,6 @@ export const shiftDay = (day, days) => {
   const shifted = new Date(day)
   shifted.setUTCDate(shifted.getUTCDate() + days)
   return utcCalendarDate(shifted)
-}
-
-/**
- * The years a registration has existed over, most recent first.
- *
- * A registration has no end date — it does not expire the way an accreditation
- * does (PAE-1904) — so the list always runs to the current year and grows each
- * January.
- * @param {{ dateRange: RegistrationDateRange, now?: Date }} params
- * @returns {number[]}
- */
-export const registrationYears = ({ dateRange, now = new Date() }) => {
-  const firstYear = yearOf(calendarDate(dateRange.validFrom))
-  const lastYear = now.getUTCFullYear()
-
-  // A registration granted ahead of the year it covers has not existed over
-  // any year yet, which `Array.from` answers as an empty list without a guard.
-  return Array.from(
-    { length: lastYear - firstYear + 1 },
-    (_, offset) => lastYear - offset
-  )
 }
 
 /**

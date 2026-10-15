@@ -1,58 +1,11 @@
 import { calendarDate } from '#server/common/helpers/calendar-date.js'
 import { describe, expect, it } from 'vitest'
 
-import {
-  registeredOnlyStretches,
-  registrationYears
-} from './registered-only.js'
+import { registeredOnlyStretches } from './registered-only.js'
 
 /**
  * @import { Stretch } from './registered-only.js'
  */
-
-// Every test pins the clock. The helpers run to "today", so a test reading the
-// real one would start failing on 1 January.
-const now = new Date('2026-06-15T00:00:00Z')
-
-describe(registrationYears, () => {
-  it('runs from the year it started to the current year, most recent first', () => {
-    expect(
-      registrationYears({
-        dateRange: { validFrom: '2024-06-01' },
-        now
-      })
-    ).toStrictEqual([2026, 2025, 2024])
-  })
-
-  it('names one year for a registration that started this year', () => {
-    expect(
-      registrationYears({
-        dateRange: { validFrom: '2026-02-01' },
-        now
-      })
-    ).toStrictEqual([2026])
-  })
-
-  // A registration can be granted before the year it covers begins, so its
-  // start date may still be in the future.
-  it('names no year for a registration that has not started yet', () => {
-    expect(
-      registrationYears({
-        dateRange: { validFrom: '2027-01-01' },
-        now
-      })
-    ).toStrictEqual([])
-  })
-
-  it('reads the starting year as UTC', () => {
-    expect(
-      registrationYears({
-        dateRange: { validFrom: '2026-01-01T00:00:00Z' },
-        now
-      })
-    ).toStrictEqual([2026])
-  })
-})
 
 describe(registeredOnlyStretches, () => {
   /**
