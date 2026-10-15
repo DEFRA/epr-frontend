@@ -2,7 +2,7 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 /**
- * @import { OrganisationView, RegistrationView } from './organisation-view.js'
+ * @import { AccreditationView, OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
 /**
@@ -22,4 +22,24 @@ export const registrationIn = (organisation, registrationNumber) => {
   }
 
   return organisation.registrations[registrationNumber]
+}
+
+/**
+ * The registration's accreditation for that year.
+ * @param {RegistrationView} registration
+ * @param {string} year
+ * @returns {AccreditationView}
+ */
+export const accreditationIn = (registration, year) => {
+  if (!Object.hasOwn(registration.accreditations, year)) {
+    throw notFound(
+      'Accreditation not found',
+      errorCodes.accreditationNotFound,
+      {
+        event: { action: 'fetch_accreditation', reason: `year=${year}` }
+      }
+    )
+  }
+
+  return registration.accreditations[year]
 }

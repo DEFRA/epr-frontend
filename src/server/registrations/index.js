@@ -17,6 +17,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { OverseasSitesParams } from './details/overseas-sites/controller.js'
+ * @import { AccreditationParams as AccreditationReportsParams } from './details/accreditations/reports/controller.js'
  */
 
 /**
@@ -82,7 +83,7 @@ const accreditationRoute = {
  */
 const reportsRoute = {
   /**
-   * @param {HapiRequest & { params: AccreditationParams }} request
+   * @param {HapiRequest & { params: AccreditationReportsParams }} request
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
@@ -200,7 +201,7 @@ export const registrations = {
         {
           ...reportsRoute,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/reports'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/reports'
         },
         {
           ...overseasSitesRoute,

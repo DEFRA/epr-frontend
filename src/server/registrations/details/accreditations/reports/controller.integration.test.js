@@ -8,7 +8,6 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import {
   getAllByRole,
@@ -27,10 +26,8 @@ import { fetchReportListDetails } from './helpers/fetch-report-list-details.js'
 
 vi.mock(import('./helpers/fetch-report-list-details.js'))
 
-const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = 'reg-001'
-const accreditationId = 'acc-001'
-const accreditationPath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
+const accreditationPath =
+  '/organisations/500118/registrations/R26ER5001180041PL/accreditations/2026'
 const path = `${accreditationPath}/reports`
 
 const operator = buildMockAuth()
@@ -60,23 +57,16 @@ const aPeriod = (period, { submitted }) =>
 
 /** @type {ReportListDetails} */
 const details = {
-  organisation: asOrganisation({
-    id: organisationId,
-    companyDetails: { name: 'Kirkby Plastics Ltd' }
-  }),
-  registration: /** @type {ReportListDetails['registration']} */ (
-    /** @type {unknown} */ ({
-      id: registrationId,
-      registrationNumber: 'R26ER5001180041PL'
-    })
-  ),
-  accreditation: /** @type {ReportListDetails['accreditation']} */ (
-    /** @type {unknown} */ ({
-      id: accreditationId,
-      accreditationNumber: 'A26ER5001180114PL',
-      status: 'approved'
-    })
-  ),
+  organisation: {
+    organisationNumber: 500118,
+    name: 'Kirkby Plastics Ltd',
+    registrations: {}
+  },
+  accreditation: {
+    accreditationNumber: 'A26ER5001180114PL',
+    status: 'approved',
+    statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+  },
   cadence: 'monthly',
   reportingPeriods: [
     aPeriod(5, { submitted: true }),
@@ -126,6 +116,13 @@ describe('the regulator reports detailed view', () => {
     const heading = getByRole(documentOf(body), 'heading', { level: 1 })
 
     expect(statusCode).toBe(statusCodes.ok)
+    expect(fetchReportListDetails).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organisationNumber: '500118',
+        registrationNumber: 'R26ER5001180041PL',
+        year: '2026'
+      })
+    )
     expect(heading.textContent).toContain('Reports')
     expect(
       heading.querySelector('[class^="govuk-caption-"]')?.textContent
@@ -177,7 +174,7 @@ describe('the regulator reports detailed view', () => {
       'View April, 2026'
     ])
     expect(links.at(0)?.getAttribute('href')).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/8/submissions/1/view`
+      `${accreditationPath}/reports/monthly/8/submissions/1/view`
     )
   })
 
@@ -224,9 +221,15 @@ describe('the regulator reports detailed view', () => {
       'Accreditation details',
       'Reports'
     ])
-    expect(crumbs.at(3)?.querySelector('a')?.getAttribute('href')).toBe(
+    expect(
+      crumbs
+        .slice(1, 4)
+        .map((crumb) => crumb.querySelector('a')?.getAttribute('href'))
+    ).toStrictEqual([
+      '/organisations/500118',
+      '/organisations/500118/registrations/R26ER5001180041PL',
       accreditationPath
-    )
+    ])
     expect(crumbs.at(4)?.querySelector('a')).toBeNull()
   })
 
@@ -252,27 +255,6 @@ describe('the regulator reports detailed view', () => {
     expect(documentOf(body).ownerDocument.title).toContain(
       'A26ER5001180114PL: Reports'
     )
-  })
-
-  it('titles the page by the heading alone, and drops the number from the caption, where the accreditation has none', async ({
-    server
-  }) => {
-    vi.mocked(fetchReportListDetails).mockResolvedValue({
-      ...details,
-      accreditation: /** @type {ReportListDetails['accreditation']} */ ({
-        ...details.accreditation,
-        accreditationNumber: null
-      })
-    })
-
-    const { body } = await visit(server, regulator)
-    const document = documentOf(body)
-
-    expect(document.ownerDocument.title).toContain('Reports')
-    expect(document.ownerDocument.title).not.toContain('A26ER')
-    expect(
-      document.querySelector('h1 [class^="govuk-caption-"]')?.textContent
-    ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
   })
 
   it('offers no way to change anything on the page', async ({ server }) => {

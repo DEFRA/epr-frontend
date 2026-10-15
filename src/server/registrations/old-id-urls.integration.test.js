@@ -19,6 +19,7 @@ const backendUrl = config.get('eprBackendUrl')
 
 const organisationId = '6507f1f77bcf86cd79943901'
 const registrationId = '6507f1f77bcf86cd79943902'
+const accreditationId = '6507f1f77bcf86cd79943903'
 const organisationNumber = '500118'
 const registrationNumber = 'R26ER5001180041PL'
 
@@ -33,8 +34,17 @@ const organisation = {
     {
       id: registrationId,
       registrationNumber,
+      accreditationId,
       material: 'plastic',
       wasteProcessingType: 'reprocessor'
+    }
+  ],
+  accreditations: [
+    {
+      id: accreditationId,
+      accreditationNumber: 'A26ER5001180114PL',
+      validFrom: '2026-07-01',
+      status: 'approved'
     }
   ]
 }
@@ -105,7 +115,7 @@ const backendHolds = (msw) =>
  */
 const visit = (server, url, auth) => server.inject({ method: 'GET', url, auth })
 
-describe('old registration page URLs', () => {
+describe('old registration and accreditation page URLs', () => {
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
   })
@@ -117,6 +127,47 @@ describe('old registration page URLs', () => {
   describe('the registered-only period page', () => {
     const oldUrl = `${byIds}/registered-only-periods/2026`
     const newUrl = `${byNumbers}/registered-only-periods/2026`
+
+    it('sends a regulator from the id URL to the number URL', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, oldUrl, regulator)
+      const page = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        regulator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(newUrl)
+      expect(page.statusCode).toBe(statusCodes.ok)
+    })
+
+    it('sends an operator from the id URL to the number URL, which is not found for them', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, oldUrl, operator)
+      const page = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        operator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(newUrl)
+      expect(page.statusCode).toBe(statusCodes.notFound)
+    })
+  })
+
+  describe('the accreditation reports page', () => {
+    const oldUrl = `${byIds}/accreditations/${accreditationId}/reports`
+    const newUrl = `${byNumbers}/accreditations/2026/reports`
 
     it('sends a regulator from the id URL to the number URL', async ({
       server,

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { CADENCE } from '../constants.js'
 import {
+  accreditationPath,
   organisationPath,
   reportApiPath,
   reportPath,
@@ -30,6 +31,26 @@ const monthlyKeys = {
   period: 8,
   submissionNumber: 1
 }
+
+describe(accreditationPath, () => {
+  it("gives the accreditation under its registration's year", () => {
+    expect(accreditationPath({ ...registrationKeys, year: '2026' })).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
+    )
+  })
+
+  it('encodes the registration number and year', () => {
+    expect(
+      accreditationPath({
+        organisationNumber: '500001',
+        registrationNumber: 'R25/SR&1',
+        year: '20/26'
+      })
+    ).toBe(
+      '/organisations/500001/registrations/R25%2FSR%261/accreditations/20%2F26'
+    )
+  })
+})
 
 describe(reportPath, () => {
   it('puts a quarterly submission under the registration reports', () => {

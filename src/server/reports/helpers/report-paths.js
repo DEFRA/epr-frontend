@@ -25,6 +25,14 @@ export const registrationPath = ({ registrationNumber, ...keys }) =>
   `${organisationPath(keys)}/registrations/${encodeURIComponent(registrationNumber)}`
 
 /**
+ * The accreditation's natural-key address.
+ * @param {AccreditationKeys} keys
+ * @returns {string}
+ */
+export const accreditationPath = ({ year, ...keys }) =>
+  `${registrationPath(keys)}/accreditations/${encodeURIComponent(year)}`
+
+/**
  * The summary log upload page, by id until it moves to natural keys.
  * @param {{ organisationId: string, registrationId: string }} ids
  * @returns {string}
@@ -53,7 +61,7 @@ export const reportPath = ({
 }) => {
   const reports =
     cadence === CADENCE.MONTHLY
-      ? `${registrationPath(keys)}/accreditations/${year}/reports`
+      ? `${accreditationPath({ ...keys, year: String(year) })}/reports`
       : `${reportsListPath(keys)}/${year}`
 
   return `${reports}/${cadence}/${period}/submissions/${submissionNumber}`
