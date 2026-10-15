@@ -8,7 +8,7 @@ import { fetchReportDetail } from './fetch-report-detail.js'
 import { ReportStaleError, STALE_REASON } from './stale.js'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -25,7 +25,7 @@ describe(fetchReportDetail, () => {
   }
 
   /**
-   * @param {SetupServerApi} msw
+   * @param {SetupServer} msw
    * @param {object} body
    */
   const backendAnswers = (msw, body) =>

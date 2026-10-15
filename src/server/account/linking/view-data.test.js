@@ -22,7 +22,7 @@ describe(buildLinkingViewData, () => {
       mockOrganisations,
       {
         errors: {
-          organisationId: {
+          organisationNumber: {
             text: 'Select an organisation'
           },
           anotherField: {
@@ -33,7 +33,7 @@ describe(buildLinkingViewData, () => {
     )
 
     expect(result.errors).toStrictEqual({
-      organisationId: {
+      organisationNumber: {
         text: 'Select an organisation'
       },
       anotherField: {
@@ -44,11 +44,39 @@ describe(buildLinkingViewData, () => {
     expect(result.errorSummary).toStrictEqual([
       {
         text: 'Select an organisation',
-        href: '#organisationId'
+        href: '#organisationNumber'
       },
       {
         text: 'Another error',
         href: '#anotherField'
+      }
+    ])
+  })
+
+  it('should carry the organisation number and reference number on each unlinked entry', () => {
+    const mockRequest = {
+      t: vi.fn((key) => `translated:${key}`)
+    }
+
+    const result = buildLinkingViewData(mockHapiRequest(mockRequest), {
+      current: { id: 'defra-org-123', name: 'Test Organisation' },
+      linked: null,
+      unlinked: [
+        {
+          id: 'org-1',
+          name: 'First Company',
+          orgId: 'FC111111',
+          referenceNumber: 'org-1'
+        }
+      ]
+    })
+
+    expect(result.unlinked).toStrictEqual([
+      {
+        displayName: 'First Company (ID: FC111111)',
+        name: 'First Company',
+        organisationNumber: 'FC111111',
+        referenceNumber: 'org-1'
       }
     ])
   })

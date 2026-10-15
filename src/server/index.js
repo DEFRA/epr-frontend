@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
 import { blockUnauthorisedWrites } from '#server/auth/block-unauthorised-writes.js'
+import { takeConfirmedChoice } from '#server/common/analytics/consent.js'
 import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuration.js'
 import { createSessionCookie } from '#server/auth/helpers/session-cookie.js'
 import { getVerifyToken } from '#server/auth/helpers/verify-token.js'
@@ -17,6 +18,7 @@ import {
 import { contentSecurityPolicy } from '#server/common/helpers/content-security-policy.js'
 import { catchAll } from '#server/common/helpers/errors.js'
 import { requestLogger } from '#server/common/helpers/logging/request-logger.js'
+import { naturalKeyRedirect } from '#server/common/helpers/natural-keys/natural-key-redirect.js'
 import { setupProxy } from '#server/common/helpers/proxy/setup-proxy.js'
 import { pulse } from '#server/common/helpers/pulse.js'
 import { requestTracing } from '#server/common/helpers/request-tracing.js'
@@ -172,7 +174,9 @@ export async function createServer(options = {}) {
   await server.register(plugins)
 
   server.ext('onPostAuth', blockUnauthorisedWrites)
+  server.ext('onPostAuth', naturalKeyRedirect)
   server.ext('onPreResponse', catchAll)
+  server.ext('onPreResponse', takeConfirmedChoice, { before: ['@hapi/yar'] })
 
   return server
 }

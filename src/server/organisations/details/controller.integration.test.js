@@ -1,17 +1,15 @@
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
-/** @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'; */
+/** @import { OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'; */
+/** @import { SetupServer } from 'msw/node'; */
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import {
   buildMockAuth,
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getAllByRole,
@@ -22,16 +20,11 @@ import {
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
-
-vi.mock(
-  import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
-)
-vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 const backendUrl = config.get('eprBackendUrl')
-const organisationId = '6507f1f77bcf86cd79943901'
-const path = `/organisations/${organisationId}`
+const organisationNumber = 500118
+const path = `/organisations/${organisationNumber}`
 
 const operator = buildMockAuth()
 
@@ -53,108 +46,64 @@ const unrecognised = buildMockAuth({
   ...sessionIdentity(IDENTITIES.unrecognised)
 })
 
-const approvedGlass = {
-  id: 'reg-001',
-  registrationNumber: 'R26ER5001180041PL',
-  status: 'approved',
-  material: 'glass',
-  glassRecyclingProcess: ['glass_re_melt'],
-  accreditationId: 'acc-001',
-  submittedToRegulator: 'ea',
-  wasteProcessingType: 'reprocessor',
-  site: { address: { line1: 'Site name A' } }
-}
-
-const rejectedAluminium = {
-  id: 'reg-002',
-  status: 'rejected',
-  material: 'aluminium',
-  submittedToRegulator: 'sepa',
-  wasteProcessingType: 'reprocessor',
-  site: { address: { line1: 'Site name A' } }
-}
-
-const exportedPaper = {
-  id: 'reg-003',
-  registrationNumber: 'R26EX5001180041PA',
-  status: 'approved',
-  material: 'paper',
-  submittedToRegulator: 'ea',
-  wasteProcessingType: 'exporter'
+/** @type {OrganisationView} */
+const organisation = {
+  organisationNumber,
+  name: 'Kirkby Plastics Ltd',
+  registrations: {
+    R26ER5001180041PL: {
+      status: 'approved',
+      material: 'glass_re_melt',
+      submittedToRegulator: { code: 'ea' },
+      wasteProcessingType: 'reprocessor',
+      site: { address: { line1: 'Site name A' } },
+      accreditations: {
+        2025: { accreditationNumber: 'A25ER5001180114GR', status: 'cancelled' },
+        2026: { accreditationNumber: 'A26ER5001180114GR', status: 'approved' }
+      }
+    },
+    R26ER5001180042AL: {
+      status: 'cancelled',
+      material: 'aluminium',
+      submittedToRegulator: { code: 'sepa' },
+      wasteProcessingType: 'reprocessor',
+      site: { address: { line1: 'Site name A' } },
+      accreditations: {}
+    },
+    R26EX5001180041PA: {
+      status: 'approved',
+      material: 'paper',
+      submittedToRegulator: { code: 'ea' },
+      wasteProcessingType: 'exporter',
+      accreditations: {}
+    }
+  }
 }
 
 /**
- * The same three registrations as the collection answers them: in the order the
- * contract promises, with glass resolved to its process and what the applicant
- * asked for kept beside it.
- * @type {RegistrationResource[]}
+ * The backend as both the regulator page and the operator dashboard read it.
+ * The year a request names is recorded, so a test can see which the page asked for.
+ * @param {SetupServer} msw
  */
-const registrations = [
-  {
-    id: 'reg-001',
-    organisation: { id: organisationId },
-    registrationNumber: 'R26ER5001180041PL',
-    status: 'approved',
-    material: 'glass_re_melt',
-    reprocessingType: 'input',
-    dateRange: { validFrom: null },
-    accreditations: [
-      {
-        id: 'acc-001',
-        accreditationNumber: 'A26ER5001180114GR',
-        status: 'approved'
-      }
-    ],
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'ea',
-      material: 'glass',
-      wasteProcessingType: 'reprocessor',
-      site: { address: { line1: 'Site name A' } }
-    }
-  },
-  {
-    id: 'reg-003',
-    organisation: { id: organisationId },
-    registrationNumber: 'R26EX5001180041PA',
-    status: 'approved',
-    material: 'paper',
-    reprocessingType: null,
-    dateRange: { validFrom: null },
-    accreditations: [],
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'ea',
-      material: 'paper',
-      wasteProcessingType: 'exporter',
-      site: null
-    }
-  },
-  {
-    id: 'reg-002',
-    organisation: { id: organisationId },
-    registrationNumber: null,
-    status: 'rejected',
-    material: 'aluminium',
-    reprocessingType: null,
-    dateRange: { validFrom: null },
-    accreditations: [],
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'sepa',
-      material: 'aluminium',
-      wasteProcessingType: 'reprocessor',
-      site: { address: { line1: 'Site name A' } }
-    }
-  }
-]
+const serveBackend = (msw) => {
+  /** @type {Array<string | null>} */
+  const yearsAskedFor = []
 
-const organisation = asOrganisation({
-  id: organisationId,
-  companyDetails: { name: 'Kirkby Plastics Ltd' },
-  registrations: [approvedGlass, rejectedAluminium, exportedPaper],
-  accreditations: [{ id: 'acc-001', status: 'approved' }]
-})
+  msw.use(
+    http.get(`${backendUrl}${path}`, ({ request }) => {
+      yearsAskedFor.push(new URL(request.url).searchParams.get('year'))
+      return HttpResponse.json(organisation)
+    }),
+    http.get(`${backendUrl}${path}/years`, () =>
+      HttpResponse.json({ years: [2026, 2025] })
+    ),
+    http.get(`${backendUrl}${path}/waste-balances/:year`, () =>
+      HttpResponse.json({})
+    )
+  )
+
+  return { yearsAskedFor }
+}
 
 /**
  * @param {HapiServer} server
@@ -183,24 +132,20 @@ const rowsOf = (body) =>
     .slice(1)
     .map((row) =>
       [...queryAllByRole(row, 'rowheader'), ...queryAllByRole(row, 'cell')].map(
-        (cell) => cell.textContent?.trim()
+        (cell) => cell.textContent?.trim().replaceAll(/\s+/g, ' ')
       )
     )
 
 describe('the organisation homepage a regulator reads', () => {
+  /** @type {ReturnType<typeof serveBackend>} */
+  let backend
+
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
   })
 
   beforeEach(({ msw }) => {
-    vi.mocked(fetchWasteBalances).mockResolvedValue({})
-    vi.mocked(fetchOrganisationById).mockResolvedValue(organisation)
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations`,
-        () => HttpResponse.json({ registrations })
-      )
-    )
+    backend = serveBackend(msw)
   })
 
   afterAll(() => {
@@ -213,6 +158,12 @@ describe('the organisation homepage a regulator reads', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(headingOf(body)).toContain('Organisation homepage')
     expect(documentOf(body).textContent).toContain('Kirkby Plastics Ltd')
+  })
+
+  it('reads the whole organisation, not one year of it', async ({ server }) => {
+    await visit(server, regulator)
+
+    expect(backend.yearsAskedFor).toStrictEqual([null])
   })
 
   it('names the columns the design asks for', async ({ server }) => {
@@ -242,28 +193,30 @@ describe('the organisation homepage a regulator reads', () => {
         'Approved',
         'Glass remelt',
         'EA',
-        'Approved',
+        '2026: Approved 2025: Cancelled',
         'View R26ER5001180041PL'
       ],
       [
-        'Not applicable',
-        'Rejected',
+        'R26ER5001180042AL',
+        'Cancelled',
         'Aluminium',
         'SEPA',
         'Not applicable',
-        'View Aluminium, Rejected'
+        'View R26ER5001180042AL'
       ]
     ])
   })
 
-  it('opens a registration from the row that names it', async ({ server }) => {
+  it('opens a registration by number from the row that names it', async ({
+    server
+  }) => {
     const { body } = await visit(server, regulator)
 
     expect(
       getByRole(documentOf(body), 'link', {
         name: /^View\s*R26ER5001180041PL$/
       }).getAttribute('href')
-    ).toBe(`/organisations/${organisationId}/registrations/reg-001`)
+    ).toBe(`${path}/registrations/R26ER5001180041PL`)
   })
 
   it('walks back to the organisation list', async ({ server }) => {
@@ -287,20 +240,65 @@ describe('the organisation homepage a regulator reads', () => {
   })
 })
 
+describe('an old bookmark to the organisation page', () => {
+  const organisationId = '6507f1f77bcf86cd79943901'
+
+  beforeAll(() => {
+    config.set('featureFlags.regulatorAccess', true)
+  })
+
+  beforeEach(({ msw }) => {
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+        HttpResponse.json({
+          id: organisationId,
+          orgId: organisationNumber,
+          registrations: [],
+          accreditations: []
+        })
+      )
+    )
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.regulatorAccess', false)
+  })
+
+  it.for(
+    /** @type {const} */ ([
+      ['an operator', ''],
+      ['an operator', '/exporting'],
+      ['an operator', '/error'],
+      ['a regulator', ''],
+      ['a regulator', '/exporting']
+    ])
+  )(
+    'sends %s from the id to the number at "%s"',
+    async ([who, page], { server }) => {
+      const auth =
+        who === 'a regulator'
+          ? regulator
+          : buildMockAuth({ linkedOrganisationId: organisationId })
+
+      const response = await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}${page}`,
+        auth
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(`${path}${page}`)
+    }
+  )
+})
+
 describe('who the organisation page renders for', () => {
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
   })
 
   beforeEach(({ msw }) => {
-    vi.mocked(fetchWasteBalances).mockResolvedValue({})
-    vi.mocked(fetchOrganisationById).mockResolvedValue(organisation)
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations`,
-        () => HttpResponse.json({ registrations })
-      )
-    )
+    serveBackend(msw)
   })
 
   afterAll(() => {

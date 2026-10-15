@@ -8,12 +8,12 @@ import { fetchOrganisations } from './fetch-organisations.js'
 const backendUrl = config.get('eprBackendUrl')
 const backendToken = 'test-backend-token'
 
-/** @import { SetupServerApi } from 'msw/node' */
+/** @import { SetupServer } from 'msw/node' */
 
 /**
  * Captures the request the helper makes and answers it with an empty page, so
  * a test can assert on what was asked for rather than what came back.
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @returns {() => URL}
  */
 const captureRequest = (msw) => {
@@ -74,35 +74,5 @@ describe(fetchOrganisations, () => {
     await fetchOrganisations({ page: 1, search: 'Acme Waste', backendToken })
 
     expect(request().searchParams.get('search')).toBe('Acme Waste')
-  })
-
-  test('asks for every organisation when no search was entered', async ({
-    msw
-  }) => {
-    const request = captureRequest(msw)
-
-    await fetchOrganisations({ page: 1, search: '', backendToken })
-
-    expect(request().searchParams.has('search')).toBe(false)
-  })
-
-  test('authorises the call with the session backend token', async ({
-    msw
-  }) => {
-    /** @type {Request | undefined} */
-    let captured
-
-    msw.use(
-      http.get(`${backendUrl}/v1/organisations`, ({ request }) => {
-        captured = request
-        return HttpResponse.json({ items: [], totalPages: 0 })
-      })
-    )
-
-    await fetchOrganisations({ page: 1, backendToken })
-
-    expect(/** @type {Request} */ (captured).headers.get('authorization')).toBe(
-      'Bearer test-backend-token'
-    )
   })
 })

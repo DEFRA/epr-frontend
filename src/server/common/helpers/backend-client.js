@@ -36,8 +36,12 @@ import { getTracingHeaderName } from './request-tracing.js'
  */
 
 /**
+ * @typedef {Record<string, string | number | undefined>} Query
+ */
+
+/**
  * @template T
- * @typedef {{ onError?: OnError, parse?: Parse<T> }} CallOptions
+ * @typedef {{ onError?: OnError, parse?: Parse<T>, query?: Query }} CallOptions
  */
 
 /**
@@ -86,6 +90,16 @@ const hasJsonBody = (response) =>
 
 /**
  * @param {string} url
+ * @param {Error} cause
+ */
+const fetchFailed = (url, cause) =>
+  internal(`Failed to fetch from url: ${url}`, errorCodes.externalFetchFailed, {
+    event: { action: 'external_fetch', reason: classifierTail(cause) },
+    cause
+  })
+
+/**
+ * @param {string} url
  * @param {RequestInit & { headers: Record<string, string> }} init
  */
 const request = async (url, init) => {
@@ -94,15 +108,21 @@ const request = async (url, init) => {
       ...init,
       headers: withTraceId(getTracingHeaderName(), init.headers)
     })
-  } catch (cause) {
-    throw internal(
-      `Failed to fetch from url: ${url}`,
-      errorCodes.externalFetchFailed,
-      {
-        event: { action: 'external_fetch', reason: classifierTail(cause) },
-        cause
-      }
-    )
+  } catch (error) {
+    throw fetchFailed(url, error)
+  }
+}
+
+/**
+ * @param {string} url
+ * @param {Response} response
+ * @returns {Promise<unknown>}
+ */
+const readJson = async (url, response) => {
+  try {
+    return await response.json()
+  } catch (error) {
+    throw fetchFailed(url, error)
   }
 }
 
@@ -134,7 +154,9 @@ const rejection = async (url, response) => {
   )
 
   if (hasJsonBody(response)) {
-    error.output.payload = await response.json()
+    error.output.payload = /** @type {Boom.Payload} */ (
+      await readJson(url, response)
+    )
   }
 
   return error
@@ -164,7 +186,7 @@ const sendJson = async (token, method, url, body) => {
     throw await rejection(url, response)
   }
 
-  return hasJsonBody(response) ? response.json() : undefined
+  return hasJsonBody(response) ? readJson(url, response) : undefined
 }
 
 /**
@@ -241,8 +263,19 @@ const sendForStream = async (token, url) => {
  * @param {{ onError?: OnError }} [defaults]
  */
 export const backend = (token, defaults = {}) => {
-  /** @param {string} path */
-  const urlOf = (path) => new URL(path, config.get('eprBackendUrl')).href
+  /**
+   * @param {string} endpoint
+   * @param {Query} [query]
+   */
+  const urlOf = (endpoint, query = {}) => {
+    const url = new URL(endpoint, config.get('eprBackendUrl'))
+
+    Object.entries(query)
+      .filter(([, value]) => value !== undefined)
+      .forEach(([key, value]) => url.searchParams.append(key, String(value)))
+
+    return url.href
+  }
 
   /**
    * @template T
@@ -264,14 +297,14 @@ export const backend = (token, defaults = {}) => {
   /**
    * @template T
    * @param {string} method
-   * @param {string} path
+   * @param {string} endpoint
    * @param {unknown} body
    * @param {CallOptions<T>} options
    * @returns {Promise<T>}
    */
-  const call = (method, path, body, { parse, ...options }) =>
+  const call = (method, endpoint, body, { parse, query, ...options }) =>
     guarded(options, async () => {
-      const url = urlOf(path)
+      const url = urlOf(endpoint, query)
       const payload = await sendJson(token, method, url, body)
       return parse ? parse(payload, { url }) : /** @type {T} */ (payload)
     })
@@ -283,45 +316,46 @@ export const backend = (token, defaults = {}) => {
     (method) =>
     /**
      * @template [T=void]
-     * @param {string} path
+     * @param {string} endpoint
      * @param {unknown} [body]
      * @param {CallOptions<T>} [options]
      * @returns {Promise<T>}
      */
-    (path, body, options = {}) =>
-      call(method, path, body, options)
+    (endpoint, body, options = {}) =>
+      call(method, endpoint, body, options)
 
   return {
     /**
      * @template [T=unknown]
-     * @param {string} path
+     * @param {string} endpoint
      * @param {CallOptions<T>} [options]
      * @returns {Promise<T>}
      */
-    get: (path, options = {}) => call('GET', path, undefined, options),
+    get: (endpoint, options = {}) => call('GET', endpoint, undefined, options),
     post: withBody('POST'),
     put: withBody('PUT'),
     patch: withBody('PATCH'),
     /**
      * @template [T=void]
-     * @param {string} path
+     * @param {string} endpoint
      * @param {CallOptions<T>} [options]
      * @returns {Promise<T>}
      */
-    delete: (path, options = {}) => call('DELETE', path, undefined, options),
+    delete: (endpoint, options = {}) =>
+      call('DELETE', endpoint, undefined, options),
     /**
      * Where the backend redirects to, without following it.
-     * @param {string} path
+     * @param {string} endpoint
      * @param {{ onError?: OnError }} [options]
      */
-    redirect: (path, options = {}) =>
-      guarded(options, () => sendForRedirect(token, urlOf(path))),
+    redirect: (endpoint, options = {}) =>
+      guarded(options, () => sendForRedirect(token, urlOf(endpoint))),
     /**
      * The body as a stream, for passing straight to `h.response`.
-     * @param {string} path
+     * @param {string} endpoint
      * @param {{ onError?: OnError }} [options]
      */
-    stream: (path, options = {}) =>
-      guarded(options, () => sendForStream(token, urlOf(path)))
+    stream: (endpoint, options = {}) =>
+      guarded(options, () => sendForStream(token, urlOf(endpoint)))
   }
 }

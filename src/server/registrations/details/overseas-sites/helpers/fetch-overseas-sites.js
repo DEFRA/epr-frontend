@@ -4,104 +4,91 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { backend, path } from '#server/common/helpers/backend-client.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+
+/** @import { OnError } from '#server/common/helpers/backend-client.js' */
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
- */
-
-/**
- * Where one overseas reprocessing site is, as
- * `/v1/organisations/{id}/registrations/{id}/overseas-sites` answers it. Every
- * field is null where no stored site carries the id the registration names.
- *
- * The resource serves where a site is, not whether it is approved, so there is
- * no approval date here to render.
  * @typedef {{
- *   name: string | null,
- *   country: string | null,
+ *   name: string,
  *   address: {
+ *     country: string,
  *     line1: string,
- *     line2?: string | null,
+ *     line2?: string,
  *     townOrCity: string,
- *     stateOrRegion?: string | null,
- *     postcode?: string | null
- *   } | null,
- *   coordinates: string | null
- * }} OverseasSiteDetail
+ *     stateOrRegion?: string,
+ *     postcode?: string
+ *   },
+ *   coordinates?: string
+ * }} OverseasSiteView
  */
 
 /**
- * @typedef {Record<string, OverseasSiteDetail>} OverseasSitesById
+ * @typedef {Record<string, OverseasSiteView>} OverseasSitesByOrsId
  * @typedef {{
- *   organisation: Organisation,
- *   registration: Registration,
- *   sites: OverseasSitesById
+ *   material: string,
+ *   overseasSites?: OverseasSitesByOrsId
+ * }} RegistrationView
+ * @typedef {{
+ *   name: string,
+ *   tradingName?: string,
+ *   organisationNumber: number,
+ *   registrations: Record<string, RegistrationView>
+ * }} OrganisationView
+ * @typedef {{
+ *   organisation: OrganisationView,
+ *   registrationNumber: string,
+ *   registration: RegistrationView
  * }} OverseasSitesDetails
  * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
+ *   organisationNumber: string,
+ *   registrationNumber: string,
  *   backendToken: string
  * }} OverseasSitesRequest
  */
 
 /**
- * A registration this organisation does not hold is a 404 from the organisation
- * read and from the sites route alike, and the two race. Either is re-thrown as
- * the same failure, so the log line names what was asked for whichever read
- * lost.
  * @param {Omit<OverseasSitesRequest, 'backendToken'>} params
- * @returns {(error: unknown) => never}
  */
-const asMissingRegistration =
-  ({ organisationId, registrationId }) =>
-  (error) => {
-    if (!Boom.isBoom(error, statusCodes.notFound)) {
-      throw error
+const registrationNotFound = ({ organisationNumber, registrationNumber }) =>
+  notFound('Registration not found', errorCodes.registrationNotFound, {
+    event: {
+      action: 'fetch_overseas_sites',
+      reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber}`
     }
+  })
 
-    throw notFound('Registration not found', errorCodes.registrationNotFound, {
-      event: {
-        action: 'fetch_overseas_sites',
-        reason: `organisationId=${organisationId} registrationId=${registrationId}`
-      }
-    })
+/**
+ * @param {Omit<OverseasSitesRequest, 'backendToken'>} params
+ * @returns {OnError}
+ */
+const asMissingRegistration = (params) => (error) => {
+  if (Boom.isBoom(error, statusCodes.notFound)) {
+    throw registrationNotFound(params)
   }
 
-/**
- * @param {OverseasSitesRequest} params
- * @returns {Promise<OverseasSitesById>}
- */
-const fetchSites = (params) =>
-  backend(params.backendToken).get(
-    path`/v1/organisations/${params.organisationId}/registrations/${params.registrationId}/overseas-sites`,
-    { onError: asMissingRegistration(params) }
-  )
+  throw error
+}
 
 /**
- * The sites the registration names, resolved to where each one is.
- *
- * The registration comes off the organisation document rather than its own
- * address, as the accreditation page's does: what this page wants from it is
- * the number for the caption and the material for the packaging waste category
- * column, and the stored record carries both.
  * @param {OverseasSitesRequest} params
  * @returns {Promise<OverseasSitesDetails>}
  */
 export const fetchOverseasSites = async (params) => {
-  const [linked, sites] = await Promise.all([
-    fetchRegistrationAndAccreditation(
-      params.organisationId,
-      params.registrationId,
-      params.backendToken
-    ).catch(asMissingRegistration(params)),
-    fetchSites(params)
-  ])
+  const { organisationNumber, registrationNumber, backendToken } = params
+
+  /** @type {OrganisationView} */
+  const organisation = await backend(backendToken).get(
+    path`/organisations/${organisationNumber}`,
+    { onError: asMissingRegistration(params) }
+  )
+
+  if (!Object.hasOwn(organisation.registrations, registrationNumber)) {
+    throw registrationNotFound(params)
+  }
 
   return {
-    organisation: linked.organisationData,
-    registration: linked.registration,
-    sites
+    organisation,
+    registrationNumber,
+    registration: organisation.registrations[registrationNumber]
   }
 }

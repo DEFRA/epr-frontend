@@ -5,7 +5,8 @@
  *   | 'signInSuccessNonInitialUser'
  *   | 'signOutSuccess'} AuthMetricName
  * @typedef {'TransactionStart' | 'TransactionEnd'} JourneyMetricName
- * @typedef {AuthMetricName | JourneyMetricName} MetricName
+ * @typedef {'OldPageUrlRequested'} PageUrlMetricName
+ * @typedef {AuthMetricName | JourneyMetricName | PageUrlMetricName} MetricName
  */
 
 /**

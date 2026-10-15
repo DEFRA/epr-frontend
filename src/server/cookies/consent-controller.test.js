@@ -59,7 +59,13 @@ describe('#cookieConsent', () => {
     expect(headers.location).toBe('/cookies')
   })
 
-  it.for(['//evil.example.com', 'https://evil.example.com', 'not-a-path'])(
+  it.for([
+    '//evil.example.com',
+    '/\\evil.example.com',
+    '/\t/evil.example.com',
+    'https://evil.example.com',
+    'not-a-path'
+  ])(
     'should refuse to redirect off-site to %s',
     async (returnUrl, { server }) => {
       const { headers } = await postConsent(server, {
@@ -70,6 +76,14 @@ describe('#cookieConsent', () => {
       expect(headers.location).toBe('/')
     }
   )
+
+  it('should return the user to the start when no page was given', async ({
+    server
+  }) => {
+    const { headers } = await postConsent(server, { analytics: 'accepted' })
+
+    expect(headers.location).toBe('/')
+  })
 
   it('should reject a choice it does not recognise', async ({ server }) => {
     const { statusCode } = await postConsent(server, {
