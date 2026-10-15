@@ -63,6 +63,27 @@ export const accreditedStretches = (accreditation, year) => {
 }
 
 /**
+ * The period an accreditation is shown as covering within its year.
+ * @param {AccreditationView} accreditation
+ * @param {string} year
+ * @returns {{ validFrom: string, validTo: string }}
+ */
+export const accreditedDateRange = (accreditation, year) => {
+  const [first] = accreditedStretches(accreditation, year)
+  const [lastDate, { status }] = /** @type {[string, { status: string }]} */ (
+    timelineEntries(accreditation).at(-1)
+  )
+
+  return {
+    validFrom: first.from,
+    validTo:
+      status === ACCREDITATION_STATUS.CANCELLED
+        ? lastDate
+        : lastDayOf(Number(year))
+  }
+}
+
+/**
  * When the registration started.
  * @param {RegistrationView} registration
  * @returns {{ validFrom: string }}

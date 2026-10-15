@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { registeredOnlyStretches } from './registered-only.js'
 import {
+  accreditedDateRange,
   accreditedStretches,
   dailyTimeline,
   registrationAccreditedStretches,
@@ -207,6 +208,47 @@ describe(accreditedStretches, () => {
         '2026'
       )
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-12-31' }])
+  })
+})
+
+describe(accreditedDateRange, () => {
+  it('ends on the day of a cancellation that follows an earlier transition that day', () => {
+    expect(
+      accreditedDateRange(
+        anAccreditation({
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2026-09-30T15:00:00.000Z': 'cancelled',
+          '2026-09-30T09:00:00.000Z': 'suspended'
+        }),
+        '2026'
+      )
+    ).toStrictEqual({ validFrom: '2026-02-01', validTo: '2026-09-30' })
+  })
+
+  it('runs from the first stretch to 31 December', () => {
+    expect(accreditedDateRange(reinstated, '2026')).toStrictEqual({
+      validFrom: '2026-01-01',
+      validTo: '2026-12-31'
+    })
+  })
+
+  it('starts on the first approval in the year when an earlier stretch ended the year before', () => {
+    expect(accreditedDateRange(cancelledLastYear, '2026')).toStrictEqual({
+      validFrom: '2026-02-01',
+      validTo: '2026-12-31'
+    })
+  })
+
+  it('ends on the cancellation date when the last entry is a cancellation', () => {
+    expect(
+      accreditedDateRange(
+        anAccreditation({
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2026-09-30T09:00:00.000Z': 'cancelled'
+        }),
+        '2026'
+      )
+    ).toStrictEqual({ validFrom: '2026-02-01', validTo: '2026-09-30' })
   })
 })
 
