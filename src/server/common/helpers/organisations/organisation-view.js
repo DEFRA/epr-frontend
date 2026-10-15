@@ -8,14 +8,25 @@
  */
 
 /**
- * @typedef {{ accreditationNumber: string, status: AccreditationStatus }} AccreditationView
+ * Statuses keyed by the ISO datetime each took effect.
+ * @typedef {Record<string, { status: string }>} StatusTimeline
+ */
+
+/**
+ * @typedef {{
+ *   accreditationNumber: string,
+ *   status: AccreditationStatus,
+ *   statusTimeline: StatusTimeline
+ * }} AccreditationView
  */
 
 /**
  * @typedef {{
  *   status: RegistrationStatus,
+ *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },
+ *   statusTimeline: StatusTimeline,
  *   accreditations: Record<string, AccreditationView>
  * }} RegistrationViewCommon
  */

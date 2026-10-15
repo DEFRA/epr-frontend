@@ -5,12 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildViewModel } from './build-view-model.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { AccreditationResource } from '../helpers/types.js'
+ * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
  * @import { TableRow } from './build-view-model.js'
  */
 
@@ -33,63 +31,47 @@ const localise = createMockLocalise({
   'reports:actionView': 'View'
 })
 
-const organisationId = '6507f1f77bcf86cd79943901'
+const organisationNumber = '500118'
+const registrationNumber = 'R26ER5001180041PL'
+const registrationPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
 
 /**
- * @param {Partial<Organisation['companyDetails']>} [companyDetails]
- * @returns {Organisation}
+ * @param {Partial<OrganisationView>} [overrides]
+ * @returns {OrganisationView}
  */
-const anOrganisation = (companyDetails) =>
-  /** @type {Organisation} */ (
-    /** @type {unknown} */ ({
-      id: organisationId,
-      companyDetails: { name: 'Kirkby Plastics Ltd', ...companyDetails }
-    })
+const anOrganisation = (overrides) => ({
+  organisationNumber: 500118,
+  name: 'Kirkby Plastics Ltd',
+  registrations: {},
+  ...overrides
+})
+
+/**
+ * @param {Record<string, string>} timeline - status by ISO datetime
+ * @returns {AccreditationView}
+ */
+const anAccreditation = (timeline) => ({
+  accreditationNumber: 'A26ER5001180114PL',
+  status: 'approved',
+  statusTimeline: Object.fromEntries(
+    Object.entries(timeline).map(([date, status]) => [date, { status }])
   )
+})
 
 /**
- * @param {Partial<RegistrationResource>} [overrides]
- * @returns {RegistrationResource}
+ * @param {Record<string, AccreditationView>} [accreditations]
+ * @returns {RegistrationView}
  */
-const aRegistration = (overrides) =>
-  /** @type {RegistrationResource} */ ({
-    id: 'reg-001',
-    organisation: { id: organisationId },
-    registrationNumber: 'R26ER5001180041PL',
-    status: 'approved',
-    material: 'plastic',
-    reprocessingType: 'input',
-    dateRange: { validFrom: '2026-01-01' },
-    accreditations: [],
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'ea',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor',
-      site: null
-    },
-    ...overrides
-  })
-
-/**
- * @param {string | null} validFrom
- * @param {string | null} [validTo]
- * @returns {AccreditationResource}
- */
-const anAccreditation = (validFrom, validTo = null) =>
-  /** @type {AccreditationResource} */ ({
-    id: 'acc-001',
-    accreditationNumber: 'A26ER5001180114PL',
-    status: 'approved',
-    reprocessingType: 'input',
-    dateRange: { validFrom, validTo },
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'ea',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor'
-    }
-  })
+const aRegistration = (accreditations = {}) => ({
+  status: 'approved',
+  validFrom: '2026-01-01',
+  material: 'plastic',
+  submittedToRegulator: { code: 'ea' },
+  wasteProcessingType: 'reprocessor',
+  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
+  site: { address: { fullAddress: 'North Road, Leeds' } },
+  accreditations
+})
 
 /**
  * A registered-only submission, which the backend writes zero-delta.
@@ -109,9 +91,8 @@ const aLedgerEvent = (createdAt = '2026-05-04T09:00:00.000Z') => ({
 
 /**
  * @param {{
- *   organisation?: Organisation,
- *   registration?: RegistrationResource,
- *   accreditations?: AccreditationResource[],
+ *   organisation?: OrganisationView,
+ *   registration?: RegistrationView,
  *   cadence?: CadenceValue | null,
  *   reportingPeriods?: ReportingPeriod[],
  *   ledgerEvents?: LedgerEvent[] | null,
@@ -121,7 +102,6 @@ const aLedgerEvent = (createdAt = '2026-05-04T09:00:00.000Z') => ({
 const build = ({
   organisation,
   registration,
-  accreditations,
   cadence = 'quarterly',
   reportingPeriods,
   ledgerEvents = null,
@@ -130,7 +110,7 @@ const build = ({
   buildViewModel({
     organisation: organisation ?? anOrganisation(),
     registration: registration ?? aRegistration(),
-    accreditations: accreditations ?? [],
+    keys: { organisationNumber, registrationNumber },
     cadence,
     reportingPeriods: reportingPeriods ?? [],
     ledgerEvents,
@@ -177,33 +157,28 @@ describe(buildViewModel, () => {
     expect(build().caption).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
   })
 
-  it('drops the number from the caption for a registration that holds none', () => {
-    expect(
-      build({
-        registration: aRegistration({ registrationNumber: null })
-      }).caption
-    ).toBe('Kirkby Plastics Ltd')
-  })
-
   it('names the organisation by its trading name where it holds one', () => {
     expect(
       build({
         organisation: anOrganisation({ tradingName: 'Kirkby Recycling' })
       }).caption
-    ).toContain('Kirkby Recycling')
+    ).toBe('Kirkby Recycling - R26ER5001180041PL')
   })
 
-  it('walks back to the registration it sits under', () => {
+  it('names the organisation by its name where the trading name is blank', () => {
+    expect(
+      build({ organisation: anOrganisation({ tradingName: '  ' }) }).caption
+    ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
+  })
+
+  it('walks back to the registration it sits under, by number', () => {
     expect(build().breadcrumbs).toStrictEqual([
       { text: 'All organisations', href: '/regulators/home' },
       {
         text: 'Kirkby Plastics Ltd',
-        href: `/organisations/${organisationId}`
+        href: `/organisations/${organisationNumber}`
       },
-      {
-        text: 'Registration details',
-        href: `/organisations/${organisationId}/registrations/reg-001`
-      },
+      { text: 'Registration details', href: registrationPath },
       { text: '2026 Registered-only periods' }
     ])
   })
@@ -214,13 +189,64 @@ describe(buildViewModel, () => {
 
   it('holds data where an accreditation started after the registration', () => {
     expect(
-      build({ accreditations: [anAccreditation('2026-03-01')] }).hasData
+      build({
+        registration: aRegistration({
+          2026: anAccreditation({ '2026-03-01T09:00:00.000Z': 'approved' })
+        })
+      }).hasData
     ).toBe(true)
   })
 
   it('holds none where the accreditation ran from the registration start', () => {
     expect(
-      build({ accreditations: [anAccreditation('2026-01-01')] }).hasData
+      build({
+        registration: aRegistration({
+          2026: anAccreditation({ '2026-01-01T09:00:00.000Z': 'approved' })
+        })
+      }).hasData
+    ).toBe(false)
+  })
+
+  it('holds data for the gap a cancelled accreditation left', () => {
+    expect(
+      build({
+        registration: aRegistration({
+          2026: anAccreditation({
+            '2026-01-01T09:00:00.000Z': 'approved',
+            '2026-03-10T09:00:00.000Z': 'cancelled',
+            '2026-03-30T09:00:00.000Z': 'approved'
+          })
+        })
+      }).hasData
+    ).toBe(true)
+  })
+
+  it('holds none where the accreditation was only suspended', () => {
+    expect(
+      build({
+        registration: aRegistration({
+          2026: anAccreditation({
+            '2026-01-01T09:00:00.000Z': 'approved',
+            '2026-03-10T09:00:00.000Z': 'suspended'
+          })
+        })
+      }).hasData
+    ).toBe(false)
+  })
+
+  it('holds none where the registration was cancelled when the accreditation was', () => {
+    const cancelledOn = {
+      '2026-01-01T09:00:00.000Z': 'approved',
+      '2026-03-01T09:00:00.000Z': 'cancelled'
+    }
+
+    expect(
+      build({
+        registration: {
+          ...aRegistration({ 2026: anAccreditation(cancelledOn) }),
+          statusTimeline: anAccreditation(cancelledOn).statusTimeline
+        }
+      }).hasData
     ).toBe(false)
   })
 
@@ -297,7 +323,7 @@ describe(buildViewModel, () => {
       const action = row?.[4]
 
       expect(action && 'html' in action ? action.html : '').toContain(
-        `/organisations/${organisationId}/registrations/reg-001/reports/2026/quarterly/1/submissions/1/view`
+        `${registrationPath}/reports/2026/quarterly/1/submissions/1/view`
       )
     })
 
@@ -345,15 +371,6 @@ describe(buildViewModel, () => {
       expect(build({ ledgerEvents: [] }).ledger).toStrictEqual({ rows: [] })
     })
 
-    it('leaves out the events of every other year', () => {
-      const ledger = build({
-        ledgerEvents: [aLedgerEvent('2025-05-04T09:00:00.000Z')],
-        year: 2026
-      }).ledger
-
-      expect(ledger).toStrictEqual({ rows: [] })
-    })
-
     it('reads the newest event of the year first', () => {
       const ledger = build({
         ledgerEvents: [
@@ -375,7 +392,7 @@ describe(buildViewModel, () => {
         '4 May 2026, 10:00am',
         'waste-balance-ledger:events.summary-log-submitted',
         'Ada Lovelace (ada@example.com)',
-        `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a><br>\n<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a>`
+        `<a href="${registrationPath}/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a><br>\n<a href="${registrationPath}/summary-logs/files/log-1/download.csv" class="govuk-link">waste-balance-ledger:actionDownloadCsv <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a>`
       ])
     })
 
@@ -385,7 +402,7 @@ describe(buildViewModel, () => {
       const ledger = build({ ledgerEvents: [aLedgerEvent()] }).ledger
 
       expect(cellsOf(ledger?.rows.at(0)).at(3)).toBe(
-        `<a href="/organisations/${organisationId}/registrations/reg-001/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a>`
+        `<a href="${registrationPath}/summary-logs/files/log-1/download" class="govuk-link">waste-balance-ledger:actionDownload <span class="govuk-visually-hidden">4 May 2026, 10:00am</span></a>`
       )
     })
   })

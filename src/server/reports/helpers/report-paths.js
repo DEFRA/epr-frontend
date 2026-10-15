@@ -4,6 +4,7 @@ import { CADENCE } from '../constants.js'
 
 /**
  * @typedef {{ organisationNumber: string, registrationNumber: string }} RegistrationKeys
+ * @typedef {RegistrationKeys & { year: string }} AccreditationKeys
  * @typedef {RegistrationKeys & { year: number, cadence: CadenceValue, period: number, submissionNumber: number }} SubmissionKeys
  */
 
