@@ -11,7 +11,7 @@ import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  */
 
@@ -21,7 +21,7 @@ const disposition =
 const zip = 'zip-bytes'
 
 /**
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {{
  *   contentDisposition?: string | null,
  *   contentType?: string | null,

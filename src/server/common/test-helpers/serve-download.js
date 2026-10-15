@@ -1,13 +1,13 @@
 import { http, HttpResponse } from 'msw'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  */
 
 /**
  * Answers a download at `url` and records each request made for it.
  * A status of 400 or above answers with no body, as a refusal would.
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {string} url
  * @param {{
  *   body?: string,

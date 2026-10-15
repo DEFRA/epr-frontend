@@ -1,5 +1,5 @@
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  */
 import { config } from '#config/config.js'
@@ -35,7 +35,7 @@ const regulator = buildMockAuth({
 })
 
 /**
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {{
  *   contentDisposition?: string | null,
  *   contentType?: string | null,

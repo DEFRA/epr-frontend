@@ -13,7 +13,7 @@ import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 /**
- * @import { SetupServerApi } from 'msw/node'
+ * @import { SetupServer } from 'msw/node'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  */
 
@@ -40,7 +40,7 @@ const regulator = buildMockAuth({
 const backendPath = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}`
 
 /**
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {string} location
  */
 const backendRedirectsTo = (msw, location) => {
@@ -58,7 +58,7 @@ const backendRedirectsTo = (msw, location) => {
 }
 
 /**
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {{
  *   contentDisposition?: string | null,
  *   contentType?: string | null,
@@ -81,7 +81,7 @@ const storageAnswers = (
   })
 
 /**
- * @param {SetupServerApi} msw
+ * @param {SetupServer} msw
  * @param {{
  *   file?: Parameters<typeof storageAnswers>[1],
  *   location?: string
