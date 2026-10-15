@@ -1,6 +1,6 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { backend } from '#server/common/helpers/backend-client.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 import {
   badGateway,
   notFound
@@ -112,7 +112,7 @@ export const summaryLogDownloadController = {
     }
 
     const downloadUrl = await backend(backendToken).redirect(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}`
+      path`/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}`
     )
 
     if (!isAllowedDownloadUrl(downloadUrl)) {

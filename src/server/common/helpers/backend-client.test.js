@@ -589,6 +589,28 @@ describe('backend-client', () => {
         ).rejects.toBeInstanceOf(Mapped)
       }
     )
+
+    it.for(/** @type {const} */ (['redirect', 'stream']))(
+      'should %s with the query',
+      async (method, { msw }) => {
+        /** @type {string[]} */
+        const searches = []
+        msw.use(
+          http.get(`${backendUrl}/v1/file`, ({ request }) => {
+            searches.push(new URL(request.url).search)
+            return new HttpResponse('bytes', {
+              headers: { location: 'https://storage.test/file' }
+            })
+          })
+        )
+
+        await backend('a-token')[method]('/v1/file', {
+          query: { unredacted: 'true', year: undefined }
+        })
+
+        expect(searches).toStrictEqual(['?unredacted=true'])
+      }
+    )
   })
 
   describe(path, () => {

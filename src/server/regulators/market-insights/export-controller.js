@@ -1,4 +1,4 @@
-import { backend } from '#server/common/helpers/backend-client.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 import { reportingPeriodNow } from './helpers/reporting-period.js'
 
@@ -29,7 +29,7 @@ export const marketInsightsExportController = {
 
     const { body, contentDisposition, contentType } = await backend(
       backendToken
-    ).stream(`/v1/market-insights/${year}/monthly/${month}/export.zip`)
+    ).stream(path`/v1/market-insights/${year}/monthly/${month}/export.zip`)
 
     const response = h.response(body).type(contentType ?? DEFAULT_CONTENT_TYPE)
 
