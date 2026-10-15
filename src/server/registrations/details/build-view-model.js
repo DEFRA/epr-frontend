@@ -11,10 +11,9 @@ import {
 
 import { organisationViewName, toCaption } from './helpers/caption.js'
 import { toDateRange } from './helpers/date-range.js'
-import { registrationYears } from './helpers/registered-only.js'
 import {
   accreditedDateRange,
-  registrationDateRange
+  registeredYears
 } from './helpers/timeline-dates.js'
 
 /**
@@ -151,7 +150,7 @@ const toAccreditedPeriods = ({ keys, registration, localise, localiseUrl }) =>
     }))
 
 /**
- * One row per year the registration has existed over, most recent first.
+ * One row per year the registration was approved in, most recent first.
  * @param {{
  *   registration: RegistrationView,
  *   registrationPath: string,
@@ -164,12 +163,10 @@ const toRegisteredOnlyPeriods = ({
   registrationPath,
   localiseUrl
 }) =>
-  registrationYears({ dateRange: registrationDateRange(registration) }).map(
-    (year) => ({
-      year: String(year),
-      href: localiseUrl(`${registrationPath}/registered-only-periods/${year}`)
-    })
-  )
+  registeredYears(registration).map((year) => ({
+    year: String(year),
+    href: localiseUrl(`${registrationPath}/registered-only-periods/${year}`)
+  }))
 
 /**
  * @param {{
