@@ -19,18 +19,19 @@ const buildResubmissionDetail = (resubmissionRequired) =>
 
 const operatorRequested = {
   requestedAt: '2026-02-10T09:00:00.000Z',
-  requestedBy: { id: 'user-1', name: 'Ada Operator', position: 'Manager' }
+  requestedBy: { name: 'Ada Operator', position: 'Manager' }
 }
 
 const closedPeriodRestated = {
-  uploadedAt: '2026-02-08T09:00:00.000Z',
-  summaryLogId: 'sl-001'
+  uploadedAt: '2026-02-08T09:00:00.000Z'
 }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-const periodPath = `${reportsUrl}/2026/monthly/2/submissions/2`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const registrationUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+const reportsUrl = `${registrationUrl}/reports`
+const accreditedReportsUrl = `${registrationUrl}/accreditations/2026/reports`
+const periodPath = `${accreditedReportsUrl}/monthly/2/submissions/2`
 const explainerUrl = `${periodPath}/resubmission-explainer`
 
 describe('#resubmissionExplainerController', () => {
@@ -291,8 +292,7 @@ describe('#resubmissionExplainerController', () => {
         buildResubmissionDetail({
           operatorRequested,
           closedPeriodRestated: {
-            uploadedAt: operatorRequested.requestedAt,
-            summaryLogId: 'sl-001'
+            uploadedAt: operatorRequested.requestedAt
           }
         })
       )
@@ -318,8 +318,7 @@ describe('#resubmissionExplainerController', () => {
         buildResubmissionDetail({
           operatorRequested,
           closedPeriodRestated: {
-            uploadedAt: '2026-02-12T09:00:00.000Z',
-            summaryLogId: 'sl-001'
+            uploadedAt: '2026-02-12T09:00:00.000Z'
           }
         })
       )
@@ -349,12 +348,14 @@ describe('#resubmissionExplainerController', () => {
       })
 
       expect(fetchReportDetail).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        2026,
-        'monthly',
-        2,
-        1,
+        {
+          organisationNumber,
+          registrationNumber,
+          year: 2026,
+          cadence: 'monthly',
+          period: 2,
+          submissionNumber: 1
+        },
         'mock-backend-token'
       )
     })
@@ -399,7 +400,7 @@ describe('#resubmissionExplainerController', () => {
     }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `${reportsUrl}/2026/monthly/2/submissions/1/resubmission-explainer`,
+        url: `${accreditedReportsUrl}/monthly/2/submissions/1/resubmission-explainer`,
         auth: mockAuth
       })
 

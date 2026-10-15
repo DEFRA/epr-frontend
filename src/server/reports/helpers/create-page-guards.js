@@ -1,12 +1,13 @@
 import Boom from '@hapi/boom'
 
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { badImplementation } from '#server/common/helpers/logging/cdp-boom.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { CADENCE } from '../constants.js'
+import { CADENCE, SUBMISSION_STATUS } from '../constants.js'
 import { fetchReportDetail } from './fetch-report-detail.js'
 import { formatPeriodLabel, formatPeriodShort } from './format-period-label.js'
+import { reportPath, reportsListPath } from './report-paths.js'
 
 /**
  * Fetches registration/accreditation and report detail, then enforces the
@@ -21,41 +22,25 @@ import { formatPeriodLabel, formatPeriodShort } from './format-period-label.js'
  * }>}
  */
 async function fetchGuardedData(isMatchingRegistration, request) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = request.params
+  const { organisationNumber, registrationNumber } = request.params
   const session = request.auth.credentials
 
-  const [{ registration, accreditation }, reportDetail] = await Promise.all([
-    fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.backendToken
-    ),
-    fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      session.backendToken
+  const { registration, accreditation } =
+    await fetchRegistrationAndAccreditationByNumber(
+      organisationNumber,
+      registrationNumber,
+      session
     )
-  ])
+  const reportDetail = await fetchReportDetail(
+    request.params,
+    session.backendToken
+  )
 
   if (!isMatchingRegistration(registration)) {
     throw Boom.notFound()
   }
 
-  if (
-    !reportDetail.id ||
-    reportDetail.status?.currentStatus !== 'in_progress'
-  ) {
+  if (reportDetail.status !== SUBMISSION_STATUS.IN_PROGRESS) {
     throw Boom.notFound()
   }
 
@@ -182,14 +167,7 @@ async function buildViewData(
   buildPageFields,
   options = {}
 ) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = request.params
+  const { year, cadence, period } = request.params
   const { t: localise } = request
 
   const { registration, accreditation, reportDetail } = options.accreditedOnly
@@ -207,8 +185,7 @@ async function buildViewData(
   const material = getRegistrationMaterialDisplayName(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const periodShort = formatPeriodShort({ year, period }, cadence, localise)
-  const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-  const periodPath = `${reportsListPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+  const periodPath = reportPath(request.params)
 
   const pageFields = buildPageFields({
     registration,
@@ -218,7 +195,7 @@ async function buildViewData(
     periodLabel,
     periodShort,
     periodPath,
-    reportsListPath,
+    reportsListPath: reportsListPath(request.params),
     period
   })
 

@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
@@ -39,9 +39,8 @@ const reportDetail = {
   endDate: '2026-01-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: { material: 'plastic' },
-  id: 'report-001',
   version: 1,
-  status: { currentStatus: 'in_progress' },
+  status: 'in_progress',
   supportingInformation: null,
   recyclingActivity: {
     totalTonnageReceived: 200,
@@ -58,7 +57,7 @@ const reportDetail = {
 }
 
 const baseUrl =
-  '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/prn-summary'
+  '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/prn-summary'
 
 describe('#prnSummaryDispatcher cross-registration routing', () => {
   beforeEach(() => {
@@ -68,7 +67,7 @@ describe('#prnSummaryDispatcher cross-registration routing', () => {
   it('should dispatch to reprocessor controller for accredited reprocessor', async ({
     server
   }) => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       accreditedReprocessor
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(

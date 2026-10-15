@@ -1,11 +1,12 @@
 import Joi from 'joi'
 
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { isResubmission } from './helpers/resubmission.js'
 import { updateReport } from './helpers/update-report.js'
 import { buildValidationErrors } from './helpers/validation.js'
@@ -159,8 +160,8 @@ function getBackPage(basePath, registration, accreditation) {
  */
 async function buildViewData(request, options = {}) {
   const {
-    organisationId,
-    registrationId,
+    organisationNumber,
+    registrationNumber,
     year,
     cadence,
     period,
@@ -170,26 +171,21 @@ async function buildViewData(request, options = {}) {
   const { t: localise } = request
 
   const { registration, accreditation } =
-    await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.backendToken
+    await fetchRegistrationAndAccreditationByNumber(
+      organisationNumber,
+      registrationNumber,
+      session
     )
 
   const reportDetail = await fetchReportDetail(
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber,
+    request.params,
     session.backendToken
   )
 
   const material = getRegistrationMaterialDisplayName(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+  const basePath = reportPath(request.params)
 
   const backPage = getBackPage(basePath, registration, accreditation)
 
@@ -211,9 +207,7 @@ async function buildViewData(request, options = {}) {
     hint: copy.hint,
     inset: copy.inset,
     backUrl: request.localiseUrl(backPage),
-    deleteUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
-    ),
+    deleteUrl: request.localiseUrl(`${basePath}/delete`),
     maxLength: MAX_SUPPORTING_INFO_LENGTH,
     value: options.value ?? reportDetail.supportingInformation ?? '',
     errors: options.errors ?? null,
@@ -272,40 +266,21 @@ export const supportingInformationPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
     const { supportingInformation, action } = request.payload
 
     await updateReport(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
+      request.params,
       { supportingInformation },
       request.auth.credentials.backendToken
     )
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-
     if (action === 'continue') {
       return h.redirect(
-        request.localiseUrl(
-          `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}/check-your-answers`
-        )
+        request.localiseUrl(`${reportPath(request.params)}/check-your-answers`)
       )
     }
 
-    return h.redirect(request.localiseUrl(basePath))
+    return h.redirect(request.localiseUrl(reportsListPath(request.params)))
   }
 }
 

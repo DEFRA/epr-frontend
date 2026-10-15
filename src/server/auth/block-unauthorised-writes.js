@@ -1,7 +1,6 @@
 import { hasWriteScope } from '#server/auth/scopes.js'
+import { isReadMethod } from '#server/common/helpers/http-methods.js'
 import Boom from '@hapi/boom'
-
-const READ_METHODS = Object.freeze(['get', 'head'])
 
 /**
  * Writes that change how the browser is treated rather than what the service
@@ -16,13 +15,13 @@ const PREFERENCE_PATHS = Object.freeze(['/cookies/consent'])
  * authoritative authorisation point and already refuses a write from a session
  * that holds no write scope; this stops one reaching it at all. Method alone
  * decides, save for `PREFERENCE_PATHS`: every other mutating route in this app
- * uses a method outside `READ_METHODS`, and every route a sign-in or neutral
+ * uses a method `isReadMethod` rejects, and every route a sign-in or neutral
  * journey needs is a GET. An unrecognised method counts as a write.
  * @param { Request } request
  * @param { ResponseToolkit } h
  */
 export function blockUnauthorisedWrites(request, h) {
-  const isWrite = !READ_METHODS.includes(request.method)
+  const isWrite = !isReadMethod(request.method)
 
   if (
     isWrite &&

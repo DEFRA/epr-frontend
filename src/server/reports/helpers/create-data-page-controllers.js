@@ -144,24 +144,8 @@ function createSimplePostHandler(fieldName, nextPage) {
     const fieldValue = request.payload[fieldName]
 
     if (fieldValue !== undefined) {
-      const {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      } = request.params
-
       await updateReport(
-        {
-          organisationId,
-          registrationId,
-          year,
-          cadence,
-          period,
-          submissionNumber
-        },
+        request.params,
         { [fieldName]: fieldValue },
         request.auth.credentials.backendToken
       )
@@ -236,14 +220,6 @@ function createTonnagePostHandler(
   viewPath
 ) {
   return async (request, h) => {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
     const fieldValue = /** @type {number | undefined} */ (
       request.payload[fieldName]
     )
@@ -261,12 +237,7 @@ function createTonnagePostHandler(
     }
 
     const reportDetail = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      request.params,
       session.backendToken
     )
 
@@ -285,14 +256,7 @@ function createTonnagePostHandler(
     }
 
     await updateReport(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
+      request.params,
       { [fieldName]: fieldValue },
       session.backendToken
     )

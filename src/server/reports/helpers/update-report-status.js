@@ -1,28 +1,19 @@
 import { fetchReportBackend } from './fetch-report-backend.js'
+import { reportApiPath } from './report-paths.js'
+
+/**
+ * @import { SubmissionKeys } from './report-paths.js'
+ */
 
 /**
  * Transitions a report's status via the backend POST endpoint.
- * @param {{ organisationId: string, registrationId: string, year: number, cadence: string, period: number, submissionNumber: number }} periodParams
+ * @param {SubmissionKeys} keys
  * @param {{ status: string, version: number, submissionDeclaredBy?: string }} transition - The target status and report version for optimistic locking
  * @param {string} backendToken
  * @returns {Promise<unknown>}
  */
-export async function updateReportStatus(
-  periodParams,
-  transition,
-  backendToken
-) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = periodParams
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}/status`
-
-  return fetchReportBackend(path, {
+export async function updateReportStatus(keys, transition, backendToken) {
+  return fetchReportBackend(`${reportApiPath(keys)}/status`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${backendToken}`
