@@ -293,6 +293,19 @@ describe('the overseas reprocessing sites page', () => {
     ).toHaveLength(0)
   })
 
+  it('does not exist for an organisation number that is not digits, and reads nothing', async ({
+    server
+  }) => {
+    const response = await server.inject({
+      method: 'GET',
+      url: `/organisations/5001x3/registrations/${registrationNumber}/overseas-sites`,
+      auth: regulator
+    })
+
+    expect(response.statusCode).toBe(statusCodes.notFound)
+    expect(fetchOverseasSites).not.toHaveBeenCalled()
+  })
+
   it('does not exist for an operator', async ({ server }) => {
     const { statusCode } = await visit(server, operator)
 

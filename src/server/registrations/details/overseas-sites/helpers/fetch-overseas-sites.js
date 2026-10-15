@@ -1,9 +1,4 @@
-import Boom from '@hapi/boom'
-
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { errorCodes } from '#server/common/enums/error-codes.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 
 /**
  * @typedef {{
@@ -45,46 +40,15 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  */
 
 /**
- * @param {Omit<OverseasSitesRequest, 'backendToken'>} params
- */
-const registrationNotFound = ({ organisationNumber, registrationNumber }) =>
-  notFound('Registration not found', errorCodes.registrationNotFound, {
-    event: {
-      action: 'fetch_overseas_sites',
-      reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber}`
-    }
-  })
-
-/**
  * @param {OverseasSitesRequest} params
  * @returns {Promise<OverseasSitesDetails>}
  */
 export const fetchOverseasSites = async (params) => {
-  const { organisationNumber, registrationNumber, backendToken } = params
-
-  const organisation = /** @type {OrganisationView} */ (
-    await fetchJsonFromBackend(
-      `/organisations/${encodeURIComponent(organisationNumber)}`,
-      {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${backendToken}` }
-      }
-    ).catch((error) => {
-      if (Boom.isBoom(error, statusCodes.notFound)) {
-        throw registrationNotFound(params)
-      }
-
-      throw error
-    })
-  )
-
-  if (!Object.hasOwn(organisation.registrations, registrationNumber)) {
-    throw registrationNotFound(params)
-  }
+  const { organisation, registration } = await fetchRegistration(params)
 
   return {
     organisation,
-    registrationNumber,
-    registration: organisation.registrations[registrationNumber]
+    registrationNumber: params.registrationNumber,
+    registration
   }
 }

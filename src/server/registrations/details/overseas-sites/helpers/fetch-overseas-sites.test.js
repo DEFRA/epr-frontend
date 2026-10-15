@@ -91,7 +91,7 @@ describe(fetchOverseasSites, () => {
         output: { statusCode: statusCodes.notFound },
         code: 'registration_not_found',
         event: {
-          action: 'fetch_overseas_sites',
+          action: 'fetch_registration',
           reason: `organisationNumber=500123 registrationNumber=${registrationNumber}`
         }
       })

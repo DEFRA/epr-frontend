@@ -102,6 +102,7 @@ const reportsRoute = {
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const overseasSitesRoute = {
+  options: overseasSitesController.options,
   /**
    * @param {HapiRequest & { params: OverseasSitesParams }} request
    * @param {ResponseToolkit} h
