@@ -87,6 +87,7 @@ export function context(request) {
   return {
     analytics: {
       ...analyticsConsent(request),
+      containerId: config.get('analytics.containerId'),
       measurementId: config.get('analytics.measurementId'),
       pagePath: analyticsPagePath(request),
       pageReferrer: analyticsPageReferrer(request)
