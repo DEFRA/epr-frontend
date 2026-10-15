@@ -1,24 +1,19 @@
 import { fetchReportBackend } from './fetch-report-backend.js'
+import { reportApiPath } from './report-paths.js'
+
+/**
+ * @import { SubmissionKeys } from './report-paths.js'
+ */
 
 /**
  * Updates a report via the backend PATCH endpoint.
- * @param {{ organisationId: string, registrationId: string, year: number, cadence: string, period: number, submissionNumber: number }} periodParams
+ * @param {SubmissionKeys} keys
  * @param {Record<string, unknown>} fields - Fields to update (e.g. { supportingInformation } or { status })
  * @param {string} backendToken
  * @returns {Promise<unknown>}
  */
-export async function updateReport(periodParams, fields, backendToken) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = periodParams
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
-
-  return fetchReportBackend(path, {
+export async function updateReport(keys, fields, backendToken) {
+  return fetchReportBackend(reportApiPath(keys), {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${backendToken}`

@@ -10,12 +10,14 @@ const { fetchJsonFromBackend } =
   await import('#server/common/helpers/fetch-json-from-backend.js')
 
 describe(updateReportStatus, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const year = 2026
-  const cadence = 'quarterly'
-  const period = 1
-  const submissionNumber = 1
+  const keys = {
+    organisationNumber: '500001',
+    registrationNumber: 'R25SR500030912PA',
+    year: 2026,
+    cadence: /** @type {const} */ ('quarterly'),
+    period: 1,
+    submissionNumber: 1
+  }
   const backendToken = 'test-token'
 
   const mockResponse = { ok: true }
@@ -24,24 +26,17 @@ describe(updateReportStatus, () => {
     vi.clearAllMocks()
   })
 
-  it('calls fetchJsonFromBackend with POST to the status endpoint', async () => {
+  it('posts to the registered-only status route for a quarterly report', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updateReportStatus(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
+      keys,
       { status: 'ready_to_submit', version: 1 },
       backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1/status',
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1/status',
       {
         method: 'POST',
         headers: {
@@ -52,24 +47,17 @@ describe(updateReportStatus, () => {
     )
   })
 
-  it('encodes URL path parameters with special characters', async () => {
+  it('posts to the accredited status route for a monthly report', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updateReportStatus(
-      {
-        organisationId: 'org/123',
-        registrationId: 'reg&456',
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
+      { ...keys, cadence: 'monthly' },
       { status: 'ready_to_submit', version: 1 },
       backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1/status',
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/status',
       expect.any(Object)
     )
   })
@@ -78,14 +66,7 @@ describe(updateReportStatus, () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await updateReportStatus(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
+      keys,
       { status: 'ready_to_submit', version: 1 },
       backendToken
     )
@@ -99,17 +80,8 @@ describe(updateReportStatus, () => {
 
     await expect(
       updateReportStatus(
-        {
-          organisationId,
-          registrationId,
-          year,
-          cadence,
-          period,
-          submissionNumber
-        },
-        /** @type {Parameters<typeof updateReportStatus>[1]} */ (
-          /** @type {unknown} */ ('ready_to_submit')
-        ),
+        keys,
+        { status: 'ready_to_submit', version: 1 },
         backendToken
       )
     ).rejects.toThrow('Network error')

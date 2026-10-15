@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
@@ -24,14 +24,13 @@ const exporterRegistration = {
 }
 
 const reportDetail = {
-  id: 'report-001',
-  status: { currentStatus: 'in_progress' }
+  status: 'in_progress'
 }
 
 const mockRequest = {
   params: {
-    organisationId: 'org-123',
-    registrationId: 'reg-001',
+    organisationNumber: '500001',
+    registrationNumber: 'R25SR500030912PA',
     year: 2026,
     cadence: 'monthly',
     period: 1,
@@ -49,7 +48,7 @@ describe('reprocessor shim wires isReprocessorRegistration', () => {
   })
 
   it('accepts reprocessor registration', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       asRegistrationWithAccreditation({
         registration: reprocessorRegistration,
         accreditation: undefined
@@ -62,7 +61,7 @@ describe('reprocessor shim wires isReprocessorRegistration', () => {
   })
 
   it('rejects exporter registration with 404', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       asRegistrationWithAccreditation({
         registration: exporterRegistration,
         accreditation: undefined

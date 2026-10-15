@@ -7,9 +7,9 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
-import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole } from '@testing-library/dom'
@@ -346,9 +346,12 @@ const emptyResponse = {
   reportingPeriods: []
 }
 
-const accreditedUrl = '/organisations/org-123/registrations/reg-001/reports'
-const exporterUrl = '/organisations/org-456/registrations/reg-002/reports'
-const reprocessorUrl = '/organisations/org-789/registrations/reg-003/reports'
+const accreditedUrl =
+  '/organisations/500001/registrations/R25SR500030912PA/reports'
+const exporterUrl =
+  '/organisations/500002/registrations/R25SE500030913PA/reports'
+const reprocessorUrl =
+  '/organisations/500003/registrations/R25SR500030914PA/reports'
 
 /** @param {InstanceType<DOMWindow['HTMLElement']>} body */
 const extractTagData = (body) =>
@@ -386,10 +389,12 @@ describe('#listReportsController', () => {
 
   describe('for accredited operator (monthly periods)', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(monthlyResponse)
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
+        monthlyResponse
+      )
     })
 
     it('should return 200', async ({ server }) => {
@@ -434,7 +439,7 @@ describe('#listReportsController', () => {
 
       expect(backLink).not.toBeNull()
       expect(backLink?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001'
+        '/organisations/500001/registrations/R25SR500030912PA'
       )
     })
 
@@ -472,7 +477,7 @@ describe('#listReportsController', () => {
 
       expect(selectLinks).toHaveLength(3)
       expect(selectLinks[0]?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1'
       )
       expect(selectLinks[0]?.textContent).toContain('Create draft')
     })
@@ -562,10 +567,10 @@ describe('#listReportsController', () => {
 
   describe('for ended period with in_progress report', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
         monthlyWithReportResponse
       )
     })
@@ -604,14 +609,14 @@ describe('#listReportsController', () => {
       expect(link).not.toBeNull()
       expect(link?.textContent).toContain('Continue')
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/tonnes-recycled'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/tonnes-recycled'
       )
     })
 
     it('should link Continue to prn-summary for accredited exporter', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedExporter
       )
 
@@ -627,7 +632,7 @@ describe('#listReportsController', () => {
       const link = body.querySelector('.govuk-table a.govuk-link')
 
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/prn-summary'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/prn-summary'
       )
     })
 
@@ -652,10 +657,10 @@ describe('#listReportsController', () => {
 
   describe('for ended period with ready_to_submit report', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
         monthlyWithReadyToSubmitResponse
       )
     })
@@ -694,7 +699,7 @@ describe('#listReportsController', () => {
       expect(link).not.toBeNull()
       expect(link?.textContent).toContain('Review and submit')
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/submit'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/submit'
       )
     })
 
@@ -720,10 +725,10 @@ describe('#listReportsController', () => {
 
   describe('for multiple ready_to_submit reports', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
         monthlyWithTwoReadyToSubmitResponse
       )
     })
@@ -750,10 +755,10 @@ describe('#listReportsController', () => {
 
   describe('for ended period with submitted report', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
         monthlyWithSubmittedResponse
       )
     })
@@ -790,14 +795,14 @@ describe('#listReportsController', () => {
       expect(link).not.toBeNull()
       expect(link?.textContent).toContain('View')
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/view'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/view'
       )
     })
 
     it('should render empty Date and time + Submitted by when backend has not supplied them yet', async ({
       server
     }) => {
-      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
           {
@@ -843,10 +848,10 @@ describe('#listReportsController', () => {
 
   describe('for mixed-status periods', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
         monthlyMixedStatusResponse
       )
     })
@@ -925,10 +930,12 @@ describe('#listReportsController', () => {
 
   describe('when only active periods exist', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(monthlyResponse)
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
+        monthlyResponse
+      )
     })
 
     it('should display both section headings', async ({ server }) => {
@@ -991,10 +998,10 @@ describe('#listReportsController', () => {
 
   describe('when only submitted periods exist', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
         monthlyWithSubmittedResponse
       )
     })
@@ -1044,10 +1051,12 @@ describe('#listReportsController', () => {
 
   describe('for registered-only exporter (quarterly)', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporter
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(quarterlyResponse)
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
+        quarterlyResponse
+      )
     })
 
     it('should return 200', async ({ server }) => {
@@ -1090,7 +1099,7 @@ describe('#listReportsController', () => {
 
       expect(selectLinks).toHaveLength(1)
       expect(selectLinks[0]?.getAttribute('href')).toBe(
-        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1'
+        '/organisations/500002/registrations/R25SE500030913PA/reports/2026/quarterly/1/submissions/1'
       )
       expect(selectLinks[0]?.textContent).toContain('Create draft')
     })
@@ -1098,7 +1107,7 @@ describe('#listReportsController', () => {
     it('should link Continue to tonnes-not-exported for in-progress report', async ({
       server
     }) => {
-      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
         cadence: CADENCE.QUARTERLY,
         reportingPeriods: [
           {
@@ -1131,21 +1140,21 @@ describe('#listReportsController', () => {
       const link = body.querySelector('.govuk-table a.govuk-link')
 
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1/tonnes-not-exported'
+        '/organisations/500002/registrations/R25SE500030913PA/reports/2026/quarterly/1/submissions/1/tonnes-not-exported'
       )
     })
 
     it('should default Continue link to supporting-information for unknown processing type', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue({
         ...registeredOnlyExporter,
         registration: {
           ...registeredOnlyExporter.registration,
           wasteProcessingType: 'unknown'
         }
       })
-      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
         cadence: CADENCE.QUARTERLY,
         reportingPeriods: [
           {
@@ -1178,17 +1187,19 @@ describe('#listReportsController', () => {
       const link = body.querySelector('.govuk-table a.govuk-link')
 
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1/supporting-information'
+        '/organisations/500002/registrations/R25SE500030913PA/reports/2026/quarterly/1/submissions/1/supporting-information'
       )
     })
   })
 
   describe('for registered-only reprocessor (quarterly)', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyReprocessor
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(quarterlyResponse)
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
+        quarterlyResponse
+      )
     })
 
     it('should display Create draft links for reprocessor periods', async ({
@@ -1207,7 +1218,7 @@ describe('#listReportsController', () => {
 
       expect(link).not.toBeNull()
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-789/registrations/reg-003/reports/2026/quarterly/1/submissions/1'
+        '/organisations/500003/registrations/R25SR500030914PA/reports/2026/quarterly/1/submissions/1'
       )
       expect(link?.textContent).toContain('Create draft')
 
@@ -1218,10 +1229,10 @@ describe('#listReportsController', () => {
 
   describe('when no periods have data', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(emptyResponse)
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(emptyResponse)
     })
 
     it('should display both section headings', async ({ server }) => {
@@ -1294,7 +1305,7 @@ describe('#listReportsController', () => {
 
   describe('error handling', () => {
     it('should return 404 when registration not found', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockRejectedValue(
         Boom.notFound('Registration not found')
       )
 
@@ -1349,10 +1360,10 @@ describe('#listReportsController', () => {
     }
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
         monthlyWithResubmissionResponse
       )
     })
@@ -1377,7 +1388,7 @@ describe('#listReportsController', () => {
         (anchor) => anchor.textContent?.includes('Review and create draft')
       )
       expect(resubLink?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/resubmission-explainer'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/2/resubmission-explainer'
       )
 
       expect(body.textContent).toContain('Matt Davis')
@@ -1412,7 +1423,7 @@ describe('#listReportsController', () => {
       it('renders the action required row with the expected due date', async ({
         server
       }) => {
-        vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
           cadence: CADENCE.MONTHLY,
           reportingPeriods
         })
@@ -1436,7 +1447,7 @@ describe('#listReportsController', () => {
     it('renders a requires resubmission entry for each affected period', async ({
       server
     }) => {
-      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
           ...resubmissionPeriodPair(1),
@@ -1461,7 +1472,7 @@ describe('#listReportsController', () => {
       server
     }) => {
       const [submitted, skeleton] = resubmissionPeriodPair(1)
-      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
           submitted,
@@ -1493,7 +1504,7 @@ describe('#listReportsController', () => {
         (anchor) => anchor.textContent?.includes('Continue')
       )
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/tonnes-recycled'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/2/tonnes-recycled'
       )
     })
 
@@ -1501,7 +1512,7 @@ describe('#listReportsController', () => {
       server
     }) => {
       const [submitted, skeleton] = resubmissionPeriodPair(1)
-      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
           submitted,
@@ -1533,7 +1544,7 @@ describe('#listReportsController', () => {
         (anchor) => anchor.textContent?.includes('Review and submit')
       )
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/submit'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/2/submit'
       )
 
       expect(body.textContent).toContain('review and submit 1 report')
@@ -1569,10 +1580,12 @@ describe('#listReportsController', () => {
     }
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(resubmittedResponse)
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
+        resubmittedResponse
+      )
     })
 
     it('renders the period as Resubmitted with a green tag and a View link in the Submitted table', async ({
@@ -1612,17 +1625,17 @@ describe('#listReportsController', () => {
       // that replaced the original, not the superseded submissionNumber 1.
       const viewLink = submittedTable?.querySelector('a.govuk-link')
       expect(viewLink?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/view'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/2/view'
       )
     })
   })
 
   describe('for a session holding no write scope', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
         monthlyMixedStatusResponse
       )
     })
@@ -1669,7 +1682,7 @@ describe('#listReportsController', () => {
       expect(
         submittedTable?.querySelector('a.govuk-link')?.getAttribute('href')
       ).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/view'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/view'
       )
     })
 
@@ -1699,10 +1712,12 @@ describe('#listReportsController', () => {
 
   describe('the route back', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriods).mockResolvedValue(monthlyResponse)
+      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
+        monthlyResponse
+      )
     })
 
     afterEach(() => {

@@ -10,12 +10,14 @@ const { fetchJsonFromBackend } =
   await import('#server/common/helpers/fetch-json-from-backend.js')
 
 describe(requestResubmission, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const year = 2026
-  const cadence = 'quarterly'
-  const period = 1
-  const submissionNumber = 1
+  const keys = {
+    organisationNumber: '500001',
+    registrationNumber: 'R25SR500030912PA',
+    year: 2026,
+    cadence: /** @type {const} */ ('quarterly'),
+    period: 1,
+    submissionNumber: 1
+  }
   const backendToken = 'test-token'
 
   const mockResponse = { status: 'requires_resubmission' }
@@ -24,23 +26,13 @@ describe(requestResubmission, () => {
     vi.clearAllMocks()
   })
 
-  it('calls fetchJsonFromBackend with POST to the request-resubmission endpoint', async () => {
+  it('posts to the registered-only request-resubmission route for a quarterly report', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
-    await requestResubmission(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      backendToken
-    )
+    await requestResubmission(keys, backendToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1/request-resubmission',
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1/request-resubmission',
       {
         method: 'POST',
         headers: {
@@ -50,23 +42,13 @@ describe(requestResubmission, () => {
     )
   })
 
-  it('encodes URL path parameters with special characters', async () => {
+  it('posts to the accredited request-resubmission route for a monthly report', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
-    await requestResubmission(
-      {
-        organisationId: 'org/123',
-        registrationId: 'reg&456',
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      backendToken
-    )
+    await requestResubmission({ ...keys, cadence: 'monthly' }, backendToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1/request-resubmission',
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/request-resubmission',
       expect.any(Object)
     )
   })
@@ -74,17 +56,7 @@ describe(requestResubmission, () => {
   it('returns the response from fetchJsonFromBackend', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
-    const result = await requestResubmission(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      backendToken
-    )
+    const result = await requestResubmission(keys, backendToken)
 
     expect(result).toStrictEqual(mockResponse)
   })
@@ -99,18 +71,8 @@ describe(requestResubmission, () => {
     })
     vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
-    await expect(
-      requestResubmission(
-        {
-          organisationId,
-          registrationId,
-          year,
-          cadence,
-          period,
-          submissionNumber
-        },
-        backendToken
-      )
-    ).rejects.toThrow('Conflict')
+    await expect(requestResubmission(keys, backendToken)).rejects.toThrow(
+      'Conflict'
+    )
   })
 })

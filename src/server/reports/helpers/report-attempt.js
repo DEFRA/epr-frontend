@@ -8,9 +8,9 @@
  * @param {PeriodParams} params
  */
 export const reportAttempt = ({
-  registrationId,
+  registrationNumber,
   year,
   cadence,
   period,
   submissionNumber
-}) => `${registrationId}/${year}/${cadence}/${period}/${submissionNumber}`
+}) => `${registrationNumber}/${year}/${cadence}/${period}/${submissionNumber}`
