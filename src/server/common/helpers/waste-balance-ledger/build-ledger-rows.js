@@ -70,31 +70,13 @@ const eventCell = ({ event, localise, noteType }) => {
 }
 
 /**
- * Where one note lives. Every segment is an id read off an address or off the
- * backend, and the path it builds goes straight into an href, so each is
- * encoded rather than trusted to be URL-safe.
- * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string,
- *   prnId: string
- * }} ids
+ * Where one note lives. The note id is read off the backend and goes straight
+ * into an href, so it is encoded rather than trusted to be URL-safe.
+ * @param {{ accreditationPath: string, prnId: string }} params
  * @returns {string}
  */
-const notePath = ({ organisationId, registrationId, accreditationId, prnId }) =>
-  [
-    'organisations',
-    organisationId,
-    'registrations',
-    registrationId,
-    'accreditations',
-    accreditationId,
-    'packaging-recycling-notes',
-    prnId,
-    'view'
-  ]
-    .map((segment) => `/${encodeURIComponent(segment)}`)
-    .join('')
+const notePath = ({ accreditationPath, prnId }) =>
+  `${accreditationPath}/packaging-recycling-notes/${encodeURIComponent(prnId)}/view`
 
 /**
  * The notes the ledger shows the cancellation of. Cancelling a note before it
@@ -125,38 +107,32 @@ const notesCancelledBeforeIssue = (events) =>
  * none - when the event happened, that being the only other thing on the row
  * that tells it apart.
  * @param {{
- *   accreditationId?: string,
+ *   accreditationPath?: string,
  *   cancelledBeforeIssue: Set<string>,
  *   event: LedgerEvent,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   offersCsvDownloads: boolean,
  *   offersDownloads: boolean,
- *   organisationId: string,
- *   registrationId: string
+ *   registrationPath: string
  * }} params
  * @returns {TableCell}
  */
 const actionCell = ({
-  accreditationId,
+  accreditationPath,
   cancelledBeforeIssue,
   event,
   localise,
   localiseUrl,
   offersCsvDownloads,
   offersDownloads,
-  organisationId,
-  registrationId
+  registrationPath
 }) => {
   const empty = { text: '', classes: cssClasses.textAlign.right }
 
   // Answered before the note rules: a submission has no accreditation.
   if (offersDownloads && event.summaryLog) {
-    const fileIds = {
-      organisationId,
-      registrationId,
-      fileId: event.summaryLog.id
-    }
+    const fileIds = { registrationPath, fileId: event.summaryLog.id }
     const submittedAt = formatLedgerTimestamp(event.createdAt)
 
     // The workbook comes first: the journey tests read the cell's first
@@ -184,20 +160,13 @@ const actionCell = ({
 
   if (
     !event.prn ||
-    !accreditationId ||
+    !accreditationPath ||
     cancelledBeforeIssue.has(event.prn.id)
   ) {
     return empty
   }
 
-  const url = localiseUrl(
-    notePath({
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId: event.prn.id
-    })
-  )
+  const url = localiseUrl(notePath({ accreditationPath, prnId: event.prn.id }))
 
   return {
     html: buildActionLinkHtml(
@@ -285,7 +254,7 @@ const actorName = ({ createdBy, localise }) => {
  * summary log, so only their rows offer one. `offersCsvDownloads` adds the
  * records beside the workbook, and is off until its flag is lit.
  * @param {{
- *   accreditationId?: string,
+ *   accreditationPath?: string,
  *   events: LedgerEvent[],
  *   holdsABalance?: boolean,
  *   localise: Localise,
@@ -293,13 +262,12 @@ const actorName = ({ createdBy, localise }) => {
  *   noteType: 'PRN' | 'PERN',
  *   offersCsvDownloads?: boolean,
  *   offersDownloads?: boolean,
- *   organisationId: string,
- *   registrationId: string
+ *   registrationPath: string
  * }} params
  * @returns {TableCell[][]}
  */
 export const buildLedgerRows = ({
-  accreditationId,
+  accreditationPath,
   events,
   holdsABalance = true,
   localise,
@@ -307,8 +275,7 @@ export const buildLedgerRows = ({
   noteType,
   offersCsvDownloads = false,
   offersDownloads = false,
-  organisationId,
-  registrationId
+  registrationPath
 }) => {
   const cancelledBeforeIssue = notesCancelledBeforeIssue(events)
 
@@ -318,15 +285,14 @@ export const buildLedgerRows = ({
     ...balanceCells({ balance: event.balance, holdsABalance, localise }),
     { text: actorName({ createdBy: event.createdBy, localise }) },
     actionCell({
-      accreditationId,
+      accreditationPath,
       cancelledBeforeIssue,
       event,
       localise,
       localiseUrl,
       offersCsvDownloads,
       offersDownloads,
-      organisationId,
-      registrationId
+      registrationPath
     })
   ])
 }

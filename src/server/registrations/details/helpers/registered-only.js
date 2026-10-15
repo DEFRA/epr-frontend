@@ -6,7 +6,6 @@ import {
 /**
  * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
  * @import { RegistrationDateRange } from '#server/common/helpers/organisations/registration-resource.js'
- * @import { AccreditationResource } from './types.js'
  */
 
 /**
@@ -42,41 +41,41 @@ const isAfter = (day, other) => day.localeCompare(other) > 0
  * @param {CalendarDate} other
  * @returns {CalendarDate}
  */
-const later = (day, other) => (isAfter(day, other) ? day : other)
+export const later = (day, other) => (isAfter(day, other) ? day : other)
 
 /**
  * @param {CalendarDate} day
  * @param {CalendarDate} other
  * @returns {CalendarDate}
  */
-const earlier = (day, other) => (isBefore(day, other) ? day : other)
+export const earlier = (day, other) => (isBefore(day, other) ? day : other)
 
 /**
  * @param {CalendarDate} day
  * @returns {number}
  */
-const yearOf = (day) => new Date(day).getUTCFullYear()
+export const yearOf = (day) => new Date(day).getUTCFullYear()
 
 /**
  * The first day of a year, as a calendar date.
  * @param {number} year
  * @returns {CalendarDate}
  */
-const firstDayOf = (year) => calendarDate(`${year}-01-01`)
+export const firstDayOf = (year) => calendarDate(`${year}-01-01`)
 
 /**
  * The last day of a year, as a calendar date.
  * @param {number} year
  * @returns {CalendarDate}
  */
-const lastDayOf = (year) => calendarDate(`${year}-12-31`)
+export const lastDayOf = (year) => calendarDate(`${year}-12-31`)
 
 /**
  * @param {CalendarDate} day
  * @param {number} days
  * @returns {CalendarDate}
  */
-const shiftDay = (day, days) => {
+export const shiftDay = (day, days) => {
   const shifted = new Date(day)
   shifted.setUTCDate(shifted.getUTCDate() + days)
   return utcCalendarDate(shifted)
@@ -111,45 +110,6 @@ export const registrationYears = ({ dateRange, now = new Date() }) => {
     (_, offset) => lastYear - offset
   )
 }
-
-/**
- * The stretch of a year the registration was live over. It opens when the
- * registration did, or on 1 January if that was earlier, and closes today or on
- * 31 December, whichever comes first — a year that has not finished is only
- * registered up to today.
- * @param {{ validFrom: CalendarDate, year: number, today: CalendarDate }} params
- * @returns {Stretch | null}
- */
-const registeredStretch = ({ validFrom, year, today }) => {
-  const from = later(validFrom, firstDayOf(year))
-  const to = earlier(today, lastDayOf(year))
-
-  return isAfter(from, to) ? null : { from, to }
-}
-
-/**
- * The stretches an accreditation occupied, clipped to nothing outside itself.
- *
- * Its `validFrom` is what says it occupied time, not its status: the dates are
- * recorded at approval, so an accreditation that never got them never ran. One
- * that was later **cancelled** keeps both, and did run over the period it
- * names — which is why this cannot key on the current status the way
- * `isRegistrationAccredited` does.
- * @param {AccreditationResource[]} accreditations
- * @param {CalendarDate} today
- * @returns {Stretch[]}
- */
-const accreditedStretches = (accreditations, today) =>
-  accreditations.flatMap(({ dateRange }) =>
-    dateRange.validFrom
-      ? [
-          {
-            from: calendarDate(dateRange.validFrom),
-            to: dateRange.validTo ? calendarDate(dateRange.validTo) : today
-          }
-        ]
-      : []
-  )
 
 /**
  * Whether two stretches share at least one day.
@@ -189,47 +149,18 @@ const subtract = (remaining, occupied) =>
   })
 
 /**
- * The periods within one year that the operator held a registration and no
- * accreditation.
+ * The registered stretches with every accredited day removed.
  *
  * Both bounds of every stretch are inclusive. An empty result means the year
  * holds no registered-only time at all, which is what a page shows the "this
  * period holds no data" message for.
- * @param {{
- *   dateRange: RegistrationDateRange,
- *   accreditations: AccreditationResource[],
- *   year: number,
- *   now?: Date
- * }} params
+ * @param {{ registered: Stretch[], accredited: Stretch[] }} params
  * @returns {Stretch[]}
  */
-export const registeredOnlyStretches = ({
-  dateRange,
-  accreditations,
-  year,
-  now = new Date()
-}) => {
-  const { validFrom } = dateRange
-
-  if (!validFrom) {
-    return []
-  }
-
-  const today = utcCalendarDate(now)
-  const registered = registeredStretch({
-    validFrom: calendarDate(validFrom),
-    year,
-    today
-  })
-
-  if (!registered) {
-    return []
-  }
-
+export const registeredOnlyStretches = ({ registered, accredited }) =>
   // Wrapped rather than passed directly: `reduce` also hands the callback the
   // index and the array, and `subtract` takes two arguments.
-  return accreditedStretches(accreditations, today).reduce(
+  accredited.reduce(
     (remaining, occupied) => subtract(remaining, occupied),
-    [registered]
+    registered
   )
-}
