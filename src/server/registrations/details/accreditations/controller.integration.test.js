@@ -368,6 +368,28 @@ describe('the accreditation details page', () => {
     ).toBe(`${registrationPath}/summary-logs/files/log-1/download`)
   })
 
+  it('encodes a registration number holding reserved characters once in its links', async ({
+    server
+  }) => {
+    const encodedPath = '/organisations/500118/registrations/R26%2FER%261'
+    const response = await server.inject({
+      method: 'GET',
+      url: `${encodedPath}/accreditations/2026`,
+      auth: regulator
+    })
+    const row = summaryRow(
+      documentOf(asHtml(response.result)),
+      'Latest summary log'
+    )
+
+    expect(fetchAccreditationDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ registrationNumber: 'R26/ER&1' })
+    )
+    expect(
+      within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
+    ).toBe(`${encodedPath}/summary-logs/files/log-1/download`)
+  })
+
   it('names no waste records while the download is dark', async ({
     server
   }) => {

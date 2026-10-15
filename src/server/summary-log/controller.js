@@ -6,6 +6,7 @@ import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summa
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { registrationUploadYear } from '#server/common/helpers/upload/registration-upload-year.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { registrationIdPath } from '#server/reports/helpers/report-paths.js'
 import { requiresResubmission } from './closed-period-changes.js'
 import { renderCheckView } from './check-controller.js'
 import { buildValidationFailuresViewModel } from './validation-failures-view-model.js'
@@ -437,7 +438,7 @@ export const summaryLogUploadProgressController = {
       session.backendToken
     )
 
-    const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+    const baseUrl = registrationIdPath({ organisationId, registrationId })
     const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
     const redirectUrl = `${baseUrl}/summary-logs/{summaryLogId}`
     const cancelUrl = baseUrl

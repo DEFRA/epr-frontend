@@ -1,5 +1,9 @@
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { paths } from '#server/paths.js'
+import {
+  organisationPath,
+  registrationPath
+} from '#server/reports/helpers/report-paths.js'
 
 /**
  * @import { Localise } from '../helpers/types.js'
@@ -109,7 +113,7 @@ export const buildViewModel = ({
 }) => {
   const name = organisationName(organisation)
   const pageName = localise('registrations:details:overseasSites:heading')
-  const organisationPath = `/organisations/${organisation.organisationNumber}`
+  const organisationNumber = String(organisation.organisationNumber)
 
   return {
     breadcrumbs: [
@@ -117,11 +121,14 @@ export const buildViewModel = ({
         text: localise('registrations:details:allOrganisations'),
         href: localiseUrl(paths.regulators.home)
       },
-      { text: name, href: localiseUrl(organisationPath) },
+      {
+        text: name,
+        href: localiseUrl(organisationPath({ organisationNumber }))
+      },
       {
         text: localise('registrations:details:heading'),
         href: localiseUrl(
-          `${organisationPath}/registrations/${registrationNumber}`
+          registrationPath({ organisationNumber, registrationNumber })
         )
       },
       { text: pageName }

@@ -2,6 +2,7 @@ import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { badRequest } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchPackagingRecyclingNote } from './fetch-packaging-recycling-note.js'
+import { accreditationIdPath } from '#server/reports/helpers/report-paths.js'
 
 const SAFE_PATH_SEGMENT_PATTERN = /^[A-Za-z0-9._~-]+$/
 
@@ -32,10 +33,12 @@ function getSafePathSegment(value, fieldName) {
  * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
  */
 function buildPrnBasePath({ organisationId, registrationId, accreditationId }) {
-  const safeOrgId = getSafePathSegment(organisationId, 'organisationId')
-  const safeRegId = getSafePathSegment(registrationId, 'registrationId')
-  const safeAccId = getSafePathSegment(accreditationId, 'accreditationId')
-  return `/organisations/${safeOrgId}/registrations/${safeRegId}/accreditations/${safeAccId}/packaging-recycling-notes`
+  const safeIds = {
+    organisationId: getSafePathSegment(organisationId, 'organisationId'),
+    registrationId: getSafePathSegment(registrationId, 'registrationId'),
+    accreditationId: getSafePathSegment(accreditationId, 'accreditationId')
+  }
+  return `${accreditationIdPath(safeIds)}/packaging-recycling-notes`
 }
 
 /**

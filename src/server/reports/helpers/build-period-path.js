@@ -1,3 +1,5 @@
+import { registrationIdPath } from './report-paths.js'
+
 /**
  * @import { CadenceValue } from '../constants.js'
  * @import { ReportingPeriod } from './fetch-reporting-periods.js'
@@ -19,4 +21,4 @@ export const buildPeriodPath = ({
   period,
   cadence
 }) =>
-  `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
+  `${registrationIdPath({ organisationId, registrationId })}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
