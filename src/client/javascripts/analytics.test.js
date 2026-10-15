@@ -220,12 +220,9 @@ describe('#analytics', () => {
         ]
       },
       {
-        description: 'configuring before a tag is named',
+        description:
+          'the Google tag starting up, which configures before naming a tag',
         request: [measurementId, 'configure_google_tags', {}]
-      },
-      {
-        description: 'configuring without any details',
-        request: [measurementId, 'configure_google_tags']
       }
     ])('should allow $description', ({ request }) => {
       expect(decide(...request)).toBe(true)

@@ -96,12 +96,10 @@ const refuse = (reason) => {
 }
 
 /**
- * Everything the container does on the page asks this first. It may watch the
- * page and report to the property the page names. It may not run code of its
- * own, add pixels, frames or cookies, report anywhere else, or do anything it
- * has not asked for before.
+ * Every permission the container asks for passes through here. Anything not
+ * listed is refused.
  * @param {{ containerId: string, measurementId: string }} published
- * @returns {(requestedBy: string, permission: string, data?: { tagId?: string }) => true}
+ * @returns {(requestedBy: string, permission: string, data: { tagId?: string }) => true}
  */
 export const tagPolicy =
   ({ containerId, measurementId }) =>
@@ -115,7 +113,7 @@ export const tagPolicy =
     }
 
     if (GOOGLE_TAG_PERMISSIONS.has(permission)) {
-      const tagId = data?.tagId
+      const { tagId } = data
 
       return tagId === undefined || tagId === measurementId
         ? true
@@ -136,7 +134,7 @@ const queue = (entry) => {
 }
 
 /**
- * The measurement library reads an `arguments` object as a command and anything
+ * The container reads an `arguments` object as a command and anything
  * else as a plain data push, and only a non-arrow function produces one.
  */
 const asCommand = function () {
