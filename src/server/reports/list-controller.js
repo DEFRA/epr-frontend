@@ -221,17 +221,16 @@ export const listController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [
-      { organisationData, registration, accreditation },
-      { cadence, reportingPeriods }
-    ] = await Promise.all([
-      fetchRegistrationAndAccreditationByNumber(
+    const { organisationData, registration, accreditation } =
+      await fetchRegistrationAndAccreditationByNumber(
         organisationNumber,
         registrationNumber,
         session
-      ),
-      fetchReportingPeriodsByNumber(request.params, session.backendToken)
-    ])
+      )
+    const { cadence, reportingPeriods } = await fetchReportingPeriodsByNumber(
+      request.params,
+      session.backendToken
+    )
 
     const material = getRegistrationMaterialDisplayName(registration)
 

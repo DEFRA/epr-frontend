@@ -1,5 +1,5 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { forbidden, notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { findOrganisationByNumber } from '#server/common/helpers/natural-keys/find-organisation.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
@@ -89,6 +89,7 @@ function withAccreditation(organisationData, registration) {
 
 /**
  * Finds the organisation and registration by number, with its linked accreditation.
+ * An organisation the user cannot see is a 403, whether or not it exists.
  * @param {string} organisationNumber
  * @param {string} registrationNumber
  * @param {UserSession} credentials
@@ -105,12 +106,16 @@ async function fetchRegistrationAndAccreditationByNumber(
   )
 
   if (!organisationData) {
-    throw notFound('Organisation not found', errorCodes.organisationNotFound, {
-      event: {
-        action: 'fetch_registration',
-        reason: `organisationNumber=${organisationNumber}`
+    throw forbidden(
+      'Organisation not available',
+      errorCodes.organisationForbidden,
+      {
+        event: {
+          action: 'fetch_registration',
+          reason: `organisationNumber=${organisationNumber}`
+        }
       }
-    })
+    )
   }
 
   const matches = organisationData.registrations.filter(

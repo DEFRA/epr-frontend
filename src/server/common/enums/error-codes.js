@@ -11,7 +11,7 @@ export const errorCodes = {
   glassRecyclingProcessUnknown: 'glass_recycling_process_unknown',
   invalidPrnField: 'invalid_prn_field',
   notAccredited: 'not_accredited',
-  organisationNotFound: 'organisation_not_found',
+  organisationForbidden: 'organisation_forbidden',
   prnCancelFailed: 'prn_cancel_failed',
   prnConfirmFailed: 'prn_confirm_failed',
   prnCreateFailed: 'prn_create_failed',

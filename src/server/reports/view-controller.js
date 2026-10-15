@@ -313,15 +313,16 @@ export const viewGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ organisationData, registration, accreditation }, reportDetail] =
-      await Promise.all([
-        fetchRegistrationAndAccreditationByNumber(
-          organisationNumber,
-          registrationNumber,
-          session
-        ),
-        fetchReportDetail(request.params, session.backendToken)
-      ])
+    const { organisationData, registration, accreditation } =
+      await fetchRegistrationAndAccreditationByNumber(
+        organisationNumber,
+        registrationNumber,
+        session
+      )
+    const reportDetail = await fetchReportDetail(
+      request.params,
+      session.backendToken
+    )
 
     const currentStatus = reportDetail.status
     if (

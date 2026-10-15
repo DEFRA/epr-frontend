@@ -304,14 +304,16 @@ async function buildViewData(request, options = {}) {
   const session = request.auth.credentials
   const { t: localise } = request
 
-  const [{ registration, accreditation }, reportDetail] = await Promise.all([
-    fetchRegistrationAndAccreditationByNumber(
+  const { registration, accreditation } =
+    await fetchRegistrationAndAccreditationByNumber(
       organisationNumber,
       registrationNumber,
       session
-    ),
-    fetchReportDetail(request.params, session.backendToken)
-  ])
+    )
+  const reportDetail = await fetchReportDetail(
+    request.params,
+    session.backendToken
+  )
 
   return buildViewModel({
     registration,

@@ -34,14 +34,16 @@ export const createdController = {
 
     const reportsUrl = reportsListPath(request.params)
 
-    const [{ registration, accreditation }, reportDetail] = await Promise.all([
-      fetchRegistrationAndAccreditationByNumber(
+    const { registration, accreditation } =
+      await fetchRegistrationAndAccreditationByNumber(
         organisationNumber,
         registrationNumber,
         session
-      ),
-      fetchReportDetail(request.params, session.backendToken)
-    ])
+      )
+    const reportDetail = await fetchReportDetail(
+      request.params,
+      session.backendToken
+    )
 
     if (reportDetail.status !== SUBMISSION_STATUS.READY_TO_SUBMIT) {
       throw Boom.notFound()

@@ -25,14 +25,16 @@ async function fetchGuardedData(isMatchingRegistration, request) {
   const { organisationNumber, registrationNumber } = request.params
   const session = request.auth.credentials
 
-  const [{ registration, accreditation }, reportDetail] = await Promise.all([
-    fetchRegistrationAndAccreditationByNumber(
+  const { registration, accreditation } =
+    await fetchRegistrationAndAccreditationByNumber(
       organisationNumber,
       registrationNumber,
       session
-    ),
-    fetchReportDetail(request.params, session.backendToken)
-  ])
+    )
+  const reportDetail = await fetchReportDetail(
+    request.params,
+    session.backendToken
+  )
 
   if (!isMatchingRegistration(registration)) {
     throw Boom.notFound()

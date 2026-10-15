@@ -221,6 +221,21 @@ describe('old report page URLs', () => {
     )
   })
 
+  it("is 403 for another organisation's report, without fetching it", async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
+    const response = await server.inject({
+      method: 'GET',
+      url: `/organisations/500999/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/view`,
+      auth: operator
+    })
+
+    expect(response.statusCode).toBe(statusCodes.forbidden)
+  })
+
   it("sends the registration page's id link to the reports list to R/reports", async ({
     server,
     msw

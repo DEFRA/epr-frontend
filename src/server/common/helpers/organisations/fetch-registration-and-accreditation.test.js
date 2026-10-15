@@ -340,7 +340,7 @@ describe(fetchRegistrationAndAccreditationByNumber, () => {
     })
   })
 
-  test("is 404 for another organisation's number", async ({ msw }) => {
+  test("is 403 for another organisation's number", async ({ msw }) => {
     msw.use(organisationHeld(anOrganisation()))
 
     await expect(
@@ -350,8 +350,8 @@ describe(fetchRegistrationAndAccreditationByNumber, () => {
         operator
       )
     ).rejects.toMatchObject({
-      output: { statusCode: statusCodes.notFound },
-      code: errorCodes.organisationNotFound
+      output: { statusCode: statusCodes.forbidden },
+      code: errorCodes.organisationForbidden
     })
   })
 
