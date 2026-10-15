@@ -54,7 +54,10 @@ const liveRuns = (timeline, liveStatuses) => {
   for (const [date, { status }] of Object.entries(dailyTimeline(timeline))) {
     if (liveStatuses.has(status)) {
       from ??= calendarDate(date)
-    } else if (from !== null) {
+      continue
+    }
+
+    if (from !== null) {
       runs.push({ from, to: shiftDay(calendarDate(date), -1) })
       from = null
     }
