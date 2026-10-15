@@ -26,6 +26,7 @@
  *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },
+ *   statusTimeline: StatusTimeline,
  *   accreditations: Record<string, AccreditationView>
  * }} RegistrationViewCommon
  */

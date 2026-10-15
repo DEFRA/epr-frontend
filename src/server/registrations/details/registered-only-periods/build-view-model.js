@@ -14,8 +14,8 @@ import { organisationViewName, toCaption } from '../helpers/caption.js'
 import { registeredOnlyStretches } from '../helpers/registered-only.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
 import {
-  registrationAccreditedStretches,
-  registrationDateRange
+  registeredStretches,
+  registrationAccreditedStretches
 } from '../helpers/timeline-dates.js'
 
 /**
@@ -158,9 +158,8 @@ export const buildViewModel = ({
   )
 
   const stretches = registeredOnlyStretches({
-    dateRange: registrationDateRange(registration),
-    accredited: registrationAccreditedStretches(registration),
-    year
+    registered: registeredStretches(registration, year),
+    accredited: registrationAccreditedStretches(registration)
   })
 
   // The calendar answers one cadence for the registration. Quarterly is what a
