@@ -2,47 +2,28 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import {
   buildMockAuth,
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import {
-  asOrganisation,
-  findRegistrationAndAccreditation
-} from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchAccreditationDetails } from '#server/registrations/details/accreditations/helpers/fetch-accreditation-details.js'
-import { fetchRegistrationDetails } from '#server/registrations/details/helpers/fetch-registration-details.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
-import fixtureData from '#fixtures/organisation/organisationData.json' with { type: 'json' }
-
-/**
- * @import { RegistrationDetails } from './details/helpers/fetch-registration-details.js'
- */
-
-vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
-)
-vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
-vi.mock(
-  import('#server/registrations/details/helpers/fetch-registration-details.js')
-)
 vi.mock(
   import('#server/registrations/details/accreditations/helpers/fetch-accreditation-details.js')
 )
 
 const backendUrl = config.get('eprBackendUrl')
 const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = 'reg-001-glass-approved'
-const path = `/organisations/${organisationId}/registrations/${registrationId}`
+const registrationId = 'reg-001-plastic-approved'
+const registrationNumber = 'R26ER5001180041PL'
+const path = `/organisations/500118/registrations/${registrationNumber}`
 
 const operator = buildMockAuth()
 
@@ -68,30 +49,17 @@ const unrecognised = buildMockAuth({
   ...sessionIdentity(IDENTITIES.unrecognised)
 })
 
-/** @type {RegistrationDetails} */
-const registrationDetails = {
-  organisation: asOrganisation({
-    id: organisationId,
-    companyDetails: { name: 'Kirkby Plastics Ltd' }
-  }),
-  registration: {
-    id: registrationId,
-    organisation: { id: organisationId },
-    registrationNumber: 'R26ER5001180041PL',
-    status: 'approved',
-    material: 'plastic',
-    reprocessingType: 'input',
-    dateRange: { validFrom: '2026-01-01' },
-    accreditations: [],
-    application: {
-      orgName: 'Kirkby Plastics',
-      submittedToRegulator: 'ea',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor',
-      site: { address: { line1: 'Unit 4 Mill Road', town: 'Leeds' } }
-    }
+const registeredOnly = {
+  status: 'approved',
+  validFrom: '2026-01-01',
+  material: 'plastic',
+  submittedToRegulator: { code: 'ea' },
+  wasteProcessingType: 'reprocessor',
+  reprocessingType: 'input',
+  site: {
+    address: { line1: 'Unit 4 Mill Road', town: 'Leeds', postcode: 'LS1 1AA' }
   },
-  accreditations: []
+  accreditations: {}
 }
 
 /**
@@ -123,16 +91,14 @@ describe('who a registration renders for', () => {
 
   beforeEach(({ msw }) => {
     msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/:organisationId/registrations/:registrationId/accreditations/:accreditationId/packaging-recycling-notes/december-prn-eligibility`,
-        () => HttpResponse.json({ mode: 'pool', windowOpen: false })
+      http.get(`${backendUrl}/organisations/500118`, () =>
+        HttpResponse.json({
+          organisationNumber: 500118,
+          name: 'Kirkby Plastics Ltd',
+          registrations: { [registrationNumber]: registeredOnly }
+        })
       )
     )
-    vi.mocked(fetchWasteBalances).mockResolvedValue({})
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-      findRegistrationAndAccreditation(fixtureData, registrationId)
-    )
-    vi.mocked(fetchRegistrationDetails).mockResolvedValue(registrationDetails)
   })
 
   afterAll(() => {
@@ -159,6 +125,22 @@ describe('who a registration renders for', () => {
       })
     ).toBeNull()
   })
+
+  it.for([
+    { name: 'a regulator', auth: regulator },
+    { name: 'an operator', auth: operator }
+  ])(
+    'is not found for $name at a registration number the organisation does not hold',
+    async ({ auth }, { server }) => {
+      const { statusCode } = await visit(
+        server,
+        auth,
+        '/organisations/500118/registrations/R99XX'
+      )
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    }
+  )
 
   it('renders an operator the identical page whether the regulator surface is on or off', async ({
     server
@@ -206,7 +188,6 @@ describe('who a registration renders for', () => {
 })
 
 describe('who an accreditation renders for', () => {
-  const registrationNumber = 'R26ER5001180041PL'
   const accreditationNumber = 'A26ER5001180114PL'
   const accreditationPath = `/organisations/500118/registrations/${registrationNumber}/accreditations/2026`
   const accreditation = {

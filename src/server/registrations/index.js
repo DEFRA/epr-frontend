@@ -1,10 +1,12 @@
-import { controller } from './controller.js'
 import { controller as accreditationController } from './details/accreditations/controller.js'
 import { controller as reportsController } from './details/accreditations/reports/controller.js'
 import { controller as detailsController } from './details/controller.js'
 import { controller as overseasSitesController } from './details/overseas-sites/controller.js'
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
-import { controller as operatorController } from './operator-controller.js'
+import {
+  controller as operatorController,
+  registrationController as operatorRegistrationController
+} from './operator-controller.js'
 import {
   wasteRecordsCsvDownloadController,
   wasteRecordsCsvDownloadPath
@@ -17,13 +19,10 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { RegistrationParams } from './details/controller.js'
  * @import { OverseasSitesParams } from './details/overseas-sites/controller.js'
  * @import { AccreditationParams } from './details/accreditations/controller.js'
  * @import { AccreditationParams as AccreditationReportsParams } from './details/accreditations/reports/controller.js'
- */
-
-/**
- * @typedef {{ organisationId: string, registrationId: string }} RegistrationParams
  */
 
 /**
@@ -37,7 +36,7 @@ const registrationController = {
   handler(request, h) {
     return readsAsARegulator(request.auth.credentials)
       ? detailsController.handler(request, h)
-      : controller.handler(request, h)
+      : operatorRegistrationController.handler(request, h)
   }
 }
 
@@ -173,7 +172,7 @@ export const registrations = {
         {
           ...registrationController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}'
         },
         {
           ...accreditationRoute,

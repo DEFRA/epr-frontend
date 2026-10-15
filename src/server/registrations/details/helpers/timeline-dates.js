@@ -5,6 +5,7 @@ import { firstDayOf, lastDayOf, later, shiftDay } from './registered-only.js'
 
 /**
  * @import { AccreditationView, RegistrationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { RegistrationDateRange } from '#server/common/helpers/organisations/registration-resource.js'
  * @import { Stretch } from './registered-only.js'
  */
 
@@ -86,7 +87,7 @@ export const accreditedDateRange = (accreditation, year) => {
 /**
  * When the registration started.
  * @param {RegistrationView} registration
- * @returns {{ validFrom: string }}
+ * @returns {RegistrationDateRange}
  */
 export const registrationDateRange = ({ validFrom }) => ({ validFrom })
 

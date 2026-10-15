@@ -3,7 +3,8 @@
  *   AccreditationStatus,
  *   Material,
  *   RegistrationStatus,
- *   RegulatorValue
+ *   RegulatorValue,
+ *   ReprocessingType
  * } from '#domain/organisations/model.js'
  */
 
@@ -33,7 +34,10 @@
 /**
  * @typedef {RegistrationViewCommon & {
  *   wasteProcessingType: 'reprocessor',
- *   site: { address: { line1: string } | { fullAddress: string } }
+ *   reprocessingType: ReprocessingType,
+ *   site: {
+ *     address: { line1: string, line2?: string, town: string, county?: string, postcode: string } | { fullAddress: string }
+ *   }
  * }} ReprocessorRegistrationView
  */
 

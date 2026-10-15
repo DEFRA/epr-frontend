@@ -87,20 +87,11 @@ export const shiftDay = (day, days) => {
  * A registration has no end date — it does not expire the way an accreditation
  * does (PAE-1904) — so the list always runs to the current year and grows each
  * January.
- *
- * A registration is given its `validFrom` when it is approved, so one that has
- * not been approved has existed over no year a regulator can open.
  * @param {{ dateRange: RegistrationDateRange, now?: Date }} params
  * @returns {number[]}
  */
 export const registrationYears = ({ dateRange, now = new Date() }) => {
-  const { validFrom } = dateRange
-
-  if (!validFrom) {
-    return []
-  }
-
-  const firstYear = yearOf(calendarDate(validFrom))
+  const firstYear = yearOf(calendarDate(dateRange.validFrom))
   const lastYear = now.getUTCFullYear()
 
   // A registration granted ahead of the year it covers has not existed over
@@ -171,7 +162,7 @@ const subtract = (remaining, occupied) =>
  * holds no registered-only time at all, which is what a page shows the "this
  * period holds no data" message for.
  * @param {{
- *   dateRange: { validFrom: string },
+ *   dateRange: RegistrationDateRange,
  *   accredited: Stretch[],
  *   year: number,
  *   now?: Date

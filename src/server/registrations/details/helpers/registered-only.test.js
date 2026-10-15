@@ -15,15 +15,6 @@ import {
 const now = new Date('2026-06-15T00:00:00Z')
 
 describe(registrationYears, () => {
-  it('names no year for a registration that was never approved', () => {
-    expect(
-      registrationYears({
-        dateRange: { validFrom: null },
-        now
-      })
-    ).toStrictEqual([])
-  })
-
   it('runs from the year it started to the current year, most recent first', () => {
     expect(
       registrationYears({

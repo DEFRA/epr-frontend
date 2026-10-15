@@ -222,6 +222,53 @@ describe('old registration and accreditation page URLs', () => {
     })
   })
 
+  describe('the registration page', () => {
+    it('sends a regulator from the id URL to the number URL', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, byIds, regulator)
+      const page = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        regulator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(byNumbers)
+      expect(page.statusCode).toBe(statusCodes.ok)
+    })
+
+    it('sends an accredited operator from the id URL to the number URL, then on to the latest year, in Welsh', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, `/cy${byIds}`, operator)
+      const onward = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        operator
+      )
+      const page = await visit(
+        server,
+        /** @type {string} */ (onward.headers.location),
+        operator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(`/cy${byNumbers}`)
+      expect(onward.statusCode).toBe(statusCodes.found)
+      expect(onward.headers.location).toBe(
+        `/cy${byNumbers}/accreditations/2026`
+      )
+      expect(page.statusCode).toBe(statusCodes.ok)
+    })
+  })
+
   describe('the accreditation page', () => {
     const oldUrl = `${byIds}/accreditations/${accreditationId}`
     const newUrl = `${byNumbers}/accreditations/2026`
