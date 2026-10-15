@@ -80,7 +80,12 @@ export const buildViewModel = ({
             submissionNumber: period.submissionNumber
           }),
         // Same rule as the accreditation page: quarterly periods are not its.
-        reportingPeriods: cadence === CADENCE.MONTHLY ? reportingPeriods : []
+        reportingPeriods:
+          cadence === CADENCE.MONTHLY
+            ? reportingPeriods.filter(
+                (period) => period.year === Number(keys.year)
+              )
+            : []
       })
     }
   }
