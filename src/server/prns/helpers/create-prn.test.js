@@ -1,108 +1,51 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { it } from '#vite/fixtures/server.js'
 
 import { createPrn } from './create-prn.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(createPrn, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-789'
-  const backendToken = 'test-token'
-
-  const payload = {
-    issuedToOrganisation: {
-      id: 'producer-1',
-      name: 'Acme Packaging Ltd'
-    },
-    tonnage: 100,
-    notes: 'Test notes'
-  }
-
-  const mockResponse = {
-    id: 'prn-789',
-    tonnage: 100,
-    material: 'plastic',
-    issuedToOrganisation: {
-      id: 'producer-1',
-      name: 'Acme Packaging Ltd'
-    },
-    status: 'draft',
-    createdAt: '2026-01-27T12:00:00.000Z',
-    wasteProcessingType: 'reprocessor',
-    processToBeUsed: 'R3',
-    isDecemberWaste: false
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('calls fetchJsonFromBackend with correct path and options', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await createPrn(
-      organisationId,
-      registrationId,
-      accreditationId,
-      payload,
-      backendToken
+  it('should post the payload to the accreditation the ids name and resolve to the created note', async ({
+    msw
+  }) => {
+    const payload = {
+      issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+      tonnage: 20
+    }
+    /** @type {{ pathname: string, body: unknown }[]} */
+    const received = []
+    msw.use(
+      http.post(/packaging-recycling-notes$/, async ({ request }) => {
+        received.push({
+          pathname: new URL(request.url).pathname,
+          body: await request.json()
+        })
+        return HttpResponse.json(
+          { id: 'prn-1', status: 'draft' },
+          { status: 201 }
+        )
+      })
     )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${backendToken}`
-        },
-        body: JSON.stringify(payload)
-      }
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await createPrn('org/123', 'reg&456', 'acc#789', payload, backendToken)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789/packaging-recycling-notes',
-      expect.any(Object)
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await createPrn(
-      organisationId,
-      registrationId,
-      accreditationId,
+      'org/1',
+      'reg&2',
+      'acc#3',
       payload,
-      backendToken
+      'a-token'
     )
 
-    expect(result).toStrictEqual(mockResponse)
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(
-      createPrn(
-        organisationId,
-        registrationId,
-        accreditationId,
-        payload,
-        backendToken
-      )
-    ).rejects.toThrow('Network error')
+    expect(result).toStrictEqual({ id: 'prn-1', status: 'draft' })
+    expect(received).toStrictEqual([
+      {
+        pathname:
+          '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/packaging-recycling-notes',
+        body: {
+          issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+          tonnage: 20
+        }
+      }
+    ])
   })
 })
