@@ -1,5 +1,5 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import {
   getNoteTypeDisplayNames,
@@ -17,6 +17,7 @@ import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { reportAttempt } from './helpers/report-attempt.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
@@ -157,43 +158,28 @@ export const checkGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { organisationNumber, registrationNumber, year, cadence, period } =
+      request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
     const { registration, accreditation } =
-      await fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.backendToken
+      await fetchRegistrationAndAccreditationByNumber(
+        organisationNumber,
+        registrationNumber,
+        session
       )
 
     const reportDetail = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      request.params,
       session.backendToken
     )
 
-    if (reportDetail.status?.currentStatus !== SUBMISSION_STATUS.IN_PROGRESS) {
-      return h.redirect(
-        request.localiseUrl(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
-        )
-      )
+    if (reportDetail.status !== SUBMISSION_STATUS.IN_PROGRESS) {
+      return h.redirect(request.localiseUrl(reportsListPath(request.params)))
     }
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+    const basePath = reportPath(request.params)
     const material = getRegistrationMaterialDisplayName(registration)
     const periodLabel = formatPeriodLabelWithComma(
       { year, period },
@@ -234,31 +220,12 @@ export const checkPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
     const { version } = request.payload
     const session = request.auth.credentials
 
     const transition = { status: SUBMISSION_STATUS.READY_TO_SUBMIT, version }
 
-    await updateReportStatus(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      transition,
-      session.backendToken
-    )
+    await updateReportStatus(request.params, transition, session.backendToken)
 
     await metrics.journey.end(
       request,
@@ -267,9 +234,7 @@ export const checkPostController = {
     )
 
     return h.redirect(
-      request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/created`
-      )
+      request.localiseUrl(`${reportPath(request.params)}/created`)
     )
   }
 }

@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
@@ -36,10 +36,10 @@ const registeredOnlyExporter = asRegistrationWithAccreditation({
   accreditation: undefined
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/delete`
-const reportAttempt = `${registrationId}/2026/quarterly/1/1`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/delete`
+const reportAttempt = `${registrationNumber}/2026/quarterly/1/1`
 
 vi.spyOn(metrics.journey, 'start').mockResolvedValue()
 vi.spyOn(metrics.journey, 'end').mockResolvedValue()
@@ -51,7 +51,7 @@ describe('#deleteController', () => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporter
       )
     })
@@ -118,7 +118,7 @@ describe('#deleteController', () => {
     describe('back link', () => {
       const host = 'localhost'
       const refererFor = (path) => `http://${host}${path}`
-      const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+      const reportsListPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
       const periodPrefix = `${reportsListPath}/2026/quarterly/1`
 
       it('should fall back to the reports list when no referer header is present', async ({
@@ -280,7 +280,7 @@ describe('#deleteController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(deleteReport).mockResolvedValue(
@@ -319,7 +319,7 @@ describe('#deleteController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
       })
 
@@ -339,12 +339,14 @@ describe('#deleteController', () => {
         })
 
         expect(deleteReport).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          2026,
-          'quarterly',
-          1,
-          1,
+          {
+            organisationNumber,
+            registrationNumber,
+            year: 2026,
+            cadence: 'quarterly',
+            period: 1,
+            submissionNumber: 1
+          },
           'mock-backend-token'
         )
       })
@@ -373,7 +375,7 @@ describe('#deleteController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/delete`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/invalid/1/submissions/1/delete`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -385,7 +387,7 @@ describe('#deleteController', () => {
     })
 
     it('should return 400 for invalid year', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submissions/1/delete`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2023/quarterly/1/submissions/1/delete`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -397,7 +399,7 @@ describe('#deleteController', () => {
     })
 
     it('should return 400 for invalid period', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submissions/1/delete`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/13/submissions/1/delete`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -411,7 +413,7 @@ describe('#deleteController', () => {
 
   describe('journey events', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(deleteReport).mockResolvedValue(

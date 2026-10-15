@@ -1,11 +1,12 @@
 import Boom from '@hapi/boom'
 
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const submittedController = {
@@ -19,37 +20,24 @@ export const submittedController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { organisationNumber, registrationNumber, year, cadence, period } =
+      request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+    const reportsUrl = reportsListPath(request.params)
 
-    const [{ registration }, reportDetail] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.backendToken
-      ),
-      fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        session.backendToken
-      )
-    ])
+    const { registration } = await fetchRegistrationAndAccreditationByNumber(
+      organisationNumber,
+      registrationNumber,
+      session
+    )
+    const reportDetail = await fetchReportDetail(
+      request.params,
+      session.backendToken
+    )
 
-    if (reportDetail.status?.currentStatus !== SUBMISSION_STATUS.SUBMITTED) {
+    if (reportDetail.status !== SUBMISSION_STATUS.SUBMITTED) {
       throw Boom.notFound()
     }
 
@@ -74,9 +62,7 @@ export const submittedController = {
       },
       viewReportLink: {
         text: localise('reports:submittedViewReport'),
-        href: request.localiseUrl(
-          `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/view`
-        )
+        href: request.localiseUrl(`${reportPath(request.params)}/view`)
       }
     })
   }

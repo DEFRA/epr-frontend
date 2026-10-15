@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
@@ -38,9 +38,8 @@ const reprocessorRegistration = asRegistrationWithAccreditation({
 })
 
 const reportDetail = {
-  id: 'report-001',
   version: 1,
-  status: { currentStatus: 'in_progress' },
+  status: 'in_progress',
   prn: {
     issuedTonnage: 91,
     totalRevenue: null,
@@ -48,9 +47,9 @@ const reportDetail = {
   }
 }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/prn-summary`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/prn-summary`
 
 describe('#prnSummaryDispatcher', () => {
   beforeEach(() => {
@@ -60,7 +59,7 @@ describe('#prnSummaryDispatcher', () => {
   it('should dispatch to exporter controller for exporter registration', async ({
     server
   }) => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       exporterRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -80,7 +79,7 @@ describe('#prnSummaryDispatcher', () => {
   it('should dispatch to reprocessor controller for reprocessor registration', async ({
     server
   }) => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       reprocessorRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(
