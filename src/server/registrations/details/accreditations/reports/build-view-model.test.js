@@ -184,6 +184,18 @@ describe('the accreditation reports view model', () => {
     ])
   })
 
+  it("lists only the accreditation year's periods where the calendar spans years", () => {
+    const { rows } = build({
+      reportingPeriods: [
+        { ...aPeriod(12), year: 2025 },
+        aPeriod(8),
+        { ...aPeriod(1), year: 2027 }
+      ]
+    }).reports
+
+    expect(rows.map((row) => row[0])).toStrictEqual([{ text: 'August, 2026' }])
+  })
+
   it('shows no rows where the registration owes quarterly reports', () => {
     expect(
       build({ cadence: CADENCE.QUARTERLY, reportingPeriods: [aPeriod(3)] })

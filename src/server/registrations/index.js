@@ -64,6 +64,7 @@ const accreditationRoute = {
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const reportsRoute = {
+  options: reportsController.options,
   /**
    * @param {HapiRequest & { params: AccreditationReportsParams }} request
    * @param {ResponseToolkit} h
