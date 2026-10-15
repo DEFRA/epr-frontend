@@ -27,6 +27,7 @@ const registration = /** @type {RegistrationView} */ ({
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'exporter',
+  statusTimeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } },
   accreditations: { 2026: accreditation2026, 2025: accreditation2025 }
 })
 

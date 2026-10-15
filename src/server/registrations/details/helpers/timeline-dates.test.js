@@ -4,8 +4,9 @@ import { registeredOnlyStretches } from './registered-only.js'
 import {
   accreditedStretches,
   dailyTimeline,
-  registrationAccreditedStretches,
-  registrationDateRange
+  registeredStretches,
+  registeredYears,
+  registrationAccreditedStretches
 } from './timeline-dates.js'
 
 /**
@@ -14,29 +15,44 @@ import {
 
 /**
  * @param {Record<string, string>} timeline - status by ISO datetime
+ */
+const toStatusTimeline = (timeline) =>
+  Object.fromEntries(
+    Object.entries(timeline).map(([date, status]) => [date, { status }])
+  )
+
+/**
+ * @param {Record<string, string>} timeline - status by ISO datetime
  * @returns {AccreditationView}
  */
 const anAccreditation = (timeline) => ({
   accreditationNumber: 'A26ER5001180114PL',
   status: 'approved',
-  statusTimeline: Object.fromEntries(
-    Object.entries(timeline).map(([date, status]) => [date, { status }])
-  )
+  statusTimeline: toStatusTimeline(timeline)
 })
 
 /**
- * @param {string} validFrom
+ * @param {Record<string, string>} timeline - status by ISO datetime
  * @param {Record<string, AccreditationView>} [accreditations]
  * @returns {RegistrationView}
  */
-const aRegistration = (validFrom, accreditations = {}) => ({
+const aRegistration = (timeline, accreditations = {}) => ({
   status: 'approved',
-  validFrom,
+  validFrom: '2020-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'exporter',
+  statusTimeline: toStatusTimeline(timeline),
   accreditations
 })
+
+/**
+ * @param {string} date
+ * @param {Record<string, AccreditationView>} [accreditations]
+ * @returns {RegistrationView}
+ */
+const approvedOn = (date, accreditations = {}) =>
+  aRegistration({ [`${date}T00:00:00.000Z`]: 'approved' }, accreditations)
 
 // Cancelled, then approved again, then suspended.
 const reinstated = anAccreditation({
@@ -82,6 +98,12 @@ describe(dailyTimeline, () => {
         })
       )
     ).toStrictEqual(['2026-02-01', '2026-06-01'])
+  })
+
+  it('reads the day from the key without parsing it', () => {
+    expect(
+      dailyTimeline({ '2026-03-01T23:30:00.000-02:00': { status: 'approved' } })
+    ).toStrictEqual({ '2026-03-01': { status: 'approved' } })
   })
 })
 
@@ -184,6 +206,19 @@ describe(accreditedStretches, () => {
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-12-31' }])
   })
 
+  it('starts a stretch on a day approved then suspended', () => {
+    expect(
+      accreditedStretches(
+        anAccreditation({
+          '2026-01-19T00:00:00.000Z': 'created',
+          '2026-01-19T00:00:00.001Z': 'approved',
+          '2026-01-19T17:06:55.419Z': 'suspended'
+        }),
+        '2026'
+      )
+    ).toStrictEqual([{ from: '2026-01-19', to: '2026-12-31' }])
+  })
+
   it('does not count the days before the first approval', () => {
     expect(
       accreditedStretches(
@@ -194,6 +229,55 @@ describe(accreditedStretches, () => {
         '2026'
       )
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-12-31' }])
+  })
+
+  it('ends a stretch the day before the accreditation is re-opened', () => {
+    expect(
+      accreditedStretches(
+        anAccreditation({
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2026-05-01T09:00:00.000Z': 'created',
+          '2026-07-01T09:00:00.000Z': 'approved'
+        }),
+        '2026'
+      )
+    ).toStrictEqual([
+      { from: '2026-02-01', to: '2026-04-30' },
+      { from: '2026-07-01', to: '2026-12-31' }
+    ])
+  })
+
+  it('ends a stretch the day before a rejection', () => {
+    expect(
+      accreditedStretches(
+        anAccreditation({
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2026-05-01T09:00:00.000Z': 'rejected'
+        }),
+        '2026'
+      )
+    ).toStrictEqual([{ from: '2026-02-01', to: '2026-04-30' }])
+  })
+
+  it('ends on 31 December when the cancellation came the following year', () => {
+    expect(
+      accreditedStretches(
+        anAccreditation({
+          '2026-02-01T09:00:00.000Z': 'approved',
+          '2027-03-01T09:00:00.000Z': 'cancelled'
+        }),
+        '2026'
+      )
+    ).toStrictEqual([{ from: '2026-02-01', to: '2026-12-31' }])
+  })
+
+  it('drops a stretch that starts after the year', () => {
+    expect(
+      accreditedStretches(
+        anAccreditation({ '2027-02-01T09:00:00.000Z': 'approved' }),
+        '2026'
+      )
+    ).toStrictEqual([])
   })
 
   it('ends nothing for a cancellation before the first approval', () => {
@@ -210,11 +294,109 @@ describe(accreditedStretches, () => {
   })
 })
 
-describe(registrationDateRange, () => {
-  it('starts when the registration did', () => {
-    expect(registrationDateRange(aRegistration('2025-04-01'))).toStrictEqual({
-      validFrom: '2025-04-01'
-    })
+describe(registeredYears, () => {
+  const now = new Date('2026-06-15T00:00:00Z')
+
+  it('names no year for a registration never approved', () => {
+    expect(
+      registeredYears(
+        aRegistration({ '2025-01-01T00:00:00.000Z': 'created' }),
+        now
+      )
+    ).toStrictEqual([])
+  })
+
+  it('runs from the year first approved to the current year, most recent first', () => {
+    expect(registeredYears(approvedOn('2024-06-01'), now)).toStrictEqual([
+      2026, 2025, 2024
+    ])
+  })
+
+  it('leaves out a year spent wholly cancelled', () => {
+    expect(
+      registeredYears(
+        aRegistration({
+          '2024-01-01T00:00:00.000Z': 'approved',
+          '2024-06-01T09:00:00.000Z': 'cancelled',
+          '2026-02-01T09:00:00.000Z': 'approved'
+        }),
+        now
+      )
+    ).toStrictEqual([2026, 2024])
+  })
+
+  it('ends with the year the registration was cancelled in', () => {
+    expect(
+      registeredYears(
+        aRegistration({
+          '2024-01-01T00:00:00.000Z': 'approved',
+          '2025-03-01T09:00:00.000Z': 'cancelled'
+        }),
+        now
+      )
+    ).toStrictEqual([2025, 2024])
+  })
+
+  it('names no year for an approval that has not started yet', () => {
+    expect(registeredYears(approvedOn('2027-01-01'), now)).toStrictEqual([])
+  })
+})
+
+describe(registeredStretches, () => {
+  const now = new Date('2026-06-15T00:00:00Z')
+
+  it('runs from the approval to today in the current year', () => {
+    expect(
+      registeredStretches(approvedOn('2026-02-10'), 2026, now)
+    ).toStrictEqual([{ from: '2026-02-10', to: '2026-06-15' }])
+  })
+
+  it('starts on 1 January when approved in an earlier year', () => {
+    expect(
+      registeredStretches(approvedOn('2025-04-01'), 2026, now)
+    ).toStrictEqual([{ from: '2026-01-01', to: '2026-06-15' }])
+  })
+
+  it('closes an earlier year at 31 December rather than at today', () => {
+    expect(
+      registeredStretches(approvedOn('2025-01-01'), 2025, now)
+    ).toStrictEqual([{ from: '2025-01-01', to: '2025-12-31' }])
+  })
+
+  it('holds nothing for a year before the approval', () => {
+    expect(
+      registeredStretches(approvedOn('2026-01-01'), 2025, now)
+    ).toStrictEqual([])
+  })
+
+  it('leaves out the days the registration was cancelled', () => {
+    expect(
+      registeredStretches(
+        aRegistration({
+          '2026-01-01T00:00:00.000Z': 'approved',
+          '2026-03-01T09:00:00.000Z': 'cancelled',
+          '2026-05-01T09:00:00.000Z': 'approved'
+        }),
+        2026,
+        now
+      )
+    ).toStrictEqual([
+      { from: '2026-01-01', to: '2026-02-28' },
+      { from: '2026-05-01', to: '2026-06-15' }
+    ])
+  })
+
+  it('ends the day before the registration is re-opened', () => {
+    expect(
+      registeredStretches(
+        aRegistration({
+          '2026-01-01T00:00:00.000Z': 'approved',
+          '2026-04-01T09:00:00.000Z': 'created'
+        }),
+        2026,
+        now
+      )
+    ).toStrictEqual([{ from: '2026-01-01', to: '2026-03-31' }])
   })
 })
 
@@ -222,7 +404,7 @@ describe(registrationAccreditedStretches, () => {
   it("gives every stretch of every year's accreditation", () => {
     expect(
       registrationAccreditedStretches(
-        aRegistration('2025-01-01', {
+        approvedOn('2025-01-01', {
           2025: anAccreditation({ '2025-03-01T09:00:00.000Z': 'approved' }),
           2026: reinstated
         })
@@ -244,22 +426,20 @@ describe('registered-only time from timelines', () => {
    */
   const registeredOnly = (registration, year = 2026) =>
     registeredOnlyStretches({
-      dateRange: registrationDateRange(registration),
-      accredited: registrationAccreditedStretches(registration),
-      year,
-      now
+      registered: registeredStretches(registration, year, now),
+      accredited: registrationAccreditedStretches(registration)
     })
 
   it('is the cancelled gap of a reinstated accreditation', () => {
     expect(
-      registeredOnly(aRegistration('2025-01-01', { 2026: reinstated }))
+      registeredOnly(approvedOn('2025-01-01', { 2026: reinstated }))
     ).toStrictEqual([{ from: '2026-03-10', to: '2026-03-29' }])
   })
 
   it('starts on the day of a final cancellation', () => {
     expect(
       registeredOnly(
-        aRegistration('2026-01-01', {
+        approvedOn('2026-01-01', {
           2026: anAccreditation({
             '2025-12-01T09:00:00.000Z': 'approved',
             '2026-09-30T09:00:00.000Z': 'cancelled'
@@ -271,14 +451,14 @@ describe('registered-only time from timelines', () => {
 
   it('is the days before a re-approval when the earlier stretch ended the year before', () => {
     expect(
-      registeredOnly(aRegistration('2025-01-01', { 2026: cancelledLastYear }))
+      registeredOnly(approvedOn('2025-01-01', { 2026: cancelledLastYear }))
     ).toStrictEqual([{ from: '2026-01-01', to: '2026-01-31' }])
   })
 
   it('keeps suspended days accredited', () => {
     expect(
       registeredOnly(
-        aRegistration('2026-01-01', {
+        approvedOn('2026-01-01', {
           2026: anAccreditation({
             '2026-03-01T09:00:00.000Z': 'approved',
             '2026-05-01T09:00:00.000Z': 'suspended'
@@ -291,10 +471,38 @@ describe('registered-only time from timelines', () => {
   it('subtracts nothing for an accreditation in another year', () => {
     expect(
       registeredOnly(
-        aRegistration('2024-01-01', {
+        approvedOn('2024-01-01', {
           2024: anAccreditation({ '2024-01-01T09:00:00.000Z': 'approved' })
         })
       )
     ).toStrictEqual([{ from: '2026-01-01', to: '2026-12-31' }])
+  })
+
+  it('subtracts nothing in a year for an accreditation cancelled in it the year before', () => {
+    expect(
+      registeredOnly(
+        approvedOn('2026-01-01', {
+          2025: anAccreditation({
+            '2025-02-01T09:00:00.000Z': 'approved',
+            '2026-03-01T09:00:00.000Z': 'cancelled'
+          })
+        })
+      )
+    ).toStrictEqual([{ from: '2026-01-01', to: '2026-12-31' }])
+  })
+
+  it('holds nothing for the days the registration was cancelled', () => {
+    expect(
+      registeredOnly(
+        aRegistration({
+          '2026-01-01T00:00:00.000Z': 'approved',
+          '2026-03-01T09:00:00.000Z': 'cancelled',
+          '2026-05-01T09:00:00.000Z': 'approved'
+        })
+      )
+    ).toStrictEqual([
+      { from: '2026-01-01', to: '2026-02-28' },
+      { from: '2026-05-01', to: '2026-12-31' }
+    ])
   })
 })
