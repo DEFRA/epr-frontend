@@ -148,7 +148,7 @@ describe('/regulators/home - GET integration', () => {
     backendReturns(msw, { items: [acme] })
 
     const { body } = await visit(server, '/regulators/home')
-    const searchBox = getByLabelText(body, 'Organisation name')
+    const searchBox = getByLabelText(body, 'Organisation name or number')
 
     expect(searchBox.closest('form')?.getAttribute('method')).toBe('get')
     expect(searchBox).toHaveProperty('name', 'search')
@@ -162,7 +162,7 @@ describe('/regulators/home - GET integration', () => {
 
     const { body } = await visit(server, '/regulators/home?search=ACME')
 
-    expect(getByLabelText(body, 'Organisation name')).toHaveProperty(
+    expect(getByLabelText(body, 'Organisation name or number')).toHaveProperty(
       'value',
       'ACME'
     )

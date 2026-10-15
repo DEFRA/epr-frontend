@@ -199,9 +199,9 @@
   "organisations": {
     "pageTitle": "All organisations",
     "heading": "All organisations",
-    "description": "Search for a reprocessor or exporter by name, or browse every organisation the service holds.",
+    "description": "Search for a reprocessor or exporter by name or organisation number, or browse every organisation the service holds.",
     "searchHeading": "Search reprocessors and exporters",
-    "searchLabel": "Organisation name",
+    "searchLabel": "Organisation name or number",
     "searchButton": "Search",
     "clearSearchButton": "Clear search",
     "browseHeading": "Browse organisations",

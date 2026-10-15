@@ -74,6 +74,40 @@ describe(fetchOrganisations, () => {
     await fetchOrganisations({ page: 1, search: 'Acme Waste', backendToken })
 
     expect(request().searchParams.get('search')).toBe('Acme Waste')
+    expect(request().searchParams.has('orgId')).toBe(false)
+  })
+
+  test('finds an organisation by number when the search is all digits', async ({
+    msw
+  }) => {
+    const request = captureRequest(msw)
+
+    await fetchOrganisations({ page: 1, search: '500019', backendToken })
+
+    expect(request().searchParams.get('orgId')).toBe('500019')
+    expect(request().searchParams.has('search')).toBe(false)
+  })
+
+  test('finds an organisation by number when the digits carry surrounding spaces', async ({
+    msw
+  }) => {
+    const request = captureRequest(msw)
+
+    await fetchOrganisations({ page: 1, search: '  500019 ', backendToken })
+
+    expect(request().searchParams.get('orgId')).toBe('500019')
+    expect(request().searchParams.has('search')).toBe(false)
+  })
+
+  test('searches by name when the search mixes digits and letters', async ({
+    msw
+  }) => {
+    const request = captureRequest(msw)
+
+    await fetchOrganisations({ page: 1, search: '5000a', backendToken })
+
+    expect(request().searchParams.get('search')).toBe('5000a')
+    expect(request().searchParams.has('orgId')).toBe(false)
   })
 
   test('asks for every organisation when no search was entered', async ({
@@ -84,6 +118,7 @@ describe(fetchOrganisations, () => {
     await fetchOrganisations({ page: 1, search: '', backendToken })
 
     expect(request().searchParams.has('search')).toBe(false)
+    expect(request().searchParams.has('orgId')).toBe(false)
   })
 
   test('authorises the call with the session backend token', async ({
