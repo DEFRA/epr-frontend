@@ -1,4 +1,7 @@
 import { backend, path } from '#server/common/helpers/backend-client.js'
+import { registrationPath } from '#server/reports/helpers/report-paths.js'
+
+/** @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js' */
 
 /**
  * What every entry of a waste balance ledger states, whichever thing it
@@ -53,6 +56,19 @@ import { backend, path } from '#server/common/helpers/backend-client.js'
  */
 
 /**
+ * Reads the events of the ledger at a backend endpoint.
+ * @param {string} endpoint
+ * @param {string} backendToken
+ * @returns {Promise<LedgerEvent[]>}
+ */
+const readEvents = async (endpoint, backendToken) => {
+  /** @type {{ events: LedgerEvent[] }} */
+  const { events } = await backend(backendToken).get(endpoint)
+
+  return events
+}
+
+/**
  * Reads the events of one waste balance ledger, in the order the backend
  * appended them.
  *
@@ -79,8 +95,20 @@ export const fetchLedgerEvents = async ({
     ? path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`
     : path`/v1/organisations/${organisationId}/registrations/${registrationId}/waste-balance-ledger`
 
-  /** @type {{ events: LedgerEvent[] }} */
-  const { events } = await backend(backendToken).get(ledgerPath)
-
-  return events
+  return readEvents(ledgerPath, backendToken)
 }
+
+/**
+ * Reads the registered-only ledger events in a year by natural key.
+ * @param {AccreditationKeys} keys
+ * @param {string} backendToken
+ * @returns {Promise<LedgerEvent[]>}
+ */
+export const fetchRegisteredOnlyLedgerEvents = async (
+  { year, ...keys },
+  backendToken
+) =>
+  readEvents(
+    `${registrationPath(keys)}/ledger/${encodeURIComponent(year)}`,
+    backendToken
+  )

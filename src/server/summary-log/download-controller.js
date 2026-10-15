@@ -16,32 +16,13 @@ export const summaryLogDownloadPath =
 
 /**
  * The address of one summary log's download, addressed by its file - which is
- * what the ledger records. Segments go straight into an href, so each is
+ * what the ledger records. The file id goes straight into an href, so it is
  * encoded.
- * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   fileId: string
- * }} ids
+ * @param {{ registrationPath: string, fileId: string }} params
  * @returns {string}
  */
-export const buildSummaryLogDownloadPath = ({
-  organisationId,
-  registrationId,
-  fileId
-}) =>
-  [
-    'organisations',
-    organisationId,
-    'registrations',
-    registrationId,
-    'summary-logs',
-    'files',
-    fileId,
-    'download'
-  ]
-    .map((segment) => `/${encodeURIComponent(segment)}`)
-    .join('')
+export const buildSummaryLogDownloadPath = ({ registrationPath, fileId }) =>
+  `${registrationPath}/summary-logs/files/${encodeURIComponent(fileId)}/download`
 
 const DEFAULT_CONTENT_TYPE = 'application/octet-stream'
 

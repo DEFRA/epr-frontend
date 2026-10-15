@@ -1,11 +1,19 @@
+import {
+  containerId,
+  measurementId
+} from '#server/common/test-helpers/analytics-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { JSDOM } from 'jsdom'
 import { afterEach, describe, expect, vi } from 'vitest'
 
 const authority = 'localhost:3000'
-const measurementId = 'G-TESTONLY01'
 const consented = { cookie: 'analyticsConsent=accepted' }
+const linedUp = {
+  ANALYTICS_ENABLED: 'true',
+  ANALYTICS_MEASUREMENT_ID: measurementId,
+  ANALYTICS_CONTAINER_ID: containerId
+}
 
 /**
  * The content security policy is built once, when the plugin module is first
@@ -41,10 +49,7 @@ describe('#analytics switched on end to end', () => {
 
   describe('when every switch is lined up', () => {
     it('should permit the very origins the page then loads', async () => {
-      const server = await serverStartedWith({
-        ANALYTICS_ENABLED: 'true',
-        ANALYTICS_MEASUREMENT_ID: measurementId
-      })
+      const server = await serverStartedWith(linedUp)
 
       const { headers, result } = await server.inject({
         method: 'GET',
@@ -56,6 +61,11 @@ describe('#analytics switched on end to end', () => {
       const policy = String(headers['content-security-policy'])
       const { document } = new JSDOM(asHtml(result)).window
       const tag = document.querySelector('head script[src]')
+      const published = Object.fromEntries(
+        [...document.querySelectorAll('meta[name^="analytics-"]')].map(
+          (meta) => [meta.getAttribute('name'), meta.getAttribute('content')]
+        )
+      )
 
       expect(sourcesFor(policy, 'script-src')).toContain(
         'https://www.googletagmanager.com'
@@ -64,17 +74,37 @@ describe('#analytics switched on end to end', () => {
         'https://*.google-analytics.com'
       )
       expect(tag?.getAttribute('src')).toContain('analytics')
-      expect(
-        document
-          .querySelector('meta[name="analytics-measurement-id"]')
-          ?.getAttribute('content')
-      ).toBe(measurementId)
-      expect(
-        document
-          .querySelector('meta[name="analytics-page-path"]')
-          ?.getAttribute('content')
-      ).toBe('/start')
+      expect(published).toStrictEqual({
+        'analytics-container-id': containerId,
+        'analytics-measurement-id': measurementId,
+        'analytics-page-path': '/start'
+      })
     })
+
+    it.for([
+      { description: 'only when asked for', preview: 'true', expected: true },
+      { description: 'not otherwise', preview: 'false', expected: false }
+    ])(
+      'should permit the preview console $description',
+      async ({ preview, expected }) => {
+        const server = await serverStartedWith({
+          ...linedUp,
+          ANALYTICS_PREVIEW_ENABLED: preview
+        })
+
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: '/start'
+        })
+        await server.stop()
+
+        expect(
+          String(headers['content-security-policy']).includes(
+            'https://tagmanager.google.com'
+          )
+        ).toBe(expected)
+      }
+    )
   })
 
   describe('when the visitor came from somewhere', () => {
@@ -86,10 +116,7 @@ describe('#analytics switched on end to end', () => {
       ],
       ['another site', 'https://www.gov.uk/guidance/packaging-waste', null]
     ])('should publish the step behind %s', async ([, referer, expected]) => {
-      const server = await serverStartedWith({
-        ANALYTICS_ENABLED: 'true',
-        ANALYTICS_MEASUREMENT_ID: measurementId
-      })
+      const server = await serverStartedWith(linedUp)
 
       const { result } = await server.inject({
         authority,
@@ -111,15 +138,20 @@ describe('#analytics switched on end to end', () => {
 
   describe('when a switch is out of line', () => {
     it.for([
-      ['the flag is off', { ANALYTICS_ENABLED: 'false' }],
+      ['the flag is off', { ...linedUp, ANALYTICS_ENABLED: 'false' }],
       [
         'no measurement id is configured',
-        { ANALYTICS_ENABLED: 'true', ANALYTICS_MEASUREMENT_ID: '' }
+        { ...linedUp, ANALYTICS_MEASUREMENT_ID: '' }
+      ],
+      [
+        'no container id is configured',
+        { ...linedUp, ANALYTICS_CONTAINER_ID: '' }
       ]
     ])('should record nothing when %s', async ([, env]) => {
-      const server = await serverStartedWith(
-        /** @type {Record<string, string>} */ (env)
-      )
+      const server = await serverStartedWith({
+        .../** @type {Record<string, string>} */ (env),
+        ANALYTICS_PREVIEW_ENABLED: 'true'
+      })
 
       const { headers, result } = await server.inject({
         method: 'GET',

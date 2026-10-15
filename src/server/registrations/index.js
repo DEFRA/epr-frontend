@@ -143,8 +143,8 @@ const overseasSitesRoute = {
 
 /**
  * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
+ *   organisationNumber: string,
+ *   registrationNumber: string,
  *   year: number
  * }} RegisteredOnlyPeriodParams
  */
@@ -210,7 +210,7 @@ export const registrations = {
         {
           ...registeredOnlyPeriodRoute,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/registered-only-periods/{year}'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/registered-only-periods/{year}'
         },
         {
           ...wasteRecordsCsvDownloadController,

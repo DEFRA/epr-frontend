@@ -1,5 +1,9 @@
 import { config } from '#config/config.js'
 import { ANALYTICS_CONSENT_COOKIE } from '#server/common/analytics/consent.js'
+import {
+  switchAnalyticsOff,
+  switchAnalyticsOn
+} from '#server/common/test-helpers/analytics-helper.js'
 import { chooseAnalytics } from '#server/common/test-helpers/consent-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
@@ -98,15 +102,9 @@ describe('#analyticsChoice', () => {
   })
 
   describe('when analytics is enabled', () => {
-    beforeAll(() => {
-      config.set('analytics.isEnabled', true)
-      config.set('analytics.measurementId', 'G-TESTONLY01')
-    })
+    beforeAll(switchAnalyticsOn)
 
-    afterAll(() => {
-      config.set('analytics.isEnabled', false)
-      config.set('analytics.measurementId', '')
-    })
+    afterAll(switchAnalyticsOff)
 
     it('should list the analytics cookies it may set', async ({ server }) => {
       const body = await getCookiesPage(server)
@@ -224,15 +222,9 @@ describe('#analyticsChoice', () => {
   })
 
   describe('the way back to the page the visitor was looking at', () => {
-    beforeAll(() => {
-      config.set('analytics.isEnabled', true)
-      config.set('analytics.measurementId', 'G-TESTONLY01')
-    })
+    beforeAll(switchAnalyticsOn)
 
-    afterAll(() => {
-      config.set('analytics.isEnabled', false)
-      config.set('analytics.measurementId', '')
-    })
+    afterAll(switchAnalyticsOff)
 
     it.for([
       {

@@ -73,7 +73,11 @@ const organisationOf = (overrides = {}) => ({
 })
 
 /** @type {AccreditationView} */
-const approved2026 = { accreditationNumber: 'A26ER1', status: 'approved' }
+const approved2026 = {
+  accreditationNumber: 'A26ER1',
+  status: 'approved',
+  statusTimeline: {}
+}
 
 /**
  * @param {Record<string, RegistrationView>} registrations
@@ -287,7 +291,11 @@ describe('#organisationController', () => {
       serve({
         R26ER1: reprocessor({
           accreditations: {
-            2025: { accreditationNumber: 'A25ER1', status: 'suspended' }
+            2025: {
+              accreditationNumber: 'A25ER1',
+              status: 'suspended',
+              statusTimeline: {}
+            }
           }
         })
       })
@@ -302,7 +310,11 @@ describe('#organisationController', () => {
       serve({
         R26ER1: reprocessor({
           accreditations: {
-            2026: { accreditationNumber: 'A26ER1', status: 'suspended' }
+            2026: {
+              accreditationNumber: 'A26ER1',
+              status: 'suspended',
+              statusTimeline: {}
+            }
           }
         })
       })
@@ -319,7 +331,11 @@ describe('#organisationController', () => {
         R26ER1: reprocessor({
           status: 'cancelled',
           accreditations: {
-            2026: { accreditationNumber: 'A26ER1', status: 'cancelled' }
+            2026: {
+              accreditationNumber: 'A26ER1',
+              status: 'cancelled',
+              statusTimeline: {}
+            }
           }
         })
       })
