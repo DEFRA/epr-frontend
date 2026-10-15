@@ -184,6 +184,19 @@ describe(accreditedStretches, () => {
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-12-31' }])
   })
 
+  it('starts a stretch on a day approved then suspended', () => {
+    expect(
+      accreditedStretches(
+        anAccreditation({
+          '2026-01-19T00:00:00.000Z': 'created',
+          '2026-01-19T00:00:00.001Z': 'approved',
+          '2026-01-19T17:06:55.419Z': 'suspended'
+        }),
+        '2026'
+      )
+    ).toStrictEqual([{ from: '2026-01-19', to: '2026-12-31' }])
+  })
+
   it('does not count the days before the first approval', () => {
     expect(
       accreditedStretches(

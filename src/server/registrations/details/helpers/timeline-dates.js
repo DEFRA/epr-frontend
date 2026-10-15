@@ -27,6 +27,12 @@ export const dailyTimeline = (timeline) =>
 const timelineEntries = ({ statusTimeline }) =>
   Object.entries(dailyTimeline(statusTimeline))
 
+/** @type {ReadonlySet<string>} */
+const ACCREDITED_STATUSES = new Set([
+  ACCREDITATION_STATUS.APPROVED,
+  ACCREDITATION_STATUS.SUSPENDED
+])
+
 /**
  * The runs of approved or suspended days within the accreditation's year; a status holds until the next entry's date.
  * @param {AccreditationView} accreditation
@@ -40,7 +46,7 @@ export const accreditedStretches = (accreditation, year) => {
   let from = null
 
   for (const [date, { status }] of timelineEntries(accreditation)) {
-    if (status === ACCREDITATION_STATUS.APPROVED && from === null) {
+    if (ACCREDITED_STATUSES.has(status) && from === null) {
       from = calendarDate(date)
       continue
     }
