@@ -13,35 +13,16 @@ export const summaryLogCsvDownloadPath =
 
 /**
  * The address of one summary log's records as CSV, addressed by its file - the
- * id the ledger records. Segments go straight into an href, so each is
+ * id the ledger records. The file id goes straight into an href, so it is
  * encoded.
  *
  * The `.csv` suffix keeps the journey tests' `a[href$="/download"]` selector
  * matching the workbook link alone.
- * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   fileId: string
- * }} ids
+ * @param {{ registrationPath: string, fileId: string }} params
  * @returns {string}
  */
-export const buildSummaryLogCsvDownloadPath = ({
-  organisationId,
-  registrationId,
-  fileId
-}) =>
-  [
-    'organisations',
-    organisationId,
-    'registrations',
-    registrationId,
-    'summary-logs',
-    'files',
-    fileId,
-    'download.csv'
-  ]
-    .map((segment) => `/${encodeURIComponent(segment)}`)
-    .join('')
+export const buildSummaryLogCsvDownloadPath = ({ registrationPath, fileId }) =>
+  `${registrationPath}/summary-logs/files/${encodeURIComponent(fileId)}/download.csv`
 
 const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
 

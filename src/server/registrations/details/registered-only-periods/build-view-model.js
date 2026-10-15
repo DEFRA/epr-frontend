@@ -5,19 +5,26 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
 import { paths } from '#server/paths.js'
 import { CADENCE } from '#server/reports/constants.js'
+import {
+  registrationPath as toRegistrationPath,
+  reportPath
+} from '#server/reports/helpers/report-paths.js'
 
-import { eventsInYear } from './helpers/events-in-year.js'
-import { organisationName, toCaption } from '../helpers/caption.js'
+import { organisationViewName, toCaption } from '../helpers/caption.js'
 import { registeredOnlyStretches } from '../helpers/registered-only.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
+import {
+  registeredStretches,
+  registrationAccreditedStretches
+} from '../helpers/timeline-dates.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { AccreditationResource, Localise } from '../helpers/types.js'
- * @import { RegistrationResource } from '#server/common/helpers/organisations/registration-resource.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { Localise } from '../helpers/types.js'
  */
 
 /**
@@ -43,9 +50,8 @@ import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
  *   ledgerEvents: LedgerEvent[] | null | undefined,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   organisationId: string,
- *   registration: RegistrationResource,
- *   year: number
+ *   registration: RegistrationView,
+ *   registrationPath: string
  * }} params
  * @returns {LedgerTable | null}
  */
@@ -53,23 +59,18 @@ const toLedger = ({
   ledgerEvents,
   localise,
   localiseUrl,
-  organisationId,
   registration,
-  year
+  registrationPath
 }) => {
   if (!ledgerEvents) {
     return null
   }
 
-  // The resource files the processing type under its application, not at the
-  // top level the domain model uses.
-  const { noteType } = getNoteTypeDisplayNames({
-    wasteProcessingType: registration.application.wasteProcessingType
-  })
+  const { noteType } = getNoteTypeDisplayNames(registration)
 
   return {
     rows: buildLedgerRows({
-      events: eventsInYear({ events: ledgerEvents, year }),
+      events: ledgerEvents,
       holdsABalance: false,
       localise,
       localiseUrl,
@@ -77,17 +78,56 @@ const toLedger = ({
       // The page is regulator-only, so the flag is the whole question here.
       offersCsvDownloads: offersWasteRecordsDownloads(),
       offersDownloads: true,
-      organisationId,
-      registrationId: registration.id
+      registrationPath
     })
   }
 }
 
 /**
  * @param {{
- *   organisation: Organisation,
- *   registration: RegistrationResource,
- *   accreditations: AccreditationResource[],
+ *   keys: RegistrationKeys,
+ *   name: string,
+ *   registrationAddress: string,
+ *   year: number,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string
+ * }} params
+ * @returns {Crumb[]}
+ */
+const toBreadcrumbs = ({
+  keys,
+  name,
+  registrationAddress,
+  year,
+  localise,
+  localiseUrl
+}) => [
+  {
+    text: localise('registrations:details:allOrganisations'),
+    href: localiseUrl(paths.regulators.home)
+  },
+  {
+    text: name,
+    href: localiseUrl(
+      `/organisations/${encodeURIComponent(keys.organisationNumber)}`
+    )
+  },
+  {
+    text: localise('registrations:details:heading'),
+    href: localiseUrl(registrationAddress)
+  },
+  {
+    text: localise('registrations:details:registeredOnlyPeriod:breadcrumb', {
+      year: String(year)
+    })
+  }
+]
+
+/**
+ * @param {{
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
+ *   keys: RegistrationKeys,
  *   cadence: CadenceValue | null,
  *   reportingPeriods: ReportingPeriod[],
  *   ledgerEvents: LedgerEvent[] | null | undefined,
@@ -100,7 +140,7 @@ const toLedger = ({
 export const buildViewModel = ({
   organisation,
   registration,
-  accreditations,
+  keys,
   cadence,
   reportingPeriods,
   ledgerEvents,
@@ -108,8 +148,8 @@ export const buildViewModel = ({
   localise,
   localiseUrl
 }) => {
-  const name = organisationName(organisation)
-  const registrationPath = `/organisations/${organisation.id}/registrations/${registration.id}`
+  const name = organisationViewName(organisation)
+  const registrationAddress = toRegistrationPath(keys)
   const heading = localise(
     'registrations:details:registeredOnlyPeriod:heading',
     {
@@ -118,9 +158,8 @@ export const buildViewModel = ({
   )
 
   const stretches = registeredOnlyStretches({
-    dateRange: registration.dateRange,
-    accreditations,
-    year
+    registered: registeredStretches(registration, year),
+    accredited: registrationAccreditedStretches(registration)
   })
 
   // The calendar answers one cadence for the registration. Quarterly is what a
@@ -129,24 +168,15 @@ export const buildViewModel = ({
   const quarterlyPeriods = cadence === CADENCE.QUARTERLY ? reportingPeriods : []
 
   return {
-    breadcrumbs: [
-      {
-        text: localise('registrations:details:allOrganisations'),
-        href: localiseUrl(paths.regulators.home)
-      },
-      { text: name, href: localiseUrl(`/organisations/${organisation.id}`) },
-      {
-        text: localise('registrations:details:heading'),
-        href: localiseUrl(registrationPath)
-      },
-      {
-        text: localise(
-          'registrations:details:registeredOnlyPeriod:breadcrumb',
-          { year: String(year) }
-        )
-      }
-    ],
-    caption: toCaption([name, registration.registrationNumber]),
+    breadcrumbs: toBreadcrumbs({
+      keys,
+      name,
+      registrationAddress,
+      year,
+      localise,
+      localiseUrl
+    }),
+    caption: toCaption([name, keys.registrationNumber]),
     // A year holding no registered-only time is the page's whole subject, so
     // the answer is carried rather than the stretches that produced it.
     hasData: stretches.length > 0,
@@ -155,9 +185,8 @@ export const buildViewModel = ({
       ledgerEvents,
       localise,
       localiseUrl,
-      organisationId: organisation.id,
       registration,
-      year
+      registrationPath: registrationAddress
     }),
     // The year already identifies this page, so unlike its two siblings it
     // does not prefix a record number - that would put two identifiers in
@@ -172,8 +201,14 @@ export const buildViewModel = ({
         cadence: CADENCE.QUARTERLY,
         localise,
         localiseUrl,
-        organisationId: organisation.id,
-        registrationId: registration.id,
+        periodPath: (period) =>
+          reportPath({
+            ...keys,
+            year: period.year,
+            cadence: CADENCE.QUARTERLY,
+            period: period.period,
+            submissionNumber: period.submissionNumber
+          }),
         reportingPeriods: quarterlyPeriods
       })
     }
