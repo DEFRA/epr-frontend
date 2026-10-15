@@ -68,6 +68,7 @@ const aRegistration = (accreditations = {}) => ({
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'reprocessor',
+  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   site: { address: { fullAddress: 'North Road, Leeds' } },
   accreditations
 })
@@ -229,6 +230,22 @@ describe(buildViewModel, () => {
             '2026-03-10T09:00:00.000Z': 'suspended'
           })
         })
+      }).hasData
+    ).toBe(false)
+  })
+
+  it('holds none where the registration was cancelled when the accreditation was', () => {
+    const cancelledOn = {
+      '2026-01-01T09:00:00.000Z': 'approved',
+      '2026-03-01T09:00:00.000Z': 'cancelled'
+    }
+
+    expect(
+      build({
+        registration: {
+          ...aRegistration({ 2026: anAccreditation(cancelledOn) }),
+          statusTimeline: anAccreditation(cancelledOn).statusTimeline
+        }
       }).hasData
     ).toBe(false)
   })

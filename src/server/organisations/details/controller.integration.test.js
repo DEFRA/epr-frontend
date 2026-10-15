@@ -58,6 +58,7 @@ const organisation = {
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'reprocessor',
       site: { address: { line1: 'Site name A' } },
+      statusTimeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } },
       accreditations: {
         2025: {
           accreditationNumber: 'A25ER5001180114GR',
@@ -81,6 +82,10 @@ const organisation = {
       submittedToRegulator: { code: 'sepa' },
       wasteProcessingType: 'reprocessor',
       site: { address: { line1: 'Site name A' } },
+      statusTimeline: {
+        '2025-01-01T00:00:00.000Z': { status: 'approved' },
+        '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+      },
       accreditations: {}
     },
     R26EX5001180041PA: {
@@ -89,6 +94,7 @@ const organisation = {
       material: 'paper',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'exporter',
+      statusTimeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } },
       accreditations: {}
     }
   }
