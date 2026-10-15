@@ -2,16 +2,14 @@ import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchStreamFromBackend } from '#server/common/helpers/fetch-stream-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import { registrationPath as toRegistrationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 export const wasteRecordsCsvDownloadPath =
-  '/organisations/{organisationNumber}/registrations/{registrationNumber}/waste-records/download.csv'
+  '/organisations/{organisationId}/registrations/{registrationId}/waste-records/download.csv'
 
 /**
  * The address of a registration's latest waste records as CSV.
@@ -34,10 +32,13 @@ const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
  */
 export const wasteRecordsCsvDownloadController = {
   /**
-   * @param {HapiRequest & { params: RegistrationKeys }} request
+   * @param {HapiRequest & {
+   *   params: { organisationId: string, registrationId: string }
+   * }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
+    const { organisationId, registrationId } = request.params
     const { backendToken } = request.auth.credentials
 
     if (!readsWasteRecordsDownloads(request.auth.credentials)) {
@@ -47,7 +48,7 @@ export const wasteRecordsCsvDownloadController = {
         {
           event: {
             action: 'download_waste_records_csv',
-            reason: `records not offered to this caller registrationNumber=${request.params.registrationNumber}`
+            reason: `records not offered to this caller registrationId=${registrationId}`
           }
         }
       )
@@ -55,7 +56,7 @@ export const wasteRecordsCsvDownloadController = {
 
     const { body, contentDisposition, contentType } =
       await fetchStreamFromBackend(
-        `${toRegistrationPath(request.params)}/waste-records/export.csv`,
+        `/v1/organisations/${organisationId}/registrations/${registrationId}/waste-records/export.csv`,
         { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
       )
 

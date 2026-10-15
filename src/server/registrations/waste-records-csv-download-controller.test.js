@@ -17,10 +17,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(import('#server/common/helpers/fetch-stream-from-backend.js'))
 
-const registrationPath = '/organisations/500002/registrations/R26ER5000000002PA'
-const path = `${registrationPath}/waste-records/download.csv`
+const organisationId = '6507f1f77bcf86cd79943901'
+const registrationId = 'reg-001'
+const path = `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv`
 
-const backendPath = `${registrationPath}/waste-records/export.csv`
+const backendPath = `/v1/organisations/${organisationId}/registrations/${registrationId}/waste-records/export.csv`
 
 const disposition =
   'attachment; filename="R26ER5000000002PA-waste-records-2026-09-08.csv"'
