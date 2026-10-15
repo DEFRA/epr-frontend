@@ -6,7 +6,11 @@ import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-import { reportPath, reportsListPath } from './helpers/report-paths.js'
+import {
+  organisationPath,
+  reportPath,
+  reportsListPath
+} from './helpers/report-paths.js'
 import { isResubmission } from './helpers/resubmission.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -60,7 +64,7 @@ export const createdController = {
       ? localise('reports:createdStatusValueResubmission')
       : localise('reports:createdStatusValue')
 
-    const homeUrl = `/organisations/${encodeURIComponent(organisationNumber)}`
+    const homeUrl = organisationPath({ organisationNumber })
     const viewDraftUrl = `${reportPath(request.params)}/view`
 
     return h.view('reports/created', {

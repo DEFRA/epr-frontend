@@ -255,7 +255,7 @@ describe('#reportDataIncompleteController', () => {
     })
 
     expect(link.getAttribute('href')).toBe(
-      `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
+      '/organisations/org-123/registrations/reg-001/summary-logs/upload'
     )
   })
 
@@ -420,7 +420,7 @@ describe('#reportDataIncompleteController', () => {
     })
 
     expect(button.getAttribute('href')).toBe(
-      `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
+      '/organisations/org-123/registrations/reg-001/summary-logs/upload'
     )
   })
 

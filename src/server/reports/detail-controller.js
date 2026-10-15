@@ -21,12 +21,12 @@ import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import {
-  registrationPath,
+  summaryLogUploadPath,
   reportPath,
   reportsListPath
 } from './helpers/report-paths.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
-import { PREVIEW_STATUS } from './constants.js'
+import { SUBMISSION_STATUS } from './constants.js'
 
 /**
  * @param {object|undefined} exportActivity
@@ -107,6 +107,7 @@ function buildSectionIntros(
 
 /**
  * @param {RegistrationKeys} keys
+ * @param {string} uploadPath
  * @param {object} registration
  * @param {object | undefined} accreditation
  * @param {object} reportDetail
@@ -115,6 +116,7 @@ function buildSectionIntros(
  */
 function buildViewData(
   keys,
+  uploadPath,
   registration,
   accreditation,
   reportDetail,
@@ -146,7 +148,7 @@ function buildViewData(
       wasteActionGerund
     }),
     backUrl: localiseUrl(reportsListPath(keys)),
-    uploadUrl: localiseUrl(`${registrationPath(keys)}/summary-logs/upload`),
+    uploadUrl: localiseUrl(uploadPath),
     lastUploadedAt: reportDetail.source?.lastUploadedAt
       ? {
           date: formatDate(reportDetail.source.lastUploadedAt),
@@ -216,15 +218,20 @@ export const detailController = {
       session.backendToken
     )
 
-    if (reportDetail.status !== PREVIEW_STATUS) {
+    if (reportDetail.status !== SUBMISSION_STATUS.NOT_STARTED) {
       return h.redirect(request.localiseUrl(reportsListPath(request.params)))
     }
 
     const basePath = reportPath(request.params)
+    const uploadPath = summaryLogUploadPath({
+      organisationId: organisationData.id,
+      registrationId: registration.id
+    })
 
     if (reportDetail.incompleteSummaryLogRows) {
       request.yar.set('reportDataIncompleteContext', {
         periodPath: basePath,
+        uploadPath,
         payload: reportDetail.incompleteSummaryLogRows
       })
       return h.redirect(
@@ -234,6 +241,7 @@ export const detailController = {
 
     const viewData = buildViewData(
       request.params,
+      uploadPath,
       registration,
       accreditation,
       reportDetail,

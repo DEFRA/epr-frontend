@@ -1,4 +1,5 @@
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
+import { organisationPath } from '#server/reports/helpers/report-paths.js'
 import Joi from 'joi'
 import { linkOrganisation } from './helpers/link-organisation.js'
 import { provideUserOrganisations } from './prerequisites/provide-user-organisations.js'
@@ -76,7 +77,7 @@ export const controller = {
       await request.server.app.cache.set(sessionId, session)
     }
 
-    return h.redirect(`/organisations/${organisationNumber}`)
+    return h.redirect(organisationPath({ organisationNumber }))
   }
 }
 

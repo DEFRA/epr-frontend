@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { asHapiRequest } from '#server/common/hapi-types.js'
-import { redirectPreservingMethod } from '#server/common/helpers/natural-keys/redirect-preserving-method.js'
+import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
 
 import { checkGetController, checkPostController } from './check-controller.js'
 import { createController } from './create-controller.js'

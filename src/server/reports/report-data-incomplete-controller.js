@@ -1,10 +1,6 @@
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { buildReportDataIncompleteView } from './helpers/report-data-incomplete.js'
-import {
-  registrationPath,
-  reportPath,
-  reportsListPath
-} from './helpers/report-paths.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 
 /**
  * Renders the exporter validation-error screen (PAE-1420) when report creation
@@ -40,9 +36,7 @@ export const reportDataIncompleteGetController = {
       return h.redirect(reportsUrl)
     }
 
-    const uploadUrl = request.localiseUrl(
-      `${registrationPath(request.params)}/summary-logs/upload`
-    )
+    const uploadUrl = request.localiseUrl(context.uploadPath)
 
     const { heading, countLine, worksheets, helpLine } =
       buildReportDataIncompleteView(context.payload, localise)
@@ -73,5 +67,5 @@ export const reportDataIncompleteGetController = {
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { ReportDataIncompletePayload } from './helpers/report-data-incomplete.js'
- * @typedef {{ periodPath: string, payload: ReportDataIncompletePayload }} ReportDataIncompleteContext
+ * @typedef {{ periodPath: string, uploadPath: string, payload: ReportDataIncompletePayload }} ReportDataIncompleteContext
  */

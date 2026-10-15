@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 
 import { CADENCE } from '../constants.js'
 import {
+  organisationPath,
   reportApiPath,
   reportPath,
   reportsCalendarApiPath,
-  reportsListPath
+  reportsListPath,
+  summaryLogUploadPath
 } from './report-paths.js'
 
 const registrationKeys = {
@@ -62,6 +64,22 @@ describe(reportApiPath, () => {
     expect(reportApiPath(monthlyKeys)).toBe(
       '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/8/submissions/1'
     )
+  })
+})
+
+describe(organisationPath, () => {
+  it('gives the organisation home page, encoding the number', () => {
+    expect(organisationPath({ organisationNumber: '5/1' })).toBe(
+      '/organisations/5%2F1'
+    )
+  })
+})
+
+describe(summaryLogUploadPath, () => {
+  it('gives the upload page by id', () => {
+    expect(
+      summaryLogUploadPath({ organisationId: 'org-1', registrationId: 'reg-1' })
+    ).toBe('/organisations/org-1/registrations/reg-1/summary-logs/upload')
   })
 })
 

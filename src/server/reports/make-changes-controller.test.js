@@ -181,7 +181,7 @@ describe('#makeChangesController', () => {
       })
 
       expect(uploadLink.getAttribute('href')).toBe(
-        `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
+        '/organisations/org-123/registrations/reg-001/summary-logs/upload'
       )
     })
 

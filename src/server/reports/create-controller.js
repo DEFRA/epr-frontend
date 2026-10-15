@@ -4,7 +4,7 @@ import { createReport } from './helpers/create-report.js'
 import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { reportAttempt } from './helpers/report-attempt.js'
-import { reportPath } from './helpers/report-paths.js'
+import { reportPath, summaryLogUploadPath } from './helpers/report-paths.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { isReportDataIncompleteError } from './helpers/report-data-incomplete.js'
@@ -21,7 +21,7 @@ export const createController = {
     const { organisationNumber, registrationNumber, cadence } = request.params
     const session = request.auth.credentials
 
-    const { registration, accreditation } =
+    const { organisationData, registration, accreditation } =
       await fetchRegistrationAndAccreditationByNumber(
         organisationNumber,
         registrationNumber,
@@ -40,6 +40,10 @@ export const createController = {
       if (isReportDataIncompleteError(boomError)) {
         request.yar.set('reportDataIncompleteContext', {
           periodPath: basePath,
+          uploadPath: summaryLogUploadPath({
+            organisationId: organisationData.id,
+            registrationId: registration.id
+          }),
           payload: boomError.output.payload
         })
         return h.redirect(

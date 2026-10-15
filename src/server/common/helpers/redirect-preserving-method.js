@@ -1,11 +1,10 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { isReadMethod } from '#server/common/helpers/http-methods.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
-
-const READ_METHODS = Object.freeze(['get', 'head'])
 
 /**
  * Redirects to the path in the request's language, keeping its query string.
@@ -18,7 +17,7 @@ export const redirectPreservingMethod = (request, h, path) =>
   h
     .redirect(request.localiseUrl(`${path}${request.url.search}`))
     .code(
-      READ_METHODS.includes(request.method)
+      isReadMethod(request.method)
         ? statusCodes.found
         : statusCodes.temporaryRedirect
     )

@@ -7,7 +7,7 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-import { registrationPath, reportPath } from './helpers/report-paths.js'
+import { reportPath, summaryLogUploadPath } from './helpers/report-paths.js'
 import { requestResubmission } from './helpers/request-resubmission.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
@@ -108,7 +108,7 @@ export const makeChangesGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { registration, accreditation } =
+    const { organisationData, registration, accreditation } =
       await fetchRegistrationAndAccreditationByNumber(
         organisationNumber,
         registrationNumber,
@@ -148,7 +148,10 @@ export const makeChangesGetController = {
       ...dataUpdateCopy,
       backUrl: request.localiseUrl(viewPath),
       uploadUrl: request.localiseUrl(
-        `${registrationPath(request.params)}/summary-logs/upload`
+        summaryLogUploadPath({
+          organisationId: organisationData.id,
+          registrationId: registration.id
+        })
       )
     })
   }

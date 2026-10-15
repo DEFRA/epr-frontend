@@ -8,12 +8,28 @@ import { CADENCE } from '../constants.js'
  */
 
 /**
+ * The organisation's natural-key address.
+ * @param {{ organisationNumber: string | number }} keys
+ * @returns {string}
+ */
+export const organisationPath = ({ organisationNumber }) =>
+  `/organisations/${encodeURIComponent(organisationNumber)}`
+
+/**
  * The registration's natural-key address.
  * @param {RegistrationKeys} keys
  * @returns {string}
  */
-export const registrationPath = ({ organisationNumber, registrationNumber }) =>
-  `/organisations/${encodeURIComponent(organisationNumber)}/registrations/${encodeURIComponent(registrationNumber)}`
+export const registrationPath = ({ registrationNumber, ...keys }) =>
+  `${organisationPath(keys)}/registrations/${encodeURIComponent(registrationNumber)}`
+
+/**
+ * The summary log upload page, by id until it moves to natural keys.
+ * @param {{ organisationId: string, registrationId: string }} ids
+ * @returns {string}
+ */
+export const summaryLogUploadPath = ({ organisationId, registrationId }) =>
+  `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
 
 /**
  * The report list page for a registration.

@@ -7,7 +7,7 @@ import {
   findOrganisationByNumber
 } from './find-organisation.js'
 import { routeKeyForm, urlKeyForm } from './key-form.js'
-import { redirectPreservingMethod } from './redirect-preserving-method.js'
+import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
 import { toIds, toNaturalKeys } from './swap-keys.js'
 
 /**
