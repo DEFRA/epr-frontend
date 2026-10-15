@@ -1,5 +1,6 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { forbidden, notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { findOrganisationByNumber } from '#server/common/helpers/natural-keys/find-organisation.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
@@ -7,6 +8,7 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  * @import {Accreditation} from '#domain/organisations/accreditation.js'
  * @import {Organisation} from '#domain/organisations/model.js'
  * @import {Registration} from '#domain/organisations/registration.js'
+ * @import {UserSession} from '#server/auth/types/session.js'
  */
 
 /**
@@ -59,6 +61,16 @@ async function fetchRegistrationAndAccreditation(
     })
   }
 
+  return withAccreditation(organisationData, registration)
+}
+
+/**
+ * Pairs a registration with its linked accreditation, raw and live.
+ * @param {Organisation} organisationData
+ * @param {Registration} registration
+ * @returns {RegistrationWithAccreditation}
+ */
+function withAccreditation(organisationData, registration) {
   const rawAccreditation = organisationData.accreditations.find(
     ({ id }) => id === registration.accreditationId
   )
@@ -75,4 +87,54 @@ async function fetchRegistrationAndAccreditation(
   }
 }
 
-export { fetchRegistrationAndAccreditation }
+/**
+ * Finds the organisation and registration by number, with its linked accreditation.
+ * An organisation the user cannot see is a 403, whether or not it exists.
+ * @param {string} organisationNumber
+ * @param {string} registrationNumber
+ * @param {UserSession} credentials
+ * @returns {Promise<RegistrationWithAccreditation>}
+ */
+async function fetchRegistrationAndAccreditationByNumber(
+  organisationNumber,
+  registrationNumber,
+  credentials
+) {
+  const organisationData = await findOrganisationByNumber(
+    organisationNumber,
+    credentials
+  )
+
+  if (!organisationData) {
+    throw forbidden(
+      'Organisation not available',
+      errorCodes.organisationForbidden,
+      {
+        event: {
+          action: 'fetch_registration',
+          reason: `organisationNumber=${organisationNumber}`
+        }
+      }
+    )
+  }
+
+  const matches = organisationData.registrations.filter(
+    (registration) => registration.registrationNumber === registrationNumber
+  )
+
+  if (matches.length !== 1) {
+    throw notFound('Registration not found', errorCodes.registrationNotFound, {
+      event: {
+        action: 'fetch_registration',
+        reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber} matches=${matches.length}`
+      }
+    })
+  }
+
+  return withAccreditation(organisationData, matches[0])
+}
+
+export {
+  fetchRegistrationAndAccreditation,
+  fetchRegistrationAndAccreditationByNumber
+}

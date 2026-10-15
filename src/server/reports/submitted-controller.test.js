@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
@@ -35,7 +35,6 @@ const mockRegistration = asRegistrationWithAccreditation({
 })
 
 const mockReportDetail = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
@@ -43,10 +42,8 @@ const mockReportDetail = {
   endDate: '2026-03-31',
   dueDate: '2026-04-20',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: { material: 'plastic' },
-  id: 'report-001',
   version: 1,
-  status: { currentStatus: 'submitted' },
+  status: 'submitted',
   supportingInformation: null,
   recyclingActivity: {
     totalTonnageReceived: 80.25,
@@ -63,16 +60,16 @@ const mockReportDetail = {
   }
 }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const basePeriodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const basePeriodPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 const submittedUrl = `${basePeriodPath}/submitted`
-const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+const reportsUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
 
 describe('#submittedController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
       mockRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -341,7 +338,7 @@ describe('#submittedController', () => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse({
           ...mockReportDetail,
-          status: { currentStatus: 'ready_to_submit' }
+          status: 'ready_to_submit'
         })
       )
 
@@ -358,7 +355,7 @@ describe('#submittedController', () => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse({
           ...mockReportDetail,
-          status: { currentStatus: 'in_progress' }
+          status: 'in_progress'
         })
       )
 
@@ -375,7 +372,7 @@ describe('#submittedController', () => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse({
           ...mockReportDetail,
-          status: { currentStatus: 'due' }
+          status: 'due'
         })
       )
 
@@ -393,7 +390,7 @@ describe('#submittedController', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/submitted`,
+        url: `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/invalid/1/submissions/1/submitted`,
         auth: mockAuth
       })
 
@@ -403,7 +400,7 @@ describe('#submittedController', () => {
     it('should return 400 for invalid year', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submissions/1/submitted`,
+        url: `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2023/quarterly/1/submissions/1/submitted`,
         auth: mockAuth
       })
 
@@ -413,7 +410,7 @@ describe('#submittedController', () => {
     it('should return 400 for invalid period', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submissions/1/submitted`,
+        url: `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/13/submissions/1/submitted`,
         auth: mockAuth
       })
 

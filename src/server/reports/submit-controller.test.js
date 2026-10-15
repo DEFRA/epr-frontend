@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
@@ -95,7 +95,7 @@ function buildRegistration(overrides = {}) {
 }
 
 const exporterRegistration = buildRegistration({
-  registration: { wasteProcessingType: 'exporter' }
+  registration: { wasteProcessingType: 'exporter', site: undefined }
 })
 
 const reprocessorRegistration = buildRegistration({
@@ -115,25 +115,19 @@ const reprocessorRegistration = buildRegistration({
 
 /** @type {ReportDetailResponse} */
 const exporterReportDetail = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
+  submissionNumber: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
   dueDate: '2026-04-20',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: { material: 'plastic' },
-  id: 'report-001',
   version: 1,
-  status: {
-    currentStatus: 'ready_to_submit',
-    currentStatusAt: '2026-01-20T14:35:00.000Z',
-    created: {
-      at: '2026-01-20T14:30:00.000Z',
-      by: { id: 'user-456', name: 'Michael Doran', position: 'User' }
-    }
-  },
+  status: 'ready_to_submit',
+  createdAt: '2026-01-20T14:30:00.000Z',
+  createdBy: { name: 'Michael Doran', position: 'User' },
+  canRequestResubmission: false,
   supportingInformation: 'Supply chain disruption in February',
   recyclingActivity: {
     totalTonnageReceived: 80.25,
@@ -208,34 +202,19 @@ const accreditedReprocessorRegistration = buildRegistration({
 
 /** @type {ReportDetailResponse} */
 const reprocessorReportDetail = {
-  operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
+  submissionNumber: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
   dueDate: '2026-04-20',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: {
-    material: 'plastic',
-    site: {
-      address: {
-        line1: 'North Road',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
-      }
-    }
-  },
-  id: 'report-001',
   version: 1,
-  status: {
-    currentStatus: 'ready_to_submit',
-    currentStatusAt: '2026-01-10T09:05:00.000Z',
-    created: {
-      at: '2026-01-10T09:00:00.000Z',
-      by: { id: 'user-789', name: 'Jane Smith', position: 'User' }
-    }
-  },
+  status: 'ready_to_submit',
+  createdAt: '2026-01-10T09:00:00.000Z',
+  createdBy: { name: 'Jane Smith', position: 'User' },
+  canRequestResubmission: false,
   supportingInformation: undefined,
   recyclingActivity: {
     totalTonnageReceived: 80.25,
@@ -270,7 +249,6 @@ const reprocessorReportDetail = {
 /** @type {ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
   ...reprocessorReportDetail,
-  operatorCategory: 'REPROCESSOR_ACCREDITED',
   prn: {
     averagePricePerTonne: 150,
     freeTonnage: 5,
@@ -290,7 +268,6 @@ const accreditedExporterRegistration = buildRegistration({
 /** @type {ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
-  operatorCategory: 'EXPORTER_ACCREDITED',
   exportActivity: {
     .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
       exporterReportDetail.exportActivity
@@ -313,11 +290,11 @@ const accreditedExporterReportDetail = {
   }
 }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/submit`
-const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-const submittedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/submitted`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/submit`
+const reportsUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+const submittedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/submitted`
 
 /** Inject a GET request and return the parsed DOM body. */
 async function getBody(server) {
@@ -337,7 +314,7 @@ describe('#submitController', () => {
   describe('GET', () => {
     describe('for exporter with supporting information', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -856,7 +833,7 @@ describe('#submitController', () => {
 
     describe('for exporter with no export activity', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue({
@@ -918,7 +895,7 @@ describe('#submitController', () => {
 
     describe('for accredited exporter', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
           accreditedExporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -1049,7 +1026,7 @@ describe('#submitController', () => {
 
     describe('for reprocessor without supporting information', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
           reprocessorRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(reprocessorReportDetail)
@@ -1170,7 +1147,7 @@ describe('#submitController', () => {
 
     describe('for accredited reprocessor', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
           accreditedReprocessorRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -1265,8 +1242,7 @@ describe('#submitController', () => {
           label: 'exporter quarterly',
           registration: exporterRegistration,
           report: exporterReportDetail,
-          cadence: 'quarterly',
-          period: 1
+          periodPath: `${reportsUrl}/2026/quarterly/1/submissions/1`
         },
         {
           label: 'reprocessor monthly',
@@ -1276,21 +1252,19 @@ describe('#submitController', () => {
             cadence: 'monthly',
             period: 3
           },
-          cadence: 'monthly',
-          period: 3
+          periodPath: `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/3/submissions/1`
         }
       ])(
         'should display warning button for $label',
-        async ({ registration, report, cadence, period }, { server }) => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            registration
-          )
+        async ({ registration, report, periodPath }, { server }) => {
+          vi.mocked(
+            fetchRegistrationAndAccreditationByNumber
+          ).mockResolvedValue(registration)
           vi.mocked(fetchReportDetail).mockResolvedValue(report)
 
-          const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/submissions/1/submit`
           const { result } = await server.inject({
             method: 'GET',
-            url,
+            url: `${periodPath}/submit`,
             auth: mockAuth
           })
           const body = new JSDOM(result).window.document.body
@@ -1298,9 +1272,7 @@ describe('#submitController', () => {
             name: /Delete report/i
           })
 
-          expect(deleteButton.getAttribute('href')).toBe(
-            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/submissions/1/delete`
-          )
+          expect(deleteButton.getAttribute('href')).toBe(`${periodPath}/delete`)
           expect(deleteButton.classList.contains('govuk-button--warning')).toBe(
             true
           )
@@ -1310,17 +1282,12 @@ describe('#submitController', () => {
 
     describe('when report is already submitted', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
-          status: {
-            .../** @type {NonNullable<ReportDetailResponse['status']>} */ (
-              exporterReportDetail.status
-            ),
-            currentStatus: 'submitted'
-          }
+          status: 'submitted'
         })
       })
 
@@ -1341,7 +1308,7 @@ describe('#submitController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -1379,8 +1346,8 @@ describe('#submitController', () => {
 
         expect(updateReportStatus).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'quarterly',
             period: 1,
@@ -1576,7 +1543,7 @@ describe('#submitController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/submit`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/invalid/1/submissions/1/submit`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -1588,7 +1555,7 @@ describe('#submitController', () => {
     })
 
     it('should return 400 for invalid year', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submissions/1/submit`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2023/quarterly/1/submissions/1/submit`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -1600,7 +1567,7 @@ describe('#submitController', () => {
     })
 
     it('should return 400 for invalid period', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submissions/1/submit`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/13/submissions/1/submit`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -1613,10 +1580,10 @@ describe('#submitController', () => {
   })
 
   describe('resubmission variant (submissionNumber > 1)', () => {
-    const resubmitUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/submit`
+    const resubmitUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/2/submit`
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -1680,12 +1647,7 @@ describe('#submitController', () => {
       }) => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
-          status: {
-            .../** @type {NonNullable<typeof exporterReportDetail.status>} */ (
-              exporterReportDetail.status
-            ),
-            currentStatus: 'in_progress'
-          }
+          status: 'in_progress'
         })
 
         const { statusCode } = await server.inject({
@@ -1699,7 +1661,7 @@ describe('#submitController', () => {
     })
 
     describe('POST', () => {
-      const resubmittedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/submitted`
+      const resubmittedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/2/submitted`
 
       it('should submit the resubmission with submissionNumber 2 and redirect to submitted', async ({
         server
@@ -1718,8 +1680,8 @@ describe('#submitController', () => {
 
         expect(updateReportStatus).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'quarterly',
             period: 1,
@@ -1770,10 +1732,10 @@ describe('#submitController', () => {
   })
 
   describe('journey events', () => {
-    const attempt = 'reg-001/2026/quarterly/1/1'
+    const attempt = 'R25SR500030912PA/2026/quarterly/1/1'
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -1797,12 +1759,7 @@ describe('#submitController', () => {
     }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...exporterReportDetail,
-        status: {
-          .../** @type {NonNullable<ReportDetailResponse['status']>} */ (
-            exporterReportDetail.status
-          ),
-          currentStatus: 'submitted'
-        }
+        status: 'submitted'
       })
 
       await server.inject({ method: 'GET', url: baseUrl, auth: mockAuth })

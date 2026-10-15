@@ -1,5 +1,7 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
+import { reportsCalendarApiPath } from './report-paths.js'
+
 /**
  * Fetches available reporting periods for a registration from the backend.
  * @param {string} organisationId
@@ -15,6 +17,19 @@ export async function fetchReportingPeriods(
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/calendar`
 
   return fetchJsonFromBackend(path, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${backendToken}` }
+  })
+}
+
+/**
+ * Fetches available reporting periods for a registration by its natural keys.
+ * @param {RegistrationKeys} keys
+ * @param {string} backendToken
+ * @returns {Promise<ReportingPeriodsResponse>}
+ */
+export async function fetchReportingPeriodsByNumber(keys, backendToken) {
+  return fetchJsonFromBackend(reportsCalendarApiPath(keys), {
     method: 'GET',
     headers: { Authorization: `Bearer ${backendToken}` }
   })
@@ -55,4 +70,5 @@ export async function fetchReportingPeriods(
 
 /**
  * @import { CadenceValue, SubmissionStatusValue } from '../constants.js'
+ * @import { RegistrationKeys } from './report-paths.js'
  */
