@@ -21,6 +21,7 @@
 {% block head %}
   <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">
   {% if analytics.hasConsented %}
+    <meta name="analytics-container-id" content="{{ analytics.containerId }}">
     <meta name="analytics-measurement-id" content="{{ analytics.measurementId }}">
     <meta name="analytics-page-path" content="{{ analytics.pagePath }}">
     {% if analytics.pageReferrer !== null %}
