@@ -1,12 +1,31 @@
-import { ACCREDITATION_STATUS } from '#domain/organisations/model.js'
-import { calendarDate } from '#server/common/helpers/calendar-date.js'
+import {
+  ACCREDITATION_STATUS,
+  REGISTRATION_STATUS
+} from '#domain/organisations/model.js'
+import {
+  calendarDate,
+  utcCalendarDate
+} from '#server/common/helpers/calendar-date.js'
 
-import { firstDayOf, lastDayOf, later, shiftDay } from './registered-only.js'
+import {
+  earlier,
+  firstDayOf,
+  lastDayOf,
+  later,
+  shiftDay,
+  yearOf
+} from './registered-only.js'
 
 /**
+ * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
  * @import { AccreditationView, RegistrationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { RegistrationDateRange } from '#server/common/helpers/organisations/registration-resource.js'
  * @import { Stretch } from './registered-only.js'
+ */
+
+/**
+ * A run of live days; one still live has no end.
+ * @typedef {{ from: CalendarDate, to: CalendarDate | null }} Run
  */
 
 /**
@@ -18,49 +37,97 @@ export const dailyTimeline = (timeline) =>
   Object.fromEntries(
     Object.entries(timeline)
       .sort(([one], [other]) => one.localeCompare(other))
-      .map(([at, entry]) => [new Date(at).toISOString().slice(0, 10), entry])
+      .map(([at, entry]) => [calendarDate(at), entry])
   )
 
 /**
- * @param {AccreditationView} accreditation
- * @returns {[string, { status: string }][]}
+ * The runs of days holding a live status; any other status ends a run the day before.
+ * @param {StatusTimeline} timeline
+ * @param {ReadonlySet<string>} liveStatuses
+ * @returns {Run[]}
  */
-const timelineEntries = ({ statusTimeline }) =>
-  Object.entries(dailyTimeline(statusTimeline))
-
-/**
- * The runs of approved or suspended days within the accreditation's year; a status holds until the next entry's date.
- * @param {AccreditationView} accreditation
- * @param {string} year
- * @returns {Stretch[]}
- */
-export const accreditedStretches = (accreditation, year) => {
-  /** @type {Stretch[]} */
-  const stretches = []
-  /** @type {Stretch['from'] | null} */
+const liveRuns = (timeline, liveStatuses) => {
+  /** @type {Run[]} */
+  const runs = []
+  /** @type {CalendarDate | null} */
   let from = null
 
-  for (const [date, { status }] of timelineEntries(accreditation)) {
-    if (status === ACCREDITATION_STATUS.APPROVED && from === null) {
-      from = calendarDate(date)
-      continue
-    }
-
-    if (status === ACCREDITATION_STATUS.CANCELLED && from !== null) {
-      stretches.push({ from, to: shiftDay(calendarDate(date), -1) })
+  for (const [date, { status }] of Object.entries(dailyTimeline(timeline))) {
+    if (liveStatuses.has(status)) {
+      from ??= calendarDate(date)
+    } else if (from !== null) {
+      runs.push({ from, to: shiftDay(calendarDate(date), -1) })
       from = null
     }
   }
 
-  if (from !== null) {
-    stretches.push({ from, to: lastDayOf(Number(year)) })
+  return from === null ? runs : [...runs, { from, to: null }]
+}
+
+/**
+ * The runs clipped to the bounds, dropping any left empty.
+ * @param {Run[]} runs
+ * @param {Stretch} bounds
+ * @returns {Stretch[]}
+ */
+const clip = (runs, bounds) =>
+  runs
+    .map(({ from, to }) => ({
+      from: later(from, bounds.from),
+      to: earlier(to ?? bounds.to, bounds.to)
+    }))
+    .filter(({ from, to }) => from.localeCompare(to) <= 0)
+
+/** @type {ReadonlySet<string>} */
+const ACCREDITED_STATUSES = new Set([
+  ACCREDITATION_STATUS.APPROVED,
+  ACCREDITATION_STATUS.SUSPENDED
+])
+
+/** @type {ReadonlySet<string>} */
+const REGISTERED_STATUSES = new Set([REGISTRATION_STATUS.APPROVED])
+
+/**
+ * The runs of approved or suspended days within the accreditation's year.
+ * @param {AccreditationView} accreditation
+ * @param {string} year
+ * @returns {Stretch[]}
+ */
+export const accreditedStretches = ({ statusTimeline }, year) =>
+  clip(liveRuns(statusTimeline, ACCREDITED_STATUSES), {
+    from: firstDayOf(Number(year)),
+    to: lastDayOf(Number(year))
+  })
+
+/**
+ * 1 January if accredited going into the year, else the first approval in it.
+ * Reads every entry, so an approval superseded the same day still counts.
+ * @param {StatusTimeline} statusTimeline
+ * @param {CalendarDate} yearStart
+ * @returns {CalendarDate}
+ */
+const accreditedFrom = (statusTimeline, yearStart) => {
+  const liveAtYearStart = liveRuns(statusTimeline, ACCREDITED_STATUSES).some(
+    ({ from, to }) =>
+      from.localeCompare(yearStart) < 0 &&
+      (to === null || to.localeCompare(yearStart) >= 0)
+  )
+
+  if (liveAtYearStart) {
+    return yearStart
   }
 
-  const firstDay = firstDayOf(Number(year))
+  const approvedAt = /** @type {string} */ (
+    Object.keys(statusTimeline)
+      .sort((one, other) => one.localeCompare(other))
+      .find(
+        (at) =>
+          statusTimeline[at].status === ACCREDITATION_STATUS.APPROVED &&
+          calendarDate(at).localeCompare(yearStart) >= 0
+      )
+  )
 
-  return stretches
-    .filter(({ to }) => to.localeCompare(firstDay) >= 0)
-    .map((stretch) => ({ ...stretch, from: later(stretch.from, firstDay) }))
+  return calendarDate(approvedAt)
 }
 
 /**
@@ -69,14 +136,13 @@ export const accreditedStretches = (accreditation, year) => {
  * @param {string} year
  * @returns {{ validFrom: string, validTo: string }}
  */
-export const accreditedDateRange = (accreditation, year) => {
-  const [first] = accreditedStretches(accreditation, year)
+export const accreditedDateRange = ({ statusTimeline }, year) => {
   const [lastDate, { status }] = /** @type {[string, { status: string }]} */ (
-    timelineEntries(accreditation).at(-1)
+    Object.entries(dailyTimeline(statusTimeline)).at(-1)
   )
 
   return {
-    validFrom: first.from,
+    validFrom: accreditedFrom(statusTimeline, firstDayOf(Number(year))),
     validTo:
       status === ACCREDITATION_STATUS.CANCELLED
         ? lastDate
@@ -90,6 +156,50 @@ export const accreditedDateRange = (accreditation, year) => {
  * @returns {RegistrationDateRange}
  */
 export const registrationDateRange = ({ validFrom }) => ({ validFrom })
+
+/**
+ * The registration's approved runs up to today.
+ * @param {RegistrationView} registration
+ * @param {CalendarDate} today
+ * @returns {Stretch[]}
+ */
+const registeredRunsToDate = ({ statusTimeline }, today) =>
+  liveRuns(statusTimeline, REGISTERED_STATUSES)
+    .map(({ from, to }) => ({ from, to: earlier(to ?? today, today) }))
+    .filter(({ from, to }) => from.localeCompare(to) <= 0)
+
+/**
+ * The years holding at least one approved day up to today, most recent first.
+ * @param {RegistrationView} registration
+ * @param {Date} [now]
+ * @returns {number[]}
+ */
+export const registeredYears = (registration, now = new Date()) => {
+  const years = registeredRunsToDate(
+    registration,
+    utcCalendarDate(now)
+  ).flatMap(({ from, to }) =>
+    Array.from(
+      { length: yearOf(to) - yearOf(from) + 1 },
+      (_, offset) => yearOf(from) + offset
+    )
+  )
+
+  return [...new Set(years)].sort((one, other) => other - one)
+}
+
+/**
+ * The registration's approved runs within the year, and up to today.
+ * @param {RegistrationView} registration
+ * @param {number} year
+ * @param {Date} [now]
+ * @returns {Stretch[]}
+ */
+export const registeredStretches = (registration, year, now = new Date()) =>
+  clip(registeredRunsToDate(registration, utcCalendarDate(now)), {
+    from: firstDayOf(year),
+    to: lastDayOf(year)
+  })
 
 /**
  * Every stretch the registration's accreditations covered, across their years.

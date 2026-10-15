@@ -23,7 +23,7 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 /**
  * @import { SetupServer } from 'msw/node'
- * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { AccreditationView, OrganisationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -102,28 +102,34 @@ const aLedgerEvent = (createdAt = `${YEAR}-05-04T09:00:00.000Z`) => ({
   createdBy: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com' }
 })
 
+/** Approved on 1 January 2026 and never cancelled. */
+const approvedSinceYear = {
+  '2026-01-01T00:00:00.000Z': { status: 'approved' }
+}
+
 /**
  * @param {{
  *   accreditations?: Record<string, AccreditationView>,
- *   validFrom?: string
+ *   statusTimeline?: StatusTimeline
  * }} [overrides]
  * @returns {OrganisationView}
  */
 const anOrganisation = ({
   accreditations = {},
-  validFrom = '2026-01-01'
+  statusTimeline = approvedSinceYear
 } = {}) => ({
   organisationNumber: 500118,
   name: 'Kirkby Plastics Ltd',
   registrations: {
     [registrationNumber]: {
       status: 'approved',
-      validFrom,
+      validFrom: '2026-01-01',
       material: 'plastic',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'reprocessor',
       reprocessingType: 'input',
       site: { address: { fullAddress: 'North Road, Leeds' } },
+      statusTimeline,
       accreditations
     }
   }
@@ -134,6 +140,7 @@ const anOrganisation = ({
  * @param {SetupServer} msw
  * @param {{
  *   accreditations?: Record<string, AccreditationView>,
+ *   statusTimeline?: StatusTimeline,
  *   cadence?: CadenceValue,
  *   reportingPeriods?: ReportingPeriod[],
  *   calendarStatus?: number,
@@ -146,6 +153,7 @@ const backendHolds = (
   msw,
   {
     accreditations,
+    statusTimeline,
     cadence = 'quarterly',
     reportingPeriods = [],
     calendarStatus = statusCodes.ok,
@@ -157,7 +165,7 @@ const backendHolds = (
 
   msw.use(
     http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
-      HttpResponse.json(anOrganisation({ accreditations }))
+      HttpResponse.json(anOrganisation({ accreditations, statusTimeline }))
     ),
     http.get(`${backendUrl}${registrationPath}/reports/calendar`, () =>
       HttpResponse.json(
@@ -407,6 +415,35 @@ describe('the registered-only period page', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
+  it('does not exist for a year the registration spent wholly cancelled', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      statusTimeline: {
+        '2025-01-01T00:00:00.000Z': { status: 'approved' },
+        '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+      }
+    })
+
+    const { statusCode } = await visit(server, regulator)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  it('does not exist for an organisation number that is not digits', async ({
+    server
+  }) => {
+    const { statusCode } = await visit(
+      server,
+      regulator,
+      YEAR,
+      `/organisations/500118x/registrations/${registrationNumber}/registered-only-periods/${YEAR}`
+    )
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
   it('does not exist for a year outside the range the service answers for', async ({
     server
   }) => {
@@ -624,8 +661,7 @@ describe('the registered-only period page', () => {
       ).not.toBeNull()
     })
 
-    // The backend 404s a year the registration was never approved in, though
-    // the page lists every year from the registration's start.
+    // A product decision: no ledger for the year reads as an empty one.
     it('says nothing has moved the balance where the backend has no ledger for the year', async ({
       server,
       msw

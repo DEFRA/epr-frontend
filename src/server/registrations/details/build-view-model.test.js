@@ -43,6 +43,7 @@ const organisation = {
 const aReprocessorAt = (address) => ({
   status: 'approved',
   validFrom: '2026-01-01',
+  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'reprocessor',
@@ -55,6 +56,7 @@ const aReprocessorAt = (address) => ({
 const anExporter = {
   status: 'approved',
   validFrom: '2026-01-01',
+  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'exporter',
