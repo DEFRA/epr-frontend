@@ -87,10 +87,14 @@ export const controller = {
           pageTitle: localise('waste-balance-ledger:pageTitle')
         }
 
+    const registrationPath = `/organisations/${organisationId}/registrations/${registrationId}`
+
     return h.view('waste-balance-ledger/index', {
       ...page,
       ledgerRows: buildLedgerRows({
-        accreditationId,
+        accreditationPath: accreditationId
+          ? `${registrationPath}/accreditations/${accreditationId}`
+          : undefined,
         events,
         localise,
         localiseUrl: request.localiseUrl,
@@ -98,8 +102,7 @@ export const controller = {
         offersCsvDownloads: readsWasteRecordsDownloads(session),
         // An operator reaches this page too, and may not fetch the file.
         offersDownloads: readsAsARegulator(session),
-        organisationId,
-        registrationId
+        registrationPath
       })
     })
   }

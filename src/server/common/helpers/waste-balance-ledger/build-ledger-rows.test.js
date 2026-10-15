@@ -31,15 +31,15 @@ const localiseUrl = (path) => `/en${path}`
  */
 const buildRows = (overrides = {}) =>
   buildLedgerRows({
-    accreditationId: 'acc-1',
+    accreditationPath:
+      '/organisations/org-1/registrations/reg-1/accreditations/acc-1',
     events: [],
     localise,
     localiseUrl,
     noteType: 'PRN',
     offersCsvDownloads: true,
     offersDownloads: true,
-    organisationId: 'org-1',
-    registrationId: 'reg-1',
+    registrationPath: '/organisations/org-1/registrations/reg-1',
     ...overrides
   })
 
@@ -341,9 +341,36 @@ describe(buildLedgerRows, () => {
     )
   })
 
+  it('encodes the note id it adds to the path', () => {
+    const [row] = buildRows({
+      events: [
+        buildEvent({ prn: { id: 'prn/1&', prnNumber: null, tonnage: 1 } })
+      ]
+    })
+
+    expect(cellsOf(row).at(5)).toContain(
+      'href="/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes/prn%2F1%26/view"'
+    )
+  })
+
+  it('encodes the file id it adds to each download path', () => {
+    const [row] = buildRows({
+      events: [
+        buildSummaryLogEvent({ summaryLog: { id: 'log/1&', creditTotal: 40 } })
+      ]
+    })
+
+    const hrefs = [...(cellsOf(row).at(5) ?? '').matchAll(/href="([^"]+)"/g)]
+
+    expect(hrefs.map(([, href]) => href)).toStrictEqual([
+      '/en/organisations/org-1/registrations/reg-1/summary-logs/files/log%2F1%26/download',
+      '/en/organisations/org-1/registrations/reg-1/summary-logs/files/log%2F1%26/download.csv'
+    ])
+  })
+
   it('offers nothing to open on a ledger read without an accreditation', () => {
     const [row] = buildRows({
-      accreditationId: undefined,
+      accreditationPath: undefined,
       events: [buildNumberedEvent()]
     })
 
@@ -409,7 +436,7 @@ describe(buildLedgerRows, () => {
      */
     const buildBalanceFreeRows = (overrides = {}) =>
       buildRows({
-        accreditationId: undefined,
+        accreditationPath: undefined,
         events: [buildRegisteredOnlyEvent()],
         holdsABalance: false,
         ...overrides
