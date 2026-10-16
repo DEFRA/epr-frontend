@@ -1,9 +1,7 @@
-import { errorCodes } from '#server/common/enums/error-codes.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 
 import { buildViewModel } from './build-view-model.js'
-import { fetchOverseasSites } from './helpers/fetch-overseas-sites.js'
-import { registrationParamsSchema } from '../helpers/year-params-schema.js'
+import { registrationParamsValidation } from '../helpers/year-params-schema.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -19,22 +17,10 @@ import { registrationParamsSchema } from '../helpers/year-params-schema.js'
  */
 export const controller = {
   options: {
-    validate: {
-      params: registrationParamsSchema,
-      // An organisation number that is not digits is an address that does not exist.
-      failAction: () => {
-        throw notFound(
-          'Overseas sites not found',
-          errorCodes.registrationNotFound,
-          {
-            event: {
-              action: 'fetch_overseas_sites',
-              reason: 'the address holds no such organisation number'
-            }
-          }
-        )
-      }
-    }
+    validate: registrationParamsValidation(
+      'Overseas sites not found',
+      'fetch_overseas_sites'
+    )
   },
   /**
    * @param {HapiRequest & { params: OverseasSitesParams }} request
@@ -42,18 +28,18 @@ export const controller = {
    */
   async handler(request, h) {
     const { organisationNumber, registrationNumber } = request.params
-    const { backendToken } = request.auth.credentials
-
-    const details = await fetchOverseasSites({
+    const { organisation, registration } = await fetchRegistration({
       organisationNumber,
       registrationNumber,
-      backendToken
+      backendToken: request.auth.credentials.backendToken
     })
 
     return h.view(
       'registrations/details/overseas-sites/index',
       buildViewModel({
-        ...details,
+        organisation,
+        registrationNumber,
+        registration,
         localise: request.t,
         localiseUrl: request.localiseUrl
       })
