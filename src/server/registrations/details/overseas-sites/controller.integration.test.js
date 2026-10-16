@@ -20,14 +20,13 @@ import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
-import { fetchOverseasSites } from './helpers/fetch-overseas-sites.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 
 /**
- * @import { OverseasSiteView, OverseasSitesByOrsId, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
- * @import { OverseasSitesDetails } from './helpers/fetch-overseas-sites.js'
+ * @import { OrganisationView, OverseasSiteView, OverseasSitesByOrsId, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
-vi.mock(import('./helpers/fetch-overseas-sites.js'))
+vi.mock(import('#server/common/helpers/organisations/fetch-registration.js'))
 
 const backendUrl = config.get('eprBackendUrl')
 
@@ -63,16 +62,15 @@ const bahiaPlasticos = {
 
 /**
  * @param {{ sites?: OverseasSitesByOrsId }} [overrides]
- * @returns {OverseasSitesDetails}
+ * @returns {{ organisation: OrganisationView, registration: RegistrationView }}
  */
 const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
   /** @type {RegistrationView} */
   const registration = {
-    status: 'approved',
+    status: { current: 'approved', timeline: {} },
     validFrom: '2026-01-01',
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
-    statusTimeline: {},
     accreditations: {},
     wasteProcessingType: 'exporter',
     overseasSites: sites
@@ -84,7 +82,6 @@ const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
       organisationNumber: 500123,
       registrations: { [registrationNumber]: registration }
     },
-    registrationNumber,
     registration
   }
 }
@@ -112,7 +109,7 @@ describe('the overseas reprocessing sites page', () => {
   })
 
   beforeEach(() => {
-    vi.mocked(fetchOverseasSites).mockResolvedValue(overseasSitesDetails())
+    vi.mocked(fetchRegistration).mockResolvedValue(overseasSitesDetails())
   })
 
   afterAll(() => {
@@ -189,7 +186,7 @@ describe('the overseas reprocessing sites page', () => {
   it('lists the sites in ORS id order whatever order they arrive in', async ({
     server
   }) => {
-    vi.mocked(fetchOverseasSites).mockResolvedValue(
+    vi.mocked(fetchRegistration).mockResolvedValue(
       overseasSitesDetails({
         sites: {
           '021': { ...bahiaPlasticos, name: 'Third' },
@@ -208,7 +205,7 @@ describe('the overseas reprocessing sites page', () => {
   })
 
   it('dashes the parts of an address a site leaves out', async ({ server }) => {
-    vi.mocked(fetchOverseasSites).mockResolvedValue(
+    vi.mocked(fetchRegistration).mockResolvedValue(
       overseasSitesDetails({
         sites: {
           '014': {
@@ -245,7 +242,7 @@ describe('the overseas reprocessing sites page', () => {
   it('says so where the registration reprocesses overseas nowhere', async ({
     server
   }) => {
-    vi.mocked(fetchOverseasSites).mockResolvedValue(
+    vi.mocked(fetchRegistration).mockResolvedValue(
       overseasSitesDetails({ sites: {} })
     )
 
@@ -314,7 +311,7 @@ describe('the overseas reprocessing sites page', () => {
     })
 
     expect(response.statusCode).toBe(statusCodes.notFound)
-    expect(fetchOverseasSites).not.toHaveBeenCalled()
+    expect(fetchRegistration).not.toHaveBeenCalled()
   })
 
   it('does not exist for an operator', async ({ server }) => {
@@ -326,7 +323,7 @@ describe('the overseas reprocessing sites page', () => {
   it('reads nothing from the backend for an operator', async ({ server }) => {
     await visit(server, operator)
 
-    expect(fetchOverseasSites).not.toHaveBeenCalled()
+    expect(fetchRegistration).not.toHaveBeenCalled()
   })
 
   // The two cases below are the gate's whole subject. A session's role and its

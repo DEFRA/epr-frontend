@@ -68,7 +68,8 @@ const formatWasteBalance = (accreditation, wasteBalance, localise) =>
  */
 const createAccreditationTag = (accreditation, localise) =>
   createTag(
-    accreditation?.status ?? localise('organisations:table:notAccredited')
+    accreditation?.status.current ??
+      localise('organisations:table:notAccredited')
   )
 
 /**
@@ -118,7 +119,7 @@ function createRow(
       classes: 'govuk-!-width-one-quarter'
     },
     {
-      html: createTag(registration.status)
+      html: createTag(registration.status.current)
     },
     {
       html: createAccreditationTag(accreditation, localise)
