@@ -3,12 +3,7 @@ import { capitalize } from 'lodash-es'
 import { config } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
-import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
-import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
-import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
 import {
   accreditationPath,
   organisationPath,
@@ -16,11 +11,9 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 import { getStatusClass } from './helpers/status-helpers.js'
 
-/** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
-
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Year } from '#server/common/helpers/year.js'
@@ -29,8 +22,16 @@ import { getStatusClass } from './helpers/status-helpers.js'
  */
 
 /**
- * @typedef {{ organisationNumber: string }} OrganisationParams
+ * @param {OrganisationNumber} orgNumber
+ * @param {{ year?: Year | null, exporting?: boolean }} [options]
+ * @returns {string}
  */
+export const homePath = (orgNumber, { year, exporting } = {}) => {
+  const yearSegment = year ? `/${year}` : ''
+  const exportingSegment = exporting ? '/exporting' : ''
+
+  return `${organisationPath({ organisationNumber: orgNumber })}${yearSegment}${exportingSegment}`
+}
 
 /**
  * @typedef {{ text: string, classes?: string, format?: string } | { html: string, classes?: string }} TableCell
@@ -239,51 +240,6 @@ const tabTypes = Object.freeze({
 })
 
 /**
- * Each registration with the year's accreditation, if it is live
- * @param {Record<string, RegistrationView>} registrations
- * @param {Year} selectedYear
- * @returns {DisplayedRegistration[]}
- */
-function getDisplayedRegistrations(registrations, selectedYear) {
-  return Object.entries(registrations).map(([number, registration]) => {
-    const accreditation = registration.accreditations[selectedYear]
-    return {
-      number,
-      registration,
-      accreditation: isAccreditationActive(accreditation)
-        ? accreditation
-        : undefined
-    }
-  })
-}
-
-/**
- * Fetches the year's waste balances. A failure leaves the page without them.
- * @param {OrganisationNumber} orgNumber
- * @param {Year} selectedYear
- * @param {string} backendToken - JWT token
- * @param {TypedLogger} logger - Request logger
- * @returns {Promise<WasteBalanceMap>}
- */
-async function getWasteBalanceMap(
-  orgNumber,
-  selectedYear,
-  backendToken,
-  logger
-) {
-  try {
-    return await fetchOrganisationWasteBalances(
-      orgNumber,
-      selectedYear,
-      backendToken
-    )
-  } catch (error) {
-    logger.error({ message: 'Failed to fetch waste balances', err: error })
-    return {}
-  }
-}
-
-/**
  * Determines which sites to display and the table title based on available data and active tab
  * @param {object} params
  * @param {Array} params.reprocessorSites - Reprocessor sites
@@ -326,107 +282,67 @@ function getActiveSitesAndTitle({
 }
 
 /**
- * The organisation as it stood in its latest approved year. An organisation
- * with no approved year has no registrations to show.
- * @param {OrganisationNumber} orgNumber
- * @param {string} backendToken
- * @param {TypedLogger} logger
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {{
+ *   orgNumber: OrganisationNumber,
+ *   organisation: { name: string, tradingName?: string },
+ *   displayedRegistrations: DisplayedRegistration[],
+ *   wasteBalanceMap: WasteBalanceMap,
+ *   year: Year | null
+ * }} page
  */
-async function fetchLatestYear(orgNumber, backendToken, logger) {
-  const [selectedYear] = await fetchOrganisationYears(orgNumber, backendToken)
+export function renderHome(
+  request,
+  h,
+  { orgNumber, organisation, displayedRegistrations, wasteBalanceMap, year }
+) {
+  const { t: localise } = request
 
-  if (!selectedYear) {
-    return {
-      organisation: await fetchOrganisation(orgNumber, backendToken),
-      selectedYear: null,
-      displayedRegistrations: [],
-      wasteBalanceMap: {}
-    }
-  }
+  const isExporterTab = request.path.endsWith('/exporting')
+  const activeTab = isExporterTab ? tabTypes.EXPORTER : tabTypes.REPROCESSOR
 
-  const [organisation, wasteBalanceMap] = await Promise.all([
-    fetchOrganisation(orgNumber, backendToken, { year: selectedYear }),
-    getWasteBalanceMap(orgNumber, selectedYear, backendToken, logger)
-  ])
+  const reprocessorSites = getRegistrationSites(
+    request,
+    orgNumber,
+    displayedRegistrations,
+    'reprocessor',
+    wasteBalanceMap,
+    year
+  )
 
-  return {
-    organisation,
-    selectedYear,
-    displayedRegistrations: getDisplayedRegistrations(
-      organisation.registrations,
-      selectedYear
+  const exporterSites = getRegistrationSites(
+    request,
+    orgNumber,
+    displayedRegistrations,
+    'exporter',
+    wasteBalanceMap,
+    year
+  )
+
+  const { sites, tableTitle, shouldRenderTabs } = getActiveSitesAndTitle({
+    reprocessorSites,
+    exporterSites,
+    activeTab,
+    localise
+  })
+
+  const organisationName = organisation.tradingName?.trim() || organisation.name
+
+  return h.view('organisations/index', {
+    pageTitle: localise('organisations:pageTitle', {
+      name: organisationName
+    }),
+    organisationName,
+    activeTab,
+    reprocessorUrl: request.localiseUrl(homePath(orgNumber, { year })),
+    exporterUrl: request.localiseUrl(
+      homePath(orgNumber, { year, exporting: true })
     ),
-    wasteBalanceMap
-  }
-}
-
-/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
-export const controller = {
-  /**
-   * @param {HapiRequest & { params: OrganisationParams }} request
-   * @param {ResponseToolkit} h
-   */
-  async handler(request, h) {
-    const { t: localise } = request
-    const orgNumber = organisationNumber(
-      Number(request.params.organisationNumber)
-    )
-    const session = request.auth.credentials
-
-    const isExporterTab = request.path.endsWith('/exporting')
-    const activeTab = isExporterTab ? tabTypes.EXPORTER : tabTypes.REPROCESSOR
-
-    const {
-      organisation,
-      selectedYear,
-      displayedRegistrations,
-      wasteBalanceMap
-    } = await fetchLatestYear(orgNumber, session.backendToken, request.logger)
-
-    const reprocessorSites = getRegistrationSites(
-      request,
-      orgNumber,
-      displayedRegistrations,
-      'reprocessor',
-      wasteBalanceMap,
-      selectedYear
-    )
-
-    const exporterSites = getRegistrationSites(
-      request,
-      orgNumber,
-      displayedRegistrations,
-      'exporter',
-      wasteBalanceMap,
-      selectedYear
-    )
-
-    const { sites, tableTitle, shouldRenderTabs } = getActiveSitesAndTitle({
-      reprocessorSites,
-      exporterSites,
-      activeTab,
-      localise
-    })
-
-    const organisationName =
-      organisation.tradingName?.trim() || organisation.name
-    const homePath = organisationPath({ organisationNumber: orgNumber })
-
-    return h.view('organisations/index', {
-      pageTitle: localise('organisations:pageTitle', {
-        name: organisationName
-      }),
-      organisationName,
-      activeTab,
-      reprocessorUrl: request.localiseUrl(homePath),
-      exporterUrl: request.localiseUrl(`${homePath}/exporting`),
-      shouldRenderTabs,
-      selectedYear: config.get('featureFlags.navigateAcrossYears')
-        ? selectedYear
-        : null,
-      sites,
-      tableTitle,
-      tabTypes
-    })
-  }
+    shouldRenderTabs,
+    selectedYear: config.get('featureFlags.navigateAcrossYears') ? year : null,
+    sites,
+    tableTitle,
+    tabTypes
+  })
 }
