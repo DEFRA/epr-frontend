@@ -1,9 +1,11 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 import { buildViewModel } from './build-view-model.js'
 import { fetchReportListDetails } from './helpers/fetch-report-list-details.js'
-import { yearParamsSchema } from '../../helpers/year-params-schema.js'
+import {
+  paramsOrNotFound,
+  yearParamsSchema
+} from '../../helpers/params-validation.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -24,22 +26,12 @@ import { yearParamsSchema } from '../../helpers/year-params-schema.js'
  */
 export const controller = {
   options: {
-    validate: {
-      params: yearParamsSchema,
-      // 404 not 400, as the registered-only period does.
-      failAction: () => {
-        throw notFound(
-          'Accreditation reports not found',
-          errorCodes.accreditationNotFound,
-          {
-            event: {
-              action: 'fetch_accreditation_reports',
-              reason: 'the address holds no such accreditation'
-            }
-          }
-        )
-      }
-    }
+    validate: paramsOrNotFound(yearParamsSchema, {
+      message: 'Accreditation reports not found',
+      code: errorCodes.accreditationNotFound,
+      action: 'fetch_accreditation_reports',
+      reason: 'the address holds no such accreditation'
+    })
   },
   /**
    * @param {HapiRequest & { params: AccreditationParams }} request

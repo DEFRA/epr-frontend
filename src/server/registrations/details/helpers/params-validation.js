@@ -1,6 +1,5 @@
 import Joi from 'joi'
 
-import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import {
   MAX_YEAR,
@@ -25,18 +24,17 @@ export const yearParamsSchema = registrationParamsSchema.keys({
 })
 
 /**
- * Validates a registration's address; one that does not match is a 404.
- * @param {string} message
- * @param {string} action
+ * Validates an address's params. Ones the schema rejects are a 404, not a 400:
+ * the address does not exist.
+ * @param {Joi.ObjectSchema} params
+ * @param {{ message: string, code: string, action: string, reason: string }} notFoundAs
  */
-export const registrationParamsValidation = (message, action) => ({
-  params: registrationParamsSchema,
+export const paramsOrNotFound = (
+  params,
+  { message, code, action, reason }
+) => ({
+  params,
   failAction: () => {
-    throw notFound(message, errorCodes.registrationNotFound, {
-      event: {
-        action,
-        reason: 'the address holds no such organisation number'
-      }
-    })
+    throw notFound(message, code, { event: { action, reason } })
   }
 })

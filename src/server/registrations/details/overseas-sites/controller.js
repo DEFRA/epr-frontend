@@ -1,7 +1,11 @@
+import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 
 import { buildViewModel } from './build-view-model.js'
-import { registrationParamsValidation } from '../helpers/year-params-schema.js'
+import {
+  paramsOrNotFound,
+  registrationParamsSchema
+} from '../helpers/params-validation.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -17,10 +21,12 @@ import { registrationParamsValidation } from '../helpers/year-params-schema.js'
  */
 export const controller = {
   options: {
-    validate: registrationParamsValidation(
-      'Overseas sites not found',
-      'fetch_overseas_sites'
-    )
+    validate: paramsOrNotFound(registrationParamsSchema, {
+      message: 'Overseas sites not found',
+      code: errorCodes.registrationNotFound,
+      action: 'fetch_overseas_sites',
+      reason: 'the address holds no such organisation number'
+    })
   },
   /**
    * @param {HapiRequest & { params: OverseasSitesParams }} request
