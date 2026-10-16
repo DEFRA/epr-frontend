@@ -12,6 +12,7 @@ import {
 } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
+import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
 import {
   showsDecemberBalance,
   toDecemberBalanceBreakdown
@@ -309,10 +310,10 @@ export const registrationController = {
     const year = latestAccreditationYear(registration)
 
     if (year) {
-      return h.redirect(
-        request.localiseUrl(
-          `${accreditationPath({ ...keys, year })}${request.url.search}`
-        )
+      return redirectPreservingMethod(
+        request,
+        h,
+        accreditationPath({ ...keys, year })
       )
     }
 
