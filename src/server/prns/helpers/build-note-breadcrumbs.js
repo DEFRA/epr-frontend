@@ -1,5 +1,10 @@
 import { paths } from '#server/paths.js'
 import { organisationName } from '#server/registrations/details/helpers/caption.js'
+import {
+  accreditationIdPath,
+  organisationIdPath,
+  registrationIdPath
+} from '#server/reports/helpers/report-paths.js'
 
 /**
  * @import { TFunction } from 'i18next'
@@ -39,8 +44,12 @@ export const buildNoteBreadcrumbs = ({
   localise,
   localiseUrl
 }) => {
-  const registrationPath = `/organisations/${organisation.id}/registrations/${registration.id}`
-  const accreditationPath = `${registrationPath}/accreditations/${accreditationId}`
+  const ids = {
+    organisationId: organisation.id,
+    registrationId: registration.id,
+    accreditationId
+  }
+  const accreditationPath = accreditationIdPath(ids)
 
   return [
     {
@@ -49,11 +58,11 @@ export const buildNoteBreadcrumbs = ({
     },
     {
       text: organisationName(organisation),
-      href: localiseUrl(`/organisations/${organisation.id}`)
+      href: localiseUrl(organisationIdPath(ids))
     },
     {
       text: localise('registrations:details:heading'),
-      href: localiseUrl(registrationPath)
+      href: localiseUrl(registrationIdPath(ids))
     },
     {
       text: localise('registrations:details:accreditation:breadcrumb'),

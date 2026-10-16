@@ -1,4 +1,5 @@
 import Boom from '@hapi/boom'
+import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchRegisteredOnlyLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
 import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -24,10 +25,13 @@ const registrationNumber = 'R26ER5001180041PL'
 const backendToken = 'test-token'
 
 const error = vi.fn()
-const logger = /** @type {TypedLogger} */ (/** @type {unknown} */ ({ error }))
+const info = vi.fn()
+const logger = /** @type {TypedLogger} */ (
+  /** @type {unknown} */ ({ error, info })
+)
 
 const registration = /** @type {RegistrationView} */ (
-  /** @type {unknown} */ ({ validFrom: '2026-01-01', accreditations: {} })
+  /** @type {unknown} */ ({ statusTimeline: {}, accreditations: {} })
 )
 
 /** @type {OrganisationView} */
@@ -64,6 +68,7 @@ describe(fetchRegisteredOnlyPeriod, () => {
     })
     vi.mocked(fetchRegisteredOnlyLedgerEvents).mockResolvedValue(ledgerEvents)
     error.mockClear()
+    info.mockClear()
   })
 
   it('returns the registration from the read model alongside the reporting calendar', async () => {
@@ -121,12 +126,20 @@ describe(fetchRegisteredOnlyPeriod, () => {
     )
   })
 
-  it('lets an unknown organisation surface', async () => {
+  it('is a registration not found for an organisation the backend does not know', async () => {
     vi.mocked(fetchOrganisation).mockRejectedValue(Boom.notFound())
 
     await expect(fetchRegisteredOnlyPeriod(params)).rejects.toMatchObject({
-      output: { statusCode: 404 }
+      output: { statusCode: 404 },
+      code: errorCodes.registrationNotFound
     })
+  })
+
+  it('lets any other failure reading the organisation surface', async () => {
+    const err = Boom.internal('organisation unavailable')
+    vi.mocked(fetchOrganisation).mockRejectedValue(err)
+
+    await expect(fetchRegisteredOnlyPeriod(params)).rejects.toBe(err)
   })
 
   it('is not found for a registration number the organisation does not hold', async () => {
@@ -163,6 +176,22 @@ describe(fetchRegisteredOnlyPeriod, () => {
       const result = await fetchRegisteredOnlyPeriod(params)
 
       expect(result.ledgerEvents).toStrictEqual([])
+    })
+
+    it('logs which ledger the backend had none for', async () => {
+      vi.mocked(fetchRegisteredOnlyLedgerEvents).mockRejectedValue(
+        Boom.notFound()
+      )
+
+      await fetchRegisteredOnlyPeriod(params)
+
+      expect(info).toHaveBeenCalledWith({
+        message: 'No registered-only ledger for the year, showing it empty',
+        event: {
+          action: 'fetch_registered_only_ledger',
+          reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber} year=2026`
+        }
+      })
     })
 
     it('fails the page for a ledger it could not read', async () => {

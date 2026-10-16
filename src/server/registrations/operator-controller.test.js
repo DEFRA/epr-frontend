@@ -4,7 +4,13 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole, queryByRole, queryByTestId } from '@testing-library/dom'
+import {
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByTestId,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect } from 'vitest'
@@ -522,10 +528,10 @@ describe("the operator's registration page with no year", () => {
     const { statusCode, body } = await visit(server, { url: registrationPath })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(
-      'Glass remelt'
-    )
-    expect(body.textContent).toContain(registrationNumber)
+    expect(
+      getByRole(body, 'heading', { level: 1, name: /Glass remelt/ })
+    ).toBeDefined()
+    expect(getByText(body, registrationNumber)).toBeDefined()
   })
 
   it('shows a registered-only operator no accreditation, balance or notes', async ({
@@ -536,7 +542,7 @@ describe("the operator's registration page with no year", () => {
 
     const { body } = await visit(server, { url: registrationPath })
 
-    expect(body.textContent).not.toContain(accreditationNumber)
+    expect(queryByText(body, accreditationNumber)).toBeNull()
     expect(queryByTestId(body, 'waste-balance-amount')).toBeNull()
     expect(queryByRole(body, 'link', { name: 'Create new PRN' })).toBeNull()
   })

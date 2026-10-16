@@ -13,6 +13,7 @@ import { metrics } from '#server/common/helpers/metrics/index.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { accreditationIdPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const actionController = {
@@ -100,7 +101,7 @@ function buildActionViewData({
 }) {
   const { isExporter, noteType, noteTypeFull } =
     getNoteTypeDisplayNames(registration)
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+  const basePath = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes`
   const displayMaterial = getRegistrationMaterialDisplayName(registration)
   const isNotDraft = prn.status !== 'draft'
   const statusConfig = getStatusConfig(prn.status, localise)

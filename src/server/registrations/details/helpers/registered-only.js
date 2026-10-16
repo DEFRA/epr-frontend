@@ -5,7 +5,6 @@ import {
 
 /**
  * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
- * @import { RegistrationDateRange } from '#server/common/helpers/organisations/registration-resource.js'
  */
 
 /**
@@ -48,13 +47,13 @@ export const later = (day, other) => (isAfter(day, other) ? day : other)
  * @param {CalendarDate} other
  * @returns {CalendarDate}
  */
-const earlier = (day, other) => (isBefore(day, other) ? day : other)
+export const earlier = (day, other) => (isBefore(day, other) ? day : other)
 
 /**
  * @param {CalendarDate} day
  * @returns {number}
  */
-const yearOf = (day) => new Date(day).getUTCFullYear()
+export const yearOf = (day) => new Date(day).getUTCFullYear()
 
 /**
  * The first day of a year, as a calendar date.
@@ -79,42 +78,6 @@ export const shiftDay = (day, days) => {
   const shifted = new Date(day)
   shifted.setUTCDate(shifted.getUTCDate() + days)
   return utcCalendarDate(shifted)
-}
-
-/**
- * The years a registration has existed over, most recent first.
- *
- * A registration has no end date — it does not expire the way an accreditation
- * does (PAE-1904) — so the list always runs to the current year and grows each
- * January.
- * @param {{ dateRange: RegistrationDateRange, now?: Date }} params
- * @returns {number[]}
- */
-export const registrationYears = ({ dateRange, now = new Date() }) => {
-  const firstYear = yearOf(calendarDate(dateRange.validFrom))
-  const lastYear = now.getUTCFullYear()
-
-  // A registration granted ahead of the year it covers has not existed over
-  // any year yet, which `Array.from` answers as an empty list without a guard.
-  return Array.from(
-    { length: lastYear - firstYear + 1 },
-    (_, offset) => lastYear - offset
-  )
-}
-
-/**
- * The stretch of a year the registration was live over. It opens when the
- * registration did, or on 1 January if that was earlier, and closes today or on
- * 31 December, whichever comes first — a year that has not finished is only
- * registered up to today.
- * @param {{ validFrom: CalendarDate, year: number, today: CalendarDate }} params
- * @returns {Stretch | null}
- */
-const registeredStretch = ({ validFrom, year, today }) => {
-  const from = later(validFrom, firstDayOf(year))
-  const to = earlier(today, lastDayOf(year))
-
-  return isAfter(from, to) ? null : { from, to }
 }
 
 /**
@@ -155,41 +118,18 @@ const subtract = (remaining, occupied) =>
   })
 
 /**
- * The periods within one year that the operator held a registration and no
- * accreditation.
+ * The registered stretches with every accredited day removed.
  *
  * Both bounds of every stretch are inclusive. An empty result means the year
  * holds no registered-only time at all, which is what a page shows the "this
  * period holds no data" message for.
- * @param {{
- *   dateRange: RegistrationDateRange,
- *   accredited: Stretch[],
- *   year: number,
- *   now?: Date
- * }} params
+ * @param {{ registered: Stretch[], accredited: Stretch[] }} params
  * @returns {Stretch[]}
  */
-export const registeredOnlyStretches = ({
-  dateRange,
-  accredited,
-  year,
-  now = new Date()
-}) => {
-  const today = utcCalendarDate(now)
-  const registered = registeredStretch({
-    validFrom: calendarDate(dateRange.validFrom),
-    year,
-    today
-  })
-
-  if (!registered) {
-    return []
-  }
-
+export const registeredOnlyStretches = ({ registered, accredited }) =>
   // Wrapped rather than passed directly: `reduce` also hands the callback the
   // index and the array, and `subtract` takes two arguments.
-  return accredited.reduce(
+  accredited.reduce(
     (remaining, occupied) => subtract(remaining, occupied),
-    [registered]
+    registered
   )
-}

@@ -40,6 +40,7 @@ const regulator = buildMockAuth({
 const registration = {
   status: 'approved',
   validFrom: '2026-01-01',
+  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'reprocessor',
@@ -54,6 +55,7 @@ const registration = {
 const exporterRegistration = {
   status: 'approved',
   validFrom: '2026-01-01',
+  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'exporter',
@@ -300,7 +302,12 @@ describe('the registration details page a regulator reads', () => {
 
     try {
       backendHolds(msw, {
-        registration: { ...registration, validFrom: '2025-03-01' }
+        registration: {
+          ...registration,
+          statusTimeline: {
+            '2025-03-01T00:00:00.000Z': { status: 'approved' }
+          }
+        }
       })
 
       const { body } = await visit(server)

@@ -11,6 +11,7 @@ import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
 import {
   accreditationPath,
+  organisationPath,
   registrationPath
 } from '#server/reports/helpers/report-paths.js'
 import { getStatusClass } from './helpers/status-helpers.js'
@@ -409,6 +410,7 @@ export const controller = {
 
     const organisationName =
       organisation.tradingName?.trim() || organisation.name
+    const homePath = organisationPath({ organisationNumber: orgNumber })
 
     return h.view('organisations/index', {
       pageTitle: localise('organisations:pageTitle', {
@@ -416,8 +418,8 @@ export const controller = {
       }),
       organisationName,
       activeTab,
-      reprocessorUrl: request.localiseUrl(`/organisations/${orgNumber}`),
-      exporterUrl: request.localiseUrl(`/organisations/${orgNumber}/exporting`),
+      reprocessorUrl: request.localiseUrl(homePath),
+      exporterUrl: request.localiseUrl(`${homePath}/exporting`),
       shouldRenderTabs,
       selectedYear: config.get('featureFlags.navigateAcrossYears')
         ? selectedYear

@@ -26,8 +26,8 @@ import { fetchReportListDetails } from './helpers/fetch-report-list-details.js'
 
 vi.mock(import('./helpers/fetch-report-list-details.js'))
 
-const accreditationPath =
-  '/organisations/500118/registrations/R26ER5001180041PL/accreditations/2026'
+const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
+const accreditationPath = `${registrationPath}/accreditations/2026`
 const path = `${accreditationPath}/reports`
 
 const operator = buildMockAuth()
@@ -40,13 +40,13 @@ const regulator = buildMockAuth({
 
 /**
  * @param {number} period
- * @param {{ submitted: boolean }} options
+ * @param {{ submitted: boolean, year?: number }} options
  * @returns {ReportListDetails['reportingPeriods'][number]}
  */
-const aPeriod = (period, { submitted }) =>
+const aPeriod = (period, { submitted, year = 2026 }) =>
   /** @type {ReportListDetails['reportingPeriods'][number]} */ (
     /** @type {unknown} */ ({
-      year: 2026,
+      year,
       period,
       submissionNumber: 1,
       dueDate: '2026-09-20',
@@ -80,9 +80,10 @@ const details = {
 /**
  * @param {HapiServer} server
  * @param {ReturnType<typeof buildMockAuth>} auth
+ * @param {string} [url]
  */
-const visit = async (server, auth) => {
-  const response = await server.inject({ method: 'GET', url: path, auth })
+const visit = async (server, auth, url = path) => {
+  const response = await server.inject({ method: 'GET', url, auth })
 
   return { statusCode: response.statusCode, body: asHtml(response.result) }
 }
@@ -145,6 +146,43 @@ describe('the regulator reports detailed view', () => {
       'April, 2026'
     ])
   })
+
+  it.for([
+    { year: 2025, months: ['May, 2025', 'April, 2025'], periods: [5, 4] },
+    { year: 2026, months: ['August, 2026', 'June, 2026'], periods: [8, 6] }
+  ])(
+    'lists only the periods of $year, each linked under $year, where the calendar spans years',
+    async ({ year, months, periods }, { server }) => {
+      vi.mocked(fetchReportListDetails).mockResolvedValue({
+        ...details,
+        reportingPeriods: [
+          aPeriod(4, { submitted: true, year: 2025 }),
+          aPeriod(8, { submitted: true }),
+          aPeriod(5, { submitted: true, year: 2025 }),
+          aPeriod(6, { submitted: true })
+        ]
+      })
+
+      const reportsPath = `${registrationPath}/accreditations/${year}/reports`
+      const { body } = await visit(server, regulator, reportsPath)
+      const [, ...rows] = getAllByRole(reportsTable(body), 'row')
+
+      expect(
+        rows.map((row) =>
+          within(row).getByRole('rowheader').textContent?.trim()
+        )
+      ).toStrictEqual(months)
+      expect(
+        getAllByRole(reportsTable(body), 'link').map((link) =>
+          link.getAttribute('href')
+        )
+      ).toStrictEqual(
+        periods.map(
+          (period) => `${reportsPath}/monthly/${period}/submissions/1/view`
+        )
+      )
+    }
+  )
 
   it('heads the five columns the accreditation page does', async ({
     server
@@ -270,6 +308,32 @@ describe('the regulator reports detailed view', () => {
     const { statusCode } = await visit(server, regulator)
 
     expect(statusCode).toBe(statusCodes.internalServerError)
+  })
+
+  it('does not exist for an organisation number that is not digits', async ({
+    server
+  }) => {
+    const { statusCode } = await visit(
+      server,
+      regulator,
+      '/organisations/500118x/registrations/R26ER5001180041PL/accreditations/2026/reports'
+    )
+
+    expect(statusCode).toBe(statusCodes.notFound)
+    expect(fetchReportListDetails).not.toHaveBeenCalled()
+  })
+
+  it('does not exist for a year outside the range the service answers for', async ({
+    server
+  }) => {
+    const { statusCode } = await visit(
+      server,
+      regulator,
+      `${registrationPath}/accreditations/1999/reports`
+    )
+
+    expect(statusCode).toBe(statusCodes.notFound)
+    expect(fetchReportListDetails).not.toHaveBeenCalled()
   })
 
   it('does not exist for an operator', async ({ server }) => {

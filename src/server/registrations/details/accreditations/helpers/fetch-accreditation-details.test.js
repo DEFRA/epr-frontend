@@ -1,39 +1,24 @@
-import Boom from '@hapi/boom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { config } from '#config/config.js'
+import { http, HttpResponse } from 'msw'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
+import { test } from '#vite/fixtures/server.js'
 
 import { fetchAccreditationDetails } from './fetch-accreditation-details.js'
 
 /**
- * @import { UserSession } from '#server/auth/types/session.js'
- * @import { Registration } from '#domain/organisations/registration.js'
- * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
- * @import { OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { HttpHandler } from 'msw'
+ * @import { SetupServer } from 'msw/node'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { ReportingCalendar } from './fetch-accreditation-details.js'
  */
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-vi.mock(
-  import('#server/common/helpers/natural-keys/find-record-ids.js'),
-  () => ({ findRecordIds: vi.fn() })
-)
-vi.mock(
-  import('#server/common/helpers/waste-balance/fetch-accreditation-balance.js'),
-  () => ({ fetchAccreditationBalance: vi.fn() })
-)
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-const { findRecordIds } =
-  await import('#server/common/helpers/natural-keys/find-record-ids.js')
-const { fetchAccreditationBalance } =
-  await import('#server/common/helpers/waste-balance/fetch-accreditation-balance.js')
+const backendUrl = config.get('eprBackendUrl')
 
 describe(fetchAccreditationDetails, () => {
   const keys = {
@@ -41,15 +26,23 @@ describe(fetchAccreditationDetails, () => {
     registrationNumber: 'R26ER5001180041PL',
     year: '2026'
   }
-  const registrationPath =
-    '/organisations/500118/registrations/R26ER5001180041PL'
   const backendToken = 'test-token'
-  const credentials = /** @type {UserSession} */ (
-    /** @type {unknown} */ ({ backendToken })
-  )
-  const logger = /** @type {TypedLogger} */ (
-    /** @type {unknown} */ ({ error: vi.fn() })
-  )
+  const organisationId = 'org-123'
+  const registrationId = 'reg-456'
+  const accreditationId = 'acc-789'
+  const credentials = buildMockAuth({
+    linkedOrganisationId: organisationId,
+    backendToken
+  }).credentials
+  const logger = createMockLogger()
+
+  const organisationUrl = `${backendUrl}/organisations/500118`
+  const registrationUrl = `${organisationUrl}/registrations/R26ER5001180041PL`
+  const balancesUrl = `${organisationUrl}/waste-balances/2026`
+  const calendarUrl = `${registrationUrl}/reports/calendar`
+  const ledgerUrl = `${registrationUrl}/accreditations/2026/ledger`
+  const organisationRecordUrl = `${backendUrl}/v1/organisations/${organisationId}`
+  const notesUrl = `${organisationRecordUrl}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   const accreditation = {
     accreditationNumber: 'A26ER5001180114PL',
@@ -64,18 +57,28 @@ describe(fetchAccreditationDetails, () => {
     wasteProcessingType: 'exporter',
     accreditations: { 2026: accreditation }
   }
-  const organisation = /** @type {OrganisationView} */ (
-    /** @type {unknown} */ ({
-      organisationNumber: 500118,
-      name: 'Acme Recycling Ltd',
-      registrations: { [keys.registrationNumber]: registration }
-    })
-  )
-  const ids = {
-    organisationId: 'org-123',
-    registrationId: 'reg-456',
-    accreditationId: 'acc-789',
-    registration: /** @type {Registration} */ (/** @type {unknown} */ ({}))
+  const organisation = {
+    organisationNumber: 500118,
+    name: 'Acme Recycling Ltd',
+    registrations: { [keys.registrationNumber]: registration }
+  }
+  const organisationRecord = {
+    id: organisationId,
+    orgId: 500118,
+    registrations: [
+      {
+        id: registrationId,
+        registrationNumber: keys.registrationNumber,
+        accreditationId
+      }
+    ],
+    accreditations: [
+      {
+        id: accreditationId,
+        accreditationNumber: accreditation.accreditationNumber,
+        validFrom: '2026-01-01'
+      }
+    ]
   }
   const wasteBalance = { amount: 120.5, availableAmount: 80.25 }
   /** @type {ReportingPeriod[]} */
@@ -123,33 +126,50 @@ describe(fetchAccreditationDetails, () => {
     }
   ]
 
-  /**
-   * @param {{
-   *   calendar?: () => Promise<ReportingCalendar>,
-   *   ledger?: () => Promise<{ events: LedgerEvent[] }>,
-   *   notes?: () => Promise<PackagingRecyclingNote[]>
-   * }} [answers]
-   */
-  const backendAnswers = ({
-    calendar: calendarAnswer = () => Promise.resolve(calendar),
-    ledger: ledgerAnswer = () => Promise.resolve({ events: ledgerEvents }),
-    notes: notesAnswer = () => Promise.resolve(packagingRecyclingNotes)
-  } = {}) =>
-    vi.mocked(fetchJsonFromBackend).mockImplementation((path) => {
-      if (path.endsWith('/reports/calendar')) {
-        return calendarAnswer()
-      }
-
-      if (path.endsWith('/ledger')) {
-        return ledgerAnswer()
-      }
-
-      if (path.endsWith('/packaging-recycling-notes')) {
-        return notesAnswer()
-      }
-
-      return Promise.resolve(organisation)
+  const backendFailure = expect.objectContaining({
+    output: expect.objectContaining({
+      statusCode: statusCodes.internalServerError
     })
+  })
+  const notFound = expect.objectContaining({
+    output: expect.objectContaining({ statusCode: statusCodes.notFound })
+  })
+
+  /** @param {string} url */
+  const failing = (url) =>
+    http.get(
+      url,
+      () => new HttpResponse(null, { status: statusCodes.internalServerError })
+    )
+
+  /**
+   * The backend answers every read; a handler passed in takes precedence.
+   * @param {SetupServer} msw
+   * @param {HttpHandler[]} overrides
+   */
+  const backendHolds = (msw, ...overrides) =>
+    msw.use(
+      ...overrides,
+      http.get(organisationUrl, () => HttpResponse.json(organisation)),
+      http.get(balancesUrl, () =>
+        HttpResponse.json({
+          A26OTHER: { amount: 1, availableAmount: 1 },
+          [accreditation.accreditationNumber]: wasteBalance
+        })
+      ),
+      http.get(
+        `${organisationUrl}/registrations/:registrationNumber/reports/calendar`,
+        () => HttpResponse.json(calendar)
+      ),
+      http.get(
+        `${organisationUrl}/registrations/:registrationNumber/accreditations/:year/ledger`,
+        () => HttpResponse.json({ events: ledgerEvents })
+      ),
+      http.get(organisationRecordUrl, () =>
+        HttpResponse.json(organisationRecord)
+      ),
+      http.get(notesUrl, () => HttpResponse.json(packagingRecyclingNotes))
+    )
 
   /**
    * @param {Partial<Parameters<typeof fetchAccreditationDetails>[0]>} [overrides]
@@ -165,21 +185,29 @@ describe(fetchAccreditationDetails, () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    backendAnswers()
-    vi.mocked(findRecordIds).mockResolvedValue(ids)
-    vi.mocked(fetchAccreditationBalance).mockResolvedValue(wasteBalance)
   })
 
-  it('reads the organisation by number, without a year', async () => {
+  test('reads the organisation by number, without a year', async ({ msw }) => {
+    /** @type {string | undefined} */
+    let requested
+    backendHolds(
+      msw,
+      http.get(organisationUrl, ({ request }) => {
+        requested = request.url
+        return HttpResponse.json(organisation)
+      })
+    )
+
     await fetchDetails()
 
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith('/organisations/500118', {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${backendToken}` }
-    })
+    expect(requested).toBe(organisationUrl)
   })
 
-  it('combines the records, the balance, the calendar, the ledger and the notes', async () => {
+  test('combines the records, the balance, the calendar, the ledger and the notes', async ({
+    msw
+  }) => {
+    backendHolds(msw)
+
     const result = await fetchDetails()
 
     expect(result).toStrictEqual({
@@ -194,7 +222,11 @@ describe(fetchAccreditationDetails, () => {
     })
   })
 
-  it('is not found for a registration number the organisation does not hold', async () => {
+  test('is not found for a registration number the organisation does not hold', async ({
+    msw
+  }) => {
+    backendHolds(msw)
+
     await expect(
       fetchDetails({ registrationNumber: 'R99XX' })
     ).rejects.toMatchObject({
@@ -202,34 +234,54 @@ describe(fetchAccreditationDetails, () => {
     })
   })
 
-  it('is not found for a year the registration holds no accreditation for', async () => {
+  test('is not found for a year the registration holds no accreditation for', async ({
+    msw
+  }) => {
+    backendHolds(msw)
+
     await expect(fetchDetails({ year: '2025' })).rejects.toMatchObject({
       output: { statusCode: statusCodes.notFound }
     })
   })
 
-  it('lets the backend refusing the organisation number through', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(Boom.notFound())
+  test('lets the backend refusing the organisation number through', async ({
+    msw
+  }) => {
+    backendHolds(
+      msw,
+      http.get(
+        organisationUrl,
+        () => new HttpResponse(null, { status: statusCodes.notFound })
+      )
+    )
 
     await expect(fetchDetails()).rejects.toMatchObject({
       output: { statusCode: statusCodes.notFound }
     })
   })
 
-  it("reads the year's balance by accreditation number", async () => {
-    await fetchDetails()
+  test("reads the year's balance by accreditation number", async ({ msw }) => {
+    let authorization
+    backendHolds(
+      msw,
+      http.get(balancesUrl, ({ request }) => {
+        authorization = request.headers.get('Authorization')
+        return HttpResponse.json({
+          [accreditation.accreditationNumber]: wasteBalance
+        })
+      })
+    )
 
-    expect(fetchAccreditationBalance).toHaveBeenCalledWith({
-      organisationNumber: 500118,
-      year: 2026,
-      accreditationNumber: 'A26ER5001180114PL',
-      backendToken,
-      logger
-    })
+    const result = await fetchDetails()
+
+    expect(result.wasteBalance).toStrictEqual(wasteBalance)
+    expect(authorization).toBe(`Bearer ${backendToken}`)
   })
 
-  it('reports a balance it could not read as absent rather than failing the page', async () => {
-    vi.mocked(fetchAccreditationBalance).mockResolvedValue(null)
+  test('reports a balance it could not read as absent rather than failing the page', async ({
+    msw
+  }) => {
+    backendHolds(msw, failing(balancesUrl))
 
     const result = await fetchDetails()
 
@@ -237,18 +289,19 @@ describe(fetchAccreditationDetails, () => {
     expect(result.accreditation).toStrictEqual(accreditation)
   })
 
-  it('reads the reporting calendar by number', async () => {
-    await fetchDetails()
+  test('reads the reporting calendar by number', async ({ msw }) => {
+    backendHolds(msw)
 
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      `${registrationPath}/reports/calendar`,
-      expect.any(Object)
-    )
+    const result = await fetchDetails()
+
+    expect(result.reportingPeriods).toStrictEqual(reportingPeriods)
+    expect(result.cadence).toBe('monthly')
   })
 
-  it('reports a calendar it could not read as no periods rather than failing the page', async () => {
-    const err = new Error('calendar unavailable')
-    backendAnswers({ calendar: () => Promise.reject(err) })
+  test('reports a calendar it could not read as no periods rather than failing the page', async ({
+    msw
+  }) => {
+    backendHolds(msw, failing(calendarUrl))
 
     const result = await fetchDetails()
 
@@ -257,27 +310,27 @@ describe(fetchAccreditationDetails, () => {
     expect(logger.error).toHaveBeenCalledWith({
       message:
         'Failed to fetch reporting periods for organisation 500118 registration R26ER5001180041PL',
-      err
+      err: backendFailure
     })
   })
 
   describe('the packaging recycling notes', () => {
-    it('reads the notes by the ids the numbers resolve to', async () => {
+    test('reads the notes by the ids the numbers resolve to', async ({
+      msw
+    }) => {
+      backendHolds(msw)
+
       const result = await fetchDetails()
 
-      expect(findRecordIds).toHaveBeenCalledWith(keys, credentials)
-      expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-        '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes',
-        expect.anything()
-      )
       expect(result.packagingRecyclingNotes).toStrictEqual(
         packagingRecyclingNotes
       )
     })
 
-    it('reports notes it could not read as none rather than failing the page', async () => {
-      const err = new Error('nope')
-      backendAnswers({ notes: () => Promise.reject(err) })
+    test('reports notes it could not read as none rather than failing the page', async ({
+      msw
+    }) => {
+      backendHolds(msw, failing(notesUrl))
 
       const result = await fetchDetails()
 
@@ -285,45 +338,63 @@ describe(fetchAccreditationDetails, () => {
       expect(logger.error).toHaveBeenCalledWith({
         message:
           'Failed to fetch packaging recycling notes for organisation org-123 accreditation acc-789',
-        err
+        err: backendFailure
       })
       expect(result.ledgerEvents).toStrictEqual(ledgerEvents)
     })
 
-    it('fails the page where the ids could not be found', async () => {
-      const err = Boom.notFound()
-      vi.mocked(findRecordIds).mockRejectedValue(err)
+    test('fails the page where the ids could not be found', async ({ msw }) => {
+      backendHolds(
+        msw,
+        http.get(
+          organisationRecordUrl,
+          () => new HttpResponse(null, { status: statusCodes.notFound })
+        )
+      )
 
-      await expect(fetchDetails()).rejects.toBe(err)
+      await expect(fetchDetails()).rejects.toThrow(notFound)
     })
   })
 
   describe('the waste balance ledger', () => {
-    it("reads the accreditation's ledger by number", async () => {
+    test("reads the accreditation's ledger by number", async ({ msw }) => {
+      let authorization
+      backendHolds(
+        msw,
+        http.get(ledgerUrl, ({ request }) => {
+          authorization = request.headers.get('Authorization')
+          return HttpResponse.json({ events: ledgerEvents })
+        })
+      )
+
       const result = await fetchDetails()
 
-      expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-        `${registrationPath}/accreditations/2026/ledger`,
-        { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
-      )
       expect(result.ledgerEvents).toStrictEqual(ledgerEvents)
+      expect(authorization).toBe(`Bearer ${backendToken}`)
     })
 
-    it('asks for no ledger, and answers none, for a session that may not read one', async () => {
+    test('asks for no ledger, and answers none, for a session that may not read one', async ({
+      msw
+    }) => {
+      let ledgerRequested = false
+      backendHolds(
+        msw,
+        http.get(ledgerUrl, () => {
+          ledgerRequested = true
+          return HttpResponse.json({ events: ledgerEvents })
+        })
+      )
+
       const result = await fetchDetails({ canReadLedger: false })
 
       expect(result.ledgerEvents).toBeNull()
-      expect(fetchJsonFromBackend).not.toHaveBeenCalledWith(
-        expect.stringMatching(/\/ledger$/),
-        expect.any(Object)
-      )
+      expect(ledgerRequested).toBe(false)
     })
 
-    it('fails the page for a ledger it could not read', async () => {
-      const err = new Error('ledger unavailable')
-      backendAnswers({ ledger: () => Promise.reject(err) })
+    test('fails the page for a ledger it could not read', async ({ msw }) => {
+      backendHolds(msw, failing(ledgerUrl))
 
-      await expect(fetchDetails()).rejects.toBe(err)
+      await expect(fetchDetails()).rejects.toThrow(backendFailure)
     })
   })
 })

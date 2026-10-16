@@ -290,6 +290,7 @@ describe('#context', () => {
       expect(contextResult).toStrictEqual({
         analytics: {
           confirmedChoice: null,
+          containerId: '',
           hasConsented: false,
           hasRejected: false,
           isEnabled: false,
@@ -387,6 +388,7 @@ describe('#context cache', () => {
       expect(contextResult).toStrictEqual({
         analytics: {
           confirmedChoice: null,
+          containerId: '',
           hasConsented: false,
           hasRejected: false,
           isEnabled: false,

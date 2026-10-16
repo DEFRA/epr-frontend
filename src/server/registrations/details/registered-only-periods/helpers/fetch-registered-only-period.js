@@ -1,6 +1,8 @@
 import Boom from '@hapi/boom'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { registrationIn } from '#server/common/helpers/organisations/registration-in-view.js'
@@ -68,16 +70,23 @@ const fetchCalendar = async ({ keys, backendToken, logger }) => {
 }
 
 /**
- * The year's registered-only ledger: null without the read scope, empty for a year never approved.
+ * The year's registered-only ledger: null without the read scope, empty when the backend has none.
  * @param {{
  *   keys: RegistrationKeys,
  *   year: number,
  *   backendToken: string,
- *   canReadLedger: boolean
+ *   canReadLedger: boolean,
+ *   logger: TypedLogger
  * }} params
  * @returns {Promise<LedgerEvent[] | null>}
  */
-const fetchLedger = async ({ keys, year, backendToken, canReadLedger }) => {
+const fetchLedger = async ({
+  keys,
+  year,
+  backendToken,
+  canReadLedger,
+  logger
+}) => {
   if (!canReadLedger) {
     return null
   }
@@ -88,16 +97,24 @@ const fetchLedger = async ({ keys, year, backendToken, canReadLedger }) => {
       backendToken
     )
   } catch (error) {
-    if (Boom.isBoom(error, statusCodes.notFound)) {
-      return []
+    if (!Boom.isBoom(error, statusCodes.notFound)) {
+      throw error
     }
 
-    throw error
+    logger.info({
+      message: 'No registered-only ledger for the year, showing it empty',
+      event: {
+        action: 'fetch_registered_only_ledger',
+        reason: `organisationNumber=${keys.organisationNumber} registrationNumber=${keys.registrationNumber} year=${year}`
+      }
+    })
+
+    return []
   }
 }
 
 /**
- * The registration from the organisation read model.
+ * The registration from the organisation read model; an unknown organisation is a registration not found.
  * @param {{ keys: RegistrationKeys, backendToken: string }} params
  * @returns {Promise<{ organisation: OrganisationView, registration: RegistrationView }>}
  */
@@ -105,7 +122,18 @@ const fetchRegistration = async ({ keys, backendToken }) => {
   const organisation = await fetchOrganisation(
     organisationNumber(Number(keys.organisationNumber)),
     backendToken
-  )
+  ).catch((error) => {
+    if (!Boom.isBoom(error, statusCodes.notFound)) {
+      throw error
+    }
+
+    throw notFound('Registration not found', errorCodes.registrationNotFound, {
+      event: {
+        action: 'fetch_registration',
+        reason: `organisationNumber=${keys.organisationNumber} registrationNumber=${keys.registrationNumber}`
+      }
+    })
+  })
 
   return {
     organisation,
@@ -114,10 +142,7 @@ const fetchRegistration = async ({ keys, backendToken }) => {
 }
 
 /**
- * The registration, the reporting calendar and the ledger, read together.
- *
- * Unlike the calendar, a failed ledger read is not caught: it is the record the
- * page exists to show.
+ * The registration, calendar and ledger together; a 404 ledger reads as empty (a product decision), any other ledger failure fails the page.
  * @param {RegisteredOnlyPeriodRequest} params
  * @returns {Promise<RegisteredOnlyPeriodDetails>}
  */
@@ -131,7 +156,7 @@ export const fetchRegisteredOnlyPeriod = async ({
   const [details, calendar, ledgerEvents] = await Promise.all([
     fetchRegistration({ keys, backendToken }),
     fetchCalendar({ keys, backendToken, logger }),
-    fetchLedger({ keys, year, backendToken, canReadLedger })
+    fetchLedger({ keys, year, backendToken, canReadLedger, logger })
   ])
 
   return { ...details, ...calendar, ledgerEvents }

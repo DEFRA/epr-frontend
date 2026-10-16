@@ -1,4 +1,8 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import {
+  accreditationIdPath,
+  organisationIdPath
+} from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const createdController = {
@@ -18,7 +22,7 @@ export const createdController = {
     if (prnCreated?.id !== prnId) {
       // No session data or ID mismatch - redirect to view page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
+        `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnId}/view`
       )
     }
 
@@ -27,10 +31,10 @@ export const createdController = {
 
     const { noteType, noteTypePlural } = getNoteTypeDisplayNames(prnCreated)
 
-    const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+    const listUrl = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes`
     const viewUrl = `${listUrl}/${prnId}/view`
     const createUrl = `${listUrl}/create`
-    const homeUrl = `/organisations/${organisationId}`
+    const homeUrl = organisationIdPath({ organisationId })
 
     const headingKey = prnCreated.isDecemberWaste
       ? 'prns:create:successHeadingDecemberWaste'

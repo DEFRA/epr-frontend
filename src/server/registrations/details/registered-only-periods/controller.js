@@ -1,18 +1,12 @@
-import Joi from 'joi'
-
 import { hasLedgerReadScope } from '#server/auth/scopes.js'
 
 import { buildViewModel } from './build-view-model.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import {
-  MAX_YEAR,
-  MIN_YEAR
-} from '#server/reports/helpers/period-params-schema.js'
 
 import { fetchRegisteredOnlyPeriod } from './helpers/fetch-registered-only-period.js'
-import { registrationYears } from '../helpers/registered-only.js'
-import { registrationDateRange } from '../helpers/timeline-dates.js'
+import { registeredYears } from '../helpers/timeline-dates.js'
+import { yearParamsSchema } from '../helpers/year-params-schema.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -26,16 +20,6 @@ import { registrationDateRange } from '../helpers/timeline-dates.js'
  *   year: number
  * }} RegisteredOnlyPeriodParams
  */
-
-/**
- * The year is bound by the same range every other `{year}` address uses, so a
- * year one accepts is not one another rejects.
- */
-const paramsSchema = Joi.object({
-  organisationNumber: Joi.string().required(),
-  registrationNumber: Joi.string().required(),
-  year: Joi.number().integer().min(MIN_YEAR).max(MAX_YEAR).required()
-})
 
 /**
  * @param {string} reason
@@ -57,11 +41,11 @@ const noSuchPeriod = (reason) => {
 export const controller = {
   options: {
     validate: {
-      params: paramsSchema,
+      params: yearParamsSchema,
       // A year the address cannot hold is not a bad request, it is an address
       // that does not exist - and answering 400 would tell a caller the route
       // is there while a well-formed year answers 404 for them.
-      failAction: () => noSuchPeriod('the year is not one this address holds')
+      failAction: () => noSuchPeriod('the address holds no such period')
     }
   },
   /**
@@ -87,13 +71,8 @@ export const controller = {
       logger: request.logger
     })
 
-    // A well-formed year the registration never ran over is a page about
-    // nothing, so it is not found rather than rendered empty.
-    if (
-      !registrationYears({
-        dateRange: registrationDateRange(registration)
-      }).includes(year)
-    ) {
+    // A year with no approved registration day is not found, as the backend's ledger answers.
+    if (!registeredYears(registration).includes(year)) {
       noSuchPeriod(
         `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber} year=${year}`
       )

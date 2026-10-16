@@ -52,6 +52,7 @@ const unrecognised = buildMockAuth({
 const registeredOnly = {
   status: 'approved',
   validFrom: '2026-01-01',
+  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'reprocessor',

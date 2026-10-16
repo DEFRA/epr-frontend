@@ -12,6 +12,7 @@ import {
 } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
+import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
 import {
   showsDecemberBalance,
   toDecemberBalanceBreakdown
@@ -21,6 +22,7 @@ import { year as toYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import {
   accreditationPath,
+  organisationPath,
   registrationPath,
   reportsListPath
 } from '#server/reports/helpers/report-paths.js'
@@ -198,12 +200,10 @@ const buildRegistrationViewModel = ({ request, keys, registration }) => {
   const { isExporter, noteTypePlural } = getNoteTypeDisplayNames(registration)
   const siteName = toSiteName(registration, localise)
   const material = getMaterialDisplayName(registration.material)
-  const organisationPath = `/organisations/${encodeURIComponent(keys.organisationNumber)}`
+  const homePath = organisationPath(keys)
 
   return {
-    backUrl: localiseUrl(
-      isExporter ? `${organisationPath}/exporting` : organisationPath
-    ),
+    backUrl: localiseUrl(isExporter ? `${homePath}/exporting` : homePath),
     contactRegulatorUrl: localiseUrl('/contact'),
     hasSiteName: !!siteName,
     isExporter,
@@ -309,10 +309,10 @@ export const registrationController = {
     const year = latestAccreditationYear(registration)
 
     if (year) {
-      return h.redirect(
-        request.localiseUrl(
-          `${accreditationPath({ ...keys, year })}${request.url.search}`
-        )
+      return redirectPreservingMethod(
+        request,
+        h,
+        accreditationPath({ ...keys, year })
       )
     }
 

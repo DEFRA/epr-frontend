@@ -6,6 +6,7 @@ import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/bui
 import { paths } from '#server/paths.js'
 import { CADENCE } from '#server/reports/constants.js'
 import {
+  organisationPath,
   registrationPath as toRegistrationPath,
   reportPath
 } from '#server/reports/helpers/report-paths.js'
@@ -14,8 +15,8 @@ import { organisationViewName, toCaption } from '../helpers/caption.js'
 import { registeredOnlyStretches } from '../helpers/registered-only.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
 import {
-  registrationAccreditedStretches,
-  registrationDateRange
+  registeredStretches,
+  registrationAccreditedStretches
 } from '../helpers/timeline-dates.js'
 
 /**
@@ -108,9 +109,7 @@ const toBreadcrumbs = ({
   },
   {
     text: name,
-    href: localiseUrl(
-      `/organisations/${encodeURIComponent(keys.organisationNumber)}`
-    )
+    href: localiseUrl(organisationPath(keys))
   },
   {
     text: localise('registrations:details:heading'),
@@ -158,9 +157,8 @@ export const buildViewModel = ({
   )
 
   const stretches = registeredOnlyStretches({
-    dateRange: registrationDateRange(registration),
-    accredited: registrationAccreditedStretches(registration),
-    year
+    registered: registeredStretches(registration, year),
+    accredited: registrationAccreditedStretches(registration)
   })
 
   // The calendar answers one cadence for the registration. Quarterly is what a

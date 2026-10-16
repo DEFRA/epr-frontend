@@ -1,5 +1,8 @@
-import { config } from '#config/config.js'
 import { ANALYTICS_CONSENT_COOKIE } from '#server/common/analytics/consent.js'
+import {
+  switchAnalyticsOff,
+  switchAnalyticsOn
+} from '#server/common/test-helpers/analytics-helper.js'
 import { chooseAnalytics } from '#server/common/test-helpers/consent-helper.js'
 import {
   extractCookieValues,
@@ -55,15 +58,9 @@ describe('#cookieBanner', () => {
   })
 
   describe('when analytics is enabled and no choice has been made', () => {
-    beforeAll(() => {
-      config.set('analytics.isEnabled', true)
-      config.set('analytics.measurementId', 'G-TESTONLY01')
-    })
+    beforeAll(switchAnalyticsOn)
 
-    afterAll(() => {
-      config.set('analytics.isEnabled', false)
-      config.set('analytics.measurementId', '')
-    })
+    afterAll(switchAnalyticsOff)
 
     it('should render the banner naming the service', async ({ server }) => {
       const { result } = await getStartPage({ server })
@@ -185,15 +182,9 @@ describe('#cookieBanner', () => {
   })
 
   describe('when a choice has just been made from the banner', () => {
-    beforeAll(() => {
-      config.set('analytics.isEnabled', true)
-      config.set('analytics.measurementId', 'G-TESTONLY01')
-    })
+    beforeAll(switchAnalyticsOn)
 
-    afterAll(() => {
-      config.set('analytics.isEnabled', false)
-      config.set('analytics.measurementId', '')
-    })
+    afterAll(switchAnalyticsOff)
 
     it.for([
       { consent: 'accepted', message: "You've accepted analytics cookies." },
@@ -302,15 +293,9 @@ describe('#cookieBanner', () => {
   })
 
   describe('when a choice has already been made', () => {
-    beforeAll(() => {
-      config.set('analytics.isEnabled', true)
-      config.set('analytics.measurementId', 'G-TESTONLY01')
-    })
+    beforeAll(switchAnalyticsOn)
 
-    afterAll(() => {
-      config.set('analytics.isEnabled', false)
-      config.set('analytics.measurementId', '')
-    })
+    afterAll(switchAnalyticsOff)
 
     it.for(['accepted', 'rejected'])(
       'should not render the banner having %s',

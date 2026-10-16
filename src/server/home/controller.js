@@ -1,6 +1,7 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { paths } from '#server/paths.js'
+import { organisationPath } from '#server/reports/helpers/report-paths.js'
 
 const SUMMARY_LOG_GUIDANCE_URL =
   'https://www.gov.uk/government/publications/summary-log-templates-for-uk-packaging-waste/recording-uk-packaging-waste-in-summary-logs-supplementary-guidance'
@@ -23,7 +24,9 @@ async function getStartNowHref(request) {
   const organisations = await fetchUserOrganisations(backendToken)
 
   if (organisations.linked) {
-    return request.localiseUrl(`/organisations/${organisations.linked.orgId}`)
+    return request.localiseUrl(
+      organisationPath({ organisationNumber: organisations.linked.orgId })
+    )
   }
 
   return request.localiseUrl(ACCOUNT_LINKING_PATH)

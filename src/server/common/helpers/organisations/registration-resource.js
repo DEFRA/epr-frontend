@@ -18,9 +18,4 @@
  * @typedef {{ validFrom: string | null, validTo: string | null }} DateRange
  */
 
-/**
- * When a registration started; registrations do not expire (PAE-1904).
- * @typedef {{ validFrom: string }} RegistrationDateRange
- */
-
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import

@@ -8,6 +8,7 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
+import { accreditationIdPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const discardGetController = {
@@ -26,7 +27,7 @@ export const discardGetController = {
 
     if (prnDraft?.id !== prnId) {
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+        `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/create`
       )
     }
 
@@ -39,7 +40,7 @@ export const discardGetController = {
 
     const { noteType } = getNoteTypeDisplayNames(registration)
 
-    const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
+    const viewUrl = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnId}/view`
 
     await metrics.journey.start(request, JOURNEY.discardPrn, prnId)
 
@@ -64,7 +65,7 @@ export const discardPostController = {
       request.params
     const session = request.auth.credentials
 
-    const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+    const createUrl = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/create`
 
     /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
