@@ -1,24 +1,34 @@
-import Boom from '@hapi/boom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
 
-import { fetchOrganisation } from './fetch-organisation.js'
+import { test } from '#vite/fixtures/server.js'
+
 import { fetchRegistration } from './fetch-registration.js'
 
 /**
  * @import { OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
-vi.mock(import('./fetch-organisation.js'))
+const backendUrl = config.get('eprBackendUrl')
 
 const registrationNumber = 'R26ER5001180041PL'
 const backendToken = 'test-token'
 
-const registration = /** @type {RegistrationView} */ (
-  /** @type {unknown} */ ({ statusTimeline: {}, accreditations: {} })
-)
+const organisationUrl = `${backendUrl}/organisations/500118`
+
+/** @type {RegistrationView} */
+const registration = {
+  status: 'approved',
+  validFrom: '2026-01-01',
+  material: 'plastic',
+  submittedToRegulator: { code: 'ea' },
+  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
+  accreditations: {},
+  wasteProcessingType: 'exporter'
+}
 
 /** @type {OrganisationView} */
 const organisation = {
@@ -43,24 +53,38 @@ const notFoundForThisRegistration = {
 }
 
 describe(fetchRegistration, () => {
-  beforeEach(() => {
-    vi.mocked(fetchOrganisation).mockResolvedValue(organisation)
-  })
+  test('returns the organisation and its registration with that number', async ({
+    msw
+  }) => {
+    msw.use(http.get(organisationUrl, () => HttpResponse.json(organisation)))
 
-  it('returns the organisation and its registration with that number', async () => {
     await expect(fetchRegistration(params)).resolves.toStrictEqual({
       organisation,
       registration
     })
   })
 
-  it('reads the organisation by its number as the token bearer', async () => {
+  test('reads the organisation as the token bearer', async ({ msw }) => {
+    /** @type {string | null} */
+    let authorisation = null
+
+    msw.use(
+      http.get(organisationUrl, ({ request }) => {
+        authorisation = request.headers.get('authorization')
+        return HttpResponse.json(organisation)
+      })
+    )
+
     await fetchRegistration(params)
 
-    expect(fetchOrganisation).toHaveBeenCalledWith(500118, backendToken)
+    expect(authorisation).toBe('Bearer test-token')
   })
 
-  it('is a registration not found for a number the organisation does not hold', async () => {
+  test('is a registration not found for a number the organisation does not hold', async ({
+    msw
+  }) => {
+    msw.use(http.get(organisationUrl, () => HttpResponse.json(organisation)))
+
     await expect(
       fetchRegistration({ ...params, registrationNumber: 'toString' })
     ).rejects.toMatchObject({
@@ -72,18 +96,37 @@ describe(fetchRegistration, () => {
     })
   })
 
-  it('is a registration not found for an organisation the backend does not know', async () => {
-    vi.mocked(fetchOrganisation).mockRejectedValue(Boom.notFound())
+  test('is a registration not found for an organisation the backend does not know', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get(
+        organisationUrl,
+        () => new HttpResponse(null, { status: statusCodes.notFound })
+      )
+    )
 
     await expect(fetchRegistration(params)).rejects.toMatchObject(
       notFoundForThisRegistration
     )
   })
 
-  it('lets any other failure reading the organisation surface', async () => {
-    const failure = Boom.internal('organisation unavailable')
-    vi.mocked(fetchOrganisation).mockRejectedValue(failure)
+  test('lets any other failure reading the organisation surface', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get(
+        organisationUrl,
+        () =>
+          new HttpResponse(null, { status: statusCodes.internalServerError })
+      )
+    )
 
-    await expect(fetchRegistration(params)).rejects.toBe(failure)
+    const failure = fetchRegistration(params)
+
+    await expect(failure).rejects.toMatchObject({
+      output: { statusCode: statusCodes.internalServerError }
+    })
+    await expect(failure).rejects.not.toHaveProperty('code')
   })
 })

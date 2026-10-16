@@ -1,6 +1,4 @@
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
-import { registrationIn } from '#server/common/helpers/organisations/registration-in-view.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 
 import { buildViewModel } from './build-view-model.js'
 
@@ -22,18 +20,19 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationNumber: number, registrationNumber } = request.params
-    const organisation = await fetchOrganisation(
-      organisationNumber(Number(number)),
-      request.auth.credentials.backendToken
-    )
+    const { organisationNumber, registrationNumber } = request.params
+    const { organisation, registration } = await fetchRegistration({
+      organisationNumber,
+      registrationNumber,
+      backendToken: request.auth.credentials.backendToken
+    })
 
     return h.view(
       'registrations/details/index',
       buildViewModel({
-        keys: { organisationNumber: number, registrationNumber },
+        keys: { organisationNumber, registrationNumber },
         organisation,
-        registration: registrationIn(organisation, registrationNumber),
+        registration,
         localise: request.t,
         localiseUrl: request.localiseUrl
       })

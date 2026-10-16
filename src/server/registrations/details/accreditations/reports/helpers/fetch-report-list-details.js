@@ -1,9 +1,5 @@
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
-import {
-  accreditationIn,
-  registrationIn
-} from '#server/common/helpers/organisations/registration-in-view.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
+import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
@@ -33,15 +29,10 @@ export const fetchReportListDetails = async ({
   year,
   ...keys
 }) => {
-  const [organisation, calendar] = await Promise.all([
-    fetchOrganisation(
-      organisationNumber(Number(keys.organisationNumber)),
-      backendToken
-    ),
+  const [{ organisation, registration }, calendar] = await Promise.all([
+    fetchRegistration({ ...keys, backendToken }),
     fetchReportingPeriodsByNumber(keys, backendToken)
   ])
-
-  const registration = registrationIn(organisation, keys.registrationNumber)
 
   return {
     organisation,

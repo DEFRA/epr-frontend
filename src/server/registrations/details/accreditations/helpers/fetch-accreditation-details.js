@@ -1,10 +1,7 @@
 import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
-import {
-  accreditationIn,
-  registrationIn
-} from '#server/common/helpers/organisations/registration-in-view.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
+import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import { fetchAccreditationLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
 import { year as toYear } from '#server/common/helpers/year.js'
@@ -57,13 +54,14 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
  * @returns {Promise<Pick<AccreditationDetails, 'organisation' | 'registration' | 'accreditation' | 'wasteBalance'>>}
  */
 const fetchAccreditation = async ({ keys, backendToken, logger }) => {
-  const number = organisationNumber(Number(keys.organisationNumber))
-  const organisation = await fetchOrganisation(number, backendToken)
-  const registration = registrationIn(organisation, keys.registrationNumber)
+  const { organisation, registration } = await fetchRegistration({
+    ...keys,
+    backendToken
+  })
   const accreditation = accreditationIn(registration, keys.year)
 
   const wasteBalance = await fetchAccreditationBalance({
-    organisationNumber: number,
+    organisationNumber: organisationNumber(Number(keys.organisationNumber)),
     year: toYear(Number(keys.year)),
     accreditationNumber: accreditation.accreditationNumber,
     backendToken,

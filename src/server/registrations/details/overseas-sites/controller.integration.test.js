@@ -23,7 +23,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 import { fetchOverseasSites } from './helpers/fetch-overseas-sites.js'
 
 /**
- * @import { OverseasSiteView, OverseasSitesByOrsId, OverseasSitesDetails } from './helpers/fetch-overseas-sites.js'
+ * @import { OverseasSiteView, OverseasSitesByOrsId, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { OverseasSitesDetails } from './helpers/fetch-overseas-sites.js'
  */
 
 vi.mock(import('./helpers/fetch-overseas-sites.js'))
@@ -65,7 +66,17 @@ const bahiaPlasticos = {
  * @returns {OverseasSitesDetails}
  */
 const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
-  const registration = { material: 'plastic', overseasSites: sites }
+  /** @type {RegistrationView} */
+  const registration = {
+    status: 'approved',
+    validFrom: '2026-01-01',
+    material: 'plastic',
+    submittedToRegulator: { code: 'ea' },
+    statusTimeline: {},
+    accreditations: {},
+    wasteProcessingType: 'exporter',
+    overseasSites: sites
+  }
 
   return {
     organisation: {
