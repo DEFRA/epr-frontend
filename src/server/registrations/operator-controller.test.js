@@ -37,7 +37,7 @@ const accreditationPath = `${registrationPath}/accreditations/${year}`
 
 /** @type {Record<string, unknown>} */
 const reprocessor = {
-  status: { current: 'approved', timeline: {} },
+  status: { current: 'approved', timeline: [] },
   validFrom: `${year}-01-01`,
   material: 'glass_re_melt',
   submittedToRegulator: { code: 'ea' },
@@ -51,9 +51,7 @@ const reprocessor = {
       accreditationNumber,
       status: {
         current: 'approved',
-        timeline: {
-          [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' }
-        }
+        timeline: [{ status: 'approved', at: `${year}-01-01T09:00:00.000Z` }]
       }
     }
   }
@@ -328,10 +326,10 @@ describe("the operator's registration page for a year", () => {
             accreditationNumber,
             status: {
               current: 'cancelled',
-              timeline: {
-                [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' },
-                [`${year}-03-01`]: { status: 'cancelled' }
-              }
+              timeline: [
+                { status: 'approved', at: `${year}-01-01T09:00:00.000Z` },
+                { status: 'cancelled', at: `${year}-03-01T09:00:00.000Z` }
+              ]
             }
           }
         }
@@ -450,9 +448,12 @@ describe("the operator's registration page with no year", () => {
             accreditationNumber: 'A25ER5001180114GL',
             status: {
               current: 'approved',
-              timeline: {
-                [`${thisYear - 1}-01-01T09:00:00.000Z`]: { status: 'approved' }
-              }
+              timeline: [
+                {
+                  status: 'approved',
+                  at: `${thisYear - 1}-01-01T09:00:00.000Z`
+                }
+              ]
             }
           },
           .../** @type {object} */ (reprocessor.accreditations)
@@ -508,10 +509,10 @@ describe("the operator's registration page with no year", () => {
             accreditationNumber,
             status: {
               current: 'cancelled',
-              timeline: {
-                [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' },
-                [`${year}-03-01`]: { status: 'cancelled' }
-              }
+              timeline: [
+                { status: 'approved', at: `${year}-01-01T09:00:00.000Z` },
+                { status: 'cancelled', at: `${year}-03-01T09:00:00.000Z` }
+              ]
             }
           }
         }

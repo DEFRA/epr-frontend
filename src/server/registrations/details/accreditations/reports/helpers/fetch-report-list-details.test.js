@@ -23,7 +23,7 @@ describe(fetchReportListDetails, () => {
     accreditationNumber: 'A26ER5001180114PL',
     status: {
       current: 'approved',
-      timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+      timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
     }
   }
 
@@ -35,7 +35,7 @@ describe(fetchReportListDetails, () => {
       [registrationNumber]: {
         status: {
           current: 'approved',
-          timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+          timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
         },
         validFrom: '2026-01-01',
         material: 'plastic',
