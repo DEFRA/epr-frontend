@@ -1,11 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { errorCodes } from '#server/common/enums/error-codes.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
-import { registrationIn } from '#server/common/helpers/organisations/registration-in-view.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { fetchRegisteredOnlyLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
 import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
 
@@ -114,34 +110,6 @@ const fetchLedger = async ({
 }
 
 /**
- * The registration from the organisation read model; an unknown organisation is a registration not found.
- * @param {{ keys: RegistrationKeys, backendToken: string }} params
- * @returns {Promise<{ organisation: OrganisationView, registration: RegistrationView }>}
- */
-const fetchRegistration = async ({ keys, backendToken }) => {
-  const organisation = await fetchOrganisation(
-    organisationNumber(Number(keys.organisationNumber)),
-    backendToken
-  ).catch((error) => {
-    if (!Boom.isBoom(error, statusCodes.notFound)) {
-      throw error
-    }
-
-    throw notFound('Registration not found', errorCodes.registrationNotFound, {
-      event: {
-        action: 'fetch_registration',
-        reason: `organisationNumber=${keys.organisationNumber} registrationNumber=${keys.registrationNumber}`
-      }
-    })
-  })
-
-  return {
-    organisation,
-    registration: registrationIn(organisation, keys.registrationNumber)
-  }
-}
-
-/**
  * The registration, calendar and ledger together; a 404 ledger reads as empty (a product decision), any other ledger failure fails the page.
  * @param {RegisteredOnlyPeriodRequest} params
  * @returns {Promise<RegisteredOnlyPeriodDetails>}
@@ -154,7 +122,7 @@ export const fetchRegisteredOnlyPeriod = async ({
   ...keys
 }) => {
   const [details, calendar, ledgerEvents] = await Promise.all([
-    fetchRegistration({ keys, backendToken }),
+    fetchRegistration({ ...keys, backendToken }),
     fetchCalendar({ keys, backendToken, logger }),
     fetchLedger({ keys, year, backendToken, canReadLedger, logger })
   ])

@@ -13,6 +13,11 @@ import {
   toRegistrationTrail
 } from '#server/registrations/details/helpers/accreditation-child-page.js'
 import { organisationName } from '#server/registrations/details/helpers/caption.js'
+import {
+  accreditationIdPath,
+  organisationIdPath,
+  registrationIdPath
+} from '#server/reports/helpers/report-paths.js'
 
 /**
  * @typedef {{
@@ -62,13 +67,15 @@ export const controller = {
     const { noteType } = getNoteTypeDisplayNames(registration)
     const heading = localise('waste-balance-ledger:heading')
     const name = organisationName(organisationData)
-    const organisationPath = `/organisations/${organisationId}`
-    const registrationPath = `${organisationPath}/registrations/${registrationId}`
+    const registrationPath = registrationIdPath({
+      organisationId,
+      registrationId
+    })
     const accreditationPath = accreditationId
-      ? `${registrationPath}/accreditations/${accreditationId}`
+      ? accreditationIdPath({ organisationId, registrationId, accreditationId })
       : undefined
     const recordPaths = {
-      organisation: organisationPath,
+      organisation: organisationIdPath({ organisationId }),
       registration: registrationPath
     }
 

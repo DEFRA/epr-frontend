@@ -1,3 +1,5 @@
+import { organisationPath } from '#server/reports/helpers/report-paths.js'
+
 import { toStatusTag } from './to-status-tag.js'
 
 /** @import { StatusTag } from './to-status-tag.js' */
@@ -49,5 +51,5 @@ export const toOrganisationRow = (
   organisationId: String(orgId),
   regulator: submittedToRegulator?.toUpperCase() ?? '',
   status: toStatusTag(status, localise),
-  href: localiseUrl(`/organisations/${orgId}`)
+  href: localiseUrl(organisationPath({ organisationNumber: orgId }))
 })

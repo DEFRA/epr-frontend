@@ -2,6 +2,10 @@ import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+import {
+  accreditationIdPath,
+  registrationIdPath
+} from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const issuedController = {
@@ -43,7 +47,7 @@ export const issuedController = {
     // Only show success page if PRN has been issued (status is awaiting_acceptance)
     if (prn.status !== 'awaiting_acceptance') {
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
+        `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnId}/view`
       )
     }
 
@@ -55,9 +59,9 @@ export const issuedController = {
 
     const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
-    const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-    const homeUrl = `/organisations/${organisationId}/registrations/${registrationId}`
-    const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
+    const listUrl = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes`
+    const homeUrl = registrationIdPath({ organisationId, registrationId })
+    const viewUrl = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnId}/view`
 
     return h.view('prns/issued', {
       pageTitle: localise('prns:issued:pageTitle', { noteType }),

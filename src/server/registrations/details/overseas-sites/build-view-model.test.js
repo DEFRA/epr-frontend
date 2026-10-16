@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { buildViewModel } from './build-view-model.js'
 
 /**
- * @import { OrganisationView, RegistrationView } from './helpers/fetch-overseas-sites.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
 const localise = createMockLocalise({
@@ -17,7 +17,12 @@ const registrationNumber = 'R26ER5001180041PL'
 
 /** @type {RegistrationView} */
 const aRegistration = {
+  status: { current: 'approved', timeline: {} },
+  validFrom: '2026-01-01',
   material: 'plastic',
+  submittedToRegulator: { code: 'ea' },
+  accreditations: {},
+  wasteProcessingType: 'exporter',
   overseasSites: {
     '007': {
       name: 'Bahia Plásticos',
@@ -107,7 +112,8 @@ describe(buildViewModel, () => {
   })
 
   it('lists no sites for a registration that names none', () => {
-    const model = viewModel({ registration: { material: 'plastic' } })
+    const { overseasSites: _overseasSites, ...withoutSites } = aRegistration
+    const model = viewModel({ registration: withoutSites })
 
     expect(model.sites.rows).toStrictEqual([])
   })

@@ -37,7 +37,7 @@ describe('#analyticsPageReferrer against the running server', () => {
     ],
     [
       `http://${authority}/organisations/${organisationId}/registrations/${registrationId}`,
-      '/organisations/:organisationId/registrations/:registrationId'
+      '/organisations/:organisationNumber/registrations/:registrationNumber'
     ],
     [`http://${authority}/cookies?some=query`, '/cookies']
   ])(

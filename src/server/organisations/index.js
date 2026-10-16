@@ -1,31 +1,10 @@
-import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
-import { controller } from './controller.js'
-import { controller as detailsController } from './details/controller.js'
 import { errorController } from './error-controller.js'
+import { homeController } from './home-controller.js'
+import { yearController } from './year-controller.js'
 
 /**
- * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @typedef {{ organisationNumber: string, year?: string }} OrganisationParams
  */
-
-/**
- * @typedef {{ organisationNumber: string }} OrganisationParams
- */
-
-/**
- * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
- */
-const organisationController = {
-  /**
-   * @param {HapiRequest & { params: OrganisationParams }} request
-   * @param {ResponseToolkit} h
-   */
-  handler(request, h) {
-    return readsAsARegulator(request.auth.credentials)
-      ? detailsController.handler(request, h)
-      : controller.handler(request, h)
-  }
-}
 
 /**
  * Sets up the routes used in the organisations page.
@@ -38,14 +17,24 @@ export const organisations = {
     register(server) {
       server.route([
         {
-          ...organisationController,
+          ...homeController,
           method: 'GET',
           path: '/organisations/{organisationNumber}'
         },
         {
-          ...organisationController,
+          ...homeController,
           method: 'GET',
           path: '/organisations/{organisationNumber}/exporting'
+        },
+        {
+          ...yearController,
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/{year}'
+        },
+        {
+          ...yearController,
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/{year}/exporting'
         },
         {
           ...errorController,

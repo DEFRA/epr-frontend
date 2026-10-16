@@ -95,11 +95,62 @@ const REGISTERED_STATUSES = new Set([REGISTRATION_STATUS.APPROVED])
  * @param {string} year
  * @returns {Stretch[]}
  */
-export const accreditedStretches = ({ statusTimeline }, year) =>
-  clip(liveRuns(statusTimeline, ACCREDITED_STATUSES), {
+export const accreditedStretches = ({ status }, year) =>
+  clip(liveRuns(status.timeline, ACCREDITED_STATUSES), {
     from: firstDayOf(Number(year)),
     to: lastDayOf(Number(year))
   })
+
+/**
+ * 1 January if accredited going into the year, else the first approval in it.
+ * Reads every entry, so an approval superseded the same day still counts.
+ * @param {StatusTimeline} statusTimeline
+ * @param {CalendarDate} yearStart
+ * @returns {CalendarDate}
+ */
+const accreditedFrom = (statusTimeline, yearStart) => {
+  const liveAtYearStart = liveRuns(statusTimeline, ACCREDITED_STATUSES).some(
+    ({ from, to }) =>
+      from.localeCompare(yearStart) < 0 &&
+      (to === null || to.localeCompare(yearStart) >= 0)
+  )
+
+  if (liveAtYearStart) {
+    return yearStart
+  }
+
+  const approvedAt = /** @type {string} */ (
+    Object.keys(statusTimeline)
+      .sort((one, other) => one.localeCompare(other))
+      .find(
+        (at) =>
+          statusTimeline[at].status === ACCREDITATION_STATUS.APPROVED &&
+          calendarDate(at).localeCompare(yearStart) >= 0
+      )
+  )
+
+  return calendarDate(approvedAt)
+}
+
+/**
+ * The period an accreditation is shown as covering within its year.
+ * @param {AccreditationView} accreditation
+ * @param {string} year
+ * @returns {{ validFrom: string, validTo: string }}
+ */
+export const accreditedDateRange = ({ status: { timeline } }, year) => {
+  const [lastDate, { status }] = /** @type {[string, { status: string }]} */ (
+    Object.entries(dailyTimeline(timeline)).at(-1)
+  )
+
+  return {
+    validFrom: accreditedFrom(timeline, firstDayOf(Number(year))),
+    validTo:
+      status === ACCREDITATION_STATUS.CANCELLED
+        ? lastDate
+        : lastDayOf(Number(year))
+  }
+}
 
 /**
  * The registration's approved runs up to today.
@@ -107,8 +158,8 @@ export const accreditedStretches = ({ statusTimeline }, year) =>
  * @param {CalendarDate} today
  * @returns {Stretch[]}
  */
-const registeredRunsToDate = ({ statusTimeline }, today) =>
-  liveRuns(statusTimeline, REGISTERED_STATUSES)
+const registeredRunsToDate = ({ status }, today) =>
+  liveRuns(status.timeline, REGISTERED_STATUSES)
     .map(({ from, to }) => ({ from, to: earlier(to ?? today, today) }))
     .filter(({ from, to }) => from.localeCompare(to) <= 0)
 

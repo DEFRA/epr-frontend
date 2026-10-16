@@ -3,6 +3,7 @@ import {
   buildPrnBasePath,
   fetchPrnContext
 } from './helpers/fetch-prn-context.js'
+import { registrationIdPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const cancelledController = {
@@ -22,7 +23,7 @@ export const cancelledController = {
 
     const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
-    const homeUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+    const homeUrl = registrationIdPath({ organisationId, registrationId })
 
     return h.view('prns/cancelled', {
       pageTitle: localise('prns:cancelled:pageTitle', { noteType }),

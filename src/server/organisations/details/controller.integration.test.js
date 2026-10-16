@@ -52,49 +52,65 @@ const organisation = {
   name: 'Kirkby Plastics Ltd',
   registrations: {
     R26ER5001180041PL: {
-      status: 'approved',
+      status: {
+        current: 'approved',
+        timeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } }
+      },
       validFrom: '2025-01-01',
       material: 'glass_re_melt',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'reprocessor',
-      site: { address: { line1: 'Site name A' } },
-      statusTimeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } },
+      reprocessingType: 'input',
+      site: {
+        address: { line1: 'Site name A', town: 'Kirkby', postcode: 'L33 7SA' }
+      },
       accreditations: {
         2025: {
           accreditationNumber: 'A25ER5001180114GR',
-          status: 'cancelled',
-          statusTimeline: {
-            '2025-01-01T09:00:00.000Z': { status: 'approved' },
-            '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+          status: {
+            current: 'cancelled',
+            timeline: {
+              '2025-01-01T09:00:00.000Z': { status: 'approved' },
+              '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+            }
           }
         },
         2026: {
           accreditationNumber: 'A26ER5001180114GR',
-          status: 'approved',
-          statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+          status: {
+            current: 'approved',
+            timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+          }
         }
       }
     },
     R26ER5001180042AL: {
-      status: 'cancelled',
+      status: {
+        current: 'cancelled',
+        timeline: {
+          '2025-01-01T00:00:00.000Z': { status: 'approved' },
+          '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+        }
+      },
       validFrom: '2025-01-01',
       material: 'aluminium',
       submittedToRegulator: { code: 'sepa' },
       wasteProcessingType: 'reprocessor',
-      site: { address: { line1: 'Site name A' } },
-      statusTimeline: {
-        '2025-01-01T00:00:00.000Z': { status: 'approved' },
-        '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+      reprocessingType: 'input',
+      site: {
+        address: { line1: 'Site name A', town: 'Kirkby', postcode: 'L33 7SA' }
       },
       accreditations: {}
     },
     R26EX5001180041PA: {
-      status: 'approved',
+      status: {
+        current: 'approved',
+        timeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } }
+      },
       validFrom: '2025-01-01',
       material: 'paper',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'exporter',
-      statusTimeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } },
       accreditations: {}
     }
   }
@@ -328,7 +344,7 @@ describe('who the organisation page renders for', () => {
   it('gives an operator their own page, not the regulator one', async ({
     server
   }) => {
-    const { statusCode, body } = await visit(server, operator)
+    const { statusCode, body } = await visit(server, operator, `${path}/2026`)
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(headingOf(body)).not.toContain('Organisation homepage')
@@ -340,15 +356,21 @@ describe('who the organisation page renders for', () => {
   it('renders an operator the identical page whether the regulator surface is on or off', async ({
     server
   }) => {
-    const surfaceOn = await visit(server, operator)
+    const surfaceOn = await visit(server, operator, `${path}/2026`)
 
     config.set('featureFlags.regulatorAccess', false)
-    const surfaceOff = await visit(server, operator)
+    const surfaceOff = await visit(server, operator, `${path}/2026`)
     config.set('featureFlags.regulatorAccess', true)
 
     expect(surfaceOn.statusCode).toBe(statusCodes.ok)
     expect(surfaceOff.statusCode).toBe(statusCodes.ok)
     expect(surfaceOff.body).toBe(surfaceOn.body)
+  })
+
+  it('does not give a regulator a year page', async ({ server }) => {
+    const { statusCode } = await visit(server, regulator, `${path}/2026`)
+
+    expect(statusCode).toBe(statusCodes.notFound)
   })
 
   it('gives a support user the regulator page', async ({ server }) => {
@@ -361,7 +383,7 @@ describe('who the organisation page renders for', () => {
   it('keeps a session the backend named nobody on the operator page', async ({
     server
   }) => {
-    const { body } = await visit(server, unrecognised)
+    const { body } = await visit(server, unrecognised, `${path}/2026`)
 
     expect(headingOf(body)).not.toContain('Organisation homepage')
   })
@@ -370,7 +392,7 @@ describe('who the organisation page renders for', () => {
     server
   }) => {
     config.set('featureFlags.regulatorAccess', false)
-    const { statusCode, body } = await visit(server, regulator)
+    const { statusCode, body } = await visit(server, regulator, `${path}/2026`)
     config.set('featureFlags.regulatorAccess', true)
 
     expect(statusCode).toBe(statusCodes.ok)

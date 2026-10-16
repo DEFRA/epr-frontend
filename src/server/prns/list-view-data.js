@@ -5,6 +5,10 @@ import { toDecemberBalanceBreakdown } from '#server/common/helpers/waste-balance
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
+import {
+  accreditationIdPath,
+  registrationIdPath
+} from '#server/reports/helpers/report-paths.js'
 
 /**
  * @param {{
@@ -45,7 +49,6 @@ export function buildListViewData(
   const { t: localise } = request
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
   const canWrite = hasWriteScope(request.auth.credentials)
-  const routeBase = `/organisations/${organisationId}/registrations/${registrationId}`
 
   const buildAwaiting = (prnList) =>
     buildAwaitingTable(request, {
@@ -70,10 +73,12 @@ export function buildListViewData(
 
   return {
     ...buildListLabels(localise, { noteType, noteTypePlural }),
-    backUrl: request.localiseUrl(routeBase),
+    backUrl: request.localiseUrl(
+      registrationIdPath({ organisationId, registrationId })
+    ),
     createLink: {
       href: request.localiseUrl(
-        `${routeBase}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+        `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/create`
       ),
       text: localise('prns:list:createLink', { noteType })
     },
@@ -164,7 +169,7 @@ function buildAwaitingTable(
   const viewText = localise('prns:list:table:viewText')
 
   const dataRows = prns.map((prn) => {
-    const notePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}`
+    const notePath = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prn.id}`
     const actionUrl = request.localiseUrl(notePath)
     const viewUrl = request.localiseUrl(`${notePath}/view`)
     return [
@@ -229,7 +234,7 @@ function buildDetailTable(
 
   const rows = prns.map((prn) => {
     const viewUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}/view`
+      `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prn.id}/view`
     )
     return [
       { text: prn.prnNumber },

@@ -64,8 +64,10 @@ const details = {
   },
   accreditation: {
     accreditationNumber: 'A26ER5001180114PL',
-    status: 'approved',
-    statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+    status: {
+      current: 'approved',
+      timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+    }
   },
   cadence: 'monthly',
   reportingPeriods: [

@@ -6,6 +6,20 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  */
 
 /**
+ * @param {{ organisationNumber: string | number, registrationNumber: string }} keys
+ */
+export const registrationNotFound = ({
+  organisationNumber,
+  registrationNumber
+}) =>
+  notFound('Registration not found', errorCodes.registrationNotFound, {
+    event: {
+      action: 'fetch_registration',
+      reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber}`
+    }
+  })
+
+/**
  * The organisation's registration with that number.
  * @param {OrganisationView} organisation
  * @param {string} registrationNumber
@@ -13,11 +27,9 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  */
 export const registrationIn = (organisation, registrationNumber) => {
   if (!Object.hasOwn(organisation.registrations, registrationNumber)) {
-    throw notFound('Registration not found', errorCodes.registrationNotFound, {
-      event: {
-        action: 'fetch_registration',
-        reason: `organisationNumber=${organisation.organisationNumber} registrationNumber=${registrationNumber}`
-      }
+    throw registrationNotFound({
+      organisationNumber: organisation.organisationNumber,
+      registrationNumber
     })
   }
 
@@ -43,3 +55,13 @@ export const accreditationIn = (registration, year) => {
 
   return registration.accreditations[year]
 }
+
+/**
+ * The most recent year the registration holds an accreditation for.
+ * @param {RegistrationView} registration
+ * @returns {string | undefined}
+ */
+export const latestAccreditationYear = (registration) =>
+  Object.keys(registration.accreditations)
+    .sort((one, other) => one.localeCompare(other))
+    .at(-1)

@@ -52,21 +52,6 @@ export const toRegistrationTrail = ({
 ]
 
 /**
- * @param {{
- *   accreditationId: string,
- *   organisationId: string,
- *   registrationId: string
- * }} params
- * @returns {string}
- */
-export const toAccreditationPath = ({
-  accreditationId,
-  organisationId,
-  registrationId
-}) =>
-  `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
-
-/**
  * The furniture every page below an accreditation shares.
  * @param {{
  *   heading: string,

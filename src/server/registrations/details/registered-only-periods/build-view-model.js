@@ -6,6 +6,7 @@ import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/bui
 import { paths } from '#server/paths.js'
 import { CADENCE } from '#server/reports/constants.js'
 import {
+  organisationPath,
   registrationPath as toRegistrationPath,
   reportPath
 } from '#server/reports/helpers/report-paths.js'
@@ -108,9 +109,7 @@ const toBreadcrumbs = ({
   },
   {
     text: name,
-    href: localiseUrl(
-      `/organisations/${encodeURIComponent(keys.organisationNumber)}`
-    )
+    href: localiseUrl(organisationPath(keys))
   },
   {
     text: localise('registrations:details:heading'),
