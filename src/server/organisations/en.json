@@ -1,4 +1,12 @@
 {
+  "chooseYear": {
+    "heading": "Choose a different year",
+    "hint": "Choose a different year and then you can select a material for that period.",
+    "continue": "Continue",
+    "errorSummaryTitle": "There is a problem",
+    "error": "Select a year"
+  },
+  "chooseYearLink": "Choose a different year",
   "details": {
     "allOrganisations": "All organisations",
     "heading": "Organisation homepage",

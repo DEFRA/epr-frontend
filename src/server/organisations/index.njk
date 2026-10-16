@@ -29,7 +29,12 @@
         <hr class="govuk-section-break govuk-section-break--xl govuk-section-break--visible">
 
         {% if selectedYear %}
-          <p class="govuk-heading-m">{{ localise('organisations:yearData', { year: selectedYear }) }}</p>
+          <p class="govuk-body">
+            <span class="govuk-heading-m govuk-!-display-inline">{{ localise('organisations:yearData', { year: selectedYear }) }}</span>
+            {% if chooseYearUrl %}
+              <a class="govuk-link govuk-!-margin-left-2" href="{{ chooseYearUrl }}">{{ localise('organisations:chooseYearLink') }}</a>
+            {% endif %}
+          </p>
         {% endif %}
 
         {% if shouldRenderTabs %}
