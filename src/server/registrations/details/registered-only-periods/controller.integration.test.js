@@ -127,6 +127,7 @@ const anOrganisation = ({
       material: 'plastic',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
       site: { address: { fullAddress: 'North Road, Leeds' } },
       statusTimeline,
       accreditations

@@ -3,7 +3,8 @@
  *   AccreditationStatus,
  *   Material,
  *   RegistrationStatus,
- *   RegulatorValue
+ *   RegulatorValue,
+ *   ReprocessingType
  * } from '#domain/organisations/model.js'
  */
 
@@ -22,19 +23,42 @@
 
 /**
  * @typedef {{
+ *   name: string,
+ *   address: {
+ *     country: string,
+ *     line1: string,
+ *     line2?: string,
+ *     townOrCity: string,
+ *     stateOrRegion?: string,
+ *     postcode?: string
+ *   },
+ *   coordinates?: string
+ * }} OverseasSiteView
+ */
+
+/**
+ * @typedef {Record<string, OverseasSiteView>} OverseasSitesByOrsId
+ */
+
+/**
+ * @typedef {{
  *   status: RegistrationStatus,
  *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },
  *   statusTimeline: StatusTimeline,
- *   accreditations: Record<string, AccreditationView>
+ *   accreditations: Record<string, AccreditationView>,
+ *   overseasSites?: OverseasSitesByOrsId
  * }} RegistrationViewCommon
  */
 
 /**
  * @typedef {RegistrationViewCommon & {
  *   wasteProcessingType: 'reprocessor',
- *   site: { address: { line1: string } | { fullAddress: string } }
+ *   reprocessingType: ReprocessingType,
+ *   site: {
+ *     address: { line1: string, line2?: string, town: string, county?: string, postcode: string } | { fullAddress: string }
+ *   }
  * }} ReprocessorRegistrationView
  */
 

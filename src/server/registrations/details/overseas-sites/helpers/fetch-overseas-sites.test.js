@@ -8,7 +8,7 @@ import { test } from '#vite/fixtures/server.js'
 import { fetchOverseasSites } from './fetch-overseas-sites.js'
 
 /**
- * @import { OrganisationView, RegistrationView } from './fetch-overseas-sites.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -23,7 +23,13 @@ const params = { organisationNumber, registrationNumber, backendToken }
 
 /** @type {RegistrationView} */
 const registration = {
+  status: 'approved',
+  validFrom: '2026-01-01',
   material: 'plastic',
+  submittedToRegulator: { code: 'ea' },
+  statusTimeline: {},
+  accreditations: {},
+  wasteProcessingType: 'exporter',
   overseasSites: {
     '007': {
       name: 'Bahia Plásticos',
@@ -91,7 +97,7 @@ describe(fetchOverseasSites, () => {
         output: { statusCode: statusCodes.notFound },
         code: 'registration_not_found',
         event: {
-          action: 'fetch_overseas_sites',
+          action: 'fetch_registration',
           reason: `organisationNumber=500123 registrationNumber=${registrationNumber}`
         }
       })

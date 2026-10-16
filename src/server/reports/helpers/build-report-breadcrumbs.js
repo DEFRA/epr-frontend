@@ -2,6 +2,11 @@ import { paths } from '#server/paths.js'
 import { organisationName } from '#server/registrations/details/helpers/caption.js'
 
 import { CADENCE } from '../constants.js'
+import {
+  accreditationIdPath,
+  organisationIdPath,
+  registrationIdPath
+} from './report-paths.js'
 
 /**
  * @import { TFunction } from 'i18next'
@@ -22,7 +27,7 @@ import { CADENCE } from '../constants.js'
  * list, which names no period at all.
  * @param {{
  *   registrationPath: string,
- *   accreditationId: string | undefined,
+ *   accreditationPath: string | undefined,
  *   year: number | string | undefined,
  *   cadence: CadenceValue | undefined,
  *   localise: TFunction,
@@ -32,7 +37,7 @@ import { CADENCE } from '../constants.js'
  */
 const periodCrumb = ({
   registrationPath,
-  accreditationId,
+  accreditationPath,
   year,
   cadence,
   localise,
@@ -56,13 +61,11 @@ const periodCrumb = ({
     ]
   }
 
-  return accreditationId
+  return accreditationPath
     ? [
         {
           text: localise('registrations:details:accreditation:breadcrumb'),
-          href: localiseUrl(
-            `${registrationPath}/accreditations/${accreditationId}`
-          )
+          href: localiseUrl(accreditationPath)
         }
       ]
     : []
@@ -91,7 +94,12 @@ export const buildReportBreadcrumbs = ({
   localise,
   localiseUrl
 }) => {
-  const registrationPath = `/organisations/${organisation.id}/registrations/${registration.id}`
+  const ids = {
+    organisationId: organisation.id,
+    registrationId: registration.id
+  }
+  const registrationPath = registrationIdPath(ids)
+  const { accreditationId } = registration
 
   return [
     {
@@ -100,7 +108,7 @@ export const buildReportBreadcrumbs = ({
     },
     {
       text: organisationName(organisation),
-      href: localiseUrl(`/organisations/${organisation.id}`)
+      href: localiseUrl(organisationIdPath(ids))
     },
     {
       text: localise('registrations:details:heading'),
@@ -108,7 +116,9 @@ export const buildReportBreadcrumbs = ({
     },
     ...periodCrumb({
       registrationPath,
-      accreditationId: registration.accreditationId,
+      accreditationPath: accreditationId
+        ? accreditationIdPath({ ...ids, accreditationId })
+        : undefined,
       year,
       cadence,
       localise,
