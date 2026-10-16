@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 import {
   accreditationPath,
   registrationPath
@@ -59,20 +59,14 @@ import {
  */
 
 /**
- * Reads the events of the ledger at a backend path.
- * @param {string} path
+ * Reads the events of the ledger at a backend endpoint.
+ * @param {string} endpoint
  * @param {string} backendToken
  * @returns {Promise<LedgerEvent[]>}
  */
-const readEvents = async (path, backendToken) => {
-  const { events } = /** @type {{ events: LedgerEvent[] }} */ (
-    await fetchJsonFromBackend(path, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${backendToken}`
-      }
-    })
-  )
+const readEvents = async (endpoint, backendToken) => {
+  /** @type {{ events: LedgerEvent[] }} */
+  const { events } = await backend(backendToken).get(endpoint)
 
   return events
 }
@@ -100,10 +94,9 @@ export const fetchLedgerEvents = async ({
   accreditationId,
   backendToken
 }) => {
-  const registrationIdPath = `/v1/organisations/${organisationId}/registrations/${registrationId}`
   const ledgerPath = accreditationId
-    ? `${registrationIdPath}/accreditations/${accreditationId}/waste-balance-ledger`
-    : `${registrationIdPath}/waste-balance-ledger`
+    ? path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`
+    : path`/v1/organisations/${organisationId}/registrations/${registrationId}/waste-balance-ledger`
 
   return readEvents(ledgerPath, backendToken)
 }

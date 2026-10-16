@@ -1,23 +1,31 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect, vi } from 'vitest'
+
+import { beforeEach, it } from '#vite/fixtures/server.js'
 
 import { fetchPrnListDetails } from './fetch-prn-list-details.js'
 
 /**
+ * @import { SetupServer } from 'msw/node'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { PrnListDetails } from './fetch-prn-list-details.js'
  */
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
+/**
+ * @typedef {{ authorization: string | null, pathname: string }} Received
+ */
+
+/**
+ * @param {Received} a
+ * @param {Received} b
+ */
+const byPathname = (a, b) => a.pathname.localeCompare(b.pathname)
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
 const { fetchRegistrationAndAccreditation } =
   await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 
@@ -65,8 +73,33 @@ describe(fetchPrnListDetails, () => {
     }
   ]
 
-  const isNotesPath = (/** @type {string} */ path) =>
-    path.endsWith('/packaging-recycling-notes')
+  /**
+   * @param {SetupServer} msw
+   * @param {() => Response} [answer]
+   */
+  const backendAnswers = (msw, answer = () => HttpResponse.json(notes)) => {
+    /** @type {Received[]} */
+    const received = []
+
+    msw.use(
+      http.get(/\/v1\/organisations\//, ({ request }) => {
+        const { pathname } = new URL(request.url)
+        received.push({
+          authorization: request.headers.get('authorization'),
+          pathname
+        })
+
+        return pathname.endsWith('/packaging-recycling-notes')
+          ? answer()
+          : HttpResponse.json(accreditation)
+      })
+    )
+
+    return received
+  }
+
+  /** @type {Received[]} */
+  let requests
 
   const fetchDetails = () =>
     fetchPrnListDetails({
@@ -76,17 +109,13 @@ describe(fetchPrnListDetails, () => {
       backendToken
     })
 
-  beforeEach(() => {
+  beforeEach(({ msw }) => {
     vi.clearAllMocks()
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
       organisationData: organisation,
       registration
     })
-    vi.mocked(fetchJsonFromBackend).mockImplementation((path) =>
-      isNotesPath(path)
-        ? Promise.resolve(notes)
-        : Promise.resolve(accreditation)
-    )
+    requests = backendAnswers(msw)
   })
 
   it('reads the three things the page shows, and nothing else', async () => {
@@ -102,24 +131,10 @@ describe(fetchPrnListDetails, () => {
     // The waste balance, the reporting calendar and the ledger belong to the
     // page above this one; asking for them here would be three reads spent on
     // nothing this page draws.
-    expect(fetchJsonFromBackend).toHaveBeenCalledTimes(2)
+    expect(requests).toHaveLength(2)
   })
 
-  it('reads the accreditation and its notes from the paths the backend serves', async () => {
-    await fetchDetails()
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`,
-      { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`,
-      expect.anything()
-    )
-  })
-
-  it('encodes ids that carry characters an address would otherwise read', async () => {
+  it('reads the accreditation and its notes with the session token, encoding the ids in each path', async () => {
     await fetchPrnListDetails({
       organisationId: 'org/123',
       registrationId: 'reg 456',
@@ -127,21 +142,23 @@ describe(fetchPrnListDetails, () => {
       backendToken
     })
 
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%20456/accreditations/acc%3F789',
-      expect.anything()
+    expect(requests.toSorted(byPathname)).toStrictEqual(
+      [
+        '/v1/organisations/org%2F123/registrations/reg%20456/accreditations/acc%3F789',
+        '/v1/organisations/org%2F123/registrations/reg%20456/accreditations/acc%3F789/packaging-recycling-notes'
+      ]
+        .map((pathname) => ({ authorization: 'Bearer token', pathname }))
+        .toSorted(byPathname)
     )
   })
 
-  it('fails the page where the notes could not be read', async () => {
-    vi.mocked(fetchJsonFromBackend).mockImplementation((path) =>
-      isNotesPath(path)
-        ? Promise.reject(new Error('nope'))
-        : Promise.resolve(accreditation)
-    )
+  it('fails the page where the notes could not be read', async ({ msw }) => {
+    backendAnswers(msw, () => new HttpResponse(null, { status: 503 }))
 
     // Unlike the summary section on the accreditation page, the notes are the
     // whole of this page, so there is nothing left to render without them.
-    await expect(fetchDetails()).rejects.toThrow('nope')
+    await expect(fetchDetails()).rejects.toMatchObject({
+      output: { statusCode: 503 }
+    })
   })
 })

@@ -66,6 +66,41 @@ describe(fetchLedgerEvents, () => {
     ).resolves.toStrictEqual(events)
   })
 
+  test.for([
+    {
+      accreditationId: 'acc#3',
+      pathname:
+        '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/waste-balance-ledger'
+    },
+    {
+      accreditationId: undefined,
+      pathname:
+        '/v1/organisations/org%2F1/registrations/reg%262/waste-balance-ledger'
+    }
+  ])(
+    'encodes the ids in the ledger path $pathname',
+    async ({ accreditationId, pathname }, { msw }) => {
+      /** @type {string[]} */
+      const pathnames = []
+
+      msw.use(
+        http.get(/\/waste-balance-ledger$/, ({ request }) => {
+          pathnames.push(new URL(request.url).pathname)
+          return HttpResponse.json(ledgerOf([]))
+        })
+      )
+
+      await fetchLedgerEvents({
+        organisationId: 'org/1',
+        registrationId: 'reg&2',
+        accreditationId,
+        backendToken
+      })
+
+      expect(pathnames).toStrictEqual([pathname])
+    }
+  )
+
   test('authorises the call with the session backend token', async ({
     msw
   }) => {

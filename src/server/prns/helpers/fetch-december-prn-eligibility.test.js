@@ -1,94 +1,41 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { it } from '#vite/fixtures/server.js'
 
 import { fetchDecemberPrnEligibility } from './fetch-december-prn-eligibility.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(fetchDecemberPrnEligibility, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-789'
-  const backendToken = 'test-token'
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('calls fetchJsonFromBackend with correct path and options', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
-      mode: 'manual',
-      windowOpen: true
-    })
-
-    await fetchDecemberPrnEligibility(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
+  it('should get the eligibility of the accreditation the ids name and resolve to it', async ({
+    msw
+  }) => {
+    const eligibility = { mode: 'manual', windowOpen: true }
+    /** @type {{ authorization: string | null, pathname: string }[]} */
+    const received = []
+    msw.use(
+      http.get(/december-prn-eligibility$/, ({ request }) => {
+        received.push({
+          authorization: request.headers.get('authorization'),
+          pathname: new URL(request.url).pathname
+        })
+        return HttpResponse.json(eligibility)
+      })
     )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes/december-prn-eligibility',
-      {
-        headers: {
-          Authorization: `Bearer ${backendToken}`
-        }
-      }
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
-      mode: 'none',
-      windowOpen: false
-    })
-
-    await fetchDecemberPrnEligibility(
-      'org/123',
-      'reg&456',
-      'acc#789',
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789/packaging-recycling-notes/december-prn-eligibility',
-      expect.any(Object)
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    const eligibility = {
-      mode: 'manual',
-      windowOpen: true
-    }
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(eligibility)
 
     const result = await fetchDecemberPrnEligibility(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
+      'org/1',
+      'reg&2',
+      'acc#3',
+      'a-token'
     )
 
-    expect(result).toStrictEqual(eligibility)
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(
-      fetchDecemberPrnEligibility(
-        organisationId,
-        registrationId,
-        accreditationId,
-        backendToken
-      )
-    ).rejects.toThrow('Network error')
+    expect(result).toStrictEqual({ mode: 'manual', windowOpen: true })
+    expect(received).toStrictEqual([
+      {
+        authorization: 'Bearer a-token',
+        pathname:
+          '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/packaging-recycling-notes/december-prn-eligibility'
+      }
+    ])
   })
 })
