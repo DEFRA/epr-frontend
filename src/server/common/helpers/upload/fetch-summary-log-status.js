@@ -1,28 +1,24 @@
 import { summaryLogStatusResponseSchema } from '#domain/summary-logs/loads-schema.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { registrationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { SummaryLogStatusResponse } from '#server/summary-log/types.js'
  */
 
 /**
  * Fetches summary log status from EPR Backend
- * @param {string} organisationId
- * @param {string} registrationId
+ * @param {RegistrationKeys} keys
  * @param {string} summaryLogId
  * @param {object} options
  * @param {string} options.backendToken - Bearer token for the backend
  * @returns {Promise<SummaryLogStatusResponse>}
  */
-const fetchSummaryLogStatus = async (
-  organisationId,
-  registrationId,
-  summaryLogId,
-  { backendToken }
-) => {
+const fetchSummaryLogStatus = async (keys, summaryLogId, { backendToken }) => {
   const data = await fetchJsonFromBackend(
-    `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
+    `${registrationPath(keys)}/summary-logs/${summaryLogId}`,
     { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
   )
 

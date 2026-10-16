@@ -9,8 +9,10 @@ import { submitSummaryLog } from './submit-summary-log.js'
 const backendUrl = config.get('eprBackendUrl')
 
 describe(submitSummaryLog, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
+  const keys = {
+    organisationNumber: '500118',
+    registrationNumber: 'R26ER5001180041PL'
+  }
   const summaryLogId = 'log-789'
 
   test('submits summary log and returns response data', async ({ msw }) => {
@@ -23,7 +25,7 @@ describe(submitSummaryLog, () => {
     let capturedRequest
     msw.use(
       http.post(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789/submit`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789/submit`,
         ({ request }) => {
           capturedRequest = request
           return HttpResponse.json(mockResponse)
@@ -31,12 +33,7 @@ describe(submitSummaryLog, () => {
       )
     )
 
-    const result = await submitSummaryLog(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      'test-id-token'
-    )
+    const result = await submitSummaryLog(keys, summaryLogId, 'test-id-token')
 
     const request = /** @type {Request} */ (capturedRequest)
 
@@ -50,7 +47,7 @@ describe(submitSummaryLog, () => {
   }) => {
     msw.use(
       http.post(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789/submit`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789/submit`,
         () =>
           new HttpResponse(null, {
             status: 500,
@@ -60,12 +57,7 @@ describe(submitSummaryLog, () => {
     )
 
     await expect(
-      submitSummaryLog(
-        organisationId,
-        registrationId,
-        summaryLogId,
-        'test-id-token'
-      )
+      submitSummaryLog(keys, summaryLogId, 'test-id-token')
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }

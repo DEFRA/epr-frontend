@@ -29,13 +29,18 @@ vi.mock(
 vi.spyOn(metrics.journey, 'start').mockResolvedValue()
 vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
-const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
+const mockAuth = buildMockAuth({
+  backendToken: 'test-id-token',
+  linkedOrganisationId: '123'
+})
 
 describe('#submitSummaryLogController', () => {
   const organisationId = '123'
   const registrationId = '456'
+  const organisationNumber = '500118'
+  const registrationNumber = 'R26ER5001180041PL'
   const summaryLogId = '789'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
+  const url = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}/submit`
 
   beforeEach(({ msw }) => {
     vi.clearAllMocks()
@@ -45,7 +50,9 @@ describe('#submitSummaryLogController', () => {
         () =>
           HttpResponse.json({
             id: organisationId,
-            registrations: [{ id: registrationId }]
+            orgId: Number(organisationNumber),
+            registrations: [{ id: registrationId, registrationNumber }],
+            accreditations: []
           })
       )
     )
@@ -61,7 +68,7 @@ describe('#submitSummaryLogController', () => {
 
     vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
 
-    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
       auth: mockAuth
     })
@@ -75,14 +82,13 @@ describe('#submitSummaryLogController', () => {
     })
 
     expect(submitSummaryLog).toHaveBeenCalledWith(
-      organisationId,
-      registrationId,
+      { organisationNumber, registrationNumber },
       summaryLogId,
       'test-id-token'
     )
     expect(response.statusCode).toBe(statusCodes.found)
     expect(response.headers.location).toBe(
-      `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     )
   })
 
@@ -96,7 +102,7 @@ describe('#submitSummaryLogController', () => {
 
     vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
 
-    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
       auth: mockAuth
     })
@@ -126,7 +132,7 @@ describe('#submitSummaryLogController', () => {
       accreditationNumber: '493021'
     })
 
-    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
       auth: mockAuth
     })
@@ -142,7 +148,7 @@ describe('#submitSummaryLogController', () => {
     expect(metrics.journey.end).toHaveBeenCalledWith(
       expect.anything(),
       JOURNEY.uploadSummaryLog,
-      registrationId
+      registrationNumber
     )
   })
 
@@ -153,7 +159,7 @@ describe('#submitSummaryLogController', () => {
       Boom.conflict('Summary log must be validated before submission')
     )
 
-    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
       auth: mockAuth
     })
@@ -176,7 +182,7 @@ describe('#submitSummaryLogController', () => {
       Boom.conflict('Summary log must be validated before submission')
     )
 
-    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
       auth: mockAuth
     })
@@ -197,7 +203,7 @@ describe('#submitSummaryLogController', () => {
       expect.stringContaining('someone else from your organisation')
     )
     expect(result).toStrictEqual(
-      expect.stringContaining(`/organisations/${organisationId}`)
+      expect.stringContaining(`href="/organisations/${organisationNumber}"`)
     )
   })
 
@@ -207,7 +213,7 @@ describe('#submitSummaryLogController', () => {
     const error = new Error('Backend error')
     vi.mocked(submitSummaryLog).mockRejectedValueOnce(error)
 
-    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
       auth: mockAuth
     })
@@ -234,7 +240,7 @@ describe('#submitSummaryLogController', () => {
 
     vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
 
-    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
       auth: mockAuth
     })
@@ -282,7 +288,7 @@ describe('#submitSummaryLogController', () => {
   it('should redirect to logged-out when not authenticated', async ({
     server
   }) => {
-    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
       auth: mockAuth
     })

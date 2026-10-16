@@ -111,15 +111,22 @@ describe('journey metrics emit-once, driven through a real session', () => {
   describe('summary log upload journey (success page re-renders on every poll)', () => {
     const organisationId = '123'
     const registrationId = '456'
+    const organisationNumber = '500118'
+    const registrationNumber = 'R26ER5001180041PL'
+    const operatorAuth = buildMockAuth({
+      backendToken: 'test-id-token',
+      linkedOrganisationId: organisationId
+    })
     const summaryLogId = '789'
-    const uploadUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-    const submitUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
+    const uploadUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
+    const submitUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}/submit`
 
     const mockOrganisationData = /** @type {Organisation} */ (
       /** @type {unknown} */ ({
         id: organisationId,
+        orgId: Number(organisationNumber),
         registrations: [
-          { id: registrationId, status: 'approved', validFrom: '2026-01-01' }
+          { id: registrationId, registrationNumber, status: 'approved' }
         ],
         accreditations: []
       })
@@ -137,13 +144,13 @@ describe('journey metrics emit-once, driven through a real session', () => {
       server
     }) => {
       const { cookie } = await getCsrfToken(server, uploadUrl, {
-        auth: mockAuth
+        auth: operatorAuth
       })
 
       await server.inject({
         method: 'GET',
         url: uploadUrl,
-        auth: mockAuth,
+        auth: operatorAuth,
         headers: { cookie }
       })
 
@@ -166,20 +173,20 @@ describe('journey metrics emit-once, driven through a real session', () => {
       const { cookie: startCookie, crumb } = await getCsrfToken(
         server,
         uploadUrl,
-        { auth: mockAuth }
+        { auth: operatorAuth }
       )
 
       const firstSubmit = await server.inject({
         method: 'POST',
         url: submitUrl,
-        auth: mockAuth,
+        auth: operatorAuth,
         headers: { cookie: startCookie },
         payload: { crumb }
       })
       await server.inject({
         method: 'POST',
         url: submitUrl,
-        auth: mockAuth,
+        auth: operatorAuth,
         headers: { cookie: nextSessionCookie(startCookie, firstSubmit) },
         payload: { crumb }
       })
@@ -200,20 +207,20 @@ describe('journey metrics emit-once, driven through a real session', () => {
       const { cookie: startCookie, crumb } = await getCsrfToken(
         server,
         uploadUrl,
-        { auth: mockAuth }
+        { auth: operatorAuth }
       )
 
       const submitResponse = await server.inject({
         method: 'POST',
         url: submitUrl,
-        auth: mockAuth,
+        auth: operatorAuth,
         headers: { cookie: startCookie },
         payload: { crumb }
       })
       await server.inject({
         method: 'GET',
         url: uploadUrl,
-        auth: mockAuth,
+        auth: operatorAuth,
         headers: { cookie: nextSessionCookie(startCookie, submitResponse) }
       })
 
