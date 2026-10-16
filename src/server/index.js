@@ -62,6 +62,7 @@ export async function createServer(options = {}) {
       },
       xss: 'enabled',
       noSniff: true,
+      referrer: 'strict-origin-when-cross-origin',
       xframe: true
     },
     auth: { mode: /** @type {const} */ ('required') }
