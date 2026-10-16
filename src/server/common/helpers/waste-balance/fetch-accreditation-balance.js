@@ -34,7 +34,14 @@ export const fetchAccreditationBalance = async ({
 
     return wasteBalanceMap[accreditationNumber] ?? null
   } catch (error) {
-    logger.error({ message: 'Failed to fetch waste balance', err: error })
+    logger.error({
+      message: 'Failed to fetch waste balance',
+      err: error,
+      event: {
+        action: 'fetch_accreditation_balance',
+        reason: `organisationNumber=${organisationNumber} year=${year}`
+      }
+    })
     return null
   }
 }

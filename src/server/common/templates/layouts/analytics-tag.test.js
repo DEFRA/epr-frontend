@@ -1,5 +1,10 @@
-import { config } from '#config/config.js'
 import { ANALYTICS_CONSENT_COOKIE } from '#server/common/analytics/consent.js'
+import {
+  containerId,
+  measurementId,
+  switchAnalyticsOff,
+  switchAnalyticsOn
+} from '#server/common/test-helpers/analytics-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { JSDOM } from 'jsdom'
@@ -8,8 +13,6 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
 /**
  * @import { HapiServer } from '#server/common/hapi-types.js'
  */
-
-const measurementId = 'G-TESTONLY01'
 
 /**
  * @param {HapiServer} server
@@ -42,15 +45,9 @@ describe('#analyticsTag', () => {
   })
 
   describe('when analytics is enabled', () => {
-    beforeAll(() => {
-      config.set('analytics.isEnabled', true)
-      config.set('analytics.measurementId', measurementId)
-    })
+    beforeAll(switchAnalyticsOn)
 
-    afterAll(() => {
-      config.set('analytics.isEnabled', false)
-      config.set('analytics.measurementId', '')
-    })
+    afterAll(switchAnalyticsOff)
 
     it.for(['rejected', undefined])(
       'should not load the tag having answered %s',
@@ -67,23 +64,28 @@ describe('#analyticsTag', () => {
       expect(tagOf(head)).not.toBeNull()
     })
 
-    it('should publish the measurement id for the tag to read', async ({
-      server
-    }) => {
-      const head = await getHead(server, 'accepted')
-      const meta = head.querySelector('meta[name="analytics-measurement-id"]')
+    it.for([
+      ['measurement', measurementId],
+      ['container', containerId]
+    ])(
+      'should publish the %s id for the tag to read',
+      async ([kind, id], { server }) => {
+        const head = await getHead(server, 'accepted')
+        const meta = head.querySelector(`meta[name="analytics-${kind}-id"]`)
 
-      expect(meta?.getAttribute('content')).toBe(measurementId)
-    })
+        expect(meta?.getAttribute('content')).toBe(id)
+      }
+    )
 
-    it('should not publish the measurement id before consent', async ({
-      server
-    }) => {
-      const head = await getHead(server)
+    it.for(['measurement', 'container'])(
+      'should not publish the %s id before consent',
+      async (kind, { server }) => {
+        const head = await getHead(server)
 
-      expect(
-        head.querySelector('meta[name="analytics-measurement-id"]')
-      ).toBeNull()
-    })
+        expect(
+          head.querySelector(`meta[name="analytics-${kind}-id"]`)
+        ).toBeNull()
+      }
+    )
   })
 })
