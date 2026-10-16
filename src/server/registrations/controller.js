@@ -164,6 +164,42 @@ const toAccreditedYear = (accreditation) =>
     : undefined
 
 /**
+ * The reapply link, read from the raw accreditation so a cancelled one still shows it.
+ * @param {{
+ *   organisationId: string,
+ *   registration: Registration,
+ *   rawAccreditation: Accreditation | undefined
+ * }} params
+ */
+function toReapplyAccreditation({
+  organisationId,
+  registration,
+  rawAccreditation
+}) {
+  const accreditedYear = toAccreditedYear(rawAccreditation)
+
+  if (
+    accreditedYear === undefined ||
+    registration.status !== REGISTRATION_STATUS.APPROVED
+  ) {
+    return null
+  }
+
+  const { windowStart, windowEnd, baseUrl } = config.get('reapplyAccreditation')
+
+  return buildReapplyAccreditation({
+    now: new Date(),
+    window: { windowStart, windowEnd },
+    baseUrl,
+    organisationId,
+    registrationId: registration.id,
+    material: registration.material,
+    registrationStatus: registration.status,
+    year: accreditedYear
+  })
+}
+
+/**
  * Build view model for accreditation dashboard
  * @param {{
  *   request: HapiRequest;
@@ -199,25 +235,11 @@ function buildViewModel({
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
   )
 
-  const { windowStart, windowEnd, baseUrl } = config.get('reapplyAccreditation')
-  // Deliberately the raw (unfiltered) accreditation, not the live-only
-  // `accreditation` above: the reapply link must also show for a `cancelled`
-  // accreditation, which the filtered view drops to undefined.
-  const accreditedYear = toAccreditedYear(rawAccreditation)
-  const reapplyAccreditation =
-    accreditedYear === undefined ||
-    registration.status !== REGISTRATION_STATUS.APPROVED
-      ? null
-      : buildReapplyAccreditation({
-          now: new Date(),
-          window: { windowStart, windowEnd },
-          baseUrl,
-          organisationId,
-          registrationId: registration.id,
-          material: registration.material,
-          registrationStatus: registration.status,
-          year: accreditedYear
-        })
+  const reapplyAccreditation = toReapplyAccreditation({
+    organisationId,
+    registration,
+    rawAccreditation
+  })
 
   /** @type {RegistrationViewModel} */
   const viewModel = {
