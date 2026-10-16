@@ -10,6 +10,7 @@ import { CADENCE } from '#server/reports/constants.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
 import {
   accreditationPath as toAccreditationPath,
+  organisationPath,
   registrationPath as toRegistrationPath,
   reportPath
 } from '#server/reports/helpers/report-paths.js'
@@ -403,7 +404,7 @@ export const buildViewModel = ({
   const name = organisationViewName(organisation)
   const pageName = localise('registrations:details:accreditation:breadcrumb')
   const paths = {
-    organisation: `/organisations/${encodeURIComponent(keys.organisationNumber)}`,
+    organisation: organisationPath(keys),
     registration: toRegistrationPath(keys),
     accreditation: toAccreditationPath(keys)
   }

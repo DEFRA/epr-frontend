@@ -12,6 +12,7 @@ import {
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
+import { accreditationIdPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const cancelGetController = {
@@ -84,7 +85,7 @@ export const cancelPostController = {
       await metrics.journey.end(request, JOURNEY.cancelPrn, prnId)
 
       return h.redirect(
-        `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes/${noteId}/cancelled`
+        `${accreditationIdPath({ organisationId: orgId, registrationId: regId, accreditationId: accId })}/packaging-recycling-notes/${noteId}/cancelled`
       )
     } catch (error) {
       if (error.isBoom) {

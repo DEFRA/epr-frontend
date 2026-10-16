@@ -22,6 +22,7 @@ import { year as toYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import {
   accreditationPath,
+  organisationPath,
   registrationPath,
   reportsListPath
 } from '#server/reports/helpers/report-paths.js'
@@ -199,12 +200,10 @@ const buildRegistrationViewModel = ({ request, keys, registration }) => {
   const { isExporter, noteTypePlural } = getNoteTypeDisplayNames(registration)
   const siteName = toSiteName(registration, localise)
   const material = getMaterialDisplayName(registration.material)
-  const organisationPath = `/organisations/${encodeURIComponent(keys.organisationNumber)}`
+  const homePath = organisationPath(keys)
 
   return {
-    backUrl: localiseUrl(
-      isExporter ? `${organisationPath}/exporting` : organisationPath
-    ),
+    backUrl: localiseUrl(isExporter ? `${homePath}/exporting` : homePath),
     contactRegulatorUrl: localiseUrl('/contact'),
     hasSiteName: !!siteName,
     isExporter,

@@ -2,6 +2,10 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
+import {
+  organisationPath,
+  registrationPath
+} from '#server/reports/helpers/report-paths.js'
 
 /**
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
@@ -50,7 +54,7 @@ const toAccreditationTags = (accreditations) =>
  * @param {{
  *   number: string,
  *   registration: RegistrationView,
- *   organisationPath: string,
+ *   organisationNumber: string,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {RegistrationRow}
@@ -58,7 +62,7 @@ const toAccreditationTags = (accreditations) =>
 const toRegistrationRow = ({
   number,
   registration,
-  organisationPath,
+  organisationNumber,
   localiseUrl
 }) => ({
   number,
@@ -66,7 +70,9 @@ const toRegistrationRow = ({
   material: getMaterialDisplayName(registration.material),
   regulator: registration.submittedToRegulator.code.toUpperCase(),
   accreditations: toAccreditationTags(registration.accreditations),
-  href: localiseUrl(`${organisationPath}/registrations/${number}`)
+  href: localiseUrl(
+    registrationPath({ organisationNumber, registrationNumber: number })
+  )
 })
 
 /**
@@ -89,12 +95,12 @@ const addToSite = (tables, { name, row }) => {
 /**
  * @param {{
  *   registrations: Array<[string, RegistrationView]>,
- *   organisationPath: string,
+ *   organisationNumber: string,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {SiteTable[]}
  */
-const toSiteTables = ({ registrations, organisationPath, localiseUrl }) =>
+const toSiteTables = ({ registrations, organisationNumber, localiseUrl }) =>
   registrations.reduce(
     (tables, [number, registration]) =>
       addToSite(tables, {
@@ -102,7 +108,7 @@ const toSiteTables = ({ registrations, organisationPath, localiseUrl }) =>
         row: toRegistrationRow({
           number,
           registration,
-          organisationPath,
+          organisationNumber,
           localiseUrl
         })
       }),
@@ -150,7 +156,8 @@ export const buildViewModel = ({
 }) => {
   const { name } = organisation
   const heading = localise('organisations:details:heading')
-  const organisationPath = `/organisations/${organisation.organisationNumber}`
+  const organisationNumber = String(organisation.organisationNumber)
+  const homePath = organisationPath({ organisationNumber })
   const registrations = Object.entries(organisation.registrations)
 
   const tablesOf = (
@@ -161,7 +168,7 @@ export const buildViewModel = ({
         ([, registration]) =>
           registration.wasteProcessingType === wasteProcessingType
       ),
-      organisationPath,
+      organisationNumber,
       localiseUrl
     })
 
@@ -185,9 +192,9 @@ export const buildViewModel = ({
       { text: name }
     ],
     caption: name,
-    exporterUrl: localiseUrl(`${organisationPath}/exporting`),
+    exporterUrl: localiseUrl(`${homePath}/exporting`),
     pageTitle: `${name}: ${heading}`,
-    reprocessorUrl: localiseUrl(organisationPath),
+    reprocessorUrl: localiseUrl(homePath),
     shouldRenderTabs: holdsBoth,
     siteTables: tab === 'EXPORTER' ? exporterTables : reprocessorTables
   }
