@@ -1,6 +1,6 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
+import { isAccreditationViewActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
@@ -45,11 +45,9 @@ function getDisplayedRegistrations(registrations, selectedYear) {
     return {
       number,
       registration,
-      accreditation:
-        accreditation &&
-        isAccreditationActive({ status: accreditation.status.current })
-          ? accreditation
-          : undefined
+      accreditation: isAccreditationViewActive(accreditation)
+        ? accreditation
+        : undefined
     }
   })
 }

@@ -3,7 +3,7 @@ import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
+import { isAccreditationViewActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
   accreditationIn,
@@ -109,7 +109,7 @@ const buildTaggedReference = ({ reference, status }) => ({
  * @returns {MaybeTaggedReference}
  */
 const toAccreditationTag = (accreditation) =>
-  isAccreditationActive({ status: accreditation.status.current })
+  isAccreditationViewActive(accreditation)
     ? {
         ...buildTaggedReference({
           reference: accreditation.accreditationNumber,

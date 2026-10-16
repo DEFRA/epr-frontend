@@ -4,14 +4,11 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 
 /** @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js' */
 /** @import { Year } from '#server/common/helpers/year.js' */
-/** @import { OrganisationView, StatusTimeline } from './organisation-view.js' */
+/** @import { OrganisationView, Status, StatusTimeline } from './organisation-view.js' */
 
 /**
  * A registration or accreditation in either shape the backend serves.
- * @typedef {{
- *   status: string | { current: string, timeline: StatusTimeline },
- *   statusTimeline?: StatusTimeline
- * }} ServedStatus
+ * @typedef {{ status: string, statusTimeline: StatusTimeline } | { status: Status<string> }} ServedStatus
  */
 
 /**
@@ -24,13 +21,14 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * Nests a flat `status` and `statusTimeline`. Remove once the backend serves only the nested shape.
  * @param {ServedStatus} view
  */
-const nestStatus = ({ status, statusTimeline, ...rest }) => ({
-  ...rest,
-  status:
-    typeof status === 'string'
-      ? { current: status, timeline: statusTimeline }
-      : status
-})
+const nestStatus = (view) => {
+  if (!('statusTimeline' in view)) {
+    return view
+  }
+
+  const { status, statusTimeline, ...rest } = view
+  return { ...rest, status: { current: status, timeline: statusTimeline } }
+}
 
 /**
  * @param {ServedOrganisation} organisation
