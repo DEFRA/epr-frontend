@@ -32,7 +32,7 @@ const logger = /** @type {TypedLogger} */ (
 
 const registration = /** @type {RegistrationView} */ (
   /** @type {unknown} */ ({
-    status: { current: 'approved', timeline: {} },
+    status: { current: 'approved', timeline: [] },
     accreditations: {}
   })
 )

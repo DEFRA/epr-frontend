@@ -48,11 +48,11 @@ describe(fetchAccreditationDetails, () => {
     accreditationNumber: 'A26ER5001180114PL',
     status: {
       current: 'approved',
-      timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+      timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
     }
   }
   const registration = {
-    status: { current: 'approved', timeline: {} },
+    status: { current: 'approved', timeline: [] },
     validFrom: '2026-01-01',
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },

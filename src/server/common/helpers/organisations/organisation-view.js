@@ -9,8 +9,8 @@
  */
 
 /**
- * Statuses keyed by the ISO datetime each took effect.
- * @typedef {Record<string, { status: string }>} StatusTimeline
+ * Status changes oldest first, each with the ISO datetime it took effect.
+ * @typedef {ReadonlyArray<{ status: string, at: string }>} StatusTimeline
  */
 
 /**

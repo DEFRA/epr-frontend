@@ -17,7 +17,7 @@ const registrationNumber = 'R26ER5001180041PL'
 
 /** @type {RegistrationView} */
 const aRegistration = {
-  status: { current: 'approved', timeline: {} },
+  status: { current: 'approved', timeline: [] },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },

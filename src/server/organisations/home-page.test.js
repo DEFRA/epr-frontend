@@ -40,7 +40,7 @@ const mockAuth = buildMockAuth({
  */
 const reprocessor = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
-    status: { current: 'approved', timeline: {} },
+    status: { current: 'approved', timeline: [] },
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'reprocessor',
@@ -55,7 +55,7 @@ const reprocessor = (overrides = {}) =>
  */
 const exporter = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
-    status: { current: 'approved', timeline: {} },
+    status: { current: 'approved', timeline: [] },
     material: 'paper',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'exporter',
@@ -78,7 +78,7 @@ const organisationOf = (overrides = {}) => ({
 /** @type {AccreditationView} */
 const approved2026 = {
   accreditationNumber: 'A26ER1',
-  status: { current: 'approved', timeline: {} }
+  status: { current: 'approved', timeline: [] }
 }
 
 /**
@@ -288,7 +288,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: 'A26ER1',
-              status: { current: 'cancelled', timeline: {} }
+              status: { current: 'cancelled', timeline: [] }
             }
           }
         })
@@ -309,7 +309,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2025: {
               accreditationNumber: 'A25ER1',
-              status: { current: 'approved', timeline: {} }
+              status: { current: 'approved', timeline: [] }
             }
           }
         })
@@ -390,7 +390,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2025: {
               accreditationNumber: 'A25ER1',
-              status: { current: 'suspended', timeline: {} }
+              status: { current: 'suspended', timeline: [] }
             }
           }
         })
@@ -408,7 +408,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: 'A26ER1',
-              status: { current: 'suspended', timeline: {} }
+              status: { current: 'suspended', timeline: [] }
             }
           }
         })
@@ -424,11 +424,11 @@ describe('the organisation home page', () => {
     }) => {
       serve({
         R26ER1: reprocessor({
-          status: { current: 'cancelled', timeline: {} },
+          status: { current: 'cancelled', timeline: [] },
           accreditations: {
             2026: {
               accreditationNumber: 'A26ER1',
-              status: { current: 'cancelled', timeline: {} }
+              status: { current: 'cancelled', timeline: [] }
             }
           }
         })
