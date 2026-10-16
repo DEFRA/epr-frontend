@@ -21,11 +21,13 @@ const organisationUrl = `${backendUrl}/organisations/500118`
 
 /** @type {RegistrationView} */
 const registration = {
-  status: 'approved',
+  status: {
+    current: 'approved',
+    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+  },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
-  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   accreditations: {},
   wasteProcessingType: 'exporter'
 }

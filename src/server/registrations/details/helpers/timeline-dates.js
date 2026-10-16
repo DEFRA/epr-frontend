@@ -95,8 +95,8 @@ const REGISTERED_STATUSES = new Set([REGISTRATION_STATUS.APPROVED])
  * @param {string} year
  * @returns {Stretch[]}
  */
-export const accreditedStretches = ({ statusTimeline }, year) =>
-  clip(liveRuns(statusTimeline, ACCREDITED_STATUSES), {
+export const accreditedStretches = ({ status }, year) =>
+  clip(liveRuns(status.timeline, ACCREDITED_STATUSES), {
     from: firstDayOf(Number(year)),
     to: lastDayOf(Number(year))
   })
@@ -138,13 +138,13 @@ const accreditedFrom = (statusTimeline, yearStart) => {
  * @param {string} year
  * @returns {{ validFrom: string, validTo: string }}
  */
-export const accreditedDateRange = ({ statusTimeline }, year) => {
+export const accreditedDateRange = ({ status: { timeline } }, year) => {
   const [lastDate, { status }] = /** @type {[string, { status: string }]} */ (
-    Object.entries(dailyTimeline(statusTimeline)).at(-1)
+    Object.entries(dailyTimeline(timeline)).at(-1)
   )
 
   return {
-    validFrom: accreditedFrom(statusTimeline, firstDayOf(Number(year))),
+    validFrom: accreditedFrom(timeline, firstDayOf(Number(year))),
     validTo:
       status === ACCREDITATION_STATUS.CANCELLED
         ? lastDate
@@ -158,8 +158,8 @@ export const accreditedDateRange = ({ statusTimeline }, year) => {
  * @param {CalendarDate} today
  * @returns {Stretch[]}
  */
-const registeredRunsToDate = ({ statusTimeline }, today) =>
-  liveRuns(statusTimeline, REGISTERED_STATUSES)
+const registeredRunsToDate = ({ status }, today) =>
+  liveRuns(status.timeline, REGISTERED_STATUSES)
     .map(({ from, to }) => ({ from, to: earlier(to ?? today, today) }))
     .filter(({ from, to }) => from.localeCompare(to) <= 0)
 

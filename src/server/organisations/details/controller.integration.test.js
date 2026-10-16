@@ -52,7 +52,10 @@ const organisation = {
   name: 'Kirkby Plastics Ltd',
   registrations: {
     R26ER5001180041PL: {
-      status: 'approved',
+      status: {
+        current: 'approved',
+        timeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } }
+      },
       validFrom: '2025-01-01',
       material: 'glass_re_melt',
       submittedToRegulator: { code: 'ea' },
@@ -61,25 +64,34 @@ const organisation = {
       site: {
         address: { line1: 'Site name A', town: 'Kirkby', postcode: 'L33 7SA' }
       },
-      statusTimeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } },
       accreditations: {
         2025: {
           accreditationNumber: 'A25ER5001180114GR',
-          status: 'cancelled',
-          statusTimeline: {
-            '2025-01-01T09:00:00.000Z': { status: 'approved' },
-            '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+          status: {
+            current: 'cancelled',
+            timeline: {
+              '2025-01-01T09:00:00.000Z': { status: 'approved' },
+              '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+            }
           }
         },
         2026: {
           accreditationNumber: 'A26ER5001180114GR',
-          status: 'approved',
-          statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+          status: {
+            current: 'approved',
+            timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+          }
         }
       }
     },
     R26ER5001180042AL: {
-      status: 'cancelled',
+      status: {
+        current: 'cancelled',
+        timeline: {
+          '2025-01-01T00:00:00.000Z': { status: 'approved' },
+          '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+        }
+      },
       validFrom: '2025-01-01',
       material: 'aluminium',
       submittedToRegulator: { code: 'sepa' },
@@ -88,19 +100,17 @@ const organisation = {
       site: {
         address: { line1: 'Site name A', town: 'Kirkby', postcode: 'L33 7SA' }
       },
-      statusTimeline: {
-        '2025-01-01T00:00:00.000Z': { status: 'approved' },
-        '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
-      },
       accreditations: {}
     },
     R26EX5001180041PA: {
-      status: 'approved',
+      status: {
+        current: 'approved',
+        timeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } }
+      },
       validFrom: '2025-01-01',
       material: 'paper',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'exporter',
-      statusTimeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } },
       accreditations: {}
     }
   }
