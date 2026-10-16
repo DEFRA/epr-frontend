@@ -1,10 +1,8 @@
 import { paths } from '#server/paths.js'
 
-import { organisationName, toCaption } from './caption.js'
+import { toCaption } from './caption.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
  * @import { Localise } from './types.js'
  */
 
@@ -16,6 +14,11 @@ import { organisationName, toCaption } from './caption.js'
  *   heading: string,
  *   pageTitle: string
  * }} AccreditationChildPage
+ * @typedef {{
+ *   organisation: string,
+ *   registration: string,
+ *   accreditation?: string
+ * }} RecordPaths
  */
 
 /**
@@ -23,117 +26,73 @@ import { organisationName, toCaption } from './caption.js'
  * @param {{
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   organisation: Organisation,
- *   registration: Registration
+ *   organisationName: string,
+ *   paths: RecordPaths
  * }} params
  * @returns {Crumb[]}
  */
 export const toRegistrationTrail = ({
   localise,
   localiseUrl,
-  organisation,
-  registration
+  organisationName,
+  paths: { organisation, registration }
 }) => [
   {
     text: localise('registrations:details:allOrganisations'),
     href: localiseUrl(paths.regulators.home)
   },
   {
-    text: organisationName(organisation),
-    href: localiseUrl(`/organisations/${organisation.id}`)
+    text: organisationName,
+    href: localiseUrl(organisation)
   },
   {
     text: localise('registrations:details:heading'),
-    href: localiseUrl(
-      `/organisations/${organisation.id}/registrations/${registration.id}`
-    )
+    href: localiseUrl(registration)
   }
 ]
-
-/**
- * Continues the accreditation page's trail, ending on this page unlinked.
- * @param {{
- *   accreditationPath: string,
- *   heading: string,
- *   localise: Localise,
- *   localiseUrl: (path: string) => string,
- *   organisation: Organisation,
- *   registration: Registration
- * }} params
- * @returns {Crumb[]}
- */
-const toBreadcrumbs = ({
-  accreditationPath,
-  heading,
-  localise,
-  localiseUrl,
-  organisation,
-  registration
-}) => [
-  ...toRegistrationTrail({ localise, localiseUrl, organisation, registration }),
-  {
-    text: localise('registrations:details:accreditation:breadcrumb'),
-    href: localiseUrl(accreditationPath)
-  },
-  { text: heading }
-]
-
-/**
- * @param {{
- *   accreditationId: string,
- *   organisationId: string,
- *   registrationId: string
- * }} params
- * @returns {string}
- */
-export const toAccreditationPath = ({
-  accreditationId,
-  organisationId,
-  registrationId
-}) =>
-  `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
 
 /**
  * The furniture every page below an accreditation shares.
  * @param {{
- *   accreditation: { id: string, accreditationNumber?: string | null },
  *   heading: string,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   organisation: Organisation,
- *   registration: Registration
+ *   organisationName: string,
+ *   registrationNumber?: string | null,
+ *   accreditationNumber?: string | null,
+ *   paths: RecordPaths & { accreditation: string }
  * }} params
  * @returns {AccreditationChildPage}
  */
 export const toAccreditationChildPage = ({
-  accreditation,
   heading,
   localise,
   localiseUrl,
-  organisation,
-  registration
-}) => {
-  return {
-    breadcrumbs: toBreadcrumbs({
-      accreditationPath: toAccreditationPath({
-        accreditationId: accreditation.id,
-        organisationId: organisation.id,
-        registrationId: registration.id
-      }),
-      heading,
+  organisationName,
+  registrationNumber,
+  accreditationNumber,
+  paths: recordPaths
+}) => ({
+  breadcrumbs: [
+    ...toRegistrationTrail({
       localise,
       localiseUrl,
-      organisation,
-      registration
+      organisationName,
+      paths: recordPaths
     }),
-    caption: toCaption([
-      organisationName(organisation),
-      registration.registrationNumber,
-      accreditation.accreditationNumber
-    ]),
-    heading,
-    pageTitle: accreditation.accreditationNumber
-      ? `${accreditation.accreditationNumber}: ${heading}`
-      : heading
-  }
-}
+    {
+      text: localise('registrations:details:accreditation:breadcrumb'),
+      href: localiseUrl(recordPaths.accreditation)
+    },
+    { text: heading }
+  ],
+  caption: toCaption([
+    organisationName,
+    registrationNumber,
+    accreditationNumber
+  ]),
+  heading,
+  pageTitle: accreditationNumber
+    ? `${accreditationNumber}: ${heading}`
+    : heading
+})

@@ -1,22 +1,6 @@
-import { backend, path } from '#server/common/helpers/backend-client.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 
 import { reportsCalendarApiPath } from './report-paths.js'
-
-/**
- * Fetches available reporting periods for a registration from the backend.
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {string} backendToken
- * @returns {Promise<ReportingPeriodsResponse>}
- */
-export const fetchReportingPeriods = (
-  organisationId,
-  registrationId,
-  backendToken
-) =>
-  backend(backendToken).get(
-    path`/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`
-  )
 
 /**
  * Fetches available reporting periods for a registration by its natural keys.

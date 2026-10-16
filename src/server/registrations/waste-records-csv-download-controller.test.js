@@ -14,11 +14,10 @@ import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
-const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = 'reg-001'
-const path = `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download.csv`
+const registrationPath = '/organisations/500002/registrations/R26ER5000000002PA'
+const path = `${registrationPath}/waste-records/download.csv`
 
-const backendPath = `/v1/organisations/${organisationId}/registrations/${registrationId}/waste-records/export.csv`
+const backendPath = `${registrationPath}/waste-records/export.csv`
 
 const disposition =
   'attachment; filename="R26ER5000000002PA-waste-records-2026-09-08.csv"'
@@ -133,7 +132,7 @@ describe('the waste records CSV download', () => {
     expect(requests).toStrictEqual([
       {
         authorization: expect.stringMatching(/^Bearer .+/),
-        url: 'http://epr-backend.test/v1/organisations/6507f1f77bcf86cd79943901/registrations/reg-001/waste-records/export.csv'
+        url: `${config.get('eprBackendUrl')}${backendPath}`
       }
     ])
   })

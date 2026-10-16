@@ -1,36 +1,25 @@
 import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { backend, path } from '#server/common/helpers/backend-client.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { registrationPath as toRegistrationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 export const wasteRecordsCsvDownloadPath =
-  '/organisations/{organisationId}/registrations/{registrationId}/waste-records/download.csv'
+  '/organisations/{organisationNumber}/registrations/{registrationNumber}/waste-records/download.csv'
 
 /**
- * The address of a registration's latest waste records as CSV. Segments go
- * straight into an href, so each is encoded.
- * @param {{ organisationId: string, registrationId: string }} ids
+ * The address of a registration's latest waste records as CSV.
+ * @param {string} registrationPath
  * @returns {string}
  */
-export const buildWasteRecordsCsvDownloadPath = ({
-  organisationId,
-  registrationId
-}) =>
-  [
-    'organisations',
-    organisationId,
-    'registrations',
-    registrationId,
-    'waste-records',
-    'download.csv'
-  ]
-    .map((segment) => `/${encodeURIComponent(segment)}`)
-    .join('')
+export const buildWasteRecordsCsvDownloadPath = (registrationPath) =>
+  `${registrationPath}/waste-records/download.csv`
 
 const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
 
@@ -45,13 +34,10 @@ const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
  */
 export const wasteRecordsCsvDownloadController = {
   /**
-   * @param {HapiRequest & {
-   *   params: { organisationId: string, registrationId: string }
-   * }} request
+   * @param {HapiRequest & { params: RegistrationKeys }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId } = request.params
     const { backendToken } = request.auth.credentials
 
     if (!readsWasteRecordsDownloads(request.auth.credentials)) {
@@ -61,7 +47,7 @@ export const wasteRecordsCsvDownloadController = {
         {
           event: {
             action: 'download_waste_records_csv',
-            reason: `records not offered to this caller registrationId=${registrationId}`
+            reason: `records not offered to this caller registrationNumber=${request.params.registrationNumber}`
           }
         }
       )
@@ -69,9 +55,7 @@ export const wasteRecordsCsvDownloadController = {
 
     const { body, contentDisposition, contentType } = await backend(
       backendToken
-    ).stream(
-      path`/v1/organisations/${organisationId}/registrations/${registrationId}/waste-records/export.csv`
-    )
+    ).stream(`${toRegistrationPath(request.params)}/waste-records/export.csv`)
 
     const response = h.response(body).type(contentType ?? DEFAULT_CONTENT_TYPE)
 

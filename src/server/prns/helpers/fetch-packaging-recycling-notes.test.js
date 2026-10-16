@@ -17,11 +17,14 @@ describe(fetchPackagingRecyclingNotes, () => {
         status: 'awaiting_authorisation'
       }
     ]
-    /** @type {string[]} */
-    const pathnames = []
+    /** @type {{ authorization: string | null, pathname: string }[]} */
+    const received = []
     msw.use(
       http.get(/packaging-recycling-notes$/, ({ request }) => {
-        pathnames.push(new URL(request.url).pathname)
+        received.push({
+          authorization: request.headers.get('authorization'),
+          pathname: new URL(request.url).pathname
+        })
         return HttpResponse.json(notes)
       })
     )
@@ -41,8 +44,12 @@ describe(fetchPackagingRecyclingNotes, () => {
         status: 'awaiting_authorisation'
       }
     ])
-    expect(pathnames).toStrictEqual([
-      '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/packaging-recycling-notes'
+    expect(received).toStrictEqual([
+      {
+        authorization: 'Bearer a-token',
+        pathname:
+          '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/packaging-recycling-notes'
+      }
     ])
   })
 })

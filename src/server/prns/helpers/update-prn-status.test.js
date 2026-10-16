@@ -10,13 +10,14 @@ describe(updatePrnStatus, () => {
     msw
   }) => {
     const updated = { id: 'prn/4', status: 'awaiting_authorisation' }
-    /** @type {{ pathname: string, body: unknown }[]} */
+    /** @type {{ authorization: string | null, body: unknown, pathname: string }[]} */
     const received = []
     msw.use(
       http.post(/\/status$/, async ({ request }) => {
         received.push({
-          pathname: new URL(request.url).pathname,
-          body: await request.json()
+          authorization: request.headers.get('authorization'),
+          body: await request.json(),
+          pathname: new URL(request.url).pathname
         })
         return HttpResponse.json(updated)
       })
@@ -34,9 +35,10 @@ describe(updatePrnStatus, () => {
     expect(result).toStrictEqual(updated)
     expect(received).toStrictEqual([
       {
+        authorization: 'Bearer a-token',
+        body: { status: 'awaiting_authorisation' },
         pathname:
-          '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/packaging-recycling-notes/prn%2F4/status',
-        body: { status: 'awaiting_authorisation' }
+          '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/packaging-recycling-notes/prn%2F4/status'
       }
     ])
   })

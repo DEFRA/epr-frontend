@@ -12,6 +12,12 @@ import {
   toAccreditationChildPage,
   toRegistrationTrail
 } from '#server/registrations/details/helpers/accreditation-child-page.js'
+import { organisationName } from '#server/registrations/details/helpers/caption.js'
+import {
+  accreditationIdPath,
+  organisationIdPath,
+  registrationIdPath
+} from '#server/reports/helpers/report-paths.js'
 
 /**
  * @typedef {{
@@ -60,41 +66,46 @@ export const controller = {
     const { t: localise } = request
     const { noteType } = getNoteTypeDisplayNames(registration)
     const heading = localise('waste-balance-ledger:heading')
+    const name = organisationName(organisationData)
+    const registrationPath = registrationIdPath({
+      organisationId,
+      registrationId
+    })
+    const accreditationPath = accreditationId
+      ? accreditationIdPath({ organisationId, registrationId, accreditationId })
+      : undefined
+    const recordPaths = {
+      organisation: organisationIdPath({ organisationId }),
+      registration: registrationPath
+    }
 
     // The registered-only partition sits under no accreditation, so its trail
     // stops at the registration and its caption names the phase instead.
     const page = accreditation
       ? toAccreditationChildPage({
-          accreditation,
           heading,
           localise,
           localiseUrl: request.localiseUrl,
-          organisation: organisationData,
-          registration
+          organisationName: name,
+          registrationNumber: registration.registrationNumber,
+          accreditationNumber: accreditation.accreditationNumber,
+          paths: {
+            ...recordPaths,
+            accreditation: /** @type {string} */ (accreditationPath)
+          }
         })
-      : {
-          breadcrumbs: [
-            ...toRegistrationTrail({
-              localise,
-              localiseUrl: request.localiseUrl,
-              organisation: organisationData,
-              registration
-            }),
-            { text: heading }
-          ],
-          caption: localise('waste-balance-ledger:registeredOnlyCaption'),
+      : toRegisteredOnlyPage({
           heading,
-          pageTitle: localise('waste-balance-ledger:pageTitle')
-        }
-
-    const registrationPath = `/organisations/${organisationId}/registrations/${registrationId}`
+          localise,
+          localiseUrl: request.localiseUrl,
+          name,
+          paths: recordPaths
+        })
 
     return h.view('waste-balance-ledger/index', {
       ...page,
       ledgerRows: buildLedgerRows({
-        accreditationPath: accreditationId
-          ? `${registrationPath}/accreditations/${accreditationId}`
-          : undefined,
+        accreditationPath,
         events,
         localise,
         localiseUrl: request.localiseUrl,
@@ -105,6 +116,32 @@ export const controller = {
         registrationPath
       })
     })
+  }
+}
+
+/**
+ * @param {{
+ *   heading: string,
+ *   localise: HapiRequest['t'],
+ *   localiseUrl: HapiRequest['localiseUrl'],
+ *   name: string,
+ *   paths: { organisation: string, registration: string }
+ * }} params
+ */
+function toRegisteredOnlyPage({ heading, localise, localiseUrl, name, paths }) {
+  return {
+    breadcrumbs: [
+      ...toRegistrationTrail({
+        localise,
+        localiseUrl,
+        organisationName: name,
+        paths
+      }),
+      { text: heading }
+    ],
+    caption: localise('waste-balance-ledger:registeredOnlyCaption'),
+    heading,
+    pageTitle: localise('waste-balance-ledger:pageTitle')
   }
 }
 
