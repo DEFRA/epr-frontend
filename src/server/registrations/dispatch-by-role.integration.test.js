@@ -24,6 +24,7 @@ const organisationId = '6507f1f77bcf86cd79943901'
 const registrationId = 'reg-001-plastic-approved'
 const registrationNumber = 'R26ER5001180041PL'
 const path = `/organisations/500118/registrations/${registrationNumber}`
+const yearPath = `${path}/2026`
 
 const operator = buildMockAuth()
 
@@ -115,10 +116,16 @@ describe('who a registration renders for', () => {
     expect(headingOf(body)).toContain('Registration details')
   })
 
+  it('is not found for a regulator at a year address', async ({ server }) => {
+    const { statusCode } = await visit(server, regulator, yearPath)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
   it('gives an operator their own page, not the regulator one', async ({
     server
   }) => {
-    const { statusCode, body } = await visit(server, operator)
+    const { statusCode, body } = await visit(server, operator, yearPath)
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(headingOf(body)).not.toContain('Registration details')
@@ -164,10 +171,10 @@ describe('who a registration renders for', () => {
   it('renders an operator the identical page whether the regulator surface is on or off', async ({
     server
   }) => {
-    const surfaceOn = await visit(server, operator)
+    const surfaceOn = await visit(server, operator, yearPath)
 
     config.set('featureFlags.regulatorAccess', false)
-    const surfaceOff = await visit(server, operator)
+    const surfaceOff = await visit(server, operator, yearPath)
     config.set('featureFlags.regulatorAccess', true)
 
     expect(surfaceOff.statusCode).toBe(surfaceOn.statusCode)
@@ -177,10 +184,10 @@ describe('who a registration renders for', () => {
   it('renders an operator who holds no write scope the identical page either way', async ({
     server
   }) => {
-    const surfaceOn = await visit(server, operatorWithoutWrite)
+    const surfaceOn = await visit(server, operatorWithoutWrite, yearPath)
 
     config.set('featureFlags.regulatorAccess', false)
-    const surfaceOff = await visit(server, operatorWithoutWrite)
+    const surfaceOff = await visit(server, operatorWithoutWrite, yearPath)
     config.set('featureFlags.regulatorAccess', true)
 
     expect(surfaceOff.body).toBe(surfaceOn.body)
@@ -189,7 +196,7 @@ describe('who a registration renders for', () => {
   it('keeps a session the backend named nobody on the operator page', async ({
     server
   }) => {
-    const { body } = await visit(server, unrecognised)
+    const { body } = await visit(server, unrecognised, yearPath)
 
     expect(headingOf(body)).not.toContain('Registration details')
   })
@@ -198,7 +205,7 @@ describe('who a registration renders for', () => {
     server
   }) => {
     config.set('featureFlags.regulatorAccess', false)
-    const { statusCode, body } = await visit(server, regulator)
+    const { statusCode, body } = await visit(server, regulator, yearPath)
     config.set('featureFlags.regulatorAccess', true)
 
     expect(statusCode).toBe(statusCodes.ok)

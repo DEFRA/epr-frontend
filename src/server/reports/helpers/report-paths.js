@@ -33,6 +33,14 @@ export const accreditationPath = ({ year, ...keys }) =>
   `${registrationPath(keys)}/accreditations/${encodeURIComponent(year)}`
 
 /**
+ * The registration's natural-key address for a year.
+ * @param {RegistrationKeys & { year: string | number }} keys
+ * @returns {string}
+ */
+export const registrationYearPath = ({ year, ...keys }) =>
+  `${registrationPath(keys)}/${encodeURIComponent(year)}`
+
+/**
  * The organisation's address by id, for pages not yet on natural keys.
  * @param {{ organisationId: string }} ids
  * @returns {string}
