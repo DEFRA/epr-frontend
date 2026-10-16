@@ -46,7 +46,7 @@ const toAccreditationTags = (accreditations) =>
   Object.entries(accreditations)
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([year, { status }]) => {
-      const tag = toStatusTag(status)
+      const tag = toStatusTag(status.current)
       return { ...tag, text: `${year}: ${tag.text}` }
     })
 
@@ -66,7 +66,7 @@ const toRegistrationRow = ({
   localiseUrl
 }) => ({
   number,
-  status: toStatusTag(registration.status),
+  status: toStatusTag(registration.status.current),
   material: getMaterialDisplayName(registration.material),
   regulator: registration.submittedToRegulator.code.toUpperCase(),
   accreditations: toAccreditationTags(registration.accreditations),

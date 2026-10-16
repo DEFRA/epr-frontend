@@ -113,7 +113,7 @@ const toSummaryRows = (params) => {
   return [
     {
       key: localise('registrations:details:summary:status'),
-      status: toStatusTag(registration.status)
+      status: toStatusTag(registration.status.current)
     },
     {
       key: localise('registrations:details:summary:processingType'),
@@ -146,7 +146,7 @@ const toAccreditedPeriods = ({ keys, registration, localise, localiseUrl }) =>
         accreditedDateRange(accreditation, year),
         localise
       ),
-      status: toStatusTag(accreditation.status),
+      status: toStatusTag(accreditation.status.current),
       href: localiseUrl(accreditationPath({ ...keys, year }))
     }))
 

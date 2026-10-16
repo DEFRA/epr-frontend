@@ -5,7 +5,7 @@ import { siteNameOf } from './site-name.js'
 /** @import { RegistrationView } from './organisation-view.js' */
 
 const common = {
-  status: 'approved',
+  status: { current: 'approved', timeline: {} },
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   accreditations: {}

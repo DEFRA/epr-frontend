@@ -3,7 +3,7 @@ import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
+import { isAccreditationViewActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
   accreditationIn,
@@ -109,11 +109,11 @@ const buildTaggedReference = ({ reference, status }) => ({
  * @returns {MaybeTaggedReference}
  */
 const toAccreditationTag = (accreditation) =>
-  isAccreditationActive(accreditation)
+  isAccreditationViewActive(accreditation)
     ? {
         ...buildTaggedReference({
           reference: accreditation.accreditationNumber,
-          status: accreditation.status
+          status: accreditation.status.current
         }),
         exists: true
       }
@@ -210,7 +210,7 @@ const buildRegistrationViewModel = ({ request, keys, registration }) => {
     pageTitle: localise('registrations:pageTitle', { siteName, material }),
     registration: buildTaggedReference({
       reference: keys.registrationNumber,
-      status: registration.status
+      status: registration.status.current
     }),
     reports: {
       link: {
@@ -372,7 +372,7 @@ export const controller = {
       organisationId: ids.organisationId,
       registrationId: ids.registrationId,
       material: ids.registration.material,
-      registrationStatus: registration.status,
+      registrationStatus: registration.status.current,
       year: Number(year)
     })
 
