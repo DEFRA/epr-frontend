@@ -143,6 +143,22 @@ describe('who a registration renders for', () => {
     }
   )
 
+  it.for([
+    { name: 'a regulator', auth: regulator },
+    { name: 'an operator', auth: operator }
+  ])(
+    'is not found for $name at an organisation number that is not digits',
+    async ({ auth }, { server }) => {
+      const { statusCode } = await visit(
+        server,
+        auth,
+        `/organisations/500118x/registrations/${registrationNumber}`
+      )
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    }
+  )
+
   it('renders an operator the identical page whether the regulator surface is on or off', async ({
     server
   }) => {

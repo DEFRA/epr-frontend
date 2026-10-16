@@ -7,7 +7,7 @@ import {
 
 /**
  * @import { Localise } from '../helpers/types.js'
- * @import { OrganisationView, RegistrationView } from './helpers/fetch-overseas-sites.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
 /**
