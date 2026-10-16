@@ -1,4 +1,4 @@
-import { fetchReportBackend } from './fetch-report-backend.js'
+import { reportBackend } from './report-backend.js'
 import { reportApiPath } from './report-paths.js'
 
 /**
@@ -12,12 +12,5 @@ import { reportApiPath } from './report-paths.js'
  * @param {string} backendToken
  * @returns {Promise<unknown>}
  */
-export async function updateReport(keys, fields, backendToken) {
-  return fetchReportBackend(reportApiPath(keys), {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    },
-    body: JSON.stringify(fields)
-  })
-}
+export const updateReport = (keys, fields, backendToken) =>
+  reportBackend(backendToken).patch(reportApiPath(keys), fields)

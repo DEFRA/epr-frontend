@@ -1,110 +1,32 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
 
-import {
-  fetchReportingPeriods,
-  fetchReportingPeriodsByNumber
-} from './fetch-reporting-periods.js'
+import { it } from '#vite/fixtures/server.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
-describe(fetchReportingPeriods, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const backendToken = 'test-token'
-
-  const mockResponse = {
-    cadence: 'monthly',
-    reportingPeriods: [
-      {
-        year: 2026,
-        period: 1,
-        startDate: '2026-01-01',
-        endDate: '2026-01-31',
-        dueDate: '2026-02-20',
-        report: null
-      }
-    ]
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('calls fetchJsonFromBackend with correct path and options', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await fetchReportingPeriods(organisationId, registrationId, backendToken)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/calendar',
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${backendToken}`
-        }
-      }
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await fetchReportingPeriods('org/123', 'reg&456', backendToken)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/calendar',
-      expect.any(Object)
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    const result = await fetchReportingPeriods(
-      organisationId,
-      registrationId,
-      backendToken
-    )
-
-    expect(result).toStrictEqual(mockResponse)
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(
-      fetchReportingPeriods(organisationId, registrationId, backendToken)
-    ).rejects.toThrow('Network error')
-  })
-})
+import { fetchReportingPeriodsByNumber } from './fetch-reporting-periods.js'
 
 describe(fetchReportingPeriodsByNumber, () => {
-  const keys = {
-    organisationNumber: '500001',
-    registrationNumber: 'R25SR500030912PA'
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('reads the natural-key reporting calendar', async () => {
+  it('should read the calendar of the registration the keys name', async ({
+    msw
+  }) => {
     const calendar = { cadence: 'quarterly', reportingPeriods: [] }
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(calendar)
-
-    await expect(
-      fetchReportingPeriodsByNumber(keys, 'test-token')
-    ).resolves.toStrictEqual(calendar)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/organisations/500001/registrations/R25SR500030912PA/reports/calendar',
-      { method: 'GET', headers: { Authorization: 'Bearer test-token' } }
+    /** @type {string[]} */
+    const pathnames = []
+    msw.use(
+      http.get(/\/calendar$/, ({ request }) => {
+        pathnames.push(new URL(request.url).pathname)
+        return HttpResponse.json(calendar)
+      })
     )
+
+    const result = await fetchReportingPeriodsByNumber(
+      { organisationNumber: '500001', registrationNumber: 'R25/1' },
+      'a-token'
+    )
+
+    expect(result).toStrictEqual(calendar)
+    expect(pathnames).toStrictEqual([
+      '/organisations/500001/registrations/R25%2F1/reports/calendar'
+    ])
   })
 })

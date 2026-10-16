@@ -1,78 +1,47 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { it } from '#vite/fixtures/server.js'
 
 import { requestResubmission } from './request-resubmission.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(requestResubmission, () => {
-  const keys = {
-    organisationNumber: '500001',
-    registrationNumber: 'R25SR500030912PA',
-    year: 2026,
-    cadence: /** @type {const} */ ('quarterly'),
-    period: 1,
-    submissionNumber: 1
-  }
-  const backendToken = 'test-token'
+  it('should ask to resubmit the submission the period names', async ({
+    msw
+  }) => {
+    /** @type {{ method: string, pathname: string, body: string }[]} */
+    const received = []
+    msw.use(
+      http.post(/\/reports\//, async ({ request }) => {
+        received.push({
+          method: request.method,
+          pathname: new URL(request.url).pathname,
+          body: await request.text()
+        })
+        return new HttpResponse(null, { status: 204 })
+      })
+    )
 
-  const mockResponse = { status: 'requires_resubmission' }
+    const result = await requestResubmission(
+      {
+        organisationNumber: '500001',
+        registrationNumber: 'R25/1',
+        year: 2026,
+        cadence: 'monthly',
+        period: 3,
+        submissionNumber: 1
+      },
+      'a-token'
+    )
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('posts to the registered-only request-resubmission route for a quarterly report', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await requestResubmission(keys, backendToken)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1/request-resubmission',
+    expect(result).toBeUndefined()
+    expect(received).toStrictEqual([
       {
         method: 'POST',
-        headers: {
-          Authorization: 'Bearer test-token'
-        }
+        pathname:
+          '/organisations/500001/registrations/R25%2F1/accreditations/2026/reports/monthly/3/submissions/1/request-resubmission',
+        body: ''
       }
-    )
-  })
-
-  it('posts to the accredited request-resubmission route for a monthly report', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await requestResubmission({ ...keys, cadence: 'monthly' }, backendToken)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1/request-resubmission',
-      expect.any(Object)
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    const result = await requestResubmission(keys, backendToken)
-
-    expect(result).toStrictEqual(mockResponse)
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = Object.assign(new Error('Conflict'), {
-      isBoom: true,
-      output: {
-        statusCode: 409,
-        payload: { code: 'resubmission_already_requested' }
-      }
-    })
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(requestResubmission(keys, backendToken)).rejects.toThrow(
-      'Conflict'
-    )
+    ])
   })
 })
