@@ -111,6 +111,11 @@ const backendHolds = (msw, held = organisation) =>
     http.get(`${backendUrl}${byNumbers}/accreditations/2026/ledger`, () =>
       HttpResponse.json({ events: [] })
     ),
+    http.get(`${backendUrl}${byNumbers}/waste-records/export.csv`, () =>
+      HttpResponse.text('Row Id\n', {
+        headers: { 'content-type': 'text/csv; charset=utf-8' }
+      })
+    ),
     http.get(
       `${backendUrl}/organisations/${organisationNumber}/waste-balances/2026`,
       () => HttpResponse.json({})
@@ -267,6 +272,40 @@ describe('old registration and accreditation page URLs', () => {
         `/cy${byNumbers}/accreditations/2026`
       )
       expect(page.statusCode).toBe(statusCodes.ok)
+    })
+  })
+
+  describe('the waste records CSV download', () => {
+    beforeAll(() => {
+      config.set('featureFlags.wasteRecordsDownload', true)
+    })
+
+    afterAll(() => {
+      config.set('featureFlags.wasteRecordsDownload', false)
+    })
+
+    it('sends a regulator from the id URL to the number URL', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(
+        server,
+        `${byIds}/waste-records/download.csv`,
+        regulator
+      )
+      const download = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        regulator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(
+        `${byNumbers}/waste-records/download.csv`
+      )
+      expect(download.statusCode).toBe(statusCodes.ok)
     })
   })
 

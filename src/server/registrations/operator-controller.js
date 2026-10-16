@@ -4,11 +4,10 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
-import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
   accreditationIn,
-  latestAccreditationYear,
-  registrationIn
+  latestAccreditationYear
 } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
@@ -301,11 +300,10 @@ export const registrationController = {
     const { organisationNumber: number, registrationNumber } = request.params
     const keys = { organisationNumber: number, registrationNumber }
 
-    const organisation = await fetchOrganisation(
-      organisationNumber(Number(number)),
-      request.auth.credentials.backendToken
-    )
-    const registration = registrationIn(organisation, registrationNumber)
+    const { registration } = await fetchRegistration({
+      ...keys,
+      backendToken: request.auth.credentials.backendToken
+    })
     const year = latestAccreditationYear(registration)
 
     if (year) {
@@ -340,11 +338,10 @@ export const controller = {
     const { backendToken } = credentials
     const numberKey = organisationNumber(Number(number))
 
-    const [organisation, ids] = await Promise.all([
-      fetchOrganisation(numberKey, backendToken),
+    const [{ registration }, ids] = await Promise.all([
+      fetchRegistration({ ...keys, backendToken }),
       findRecordIds(keys, credentials)
     ])
-    const registration = registrationIn(organisation, registrationNumber)
     const accreditation = accreditationIn(registration, year)
 
     const [wasteBalance, showsDecember] = await Promise.all([

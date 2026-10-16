@@ -2,6 +2,7 @@ import { controller as accreditationController } from './details/accreditations/
 import { controller as reportsController } from './details/accreditations/reports/controller.js'
 import { controller as detailsController } from './details/controller.js'
 import { controller as overseasSitesController } from './details/overseas-sites/controller.js'
+import { registrationParamsSchema } from './details/helpers/year-params-schema.js'
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
 import {
   controller as operatorController,
@@ -29,6 +30,23 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const registrationController = {
+  options: {
+    validate: {
+      params: registrationParamsSchema,
+      failAction: () => {
+        throw notFound(
+          'Registration not found',
+          errorCodes.registrationNotFound,
+          {
+            event: {
+              action: 'fetch_registration',
+              reason: 'the address holds no such organisation number'
+            }
+          }
+        )
+      }
+    }
+  },
   /**
    * @param {HapiRequest & { params: RegistrationParams }} request
    * @param {ResponseToolkit} h
@@ -102,6 +120,7 @@ const reportsRoute = {
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const overseasSitesRoute = {
+  options: overseasSitesController.options,
   /**
    * @param {HapiRequest & { params: OverseasSitesParams }} request
    * @param {ResponseToolkit} h

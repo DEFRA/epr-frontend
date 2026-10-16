@@ -23,12 +23,32 @@
 
 /**
  * @typedef {{
+ *   name: string,
+ *   address: {
+ *     country: string,
+ *     line1: string,
+ *     line2?: string,
+ *     townOrCity: string,
+ *     stateOrRegion?: string,
+ *     postcode?: string
+ *   },
+ *   coordinates?: string
+ * }} OverseasSiteView
+ */
+
+/**
+ * @typedef {Record<string, OverseasSiteView>} OverseasSitesByOrsId
+ */
+
+/**
+ * @typedef {{
  *   status: RegistrationStatus,
  *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },
  *   statusTimeline: StatusTimeline,
- *   accreditations: Record<string, AccreditationView>
+ *   accreditations: Record<string, AccreditationView>,
+ *   overseasSites?: OverseasSitesByOrsId
  * }} RegistrationViewCommon
  */
 
