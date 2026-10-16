@@ -11,16 +11,15 @@ import {
 } from './timeline-dates.js'
 
 /**
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { AccreditationView, RegistrationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
 /**
- * @param {Record<string, string>} timeline - status by ISO datetime
+ * @param {Record<string, string>} timeline - status by ISO datetime, oldest first
+ * @returns {StatusTimeline}
  */
 const toStatusTimeline = (timeline) =>
-  Object.fromEntries(
-    Object.entries(timeline).map(([date, status]) => [date, { status }])
-  )
+  Object.entries(timeline).map(([at, status]) => ({ status, at }))
 
 /**
  * @param {Record<string, string>} timeline - status by ISO datetime
@@ -71,37 +70,37 @@ const cancelledLastYear = anAccreditation({
 describe(dailyTimeline, () => {
   it('keys each status by its UTC day', () => {
     expect(
-      dailyTimeline({ '2026-03-01T09:00:00.000Z': { status: 'approved' } })
+      dailyTimeline([{ status: 'approved', at: '2026-03-01T09:00:00.000Z' }])
     ).toStrictEqual({ '2026-03-01': { status: 'approved' } })
   })
 
   it('keeps the last status on a day with several transitions', () => {
     expect(
-      dailyTimeline({
-        '2026-03-01T15:00:00.000Z': { status: 'cancelled' },
-        '2026-03-01T09:00:00.000Z': { status: 'approved' },
-        '2026-02-01T09:00:00.000Z': { status: 'created' }
-      })
+      dailyTimeline([
+        { status: 'created', at: '2026-02-01T09:00:00.000Z' },
+        { status: 'approved', at: '2026-03-01T09:00:00.000Z' },
+        { status: 'cancelled', at: '2026-03-01T15:00:00.000Z' }
+      ])
     ).toStrictEqual({
       '2026-02-01': { status: 'created' },
       '2026-03-01': { status: 'cancelled' }
     })
   })
 
-  it('orders the days chronologically whatever order the keys arrive in', () => {
+  it('keeps the later of two changes made at the same time', () => {
     expect(
-      Object.keys(
-        dailyTimeline({
-          '2026-06-01T09:00:00.000Z': { status: 'suspended' },
-          '2026-02-01T09:00:00.000Z': { status: 'approved' }
-        })
-      )
-    ).toStrictEqual(['2026-02-01', '2026-06-01'])
+      dailyTimeline([
+        { status: 'approved', at: '2026-03-01T09:00:00.000Z' },
+        { status: 'suspended', at: '2026-03-01T09:00:00.000Z' }
+      ])
+    ).toStrictEqual({ '2026-03-01': { status: 'suspended' } })
   })
 
-  it('reads the day from the key without parsing it', () => {
+  it('reads the day from the time without parsing it', () => {
     expect(
-      dailyTimeline({ '2026-03-01T23:30:00.000-02:00': { status: 'approved' } })
+      dailyTimeline([
+        { status: 'approved', at: '2026-03-01T23:30:00.000-02:00' }
+      ])
     ).toStrictEqual({ '2026-03-01': { status: 'approved' } })
   })
 })
@@ -135,18 +134,6 @@ describe(accreditedStretches, () => {
       { from: '2026-02-01', to: '2026-02-28' },
       { from: '2026-05-01', to: '2026-12-31' }
     ])
-  })
-
-  it('reads keys out of order chronologically', () => {
-    expect(
-      accreditedStretches(
-        anAccreditation({
-          '2026-09-30T09:00:00.000Z': 'cancelled',
-          '2026-02-01T09:00:00.000Z': 'approved'
-        }),
-        '2026'
-      )
-    ).toStrictEqual([{ from: '2026-02-01', to: '2026-09-29' }])
   })
 
   it('runs from the first approval to 31 December', () => {
@@ -299,8 +286,8 @@ describe(accreditedDateRange, () => {
       accreditedDateRange(
         anAccreditation({
           '2026-02-01T09:00:00.000Z': 'approved',
-          '2026-09-30T15:00:00.000Z': 'cancelled',
-          '2026-09-30T09:00:00.000Z': 'suspended'
+          '2026-09-30T09:00:00.000Z': 'suspended',
+          '2026-09-30T15:00:00.000Z': 'cancelled'
         }),
         '2026'
       )

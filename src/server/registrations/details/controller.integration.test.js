@@ -40,7 +40,7 @@ const regulator = buildMockAuth({
 const registration = {
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   validFrom: '2026-01-01',
   material: 'plastic',
@@ -57,7 +57,7 @@ const registration = {
 const exporterRegistration = {
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   validFrom: '2026-01-01',
   material: 'plastic',
@@ -70,7 +70,7 @@ const accreditation = {
   accreditationNumber: 'A26ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
   }
 }
 
@@ -246,17 +246,17 @@ describe('the registration details page a regulator reads', () => {
             accreditationNumber: 'A25ER5001180097PL',
             status: {
               current: 'cancelled',
-              timeline: {
-                '2025-02-15T09:00:00.000Z': { status: 'approved' },
-                '2025-03-31T09:00:00.000Z': { status: 'cancelled' }
-              }
+              timeline: [
+                { status: 'approved', at: '2025-02-15T09:00:00.000Z' },
+                { status: 'cancelled', at: '2025-03-31T09:00:00.000Z' }
+              ]
             }
           },
           2026: {
             ...accreditation,
             status: {
               current: 'approved',
-              timeline: { '2025-12-15T09:00:00.000Z': { status: 'approved' } }
+              timeline: [{ status: 'approved', at: '2025-12-15T09:00:00.000Z' }]
             }
           }
         }
@@ -315,7 +315,7 @@ describe('the registration details page a regulator reads', () => {
           ...registration,
           status: {
             current: 'approved',
-            timeline: { '2025-03-01T00:00:00.000Z': { status: 'approved' } }
+            timeline: [{ status: 'approved', at: '2025-03-01T00:00:00.000Z' }]
           }
         }
       })

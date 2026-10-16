@@ -17,7 +17,7 @@ const accreditation2025 = /** @type {const} */ ({
   accreditationNumber: 'A25ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: { '2025-01-01T09:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2025-01-01T09:00:00.000Z' }]
   }
 })
 
@@ -25,14 +25,14 @@ const accreditation2026 = /** @type {const} */ ({
   accreditationNumber: 'A26ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
   }
 })
 
 const registration = /** @type {RegistrationView} */ ({
   status: {
     current: 'approved',
-    timeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
   },
   validFrom: '2025-01-01',
   material: 'plastic',
