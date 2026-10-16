@@ -83,17 +83,20 @@ describe(isAccreditationViewActive, () => {
     { current: 'created', expected: false },
     { current: 'rejected', expected: false },
     { current: 'cancelled', expected: false }
-  ])('returns $expected for $current accreditation', ({ current, expected }) => {
-    const accreditation = {
-      accreditationNumber: 'ACC-001',
-      status: {
-        current: /** @type {AccreditationStatus} */ (current),
-        timeline: {}
+  ])(
+    'returns $expected for $current accreditation',
+    ({ current, expected }) => {
+      const accreditation = {
+        accreditationNumber: 'ACC-001',
+        status: {
+          current: /** @type {AccreditationStatus} */ (current),
+          timeline: {}
+        }
       }
-    }
 
-    expect(isAccreditationViewActive(accreditation)).toBe(expected)
-  })
+      expect(isAccreditationViewActive(accreditation)).toBe(expected)
+    }
+  )
 
   it('returns false for a year with no accreditation', () => {
     expect(isAccreditationViewActive(undefined)).toBe(false)
