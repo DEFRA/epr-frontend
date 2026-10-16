@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 
 import { CADENCE } from '../constants.js'
 import {
+  accreditationIdPath,
+  accreditationPath,
+  organisationIdPath,
   organisationPath,
+  registrationIdPath,
   reportApiPath,
   reportPath,
   reportsCalendarApiPath,
@@ -30,6 +34,26 @@ const monthlyKeys = {
   period: 8,
   submissionNumber: 1
 }
+
+describe(accreditationPath, () => {
+  it("gives the accreditation under its registration's year", () => {
+    expect(accreditationPath({ ...registrationKeys, year: '2026' })).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
+    )
+  })
+
+  it('encodes the registration number and year', () => {
+    expect(
+      accreditationPath({
+        organisationNumber: '500001',
+        registrationNumber: 'R25/SR&1',
+        year: '20/26'
+      })
+    ).toBe(
+      '/organisations/500001/registrations/R25%2FSR%261/accreditations/20%2F26'
+    )
+  })
+})
 
 describe(reportPath, () => {
   it('puts a quarterly submission under the registration reports', () => {
@@ -80,6 +104,58 @@ describe(summaryLogUploadPath, () => {
     expect(
       summaryLogUploadPath({ organisationId: 'org-1', registrationId: 'reg-1' })
     ).toBe('/organisations/org-1/registrations/reg-1/summary-logs/upload')
+  })
+
+  it('encodes the ids', () => {
+    expect(
+      summaryLogUploadPath({ organisationId: 'o&1', registrationId: 'r/1' })
+    ).toBe('/organisations/o%261/registrations/r%2F1/summary-logs/upload')
+  })
+})
+
+const ids = {
+  organisationId: 'org-1',
+  registrationId: 'reg-1',
+  accreditationId: 'acc-1'
+}
+
+describe(organisationIdPath, () => {
+  it('gives the organisation page by id, encoding it', () => {
+    expect(organisationIdPath({ organisationId: 'org/1' })).toBe(
+      '/organisations/org%2F1'
+    )
+  })
+})
+
+describe(registrationIdPath, () => {
+  it('gives the registration page by id', () => {
+    expect(registrationIdPath(ids)).toBe(
+      '/organisations/org-1/registrations/reg-1'
+    )
+  })
+
+  it('encodes the organisation and registration ids', () => {
+    expect(
+      registrationIdPath({ organisationId: 'o&1', registrationId: 'r/1' })
+    ).toBe('/organisations/o%261/registrations/r%2F1')
+  })
+})
+
+describe(accreditationIdPath, () => {
+  it('gives the accreditation page by id', () => {
+    expect(accreditationIdPath(ids)).toBe(
+      '/organisations/org-1/registrations/reg-1/accreditations/acc-1'
+    )
+  })
+
+  it('encodes every id', () => {
+    expect(
+      accreditationIdPath({
+        organisationId: 'o&1',
+        registrationId: 'r/1',
+        accreditationId: 'a?1'
+      })
+    ).toBe('/organisations/o%261/registrations/r%2F1/accreditations/a%3F1')
   })
 })
 

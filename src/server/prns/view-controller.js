@@ -28,6 +28,7 @@ import { getStatusConfig } from './helpers/get-status-config.js'
 import { noteReturn } from './helpers/note-return-path.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { accreditationIdPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
@@ -294,7 +295,7 @@ async function handleDraftView(
     },
     discardLink: {
       text: localise('prns:create:discardLink'),
-      href: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnDraft.id}/discard`
+      href: `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnDraft.id}/discard`
     },
     organisationId,
     registrationId,

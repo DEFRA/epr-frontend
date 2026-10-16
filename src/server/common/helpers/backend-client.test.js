@@ -647,8 +647,47 @@ describe('backend-client', () => {
         message: 'Invalid response from url: http://epr-backend.test/v1/thing',
         event: {
           action: 'parse_backend_response',
-          reason: 'id: "id" must be a string; count: "count" is required'
+          reason: 'id: string.base; count: any.required'
         }
+      })
+    })
+
+    it('should keep the values the backend sent out of the reason', async ({
+      msw
+    }) => {
+      msw.use(
+        http.get(`${backendUrl}/v1/thing`, () =>
+          HttpResponse.json({ id: 'jane@example.com', count: 2 })
+        )
+      )
+
+      await expect(
+        backend('a-token').get('/v1/thing', {
+          parse: strictly(
+            thingSchema.keys({ id: Joi.string().pattern(/^thing-/) })
+          )
+        })
+      ).rejects.toMatchObject({
+        event: { reason: 'id: string.pattern.base' }
+      })
+    })
+
+    it('should reject as a bad gateway when the backend sends no body', async ({
+      msw
+    }) => {
+      msw.use(
+        http.get(
+          `${backendUrl}/v1/thing`,
+          () => new HttpResponse(null, { status: 204 })
+        )
+      )
+
+      await expect(
+        backend('a-token').get('/v1/thing', { parse: strictly(thingSchema) })
+      ).rejects.toMatchObject({
+        output: { statusCode: 502 },
+        code: 'backend_response_invalid',
+        event: { reason: 'response: any.required' }
       })
     })
   })

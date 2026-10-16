@@ -61,12 +61,12 @@ describe('#fetchIdentity', () => {
     {
       description: 'omits the scopes',
       body: { role: 'operator' },
-      reason: 'scopes: "scopes" is required'
+      reason: 'scopes: any.required'
     },
     {
       description: 'has scopes that are not strings',
       body: { role: 'operator', scopes: [{}] },
-      reason: 'scopes.0: "scopes[0]" must be a string'
+      reason: 'scopes.0: string.base'
     }
   ])(
     'should reject as a bad gateway a response that $description',

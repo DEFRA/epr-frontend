@@ -4,9 +4,7 @@
  */
 
 /**
- * Re-exported so a page's helpers keep one import for the types they read. It
- * is defined beside `RegistrationResource`, which is the shallower module and
- * the one a common helper can reach.
+ * Re-exported so a page's helpers keep one import for the types they read.
  * @typedef {DateRange} DateRange
  */
 
