@@ -68,6 +68,7 @@ const aRegistration = (accreditations = {}) => ({
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'reprocessor',
+  reprocessingType: 'input',
   statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   site: { address: { fullAddress: 'North Road, Leeds' } },
   accreditations

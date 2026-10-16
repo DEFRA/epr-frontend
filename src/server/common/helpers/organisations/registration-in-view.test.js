@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 
-import { accreditationIn, registrationIn } from './registration-in-view.js'
+import {
+  accreditationIn,
+  latestAccreditationYear,
+  registrationIn
+} from './registration-in-view.js'
 
 /**
  * @import { OrganisationView, RegistrationView } from './organisation-view.js'
@@ -76,5 +80,17 @@ describe(accreditationIn, () => {
     expect(() => accreditationIn(registration, 'constructor')).toThrow(
       expect.objectContaining({ code: errorCodes.accreditationNotFound })
     )
+  })
+})
+
+describe(latestAccreditationYear, () => {
+  it('returns the highest year', () => {
+    expect(latestAccreditationYear(registration)).toBe('2026')
+  })
+
+  it('returns undefined for a registration with no accreditations', () => {
+    expect(
+      latestAccreditationYear({ ...registration, accreditations: {} })
+    ).toBeUndefined()
   })
 })

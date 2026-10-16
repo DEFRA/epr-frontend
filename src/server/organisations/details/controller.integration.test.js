@@ -57,7 +57,10 @@ const organisation = {
       material: 'glass_re_melt',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'reprocessor',
-      site: { address: { line1: 'Site name A' } },
+      reprocessingType: 'input',
+      site: {
+        address: { line1: 'Site name A', town: 'Kirkby', postcode: 'L33 7SA' }
+      },
       statusTimeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } },
       accreditations: {
         2025: {
@@ -81,7 +84,10 @@ const organisation = {
       material: 'aluminium',
       submittedToRegulator: { code: 'sepa' },
       wasteProcessingType: 'reprocessor',
-      site: { address: { line1: 'Site name A' } },
+      reprocessingType: 'input',
+      site: {
+        address: { line1: 'Site name A', town: 'Kirkby', postcode: 'L33 7SA' }
+      },
       statusTimeline: {
         '2025-01-01T00:00:00.000Z': { status: 'approved' },
         '2025-06-01T09:00:00.000Z': { status: 'cancelled' }

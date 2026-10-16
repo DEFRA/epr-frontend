@@ -4,7 +4,13 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole, queryByRole, queryByTestId } from '@testing-library/dom'
+import {
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByTestId,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect } from 'vitest'
@@ -419,6 +425,223 @@ describe("the operator's registration page for a year", () => {
     })
 
     const { statusCode } = await visit(server)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+})
+
+describe("the operator's registration page with no year", () => {
+  /** @type {Record<string, unknown>} */
+  const registeredOnly = { ...reprocessor, accreditations: {} }
+
+  it('sends an accredited operator to the latest year', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      registration: {
+        ...reprocessor,
+        accreditations: {
+          [thisYear - 1]: {
+            accreditationNumber: 'A25ER5001180114GL',
+            status: 'approved',
+            statusTimeline: {
+              [`${thisYear - 1}-01-01T09:00:00.000Z`]: { status: 'approved' }
+            }
+          },
+          .../** @type {object} */ (reprocessor.accreditations)
+        }
+      }
+    })
+
+    const response = await server.inject({
+      method: 'GET',
+      url: registrationPath,
+      auth: operator
+    })
+
+    expect(response.statusCode).toBe(statusCodes.found)
+    expect(response.headers.location).toBe(accreditationPath)
+  })
+
+  it('keeps a Welsh reader in Welsh', async ({ server, msw }) => {
+    backendHolds(msw)
+
+    const response = await server.inject({
+      method: 'GET',
+      url: `/cy${registrationPath}`,
+      auth: operator
+    })
+
+    expect(response.headers.location).toBe(`/cy${accreditationPath}`)
+  })
+
+  it('keeps the query string', async ({ server, msw }) => {
+    backendHolds(msw)
+
+    const response = await server.inject({
+      method: 'GET',
+      url: `${registrationPath}?from=dashboard`,
+      auth: operator
+    })
+
+    expect(response.headers.location).toBe(
+      `${accreditationPath}?from=dashboard`
+    )
+  })
+
+  it('sends an operator whose accreditation is cancelled to its year', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      registration: {
+        ...reprocessor,
+        accreditations: {
+          [year]: {
+            accreditationNumber,
+            status: 'cancelled',
+            statusTimeline: {
+              [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' },
+              [`${year}-03-01`]: { status: 'cancelled' }
+            }
+          }
+        }
+      }
+    })
+
+    const response = await server.inject({
+      method: 'GET',
+      url: registrationPath,
+      auth: operator
+    })
+
+    expect(response.headers.location).toBe(accreditationPath)
+  })
+
+  it('shows a registered-only operator their registration', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { statusCode, body } = await visit(server, { url: registrationPath })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(
+      getByRole(body, 'heading', { level: 1, name: /Glass remelt/ })
+    ).toBeDefined()
+    expect(getByText(body, registrationNumber)).toBeDefined()
+  })
+
+  it('shows a registered-only operator no accreditation, balance or notes', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body } = await visit(server, { url: registrationPath })
+
+    expect(queryByText(body, accreditationNumber)).toBeNull()
+    expect(queryByTestId(body, 'waste-balance-amount')).toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Create new PRN' })).toBeNull()
+  })
+
+  it('names every link by number', async ({ server, msw }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body } = await visit(server, {
+      url: registrationPath,
+      auth: buildMockAuth({
+        linkedOrganisationId: organisationId,
+        scope: [SCOPES.organisationLinkedWrite, SCOPES.wasteBalanceLedgerRead]
+      })
+    })
+
+    expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+      '/organisations/500118'
+    )
+    expect(hrefOf(body, 'Upload your summary log')).toBe(
+      `${registrationPath}/summary-logs/upload`
+    )
+    expect(hrefOf(body, 'Manage reports')).toBe(`${registrationPath}/reports`)
+    expect(hrefOf(body, 'View waste balance ledger')).toBe(
+      `${registrationPath}/waste-balance-ledger`
+    )
+  })
+
+  it('offers no ledger link to a session that may not read it', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body } = await visit(server, { url: registrationPath })
+
+    expect(
+      queryByRole(body, 'link', { name: 'View waste balance ledger' })
+    ).toBeNull()
+  })
+
+  it('offers a registered-only operator no reapply link', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body } = await visit(server, { url: registrationPath })
+
+    expect(
+      queryByRole(body, 'link', {
+        name: `apply for ${thisYear + 1} accreditation`
+      })
+    ).toBeNull()
+  })
+
+  it('reads no ids, balance or December eligibility for a registered-only operator', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      registration: registeredOnly,
+      ids: () =>
+        new HttpResponse(null, { status: statusCodes.internalServerError }),
+      balances: () =>
+        new HttpResponse(null, { status: statusCodes.internalServerError })
+    })
+
+    const { statusCode } = await visit(server, { url: registrationPath })
+
+    expect(statusCode).toBe(statusCodes.ok)
+  })
+
+  it('is not found for an organisation number the backend does not know', async ({
+    server,
+    msw
+  }) => {
+    msw.use(
+      http.get(
+        `${backendUrl}/organisations/500999`,
+        () => new HttpResponse(null, { status: statusCodes.notFound })
+      )
+    )
+
+    const { statusCode } = await visit(server, {
+      url: `/organisations/500999/registrations/${registrationNumber}`
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  it('is not found for a registration number the organisation does not hold', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
+    const { statusCode } = await visit(server, {
+      url: '/organisations/500118/registrations/R99XX'
+    })
 
     expect(statusCode).toBe(statusCodes.notFound)
   })

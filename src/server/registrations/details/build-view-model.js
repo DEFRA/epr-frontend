@@ -4,15 +4,24 @@ import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
+import {
+  accreditationPath,
+  registrationPath as toRegistrationPath
+} from '#server/reports/helpers/report-paths.js'
 
+import { organisationViewName, toCaption } from './helpers/caption.js'
 import { toDateRange } from './helpers/date-range.js'
-import { registrationYears } from './helpers/registered-only.js'
+import {
+  accreditedDateRange,
+  registeredYears
+} from './helpers/timeline-dates.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { SiteAddress } from '#server/common/helpers/organisations/registration-resource.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
- * @import { AccreditationResource, Localise } from './helpers/types.js'
- * @import { RegistrationResource, SiteAddress } from '#server/common/helpers/organisations/registration-resource.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { Localise } from './helpers/types.js'
  */
 
 /**
@@ -40,26 +49,6 @@ import { registrationYears } from './helpers/registered-only.js'
  */
 
 /**
- * The reprocessing type is recorded when a registration is approved, so an
- * application that holds none reads as the processing type alone.
- * @param {RegistrationResource} registration
- * @returns {string}
- */
-const toProcessingType = ({ reprocessingType, application }) =>
-  reprocessingType
-    ? `${capitalize(application.wasteProcessingType)} (${reprocessingType})`
-    : capitalize(application.wasteProcessingType)
-
-/**
- * A registration that has resolved to no material of its own has only what the
- * applicant applied for to show, which is the coarse answer they gave.
- * @param {RegistrationResource} registration
- * @returns {string}
- */
-const toMaterial = ({ material, application }) =>
-  getMaterialDisplayName(material ?? application.material)
-
-/**
  * @param {SiteAddress} address
  * @returns {string}
  */
@@ -71,27 +60,56 @@ const toSiteLine = ({ line1, line2, town, county, postcode, fullAddress }) =>
     .join(', ')
 
 /**
- * An exporter reprocesses nowhere this service records, so a registration with
- * no site shows no site row rather than an empty one. Only an exporter sends
- * waste overseas, so only an exporter is offered the sites it sends to.
+ * @param {RegistrationView} registration
+ * @returns {string}
+ */
+const toProcessingType = (registration) =>
+  registration.wasteProcessingType === WASTE_PROCESSING_TYPE.EXPORTER
+    ? capitalize(registration.wasteProcessingType)
+    : `${capitalize(registration.wasteProcessingType)} (${registration.reprocessingType})`
+
+/**
+ * A reprocessor's site, or the overseas sites an exporter sends to.
  * @param {{
- *   registration: RegistrationResource,
+ *   registration: RegistrationView,
+ *   registrationPath: string,
+ *   localise: Localise,
+ *   localiseUrl: (path: string) => string
+ * }} params
+ * @returns {SummaryRow}
+ */
+const toSitesRow = ({
+  registration,
+  registrationPath,
+  localise,
+  localiseUrl
+}) =>
+  registration.wasteProcessingType === WASTE_PROCESSING_TYPE.EXPORTER
+    ? {
+        key: localise('registrations:details:summary:overseasSites'),
+        link: {
+          href: localiseUrl(`${registrationPath}/overseas-sites`),
+          text: localise('registrations:details:summary:overseasSitesView')
+        }
+      }
+    : {
+        key: localise('registrations:details:summary:site'),
+        value: toSiteLine(registration.site.address)
+      }
+
+/**
+ * @param {{
+ *   registration: RegistrationView,
  *   registrationPath: string,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {SummaryRow[]}
  */
-const toSummaryRows = ({
-  registration,
-  registrationPath,
-  localise,
-  localiseUrl
-}) => {
-  const { application } = registration
+const toSummaryRows = (params) => {
+  const { registration, localise } = params
 
-  /** @type {SummaryRow[]} */
-  const rows = [
+  return [
     {
       key: localise('registrations:details:summary:status'),
       status: toStatusTag(registration.status)
@@ -102,79 +120,39 @@ const toSummaryRows = ({
     },
     {
       key: localise('registrations:details:summary:material'),
-      value: toMaterial(registration)
-    }
+      value: getMaterialDisplayName(registration.material)
+    },
+    toSitesRow(params)
   ]
-
-  if (application.site) {
-    rows.push({
-      key: localise('registrations:details:summary:site'),
-      value: toSiteLine(application.site.address)
-    })
-  }
-
-  if (application.wasteProcessingType === WASTE_PROCESSING_TYPE.EXPORTER) {
-    rows.push({
-      key: localise('registrations:details:summary:overseasSites'),
-      link: {
-        href: localiseUrl(`${registrationPath}/overseas-sites`),
-        text: localise('registrations:details:summary:overseasSitesView')
-      }
-    })
-  }
-
-  return rows
 }
 
 /**
- * An accreditation earns a number when it is granted, so one holding no number
- * never became an accreditation and names no period.
+ * One row per accreditation year, newest first.
  * @param {{
- *   accreditations: AccreditationResource[],
- *   registrationPath: string,
+ *   keys: RegistrationKeys,
+ *   registration: RegistrationView,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {AccreditedPeriod[]}
  */
-const toAccreditedPeriods = ({
-  accreditations,
-  registrationPath,
-  localise,
-  localiseUrl
-}) =>
-  [...accreditations].sort(byMostRecentStart).flatMap((accreditation) =>
-    accreditation.accreditationNumber
-      ? [
-          {
-            number: accreditation.accreditationNumber,
-            dateRange: toDateRange(accreditation.dateRange, localise),
-            status: toStatusTag(accreditation.status),
-            href: localiseUrl(
-              `${registrationPath}/accreditations/${accreditation.id}`
-            )
-          }
-        ]
-      : []
-  )
+const toAccreditedPeriods = ({ keys, registration, localise, localiseUrl }) =>
+  Object.entries(registration.accreditations)
+    .sort(([year], [other]) => other.localeCompare(year))
+    .map(([year, accreditation]) => ({
+      number: accreditation.accreditationNumber,
+      dateRange: toDateRange(
+        accreditedDateRange(accreditation, year),
+        localise
+      ),
+      status: toStatusTag(accreditation.status),
+      href: localiseUrl(accreditationPath({ ...keys, year }))
+    }))
 
 /**
- * @param {AccreditationResource} a
- * @param {AccreditationResource} b
- * @returns {number}
- */
-const byMostRecentStart = (a, b) =>
-  (b.dateRange.validFrom ?? '').localeCompare(a.dateRange.validFrom ?? '')
-
-/**
- * One row per year the registration has existed over, whether or not it held an
- * accreditation for all of it. A year fully covered by an accreditation still
- * gets a row: the page it opens is what says so, rather than the row's absence
- * leaving a regulator to infer it.
- *
- * `registrationYears` answers most recent first, so nothing is sorted here.
+ * One row per year the registration was approved in, most recent first.
  * @param {{
- *   registration: RegistrationResource,
+ *   registration: RegistrationView,
  *   registrationPath: string,
  *   localiseUrl: (path: string) => string
  * }} params
@@ -185,45 +163,36 @@ const toRegisteredOnlyPeriods = ({
   registrationPath,
   localiseUrl
 }) =>
-  registrationYears({ dateRange: registration.dateRange }).map((year) => ({
+  registeredYears(registration).map((year) => ({
     year: String(year),
     href: localiseUrl(`${registrationPath}/registered-only-periods/${year}`)
   }))
 
 /**
- * An organisation trading under another name is known by it, so that is the
- * name the regulator is shown.
- * @param {Organisation} organisation
- * @returns {string}
- */
-const organisationName = ({ companyDetails }) =>
-  companyDetails.tradingName?.trim() || companyDetails.name
-
-/**
  * @param {{
- *   organisation: Organisation,
- *   registration: RegistrationResource,
- *   accreditations: AccreditationResource[],
+ *   keys: RegistrationKeys,
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {RegistrationDetailsViewModel}
  */
 export const buildViewModel = ({
+  keys,
   organisation,
   registration,
-  accreditations,
   localise,
   localiseUrl
 }) => {
-  const name = organisationName(organisation)
-  const registrationPath = `/organisations/${registration.organisation.id}/registrations/${registration.id}`
+  const name = organisationViewName(organisation)
+  const path = toRegistrationPath(keys)
   const heading = localise('registrations:details:heading')
 
   return {
     accreditedPeriods: toAccreditedPeriods({
-      accreditations,
-      registrationPath,
+      keys,
+      registration,
       localise,
       localiseUrl
     }),
@@ -234,24 +203,22 @@ export const buildViewModel = ({
       },
       {
         text: name,
-        href: localiseUrl(`/organisations/${registration.organisation.id}`)
+        href: localiseUrl(
+          `/organisations/${encodeURIComponent(keys.organisationNumber)}`
+        )
       },
       { text: heading }
     ],
-    caption: registration.registrationNumber
-      ? `${name} - ${registration.registrationNumber}`
-      : name,
-    pageTitle: registration.registrationNumber
-      ? `${registration.registrationNumber}: ${heading}`
-      : heading,
+    caption: toCaption([name, keys.registrationNumber]),
+    pageTitle: `${keys.registrationNumber}: ${heading}`,
     registeredOnlyPeriods: toRegisteredOnlyPeriods({
       registration,
-      registrationPath,
+      registrationPath: path,
       localiseUrl
     }),
     summaryRows: toSummaryRows({
       registration,
-      registrationPath,
+      registrationPath: path,
       localise,
       localiseUrl
     })

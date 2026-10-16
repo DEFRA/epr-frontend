@@ -7,10 +7,12 @@ import { isAccreditationActive } from '#server/common/helpers/organisations/accr
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import {
   accreditationIn,
+  latestAccreditationYear,
   registrationIn
 } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
+import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
 import {
   showsDecemberBalance,
   toDecemberBalanceBreakdown
@@ -61,7 +63,7 @@ import { capitalize } from 'lodash-es'
  *   isExporter: boolean;
  *   material: string;
  *   pageTitle: string;
- *   prns: { description: string; link: Link; manageLink: Link; title: string };
+ *   prns: { description: string; link: Link; manageLink: Link; title: string } | null;
  *   reapplyAccreditation: ReapplyLink | null;
  *   registration: TaggedReference;
  *   reports: { link: Link };
@@ -82,6 +84,13 @@ import { capitalize } from 'lodash-es'
  *   registrationNumber: string,
  *   year: string
  * }} OperatorAccreditationParams
+ */
+
+/**
+ * @typedef {{
+ *   organisationNumber: string,
+ *   registrationNumber: string
+ * }} OperatorRegistrationParams
  */
 
 /**
@@ -152,7 +161,7 @@ const toLedgerUrl = (request, path) =>
  * @param {HapiRequest} request
  * @param {{ noteType: 'PRN' | 'PERN', noteTypePlural: 'PRNs' | 'PERNs' }} noteTypes
  * @param {string} notesPath
- * @returns {RegistrationViewModel['prns']}
+ * @returns {NonNullable<RegistrationViewModel['prns']>}
  */
 const toPrns = (request, { noteType, noteTypePlural }, notesPath) => {
   const { t: localise } = request
@@ -259,6 +268,59 @@ const buildViewModel = ({
       breakdown: showsDecember ? toDecemberBalanceBreakdown(wasteBalance) : null
     },
     wasteBalanceLedgerUrl: toLedgerUrl(request, path)
+  }
+}
+
+/**
+ * The operator's registration page while it holds no accreditation.
+ * @param {{
+ *   request: HapiRequest,
+ *   keys: RegistrationKeys,
+ *   registration: RegistrationView
+ * }} params
+ * @returns {RegistrationViewModel}
+ */
+const buildRegisteredOnlyViewModel = ({ request, keys, registration }) => ({
+  ...buildRegistrationViewModel({ request, keys, registration }),
+  accreditation: { exists: false },
+  prns: null,
+  reapplyAccreditation: null,
+  wasteBalanceLedgerUrl: toLedgerUrl(request, registrationPath(keys))
+})
+
+/**
+ * The operator's registration page with no year: an accredited registration
+ * redirects to its latest year.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+export const registrationController = {
+  /**
+   * @param {HapiRequest & { params: OperatorRegistrationParams }} request
+   * @param {ResponseToolkit} h
+   */
+  async handler(request, h) {
+    const { organisationNumber: number, registrationNumber } = request.params
+    const keys = { organisationNumber: number, registrationNumber }
+
+    const organisation = await fetchOrganisation(
+      organisationNumber(Number(number)),
+      request.auth.credentials.backendToken
+    )
+    const registration = registrationIn(organisation, registrationNumber)
+    const year = latestAccreditationYear(registration)
+
+    if (year) {
+      return redirectPreservingMethod(
+        request,
+        h,
+        accreditationPath({ ...keys, year })
+      )
+    }
+
+    return h.view(
+      'registrations/index',
+      buildRegisteredOnlyViewModel({ request, keys, registration })
+    )
   }
 }
 

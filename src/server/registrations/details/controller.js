@@ -1,5 +1,8 @@
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
+import { registrationIn } from '#server/common/helpers/organisations/registration-in-view.js'
+
 import { buildViewModel } from './build-view-model.js'
-import { fetchRegistrationDetails } from './helpers/fetch-registration-details.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -7,7 +10,7 @@ import { fetchRegistrationDetails } from './helpers/fetch-registration-details.j
  */
 
 /**
- * @typedef {{ organisationId: string, registrationId: string }} RegistrationParams
+ * @typedef {{ organisationNumber: string, registrationNumber: string }} RegistrationParams
  */
 
 /**
@@ -19,22 +22,18 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId } = request.params
-    const { backendToken } = request.auth.credentials
-
-    const { organisation, registration, accreditations } =
-      await fetchRegistrationDetails({
-        organisationId,
-        registrationId,
-        backendToken
-      })
+    const { organisationNumber: number, registrationNumber } = request.params
+    const organisation = await fetchOrganisation(
+      organisationNumber(Number(number)),
+      request.auth.credentials.backendToken
+    )
 
     return h.view(
       'registrations/details/index',
       buildViewModel({
+        keys: { organisationNumber: number, registrationNumber },
         organisation,
-        registration,
-        accreditations,
+        registration: registrationIn(organisation, registrationNumber),
         localise: request.t,
         localiseUrl: request.localiseUrl
       })
