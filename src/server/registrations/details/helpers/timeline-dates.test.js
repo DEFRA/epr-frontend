@@ -22,13 +22,20 @@ const toStatusTimeline = (timeline) =>
   Object.entries(timeline).map(([at, status]) => ({ status, at }))
 
 /**
+ * @param {StatusTimeline} timeline
+ * @returns {AccreditationView}
+ */
+const accreditationWith = (timeline) => ({
+  accreditationNumber: 'A26ER5001180114PL',
+  status: { current: 'approved', timeline }
+})
+
+/**
  * @param {Record<string, string>} timeline - status by ISO datetime
  * @returns {AccreditationView}
  */
-const anAccreditation = (timeline) => ({
-  accreditationNumber: 'A26ER5001180114PL',
-  status: { current: 'approved', timeline: toStatusTimeline(timeline) }
-})
+const anAccreditation = (timeline) =>
+  accreditationWith(toStatusTimeline(timeline))
 
 /**
  * @param {Record<string, string>} timeline - status by ISO datetime
@@ -59,6 +66,12 @@ const reinstated = anAccreditation({
   '2026-03-30T09:00:00.000Z': 'approved',
   '2026-06-01T09:00:00.000Z': 'suspended'
 })
+
+// Created and approved in the same change.
+const createdAndApprovedAtOnce = accreditationWith([
+  { status: 'created', at: '2026-01-01T00:00:00.000Z' },
+  { status: 'approved', at: '2026-01-01T00:00:00.000Z' }
+])
 
 // Cancelled the year before, then approved again.
 const cancelledLastYear = anAccreditation({
@@ -205,6 +218,12 @@ describe(accreditedStretches, () => {
     ).toStrictEqual([{ from: '2026-01-19', to: '2026-12-31' }])
   })
 
+  it('starts a stretch on a day created and approved at the same time', () => {
+    expect(accreditedStretches(createdAndApprovedAtOnce, '2026')).toStrictEqual(
+      [{ from: '2026-01-01', to: '2026-12-31' }]
+    )
+  })
+
   it('does not count the days before the first approval', () => {
     expect(
       accreditedStretches(
@@ -331,6 +350,15 @@ describe(accreditedDateRange, () => {
         '2026'
       )
     ).toStrictEqual({ validFrom: '2026-01-19', validTo: '2026-12-31' })
+  })
+
+  it('runs the whole year when created and approved at the same time', () => {
+    expect(accreditedDateRange(createdAndApprovedAtOnce, '2026')).toStrictEqual(
+      {
+        validFrom: '2026-01-01',
+        validTo: '2026-12-31'
+      }
+    )
   })
 
   it('starts and ends on the day it was approved and cancelled', () => {

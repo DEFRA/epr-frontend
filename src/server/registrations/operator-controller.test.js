@@ -328,7 +328,7 @@ describe("the operator's registration page for a year", () => {
               current: 'cancelled',
               timeline: [
                 { status: 'approved', at: `${year}-01-01T09:00:00.000Z` },
-                { status: 'cancelled', at: `${year}-03-01` }
+                { status: 'cancelled', at: `${year}-03-01T09:00:00.000Z` }
               ]
             }
           }
@@ -511,7 +511,7 @@ describe("the operator's registration page with no year", () => {
               current: 'cancelled',
               timeline: [
                 { status: 'approved', at: `${year}-01-01T09:00:00.000Z` },
-                { status: 'cancelled', at: `${year}-03-01` }
+                { status: 'cancelled', at: `${year}-03-01T09:00:00.000Z` }
               ]
             }
           }
