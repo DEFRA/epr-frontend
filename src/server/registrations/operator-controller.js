@@ -1,14 +1,13 @@
 import { config } from '#config/config.js'
 import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { isAccreditationViewActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
-import {
-  accreditationIn,
-  latestAccreditationYear
-} from '#server/common/helpers/organisations/registration-in-view.js'
+import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
 import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
@@ -23,9 +22,15 @@ import {
   accreditationPath,
   organisationPath,
   registrationPath,
+  registrationYearPath,
   reportsListPath
 } from '#server/reports/helpers/report-paths.js'
 import { capitalize } from 'lodash-es'
+import {
+  paramsOrNotFound,
+  yearParamsSchema
+} from './details/helpers/params-validation.js'
+import { registeredYears } from './details/helpers/timeline-dates.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -91,6 +96,10 @@ import { capitalize } from 'lodash-es'
  *   organisationNumber: string,
  *   registrationNumber: string
  * }} OperatorRegistrationParams
+ */
+
+/**
+ * @typedef {OperatorRegistrationParams & { year: number }} OperatorRegistrationYearParams
  */
 
 /**
@@ -287,8 +296,20 @@ const buildRegisteredOnlyViewModel = ({ request, keys, registration }) => ({
 })
 
 /**
- * The operator's registration page with no year: an accredited registration
- * redirects to its latest year.
+ * The registration's page for the year: its accreditation where it holds one.
+ * @param {RegistrationKeys} keys
+ * @param {RegistrationView} registration
+ * @param {number} year
+ * @returns {string}
+ */
+const yearPathOf = (keys, registration, year) =>
+  Object.hasOwn(registration.accreditations, year)
+    ? accreditationPath({ ...keys, year: String(year) })
+    : registrationYearPath({ ...keys, year })
+
+/**
+ * The operator's registration page with no year: a registration redirects to
+ * the latest year it was approved in, and one never approved shows its page.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const registrationController = {
@@ -304,13 +325,73 @@ export const registrationController = {
       ...keys,
       backendToken: request.auth.credentials.backendToken
     })
-    const year = latestAccreditationYear(registration)
+    const [year] = registeredYears(registration)
 
     if (year) {
       return redirectPreservingMethod(
         request,
         h,
-        accreditationPath({ ...keys, year })
+        yearPathOf(keys, registration, year)
+      )
+    }
+
+    return h.view(
+      'registrations/index',
+      buildRegisteredOnlyViewModel({ request, keys, registration })
+    )
+  }
+}
+
+/**
+ * The operator's registered-only page for a year the registration was
+ * approved in.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+export const registrationYearController = {
+  options: {
+    validate: paramsOrNotFound(yearParamsSchema, {
+      message: 'Registration not found',
+      code: errorCodes.registrationNotFound,
+      action: 'fetch_registration',
+      reason: 'the address holds no such year'
+    })
+  },
+  /**
+   * @param {HapiRequest & { params: OperatorRegistrationYearParams }} request
+   * @param {ResponseToolkit} h
+   */
+  async handler(request, h) {
+    const {
+      organisationNumber: number,
+      registrationNumber,
+      year
+    } = request.params
+    const keys = { organisationNumber: number, registrationNumber }
+
+    const { registration } = await fetchRegistration({
+      ...keys,
+      backendToken: request.auth.credentials.backendToken
+    })
+
+    // Until a year can hold both streams, a year with an accreditation has only that page.
+    if (Object.hasOwn(registration.accreditations, year)) {
+      return redirectPreservingMethod(
+        request,
+        h,
+        accreditationPath({ ...keys, year: String(year) })
+      )
+    }
+
+    if (!registeredYears(registration).includes(year)) {
+      throw notFound(
+        'Registration not found',
+        errorCodes.registrationNotFound,
+        {
+          event: {
+            action: 'fetch_registration',
+            reason: `organisationNumber=${number} registrationNumber=${registrationNumber} year=${year}`
+          }
+        }
       )
     }
 

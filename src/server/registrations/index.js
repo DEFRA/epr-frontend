@@ -9,7 +9,8 @@ import {
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
 import {
   controller as operatorController,
-  registrationController as operatorRegistrationController
+  registrationController as operatorRegistrationController,
+  registrationYearController as operatorRegistrationYearController
 } from './operator-controller.js'
 import {
   wasteRecordsCsvDownloadController,
@@ -24,6 +25,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { RegistrationParams } from './details/controller.js'
+ * @import { OperatorRegistrationYearParams } from './operator-controller.js'
  * @import { OverseasSitesParams } from './details/overseas-sites/controller.js'
  * @import { AccreditationParams } from './details/accreditations/controller.js'
  * @import { AccreditationParams as AccreditationReportsParams } from './details/accreditations/reports/controller.js'
@@ -49,6 +51,34 @@ const registrationController = {
     return readsAsARegulator(request.auth.credentials)
       ? detailsController.handler(request, h)
       : operatorRegistrationController.handler(request, h)
+  }
+}
+
+/**
+ * Answers nothing to a regulator: their registration view has no year.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const registrationYearRoute = {
+  options: operatorRegistrationYearController.options,
+  /**
+   * @param {HapiRequest & { params: OperatorRegistrationYearParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    if (readsAsARegulator(request.auth.credentials)) {
+      throw notFound(
+        'Registration not found',
+        errorCodes.registrationNotFound,
+        {
+          event: {
+            action: 'fetch_registration',
+            reason: 'caller reads as a regulator'
+          }
+        }
+      )
+    }
+
+    return operatorRegistrationYearController.handler(request, h)
   }
 }
 
@@ -187,6 +217,11 @@ export const registrations = {
           ...registrationController,
           method: 'GET',
           path: '/organisations/{organisationNumber}/registrations/{registrationNumber}'
+        },
+        {
+          ...registrationYearRoute,
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/{year}'
         },
         {
           ...accreditationRoute,

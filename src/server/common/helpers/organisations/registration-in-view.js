@@ -55,13 +55,3 @@ export const accreditationIn = (registration, year) => {
 
   return registration.accreditations[year]
 }
-
-/**
- * The most recent year the registration holds an accreditation for.
- * @param {RegistrationView} registration
- * @returns {string | undefined}
- */
-export const latestAccreditationYear = (registration) =>
-  Object.keys(registration.accreditations)
-    .sort((one, other) => one.localeCompare(other))
-    .at(-1)
