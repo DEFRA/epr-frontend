@@ -21,8 +21,10 @@ describe(fetchReportListDetails, () => {
   /** @type {AccreditationView} */
   const accreditation = {
     accreditationNumber: 'A26ER5001180114PL',
-    status: 'approved',
-    statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+    status: {
+      current: 'approved',
+      timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+    }
   }
 
   /** @type {OrganisationView} */
@@ -31,12 +33,14 @@ describe(fetchReportListDetails, () => {
     name: 'Kirkby Plastics Ltd',
     registrations: {
       [registrationNumber]: {
-        status: 'approved',
+        status: {
+          current: 'approved',
+          timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+        },
         validFrom: '2026-01-01',
         material: 'plastic',
         submittedToRegulator: { code: 'ea' },
         wasteProcessingType: 'exporter',
-        statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
         accreditations: { 2026: accreditation }
       }
     }

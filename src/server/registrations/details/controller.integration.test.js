@@ -38,9 +38,11 @@ const regulator = buildMockAuth({
 
 /** @type {Record<string, unknown>} */
 const registration = {
-  status: 'approved',
+  status: {
+    current: 'approved',
+    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+  },
   validFrom: '2026-01-01',
-  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'reprocessor',
@@ -53,9 +55,11 @@ const registration = {
 
 /** @type {Record<string, unknown>} */
 const exporterRegistration = {
-  status: 'approved',
+  status: {
+    current: 'approved',
+    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+  },
   validFrom: '2026-01-01',
-  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'exporter',
@@ -64,8 +68,10 @@ const exporterRegistration = {
 
 const accreditation = {
   accreditationNumber: 'A26ER5001180114PL',
-  status: 'approved',
-  statusTimeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+  status: {
+    current: 'approved',
+    timeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+  }
 }
 
 /**
@@ -238,16 +244,19 @@ describe('the registration details page a regulator reads', () => {
         accreditations: {
           2025: {
             accreditationNumber: 'A25ER5001180097PL',
-            status: 'cancelled',
-            statusTimeline: {
-              '2025-02-15T09:00:00.000Z': { status: 'approved' },
-              '2025-03-31T09:00:00.000Z': { status: 'cancelled' }
+            status: {
+              current: 'cancelled',
+              timeline: {
+                '2025-02-15T09:00:00.000Z': { status: 'approved' },
+                '2025-03-31T09:00:00.000Z': { status: 'cancelled' }
+              }
             }
           },
           2026: {
             ...accreditation,
-            statusTimeline: {
-              '2025-12-15T09:00:00.000Z': { status: 'approved' }
+            status: {
+              current: 'approved',
+              timeline: { '2025-12-15T09:00:00.000Z': { status: 'approved' } }
             }
           }
         }
@@ -304,8 +313,9 @@ describe('the registration details page a regulator reads', () => {
       backendHolds(msw, {
         registration: {
           ...registration,
-          statusTimeline: {
-            '2025-03-01T00:00:00.000Z': { status: 'approved' }
+          status: {
+            current: 'approved',
+            timeline: { '2025-03-01T00:00:00.000Z': { status: 'approved' } }
           }
         }
       })

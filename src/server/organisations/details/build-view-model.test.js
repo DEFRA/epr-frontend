@@ -20,7 +20,7 @@ const organisationNumber = 500123
  */
 const aReprocessor = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
-    status: 'approved',
+    status: { current: 'approved', timeline: {} },
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'reprocessor',
@@ -35,7 +35,7 @@ const aReprocessor = (overrides = {}) =>
  */
 const anExporter = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
-    status: 'approved',
+    status: { current: 'approved', timeline: {} },
     material: 'paper',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'exporter',
@@ -136,18 +136,22 @@ describe(buildViewModel, () => {
           accreditations: {
             2025: {
               accreditationNumber: 'A25ER1',
-              status: 'cancelled',
-              statusTimeline: {
-                '2025-01-01T09:00:00.000Z': { status: 'approved' },
-                '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+              status: {
+                current: 'cancelled',
+                timeline: {
+                  '2025-01-01T09:00:00.000Z': { status: 'approved' },
+                  '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
+                }
               }
             },
             2026: {
               accreditationNumber: 'A26ER1',
-              status: 'suspended',
-              statusTimeline: {
-                '2026-01-01T09:00:00.000Z': { status: 'approved' },
-                '2026-06-01T09:00:00.000Z': { status: 'suspended' }
+              status: {
+                current: 'suspended',
+                timeline: {
+                  '2026-01-01T09:00:00.000Z': { status: 'approved' },
+                  '2026-06-01T09:00:00.000Z': { status: 'suspended' }
+                }
               }
             }
           }
