@@ -3,9 +3,11 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { year } from '#server/common/helpers/year.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
+import { homePath } from './home-page.js'
 import Boom from '@hapi/boom'
 import { getAllByRole, getByRole } from '@testing-library/dom'
 import { load } from 'cheerio'
@@ -24,7 +26,8 @@ vi.mock(
 )
 
 const ORGANISATION_NUMBER = 500123
-const PATH = `/organisations/${ORGANISATION_NUMBER}`
+const BARE_PATH = `/organisations/${ORGANISATION_NUMBER}`
+const PATH = `${BARE_PATH}/2026`
 
 const mockAuth = buildMockAuth({
   idToken: 'test-id-token',
@@ -118,6 +121,30 @@ const cellInColumn = (table) => {
   }
 }
 
+describe('#homePath', () => {
+  const organisation = organisationNumber(ORGANISATION_NUMBER)
+
+  it('builds the path when it has no year', () => {
+    expect(homePath(organisation)).toBe(BARE_PATH)
+  })
+
+  it('builds the path when it has a year', () => {
+    expect(homePath(organisation, { year: year(2026) })).toBe(PATH)
+  })
+
+  it('builds the path when it has a year and exporting', () => {
+    expect(homePath(organisation, { year: year(2026), exporting: true })).toBe(
+      `${PATH}/exporting`
+    )
+  })
+
+  it('builds the path when it has exporting and no year', () => {
+    expect(homePath(organisation, { exporting: true })).toBe(
+      `${BARE_PATH}/exporting`
+    )
+  })
+})
+
 describe('#organisationController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -158,7 +185,7 @@ describe('#organisationController', () => {
       vi.mocked(fetchOrganisationYears).mockResolvedValue([])
       serve({ R26ER1: reprocessor() })
 
-      const { payload, statusCode } = await visit(server)
+      const { payload, statusCode } = await visit(server, BARE_PATH)
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(fetchOrganisation).toHaveBeenCalledWith(
@@ -492,6 +519,85 @@ describe('#organisationController', () => {
     })
   })
 
+  describe('the year in the address', () => {
+    beforeEach(() => {
+      serve({})
+    })
+
+    it.for(
+      /** @type {const} */ ([
+        ['', '/2026'],
+        ['/exporting', '/2026/exporting']
+      ])
+    )(
+      'sends the organisation address at "%s" to its latest year',
+      async ([page, expected], { server }) => {
+        const { statusCode, headers } = await visit(
+          server,
+          `${BARE_PATH}${page}`
+        )
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(`${BARE_PATH}${expected}`)
+        expect(fetchOrganisation).not.toHaveBeenCalled()
+      }
+    )
+
+    it('reads the year the address names, not the latest', async ({
+      server
+    }) => {
+      await visit(server, `${BARE_PATH}/2025`)
+
+      expect(fetchOrganisation).toHaveBeenCalledWith(
+        ORGANISATION_NUMBER,
+        'test-backend-token',
+        { year: 2025 }
+      )
+    })
+
+    it('links the tabs within the year the address names', async ({
+      server
+    }) => {
+      serve({ R26R1: reprocessor(), R26EX1: exporter() })
+
+      const { payload } = await visit(server, `${BARE_PATH}/2025`)
+      const $ = load(payload)
+
+      expect(
+        $('.govuk-tabs__tab')
+          .map((_, el) => $(el).attr('href'))
+          .get()
+      ).toStrictEqual([`${BARE_PATH}/2025`, `${BARE_PATH}/2025/exporting`])
+    })
+
+    it('finds no page for a year the organisation has no approved registrations in', async ({
+      server
+    }) => {
+      const { statusCode } = await visit(server, `${BARE_PATH}/2024`)
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it.for(['20x6', '202', '20266'])(
+      'finds no page for the address "%s", which is not a year',
+      async (segment, { server }) => {
+        const { statusCode } = await visit(server, `${BARE_PATH}/${segment}`)
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      }
+    )
+
+    it('shows the page without a year address when the organisation has no approved year', async ({
+      server
+    }) => {
+      vi.mocked(fetchOrganisationYears).mockResolvedValue([])
+
+      const { statusCode } = await visit(server, BARE_PATH)
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+  })
+
   describe('the year it shows', () => {
     beforeEach(() => {
       serve({})
@@ -502,6 +608,8 @@ describe('#organisationController', () => {
     })
 
     it('does not show the year while the flag is off', async ({ server }) => {
+      config.set('featureFlags.navigateAcrossYears', false)
+
       const { payload } = await visit(server)
 
       expect(payload).not.toMatch(/This is \d+ data/)
@@ -521,7 +629,7 @@ describe('#organisationController', () => {
       config.set('featureFlags.navigateAcrossYears', true)
       vi.mocked(fetchOrganisationYears).mockResolvedValue([])
 
-      const { payload } = await visit(server)
+      const { payload } = await visit(server, BARE_PATH)
 
       expect(payload).not.toMatch(/This is \d+ data/)
     })
