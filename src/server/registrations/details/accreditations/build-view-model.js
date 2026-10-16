@@ -179,7 +179,7 @@ const toSummaryRows = ({
 }) => [
   {
     key: localise('registrations:details:accreditation:summary:status'),
-    status: toStatusTag(accreditation.status)
+    status: toStatusTag(accreditation.status.current)
   },
   {
     key: localise('registrations:details:accreditation:summary:number'),
