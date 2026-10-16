@@ -179,7 +179,7 @@ describe('the organisation home page', () => {
       }
     )
 
-    it('shows no registrations when the organisation has no approved year', async ({
+    it('shows no registrations when the organisation has no active year', async ({
       server
     }) => {
       vi.mocked(fetchOrganisationYears).mockResolvedValue([])
@@ -570,7 +570,7 @@ describe('the organisation home page', () => {
       }
     )
 
-    it('shows the page without a year address when the organisation has no approved year', async ({
+    it('shows the page without a year address when the organisation has no active year', async ({
       server
     }) => {
       vi.mocked(fetchOrganisationYears).mockResolvedValue([])
@@ -603,12 +603,46 @@ describe('the organisation home page', () => {
 
       const { payload } = await visit(server)
 
-      expect(load(payload)('p.govuk-heading-m').text()).toBe(
+      expect(load(payload)('span.govuk-heading-m').text()).toBe(
         'This is 2026 data'
       )
     })
 
-    it('hides the year line when the organisation has no approved year', async ({
+    it('links the year line to choosing a different year while the flag is on', async ({
+      server
+    }) => {
+      config.set('featureFlags.navigateAcrossYears', true)
+
+      const { payload } = await visit(server)
+
+      expect(
+        load(payload)('a:contains("Choose a different year")').attr('href')
+      ).toBe(`${PATH}/choose-year`)
+    })
+
+    it('offers no link while the flag is off', async ({ server }) => {
+      config.set('featureFlags.navigateAcrossYears', false)
+
+      const { payload } = await visit(server)
+
+      expect(payload).not.toContain('Choose a different year')
+    })
+
+    it('offers no other year when the organisation has only one', async ({
+      server
+    }) => {
+      config.set('featureFlags.navigateAcrossYears', true)
+      vi.mocked(fetchOrganisationYears).mockResolvedValue([year(2026)])
+
+      const { payload } = await visit(server)
+
+      expect(load(payload)('span.govuk-heading-m').text()).toBe(
+        'This is 2026 data'
+      )
+      expect(payload).not.toContain('Choose a different year')
+    })
+
+    it('hides the year line when the organisation has no active year', async ({
       server
     }) => {
       config.set('featureFlags.navigateAcrossYears', true)

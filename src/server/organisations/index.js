@@ -1,3 +1,4 @@
+import { chooseYearController } from './choose-year-controller.js'
 import { errorController } from './error-controller.js'
 import { homeController } from './home-controller.js'
 import { yearController } from './year-controller.js'
@@ -35,6 +36,11 @@ export const organisations = {
           ...yearController,
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}/exporting'
+        },
+        {
+          ...chooseYearController,
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/{year}/choose-year'
         },
         {
           ...errorController,

@@ -14,7 +14,7 @@ import { homePath, renderHome } from './home-page.js'
 /**
  * The organisation's home page with no year in the address. Regulators get
  * the details view. Operators are sent to their latest year, or shown an
- * organisation with no approved year its empty page.
+ * organisation with no active year its empty page.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const homeController = {
