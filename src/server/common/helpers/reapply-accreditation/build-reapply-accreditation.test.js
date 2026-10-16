@@ -2,39 +2,22 @@ import { describe, expect, test } from 'vitest'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
 
 /**
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AppliedForMaterial, RegistrationStatus } from '#domain/organisations/model.js'
  */
-
-/**
- * @param {unknown} r
- * @returns {Registration}
- */
-const asRegistration = (r) => /** @type {Registration} */ (r)
-/**
- * @param {unknown} a
- * @returns {Accreditation}
- */
-const asAccreditation = (a) => /** @type {Accreditation} */ (a)
 
 const baseParams = {
   now: new Date('2026-10-01T12:00:00'),
   window: { windowStart: '09-01T09:00', windowEnd: '12-31T23:59' },
   baseUrl: 'https://ws2.example',
   organisationId: 'org1',
-  registration: asRegistration({
-    id: 'reg1',
-    material: 'plastic',
-    status: 'approved'
-  }),
-  accreditation: asAccreditation({
-    status: 'approved',
-    validFrom: '2026-01-01'
-  })
+  registrationId: 'reg1',
+  material: /** @type {AppliedForMaterial} */ ('plastic'),
+  registrationStatus: /** @type {RegistrationStatus} */ ('approved'),
+  year: 2026
 }
 
 describe('#buildReapplyAccreditation', () => {
-  test('is visible and builds the link for an approved accreditation in-window', () => {
+  test('is visible and builds the link for the current year in-window', () => {
     const result = buildReapplyAccreditation(baseParams)
 
     expect(result).toStrictEqual({
@@ -43,26 +26,17 @@ describe('#buildReapplyAccreditation', () => {
     })
   })
 
-  test('is not visible for a prior-year accreditation', () => {
-    const result = buildReapplyAccreditation({
-      ...baseParams,
-      accreditation: asAccreditation({
-        status: 'approved',
-        validFrom: '2025-01-01'
-      })
-    })
+  test('is not visible for a prior year', () => {
+    const result = buildReapplyAccreditation({ ...baseParams, year: 2025 })
 
     expect(result).toBeNull()
   })
 
-  test('derives the link year from the current accreditation year + 1', () => {
+  test('links to the year after the current one', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
       now: new Date('2027-10-01T12:00:00'),
-      accreditation: asAccreditation({
-        status: 'approved',
-        validFrom: '2027-01-01'
-      })
+      year: 2027
     })
 
     expect(result?.href).toBe(
@@ -84,40 +58,12 @@ describe('#buildReapplyAccreditation', () => {
   test('sends the material slug verbatim (bare glass, no sub-type)', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
-      registration: asRegistration({
-        id: 'reg1',
-        material: 'glass',
-        status: 'approved'
-      })
+      material: 'glass'
     })
 
     expect(result?.href).toBe(
       'https://ws2.example/operator-accreditation/org1/reg1/glass/2027'
     )
-  })
-
-  test('is visible for a suspended accreditation', () => {
-    const result = buildReapplyAccreditation({
-      ...baseParams,
-      accreditation: asAccreditation({
-        status: 'suspended',
-        validFrom: '2026-01-01'
-      })
-    })
-
-    expect(result).not.toBeNull()
-  })
-
-  test('is visible for a cancelled accreditation', () => {
-    const result = buildReapplyAccreditation({
-      ...baseParams,
-      accreditation: asAccreditation({
-        status: 'cancelled',
-        validFrom: '2026-01-01'
-      })
-    })
-
-    expect(result).not.toBeNull()
   })
 
   test('is not visible when the base URL is not configured', () => {
@@ -147,38 +93,7 @@ describe('#buildReapplyAccreditation', () => {
   test('is not visible when the registration is not approved', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
-      registration: asRegistration({
-        id: 'reg1',
-        material: 'plastic',
-        status: 'created'
-      })
-    })
-
-    expect(result).toBeNull()
-  })
-
-  test('is not visible when there is no accreditation', () => {
-    const result = buildReapplyAccreditation({
-      ...baseParams,
-      accreditation: undefined
-    })
-
-    expect(result).toBeNull()
-  })
-
-  test('is not visible for a created (never accredited) accreditation', () => {
-    const result = buildReapplyAccreditation({
-      ...baseParams,
-      accreditation: asAccreditation({ status: 'created' })
-    })
-
-    expect(result).toBeNull()
-  })
-
-  test('is not visible when validFrom is missing (cannot derive the link year)', () => {
-    const result = buildReapplyAccreditation({
-      ...baseParams,
-      accreditation: asAccreditation({ status: 'cancelled' })
+      registrationStatus: 'created'
     })
 
     expect(result).toBeNull()

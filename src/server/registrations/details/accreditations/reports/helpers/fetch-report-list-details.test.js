@@ -1,59 +1,45 @@
-import { http, HttpResponse } from 'msw'
-import { describe, expect, vi } from 'vitest'
-
-import { beforeEach, it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
+import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
+import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchReportListDetails } from './fetch-report-list-details.js'
 
 /**
- * @import { SetupServer } from 'msw/node'
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { ReportListDetails } from './fetch-report-list-details.js'
  */
 
-/**
- * @typedef {{ authorization: string | null, pathname: string }} Received
- */
-
-/**
- * @param {Received} a
- * @param {Received} b
- */
-const byPathname = (a, b) => a.pathname.localeCompare(b.pathname)
-
-vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
-)
-
-const { fetchRegistrationAndAccreditation } =
-  await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+vi.mock(import('#server/common/helpers/organisations/fetch-organisation.js'))
+vi.mock(import('#server/reports/helpers/fetch-reporting-periods.js'))
 
 describe(fetchReportListDetails, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-789'
+  const organisationNumber = '500118'
+  const registrationNumber = 'R26ER5001180041PL'
   const backendToken = 'token'
 
-  const organisation = /** @type {Organisation} */ (
-    /** @type {unknown} */ ({
-      id: organisationId,
-      companyDetails: { name: 'Kirkby Plastics Ltd' }
-    })
-  )
-
-  const registration = /** @type {Registration} */ (
-    /** @type {unknown} */ ({
-      id: registrationId,
-      registrationNumber: 'R26ER5001180041PL',
-      wasteProcessingType: 'reprocessor'
-    })
-  )
-
+  /** @type {AccreditationView} */
   const accreditation = {
-    id: accreditationId,
     accreditationNumber: 'A26ER5001180114PL',
-    status: 'approved'
+    status: 'approved',
+    statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+  }
+
+  /** @type {OrganisationView} */
+  const organisation = {
+    organisationNumber: 500118,
+    name: 'Kirkby Plastics Ltd',
+    registrations: {
+      [registrationNumber]: {
+        status: 'approved',
+        validFrom: '2026-01-01',
+        material: 'plastic',
+        submittedToRegulator: { code: 'ea' },
+        wasteProcessingType: 'exporter',
+        statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
+        accreditations: { 2026: accreditation }
+      }
+    }
   }
 
   /** @type {ReportListDetails['reportingPeriods']} */
@@ -70,91 +56,68 @@ describe(fetchReportListDetails, () => {
     }
   ]
 
-  /**
-   * @param {SetupServer} msw
-   * @param {() => Response} [answer]
-   */
-  const backendAnswers = (
-    msw,
-    answer = () => HttpResponse.json({ cadence: 'monthly', reportingPeriods })
-  ) => {
-    /** @type {Received[]} */
-    const received = []
-
-    msw.use(
-      http.get(/\/v1\/organisations\//, ({ request }) => {
-        const { pathname } = new URL(request.url)
-        received.push({
-          authorization: request.headers.get('authorization'),
-          pathname
-        })
-
-        return pathname.endsWith('/reports/calendar')
-          ? answer()
-          : HttpResponse.json(accreditation)
-      })
-    )
-
-    return received
-  }
-
-  /** @type {Received[]} */
-  let requests
-
-  const fetchDetails = () =>
+  /** @param {{ registrationNumber?: string, year?: string }} [overrides] */
+  const fetchDetails = (overrides) =>
     fetchReportListDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
+      organisationNumber,
+      registrationNumber,
+      year: '2026',
+      backendToken,
+      ...overrides
     })
 
-  beforeEach(({ msw }) => {
-    vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      organisationData: organisation,
-      registration
+  beforeEach(() => {
+    vi.mocked(fetchOrganisation).mockResolvedValue(organisation)
+    vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
+      cadence: 'monthly',
+      reportingPeriods
     })
-    requests = backendAnswers(msw)
   })
 
-  it('reads what the page shows, and nothing else', async () => {
-    const result = await fetchDetails()
-
-    expect(result).toStrictEqual({
+  it("reads the organisation, the year's accreditation and the calendar", async () => {
+    await expect(fetchDetails()).resolves.toStrictEqual({
       organisation,
-      registration,
       accreditation,
       cadence: 'monthly',
       reportingPeriods
     })
-
-    expect(requests).toHaveLength(2)
   })
 
-  it('reads the accreditation and the calendar with the session token, encoding the ids in each path', async () => {
-    await fetchReportListDetails({
-      organisationId: 'org/123',
-      registrationId: 'reg 456',
-      accreditationId: 'acc?789',
-      backendToken
-    })
+  it('reads the organisation and the calendar by number', async () => {
+    await fetchDetails()
 
-    expect(requests.toSorted(byPathname)).toStrictEqual(
-      [
-        '/v1/organisations/org%2F123/registrations/reg%20456/accreditations/acc%3F789',
-        '/v1/organisations/org%2F123/registrations/reg%20456/reports/calendar'
-      ]
-        .map((pathname) => ({ authorization: 'Bearer token', pathname }))
-        .toSorted(byPathname)
+    expect(fetchOrganisation).toHaveBeenCalledWith(500118, backendToken)
+    expect(fetchReportingPeriodsByNumber).toHaveBeenCalledWith(
+      { organisationNumber, registrationNumber },
+      backendToken
     )
   })
 
-  it('fails the page where the calendar could not be read', async ({ msw }) => {
-    backendAnswers(msw, () => new HttpResponse(null, { status: 503 }))
+  it('is not found for an organisation number the backend does not know', async () => {
+    vi.mocked(fetchOrganisation).mockRejectedValue(Boom.notFound())
 
     await expect(fetchDetails()).rejects.toMatchObject({
-      output: { statusCode: 503 }
+      output: { statusCode: 404 }
     })
+  })
+
+  it('is not found for a registration number the organisation does not hold', async () => {
+    await expect(
+      fetchDetails({ registrationNumber: 'R26ER5009990041PL' })
+    ).rejects.toMatchObject({ output: { statusCode: 404 } })
+  })
+
+  it('is not found for a year the registration holds no accreditation for', async () => {
+    await expect(fetchDetails({ year: '2025' })).rejects.toMatchObject({
+      output: { statusCode: 404 }
+    })
+  })
+
+  it('fails the page where the calendar could not be read', async () => {
+    vi.mocked(fetchReportingPeriodsByNumber).mockRejectedValue(
+      new Error('nope')
+    )
+
+    await expect(fetchDetails()).rejects.toThrow('nope')
   })
 })

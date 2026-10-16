@@ -38,7 +38,8 @@ export const path = (strings, ...values) =>
 
 /**
  * Validates the response against `schema`, failing as a bad gateway that names
- * every field the backend got wrong.
+ * every field the backend got wrong, and how, but never the values it sent. A
+ * response with no body fails too.
  * @template T
  * @param {Schema<T>} schema
  * @returns {Parse<T>}
@@ -46,7 +47,9 @@ export const path = (strings, ...values) =>
 export const strictly =
   (schema) =>
   (payload, { url }) => {
-    const { error, value } = schema.validate(payload, { abortEarly: false })
+    const { error, value } = schema
+      .required()
+      .validate(payload, { abortEarly: false })
 
     if (error) {
       throw badGateway(
@@ -56,7 +59,10 @@ export const strictly =
           event: {
             action: 'parse_backend_response',
             reason: error.details
-              .map((detail) => `${detail.path.join('.')}: ${detail.message}`)
+              .map(
+                (detail) =>
+                  `${detail.path.join('.') || 'response'}: ${detail.type}`
+              )
               .join('; ')
           }
         }

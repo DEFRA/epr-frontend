@@ -16,6 +16,7 @@ import { resolveDecemberWasteControl } from './helpers/resolve-december-waste-ch
 import { resolveInsufficientBalanceMessageKey } from './helpers/insufficient-balance-error.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
+import { accreditationIdPath } from '#server/reports/helpers/report-paths.js'
 
 /** @import { ValidationErrorItem } from 'joi' */
 
@@ -424,7 +425,7 @@ export const postController = {
       )
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${result.id}/view`
+        `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${result.id}/view`
       )
     } catch (error) {
       if (error.output?.payload?.code === INSUFFICIENT_BALANCE_CODE) {
