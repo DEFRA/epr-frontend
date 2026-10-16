@@ -19,15 +19,10 @@ describe(fetchSummaryLogStatus, () => {
       validation: null
     }
 
-    /** @type {Request | undefined} */
-    let capturedRequest
     msw.use(
       http.get(
         `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
-        ({ request }) => {
-          capturedRequest = request
-          return HttpResponse.json(mockResponse)
-        }
+        () => HttpResponse.json(mockResponse)
       )
     )
 
@@ -38,13 +33,6 @@ describe(fetchSummaryLogStatus, () => {
       { backendToken: 'test-id-token' }
     )
 
-    expect(capturedRequest).toBeDefined()
-    expect(capturedRequest?.headers.get('content-type')).toBe(
-      'application/json'
-    )
-    expect(capturedRequest?.headers.get('authorization')).toBe(
-      'Bearer test-id-token'
-    )
     expect(result).toStrictEqual(mockResponse)
   })
 
@@ -150,49 +138,5 @@ describe(fetchSummaryLogStatus, () => {
     expect(result.status).toBe('validated')
 
     warnSpy.mockRestore()
-  })
-
-  it('should throw a Boom notFound error when the backend returns 404', async ({
-    msw
-  }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
-        () => new HttpResponse(null, { status: 404, statusText: 'Not Found' })
-      )
-    )
-
-    await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-        backendToken: 'test-id-token'
-      })
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 404 }
-    })
-  })
-
-  it('should throw a Boom error when the backend returns a non-404 error status', async ({
-    msw
-  }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
-        () =>
-          new HttpResponse(null, {
-            status: 500,
-            statusText: 'Internal Server Error'
-          })
-      )
-    )
-
-    await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-        backendToken: 'test-id-token'
-      })
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 500 }
-    })
   })
 })

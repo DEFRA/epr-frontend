@@ -1,4 +1,8 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
+
+/**
+ * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
+ */
 
 /**
  * Fetches waste balance data for an organisation from EPR Backend
@@ -7,28 +11,19 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<WasteBalanceMap>} Map of accreditationId to balance data
  */
-async function fetchWasteBalances(
+const fetchWasteBalances = async (
   organisationId,
   accreditationIds,
   backendToken
-) {
+) => {
   if (accreditationIds.length === 0) {
     return {}
   }
 
-  const encodedIds = accreditationIds.map(encodeURIComponent).join(',')
-  const path = `/v1/organisations/${organisationId}/waste-balances?accreditationIds=${encodedIds}`
-
-  return fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
+  return backend(backendToken).get(
+    path`/v1/organisations/${organisationId}/waste-balances`,
+    { query: { accreditationIds: accreditationIds.join(',') } }
+  )
 }
 
 export { fetchWasteBalances }
-
-/**
- * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
- */

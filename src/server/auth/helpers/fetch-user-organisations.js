@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 
 /**
  * @import { UserSession } from '../types/session.js'
@@ -12,11 +12,8 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  */
 export async function fetchUserOrganisations(backendToken) {
   /** @type {{ organisations: UserOrganisations }} */
-  const data = await fetchJsonFromBackend('/v1/me/organisations', {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
-  return data.organisations
+  const { organisations } = await backend(backendToken).get(
+    '/v1/me/organisations'
+  )
+  return organisations
 }

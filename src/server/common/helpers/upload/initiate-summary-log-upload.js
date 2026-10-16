@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
  * Initiates a summary log upload via the backend, scoped to the year it
@@ -13,22 +13,16 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} options.backendToken
  * @returns {Promise<{summaryLogId: string, uploadId: string, uploadUrl: string, statusUrl: string}>}
  */
-async function initiateSummaryLogUpload({
+const initiateSummaryLogUpload = ({
   organisationId,
   registrationId,
   year,
   redirectUrl,
   backendToken
-}) {
-  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${year}`
-
-  return fetchJsonFromBackend(path, {
-    method: 'POST',
-    body: JSON.stringify({ redirectUrl }),
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
-}
+}) =>
+  backend(backendToken).post(
+    path`/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${year}`,
+    { redirectUrl }
+  )
 
 export { initiateSummaryLogUpload }

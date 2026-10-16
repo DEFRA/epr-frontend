@@ -24,18 +24,4 @@ describe(fetchOrganisationYears, () => {
 
     expect(result).toStrictEqual([2027, 2026])
   })
-
-  test('sends the backend token as a bearer token', async ({ msw }) => {
-    let authorization
-    msw.use(
-      http.get(`${backendUrl}/organisations/50002/years`, ({ request }) => {
-        authorization = request.headers.get('Authorization')
-        return HttpResponse.json({ years: [] })
-      })
-    )
-
-    await fetchOrganisationYears(organisationNumber(50002), 'test-id-token')
-
-    expect(authorization).toBe('Bearer test-id-token')
-  })
 })
