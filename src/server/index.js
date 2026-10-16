@@ -56,14 +56,14 @@ export async function createServer(options = {}) {
     },
     security: {
       hsts: {
-        maxAge: 31536000,
         includeSubDomains: true,
+        maxAge: 31536000,
         preload: false
       },
-      xss: 'enabled',
       noSniff: true,
       referrer: 'strict-origin-when-cross-origin',
-      xframe: true
+      xframe: true,
+      xss: 'enabled'
     },
     auth: { mode: /** @type {const} */ ('required') }
   }
