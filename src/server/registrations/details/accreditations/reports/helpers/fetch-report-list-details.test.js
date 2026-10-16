@@ -12,6 +12,16 @@ import { fetchReportListDetails } from './fetch-report-list-details.js'
  * @import { ReportListDetails } from './fetch-report-list-details.js'
  */
 
+/**
+ * @typedef {{ authorization: string | null, pathname: string }} Received
+ */
+
+/**
+ * @param {Received} a
+ * @param {Received} b
+ */
+const byPathname = (a, b) => a.pathname.localeCompare(b.pathname)
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
@@ -68,13 +78,16 @@ describe(fetchReportListDetails, () => {
     msw,
     answer = () => HttpResponse.json({ cadence: 'monthly', reportingPeriods })
   ) => {
-    /** @type {string[]} */
-    const requestedPaths = []
+    /** @type {Received[]} */
+    const received = []
 
     msw.use(
       http.get(/\/v1\/organisations\//, ({ request }) => {
         const { pathname } = new URL(request.url)
-        requestedPaths.push(pathname)
+        received.push({
+          authorization: request.headers.get('authorization'),
+          pathname
+        })
 
         return pathname.endsWith('/reports/calendar')
           ? answer()
@@ -82,8 +95,11 @@ describe(fetchReportListDetails, () => {
       })
     )
 
-    return requestedPaths
+    return received
   }
+
+  /** @type {Received[]} */
+  let requests
 
   const fetchDetails = () =>
     fetchReportListDetails({
@@ -99,12 +115,10 @@ describe(fetchReportListDetails, () => {
       organisationData: organisation,
       registration
     })
-    backendAnswers(msw)
+    requests = backendAnswers(msw)
   })
 
-  it('reads what the page shows, and nothing else', async ({ msw }) => {
-    const requestedPaths = backendAnswers(msw)
-
+  it('reads what the page shows, and nothing else', async () => {
     const result = await fetchDetails()
 
     expect(result).toStrictEqual({
@@ -115,29 +129,10 @@ describe(fetchReportListDetails, () => {
       reportingPeriods
     })
 
-    expect(requestedPaths).toHaveLength(2)
+    expect(requests).toHaveLength(2)
   })
 
-  it('reads the accreditation and the calendar from the paths the backend serves', async ({
-    msw
-  }) => {
-    const requestedPaths = backendAnswers(msw)
-
-    await fetchDetails()
-
-    expect(requestedPaths.toSorted()).toStrictEqual(
-      [
-        '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789',
-        '/v1/organisations/org-123/registrations/reg-456/reports/calendar'
-      ].toSorted()
-    )
-  })
-
-  it('encodes ids that carry characters an address would otherwise read', async ({
-    msw
-  }) => {
-    const requestedPaths = backendAnswers(msw)
-
+  it('reads the accreditation and the calendar with the session token, encoding the ids in each path', async () => {
     await fetchReportListDetails({
       organisationId: 'org/123',
       registrationId: 'reg 456',
@@ -145,8 +140,13 @@ describe(fetchReportListDetails, () => {
       backendToken
     })
 
-    expect(requestedPaths).toContain(
-      '/v1/organisations/org%2F123/registrations/reg%20456/accreditations/acc%3F789'
+    expect(requests.toSorted(byPathname)).toStrictEqual(
+      [
+        '/v1/organisations/org%2F123/registrations/reg%20456/accreditations/acc%3F789',
+        '/v1/organisations/org%2F123/registrations/reg%20456/reports/calendar'
+      ]
+        .map((pathname) => ({ authorization: 'Bearer token', pathname }))
+        .toSorted(byPathname)
     )
   })
 

@@ -16,6 +16,16 @@ import { fetchAccreditationDetails } from './fetch-accreditation-details.js'
  * @import { ReportingCalendar } from './fetch-accreditation-details.js'
  */
 
+/**
+ * @typedef {{ authorization: string | null, pathname: string }} Received
+ */
+
+/**
+ * @param {Received} a
+ * @param {Received} b
+ */
+const byPathname = (a, b) => a.pathname.localeCompare(b.pathname)
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js'),
   () => ({
@@ -118,13 +128,16 @@ describe(fetchAccreditationDetails, () => {
       notes: notesAnswer = () => HttpResponse.json(packagingRecyclingNotes)
     } = {}
   ) => {
-    /** @type {string[]} */
-    const requestedPaths = []
+    /** @type {Received[]} */
+    const received = []
 
     msw.use(
       http.get(/\/v1\/organisations\//, ({ request }) => {
         const { pathname } = new URL(request.url)
-        requestedPaths.push(pathname)
+        received.push({
+          authorization: request.headers.get('authorization'),
+          pathname
+        })
 
         if (pathname.endsWith('/reports/calendar')) {
           return calendarAnswer()
@@ -142,8 +155,11 @@ describe(fetchAccreditationDetails, () => {
       })
     )
 
-    return requestedPaths
+    return received
   }
+
+  /** @type {Received[]} */
+  let requests
 
   /**
    * @param {Partial<Parameters<typeof fetchAccreditationDetails>[0]>} [overrides]
@@ -165,38 +181,26 @@ describe(fetchAccreditationDetails, () => {
       organisationData: organisation,
       registration
     })
-    backendAnswers(msw)
+    requests = backendAnswers(msw)
     vi.mocked(getWasteBalance).mockResolvedValue(wasteBalance)
   })
 
-  it('reads the accreditation, its calendar, ledger and notes from the paths the backend serves them at', async ({
-    msw
-  }) => {
-    const requestedPaths = backendAnswers(msw)
-
-    await fetchDetails()
-
-    expect(requestedPaths.toSorted()).toStrictEqual(
-      [
-        '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789',
-        '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes',
-        '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/waste-balance-ledger',
-        '/v1/organisations/org-123/registrations/reg-456/reports/calendar'
-      ].toSorted()
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async ({ msw }) => {
-    const requestedPaths = backendAnswers(msw)
-
+  it('reads the accreditation, its calendar, ledger and notes with the session token, encoding the ids in each path', async () => {
     await fetchDetails({
       organisationId: 'org/123',
       registrationId: 'reg&456',
       accreditationId: 'acc?789'
     })
 
-    expect(requestedPaths).toContain(
-      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%3F789'
+    expect(requests.toSorted(byPathname)).toStrictEqual(
+      [
+        '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%3F789',
+        '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%3F789/packaging-recycling-notes',
+        '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%3F789/waste-balance-ledger',
+        '/v1/organisations/org%2F123/registrations/reg%26456/reports/calendar'
+      ]
+        .map((pathname) => ({ authorization: 'Bearer test-token', pathname }))
+        .toSorted(byPathname)
     )
   })
 
@@ -293,16 +297,14 @@ describe(fetchAccreditationDetails, () => {
       expect(result.ledgerEvents).toStrictEqual(ledgerEvents)
     })
 
-    it('asks for no ledger, and answers none, for a session that may not read one', async ({
-      msw
-    }) => {
-      const requestedPaths = backendAnswers(msw)
-
+    it('asks for no ledger, and answers none, for a session that may not read one', async () => {
       const result = await fetchDetails({ canReadLedger: false })
 
       expect(result.ledgerEvents).toBeNull()
-      expect(requestedPaths).not.toContainEqual(
-        expect.stringMatching(/waste-balance-ledger$/)
+      expect(requests).not.toContainEqual(
+        expect.objectContaining({
+          pathname: expect.stringMatching(/waste-balance-ledger$/)
+        })
       )
     })
 
