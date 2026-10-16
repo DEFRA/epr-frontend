@@ -45,9 +45,11 @@ function getDisplayedRegistrations(registrations, selectedYear) {
     return {
       number,
       registration,
-      accreditation: isAccreditationActive(accreditation)
-        ? accreditation
-        : undefined
+      accreditation:
+        accreditation &&
+        isAccreditationActive({ status: accreditation.status.current })
+          ? accreditation
+          : undefined
     }
   })
 }

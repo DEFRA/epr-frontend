@@ -109,11 +109,11 @@ const buildTaggedReference = ({ reference, status }) => ({
  * @returns {MaybeTaggedReference}
  */
 const toAccreditationTag = (accreditation) =>
-  isAccreditationActive(accreditation)
+  isAccreditationActive({ status: accreditation.status.current })
     ? {
         ...buildTaggedReference({
           reference: accreditation.accreditationNumber,
-          status: accreditation.status
+          status: accreditation.status.current
         }),
         exists: true
       }
@@ -210,7 +210,7 @@ const buildRegistrationViewModel = ({ request, keys, registration }) => {
     pageTitle: localise('registrations:pageTitle', { siteName, material }),
     registration: buildTaggedReference({
       reference: keys.registrationNumber,
-      status: registration.status
+      status: registration.status.current
     }),
     reports: {
       link: {
@@ -372,7 +372,7 @@ export const controller = {
       organisationId: ids.organisationId,
       registrationId: ids.registrationId,
       material: ids.registration.material,
-      registrationStatus: registration.status,
+      registrationStatus: registration.status.current,
       year: Number(year)
     })
 

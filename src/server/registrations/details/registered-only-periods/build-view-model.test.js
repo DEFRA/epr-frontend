@@ -52,10 +52,12 @@ const anOrganisation = (overrides) => ({
  */
 const anAccreditation = (timeline) => ({
   accreditationNumber: 'A26ER5001180114PL',
-  status: 'approved',
-  statusTimeline: Object.fromEntries(
-    Object.entries(timeline).map(([date, status]) => [date, { status }])
-  )
+  status: {
+    current: 'approved',
+    timeline: Object.fromEntries(
+      Object.entries(timeline).map(([date, status]) => [date, { status }])
+    )
+  }
 })
 
 /**
@@ -63,13 +65,15 @@ const anAccreditation = (timeline) => ({
  * @returns {RegistrationView}
  */
 const aRegistration = (accreditations = {}) => ({
-  status: 'approved',
+  status: {
+    current: 'approved',
+    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+  },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'reprocessor',
   reprocessingType: 'input',
-  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   site: { address: { fullAddress: 'North Road, Leeds' } },
   accreditations
 })
@@ -245,7 +249,10 @@ describe(buildViewModel, () => {
       build({
         registration: {
           ...aRegistration({ 2026: anAccreditation(cancelledOn) }),
-          statusTimeline: anAccreditation(cancelledOn).statusTimeline
+          status: {
+            current: 'cancelled',
+            timeline: anAccreditation(cancelledOn).status.timeline
+          }
         }
       }).hasData
     ).toBe(false)

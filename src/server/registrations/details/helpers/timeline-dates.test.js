@@ -28,8 +28,7 @@ const toStatusTimeline = (timeline) =>
  */
 const anAccreditation = (timeline) => ({
   accreditationNumber: 'A26ER5001180114PL',
-  status: 'approved',
-  statusTimeline: toStatusTimeline(timeline)
+  status: { current: 'approved', timeline: toStatusTimeline(timeline) }
 })
 
 /**
@@ -38,12 +37,11 @@ const anAccreditation = (timeline) => ({
  * @returns {RegistrationView}
  */
 const aRegistration = (timeline, accreditations = {}) => ({
-  status: 'approved',
+  status: { current: 'approved', timeline: toStatusTimeline(timeline) },
   validFrom: '2020-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'exporter',
-  statusTimeline: toStatusTimeline(timeline),
   accreditations
 })
 
