@@ -15,6 +15,12 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  */
 
 /**
+ * @typedef {{
+ *   registrations: Record<string, ServedStatus & { accreditations: Record<string, ServedStatus> }>
+ * }} ServedOrganisation
+ */
+
+/**
  * Nests a flat `status` and `statusTimeline`. Remove once the backend serves only the nested shape.
  * @param {ServedStatus} view
  */
@@ -27,7 +33,7 @@ const nestStatus = ({ status, statusTimeline, ...rest }) => ({
 })
 
 /**
- * @param {{ registrations: Record<string, ServedStatus & { accreditations: Record<string, ServedStatus> }> }} organisation
+ * @param {ServedOrganisation} organisation
  * @returns {OrganisationView}
  */
 const nestStatuses = (organisation) =>
@@ -61,7 +67,7 @@ async function fetchOrganisation(
     }
   })
 
-  return nestStatuses(/** @type {any} */ (organisation))
+  return nestStatuses(/** @type {ServedOrganisation} */ (organisation))
 }
 
 export { fetchOrganisation }
