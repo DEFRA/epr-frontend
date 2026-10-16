@@ -145,7 +145,7 @@ describe('#homePath', () => {
   })
 })
 
-describe('#organisationController', () => {
+describe('the organisation home page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchOrganisationYears).mockResolvedValue([
@@ -156,28 +156,29 @@ describe('#organisationController', () => {
   })
 
   describe('the organisation it reads', () => {
-    it('reads the organisation as it stood in its latest approved year', async ({
-      server
-    }) => {
-      serve({})
+    it.for([2026, 2025])(
+      'reads the organisation as it stood in the year in the address, %i',
+      async (addressYear, { server }) => {
+        serve({})
 
-      await visit(server)
+        await visit(server, `${BARE_PATH}/${addressYear}`)
 
-      expect(fetchOrganisationYears).toHaveBeenCalledWith(
-        ORGANISATION_NUMBER,
-        'test-backend-token'
-      )
-      expect(fetchOrganisation).toHaveBeenCalledWith(
-        ORGANISATION_NUMBER,
-        'test-backend-token',
-        { year: 2026 }
-      )
-      expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
-        ORGANISATION_NUMBER,
-        2026,
-        'test-backend-token'
-      )
-    })
+        expect(fetchOrganisationYears).toHaveBeenCalledWith(
+          ORGANISATION_NUMBER,
+          'test-backend-token'
+        )
+        expect(fetchOrganisation).toHaveBeenCalledWith(
+          ORGANISATION_NUMBER,
+          'test-backend-token',
+          { year: addressYear }
+        )
+        expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
+          ORGANISATION_NUMBER,
+          addressYear,
+          'test-backend-token'
+        )
+      }
+    )
 
     it('shows no registrations when the organisation has no approved year', async ({
       server
@@ -384,7 +385,7 @@ describe('#organisationController', () => {
   })
 
   describe('the accreditation it shows', () => {
-    it('shows the latest year’s accreditation and no other', async ({
+    it('shows the accreditation for the year in the address and no other', async ({
       server
     }) => {
       serve({
@@ -543,18 +544,6 @@ describe('#organisationController', () => {
       }
     )
 
-    it('reads the year the address names, not the latest', async ({
-      server
-    }) => {
-      await visit(server, `${BARE_PATH}/2025`)
-
-      expect(fetchOrganisation).toHaveBeenCalledWith(
-        ORGANISATION_NUMBER,
-        'test-backend-token',
-        { year: 2025 }
-      )
-    })
-
     it('links the tabs within the year the address names', async ({
       server
     }) => {
@@ -598,7 +587,7 @@ describe('#organisationController', () => {
     })
   })
 
-  describe('the year it shows', () => {
+  describe('the year line', () => {
     beforeEach(() => {
       serve({})
     })
@@ -607,7 +596,7 @@ describe('#organisationController', () => {
       config.set('featureFlags.navigateAcrossYears', false)
     })
 
-    it('does not show the year while the flag is off', async ({ server }) => {
+    it('hides the year line while the flag is off', async ({ server }) => {
       config.set('featureFlags.navigateAcrossYears', false)
 
       const { payload } = await visit(server)
@@ -615,7 +604,7 @@ describe('#organisationController', () => {
       expect(payload).not.toMatch(/This is \d+ data/)
     })
 
-    it('shows the latest year while the flag is on', async ({ server }) => {
+    it('shows the year line while the flag is on', async ({ server }) => {
       config.set('featureFlags.navigateAcrossYears', true)
 
       const { payload } = await visit(server)
@@ -625,7 +614,9 @@ describe('#organisationController', () => {
       )
     })
 
-    it('shows no year when the organisation has none', async ({ server }) => {
+    it('hides the year line when the organisation has no approved year', async ({
+      server
+    }) => {
       config.set('featureFlags.navigateAcrossYears', true)
       vi.mocked(fetchOrganisationYears).mockResolvedValue([])
 
