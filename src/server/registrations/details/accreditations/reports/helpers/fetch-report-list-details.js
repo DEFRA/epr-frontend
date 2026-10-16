@@ -1,74 +1,42 @@
-import { backend, path } from '#server/common/helpers/backend-client.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
+import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
+import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { AccreditationResource } from '../../../helpers/types.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
  * @typedef {{
- *   organisation: Organisation,
- *   registration: Registration,
- *   accreditation: AccreditationResource,
+ *   organisation: OrganisationView,
+ *   accreditation: AccreditationView,
  *   cadence: CadenceValue,
  *   reportingPeriods: ReportingPeriod[]
  * }} ReportListDetails
  */
 
 /**
- * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string,
- *   backendToken: string
- * }} params
- * @returns {Promise<AccreditationResource>}
- */
-const fetchAccreditation = ({
-  organisationId,
-  registrationId,
-  accreditationId,
-  backendToken
-}) =>
-  backend(backendToken).get(
-    path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
-  )
-
-/**
  * What the reports page shows. A failed read fails the page: the periods are
  * all of its content.
- * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string,
- *   backendToken: string
- * }} params
+ * @param {AccreditationKeys & { backendToken: string }} params
  * @returns {Promise<ReportListDetails>}
  */
-export const fetchReportListDetails = async (params) => {
-  const [linked, accreditation, calendar] = await Promise.all([
-    fetchRegistrationAndAccreditation(
-      params.organisationId,
-      params.registrationId,
-      params.backendToken
-    ),
-    fetchAccreditation(params),
-    fetchReportingPeriods(
-      params.organisationId,
-      params.registrationId,
-      params.backendToken
-    )
+export const fetchReportListDetails = async ({
+  backendToken,
+  year,
+  ...keys
+}) => {
+  const [{ organisation, registration }, calendar] = await Promise.all([
+    fetchRegistration({ ...keys, backendToken }),
+    fetchReportingPeriodsByNumber(keys, backendToken)
   ])
 
   return {
-    organisation: linked.organisationData,
-    registration: linked.registration,
-    accreditation,
+    organisation,
+    accreditation: accreditationIn(registration, year),
     cadence: calendar.cadence,
     reportingPeriods: calendar.reportingPeriods
   }

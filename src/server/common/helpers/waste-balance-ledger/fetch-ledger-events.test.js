@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
 import {
+  fetchAccreditationLedgerEvents,
   fetchLedgerEvents,
   fetchRegisteredOnlyLedgerEvents
 } from './fetch-ledger-events.js'
@@ -65,6 +66,41 @@ describe(fetchLedgerEvents, () => {
     ).resolves.toStrictEqual(events)
   })
 
+  test.for([
+    {
+      accreditationId: 'acc#3',
+      pathname:
+        '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/waste-balance-ledger'
+    },
+    {
+      accreditationId: undefined,
+      pathname:
+        '/v1/organisations/org%2F1/registrations/reg%262/waste-balance-ledger'
+    }
+  ])(
+    'encodes the ids in the ledger path $pathname',
+    async ({ accreditationId, pathname }, { msw }) => {
+      /** @type {string[]} */
+      const pathnames = []
+
+      msw.use(
+        http.get(/\/waste-balance-ledger$/, ({ request }) => {
+          pathnames.push(new URL(request.url).pathname)
+          return HttpResponse.json(ledgerOf([]))
+        })
+      )
+
+      await fetchLedgerEvents({
+        organisationId: 'org/1',
+        registrationId: 'reg&2',
+        accreditationId,
+        backendToken
+      })
+
+      expect(pathnames).toStrictEqual([pathname])
+    }
+  )
+
   test('authorises the call with the session backend token', async ({
     msw
   }) => {
@@ -97,6 +133,31 @@ const keys = {
   year: '2026'
 }
 const naturalRegistrationPath = `${backendUrl}/organisations/500001/registrations/R25%2FSR1`
+
+describe(fetchAccreditationLedgerEvents, () => {
+  test("reads the accreditation's ledger with the session backend token", async ({
+    msw
+  }) => {
+    const events = [{ kind: 'prn-issued' }]
+    /** @type {string | null | undefined} */
+    let authorization
+
+    msw.use(
+      http.get(
+        `${naturalRegistrationPath}/accreditations/2026/ledger`,
+        ({ request }) => {
+          authorization = request.headers.get('authorization')
+          return HttpResponse.json(ledgerOf(events))
+        }
+      )
+    )
+
+    await expect(
+      fetchAccreditationLedgerEvents(keys, backendToken)
+    ).resolves.toStrictEqual(events)
+    expect(authorization).toBe('Bearer test-backend-token')
+  })
+})
 
 describe(fetchRegisteredOnlyLedgerEvents, () => {
   test("reads the year's registered-only ledger with the session backend token", async ({

@@ -3,6 +3,7 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
+import { registrationIdPath } from '#server/reports/helpers/report-paths.js'
 
 /**
  * Build view data for the create PRN/PERN page
@@ -58,7 +59,7 @@ export function buildCreatePrnViewData(
     heading: pageTitle,
     wasteBalanceText,
     decemberWaste,
-    backUrl: `/organisations/${organisationId}/registrations/${registrationId}`,
+    backUrl: registrationIdPath({ organisationId, registrationId }),
     material: {
       label: localise('prns:materialLabel'),
       value: material

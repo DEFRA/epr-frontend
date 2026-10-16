@@ -25,12 +25,44 @@ export const registrationPath = ({ registrationNumber, ...keys }) =>
   `${organisationPath(keys)}/registrations/${encodeURIComponent(registrationNumber)}`
 
 /**
+ * The accreditation's natural-key address.
+ * @param {AccreditationKeys} keys
+ * @returns {string}
+ */
+export const accreditationPath = ({ year, ...keys }) =>
+  `${registrationPath(keys)}/accreditations/${encodeURIComponent(year)}`
+
+/**
+ * The organisation's address by id, for pages not yet on natural keys.
+ * @param {{ organisationId: string }} ids
+ * @returns {string}
+ */
+export const organisationIdPath = ({ organisationId }) =>
+  `/organisations/${encodeURIComponent(organisationId)}`
+
+/**
+ * The registration's address by id.
+ * @param {{ organisationId: string, registrationId: string }} ids
+ * @returns {string}
+ */
+export const registrationIdPath = ({ registrationId, ...ids }) =>
+  `${organisationIdPath(ids)}/registrations/${encodeURIComponent(registrationId)}`
+
+/**
+ * The accreditation's address by id.
+ * @param {{ organisationId: string, registrationId: string, accreditationId: string }} ids
+ * @returns {string}
+ */
+export const accreditationIdPath = ({ accreditationId, ...ids }) =>
+  `${registrationIdPath(ids)}/accreditations/${encodeURIComponent(accreditationId)}`
+
+/**
  * The summary log upload page, by id until it moves to natural keys.
  * @param {{ organisationId: string, registrationId: string }} ids
  * @returns {string}
  */
-export const summaryLogUploadPath = ({ organisationId, registrationId }) =>
-  `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+export const summaryLogUploadPath = (ids) =>
+  `${registrationIdPath(ids)}/summary-logs/upload`
 
 /**
  * The report list page for a registration.
@@ -53,7 +85,7 @@ export const reportPath = ({
 }) => {
   const reports =
     cadence === CADENCE.MONTHLY
-      ? `${registrationPath(keys)}/accreditations/${year}/reports`
+      ? `${accreditationPath({ ...keys, year: String(year) })}/reports`
       : `${reportsListPath(keys)}/${year}`
 
   return `${reports}/${cadence}/${period}/submissions/${submissionNumber}`

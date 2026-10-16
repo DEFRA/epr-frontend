@@ -6,10 +6,14 @@ import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
-import { paths } from '#server/paths.js'
 import { CADENCE } from '#server/reports/constants.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
-import { buildPeriodPath } from '#server/reports/helpers/build-period-path.js'
+import {
+  accreditationPath as toAccreditationPath,
+  organisationPath,
+  registrationPath as toRegistrationPath,
+  reportPath
+} from '#server/reports/helpers/report-paths.js'
 
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 
@@ -19,21 +23,22 @@ import { buildStatusTagHtml as buildPrnStatusTagHtml } from '#server/prns/list-v
 import { buildWasteRecordsCsvDownloadPath } from '#server/registrations/waste-records-csv-download-controller.js'
 import { buildSummaryLogDownloadPath } from '#server/summary-log/download-controller.js'
 
-import { toAccreditationPath } from '../helpers/accreditation-child-page.js'
-import { organisationName, toCaption } from '../helpers/caption.js'
+import { toRegistrationTrail } from '../helpers/accreditation-child-page.js'
+import { organisationViewName, toCaption } from '../helpers/caption.js'
 import { toDateRange } from '../helpers/date-range.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
+import { accreditedDateRange } from '../helpers/timeline-dates.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { AccreditationResource, Localise } from '../helpers/types.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { Localise } from '../helpers/types.js'
  */
 
 /**
@@ -97,25 +102,18 @@ const toTonnage = (amount) =>
 
 /**
  * The registration's waste records, offered as a file rather than stated. The
- * records belong to the registration, not to the accreditation the page names,
- * so the link carries only those two ids.
+ * records belong to the registration, not to the accreditation the page names.
  * @param {{
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   organisationId: string,
- *   registrationId: string
+ *   registrationPath: string
  * }} params
  * @returns {SummaryRow}
  */
-const toWasteRecordsRow = ({
-  localise,
-  localiseUrl,
-  organisationId,
-  registrationId
-}) => ({
+const toWasteRecordsRow = ({ localise, localiseUrl, registrationPath }) => ({
   key: localise('registrations:details:accreditation:summary:wasteRecords'),
   html: `<a href="${localiseUrl(
-    buildWasteRecordsCsvDownloadPath({ organisationId, registrationId })
+    buildWasteRecordsCsvDownloadPath(registrationPath)
   )}" class="govuk-link">${escapeHtml(
     localise('registrations:details:accreditation:summary:download')
   )}</a>`
@@ -128,8 +126,7 @@ const toWasteRecordsRow = ({
  *   ledgerEvents: LedgerEvent[] | null,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   organisationId: string,
- *   registrationId: string
+ *   registrationPath: string
  * }} params
  * @returns {SummaryRow}
  */
@@ -137,8 +134,7 @@ const toLatestSummaryLogRow = ({
   ledgerEvents,
   localise,
   localiseUrl,
-  organisationId,
-  registrationId
+  registrationPath
 }) => {
   const key = localise(
     'registrations:details:accreditation:summary:latestSummaryLog'
@@ -153,7 +149,7 @@ const toLatestSummaryLogRow = ({
     key,
     html: `<a href="${localiseUrl(
       buildSummaryLogDownloadPath({
-        registrationPath: `/organisations/${organisationId}/registrations/${registrationId}`,
+        registrationPath,
         fileId: latest.summaryLog.id
       })
     )}" class="govuk-link">${escapeHtml(
@@ -164,12 +160,11 @@ const toLatestSummaryLogRow = ({
 
 /**
  * @param {{
- *   accreditation: AccreditationResource,
+ *   accreditation: AccreditationView,
  *   ledgerEvents: LedgerEvent[] | null,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   organisationId: string,
- *   registrationId: string,
+ *   registrationPath: string,
  *   wasteBalance: WasteBalance | null
  * }} params
  * @returns {SummaryRow[]}
@@ -179,8 +174,7 @@ const toSummaryRows = ({
   ledgerEvents,
   localise,
   localiseUrl,
-  organisationId,
-  registrationId,
+  registrationPath,
   wasteBalance
 }) => [
   {
@@ -189,7 +183,7 @@ const toSummaryRows = ({
   },
   {
     key: localise('registrations:details:accreditation:summary:number'),
-    value: accreditation.accreditationNumber ?? ''
+    value: accreditation.accreditationNumber
   },
   {
     key: localise(
@@ -201,19 +195,11 @@ const toSummaryRows = ({
     ledgerEvents,
     localise,
     localiseUrl,
-    organisationId,
-    registrationId
+    registrationPath
   }),
   // The page is regulator-only, so the flag is the whole question here.
   ...(offersWasteRecordsDownloads()
-    ? [
-        toWasteRecordsRow({
-          localise,
-          localiseUrl,
-          organisationId,
-          registrationId
-        })
-      ]
+    ? [toWasteRecordsRow({ localise, localiseUrl, registrationPath })]
     : [])
 ]
 
@@ -237,27 +223,23 @@ const toPrnsHead = (localise) => [
  * The three most recent notes, and where to read the rest. An unissued note's
  * row falls back to its created date, so the column is headed neutrally.
  * @param {{
- *   accreditationId: string,
+ *   accreditationPath: string,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   noteTypePlural: string,
- *   notes: PackagingRecyclingNote[],
- *   organisationId: string,
- *   registrationId: string
+ *   notes: PackagingRecyclingNote[]
  * }} params
  * @returns {PrnsTable}
  */
 const toPrns = ({
-  accreditationId,
+  accreditationPath,
   localise,
   localiseUrl,
   noteTypePlural,
-  notes,
-  organisationId,
-  registrationId
+  notes
 }) => {
   const { mostRecent } = toPrnGroups(notes)
-  const notesPath = `${toAccreditationPath({ accreditationId, organisationId, registrationId })}/packaging-recycling-notes`
+  const notesPath = `${accreditationPath}/packaging-recycling-notes`
 
   return {
     count: mostRecent.length,
@@ -297,23 +279,19 @@ const toPrns = ({
 /**
  * The three most recent reporting periods, and where to read the rest.
  * @param {{
- *   accreditationId: string,
  *   cadence: CadenceValue | null,
+ *   keys: AccreditationKeys,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   organisationId: string,
- *   registrationId: string,
  *   reportingPeriods: ReportingPeriod[]
  * }} params
  * @returns {ReportsSummary}
  */
 const toReportsSummary = ({
-  accreditationId,
   cadence,
+  keys,
   localise,
   localiseUrl,
-  organisationId,
-  registrationId,
   reportingPeriods
 }) => {
   // The calendar answers one cadence for the registration: quarterly periods
@@ -324,11 +302,13 @@ const toReportsSummary = ({
     localise,
     localiseUrl,
     periodPath: (period) =>
-      buildPeriodPath({
-        organisationId,
-        registrationId,
-        period,
-        cadence: CADENCE.MONTHLY
+      reportPath({
+        organisationNumber: keys.organisationNumber,
+        registrationNumber: keys.registrationNumber,
+        year: period.year,
+        cadence: CADENCE.MONTHLY,
+        period: period.period,
+        submissionNumber: period.submissionNumber
       }),
     reportingPeriods: monthlyPeriods
   }).slice(0, MOST_RECENT)
@@ -339,9 +319,7 @@ const toReportsSummary = ({
       localise,
       namespace: 'registrations:details:accreditation:reports'
     }),
-    href: localiseUrl(
-      `${toAccreditationPath({ accreditationId, organisationId, registrationId })}/reports`
-    ),
+    href: localiseUrl(`${toAccreditationPath(keys)}/reports`),
     rows
   }
 }
@@ -351,33 +329,28 @@ const toReportsSummary = ({
  * the rest, or no ledger at all where the session may not read one. An empty
  * ledger is still a ledger: the section says nothing has moved the balance yet.
  * @param {{
- *   accreditationId: string,
+ *   accreditationPath: string,
  *   ledgerEvents: LedgerEvent[] | null,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   organisationId: string,
- *   registration: Registration
+ *   registration: RegistrationView,
+ *   registrationPath: string
  * }} params
  * @returns {LedgerTable | null}
  */
 const toLedger = ({
-  accreditationId,
+  accreditationPath,
   ledgerEvents,
   localise,
   localiseUrl,
-  organisationId,
-  registration
+  registration,
+  registrationPath
 }) => {
   if (ledgerEvents === null) {
     return null
   }
 
   const { noteType } = getNoteTypeDisplayNames(registration)
-  const accreditationPath = toAccreditationPath({
-    accreditationId,
-    organisationId,
-    registrationId: registration.id
-  })
 
   // The rows are already newest first, so the slice keeps the newest.
   const rows = buildLedgerRows({
@@ -389,7 +362,7 @@ const toLedger = ({
     // The page is regulator-only, so the flag is the whole question here.
     offersCsvDownloads: offersWasteRecordsDownloads(),
     offersDownloads: true,
-    registrationPath: `/organisations/${organisationId}/registrations/${registration.id}`
+    registrationPath
   }).slice(0, MOST_RECENT)
 
   return {
@@ -400,44 +373,11 @@ const toLedger = ({
 }
 
 /**
- * The trail down to the accreditation, ending on this page unlinked.
  * @param {{
- *   localise: Localise,
- *   localiseUrl: (path: string) => string,
- *   name: string,
- *   organisation: Organisation,
- *   pageName: string,
- *   registration: Registration
- * }} params
- * @returns {Crumb[]}
- */
-const toBreadcrumbs = ({
-  localise,
-  localiseUrl,
-  name,
-  organisation,
-  pageName,
-  registration
-}) => [
-  {
-    text: localise('registrations:details:allOrganisations'),
-    href: localiseUrl(paths.regulators.home)
-  },
-  { text: name, href: localiseUrl(`/organisations/${organisation.id}`) },
-  {
-    text: localise('registrations:details:heading'),
-    href: localiseUrl(
-      `/organisations/${organisation.id}/registrations/${registration.id}`
-    )
-  },
-  { text: pageName }
-]
-
-/**
- * @param {{
- *   organisation: Organisation,
- *   registration: Registration,
- *   accreditation: AccreditationResource,
+ *   keys: AccreditationKeys,
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
+ *   accreditation: AccreditationView,
  *   wasteBalance: WasteBalance | null,
  *   reportingPeriods: ReportingPeriod[],
  *   cadence: CadenceValue | null,
@@ -449,6 +389,7 @@ const toBreadcrumbs = ({
  * @returns {AccreditationDetailsViewModel}
  */
 export const buildViewModel = ({
+  keys,
   organisation,
   registration,
   accreditation,
@@ -460,52 +401,55 @@ export const buildViewModel = ({
   localise,
   localiseUrl
 }) => {
-  const name = organisationName(organisation)
+  const name = organisationViewName(organisation)
   const pageName = localise('registrations:details:accreditation:breadcrumb')
+  const paths = {
+    organisation: organisationPath(keys),
+    registration: toRegistrationPath(keys),
+    accreditation: toAccreditationPath(keys)
+  }
 
   return {
-    breadcrumbs: toBreadcrumbs({
-      localise,
-      localiseUrl,
-      name,
-      organisation,
-      pageName,
-      registration
-    }),
+    breadcrumbs: [
+      ...toRegistrationTrail({
+        localise,
+        localiseUrl,
+        organisationName: name,
+        paths
+      }),
+      { text: pageName }
+    ],
     caption: toCaption([
       name,
-      registration.registrationNumber,
+      keys.registrationNumber,
       accreditation.accreditationNumber
     ]),
     heading: localise('registrations:details:accreditation:heading'),
     ledger: toLedger({
-      accreditationId: accreditation.id,
+      accreditationPath: paths.accreditation,
       ledgerEvents,
       localise,
       localiseUrl,
-      organisationId: organisation.id,
-      registration
+      registration,
+      registrationPath: paths.registration
     }),
-    period: toDateRange(accreditation.dateRange, localise),
-    pageTitle: accreditation.accreditationNumber
-      ? `${accreditation.accreditationNumber}: ${pageName}`
-      : pageName,
+    period: toDateRange(
+      accreditedDateRange(accreditation, keys.year),
+      localise
+    ),
+    pageTitle: `${accreditation.accreditationNumber}: ${pageName}`,
     prns: toPrns({
-      accreditationId: accreditation.id,
+      accreditationPath: paths.accreditation,
       localise,
       localiseUrl,
       noteTypePlural: getNoteTypeDisplayNames(registration).noteTypePlural,
-      notes: packagingRecyclingNotes,
-      organisationId: organisation.id,
-      registrationId: registration.id
+      notes: packagingRecyclingNotes
     }),
     reports: toReportsSummary({
-      accreditationId: accreditation.id,
       cadence,
+      keys,
       localise,
       localiseUrl,
-      organisationId: organisation.id,
-      registrationId: registration.id,
       reportingPeriods
     }),
     summaryRows: toSummaryRows({
@@ -513,8 +457,7 @@ export const buildViewModel = ({
       ledgerEvents,
       localise,
       localiseUrl,
-      organisationId: organisation.id,
-      registrationId: registration.id,
+      registrationPath: paths.registration,
       wasteBalance
     })
   }

@@ -22,5 +22,5 @@ export const errorController = {
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { OrganisationParams } from './controller.js'
+ * @import { OrganisationParams } from './index.js'
  */

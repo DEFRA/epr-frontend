@@ -1,17 +1,22 @@
 import { CADENCE } from '#server/reports/constants.js'
-import { buildPeriodPath } from '#server/reports/helpers/build-period-path.js'
+import {
+  accreditationPath,
+  organisationPath,
+  registrationPath,
+  reportPath
+} from '#server/reports/helpers/report-paths.js'
 
 import { toAccreditationChildPage } from '../../helpers/accreditation-child-page.js'
+import { organisationViewName } from '../../helpers/caption.js'
 import { toReportRows, toReportsHead } from '../../helpers/report-rows.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { AccreditationChildPage } from '../../helpers/accreditation-child-page.js'
- * @import { AccreditationResource } from '../../helpers/types.js'
  * @import { ReportsTable } from '../../helpers/report-rows.js'
  */
 
@@ -26,9 +31,9 @@ const NAMESPACE = 'registrations:details:accreditation:reports'
  * three most recent.
  * @param {{
  *   request: HapiRequest,
- *   organisation: Organisation,
- *   registration: Registration,
- *   accreditation: AccreditationResource,
+ *   keys: AccreditationKeys,
+ *   organisation: OrganisationView,
+ *   accreditation: AccreditationView,
  *   cadence: CadenceValue,
  *   reportingPeriods: ReportingPeriod[]
  * }} params
@@ -36,8 +41,8 @@ const NAMESPACE = 'registrations:details:accreditation:reports'
  */
 export const buildViewModel = ({
   request,
+  keys,
   organisation,
-  registration,
   accreditation,
   cadence,
   reportingPeriods
@@ -47,12 +52,17 @@ export const buildViewModel = ({
 
   return {
     ...toAccreditationChildPage({
-      accreditation,
       heading,
       localise,
       localiseUrl,
-      organisation,
-      registration
+      organisationName: organisationViewName(organisation),
+      registrationNumber: keys.registrationNumber,
+      accreditationNumber: accreditation.accreditationNumber,
+      paths: {
+        organisation: organisationPath(keys),
+        registration: registrationPath(keys),
+        accreditation: accreditationPath(keys)
+      }
     }),
     reports: {
       head: toReportsHead({ localise, namespace: NAMESPACE }),
@@ -61,14 +71,21 @@ export const buildViewModel = ({
         localise,
         localiseUrl,
         periodPath: (period) =>
-          buildPeriodPath({
-            organisationId: organisation.id,
-            registrationId: registration.id,
-            period,
-            cadence: CADENCE.MONTHLY
+          reportPath({
+            organisationNumber: keys.organisationNumber,
+            registrationNumber: keys.registrationNumber,
+            year: period.year,
+            cadence: CADENCE.MONTHLY,
+            period: period.period,
+            submissionNumber: period.submissionNumber
           }),
         // Same rule as the accreditation page: quarterly periods are not its.
-        reportingPeriods: cadence === CADENCE.MONTHLY ? reportingPeriods : []
+        reportingPeriods:
+          cadence === CADENCE.MONTHLY
+            ? reportingPeriods.filter(
+                (period) => period.year === Number(keys.year)
+              )
+            : []
       })
     }
   }

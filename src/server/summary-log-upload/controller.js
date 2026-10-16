@@ -4,6 +4,7 @@ import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate
 import { registrationUploadYear } from '#server/common/helpers/upload/registration-upload-year.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
+import { registrationIdPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const summaryLogUploadController = {
@@ -14,6 +15,10 @@ export const summaryLogUploadController = {
   handler: async (request, h) => {
     const localise = request.t
     const { organisationId, registrationId } = request.params
+    const registrationPath = registrationIdPath({
+      organisationId,
+      registrationId
+    })
 
     const session = request.auth.credentials
 
@@ -33,7 +38,7 @@ export const summaryLogUploadController = {
             organisationId,
             registrationId,
             year: registrationUploadYear(registration),
-            redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+            redirectUrl: `${registrationPath}/summary-logs/{summaryLogId}`,
             backendToken: session.backendToken
           })
         : {}
@@ -46,7 +51,7 @@ export const summaryLogUploadController = {
         )
       }
 
-      const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+      const backUrl = registrationPath
 
       return h.view('summary-log-upload/index', {
         pageTitle: localise('summary-log-upload:pageTitle'),
