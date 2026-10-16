@@ -23,11 +23,10 @@ const params = { organisationNumber, registrationNumber, backendToken }
 
 /** @type {RegistrationView} */
 const registration = {
-  status: 'approved',
+  status: { current: 'approved', timeline: {} },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
-  statusTimeline: {},
   accreditations: {},
   wasteProcessingType: 'exporter',
   overseasSites: {

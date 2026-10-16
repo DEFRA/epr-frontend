@@ -50,9 +50,11 @@ const unrecognised = buildMockAuth({
 })
 
 const registeredOnly = {
-  status: 'approved',
+  status: {
+    current: 'approved',
+    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+  },
   validFrom: '2026-01-01',
-  statusTimeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } },
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'reprocessor',
@@ -209,11 +211,13 @@ describe('who an accreditation renders for', () => {
   const accreditationPath = `/organisations/500118/registrations/${registrationNumber}/accreditations/2026`
   const accreditation = {
     accreditationNumber,
-    status: 'approved',
-    statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+    status: {
+      current: 'approved',
+      timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+    }
   }
   const registration = {
-    status: 'approved',
+    status: { current: 'approved', timeline: {} },
     validFrom: '2026-01-01',
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },

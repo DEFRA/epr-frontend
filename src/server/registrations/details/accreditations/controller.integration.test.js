@@ -146,7 +146,7 @@ const accreditationDetails = {
   },
   registration: /** @type {AccreditationDetails['registration']} */ (
     /** @type {unknown} */ ({
-      status: 'approved',
+      status: { current: 'approved', timeline: {} },
       validFrom: '2026-01-01',
       material: 'plastic',
       wasteProcessingType: 'reprocessor',
@@ -155,8 +155,10 @@ const accreditationDetails = {
   ),
   accreditation: {
     accreditationNumber: 'A26ER5001180114PL',
-    status: 'approved',
-    statusTimeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+    status: {
+      current: 'approved',
+      timeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+    }
   },
   wasteBalance: { amount: 1234.5, availableAmount: 987.25 },
   cadence: 'monthly',

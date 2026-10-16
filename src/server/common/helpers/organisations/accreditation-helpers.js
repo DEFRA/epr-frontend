@@ -1,4 +1,5 @@
 /** @import { AccreditationStatus } from '#domain/organisations/model.js' */
+/** @import { AccreditationView } from './organisation-view.js' */
 
 const ACTIVE_ACCREDITATION_STATUSES = new Set(['approved', 'suspended'])
 
@@ -11,3 +12,12 @@ const ACTIVE_ACCREDITATION_STATUSES = new Set(['approved', 'suspended'])
  */
 export const isAccreditationActive = (accreditation) =>
   !!accreditation && ACTIVE_ACCREDITATION_STATUSES.has(accreditation.status)
+
+/**
+ * Returns true when the accreditation in the organisation view is live.
+ * @param {AccreditationView | undefined} accreditation
+ * @returns {boolean}
+ */
+export const isAccreditationViewActive = (accreditation) =>
+  !!accreditation &&
+  ACTIVE_ACCREDITATION_STATUSES.has(accreditation.status.current)
