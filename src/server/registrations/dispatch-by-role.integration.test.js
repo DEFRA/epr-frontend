@@ -14,6 +14,7 @@ import {
   asOrganisation,
   findRegistrationAndAccreditation
 } from '#server/common/test-helpers/organisation-fixtures.js'
+import { fetchAccreditationDetails } from '#server/registrations/details/accreditations/helpers/fetch-accreditation-details.js'
 import { fetchRegistrationDetails } from '#server/registrations/details/helpers/fetch-registration-details.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, queryByRole } from '@testing-library/dom'
@@ -34,7 +35,11 @@ vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 vi.mock(
   import('#server/registrations/details/helpers/fetch-registration-details.js')
 )
+vi.mock(
+  import('#server/registrations/details/accreditations/helpers/fetch-accreditation-details.js')
+)
 
+const backendUrl = config.get('eprBackendUrl')
 const organisationId = '6507f1f77bcf86cd79943901'
 const registrationId = 'reg-001-glass-approved'
 const path = `/organisations/${organisationId}/registrations/${registrationId}`
@@ -92,9 +97,10 @@ const registrationDetails = {
 /**
  * @param {HapiServer} server
  * @param {ReturnType<typeof buildMockAuth>} auth
+ * @param {string} [url]
  */
-const visit = async (server, auth) => {
-  const response = await server.inject({ method: 'GET', url: path, auth })
+const visit = async (server, auth, url = path) => {
+  const response = await server.inject({ method: 'GET', url, auth })
 
   return {
     statusCode: response.statusCode,
@@ -118,7 +124,7 @@ describe('who a registration renders for', () => {
   beforeEach(({ msw }) => {
     msw.use(
       http.get(
-        `${config.get('eprBackendUrl')}/v1/organisations/:organisationId/registrations/:registrationId/accreditations/:accreditationId/packaging-recycling-notes/december-prn-eligibility`,
+        `${backendUrl}/v1/organisations/:organisationId/registrations/:registrationId/accreditations/:accreditationId/packaging-recycling-notes/december-prn-eligibility`,
         () => HttpResponse.json({ mode: 'pool', windowOpen: false })
       )
     )
@@ -196,5 +202,116 @@ describe('who a registration renders for', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(headingOf(body)).not.toContain('Registration details')
+  })
+})
+
+describe('who an accreditation renders for', () => {
+  const registrationNumber = 'R26ER5001180041PL'
+  const accreditationNumber = 'A26ER5001180114PL'
+  const accreditationPath = `/organisations/500118/registrations/${registrationNumber}/accreditations/2026`
+  const accreditation = {
+    accreditationNumber,
+    status: 'approved',
+    statusTimeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+  }
+  const registration = {
+    status: 'approved',
+    validFrom: '2026-01-01',
+    material: 'plastic',
+    submittedToRegulator: { code: 'ea' },
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: { address: { line1: 'Unit 4 Mill Road' } },
+    accreditations: { 2026: accreditation }
+  }
+
+  beforeAll(() => {
+    config.set('featureFlags.regulatorAccess', true)
+  })
+
+  beforeEach(() => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue(
+      /** @type {Awaited<ReturnType<typeof fetchAccreditationDetails>>} */ (
+        /** @type {unknown} */ ({
+          organisation: {
+            organisationNumber: 500118,
+            name: 'Kirkby Plastics Ltd',
+            registrations: {}
+          },
+          registration,
+          accreditation,
+          wasteBalance: null,
+          reportingPeriods: [],
+          cadence: null,
+          ledgerEvents: null,
+          packagingRecyclingNotes: []
+        })
+      )
+    )
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.regulatorAccess', false)
+  })
+
+  it('gives a regulator the accreditation page', async ({ server }) => {
+    const { statusCode, body } = await visit(
+      server,
+      regulator,
+      accreditationPath
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(headingOf(body)).toContain('Accreditation')
+  })
+
+  it("gives an operator their registration page for that year's accreditation", async ({
+    server,
+    msw
+  }) => {
+    msw.use(
+      http.get(`${backendUrl}/organisations/500118`, () =>
+        HttpResponse.json({
+          organisationNumber: 500118,
+          name: 'Kirkby Plastics Ltd',
+          registrations: { [registrationNumber]: registration }
+        })
+      ),
+      http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+        HttpResponse.json({
+          id: organisationId,
+          orgId: 500118,
+          registrations: [
+            {
+              id: registrationId,
+              registrationNumber,
+              accreditationId: 'acc-1',
+              material: 'plastic'
+            }
+          ],
+          accreditations: [
+            { id: 'acc-1', accreditationNumber, validFrom: '2026-01-01' }
+          ]
+        })
+      ),
+      http.get(`${backendUrl}/organisations/500118/waste-balances/2026`, () =>
+        HttpResponse.json({})
+      ),
+      http.get(
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/acc-1/packaging-recycling-notes/december-prn-eligibility`,
+        () => HttpResponse.json({ mode: 'pool', windowOpen: false })
+      )
+    )
+
+    const { statusCode, body } = await visit(
+      server,
+      buildMockAuth({ linkedOrganisationId: organisationId }),
+      accreditationPath
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(fetchAccreditationDetails).not.toHaveBeenCalled()
+    expect(headingOf(body)).toContain('Plastic')
+    expect(body).toContain(accreditationNumber)
   })
 })

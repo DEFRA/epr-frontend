@@ -1,4 +1,10 @@
+import { getYear, parseISO } from 'date-fns'
+
 import { config } from '#config/config.js'
+import {
+  ACCREDITATION_STATUS,
+  REGISTRATION_STATUS
+} from '#domain/organisations/model.js'
 import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -137,6 +143,63 @@ const buildMaybeTaggedReference = ({ reference, status }) => {
 }
 
 /**
+ * Statuses that count as accredited for the reapply link (PAE-1791 AC 5/6);
+ * `cancelled` is still a prior accreditation eligible for renewal.
+ * @type {Set<AccreditationStatus>}
+ */
+const ACCREDITED_STATUSES = new Set([
+  ACCREDITATION_STATUS.APPROVED,
+  ACCREDITATION_STATUS.SUSPENDED,
+  ACCREDITATION_STATUS.CANCELLED
+])
+
+/**
+ * The year an accreditation was accredited for, if it ever was.
+ * @param {Accreditation | undefined} accreditation
+ * @returns {number | undefined}
+ */
+const toAccreditedYear = (accreditation) =>
+  accreditation?.validFrom && ACCREDITED_STATUSES.has(accreditation.status)
+    ? getYear(parseISO(accreditation.validFrom))
+    : undefined
+
+/**
+ * The reapply link, read from the raw accreditation so a cancelled one still shows it.
+ * @param {{
+ *   organisationId: string,
+ *   registration: Registration,
+ *   rawAccreditation: Accreditation | undefined
+ * }} params
+ */
+function toReapplyAccreditation({
+  organisationId,
+  registration,
+  rawAccreditation
+}) {
+  const accreditedYear = toAccreditedYear(rawAccreditation)
+
+  if (
+    accreditedYear === undefined ||
+    registration.status !== REGISTRATION_STATUS.APPROVED
+  ) {
+    return null
+  }
+
+  const { windowStart, windowEnd, baseUrl } = config.get('reapplyAccreditation')
+
+  return buildReapplyAccreditation({
+    now: new Date(),
+    window: { windowStart, windowEnd },
+    baseUrl,
+    organisationId,
+    registrationId: registration.id,
+    material: registration.material,
+    registrationStatus: registration.status,
+    year: accreditedYear
+  })
+}
+
+/**
  * Build view model for accreditation dashboard
  * @param {{
  *   request: HapiRequest;
@@ -172,17 +235,10 @@ function buildViewModel({
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
   )
 
-  const { windowStart, windowEnd, baseUrl } = config.get('reapplyAccreditation')
-  const reapplyAccreditation = buildReapplyAccreditation({
-    now: new Date(),
-    window: { windowStart, windowEnd },
-    baseUrl,
+  const reapplyAccreditation = toReapplyAccreditation({
     organisationId,
     registration,
-    // Deliberately the raw (unfiltered) accreditation, not the live-only
-    // `accreditation` above: the reapply link must also show for a `cancelled`
-    // accreditation, which the filtered view drops to undefined.
-    accreditation: rawAccreditation
+    rawAccreditation
   })
 
   /** @type {RegistrationViewModel} */
@@ -339,6 +395,7 @@ function getWasteBalanceViewData(wasteBalance, noteTypePlural, showsDecember) {
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { AccreditationStatus } from '#domain/organisations/model.js'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'

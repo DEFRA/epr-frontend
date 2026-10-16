@@ -85,11 +85,12 @@ const regulator = buildMockAuth({
  * Answers the id lookup and regulator search the redirect makes, and the
  * natural-key reads the pages make.
  * @param {SetupServer} msw
+ * @param {object} [held]
  */
-const backendHolds = (msw) =>
+const backendHolds = (msw, held = organisation) =>
   msw.use(
     http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
-      HttpResponse.json(organisation)
+      HttpResponse.json(held)
     ),
     http.get(`${backendUrl}/v1/organisations`, () =>
       HttpResponse.json({
@@ -106,6 +107,21 @@ const backendHolds = (msw) =>
     ),
     http.get(`${backendUrl}${byNumbers}/ledger/2026`, () =>
       HttpResponse.json({ events: [] })
+    ),
+    http.get(`${backendUrl}${byNumbers}/accreditations/2026/ledger`, () =>
+      HttpResponse.json({ events: [] })
+    ),
+    http.get(
+      `${backendUrl}/organisations/${organisationNumber}/waste-balances/2026`,
+      () => HttpResponse.json({})
+    ),
+    http.get(
+      `${backendUrl}/v1${byIds}/accreditations/${accreditationId}/packaging-recycling-notes`,
+      () => HttpResponse.json([])
+    ),
+    http.get(
+      `${backendUrl}/v1${byIds}/accreditations/${accreditationId}/packaging-recycling-notes/december-prn-eligibility`,
+      () => HttpResponse.json({ mode: 'pool', windowOpen: false })
     )
   )
 
@@ -205,5 +221,48 @@ describe('old registration and accreditation page URLs', () => {
       expect(redirect.headers.location).toBe(newUrl)
       expect(page.statusCode).toBe(statusCodes.notFound)
     })
+  })
+
+  describe('the accreditation page', () => {
+    const oldUrl = `${byIds}/accreditations/${accreditationId}`
+    const newUrl = `${byNumbers}/accreditations/2026`
+
+    it.for([
+      { name: 'a regulator', auth: regulator },
+      { name: 'an operator', auth: operator }
+    ])(
+      'sends $name from the id URL to the number URL, with the year from validFrom',
+      async ({ auth }, { server, msw }) => {
+        backendHolds(msw)
+
+        const redirect = await visit(server, oldUrl, auth)
+        const page = await visit(
+          server,
+          /** @type {string} */ (redirect.headers.location),
+          auth
+        )
+
+        expect(redirect.statusCode).toBe(statusCodes.found)
+        expect(redirect.headers.location).toBe(newUrl)
+        expect(page.statusCode).toBe(statusCodes.ok)
+      }
+    )
+
+    it.for([
+      { name: 'a regulator', auth: regulator },
+      { name: 'an operator', auth: operator }
+    ])(
+      "is not found for $name at a created accreditation's id URL",
+      async ({ auth }, { server, msw }) => {
+        backendHolds(msw, {
+          ...organisation,
+          accreditations: [{ id: accreditationId, status: 'created' }]
+        })
+
+        const { statusCode } = await visit(server, oldUrl, auth)
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      }
+    )
   })
 })

@@ -12,25 +12,12 @@ export const wasteRecordsCsvDownloadPath =
   '/organisations/{organisationId}/registrations/{registrationId}/waste-records/download.csv'
 
 /**
- * The address of a registration's latest waste records as CSV. Segments go
- * straight into an href, so each is encoded.
- * @param {{ organisationId: string, registrationId: string }} ids
+ * The address of a registration's latest waste records as CSV.
+ * @param {string} registrationPath
  * @returns {string}
  */
-export const buildWasteRecordsCsvDownloadPath = ({
-  organisationId,
-  registrationId
-}) =>
-  [
-    'organisations',
-    organisationId,
-    'registrations',
-    registrationId,
-    'waste-records',
-    'download.csv'
-  ]
-    .map((segment) => `/${encodeURIComponent(segment)}`)
-    .join('')
+export const buildWasteRecordsCsvDownloadPath = (registrationPath) =>
+  `${registrationPath}/waste-records/download.csv`
 
 const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
 
