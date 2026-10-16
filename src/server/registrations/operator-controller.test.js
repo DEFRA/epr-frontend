@@ -37,7 +37,7 @@ const accreditationPath = `${registrationPath}/accreditations/${year}`
 
 /** @type {Record<string, unknown>} */
 const reprocessor = {
-  status: 'approved',
+  status: { current: 'approved', timeline: {} },
   validFrom: `${year}-01-01`,
   material: 'glass_re_melt',
   submittedToRegulator: { code: 'ea' },
@@ -49,9 +49,11 @@ const reprocessor = {
   accreditations: {
     [year]: {
       accreditationNumber,
-      status: 'approved',
-      statusTimeline: {
-        [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' }
+      status: {
+        current: 'approved',
+        timeline: {
+          [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' }
+        }
       }
     }
   }
@@ -324,10 +326,12 @@ describe("the operator's registration page for a year", () => {
         accreditations: {
           [year]: {
             accreditationNumber,
-            status: 'cancelled',
-            statusTimeline: {
-              [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' },
-              [`${year}-03-01`]: { status: 'cancelled' }
+            status: {
+              current: 'cancelled',
+              timeline: {
+                [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' },
+                [`${year}-03-01`]: { status: 'cancelled' }
+              }
             }
           }
         }
@@ -444,9 +448,11 @@ describe("the operator's registration page with no year", () => {
         accreditations: {
           [thisYear - 1]: {
             accreditationNumber: 'A25ER5001180114GL',
-            status: 'approved',
-            statusTimeline: {
-              [`${thisYear - 1}-01-01T09:00:00.000Z`]: { status: 'approved' }
+            status: {
+              current: 'approved',
+              timeline: {
+                [`${thisYear - 1}-01-01T09:00:00.000Z`]: { status: 'approved' }
+              }
             }
           },
           .../** @type {object} */ (reprocessor.accreditations)
@@ -500,10 +506,12 @@ describe("the operator's registration page with no year", () => {
         accreditations: {
           [year]: {
             accreditationNumber,
-            status: 'cancelled',
-            statusTimeline: {
-              [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' },
-              [`${year}-03-01`]: { status: 'cancelled' }
+            status: {
+              current: 'cancelled',
+              timeline: {
+                [`${year}-01-01T09:00:00.000Z`]: { status: 'approved' },
+                [`${year}-03-01`]: { status: 'cancelled' }
+              }
             }
           }
         }
