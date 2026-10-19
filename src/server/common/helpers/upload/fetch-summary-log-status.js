@@ -1,8 +1,10 @@
 import { summaryLogStatusResponseSchema } from '#domain/summary-logs/loads-schema.js'
-import { backend, path } from '#server/common/helpers/backend-client.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { registrationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { SummaryLogStatusResponse } from '#server/summary-log/types.js'
  */
 
@@ -28,21 +30,15 @@ const tolerantly = (payload) => {
 
 /**
  * Fetches summary log status from EPR Backend
- * @param {string} organisationId
- * @param {string} registrationId
+ * @param {RegistrationKeys} keys
  * @param {string} summaryLogId
  * @param {object} options
  * @param {string} options.backendToken - Bearer token for the backend
  * @returns {Promise<SummaryLogStatusResponse>}
  */
-const fetchSummaryLogStatus = (
-  organisationId,
-  registrationId,
-  summaryLogId,
-  { backendToken }
-) =>
+const fetchSummaryLogStatus = (keys, summaryLogId, { backendToken }) =>
   backend(backendToken).get(
-    path`/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
+    `${registrationPath(keys)}/summary-logs/${encodeURIComponent(summaryLogId)}`,
     { parse: tolerantly }
   )
 

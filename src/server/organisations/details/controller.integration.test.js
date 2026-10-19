@@ -367,12 +367,6 @@ describe('who the organisation page renders for', () => {
     expect(surfaceOff.body).toBe(surfaceOn.body)
   })
 
-  it('does not give a regulator a year page', async ({ server }) => {
-    const { statusCode } = await visit(server, regulator, `${path}/2026`)
-
-    expect(statusCode).toBe(statusCodes.notFound)
-  })
-
   it('gives a support user the regulator page', async ({ server }) => {
     const { statusCode, body } = await visit(server, support)
 

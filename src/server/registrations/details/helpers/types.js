@@ -1,31 +1,8 @@
 /** @import { DateRange } from '#server/common/helpers/organisations/registration-resource.js'; */
-/**
- * @import { AccreditationStatus } from '#domain/organisations/model.js'
- */
 
 /**
  * Re-exported so a page's helpers keep one import for the types they read.
  * @typedef {DateRange} DateRange
- */
-
-/**
- * One accreditation of a registration, as
- * `/v1/organisations/{id}/registrations/{id}/accreditations` answers. An
- * application that never became an accreditation is in the collection too, so
- * the number is nullable.
- * @typedef {{
- *   id: string,
- *   accreditationNumber: string | null,
- *   status: AccreditationStatus,
- *   reprocessingType: string | null,
- *   dateRange: DateRange,
- *   application: {
- *     orgName: string,
- *     submittedToRegulator: string,
- *     material: string,
- *     wasteProcessingType: string
- *   }
- * }} AccreditationResource
  */
 
 /**

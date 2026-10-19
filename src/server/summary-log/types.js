@@ -274,8 +274,8 @@
 /**
  * Route params for summary-log controllers.
  * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
+ *   organisationNumber: string,
+ *   registrationNumber: string,
  *   summaryLogId: string
  * }} SummaryLogParams
  */

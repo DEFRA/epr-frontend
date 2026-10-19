@@ -13,7 +13,10 @@ const aNote = (note) => ({
   tonnage: 10,
   material: 'paper',
   createdAt: '2026-01-01T00:00:00.000Z',
+  notes: null,
+  accreditationYear: 2026,
   issuedAt: null,
+  issuedBy: null,
   wasteProcessingType: 'reprocessor',
   processToBeUsed: '',
   isDecemberWaste: false,
@@ -215,5 +218,5 @@ describe(toPrnGroups, () => {
 })
 
 /**
- * @import { PackagingRecyclingNote } from './fetch-packaging-recycling-notes.js'
+ * @import { PackagingRecyclingNote } from './prn-resource.js'
  */

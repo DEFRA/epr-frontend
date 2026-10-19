@@ -1,5 +1,4 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
@@ -12,11 +11,13 @@ import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
+import { prnsPath } from './helpers/prn-resource.js'
 import { resolveDecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
 import { resolveInsufficientBalanceMessageKey } from './helpers/insufficient-balance-error.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
-import { accreditationIdPath } from '#server/reports/helpers/report-paths.js'
 
 /** @import { ValidationErrorItem } from 'joi' */
 
@@ -143,36 +144,25 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
  * recipient, validation failAction) so they can't drift on which calls they
  * make.
  * @param {HapiRequest} request
- * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
- * @param {string} backendToken
- * @returns {Promise<{ registration: object, wasteBalance: WasteBalance | null, decemberWasteControl: DecemberWasteControl }>}
+ * @param {AccreditationKeys} keys
+ * @returns {Promise<{ registration: Registration, wasteBalance: WasteBalance | null, decemberWasteControl: DecemberWasteControl }>}
  */
-async function fetchCreatePrnViewDataInputs(
-  request,
-  { organisationId, registrationId, accreditationId },
-  backendToken
-) {
-  const [{ registration }, wasteBalance, decemberPrnEligibility] =
+async function fetchCreatePrnViewDataInputs(request, keys) {
+  const credentials = request.auth.credentials
+  const { backendToken } = credentials
+
+  const [{ registration, accreditation }, decemberPrnEligibility] =
     await Promise.all([
-      getRequiredRegistrationWithAccreditation({
-        organisationId,
-        registrationId,
-        backendToken,
-        accreditationId
-      }),
-      getWasteBalance(
-        organisationId,
-        accreditationId,
-        backendToken,
-        request.logger
-      ),
-      fetchDecemberPrnEligibility(
-        organisationId,
-        registrationId,
-        accreditationId,
-        backendToken
-      )
+      getRequiredRegistrationWithAccreditationByNumber(keys, credentials),
+      fetchDecemberPrnEligibility(keys, backendToken)
     ])
+
+  const wasteBalance = await fetchPrnWasteBalance({
+    keys,
+    accreditationNumber: accreditation.accreditationNumber,
+    backendToken,
+    logger: request.logger
+  })
 
   const { noteTypePlural } = getNoteTypeDisplayNames(registration)
 
@@ -199,16 +189,11 @@ async function fetchCreatePrnViewDataInputs(
  * @param {Array<WasteOrganisation>} organisations
  */
 async function handleInsufficientBalance(request, h, organisations) {
-  const { organisationId, registrationId } = request.params
-  const session = request.auth.credentials
+  const keys = toAccreditationKeys(request.params)
   const { t: localise } = request
 
   const { registration, wasteBalance, decemberWasteControl } =
-    await fetchCreatePrnViewDataInputs(
-      request,
-      request.params,
-      session.backendToken
-    )
+    await fetchCreatePrnViewDataInputs(request, keys)
 
   const messageKey = resolveInsufficientBalanceMessageKey(
     decemberWasteControl.mode,
@@ -223,10 +208,9 @@ async function handleInsufficientBalance(request, h, organisations) {
   }
 
   const viewData = buildCreatePrnViewData(request, {
-    organisationId,
+    keys,
     recipients: mapToSelectOptions(organisations),
     registration,
-    registrationId,
     wasteBalance,
     decemberWasteControl
   })
@@ -255,7 +239,7 @@ function reRenderFormValues(payload) {
 }
 
 /**
- * @param {CreatePrnResponse} result - The created PRN draft from the backend
+ * @param {PackagingRecyclingNote} result - The created PRN draft from the backend
  * @param {string} recipientDisplayName - The resolved display name for the recipient
  * @param {string | undefined} notes - Issuer notes
  */
@@ -282,8 +266,7 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
  * @param {Array<WasteOrganisation>} organisations
  */
 async function handleInvalidRecipient(request, h, organisations) {
-  const { organisationId, registrationId } = request.params
-  const session = request.auth.credentials
+  const keys = toAccreditationKeys(request.params)
   const { t: localise } = request
 
   const noteType = getNoteType(request.payload.wasteProcessingType)
@@ -298,17 +281,12 @@ async function handleInvalidRecipient(request, h, organisations) {
   }
 
   const { registration, wasteBalance, decemberWasteControl } =
-    await fetchCreatePrnViewDataInputs(
-      request,
-      request.params,
-      session.backendToken
-    )
+    await fetchCreatePrnViewDataInputs(request, keys)
 
   const viewData = buildCreatePrnViewData(request, {
-    organisationId,
+    keys,
     recipients: mapToSelectOptions(organisations),
     registration,
-    registrationId,
     wasteBalance,
     decemberWasteControl
   })
@@ -333,9 +311,7 @@ export const postController = {
        *   payload validation configured this is always the Joi ValidationError.
        */
       failAction: async (request, h, error) => {
-        const { organisationId, registrationId } = request.params
-        const session = request.auth.credentials
-
+        const keys = toAccreditationKeys(request.params)
         const { t: localise } = request
         const { errors, errorSummary } = buildValidationErrors(
           /** @type {Joi.ValidationError} */ (error),
@@ -348,18 +324,13 @@ export const postController = {
           { registration, wasteBalance, decemberWasteControl }
         ] = await Promise.all([
           request.wasteOrganisationsService.getOrganisations(),
-          fetchCreatePrnViewDataInputs(
-            request,
-            request.params,
-            session.backendToken
-          )
+          fetchCreatePrnViewDataInputs(request, keys)
         ])
 
         const viewData = buildCreatePrnViewData(request, {
-          organisationId,
+          keys,
           recipients: mapToSelectOptions(organisations),
           registration,
-          registrationId,
           wasteBalance,
           decemberWasteControl
         })
@@ -380,8 +351,8 @@ export const postController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
-    const session = request.auth.credentials
+    const keys = toAccreditationKeys(request.params)
+    const { backendToken } = request.auth.credentials
     const { tonnage, recipient, notes, isDecemberWaste } = request.payload
 
     const { organisations } =
@@ -406,16 +377,14 @@ export const postController = {
     try {
       // Create PRN as draft in backend
       const result = await createPrn(
-        organisationId,
-        registrationId,
-        accreditationId,
+        keys,
         {
           issuedToOrganisation,
           tonnage: Number.parseInt(tonnage, 10),
           notes: notes || undefined,
           isDecemberWaste
         },
-        session.backendToken
+        backendToken
       )
 
       // Store PRN data in session for check/confirm page
@@ -424,9 +393,7 @@ export const postController = {
         buildPrnDraftSession(result, recipientDisplayName, notes)
       )
 
-      return h.redirect(
-        `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${result.id}/view`
-      )
+      return h.redirect(`${prnsPath(keys)}/${result.id}/view`)
     } catch (error) {
       if (error.output?.payload?.code === INSUFFICIENT_BALANCE_CODE) {
         return handleInsufficientBalance(request, h, organisations)
@@ -455,7 +422,9 @@ export const postController = {
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
- * @import { CreatePrnResponse } from './helpers/create-prn.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnListParams } from './helpers/session-types.js'
  * @import { DecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
  */
