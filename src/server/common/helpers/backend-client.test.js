@@ -175,6 +175,29 @@ describe('backend-client', () => {
         }
       )
 
+      it.for([302, 304])(
+        'should reject as a bad gateway a %s',
+        async (status, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/thing`,
+              () => new HttpResponse(null, { status })
+            )
+          )
+
+          await expect(
+            backend('a-token').get('/v1/thing')
+          ).rejects.toMatchObject({
+            output: { statusCode: 502 },
+            code: 'external_fetch_failed',
+            event: {
+              action: 'external_fetch',
+              reason: `backend_responded_${status}`
+            }
+          })
+        }
+      )
+
       it('should reject as an internal fetch failure carrying the cause when the backend is unreachable', async ({
         msw
       }) => {
@@ -432,27 +455,28 @@ describe('backend-client', () => {
         }
       )
 
-      it('should reject as a bad gateway an answer that names no location', async ({
-        msw
-      }) => {
-        msw.use(
-          http.get(
-            `${backendUrl}/v1/file`,
-            () => new HttpResponse(null, { status: 200 })
+      it.for([200, 302])(
+        'should reject as a bad gateway a %s that names no location',
+        async (status, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/file`,
+              () => new HttpResponse(null, { status })
+            )
           )
-        )
 
-        await expect(
-          backend('a-token').redirect('/v1/file')
-        ).rejects.toMatchObject({
-          output: { statusCode: 502 },
-          code: 'external_redirect_invalid',
-          event: {
-            action: 'external_redirect',
-            reason: 'missing_location_header'
-          }
-        })
-      })
+          await expect(
+            backend('a-token').redirect('/v1/file')
+          ).rejects.toMatchObject({
+            output: { statusCode: 502 },
+            code: 'external_redirect_invalid',
+            event: {
+              action: 'external_redirect',
+              reason: 'missing_location_header'
+            }
+          })
+        }
+      )
     })
 
     describe('stream', () => {
@@ -529,6 +553,29 @@ describe('backend-client', () => {
           event: { action: 'external_fetch', reason: 'missing_body' }
         })
       })
+
+      it.for([302, 304])(
+        'should reject as a bad gateway a %s',
+        async (status, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/export.csv`,
+              () => new HttpResponse(null, { status })
+            )
+          )
+
+          await expect(
+            backend('a-token').stream('/v1/export.csv')
+          ).rejects.toMatchObject({
+            output: { statusCode: 502 },
+            code: 'external_fetch_failed',
+            event: {
+              action: 'external_fetch',
+              reason: `backend_responded_${status}`
+            }
+          })
+        }
+      )
 
       it('should not ask for json', async ({ msw }) => {
         /** @type {(string | null)[]} */

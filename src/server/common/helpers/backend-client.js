@@ -4,6 +4,7 @@ import Boom from '@hapi/boom'
 import { withTraceId } from '@defra/hapi-tracing'
 
 import { config } from '#config/config.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
   badGateway,
@@ -133,6 +134,25 @@ const readJson = async (url, response) => {
 }
 
 /**
+ * Only a 4xx or 5xx is the backend refusing; any other answer that is not ok
+ * leaves the caller nothing to use.
+ * @param {Response} response
+ */
+const isRefusal = (response) => response.status >= statusCodes.badRequest
+
+/**
+ * @param {string} url
+ * @param {Response} response
+ * @param {string} action
+ */
+const unexpectedStatus = (url, response, action) =>
+  badGateway(
+    `Backend answered ${response.status} for: ${url}`,
+    errorCodes.externalFetchFailed,
+    { event: { action, reason: `backend_responded_${response.status}` } }
+  )
+
+/**
  * A refusal keeps its own status, so it reaches the caller as itself rather
  * than as a gateway fault.
  * @param {string} url
@@ -188,8 +208,12 @@ const sendJson = async (token, method, url, body) => {
     body: hasBody ? JSON.stringify(body) : undefined
   })
 
-  if (!response.ok) {
+  if (isRefusal(response)) {
     throw await rejection(url, response)
+  }
+
+  if (!response.ok) {
+    throw unexpectedStatus(url, response, 'external_fetch')
   }
 
   return hasJsonBody(response) ? readJson(url, response) : undefined
@@ -208,7 +232,7 @@ const sendForRedirect = async (token, url) => {
   })
   const location = response.headers.get('location')
 
-  if (!location && !response.ok) {
+  if (!location && isRefusal(response)) {
     throw refusal(url, response, 'external_redirect')
   }
 
@@ -242,8 +266,12 @@ const sendForStream = async (token, url) => {
     headers: { Authorization: `Bearer ${token}` }
   })
 
-  if (!response.ok) {
+  if (isRefusal(response)) {
     throw refusal(url, response, 'external_fetch')
+  }
+
+  if (!response.ok) {
+    throw unexpectedStatus(url, response, 'external_fetch')
   }
 
   if (!response.body) {
