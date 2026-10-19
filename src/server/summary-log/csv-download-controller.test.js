@@ -152,13 +152,14 @@ describe('the summary log CSV download', () => {
     server,
     msw
   }) => {
-    backendStreams(msw)
+    const requests = backendStreams(msw)
 
     config.set('featureFlags.regulatorAccess', false)
     const response = await visit(server, regulator)
     config.set('featureFlags.regulatorAccess', true)
 
     expect(response.statusCode).toBe(statusCodes.notFound)
+    expect(requests).toStrictEqual([])
   })
 
   it('does not exist while the records download is dark', async ({

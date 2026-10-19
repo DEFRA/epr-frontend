@@ -200,13 +200,17 @@ describe('the summary log download', () => {
   })
 
   it('does not exist for a regulator while the surface is off', async ({
-    server
+    server,
+    msw
   }) => {
+    const { backend } = theFileIsStored(msw)
+
     config.set('featureFlags.regulatorAccess', false)
     const response = await visit(server, regulator)
     config.set('featureFlags.regulatorAccess', true)
 
     expect(response.statusCode).toBe(statusCodes.notFound)
+    expect(backend).toStrictEqual([])
   })
 
   // Without this the backend could point the server at anything it liked.
