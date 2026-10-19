@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
@@ -69,7 +69,7 @@ vi.mock(
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js'),
   () => ({
-    fetchRegistrationAndAccreditation: vi.fn().mockResolvedValue({
+    fetchRegistrationAndAccreditationByNumber: vi.fn().mockResolvedValue({
       organisationData: undefined,
       registration: { id: '456', validFrom: '2026-01-01' },
       accreditation: undefined
@@ -96,8 +96,8 @@ const mockSubmitSummaryLog = vi.mocked(submitSummaryLog, {
   partial: true,
   deep: true
 })
-const mockFetchRegistrationAndAccreditation = vi.mocked(
-  fetchRegistrationAndAccreditation,
+const mockFetchRegistrationAndAccreditationByNumber = vi.mocked(
+  fetchRegistrationAndAccreditationByNumber,
   { partial: true, deep: true }
 )
 const mockFetchWasteBalances = vi.mocked(fetchWasteBalances, {
@@ -113,8 +113,10 @@ const enablesClientSidePolling = () =>
 describe('#summaryLogUploadProgressController', () => {
   const organisationId = '123'
   const registrationId = '456'
+  const organisationNumber = '500118'
+  const registrationNumber = 'R26ER5001180041PL'
   const summaryLogId = '789'
-  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs`
+  const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs`
   const summaryLogBaseUrl = `${baseUrl}/${summaryLogId}`
   const url = summaryLogBaseUrl
 
@@ -139,8 +141,7 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     expect(fetchSummaryLogStatus).toHaveBeenCalledWith(
-      organisationId,
-      registrationId,
+      { organisationNumber, registrationNumber },
       summaryLogId,
       { backendToken: 'test-id-token' }
     )
@@ -319,7 +320,7 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       expect(result).toStrictEqual(
-        expect.stringContaining(`href="/organisations/${organisationId}"`)
+        expect.stringContaining(`href="/organisations/${organisationNumber}"`)
       )
     })
 
@@ -334,7 +335,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -357,10 +358,10 @@ describe('#summaryLogUploadProgressController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(fetchRegistrationAndAccreditation).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          'test-id-token'
+        expect(fetchRegistrationAndAccreditationByNumber).toHaveBeenCalledWith(
+          organisationNumber,
+          registrationNumber,
+          expect.objectContaining({ backendToken: 'test-id-token' })
         )
         expect(fetchWasteBalances).toHaveBeenCalledWith(
           organisationId,
@@ -382,7 +383,7 @@ describe('#summaryLogUploadProgressController', () => {
             accreditationNumber: 'ACC-2025-001'
           })
 
-          mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+          mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
             organisationData: { id: organisationId },
             registration: { id: registrationId, accreditationId },
             accreditation: {
@@ -426,7 +427,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId },
           accreditation: undefined
@@ -456,7 +457,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -488,7 +489,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -523,7 +524,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditation.mockRejectedValueOnce(
+        mockFetchRegistrationAndAccreditationByNumber.mockRejectedValueOnce(
           Boom.notFound('Registration not found')
         )
 
@@ -555,7 +556,7 @@ describe('#summaryLogUploadProgressController', () => {
         ).not.toBeNull()
         expect(reportsButton).not.toBeNull()
         expect(reportsButton?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
         )
       })
 
@@ -1337,10 +1338,9 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-        organisationId,
-        registrationId,
-        year: 2026,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        keys: { organisationNumber, registrationNumber },
+        accredited: false,
+        redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
     })
@@ -1435,7 +1435,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('Continue')
       expect(result).toContain('Cancel and return to home')
       expect(result).toContain(
-        `href="/organisations/${organisationId}/registrations/${registrationId}"`
+        `href="/organisations/${organisationNumber}/registrations/${registrationNumber}"`
       )
     })
 
@@ -1457,7 +1457,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(result).toContain('govuk-back-link')
       expect(result).toContain(
-        `href="/organisations/${organisationId}/registrations/${registrationId}"`
+        `href="/organisations/${organisationNumber}/registrations/${registrationNumber}"`
       )
     })
 
@@ -1479,10 +1479,9 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-        organisationId,
-        registrationId,
-        year: 2026,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        keys: { organisationNumber, registrationNumber },
+        accredited: false,
+        redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
     })
@@ -2311,10 +2310,9 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-        organisationId,
-        registrationId,
-        year: 2026,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        keys: { organisationNumber, registrationNumber },
+        accredited: false,
+        redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
     })
@@ -2351,16 +2349,15 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-        organisationId,
-        registrationId,
-        year: 2026,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        keys: { organisationNumber, registrationNumber },
+        accredited: false,
+        redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
     })
 
-    describe('re-upload year resolution', () => {
-      it("scopes re-upload to the registration's own validFrom year", async ({
+    describe('re-upload kind', () => {
+      it('re-uploads as accredited when the registration has a live accreditation', async ({
         server
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
@@ -2368,19 +2365,18 @@ describe('#summaryLogUploadProgressController', () => {
           validation: { failures: [{ errorCode: 'REGISTRATION_MISMATCH' }] }
         })
 
-        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
           organisationData: { id: organisationId },
-          registration: { id: registrationId, validFrom: '2025-02-02' },
-          accreditation: undefined
+          registration: { id: registrationId },
+          accreditation: { id: 'acc-id', status: 'approved' }
         })
 
         await server.inject({ method: 'GET', url, auth: mockAuth })
 
         expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-          organisationId,
-          registrationId,
-          year: 2025,
-          redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+          keys: { organisationNumber, registrationNumber },
+          accredited: true,
+          redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
           backendToken: 'test-id-token'
         })
       })
@@ -2405,7 +2401,7 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).toContain(
           'A newer summary log has been uploaded. This upload is no longer being processed.'
         )
-        expect(result).toContain(`href="/organisations/${organisationId}"`)
+        expect(result).toContain(`href="/organisations/${organisationNumber}"`)
         expect(result).toContain('Return to home')
       })
 
@@ -2527,10 +2523,10 @@ describe('#summaryLogUploadProgressController', () => {
 })
 
 describe('summary log check view', () => {
-  const organisationId = '123'
-  const registrationId = '456'
+  const organisationNumber = '500118'
+  const registrationNumber = 'R26ER5001180041PL'
   const summaryLogId = '789'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+  const url = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
 
   /** @type {PeriodStatusByChange} */
   const ZERO_CHANGE = {
@@ -2542,7 +2538,8 @@ describe('summary log check view', () => {
 
   /** Make the current accredited waste balance available to the check page. */
   const givenWasteBalance = (availableAmount) => {
-    mockFetchRegistrationAndAccreditation.mockResolvedValue({
+    mockFetchRegistrationAndAccreditationByNumber.mockResolvedValue({
+      organisationData: { id: 'org-1' },
       registration: { accreditationId: 'acc-1' }
     })
     mockFetchWasteBalances.mockResolvedValue({ 'acc-1': { availableAmount } })
@@ -2576,9 +2573,11 @@ describe('summary log check view', () => {
     })
     // No accreditation by default, so the projection panel stays hidden unless a
     // test opts in via givenWasteBalance().
-    mockFetchRegistrationAndAccreditation.mockReset().mockResolvedValue({
-      registration: { accreditationId: undefined }
-    })
+    mockFetchRegistrationAndAccreditationByNumber
+      .mockReset()
+      .mockResolvedValue({
+        registration: { accreditationId: undefined }
+      })
     mockFetchWasteBalances.mockReset().mockResolvedValue({})
   })
 
@@ -2600,7 +2599,7 @@ describe('summary log check view', () => {
     const { result } = await renderMain(server)
 
     expect(result).toStrictEqual(
-      expect.stringContaining(`href="/organisations/${organisationId}"`)
+      expect.stringContaining(`href="/organisations/${organisationNumber}"`)
     )
   })
 
@@ -2958,7 +2957,7 @@ describe('summary log check view', () => {
 
     expect(result).toStrictEqual(
       expect.stringContaining(
-        'action="/organisations/123/registrations/456/summary-logs/789/submit"'
+        'action="/organisations/500118/registrations/R26ER5001180041PL/summary-logs/789/submit"'
       )
     )
     expect(result).toStrictEqual(
@@ -2969,7 +2968,7 @@ describe('summary log check view', () => {
       name: 'Go back to previous page'
     })
     expect(backLink.getAttribute('href')).toBe(
-      '/organisations/123/registrations/456/summary-logs/upload'
+      '/organisations/500118/registrations/R26ER5001180041PL/summary-logs/upload'
     )
   })
 

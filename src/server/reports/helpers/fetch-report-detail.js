@@ -1,4 +1,4 @@
-import { reportBackend } from './report-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { reportApiPath } from './report-paths.js'
 import { ReportStaleError, staleReasons } from './stale.js'
 
@@ -17,7 +17,7 @@ import { ReportStaleError, staleReasons } from './stale.js'
  */
 export async function fetchReportDetail(keys, backendToken) {
   /** @type {ReportDetailResponse} */
-  const report = await reportBackend(backendToken).get(reportApiPath(keys))
+  const report = await backend(backendToken).get(reportApiPath(keys))
 
   const reasons = staleReasons(report.stale)
   if (reasons.length > 0) {

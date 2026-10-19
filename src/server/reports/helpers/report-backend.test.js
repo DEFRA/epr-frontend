@@ -57,7 +57,10 @@ describe('report-backend', () => {
 
         await expect(
           reportBackend('a-token').patch('/v1/report', {})
-        ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 409 } })
+        ).rejects.toMatchObject({
+          isBoom: true,
+          output: { statusCode: 409, payload: body }
+        })
       }
     )
 

@@ -1,15 +1,16 @@
 import { paths } from '#server/paths.js'
 import { organisationName } from '#server/registrations/details/helpers/caption.js'
 import {
-  accreditationIdPath,
-  organisationIdPath,
-  registrationIdPath
+  accreditationPath,
+  organisationPath,
+  registrationPath
 } from '#server/reports/helpers/report-paths.js'
+import { prnsPath } from './prn-resource.js'
 
 /**
  * @import { TFunction } from 'i18next'
  * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
@@ -26,8 +27,7 @@ import {
  * address it points at serves a regulator their own list, not the operator's.
  * @param {{
  *   organisation: Organisation,
- *   registration: Registration,
- *   accreditationId: string,
+ *   keys: AccreditationKeys,
  *   noteTypePlural: string,
  *   prn: { id: string, prnNumber?: string | null },
  *   localise: TFunction,
@@ -37,43 +37,33 @@ import {
  */
 export const buildNoteBreadcrumbs = ({
   organisation,
-  registration,
-  accreditationId,
+  keys,
   noteTypePlural,
   prn,
   localise,
   localiseUrl
-}) => {
-  const ids = {
-    organisationId: organisation.id,
-    registrationId: registration.id,
-    accreditationId
-  }
-  const accreditationPath = accreditationIdPath(ids)
-
-  return [
-    {
-      text: localise('registrations:details:allOrganisations'),
-      href: localiseUrl(paths.regulators.home)
-    },
-    {
-      text: organisationName(organisation),
-      href: localiseUrl(organisationIdPath(ids))
-    },
-    {
-      text: localise('registrations:details:heading'),
-      href: localiseUrl(registrationIdPath(ids))
-    },
-    {
-      text: localise('registrations:details:accreditation:breadcrumb'),
-      href: localiseUrl(accreditationPath)
-    },
-    {
-      text: localise('registrations:details:accreditation:prns:listHeading', {
-        noteTypePlural
-      }),
-      href: localiseUrl(`${accreditationPath}/packaging-recycling-notes`)
-    },
-    { text: prn.prnNumber ?? prn.id }
-  ]
-}
+}) => [
+  {
+    text: localise('registrations:details:allOrganisations'),
+    href: localiseUrl(paths.regulators.home)
+  },
+  {
+    text: organisationName(organisation),
+    href: localiseUrl(organisationPath(keys))
+  },
+  {
+    text: localise('registrations:details:heading'),
+    href: localiseUrl(registrationPath(keys))
+  },
+  {
+    text: localise('registrations:details:accreditation:breadcrumb'),
+    href: localiseUrl(accreditationPath(keys))
+  },
+  {
+    text: localise('registrations:details:accreditation:prns:listHeading', {
+      noteTypePlural
+    }),
+    href: localiseUrl(prnsPath(keys))
+  },
+  { text: prn.prnNumber ?? prn.id }
+]

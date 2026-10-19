@@ -5,7 +5,7 @@ import {
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -19,7 +19,7 @@ import { beforeEach, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js'),
   () => ({
-    fetchRegistrationAndAccreditation: vi.fn().mockResolvedValue({
+    fetchRegistrationAndAccreditationByNumber: vi.fn().mockResolvedValue({
       organisationData: { id: '123' },
       registration: { id: '456', status: 'approved', validFrom: '2026-01-01' },
       accreditation: undefined
@@ -38,8 +38,8 @@ vi.mock(
   })
 )
 
-const mockFetchRegistrationAndAccreditation = vi.mocked(
-  fetchRegistrationAndAccreditation,
+const mockFetchRegistrationAndAccreditationByNumber = vi.mocked(
+  fetchRegistrationAndAccreditationByNumber,
   { partial: true, deep: true }
 )
 
@@ -49,19 +49,16 @@ vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
 describe('#summaryLogUploadController', () => {
-  const organisationId = '123'
-  const registrationId = '456'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+  const organisationNumber = '500118'
+  const registrationNumber = 'R26ER5001180041PL'
+  const registrationPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+  const url = `${registrationPath}/summary-logs/upload`
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFetchRegistrationAndAccreditation.mockResolvedValue({
-      organisationData: { id: organisationId },
-      registration: {
-        id: registrationId,
-        status: 'approved',
-        validFrom: '2026-01-01'
-      },
+    mockFetchRegistrationAndAccreditationByNumber.mockResolvedValue({
+      organisationData: { id: 'org-id' },
+      registration: { id: 'reg-id', registrationNumber, status: 'approved' },
       accreditation: undefined
     })
   })
@@ -89,9 +86,7 @@ describe('#summaryLogUploadController', () => {
     })
 
     expect(result).toContain('govuk-back-link')
-    expect(result).toContain(
-      `href="/organisations/${organisationId}/registrations/${registrationId}"`
-    )
+    expect(result).toContain(`href="${registrationPath}"`)
   })
 
   it('should render the upload form for an operator', async ({ server }) => {
@@ -159,7 +154,7 @@ describe('#summaryLogUploadController', () => {
     expect(metrics.journey.start).toHaveBeenCalledWith(
       expect.anything(),
       JOURNEY.uploadSummaryLog,
-      registrationId
+      registrationNumber
     )
   })
 
@@ -206,53 +201,58 @@ describe('#summaryLogUploadController', () => {
       event: {
         category: 'upload',
         action: 'summary-log-upload-failed',
-        reference: `organisationId=${organisationId}, registrationId=${registrationId}`
+        reference: `organisationNumber=${organisationNumber}, registrationNumber=${registrationNumber}`
       }
     })
   })
 
-  it('should call initiateSummaryLogUpload with the year from the registration validFrom and redirectUrl template', async ({
-    server
-  }) => {
-    await server.inject({
-      method: 'GET',
-      url,
-      auth: mockAuth
-    })
+  it('looks the registration up by its numbers', async ({ server }) => {
+    await server.inject({ method: 'GET', url, auth: mockAuth })
 
-    expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-      organisationId: '123',
-      registrationId: '456',
-      year: 2026,
-      redirectUrl:
-        '/organisations/123/registrations/456/summary-logs/{summaryLogId}',
-      backendToken: 'test-id-token'
-    })
-  })
-
-  it("should use the registration's own validFrom year, not the current year, when they differ", async ({
-    server
-  }) => {
-    mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
-      organisationData: { id: organisationId },
-      registration: {
-        id: registrationId,
-        status: 'approved',
-        validFrom: '2025-06-01'
-      },
-      accreditation: undefined
-    })
-
-    await server.inject({
-      method: 'GET',
-      url,
-      auth: mockAuth
-    })
-
-    expect(initiateSummaryLogUpload).toHaveBeenCalledWith(
-      expect.objectContaining({ year: 2025 })
+    expect(mockFetchRegistrationAndAccreditationByNumber).toHaveBeenCalledWith(
+      organisationNumber,
+      registrationNumber,
+      expect.objectContaining({ backendToken: 'test-id-token' })
     )
   })
+
+  it.for([
+    { kind: 'registered-only', accreditation: undefined, accredited: false },
+    {
+      kind: 'accredited',
+      accreditation: {
+        id: 'acc-id',
+        status: /** @type {const} */ ('approved')
+      },
+      accredited: true
+    },
+    {
+      kind: 'accredited (suspended)',
+      accreditation: {
+        id: 'acc-id',
+        status: /** @type {const} */ ('suspended')
+      },
+      accredited: true
+    }
+  ])(
+    'starts a $kind upload',
+    async ({ accreditation, accredited }, { server }) => {
+      mockFetchRegistrationAndAccreditationByNumber.mockResolvedValue({
+        organisationData: { id: 'org-id' },
+        registration: { id: 'reg-id', status: 'approved' },
+        accreditation
+      })
+
+      await server.inject({ method: 'GET', url, auth: mockAuth })
+
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+        keys: { organisationNumber, registrationNumber },
+        accredited,
+        redirectUrl: `${registrationPath}/summary-logs/{summaryLogId}`,
+        backendToken: 'test-id-token'
+      })
+    }
+  )
 
   describe('page content', () => {
     const introText =
@@ -417,13 +417,13 @@ describe('#summaryLogUploadController', () => {
     it('should return 404 when registration not found for organisation', async ({
       server
     }) => {
-      mockFetchRegistrationAndAccreditation.mockRejectedValueOnce(
+      mockFetchRegistrationAndAccreditationByNumber.mockRejectedValueOnce(
         Boom.notFound('Registration not found')
       )
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/nonexistent-registration/summary-logs/upload`,
+        url: `/organisations/${organisationNumber}/registrations/R26ER9999999999PL/summary-logs/upload`,
         auth: mockAuth
       })
 
@@ -433,13 +433,13 @@ describe('#summaryLogUploadController', () => {
     it('should not call initiateSummaryLogUpload when registration not found', async ({
       server
     }) => {
-      mockFetchRegistrationAndAccreditation.mockRejectedValueOnce(
+      mockFetchRegistrationAndAccreditationByNumber.mockRejectedValueOnce(
         Boom.notFound('Registration not found')
       )
 
       await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/nonexistent-registration/summary-logs/upload`,
+        url: `/organisations/${organisationNumber}/registrations/R26ER9999999999PL/summary-logs/upload`,
         auth: mockAuth
       })
 

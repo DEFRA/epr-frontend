@@ -1,11 +1,11 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import {
   asIssuedToOrganisation,
-  asPackagingRecyclingNote
+  asPackagingRecyclingNote,
+  asRegistrationWithLiveAccreditation
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -30,7 +30,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
+const fixtureReprocessor = asRegistrationWithLiveAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -56,7 +56,7 @@ const fixtureReprocessor = asGetRequiredRegistrationResult({
   }
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
+const fixtureExporter = asRegistrationWithLiveAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -76,12 +76,10 @@ const fixtureExporter = asGetRequiredRegistrationResult({
   }
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+const basePath =
+  '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'
 const actionUrl = `${basePath}/${prnId}`
 const pernActionUrl = `${basePath}/${pernId}`
 const viewUrl = `${basePath}/${prnId}/view`
@@ -123,9 +121,9 @@ const mockPernAwaitingAuth = asPackagingRecyclingNote({
 describe('#actionController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(
+      getRequiredRegistrationWithAccreditationByNumber
+    ).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
       mockPrnAwaitingAuth
     )
@@ -402,9 +400,9 @@ describe('#actionController', () => {
     it('displays PERN action page for exporter registration', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureExporter
-      )
+      vi.mocked(
+        getRequiredRegistrationWithAccreditationByNumber
+      ).mockResolvedValue(fixtureExporter)
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
         mockPernAwaitingAuth
       )
@@ -495,8 +493,10 @@ describe('#actionController', () => {
     it('displays issuer tradingName when present on action page', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asGetRequiredRegistrationResult({
+      vi.mocked(
+        getRequiredRegistrationWithAccreditationByNumber
+      ).mockResolvedValue(
+        asRegistrationWithLiveAccreditation({
           ...fixtureReprocessor,
           organisationData: {
             id: 'org-123',
@@ -537,8 +537,10 @@ describe('#actionController', () => {
     it('should display empty issuer when organisationData.companyDetails is null', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asGetRequiredRegistrationResult({
+      vi.mocked(
+        getRequiredRegistrationWithAccreditationByNumber
+      ).mockResolvedValue(
+        asRegistrationWithLiveAccreditation({
           ...fixtureReprocessor,
           organisationData: {
             ...fixtureReprocessor.organisationData,
@@ -572,30 +574,13 @@ describe('#actionController', () => {
       ).toBe('')
     })
 
-    it('displays empty accreditation number when accreditation is null', async ({
-      server
-    }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asGetRequiredRegistrationResult({
-          ...fixtureReprocessor,
-          accreditation: null
-        })
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: actionUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
     it('displays empty reprocessing site address when site is null', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asGetRequiredRegistrationResult({
+      vi.mocked(
+        getRequiredRegistrationWithAccreditationByNumber
+      ).mockResolvedValue(
+        asRegistrationWithLiveAccreditation({
           ...fixtureReprocessor,
           registration: {
             ...fixtureReprocessor.registration,
@@ -637,9 +622,9 @@ describe('#actionController', () => {
     })
 
     it('returns 404 when registration not found', async ({ server }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
-        Boom.notFound('Registration not found')
-      )
+      vi.mocked(
+        getRequiredRegistrationWithAccreditationByNumber
+      ).mockRejectedValue(Boom.notFound('Registration not found'))
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -709,9 +694,9 @@ describe('#actionController', () => {
     it('displays Cancel PERN button for exporter with awaiting_cancellation status', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureExporter
-      )
+      vi.mocked(
+        getRequiredRegistrationWithAccreditationByNumber
+      ).mockResolvedValue(fixtureExporter)
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
         asPackagingRecyclingNote({
           ...mockPernAwaitingAuth,

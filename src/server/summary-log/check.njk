@@ -167,9 +167,9 @@
       <p class="govuk-body">
         <strong>{{ localise('summary-log:check.insetWrongLead') }}</strong>
         {{ localise('summary-log:check.insetEditAnd') }}
-        <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:check.insetChooseFileLink') }}</a>
+        <a href="{{ registrationPath }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:check.insetChooseFileLink') }}</a>
         {{ localise('summary-log:check.insetBeforeHome') }}
-        <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:check.insetHomeLink') }}</a>).
+        <a href="{{ organisationPath }}" class="govuk-link">{{ localise('summary-log:check.insetHomeLink') }}</a>).
       </p>
     </div>
 
@@ -229,7 +229,7 @@
     {% endif %}
 
     {% if hasWriteScope %}
-    <form class="govuk-!-margin-top-6" method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
+    <form class="govuk-!-margin-top-6" method="POST" action="{{ registrationPath }}/summary-logs/{{ summaryLogId }}/submit">
       <input type="hidden" name="crumb" value="{{ crumb }}" />
       <div class="govuk-button-group">
         {{ govukButton({
@@ -238,7 +238,7 @@
         }) }}
         {{ govukButton({
           text: localise('summary-log:check.goBackButton'),
-          href: '/organisations/' + organisationId + '/registrations/' + registrationId + '/summary-logs/upload',
+          href: registrationPath + '/summary-logs/upload',
           classes: 'govuk-button--secondary'
         }) }}
       </div>

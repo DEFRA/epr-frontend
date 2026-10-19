@@ -341,8 +341,8 @@ const buildPeriodViewModel = (period, ctx) => {
  * @param {{
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType: ProcessingType,
- *   organisationId: string,
- *   registrationId: string,
+ *   organisationPath: string,
+ *   registrationPath: string,
  *   summaryLogId: string,
  *   wasteBalance?: number
  * }} context - View context
@@ -354,8 +354,8 @@ export const renderCheckView = (
   {
     loadsByReportingPeriod,
     processingType,
-    organisationId,
-    registrationId,
+    organisationPath,
+    registrationPath,
     summaryLogId,
     wasteBalance
   }
@@ -375,8 +375,8 @@ export const renderCheckView = (
 
   return h.view(CHECK_VIEW_NAME, {
     pageTitle: localise('summary-log:checkPageTitle'),
-    organisationId,
-    registrationId,
+    organisationPath,
+    registrationPath,
     summaryLogId,
     isAccredited,
     maxRowsPerBucket: MAX_ROWS_PER_BUCKET,

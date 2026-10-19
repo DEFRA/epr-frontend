@@ -118,7 +118,7 @@ const backendHolds = (
     ),
     http.get(`${backendUrl}/v1/organisations/${organisationId}`, ids),
     http.get(
-      `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/december-prn-eligibility`,
+      `${backendUrl}${accreditationPath}/packaging-recycling-notes/december-prn-eligibility`,
       () => HttpResponse.json(eligibility)
     )
   )
@@ -409,7 +409,10 @@ describe("the operator's registration page for a year", () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
-  it('fails where the ids could not be looked up', async ({ server, msw }) => {
+  it('fails where the ids for the reapply link could not be looked up', async ({
+    server,
+    msw
+  }) => {
     backendHolds(msw, {
       ids: () =>
         new HttpResponse(null, { status: statusCodes.internalServerError })

@@ -100,15 +100,23 @@ describe(organisationPath, () => {
 })
 
 describe(summaryLogUploadPath, () => {
-  it('gives the upload page by id', () => {
+  it('gives the upload page by number', () => {
     expect(
-      summaryLogUploadPath({ organisationId: 'org-1', registrationId: 'reg-1' })
-    ).toBe('/organisations/org-1/registrations/reg-1/summary-logs/upload')
+      summaryLogUploadPath({
+        organisationNumber: '500118',
+        registrationNumber: 'R26ER5001180041PL'
+      })
+    ).toBe(
+      '/organisations/500118/registrations/R26ER5001180041PL/summary-logs/upload'
+    )
   })
 
-  it('encodes the ids', () => {
+  it('encodes the numbers', () => {
     expect(
-      summaryLogUploadPath({ organisationId: 'o&1', registrationId: 'r/1' })
+      summaryLogUploadPath({
+        organisationNumber: 'o&1',
+        registrationNumber: 'r/1'
+      })
     ).toBe('/organisations/o%261/registrations/r%2F1/summary-logs/upload')
   })
 })

@@ -1,8 +1,7 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import {
-  accreditationIdPath,
-  organisationIdPath
-} from '#server/reports/helpers/report-paths.js'
+import { organisationPath } from '#server/reports/helpers/report-paths.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { prnsPath } from './helpers/prn-resource.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const createdController = {
@@ -11,9 +10,12 @@ export const createdController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
+    const keys = toAccreditationKeys(request.params)
+    const { prnId } = request.params
     const { t: localise } = request
+
+    const listUrl = prnsPath(keys)
+    const viewUrl = `${listUrl}/${prnId}/view`
 
     // Check for success session data
     /** @type {PrnCreatedSession | null} */
@@ -21,9 +23,7 @@ export const createdController = {
 
     if (prnCreated?.id !== prnId) {
       // No session data or ID mismatch - redirect to view page
-      return h.redirect(
-        `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnId}/view`
-      )
+      return h.redirect(viewUrl)
     }
 
     // Clear the session data
@@ -31,10 +31,8 @@ export const createdController = {
 
     const { noteType, noteTypePlural } = getNoteTypeDisplayNames(prnCreated)
 
-    const listUrl = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes`
-    const viewUrl = `${listUrl}/${prnId}/view`
     const createUrl = `${listUrl}/create`
-    const homeUrl = organisationIdPath({ organisationId })
+    const homeUrl = organisationPath(keys)
 
     const headingKey = prnCreated.isDecemberWaste
       ? 'prns:create:successHeadingDecemberWaste'

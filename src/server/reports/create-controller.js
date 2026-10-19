@@ -21,7 +21,7 @@ export const createController = {
     const { organisationNumber, registrationNumber, cadence } = request.params
     const session = request.auth.credentials
 
-    const { organisationData, registration, accreditation } =
+    const { registration, accreditation } =
       await fetchRegistrationAndAccreditationByNumber(
         organisationNumber,
         registrationNumber,
@@ -40,10 +40,7 @@ export const createController = {
       if (isReportDataIncompleteError(boomError)) {
         request.yar.set('reportDataIncompleteContext', {
           periodPath: basePath,
-          uploadPath: summaryLogUploadPath({
-            organisationId: organisationData.id,
-            registrationId: registration.id
-          }),
+          uploadPath: summaryLogUploadPath(request.params),
           payload: boomError.output.payload
         })
         return h.redirect(

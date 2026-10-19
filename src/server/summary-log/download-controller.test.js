@@ -17,10 +17,9 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  */
 
-const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = 'reg-001'
+const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
 const fileId = 'file-001'
-const path = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}/download`
+const path = `${registrationPath}/summary-logs/files/${fileId}/download`
 
 const disposition =
   'attachment; filename="R26ER5000000002PA-2026-09-08-091530.xlsx"'
@@ -37,7 +36,7 @@ const regulator = buildMockAuth({
   ...sessionIdentity(IDENTITIES.regulator)
 })
 
-const backendPath = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}`
+const backendPath = `${registrationPath}/summary-logs/files/${fileId}`
 
 /**
  * @param {SetupServer} msw

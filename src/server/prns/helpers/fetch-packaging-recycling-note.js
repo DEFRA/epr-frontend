@@ -1,48 +1,25 @@
-import { backend, path } from '#server/common/helpers/backend-client.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
 
 /**
  * Fetches a single packaging recycling note by ID from EPR Backend
- * @param {string} organisationId - The organisation ID
- * @param {string} registrationId - The registration ID
- * @param {string} accreditationId - The accreditation ID
+ * @param {AccreditationKeys} keys
  * @param {string} prnId - The PRN ID
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<PackagingRecyclingNote>} The packaging recycling note
  */
-const fetchPackagingRecyclingNote = (
-  organisationId,
-  registrationId,
-  accreditationId,
-  prnId,
-  backendToken
-) =>
-  backend(backendToken).get(
-    path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}`
+const fetchPackagingRecyclingNote = async (keys, prnId, backendToken) =>
+  toPackagingRecyclingNote(
+    /** @type {PrnResource} */ (
+      await backend(backendToken).get(
+        `${prnsPath(keys)}/${encodeURIComponent(prnId)}`
+      )
+    )
   )
 
 export { fetchPackagingRecyclingNote }
 
 /**
- * @typedef {object} IssuedToOrganisation
- * @property {string} id
- * @property {string} name
- * @property {string} [tradingName]
- */
-
-/**
- * @typedef {object} PackagingRecyclingNote
- * @property {string} id
- * @property {string|null} prnNumber
- * @property {IssuedToOrganisation} issuedToOrganisation
- * @property {number} tonnage
- * @property {string} material
- * @property {string} status
- * @property {string} createdAt
- * @property {string|null} notes
- * @property {boolean} isDecemberWaste
- * @property {string} wasteProcessingType
- * @property {string} processToBeUsed
- * @property {number|null} accreditationYear
- * @property {string|null} issuedAt
- * @property {{id: string, name: string, position: string}|null} issuedBy
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { PackagingRecyclingNote, PrnResource } from './prn-resource.js'
  */

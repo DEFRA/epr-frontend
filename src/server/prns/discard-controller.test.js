@@ -1,8 +1,8 @@
 import { config } from '#config/config.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import {
   asCreatePrnResponse,
+  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -23,12 +23,12 @@ import { describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
-vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 
-const { getWasteBalance } =
-  await import('#server/common/helpers/waste-balance/get-waste-balance.js')
+const { fetchPrnWasteBalance } =
+  await import('./helpers/fetch-prn-waste-balance.js')
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 
@@ -39,7 +39,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
+const fixtureReprocessor = asRegistrationWithLiveAccreditation({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-456',
@@ -49,10 +49,14 @@ const fixtureReprocessor = asGetRequiredRegistrationResult({
     site: { address: { line1: 'Reprocessing Site' } },
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  accreditation: {
+    id: 'acc-001',
+    accreditationNumber: 'ACC-001',
+    status: 'approved'
+  }
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
+const fixtureExporter = asRegistrationWithLiveAccreditation({
   organisationData: { id: 'org-123', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-456',
@@ -62,18 +66,26 @@ const fixtureExporter = asGetRequiredRegistrationResult({
     site: null,
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  accreditation: {
+    id: 'acc-001',
+    accreditationNumber: 'ACC-001',
+    status: 'approved'
+  }
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const keys = {
+  organisationNumber: '500123',
+  registrationNumber: 'R26EN0000000001PL',
+  year: '2026'
+}
+const prnsBase =
+  '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-const discardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/discard`
-const pernDiscardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/discard`
+const createUrl = `${prnsBase}/create`
+const viewUrl = `${prnsBase}/${prnId}/view`
+const discardUrl = `${prnsBase}/${prnId}/discard`
+const pernDiscardUrl = `${prnsBase}/${pernId}/discard`
 
 const validPayload = {
   tonnage: '100',
@@ -107,14 +119,14 @@ describe('#discardController', () => {
     vi.clearAllMocks()
     msw.use(
       http.get(
-        `${config.get('eprBackendUrl')}/v1/organisations/:organisationId/registrations/:registrationId/accreditations/:accreditationId/packaging-recycling-notes/december-prn-eligibility`,
+        `${config.get('eprBackendUrl')}/organisations/:organisationNumber/registrations/:registrationNumber/accreditations/:year/packaging-recycling-notes/december-prn-eligibility`,
         () => HttpResponse.json({ mode: 'pool', windowOpen: false })
       )
     )
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
-    vi.mocked(getWasteBalance).mockResolvedValue(null)
+    vi.mocked(
+      getRequiredRegistrationWithAccreditationByNumber
+    ).mockResolvedValue(fixtureReprocessor)
+    vi.mocked(fetchPrnWasteBalance).mockResolvedValue(null)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(
       asUpdatePrnStatusResponse({
@@ -277,9 +289,9 @@ describe('#discardController', () => {
       it('displays PERN wording for exporter registration', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
         vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
 
         const exporterPayload = {
@@ -358,7 +370,7 @@ describe('#discardController', () => {
         const cookies = mergeCookies(csrfCookie, ...postCookieValues)
 
         // Visit discard URL with a different PRN ID
-        const wrongPrnDiscardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/wrong-prn-id/discard`
+        const wrongPrnDiscardUrl = `${prnsBase}/wrong-prn-id/discard`
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',
@@ -406,9 +418,7 @@ describe('#discardController', () => {
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createUrl)
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'discarded' },
           mockCredentials.backendToken

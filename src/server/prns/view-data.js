@@ -3,14 +3,13 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
-import { registrationIdPath } from '#server/reports/helpers/report-paths.js'
+import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
  * Build view data for the create PRN/PERN page
  * @param {HapiRequest} request
  * @param {object} options
- * @param {string} options.organisationId
- * @param {string} options.registrationId
+ * @param {AccreditationKeys} options.keys
  * @param {Registration & { nation?: string }} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
  * @param {WasteBalance | null} [options.wasteBalance]
@@ -19,14 +18,7 @@ import { registrationIdPath } from '#server/reports/helpers/report-paths.js'
  */
 export function buildCreatePrnViewData(
   request,
-  {
-    organisationId,
-    recipients,
-    registration,
-    registrationId,
-    wasteBalance,
-    decemberWasteControl
-  }
+  { keys, recipients, registration, wasteBalance, decemberWasteControl }
 ) {
   const { t: localise } = request
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
@@ -59,7 +51,7 @@ export function buildCreatePrnViewData(
     heading: pageTitle,
     wasteBalanceText,
     decemberWaste,
-    backUrl: registrationIdPath({ organisationId, registrationId }),
+    backUrl: accreditationPath(keys),
     material: {
       label: localise('prns:materialLabel'),
       value: material
@@ -100,5 +92,6 @@ export function buildCreatePrnViewData(
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { DecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
  */

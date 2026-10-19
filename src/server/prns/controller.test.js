@@ -1,11 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asRegistrationWithLiveAccreditation } from '#server/common/test-helpers/prn-fixtures.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getByLabelText,
@@ -20,7 +20,7 @@ import { describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
-vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
 vi.spyOn(metrics.journey, 'start').mockResolvedValue()
@@ -33,7 +33,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
+const fixtureReprocessor = asRegistrationWithLiveAccreditation({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-001',
@@ -43,10 +43,14 @@ const fixtureReprocessor = asGetRequiredRegistrationResult({
     site: { address: { line1: 'Reprocessing Site' } },
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  accreditation: {
+    id: 'acc-001',
+    accreditationNumber: 'ACC-001',
+    status: 'approved'
+  }
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
+const fixtureExporter = asRegistrationWithLiveAccreditation({
   organisationData: { id: 'org-456', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-002',
@@ -55,13 +59,23 @@ const fixtureExporter = asGetRequiredRegistrationResult({
     site: null, // Exporters don't have a processing site
     accreditationId: 'acc-002'
   },
-  accreditation: { id: 'acc-002', status: 'approved' }
+  accreditation: {
+    id: 'acc-002',
+    accreditationNumber: 'ACC-002',
+    status: 'approved'
+  }
 })
 
-const reprocessorUrl =
-  '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/create'
+const reprocessorKeys = {
+  organisationNumber: '500123',
+  registrationNumber: 'R26EN0000000001PL',
+  year: '2026'
+}
+const reprocessorPrnsPath =
+  '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'
+const reprocessorUrl = `${reprocessorPrnsPath}/create`
 const exporterUrl =
-  '/organisations/org-456/registrations/reg-002/accreditations/acc-002/packaging-recycling-notes/create'
+  '/organisations/500456/registrations/E26EN0000000002PL/accreditations/2026/packaging-recycling-notes/create'
 
 describe('#createPrnController', () => {
   beforeEach(() => {
@@ -75,12 +89,14 @@ describe('#createPrnController', () => {
   describe('request handling', () => {
     describe('page rendering', () => {
       beforeEach(() => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureReprocessor
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureReprocessor)
       })
 
-      it('should render back link to registration page', async ({ server }) => {
+      it('should render back link to the registration page for the year', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: reprocessorUrl,
@@ -93,7 +109,7 @@ describe('#createPrnController', () => {
         const backLink = body.querySelector('.govuk-back-link')
         expect(backLink).not.toBeNull()
         expect(backLink.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001'
+          '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026'
         )
       })
 
@@ -293,7 +309,7 @@ describe('#createPrnController', () => {
         )
       })
 
-      it('should fetch registration data with correct parameters', async ({
+      it('should fetch registration data by the accreditation keys', async ({
         server
       }) => {
         await server.inject({
@@ -302,12 +318,34 @@ describe('#createPrnController', () => {
           auth: mockAuth
         })
 
-        expect(getRequiredRegistrationWithAccreditation).toHaveBeenCalledWith({
-          organisationId: 'org-123',
-          registrationId: 'reg-001',
-          backendToken: 'mock-backend-token',
-          accreditationId: 'acc-001'
+        expect(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).toHaveBeenCalledWith(
+          reprocessorKeys,
+          expect.objectContaining({ backendToken: 'mock-backend-token' })
+        )
+      })
+
+      it("should fetch the accreditation's waste balance and December eligibility", async ({
+        server
+      }) => {
+        await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
         })
+
+        expect(fetchPrnWasteBalance).toHaveBeenCalledWith(
+          expect.objectContaining({
+            keys: reprocessorKeys,
+            accreditationNumber: 'ACC-001',
+            backendToken: 'mock-backend-token'
+          })
+        )
+        expect(fetchDecemberPrnEligibility).toHaveBeenCalledWith(
+          reprocessorKeys,
+          'mock-backend-token'
+        )
       })
     })
 
@@ -315,13 +353,13 @@ describe('#createPrnController', () => {
       it('should return 404 when registration not found', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
-          Boom.notFound('Registration not found')
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockRejectedValue(Boom.notFound('Registration not found'))
 
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: '/organisations/org-123/registrations/reg-nonexistent/accreditations/acc-001/packaging-recycling-notes/create',
+          url: '/organisations/500123/registrations/R26EN0000009999PL/accreditations/2026/packaging-recycling-notes/create',
           auth: mockAuth
         })
 
@@ -331,9 +369,9 @@ describe('#createPrnController', () => {
       it('should return 404 when registration has no accreditation', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
-          Boom.notFound('Not accredited for this registration')
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockRejectedValue(Boom.notFound('Not accredited for this year'))
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -362,9 +400,9 @@ describe('#createPrnController', () => {
     describe('dynamic PRN/PERN text', () => {
       describe('for reprocessor (PRN)', () => {
         beforeEach(() => {
-          vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-            fixtureReprocessor
-          )
+          vi.mocked(
+            getRequiredRegistrationWithAccreditationByNumber
+          ).mockResolvedValue(fixtureReprocessor)
         })
 
         it('should display PRN in title, caption and heading', async ({
@@ -418,9 +456,9 @@ describe('#createPrnController', () => {
 
       describe('for exporter (PERN)', () => {
         beforeEach(() => {
-          vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-            fixtureExporter
-          )
+          vi.mocked(
+            getRequiredRegistrationWithAccreditationByNumber
+          ).mockResolvedValue(fixtureExporter)
         })
 
         it('should display PERN in title, caption and heading', async ({
@@ -475,10 +513,10 @@ describe('#createPrnController', () => {
 
     describe('waste balance display', () => {
       beforeEach(() => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureReprocessor
-        )
-        vi.mocked(getWasteBalance).mockResolvedValue({
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
           amount: 1000,
           availableAmount: 500
         })
@@ -508,10 +546,10 @@ describe('#createPrnController', () => {
       it('should display waste balance with PERN text for exporters', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
-        vi.mocked(getWasteBalance).mockResolvedValue({
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
           amount: 2000,
           availableAmount: 800
         })
@@ -537,7 +575,7 @@ describe('#createPrnController', () => {
       it('should not display waste balance when fetch fails', async ({
         server
       }) => {
-        vi.mocked(getWasteBalance).mockResolvedValue(null)
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue(null)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -558,14 +596,14 @@ describe('#createPrnController', () => {
 
     describe('select waste balance pool', () => {
       beforeEach(() => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureReprocessor
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureReprocessor)
         vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
           mode: 'pool',
           windowOpen: true
         })
-        vi.mocked(getWasteBalance).mockResolvedValue({
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
           amount: 60,
           availableAmount: 60,
           decemberAmount: 50,
@@ -653,9 +691,9 @@ describe('#createPrnController', () => {
 
     describe('insufficient balance error', () => {
       beforeEach(() => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureReprocessor
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureReprocessor)
       })
 
       it('should display error summary when error=insufficient_balance query param is present', async ({
@@ -713,9 +751,9 @@ describe('#createPrnController', () => {
 
   describe('journey events', () => {
     beforeEach(() => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureReprocessor
-      )
+      vi.mocked(
+        getRequiredRegistrationWithAccreditationByNumber
+      ).mockResolvedValue(fixtureReprocessor)
     })
 
     it('should record the create journey start when the form renders', async ({
@@ -730,7 +768,7 @@ describe('#createPrnController', () => {
       expect(metrics.journey.start).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.createPrn,
-        'acc-001'
+        reprocessorPrnsPath
       )
     })
   })

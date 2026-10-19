@@ -1,4 +1,3 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
@@ -10,10 +9,9 @@ import {
 } from './helpers/build-prn-detail-rows.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+import { fetchPrnContext } from './helpers/fetch-prn-context.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { accreditationIdPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const actionController = {
@@ -22,27 +20,15 @@ export const actionController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
     const { t: localise } = request
-    const session = request.auth.credentials
-
-    const [{ organisationData, registration, accreditation }, prn] =
-      await Promise.all([
-        getRequiredRegistrationWithAccreditation({
-          organisationId,
-          registrationId,
-          backendToken: session.backendToken,
-          accreditationId
-        }),
-        fetchPackagingRecyclingNote(
-          organisationId,
-          registrationId,
-          accreditationId,
-          prnId,
-          session.backendToken
-        )
-      ])
+    const {
+      organisationData,
+      registration,
+      accreditation,
+      prn,
+      basePath,
+      prnId
+    } = await fetchPrnContext(request)
 
     const recipientDisplayName = getIssuedToOrgDisplayName(
       prn.issuedToOrganisation
@@ -50,15 +36,13 @@ export const actionController = {
 
     const viewData = buildActionViewData({
       accreditation,
-      accreditationId,
+      basePath,
       localise,
       organisationData,
-      organisationId,
       prn,
       prnId,
       recipientDisplayName,
       registration,
-      registrationId,
       request
     })
 
@@ -74,34 +58,29 @@ export const actionController = {
  * Builds the complete view data for the action page
  * @param {{
  *   accreditation: RegistrationWithAccreditation['accreditation'],
- *   accreditationId: string,
+ *   basePath: string,
  *   localise: TFunction,
  *   organisationData: RegistrationWithAccreditation['organisationData'],
- *   organisationId: string,
  *   prn: PackagingRecyclingNote,
  *   prnId: string,
  *   recipientDisplayName: string,
  *   registration: RegistrationWithAccreditation['registration'],
- *   registrationId: string,
  *   request: HapiRequest
  * }} params
  */
 function buildActionViewData({
   accreditation,
-  accreditationId,
+  basePath,
   localise,
   organisationData,
-  organisationId,
   prn,
   prnId,
   recipientDisplayName,
   registration,
-  registrationId,
   request
 }) {
   const { isExporter, noteType, noteTypeFull } =
     getNoteTypeDisplayNames(registration)
-  const basePath = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes`
   const displayMaterial = getRegistrationMaterialDisplayName(registration)
   const isNotDraft = prn.status !== 'draft'
   const statusConfig = getStatusConfig(prn.status, localise)
@@ -249,6 +228,6 @@ function buildActionPrnDetailRows({
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
- * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+ * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'
  */

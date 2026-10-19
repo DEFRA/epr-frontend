@@ -1,11 +1,7 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
-import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import {
-  accreditationIdPath,
-  registrationIdPath
-} from '#server/reports/helpers/report-paths.js'
+import { fetchPrnContext } from './helpers/fetch-prn-context.js'
+import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const issuedController = {
@@ -14,10 +10,7 @@ export const issuedController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
     const { t: localise } = request
-    const session = request.auth.credentials
 
     // Read and clear session data stored by issue controller.
     // This mitigates a MongoDB replication lag race condition where the
@@ -28,27 +21,13 @@ export const issuedController = {
       request.yar.clear('prnIssued')
     }
 
-    const [{ registration }, prn] = await Promise.all([
-      getRequiredRegistrationWithAccreditation({
-        organisationId,
-        registrationId,
-        backendToken: session.backendToken,
-        accreditationId
-      }),
-      fetchPackagingRecyclingNote(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        session.backendToken
-      )
-    ])
+    const { keys, registration, prn, basePath, prnId } =
+      await fetchPrnContext(request)
+    const viewUrl = `${basePath}/${prnId}/view`
 
     // Only show success page if PRN has been issued (status is awaiting_acceptance)
     if (prn.status !== 'awaiting_acceptance') {
-      return h.redirect(
-        `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnId}/view`
-      )
+      return h.redirect(viewUrl)
     }
 
     const recipientDisplayName = getIssuedToOrgDisplayName(
@@ -58,10 +37,6 @@ export const issuedController = {
       prn.prnNumber || (prnIssued?.id === prnId && prnIssued?.prnNumber) || null
 
     const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
-
-    const listUrl = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes`
-    const homeUrl = registrationIdPath({ organisationId, registrationId })
-    const viewUrl = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnId}/view`
 
     return h.view('prns/issued', {
       pageTitle: localise('prns:issued:pageTitle', { noteType }),
@@ -79,15 +54,15 @@ export const issuedController = {
       },
       issueAnotherLink: {
         text: localise('prns:issued:issueAnotherLink', { noteType }),
-        href: listUrl
+        href: basePath
       },
       managePrnsLink: {
         text: localise('prns:issued:managePrnsLink', { noteTypePlural }),
-        href: listUrl
+        href: basePath
       },
       returnHomeLink: {
         text: localise('prns:issued:returnHomeLink'),
-        href: homeUrl
+        href: accreditationPath(keys)
       }
     })
   }

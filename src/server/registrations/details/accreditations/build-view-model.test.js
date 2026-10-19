@@ -11,7 +11,7 @@ import { buildViewModel } from './build-view-model.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod, ReportListItem } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
- * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
+ * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
  * @import { TableRow } from './build-view-model.js'
  */
 
@@ -200,9 +200,12 @@ const aNote = (note) => ({
   tonnage: 20,
   material: 'plastic',
   createdAt: '2026-01-26T09:00:00.000Z',
+  notes: null,
   issuedAt: null,
+  issuedBy: null,
   wasteProcessingType: 'reprocessor',
   processToBeUsed: '',
+  accreditationYear: 2026,
   isDecemberWaste: false,
   ...note
 })

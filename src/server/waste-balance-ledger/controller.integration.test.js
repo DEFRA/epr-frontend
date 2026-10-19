@@ -2,7 +2,7 @@ import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -27,16 +27,37 @@ vi.mock(
 
 const backendUrl = config.get('eprBackendUrl')
 
-const organisationId = '6507f1f77bcf86cd79943901'
 const accreditedRegistrationId = 'reg-001-glass-approved'
-const accreditationId = 'acc-001-glass-approved'
 const registeredOnlyRegistrationId = 'reg-006-plastic-export-created'
 
-const accreditedPath = `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/waste-balance-ledger`
-const registeredOnlyPath = `/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}/waste-balance-ledger`
+const organisationPath = '/organisations/50002'
+const accreditedRegistrationPath = `${organisationPath}/registrations/REG001234`
+const accreditationPath = `${accreditedRegistrationPath}/accreditations/2026`
+const registeredOnlyRegistrationPath = `${organisationPath}/registrations/REG006789`
 
-const accreditedLedgerUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}/waste-balance-ledger`
-const registeredOnlyLedgerUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}/waste-balance-ledger`
+const accreditedPath = `${accreditationPath}/waste-balance-ledger`
+const registeredOnlyPath = `${registeredOnlyRegistrationPath}/waste-balance-ledger`
+
+const accreditedLedgerUrl = `${backendUrl}${accreditationPath}/ledger`
+const registeredOnlyLedgerUrl = `${backendUrl}${registeredOnlyRegistrationPath}/ledger/2026`
+
+/**
+ * The accredited fixture, its accreditation live from the year in the address.
+ * @returns {ReturnType<typeof asRegistrationWithAccreditation>}
+ */
+const accreditedIn2026 = () => {
+  const linked = findRegistrationAndAccreditation(
+    fixtureData,
+    accreditedRegistrationId
+  )
+  const accreditation = { ...linked.accreditation, validFrom: '2026-01-01' }
+
+  return asRegistrationWithAccreditation({
+    ...linked,
+    accreditation,
+    rawAccreditation: accreditation
+  })
+}
 
 const regulator = buildMockAuth({
   provider: OIDC_ENTRA_ID,
@@ -91,23 +112,23 @@ const summaryLogSubmitted = {
 }
 
 /**
- * A ledger read answers the address it was asked for, and the registered-only
- * partition is keyed by a null accreditation rather than by its absence.
- * @param {string} registrationId
- * @param {string | null} accreditationOfLedger
- * @returns {(events: unknown[]) => { ledger: object, events: unknown[] }}
+ * @param {unknown[]} events
+ * @returns {{ events: unknown[] }}
  */
-const ledgerOf = (registrationId, accreditationOfLedger) => (events) => ({
-  ledger: {
-    organisationId,
-    registrationId,
-    accreditationId: accreditationOfLedger
-  },
-  events
-})
+const ledgerOf = (events) => ({ events })
 
-const accreditedLedgerOf = ledgerOf(accreditedRegistrationId, accreditationId)
-const registeredOnlyLedgerOf = ledgerOf(registeredOnlyRegistrationId, null)
+/**
+ * The registered-only fixture, read by number.
+ */
+const readsRegisteredOnly = () =>
+  vi
+    .mocked(fetchRegistrationAndAccreditationByNumber)
+    .mockResolvedValue(
+      findRegistrationAndAccreditation(
+        fixtureData,
+        registeredOnlyRegistrationId
+      )
+    )
 
 /**
  * @param {string} html
@@ -144,8 +165,8 @@ describe('the waste balance ledger page', () => {
   })
 
   beforeEach(() => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-      findRegistrationAndAccreditation(fixtureData, accreditedRegistrationId)
+    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      accreditedIn2026()
     )
   })
 
@@ -162,7 +183,7 @@ describe('the waste balance ledger page', () => {
       msw.use(
         http.get(accreditedLedgerUrl, () =>
           HttpResponse.json(
-            accreditedLedgerOf([summaryLogSubmitted, prnCreated, prnIssued])
+            ledgerOf([summaryLogSubmitted, prnCreated, prnIssued])
           )
         )
       )
@@ -208,7 +229,7 @@ describe('the waste balance ledger page', () => {
     }) => {
       msw.use(
         http.get(accreditedLedgerUrl, () =>
-          HttpResponse.json(accreditedLedgerOf([summaryLogSubmitted]))
+          HttpResponse.json(ledgerOf([summaryLogSubmitted]))
         )
       )
       config.set('featureFlags.wasteRecordsDownload', false)
@@ -234,7 +255,7 @@ describe('the waste balance ledger page', () => {
     }) => {
       msw.use(
         http.get(accreditedLedgerUrl, () =>
-          HttpResponse.json(accreditedLedgerOf([prnIssued]))
+          HttpResponse.json(ledgerOf([prnIssued]))
         )
       )
 
@@ -247,7 +268,7 @@ describe('the waste balance ledger page', () => {
       // This ledger is a page of its own, not the section on the
       // accreditation, so the note comes back here.
       expect(asHtml(result)).toContain(
-        `/packaging-recycling-notes/${prnIssued.prn.id}/view`
+        `${accreditationPath}/packaging-recycling-notes/${prnIssued.prn.id}/view`
       )
     })
 
@@ -257,7 +278,7 @@ describe('the waste balance ledger page', () => {
     }) => {
       msw.use(
         http.get(accreditedLedgerUrl, () =>
-          HttpResponse.json(accreditedLedgerOf([prnIssued]))
+          HttpResponse.json(ledgerOf([prnIssued]))
         )
       )
 
@@ -289,9 +310,7 @@ describe('the waste balance ledger page', () => {
       server
     }) => {
       msw.use(
-        http.get(accreditedLedgerUrl, () =>
-          HttpResponse.json(accreditedLedgerOf([]))
-        )
+        http.get(accreditedLedgerUrl, () => HttpResponse.json(ledgerOf([])))
       )
 
       const { result } = await server.inject({
@@ -313,9 +332,7 @@ describe('the waste balance ledger page', () => {
       server
     }) => {
       msw.use(
-        http.get(accreditedLedgerUrl, () =>
-          HttpResponse.json(accreditedLedgerOf([]))
-        )
+        http.get(accreditedLedgerUrl, () => HttpResponse.json(ledgerOf([])))
       )
 
       const { result } = await server.inject({
@@ -334,9 +351,7 @@ describe('the waste balance ledger page', () => {
       server
     }) => {
       msw.use(
-        http.get(accreditedLedgerUrl, () =>
-          HttpResponse.json(accreditedLedgerOf([]))
-        )
+        http.get(accreditedLedgerUrl, () => HttpResponse.json(ledgerOf([])))
       )
 
       const { result } = await server.inject({
@@ -356,10 +371,15 @@ describe('the waste balance ledger page', () => {
         'Accreditation details',
         'Waste balance ledger'
       ])
-      expect(crumbs.at(3)?.querySelector('a')?.getAttribute('href')).toBe(
-        `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/${accreditationId}`
-      )
-      expect(crumbs.at(4)?.querySelector('a')).toBeNull()
+      expect(
+        crumbs.map((crumb) => crumb.querySelector('a')?.getAttribute('href'))
+      ).toStrictEqual([
+        '/regulators/home',
+        organisationPath,
+        accreditedRegistrationPath,
+        accreditationPath,
+        undefined
+      ])
     })
 
     it('carries the phase banner the layout offers every page', async ({
@@ -367,9 +387,7 @@ describe('the waste balance ledger page', () => {
       server
     }) => {
       msw.use(
-        http.get(accreditedLedgerUrl, () =>
-          HttpResponse.json(accreditedLedgerOf([]))
-        )
+        http.get(accreditedLedgerUrl, () => HttpResponse.json(ledgerOf([])))
       )
 
       const { result } = await server.inject({
@@ -387,16 +405,9 @@ describe('the waste balance ledger page', () => {
       msw,
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        findRegistrationAndAccreditation(
-          fixtureData,
-          registeredOnlyRegistrationId
-        )
-      )
+      readsRegisteredOnly()
       msw.use(
-        http.get(registeredOnlyLedgerUrl, () =>
-          HttpResponse.json(registeredOnlyLedgerOf([]))
-        )
+        http.get(registeredOnlyLedgerUrl, () => HttpResponse.json(ledgerOf([])))
       )
 
       const { result } = await server.inject({
@@ -416,29 +427,23 @@ describe('the waste balance ledger page', () => {
         'Waste balance ledger'
       ])
       expect(crumbs.at(2)?.querySelector('a')?.getAttribute('href')).toBe(
-        `/organisations/${organisationId}/registrations/${registeredOnlyRegistrationId}`
+        registeredOnlyRegistrationPath
       )
       expect(crumbs.at(3)?.querySelector('a')).toBeNull()
       expect(body.ownerDocument.title).toContain('Waste balance ledger')
     })
 
-    it('encodes a registration id holding reserved characters once in its links', async ({
+    it('encodes a registration number holding reserved characters once in its links', async ({
       msw,
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        findRegistrationAndAccreditation(
-          fixtureData,
-          registeredOnlyRegistrationId
-        )
-      )
+      readsRegisteredOnly()
+      const encodedPath = `${organisationPath}/registrations/REG%261`
       msw.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/reg&1/waste-balance-ledger`,
-          () => HttpResponse.json(registeredOnlyLedgerOf([summaryLogSubmitted]))
+        http.get(`${backendUrl}${encodedPath}/ledger/2026`, () =>
+          HttpResponse.json(ledgerOf([summaryLogSubmitted]))
         )
       )
-      const encodedPath = `/organisations/${organisationId}/registrations/reg%261`
 
       const { result } = await server.inject({
         method: 'GET',
@@ -456,19 +461,63 @@ describe('the waste balance ledger page', () => {
       ).toBe(`${encodedPath}/summary-logs/files/log-1/download`)
     })
 
+    it('shows the registered-only ledger empty where the backend holds none for the year', async ({
+      msw,
+      server
+    }) => {
+      readsRegisteredOnly()
+      msw.use(
+        http.get(
+          registeredOnlyLedgerUrl,
+          () => new HttpResponse(null, { status: statusCodes.notFound })
+        )
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: registeredOnlyPath,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(
+        queryByText(
+          documentOf(asHtml(result)),
+          'Nothing has changed this waste balance yet.'
+        )
+      ).not.toBeNull()
+    })
+
+    it('fails the registered-only page where the ledger could not be read', async ({
+      msw,
+      server
+    }) => {
+      readsRegisteredOnly()
+      msw.use(
+        http.get(
+          registeredOnlyLedgerUrl,
+          () =>
+            new HttpResponse(null, { status: statusCodes.internalServerError })
+        )
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: registeredOnlyPath,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
     it('reads the registered-only ledger, and says the period carries no accreditation', async ({
       msw,
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        findRegistrationAndAccreditation(
-          fixtureData,
-          registeredOnlyRegistrationId
-        )
-      )
+      readsRegisteredOnly()
       msw.use(
         http.get(registeredOnlyLedgerUrl, () =>
-          HttpResponse.json(registeredOnlyLedgerOf([summaryLogSubmitted]))
+          HttpResponse.json(ledgerOf([summaryLogSubmitted]))
         )
       )
 
@@ -488,15 +537,10 @@ describe('the waste balance ledger page', () => {
     })
 
     it("names an exporter's notes PERNs", async ({ msw, server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        findRegistrationAndAccreditation(
-          fixtureData,
-          registeredOnlyRegistrationId
-        )
-      )
+      readsRegisteredOnly()
       msw.use(
         http.get(registeredOnlyLedgerUrl, () =>
-          HttpResponse.json(registeredOnlyLedgerOf([prnIssued]))
+          HttpResponse.json(ledgerOf([prnIssued]))
         )
       )
 
@@ -516,9 +560,7 @@ describe('the waste balance ledger page', () => {
       server
     }) => {
       msw.use(
-        http.get(accreditedLedgerUrl, () =>
-          HttpResponse.json(accreditedLedgerOf([]))
-        )
+        http.get(accreditedLedgerUrl, () => HttpResponse.json(ledgerOf([])))
       )
 
       const { result } = await server.inject({
@@ -535,36 +577,54 @@ describe('the waste balance ledger page', () => {
       ).not.toBeNull()
     })
 
-    it('refuses an address pairing the registration with another accreditation, rather than reporting an empty ledger', async ({
+    it('refuses a year the registration holds no accreditation for, rather than reporting an empty ledger', async ({
       server
     }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/acc-005-steel-approved/waste-balance-ledger`,
+        url: `${accreditedRegistrationPath}/accreditations/2025/waste-balance-ledger`,
         auth: regulator
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it('refuses a registration whose accreditation the organisation does not hold', async ({
+    it('serves the ledger of a cancelled accreditation, which keeps its ledger', async ({
+      msw,
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      const linked = accreditedIn2026()
+      const cancelled = { ...linked.rawAccreditation, status: 'cancelled' }
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
         asRegistrationWithAccreditation({
-          organisationData: fixtureData,
-          registration: {
-            id: accreditedRegistrationId,
-            accreditationId: 'acc-not-in-organisation',
-            wasteProcessingType: 'reprocessor'
-          },
-          rawAccreditation: undefined
+          ...linked,
+          accreditation: undefined,
+          rawAccreditation: cancelled
         })
+      )
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(ledgerOf([summaryLogSubmitted]))
+        )
       )
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${accreditedRegistrationId}/accreditations/acc-not-in-organisation/waste-balance-ledger`,
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    it('refuses the accredited address for a registration with no accreditation', async ({
+      server
+    }) => {
+      readsRegisteredOnly()
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${registeredOnlyRegistrationPath}/accreditations/2026/waste-balance-ledger`,
         auth: regulator
       })
 
@@ -588,7 +648,7 @@ describe('the waste balance ledger page', () => {
           level: 1
         }).textContent.trim()
       ).toBe('You do not have permission')
-      expect(fetchRegistrationAndAccreditation).not.toHaveBeenCalled()
+      expect(fetchRegistrationAndAccreditationByNumber).not.toHaveBeenCalled()
     })
 
     it('is refused the registered-only address too', async ({ server }) => {
@@ -611,7 +671,7 @@ describe('the waste balance ledger page', () => {
       })
 
       expect(statusCode).toBe(statusCodes.forbidden)
-      expect(fetchRegistrationAndAccreditation).not.toHaveBeenCalled()
+      expect(fetchRegistrationAndAccreditationByNumber).not.toHaveBeenCalled()
     })
   })
 })

@@ -300,7 +300,7 @@ describe('who an accreditation renders for', () => {
         HttpResponse.json({})
       ),
       http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/acc-1/packaging-recycling-notes/december-prn-eligibility`,
+        `${backendUrl}${accreditationPath}/packaging-recycling-notes/december-prn-eligibility`,
         () => HttpResponse.json({ mode: 'pool', windowOpen: false })
       )
     )

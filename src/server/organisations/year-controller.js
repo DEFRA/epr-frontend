@@ -1,4 +1,3 @@
-import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { isAccreditationViewActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
@@ -79,7 +78,7 @@ async function getWasteBalanceMap(
 }
 
 /**
- * The organisation's home page for one of its approved years.
+ * The organisation's home page for one of its active years.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const yearController = {
@@ -88,10 +87,6 @@ export const yearController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    if (readsAsARegulator(request.auth.credentials)) {
-      throw Boom.notFound()
-    }
-
     const orgNumber = organisationNumber(
       Number(request.params.organisationNumber)
     )
@@ -117,7 +112,8 @@ export const yearController = {
         year
       ),
       wasteBalanceMap,
-      year
+      year,
+      hasOtherYears: years.length > 1
     })
   }
 }

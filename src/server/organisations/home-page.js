@@ -34,6 +34,14 @@ export const homePath = (orgNumber, { year, exporting } = {}) => {
 }
 
 /**
+ * @param {OrganisationNumber} orgNumber
+ * @param {Year} year
+ * @returns {string}
+ */
+export const chooseYearPath = (orgNumber, year) =>
+  `${homePath(orgNumber, { year })}/choose-year`
+
+/**
  * @typedef {{ text: string, classes?: string, format?: string } | { html: string, classes?: string }} TableCell
  */
 
@@ -290,13 +298,21 @@ function getActiveSitesAndTitle({
  *   organisation: { name: string, tradingName?: string },
  *   displayedRegistrations: DisplayedRegistration[],
  *   wasteBalanceMap: WasteBalanceMap,
- *   year: Year | null
+ *   year: Year | null,
+ *   hasOtherYears?: boolean
  * }} page
  */
 export function renderHome(
   request,
   h,
-  { orgNumber, organisation, displayedRegistrations, wasteBalanceMap, year }
+  {
+    orgNumber,
+    organisation,
+    displayedRegistrations,
+    wasteBalanceMap,
+    year,
+    hasOtherYears = false
+  }
 ) {
   const { t: localise } = request
 
@@ -342,6 +358,10 @@ export function renderHome(
     ),
     shouldRenderTabs,
     selectedYear: config.get('featureFlags.navigateAcrossYears') ? year : null,
+    chooseYearUrl:
+      config.get('featureFlags.navigateAcrossYears') && year && hasOtherYears
+        ? request.localiseUrl(chooseYearPath(orgNumber, year))
+        : null,
     sites,
     tableTitle,
     tabTypes

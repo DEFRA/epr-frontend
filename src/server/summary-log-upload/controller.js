@@ -1,31 +1,28 @@
 import { hasWriteScope } from '#server/auth/scopes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { registrationUploadYear } from '#server/common/helpers/upload/registration-upload-year.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { registrationIdPath } from '#server/reports/helpers/report-paths.js'
+import { registrationPath as toRegistrationPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const summaryLogUploadController = {
   /**
-   * @param {HapiRequest & { params: { organisationId: string, registrationId: string } }} request
+   * @param {HapiRequest & { params: RegistrationKeys }} request
    * @param {ResponseToolkit} h
    */
   handler: async (request, h) => {
     const localise = request.t
-    const { organisationId, registrationId } = request.params
-    const registrationPath = registrationIdPath({
-      organisationId,
-      registrationId
-    })
+    const keys = request.params
+    const { organisationNumber, registrationNumber } = keys
+    const registrationPath = toRegistrationPath(keys)
 
     const session = request.auth.credentials
 
-    const { registration } = await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.backendToken
+    const { accreditation } = await fetchRegistrationAndAccreditationByNumber(
+      organisationNumber,
+      registrationNumber,
+      session
     )
 
     try {
@@ -35,9 +32,8 @@ export const summaryLogUploadController = {
 
       const { uploadUrl } = canUpload
         ? await initiateSummaryLogUpload({
-            organisationId,
-            registrationId,
-            year: registrationUploadYear(registration),
+            keys,
+            accredited: accreditation !== undefined,
             redirectUrl: `${registrationPath}/summary-logs/{summaryLogId}`,
             backendToken: session.backendToken
           })
@@ -47,7 +43,7 @@ export const summaryLogUploadController = {
         await metrics.journey.start(
           request,
           JOURNEY.uploadSummaryLog,
-          registrationId
+          registrationNumber
         )
       }
 
@@ -68,7 +64,7 @@ export const summaryLogUploadController = {
         event: {
           category: 'upload',
           action: 'summary-log-upload-failed',
-          reference: `organisationId=${organisationId}, registrationId=${registrationId}`
+          reference: `organisationNumber=${organisationNumber}, registrationNumber=${registrationNumber}`
         }
       })
 
@@ -84,4 +80,5 @@ export const summaryLogUploadController = {
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */

@@ -1,15 +1,17 @@
 import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { backend, path } from '#server/common/helpers/backend-client.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { registrationPath as toRegistrationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 export const summaryLogCsvDownloadPath =
-  '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/files/{fileId}/download.csv'
+  '/organisations/{organisationNumber}/registrations/{registrationNumber}/summary-logs/files/{fileId}/download.csv'
 
 /**
  * The address of one summary log's records as CSV, addressed by its file - the
@@ -38,16 +40,12 @@ const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
 export const summaryLogCsvDownloadController = {
   /**
    * @param {HapiRequest & {
-   *   params: {
-   *     organisationId: string,
-   *     registrationId: string,
-   *     fileId: string
-   *   }
+   *   params: RegistrationKeys & { fileId: string }
    * }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, fileId } = request.params
+    const { fileId, ...keys } = request.params
     const { backendToken } = request.auth.credentials
 
     if (!readsWasteRecordsDownloads(request.auth.credentials)) {
@@ -66,7 +64,7 @@ export const summaryLogCsvDownloadController = {
     const { body, contentDisposition, contentType } = await backend(
       backendToken
     ).stream(
-      path`/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}/records.csv`
+      `${toRegistrationPath(keys)}/summary-logs/files/${encodeURIComponent(fileId)}/records.csv`
     )
 
     const response = h.response(body).type(contentType ?? DEFAULT_CONTENT_TYPE)

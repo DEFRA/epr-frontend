@@ -25,13 +25,18 @@ import { fetchPrnListDetails } from './helpers/fetch-prn-list-details.js'
 
 vi.mock(import('./helpers/fetch-prn-list-details.js'))
 
-const organisationId = '6507f1f77bcf86cd79943901'
-const registrationId = 'reg-001-glass-approved'
-const accreditationId = 'acc-001-glass-approved'
-const accreditationPath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`
+const organisationId = organisationData.id
+const keys = {
+  organisationNumber: '50002',
+  registrationNumber: 'REG001234',
+  year: '2026'
+}
+const organisationPath = '/organisations/50002'
+const registrationPath = `${organisationPath}/registrations/REG001234`
+const accreditationPath = `${registrationPath}/accreditations/2026`
 const path = `${accreditationPath}/packaging-recycling-notes`
 
-const operator = buildMockAuth()
+const operator = buildMockAuth({ linkedOrganisationId: organisationId })
 
 const regulator = buildMockAuth({
   provider: OIDC_ENTRA_ID,
@@ -50,9 +55,12 @@ const aNote = (note) => ({
   tonnage: 20,
   material: 'plastic',
   createdAt: '2026-01-26T09:00:00.000Z',
+  notes: null,
   issuedAt: null,
+  issuedBy: null,
   wasteProcessingType: 'reprocessor',
   processToBeUsed: '',
+  accreditationYear: 2026,
   isDecemberWaste: false,
   ...note
 })
@@ -83,14 +91,14 @@ const details = {
   }),
   registration: /** @type {PrnListDetails['registration']} */ (
     /** @type {unknown} */ ({
-      id: registrationId,
+      id: 'reg-001-glass-approved',
       registrationNumber: 'R26ER5001180041PL',
       wasteProcessingType: 'reprocessor'
     })
   ),
   accreditation: /** @type {PrnListDetails['accreditation']} */ (
     /** @type {unknown} */ ({
-      id: accreditationId,
+      id: 'acc-001-glass-approved',
       accreditationNumber: 'A26ER5001180114PL',
       status: 'approved'
     })
@@ -229,21 +237,15 @@ describe('the regulator PRNs detailed view', () => {
     ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL - A26ER5001180114PL')
   })
 
-  it('titles the page by the heading alone where the accreditation has no number', async ({
+  it('reads the details by the numbers and year in the address', async ({
     server
   }) => {
-    vi.mocked(fetchPrnListDetails).mockResolvedValue({
-      ...details,
-      accreditation: /** @type {PrnListDetails['accreditation']} */ ({
-        ...details.accreditation,
-        accreditationNumber: null
-      })
+    await visit(server, regulator)
+
+    expect(fetchPrnListDetails).toHaveBeenCalledWith({
+      keys,
+      credentials: regulator.credentials
     })
-
-    const { body } = await visit(server, regulator)
-
-    expect(documentOf(body).ownerDocument.title).toContain('PRNs')
-    expect(documentOf(body).ownerDocument.title).not.toContain('A26ER')
   })
 
   it("names an exporter's notes PERNs", async ({ server }) => {
@@ -278,10 +280,21 @@ describe('the regulator PRNs detailed view', () => {
       'Accreditation details',
       'PRNs'
     ])
-    expect(crumbs.at(3)?.querySelector('a')?.getAttribute('href')).toBe(
-      accreditationPath
-    )
-    expect(crumbs.at(4)?.querySelector('a')).toBeNull()
+    expect(
+      crumbs.map((crumb) => crumb.querySelector('a')?.getAttribute('href'))
+    ).toStrictEqual([
+      '/regulators/home',
+      organisationPath,
+      registrationPath,
+      accreditationPath,
+      undefined
+    ])
+  })
+
+  it('links each note by number', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(body).toContain(`${path}/note-accepted/view`)
   })
 
   it('offers none of the operator furniture', async ({ server }) => {
@@ -296,20 +309,28 @@ describe('the regulator PRNs detailed view', () => {
 
   describe('the fork with the operator list', () => {
     beforeEach(({ msw }) => {
-      const organisationUrl = `${config.get('eprBackendUrl')}/v1/organisations/${organisationId}`
-      const accreditationUrl = `${organisationUrl}/registrations/${registrationId}/accreditations/${accreditationId}`
+      const backendUrl = config.get('eprBackendUrl')
+      const accreditedIn2026 = {
+        ...organisationData,
+        accreditations: organisationData.accreditations.map((accreditation) =>
+          accreditation.id === 'acc-001-glass-approved'
+            ? { ...accreditation, validFrom: '2026-01-01' }
+            : accreditation
+        )
+      }
 
       msw.use(
-        http.get(organisationUrl, () => HttpResponse.json(organisationData)),
-        http.get(`${organisationUrl}/waste-balances`, () =>
+        http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+          HttpResponse.json(accreditedIn2026)
+        ),
+        http.get(`${backendUrl}${organisationPath}/waste-balances/2026`, () =>
           HttpResponse.json({})
         ),
-        http.get(`${accreditationUrl}/packaging-recycling-notes`, () =>
-          HttpResponse.json([])
+        http.get(`${backendUrl}${path}`, () =>
+          HttpResponse.json({ items: [] })
         ),
-        http.get(
-          `${accreditationUrl}/packaging-recycling-notes/december-prn-eligibility`,
-          () => HttpResponse.json({ mode: 'pool', windowOpen: false })
+        http.get(`${backendUrl}${path}/december-prn-eligibility`, () =>
+          HttpResponse.json({ mode: 'pool', windowOpen: false })
         )
       )
     })
@@ -327,9 +348,9 @@ describe('the regulator PRNs detailed view', () => {
     }) => {
       config.set('featureFlags.regulatorAccess', false)
 
-      const { statusCode, body } = await visit(server, regulator)
+      const { body } = await visit(server, regulator)
 
-      expect(statusCode).toBe(statusCodes.ok)
+      // The operator list refuses a session linked to no organisation.
       expect(body).not.toContain('data-testid="prns-detailed-view"')
       expect(fetchPrnListDetails).not.toHaveBeenCalled()
 

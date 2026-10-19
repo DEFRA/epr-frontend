@@ -1,27 +1,33 @@
-import { backend, path } from '#server/common/helpers/backend-client.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import {
+  accreditationPath,
+  registrationPath
+} from '#server/reports/helpers/report-paths.js'
+
+/** @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js' */
+
+const UPLOAD_YEAR = 2026
 
 /**
- * Initiates a summary log upload via the backend, scoped to the year it
- * belongs to. Which accreditation, if any, the upload belongs to isn't asked
- * for here — the backend stamps it at upload-completed from the
- * registration's current accreditation link.
+ * Starts a summary log upload for 2026, at the accredited or registered-only
+ * address.
  * @param {object} options
- * @param {string} options.organisationId
- * @param {string} options.registrationId
- * @param {number} options.year
+ * @param {RegistrationKeys} options.keys
+ * @param {boolean} options.accredited
  * @param {string} options.redirectUrl
  * @param {string} options.backendToken
  * @returns {Promise<{summaryLogId: string, uploadId: string, uploadUrl: string, statusUrl: string}>}
  */
 const initiateSummaryLogUpload = ({
-  organisationId,
-  registrationId,
-  year,
+  keys,
+  accredited,
   redirectUrl,
   backendToken
 }) =>
   backend(backendToken).post(
-    path`/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${year}`,
+    accredited
+      ? `${accreditationPath({ ...keys, year: String(UPLOAD_YEAR) })}/summary-log`
+      : `${registrationPath(keys)}/summary-logs/${UPLOAD_YEAR}`,
     { redirectUrl }
   )
 

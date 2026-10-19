@@ -86,8 +86,21 @@ describe('#analytics', () => {
           ad_user_data: 'denied',
           analytics_storage: 'granted'
         }),
-        command('set', { page_location: 'http://localhost:3000/start' }),
+        command('set', {
+          cookie_domain: 'none',
+          page_location: 'http://localhost:3000/start'
+        }),
         { 'gtm.start': expect.any(Number), event: 'gtm.js' }
+      ])
+    })
+
+    it('should keep its cookies to this host rather than share them across the parent domain', () => {
+      givenPublished()
+
+      startAnalytics()
+
+      expect(commandsNamed('set')).toStrictEqual([
+        command('set', expect.objectContaining({ cookie_domain: 'none' }))
       ])
     })
 
@@ -101,6 +114,7 @@ describe('#analytics', () => {
 
       expect(commandsNamed('set')).toStrictEqual([
         command('set', {
+          cookie_domain: 'none',
           page_location:
             'http://localhost:3000/organisations/:organisationId/registrations/:registrationId/summary-logs/:summaryLogId/submit'
         })
@@ -114,6 +128,7 @@ describe('#analytics', () => {
 
       expect(commandsNamed('set')).toStrictEqual([
         command('set', {
+          cookie_domain: 'none',
           page_location: 'http://localhost:3000/start',
           page_referrer: 'http://localhost:3000/organisations/:organisationId'
         })
@@ -127,7 +142,10 @@ describe('#analytics', () => {
       startAnalytics()
 
       expect(commandsNamed('set')).toStrictEqual([
-        command('set', { page_location: 'http://localhost:3000/' })
+        command('set', {
+          cookie_domain: 'none',
+          page_location: 'http://localhost:3000/'
+        })
       ])
     })
 

@@ -17,12 +17,12 @@ export const summaryLog = {
         {
           ...summaryLogUploadProgressController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/{summaryLogId}'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/summary-logs/{summaryLogId}'
         },
         {
           ...submitSummaryLogController,
           method: 'POST',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/{summaryLogId}/submit'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/summary-logs/{summaryLogId}/submit'
         },
         {
           ...summaryLogDownloadController,

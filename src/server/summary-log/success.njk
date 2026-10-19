@@ -27,12 +27,12 @@
     <p class="govuk-body">{{ localise('summary-log:closedPeriodAdjustments.furtherActionPara3') }}</p>
     {{ govukButton({
       text: localise('summary-log:closedPeriodAdjustments.goToReports'),
-      href: '/organisations/' + organisationId + '/registrations/' + registrationId + '/reports'
+      href: registrationPath + '/reports'
     }) }}
     {% endif %}
 
     <p class="govuk-body">
-      <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
+      <a href="{{ organisationPath }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
     </p>
   </div>
 </div>

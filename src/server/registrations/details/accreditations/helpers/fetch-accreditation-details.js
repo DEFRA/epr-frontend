@@ -1,4 +1,3 @@
-import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
@@ -14,7 +13,7 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
  * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
- * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
+ * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
@@ -100,25 +99,16 @@ const fetchLedger = ({ keys, backendToken, canReadLedger }) =>
     : Promise.resolve(null)
 
 /**
- * The accreditation's notes, or none where they could not be read. A failed id
- * lookup fails the page.
- * @param {{ keys: AccreditationKeys, credentials: UserSession, logger: TypedLogger }} params
+ * The accreditation's notes, or none where they could not be read.
+ * @param {{ keys: AccreditationKeys, backendToken: string, logger: TypedLogger }} params
  * @returns {Promise<PackagingRecyclingNote[]>}
  */
-const fetchNotes = async ({ keys, credentials, logger }) => {
-  const { organisationId, registrationId, accreditationId } =
-    await findRecordIds(keys, credentials)
-
+const fetchNotes = async ({ keys, backendToken, logger }) => {
   try {
-    return await fetchPackagingRecyclingNotes(
-      organisationId,
-      registrationId,
-      accreditationId,
-      credentials.backendToken
-    )
+    return await fetchPackagingRecyclingNotes(keys, backendToken)
   } catch (error) {
     logger.error({
-      message: `Failed to fetch packaging recycling notes for organisation ${organisationId} accreditation ${accreditationId}`,
+      message: `Failed to fetch packaging recycling notes for organisation ${keys.organisationNumber} registration ${keys.registrationNumber} year ${keys.year}`,
       err: error
     })
 
@@ -152,7 +142,7 @@ export const fetchAccreditationDetails = async ({
         logger
       }),
       fetchLedger({ keys, backendToken, canReadLedger }),
-      fetchNotes({ keys, credentials, logger })
+      fetchNotes({ keys, backendToken, logger })
     ])
 
   return {

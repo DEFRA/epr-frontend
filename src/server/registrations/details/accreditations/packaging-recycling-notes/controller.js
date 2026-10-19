@@ -1,17 +1,12 @@
+import { toAccreditationKeys } from '#server/prns/helpers/fetch-prn-context.js'
+
 import { buildViewModel } from './build-view-model.js'
 import { fetchPrnListDetails } from './helpers/fetch-prn-list-details.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- */
-
-/**
- * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string
- * }} AccreditationParams
+ * @import { PrnListParams } from '#server/prns/helpers/session-types.js'
  */
 
 /**
@@ -21,23 +16,20 @@ import { fetchPrnListDetails } from './helpers/fetch-prn-list-details.js'
  */
 export const controller = {
   /**
-   * @param {HapiRequest & { params: AccreditationParams }} request
+   * @param {HapiRequest & { params: PrnListParams }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
-    const { backendToken } = request.auth.credentials
+    const keys = toAccreditationKeys(request.params)
 
     const details = await fetchPrnListDetails({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
+      keys,
+      credentials: request.auth.credentials
     })
 
     return h.view(
       'registrations/details/accreditations/packaging-recycling-notes/index',
-      buildViewModel({ ...details, request })
+      buildViewModel({ ...details, keys, request })
     )
   }
 }

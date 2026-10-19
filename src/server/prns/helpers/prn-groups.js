@@ -1,5 +1,5 @@
 /**
- * @import { PackagingRecyclingNote } from './fetch-packaging-recycling-notes.js'
+ * @import { PackagingRecyclingNote } from './prn-resource.js'
  */
 
 /**

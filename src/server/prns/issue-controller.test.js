@@ -5,9 +5,9 @@ import {
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import {
   asPackagingRecyclingNote,
+  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
@@ -26,7 +26,7 @@ vi.mock(import('./helpers/update-prn-status.js'))
 vi.spyOn(metrics.journey, 'start').mockResolvedValue()
 vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
-const { getRequiredRegistrationWithAccreditation } =
+const { getRequiredRegistrationWithAccreditationByNumber } =
   await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
@@ -39,15 +39,15 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const organisationNumber = '500123'
+const registrationNumber = 'R26EN0000000001PL'
+const year = '2026'
 const prnId = 'prn-789'
-const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issue`
-const actionUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-const issuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
-const errorUrl = `/organisations/${organisationId}/error`
+const issueUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issue`
+const actionUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}`
+const viewUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/view`
+const issuedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issued`
+const errorUrl = `/organisations/${organisationNumber}/error`
 
 const mockPrnIssued = asUpdatePrnStatusResponse({
   id: 'prn-789',
@@ -58,21 +58,23 @@ const mockPrnIssued = asUpdatePrnStatusResponse({
 describe('#issueController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      asGetRequiredRegistrationResult({
+    vi.mocked(
+      getRequiredRegistrationWithAccreditationByNumber
+    ).mockResolvedValue(
+      asRegistrationWithLiveAccreditation({
         organisationData: {
-          id: organisationId,
+          id: 'org-123',
           companyDetails: { name: 'Test Org' }
         },
         registration: {
-          id: registrationId,
+          id: 'reg-456',
           wasteProcessingType: 'reprocessor-input',
           material: 'plastic',
           nation: 'england',
           site: { address: { line1: 'Test Site' } },
-          accreditationId
+          accreditationId: 'acc-001'
         },
-        accreditation: { id: accreditationId, status: 'approved' }
+        accreditation: { id: 'acc-001', status: 'approved' }
       })
     )
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
@@ -109,9 +111,7 @@ describe('#issueController', () => {
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(issuedUrl)
       expect(updatePrnStatus).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        accreditationId,
+        { organisationNumber, registrationNumber, year },
         prnId,
         { status: 'awaiting_acceptance' },
         mockCredentials.backendToken
@@ -303,7 +303,7 @@ describe('#issueController', () => {
         const cookies = mergeCookies(csrfCookie, ...postCookieValues)
 
         // GET issued page for a DIFFERENT PRN
-        const differentIssuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/different-prn/issued`
+        const differentIssuedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/different-prn/issued`
 
         const { result, statusCode } = await server.inject({
           method: 'GET',

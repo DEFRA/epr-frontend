@@ -1,0 +1,43 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: localise("common:back"),
+    href: backUrl
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if error %}
+        {{ govukErrorSummary({
+          titleText: localise('organisations:chooseYear:errorSummaryTitle'),
+          errorList: [{ text: localise('organisations:chooseYear:error'), href: '#year' }]
+        }) }}
+      {% endif %}
+
+      <form method="get" novalidate>
+        {{ govukRadios({
+          name: "year",
+          idPrefix: "year",
+          fieldset: {
+            legend: {
+              text: localise('organisations:chooseYear:heading'),
+              isPageHeading: true,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          hint: { text: localise('organisations:chooseYear:hint') },
+          errorMessage: { text: localise('organisations:chooseYear:error') } if error,
+          items: items
+        }) }}
+        {{ govukButton({ text: localise('organisations:chooseYear:continue'), name: 'continue', value: '1' }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

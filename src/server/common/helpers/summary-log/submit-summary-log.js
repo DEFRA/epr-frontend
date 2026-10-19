@@ -1,21 +1,18 @@
-import { backend, path } from '#server/common/helpers/backend-client.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import { registrationPath } from '#server/reports/helpers/report-paths.js'
+
+/** @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js' */
 
 /**
  * Submits summary log to EPR Backend
- * @param {string} organisationId
- * @param {string} registrationId
+ * @param {RegistrationKeys} keys
  * @param {string} summaryLogId
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<{status: string, accreditationNumber: string}>}
  */
-const submitSummaryLog = (
-  organisationId,
-  registrationId,
-  summaryLogId,
-  backendToken
-) =>
+const submitSummaryLog = (keys, summaryLogId, backendToken) =>
   backend(backendToken).post(
-    path`/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
+    `${registrationPath(keys)}/summary-logs/${encodeURIComponent(summaryLogId)}/submit`
   )
 
 export { submitSummaryLog }

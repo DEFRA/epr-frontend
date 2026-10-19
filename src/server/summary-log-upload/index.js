@@ -8,7 +8,7 @@ export const summaryLogUpload = {
         {
           ...summaryLogUploadController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/upload'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/summary-logs/upload'
         }
       ])
     }

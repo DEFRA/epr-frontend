@@ -27,6 +27,12 @@ const CONSENT = {
 }
 
 /**
+ * Left to itself the measurement library writes its cookies to the widest
+ * domain it can, where every other service under that domain reads them.
+ */
+const HOST_ONLY_COOKIES = { cookie_domain: 'none' }
+
+/**
  * @param {string} name
  */
 const published = (name) =>
@@ -175,7 +181,7 @@ export const startAnalytics = () => {
   queue({ 'gtm.blocklist': BLOCKED_TAG_CLASSES })
   gtag('policy', 'all', tagPolicy({ containerId, measurementId }))
   gtag('consent', 'default', CONSENT)
-  gtag('set', reportedPage())
+  gtag('set', { ...reportedPage(), ...HOST_ONLY_COOKIES })
   queue({ 'gtm.start': Date.now(), event: 'gtm.js' })
 
   const tag = document.createElement('script')

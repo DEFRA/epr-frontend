@@ -24,7 +24,7 @@ import { postController } from './post-controller.js'
 import { viewController, viewPostController } from './view-controller.js'
 
 const basePath =
-  '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/packaging-recycling-notes'
+  '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/packaging-recycling-notes'
 
 /**
  * One address, two audiences (PAE-1930). Only this route forks; with

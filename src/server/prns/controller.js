@@ -1,10 +1,12 @@
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
+import { prnsPath } from './helpers/prn-resource.js'
 import { resolveDecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
 import { resolveInsufficientBalanceMessageKey } from './helpers/insufficient-balance-error.js'
 import { buildCreatePrnViewData } from './view-data.js'
@@ -45,31 +47,23 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
-    const session = request.auth.credentials
+    const keys = toAccreditationKeys(request.params)
+    const credentials = request.auth.credentials
+    const { backendToken } = credentials
 
-    const { registration } = await getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      backendToken: session.backendToken,
-      accreditationId
-    })
+    const { registration, accreditation } =
+      await getRequiredRegistrationWithAccreditationByNumber(keys, credentials)
 
     const [{ organisations }, wasteBalance, decemberPrnEligibility] =
       await Promise.all([
         request.wasteOrganisationsService.getOrganisations(),
-        getWasteBalance(
-          organisationId,
-          accreditationId,
-          session.backendToken,
-          request.logger
-        ),
-        fetchDecemberPrnEligibility(
-          organisationId,
-          registrationId,
-          accreditationId,
-          session.backendToken
-        )
+        fetchPrnWasteBalance({
+          keys,
+          accreditationNumber: accreditation.accreditationNumber,
+          backendToken,
+          logger: request.logger
+        }),
+        fetchDecemberPrnEligibility(keys, backendToken)
       ])
 
     const { noteTypePlural } = getNoteTypeDisplayNames(registration)
@@ -81,15 +75,14 @@ export const controller = {
     )
 
     const viewData = buildCreatePrnViewData(request, {
-      organisationId,
+      keys,
       recipients: mapToSelectOptions(organisations),
       registration,
-      registrationId,
       wasteBalance,
       decemberWasteControl
     })
 
-    await metrics.journey.start(request, JOURNEY.createPrn, accreditationId)
+    await metrics.journey.start(request, JOURNEY.createPrn, prnsPath(keys))
 
     // Check for insufficient balance error from redirect
 

@@ -7,8 +7,8 @@ import { describe, expect } from 'vitest'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  */
 
-const organisationId = '68e68d9c78f83083f0f17a76'
-const registrationId = '68e6912278f83083f0f17a7b'
+const organisationNumber = '500118'
+const registrationNumber = 'R26ER5001180041PL'
 const summaryLogId = '68e69a4578f83083f0f17a8c'
 
 /**
@@ -29,8 +29,8 @@ describe('#analyticsPagePath against the running server', () => {
   it.for([
     ['/cookies', '/cookies'],
     [
-      `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
-      '/organisations/:organisationId/registrations/:registrationId/summary-logs/:summaryLogId'
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`,
+      '/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs/:summaryLogId'
     ]
   ])(
     'should report the step behind %s, carrying no identifier',

@@ -5,11 +5,11 @@ import {
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
   asIssuedToOrganisation,
-  asPackagingRecyclingNote
+  asPackagingRecyclingNote,
+  asRegistrationWithLiveAccreditation
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
@@ -27,7 +27,7 @@ vi.mock(
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 
-const { getRequiredRegistrationWithAccreditation } =
+const { getRequiredRegistrationWithAccreditationByNumber } =
   await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
@@ -39,7 +39,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
+const fixtureReprocessor = asRegistrationWithLiveAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -55,7 +55,7 @@ const fixtureReprocessor = asGetRequiredRegistrationResult({
   accreditation: { id: 'acc-001', status: 'approved' }
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
+const fixtureExporter = asRegistrationWithLiveAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -89,20 +89,20 @@ const mockIssuedPern = asPackagingRecyclingNote({
   status: 'awaiting_acceptance'
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const organisationNumber = '500123'
+const registrationNumber = 'R26EN0000000001PL'
+const year = '2026'
 const prnId = 'prn-789'
-const issuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+const issuedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issued`
+const viewUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/view`
+const listUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes`
 
 describe('#issuedController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(
+      getRequiredRegistrationWithAccreditationByNumber
+    ).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPrn)
   })
 
@@ -398,7 +398,7 @@ describe('#issuedController', () => {
         })
         expect(returnHomeLink).toBeDefined()
         expect(returnHomeLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}`
         )
       })
 
@@ -522,14 +522,14 @@ describe('#issuedController', () => {
 
     describe('exporter (pern)', () => {
       const pernId = 'pern-123'
-      const pernIssuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/issued`
+      const pernIssuedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${pernId}/issued`
 
       it('displays PERN text for exporter wasteProcessingType', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
 
         const { cookie: csrfCookie } = await getCsrfToken(
@@ -558,9 +558,9 @@ describe('#issuedController', () => {
       it('displays View PERN button with opens in a new tab text for exporter', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
 
         const { cookie: csrfCookie } = await getCsrfToken(

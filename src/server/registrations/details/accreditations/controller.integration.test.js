@@ -117,9 +117,12 @@ const packagingRecyclingNotes = [
     material: 'plastic',
     status: 'accepted',
     createdAt: '2026-01-27T09:00:00.000Z',
+    notes: null,
     issuedAt: '2026-01-28T09:00:00.000Z',
+    issuedBy: null,
     wasteProcessingType: 'reprocessor',
     processToBeUsed: '',
+    accreditationYear: 2026,
     isDecemberWaste: false
   },
   {
@@ -130,9 +133,12 @@ const packagingRecyclingNotes = [
     material: 'plastic',
     status: 'draft',
     createdAt: '2026-02-02T09:00:00.000Z',
+    notes: null,
     issuedAt: null,
+    issuedBy: null,
     wasteProcessingType: 'reprocessor',
     processToBeUsed: '',
+    accreditationYear: 2026,
     isDecemberWaste: false
   }
 ]

@@ -5,6 +5,7 @@ import {
   buildMockAuth,
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -125,11 +126,11 @@ const backendHolds = (msw, held = organisation) =>
       () => HttpResponse.json({})
     ),
     http.get(
-      `${backendUrl}/v1${byIds}/accreditations/${accreditationId}/packaging-recycling-notes`,
-      () => HttpResponse.json([])
+      `${backendUrl}${byNumbers}/accreditations/2026/packaging-recycling-notes`,
+      () => HttpResponse.json({ items: [] })
     ),
     http.get(
-      `${backendUrl}/v1${byIds}/accreditations/${accreditationId}/packaging-recycling-notes/december-prn-eligibility`,
+      `${backendUrl}${byNumbers}/accreditations/2026/packaging-recycling-notes/december-prn-eligibility`,
       () => HttpResponse.json({ mode: 'pool', windowOpen: false })
     )
   )
@@ -311,6 +312,101 @@ describe('old registration and accreditation page URLs', () => {
       )
       expect(download.statusCode).toBe(statusCodes.ok)
     })
+  })
+
+  describe('the PRN list', () => {
+    const oldUrl = `${byIds}/accreditations/${accreditationId}/packaging-recycling-notes`
+    const newUrl = `${byNumbers}/accreditations/2026/packaging-recycling-notes`
+
+    it.for([
+      { name: 'a regulator', auth: regulator },
+      { name: 'an operator', auth: operator }
+    ])(
+      'sends $name from the id URL to the number URL',
+      async ({ auth }, { server, msw }) => {
+        backendHolds(msw)
+
+        const redirect = await visit(server, oldUrl, auth)
+        const page = await visit(
+          server,
+          /** @type {string} */ (redirect.headers.location),
+          auth
+        )
+
+        expect(redirect.statusCode).toBe(statusCodes.found)
+        expect(redirect.headers.location).toBe(newUrl)
+        expect(page.statusCode).toBe(statusCodes.ok)
+      }
+    )
+  })
+
+  describe('a PRN step', () => {
+    const oldUrl = `${byIds}/accreditations/${accreditationId}/packaging-recycling-notes/prn-1/view`
+    const newUrl = `${byNumbers}/accreditations/2026/packaging-recycling-notes/prn-1/view`
+
+    it('sends a GET from the id URL to the number URL, keeping the note id', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, oldUrl, operator)
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(newUrl)
+    })
+
+    it('sends a POST on with a 307, keeping the note id and the form', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+      const { cookie, crumb } = await getCsrfToken(server, oldUrl, {
+        auth: operator
+      })
+
+      const redirect = await server.inject({
+        method: 'POST',
+        url: oldUrl,
+        auth: operator,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(redirect.statusCode).toBe(statusCodes.temporaryRedirect)
+      expect(redirect.headers.location).toBe(newUrl)
+    })
+  })
+
+  describe('the waste balance ledger', () => {
+    it.for([
+      {
+        name: 'registered-only',
+        oldUrl: `${byIds}/waste-balance-ledger`,
+        newUrl: `${byNumbers}/waste-balance-ledger`
+      },
+      {
+        name: 'accredited',
+        oldUrl: `${byIds}/accreditations/${accreditationId}/waste-balance-ledger`,
+        newUrl: `${byNumbers}/accreditations/2026/waste-balance-ledger`
+      }
+    ])(
+      'sends a regulator from the $name id URL to the number URL',
+      async ({ oldUrl, newUrl }, { server, msw }) => {
+        backendHolds(msw)
+
+        const redirect = await visit(server, oldUrl, regulator)
+        const page = await visit(
+          server,
+          /** @type {string} */ (redirect.headers.location),
+          regulator
+        )
+
+        expect(redirect.statusCode).toBe(statusCodes.found)
+        expect(redirect.headers.location).toBe(newUrl)
+        expect(page.statusCode).toBe(statusCodes.ok)
+      }
+    )
   })
 
   describe('the accreditation page', () => {

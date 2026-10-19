@@ -108,7 +108,7 @@ export const makeChangesGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { organisationData, registration, accreditation } =
+    const { registration, accreditation } =
       await fetchRegistrationAndAccreditationByNumber(
         organisationNumber,
         registrationNumber,
@@ -147,12 +147,7 @@ export const makeChangesGetController = {
       periodLabel,
       ...dataUpdateCopy,
       backUrl: request.localiseUrl(viewPath),
-      uploadUrl: request.localiseUrl(
-        summaryLogUploadPath({
-          organisationId: organisationData.id,
-          registrationId: registration.id
-        })
-      )
+      uploadUrl: request.localiseUrl(summaryLogUploadPath(request.params))
     })
   }
 }

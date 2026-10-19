@@ -3,7 +3,7 @@ import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisa
 import { toPrnGroups } from './prn-groups.js'
 
 /**
- * @import { PackagingRecyclingNote } from './fetch-packaging-recycling-notes.js'
+ * @import { PackagingRecyclingNote } from './prn-resource.js'
  */
 
 /**

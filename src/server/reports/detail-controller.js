@@ -223,10 +223,7 @@ export const detailController = {
     }
 
     const basePath = reportPath(request.params)
-    const uploadPath = summaryLogUploadPath({
-      organisationId: organisationData.id,
-      registrationId: registration.id
-    })
+    const uploadPath = summaryLogUploadPath(request.params)
 
     if (reportDetail.incompleteSummaryLogRows) {
       request.yar.set('reportDataIncompleteContext', {

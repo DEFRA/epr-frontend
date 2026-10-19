@@ -1,7 +1,7 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import {
   asCreatePrnResponse,
+  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -19,17 +19,35 @@ import { describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
-vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
+vi.mock(
+  import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
+)
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
-const { fetchWasteBalances } =
-  await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
+const { fetchPrnWasteBalance } =
+  await import('./helpers/fetch-prn-waste-balance.js')
 const { fetchDecemberPrnEligibility } =
   await import('./helpers/fetch-december-prn-eligibility.js')
+const { fetchOrganisationWasteBalances } =
+  await import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
+
+/** @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js' */
+
+/**
+ * The accreditation's balance, as the create and confirm steps each read it.
+ * @param {WasteBalance} balance
+ */
+const mockBalance = (balance) => {
+  vi.mocked(fetchPrnWasteBalance).mockResolvedValue(balance)
+  vi.mocked(fetchOrganisationWasteBalances).mockResolvedValue({
+    'ACC-001': balance
+  })
+}
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -38,7 +56,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
+const fixtureReprocessor = asRegistrationWithLiveAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -51,10 +69,14 @@ const fixtureReprocessor = asGetRequiredRegistrationResult({
     site: { address: { line1: 'Reprocessing Site' } },
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  accreditation: {
+    id: 'acc-001',
+    accreditationNumber: 'ACC-001',
+    status: 'approved'
+  }
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
+const fixtureExporter = asRegistrationWithLiveAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -67,18 +89,21 @@ const fixtureExporter = asGetRequiredRegistrationResult({
     site: null,
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  accreditation: {
+    id: 'acc-001',
+    accreditationNumber: 'ACC-001',
+    status: 'approved'
+  }
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const organisationNumber = '500123'
+const prnsBase = `/organisations/${organisationNumber}/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes`
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
-const pernCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/created`
+const createUrl = `${prnsBase}/create`
+const viewUrl = `${prnsBase}/${prnId}/view`
+const createdUrl = `${prnsBase}/${prnId}/created`
+const pernCreatedUrl = `${prnsBase}/${pernId}/created`
 
 const validPayload = {
   tonnage: '100',
@@ -179,13 +204,14 @@ async function createPrnAndConfirm(
 describe('#createdController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(
+      getRequiredRegistrationWithAccreditationByNumber
+    ).mockResolvedValue(fixtureReprocessor)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
-    vi.mocked(fetchWasteBalances).mockResolvedValue({
-      'acc-001': { amount: 1000, availableAmount: 500 }
+    mockBalance({
+      amount: 1000,
+      availableAmount: 500
     })
     vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
       mode: 'none',
@@ -220,13 +246,11 @@ describe('#createdController', () => {
         server
       }) => {
         vi.mocked(createPrn).mockResolvedValue(mockDecemberWastePrnCreated)
-        vi.mocked(fetchWasteBalances).mockResolvedValue({
-          'acc-001': {
-            amount: 1000,
-            availableAmount: 500,
-            decemberAmount: 500,
-            decemberAvailableAmount: 500
-          }
+        mockBalance({
+          amount: 1000,
+          availableAmount: 500,
+          decemberAmount: 500,
+          decemberAvailableAmount: 500
         })
         vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
           mode: 'pool',
@@ -291,7 +315,7 @@ describe('#createdController', () => {
         expect(viewButton).toBeDefined()
         expect(viewButton.getAttribute('target')).toBe('_blank')
         expect(viewButton.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
+          `${prnsBase}/${prnId}/view`
         )
       })
 
@@ -333,9 +357,7 @@ describe('#createdController', () => {
         const prnsPageLink = getByText(main, /PRNs page/i)
 
         expect(prnsPageLink).toBeDefined()
-        expect(prnsPageLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-        )
+        expect(prnsPageLink.getAttribute('href')).toBe(prnsBase)
       })
 
       it('displays Create another PRN link', async ({ server }) => {
@@ -355,7 +377,7 @@ describe('#createdController', () => {
 
         expect(createAnotherLink).toBeDefined()
         expect(createAnotherLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+          `${prnsBase}/create`
         )
       })
 
@@ -377,7 +399,7 @@ describe('#createdController', () => {
 
         expect(returnLink).toBeDefined()
         expect(returnLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}`
+          `/organisations/${organisationNumber}`
         )
       })
 
@@ -385,9 +407,9 @@ describe('#createdController', () => {
         server
       }) => {
         // Set up exporter fixture for PERN
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
         vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
         vi.mocked(updatePrnStatus).mockResolvedValue(mockPernStatusUpdated)
 
@@ -396,7 +418,7 @@ describe('#createdController', () => {
           wasteProcessingType: 'exporter'
         }
 
-        const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/view`
+        const pernViewUrl = `${prnsBase}/${pernId}/view`
         const { cookies } = await createPrnAndConfirm(
           server,
           exporterPayload,
@@ -442,8 +464,8 @@ describe('#createdController', () => {
         const { cookies } = await createPrnAndConfirm(server)
 
         // Try to access created page with different prnId
-        const differentCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/different-id/created`
-        const differentViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/different-id/view`
+        const differentCreatedUrl = `${prnsBase}/different-id/created`
+        const differentViewUrl = `${prnsBase}/different-id/view`
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',
