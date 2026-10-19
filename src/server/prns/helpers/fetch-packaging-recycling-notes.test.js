@@ -55,6 +55,29 @@ describe(fetchPackagingRecyclingNotes, () => {
     })
   })
 
+  test('lists the notes in the order they were raised', async ({ msw }) => {
+    msw.use(
+      http.get(notesUrl, () =>
+        HttpResponse.json({
+          items: [
+            buildPrnResource({
+              id: 'newer',
+              createdAt: '2026-03-01T00:00:00.000Z'
+            }),
+            buildPrnResource({
+              id: 'older',
+              createdAt: '2026-02-01T00:00:00.000Z'
+            })
+          ]
+        })
+      )
+    )
+
+    const result = await fetchPackagingRecyclingNotes(keys, backendToken)
+
+    expect(result.map(({ id }) => id)).toStrictEqual(['older', 'newer'])
+  })
+
   test('includes Authorization and tracing headers', async ({ msw }) => {
     /** @type {Request | undefined} */
     let capturedRequest

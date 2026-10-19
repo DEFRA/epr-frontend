@@ -17,8 +17,17 @@ async function fetchPackagingRecyclingNotes(keys, backendToken) {
     })
   )
 
-  return items.map(toPackagingRecyclingNote)
+  // The backend lists newest first; the pages show notes in the order raised.
+  return items.map(toPackagingRecyclingNote).sort(oldestFirst)
 }
+
+/**
+ * @param {PackagingRecyclingNote} note
+ * @param {PackagingRecyclingNote} other
+ * @returns {number}
+ */
+const oldestFirst = (note, other) =>
+  new Date(note.createdAt).getTime() - new Date(other.createdAt).getTime()
 
 export { fetchPackagingRecyclingNotes }
 
