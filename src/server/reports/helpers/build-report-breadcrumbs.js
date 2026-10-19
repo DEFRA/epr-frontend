@@ -25,8 +25,8 @@ import {
  * page, so the trail stops at the registration above it — as does the reports
  * list, which names no period at all.
  * @param {{
- *   registrationPath: string,
- *   accreditationPath: string | undefined,
+ *   registrationUrl: string,
+ *   accreditationUrl: string | undefined,
  *   year: number | string | undefined,
  *   cadence: CadenceValue | undefined,
  *   localise: TFunction,
@@ -35,8 +35,8 @@ import {
  * @returns {Crumb[]} empty where no page lists the period
  */
 const periodCrumb = ({
-  registrationPath,
-  accreditationPath,
+  registrationUrl,
+  accreditationUrl,
   year,
   cadence,
   localise,
@@ -55,16 +55,16 @@ const periodCrumb = ({
             year: String(year)
           }
         ),
-        href: localiseUrl(`${registrationPath}/registered-only-periods/${year}`)
+        href: localiseUrl(`${registrationUrl}/registered-only-periods/${year}`)
       }
     ]
   }
 
-  return accreditationPath
+  return accreditationUrl
     ? [
         {
           text: localise('registrations:details:accreditation:breadcrumb'),
-          href: localiseUrl(accreditationPath)
+          href: localiseUrl(accreditationUrl)
         }
       ]
     : []
@@ -115,8 +115,8 @@ export const buildReportBreadcrumbs = ({
       href: localiseUrl(registrationUrl)
     },
     ...periodCrumb({
-      registrationPath: registrationUrl,
-      accreditationPath: listedOnAccreditation
+      registrationUrl,
+      accreditationUrl: listedOnAccreditation
         ? accreditationPath({ ...keys, year: String(year) })
         : undefined,
       year,
