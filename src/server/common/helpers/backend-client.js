@@ -352,16 +352,16 @@ export const backend = (token, defaults = {}) => {
     /**
      * Where the backend redirects to, without following it.
      * @param {string} endpoint
-     * @param {{ onError?: OnError }} [options]
+     * @param {{ onError?: OnError, query?: Query }} [options]
      */
-    redirect: (endpoint, options = {}) =>
-      guarded(options, () => sendForRedirect(token, urlOf(endpoint))),
+    redirect: (endpoint, { query, ...options } = {}) =>
+      guarded(options, () => sendForRedirect(token, urlOf(endpoint, query))),
     /**
      * The body as a stream, for passing straight to `h.response`.
      * @param {string} endpoint
-     * @param {{ onError?: OnError }} [options]
+     * @param {{ onError?: OnError, query?: Query }} [options]
      */
-    stream: (endpoint, options = {}) =>
-      guarded(options, () => sendForStream(token, urlOf(endpoint)))
+    stream: (endpoint, { query, ...options } = {}) =>
+      guarded(options, () => sendForStream(token, urlOf(endpoint, query)))
   }
 }
