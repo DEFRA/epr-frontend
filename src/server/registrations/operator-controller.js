@@ -45,6 +45,8 @@ import { registeredYears } from './details/helpers/timeline-dates.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
+const REGISTRATION_VIEW = 'registrations/index'
+
 /** @typedef {{ href: string; text: string }} Link */
 
 /**
@@ -318,11 +320,16 @@ const accreditationPathIn = (keys, registration, year) =>
  * @returns {number | undefined}
  */
 const latestYearOf = (registration) => {
-  // The backend dates an approval from its start date, which may not have come yet.
-  const year =
-    registeredYears(registration)[0] ?? latestAccreditationYear(registration)
+  const [registeredYear] = registeredYears(registration)
 
-  return year === undefined ? undefined : Number(year)
+  if (registeredYear) {
+    return registeredYear
+  }
+
+  // The backend dates an approval from its start date, which may not have come yet.
+  const accreditationYear = latestAccreditationYear(registration)
+
+  return accreditationYear ? Number(accreditationYear) : undefined
 }
 
 /**
@@ -355,7 +362,7 @@ export const registrationController = {
     }
 
     return h.view(
-      'registrations/index',
+      REGISTRATION_VIEW,
       buildRegisteredOnlyViewModel({ request, keys, registration })
     )
   }
@@ -412,7 +419,7 @@ export const registrationYearController = {
     }
 
     return h.view(
-      'registrations/index',
+      REGISTRATION_VIEW,
       buildRegisteredOnlyViewModel({ request, keys, registration })
     )
   }
@@ -468,7 +475,7 @@ export const controller = {
     })
 
     return h.view(
-      'registrations/index',
+      REGISTRATION_VIEW,
       buildViewModel({
         request,
         keys,
