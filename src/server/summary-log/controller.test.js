@@ -70,6 +70,7 @@ vi.mock(
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js'),
   () => ({
+    ACCREDITATION_YEAR: /** @type {const} */ ('2026'),
     fetchRegistrationWithAccreditation: vi.fn()
   })
 )
@@ -327,9 +328,7 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('waste balance', () => {
-      it('status: submitted - reads the balance for the live accreditation year', async ({
-        server
-      }) => {
+      it('status: submitted - reads the 2026 balance', async ({ server }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'

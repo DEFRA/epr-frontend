@@ -2,8 +2,10 @@ import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
-import { latestAccreditationYear } from '#server/common/helpers/organisations/registration-in-view.js'
+import {
+  ACCREDITATION_YEAR,
+  fetchRegistrationWithAccreditation
+} from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
@@ -361,17 +363,16 @@ const getWasteBalanceData = async (status, keys, session, logger) => {
   }
 
   try {
-    const { organisation, registration, accreditation } =
+    const { organisation, accreditation } =
       await fetchRegistrationWithAccreditation(keys, session.backendToken)
 
     if (!accreditation) {
       return {}
     }
 
-    // The route has no year, so read the live accreditation's.
     const wasteBalances = await fetchOrganisationWasteBalances(
       organisationNumber(organisation.organisationNumber),
-      year(Number(latestAccreditationYear(registration))),
+      year(Number(ACCREDITATION_YEAR)),
       session.backendToken
     )
 

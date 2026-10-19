@@ -11,8 +11,7 @@ import { fetchRegistration } from './fetch-registration.js'
 import {
   fetchRegistrationWithAccreditation,
   fetchRequiredAccreditation,
-  fetchRequiredAnyAccreditation,
-  liveAccreditationOf
+  fetchRequiredAnyAccreditation
 } from './fetch-registration-with-accreditation.js'
 
 vi.mock(import('./fetch-registration.js'))
@@ -32,41 +31,12 @@ const resolveRegistration = (registration) => {
   return organisation
 }
 
-describe(liveAccreditationOf, () => {
-  it('returns the latest year accreditation when it is live', () => {
-    const latest = buildAccreditationView({ accreditationNumber: 'A27' })
-    const registration = buildRegistrationView({
-      accreditations: { 2026: buildAccreditationView(), 2027: latest }
-    })
-
-    expect(liveAccreditationOf(registration)).toBe(latest)
-  })
-
-  it('returns nothing when the latest accreditation is not live', () => {
-    const registration = buildRegistrationView({
-      accreditations: {
-        2026: buildAccreditationView({
-          status: { current: 'cancelled', timeline: {} }
-        })
-      }
-    })
-
-    expect(liveAccreditationOf(registration)).toBeUndefined()
-  })
-
-  it('returns nothing for a registration with no accreditations', () => {
-    expect(
-      liveAccreditationOf(buildRegistrationView({ accreditations: {} }))
-    ).toBeUndefined()
-  })
-})
-
 describe(fetchRegistrationWithAccreditation, () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('returns the registration with its live accreditation', async () => {
+  it('returns the registration with its live 2026 accreditation', async () => {
     const registration = buildRegistrationView()
     const organisation = resolveRegistration(registration)
 
@@ -84,6 +54,42 @@ describe(fetchRegistrationWithAccreditation, () => {
       ...registrationKeys,
       backendToken
     })
+  })
+
+  it('reads 2026 even when another year is accredited', async () => {
+    resolveRegistration(
+      buildRegistrationView({
+        accreditations: {
+          2027: buildAccreditationView({ accreditationNumber: 'A27' })
+        }
+      })
+    )
+
+    const { accreditation } = await fetchRegistrationWithAccreditation(
+      registrationKeys,
+      backendToken
+    )
+
+    expect(accreditation).toBeUndefined()
+  })
+
+  it('leaves out a 2026 accreditation that is not live', async () => {
+    resolveRegistration(
+      buildRegistrationView({
+        accreditations: {
+          2026: buildAccreditationView({
+            status: { current: 'cancelled', timeline: {} }
+          })
+        }
+      })
+    )
+
+    const { accreditation } = await fetchRegistrationWithAccreditation(
+      registrationKeys,
+      backendToken
+    )
+
+    expect(accreditation).toBeUndefined()
   })
 })
 

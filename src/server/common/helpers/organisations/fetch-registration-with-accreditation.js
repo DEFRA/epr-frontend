@@ -4,12 +4,14 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 import { isAccreditationViewActive } from './accreditation-helpers.js'
 import { fetchRegistration } from './fetch-registration.js'
-import { latestAccreditationYear } from './registration-in-view.js'
 
 /**
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { AccreditationView, OrganisationView, RegistrationView } from './organisation-view.js'
  */
+
+// Fixed until pages without a year in their URL become year-configured.
+export const ACCREDITATION_YEAR = '2026'
 
 /**
  * `accreditation` is present only when live (approved or suspended).
@@ -21,19 +23,7 @@ import { latestAccreditationYear } from './registration-in-view.js'
  */
 
 /**
- * The registration's latest accreditation, when it is live.
- * @param {RegistrationView} registration
- * @returns {AccreditationView | undefined}
- */
-export const liveAccreditationOf = (registration) => {
-  const year = latestAccreditationYear(registration)
-  const accreditation = year ? registration.accreditations[year] : undefined
-
-  return isAccreditationViewActive(accreditation) ? accreditation : undefined
-}
-
-/**
- * The registration by number, with its latest live accreditation.
+ * The registration by number, with its live accreditation for {@link ACCREDITATION_YEAR}.
  * @param {RegistrationKeys} keys
  * @param {string} backendToken
  * @returns {Promise<RegistrationWithAccreditation>}
@@ -46,11 +36,14 @@ export const fetchRegistrationWithAccreditation = async (
     ...keys,
     backendToken
   })
+  const accreditation = registration.accreditations[ACCREDITATION_YEAR]
 
   return {
     organisation,
     registration,
-    accreditation: liveAccreditationOf(registration)
+    accreditation: isAccreditationViewActive(accreditation)
+      ? accreditation
+      : undefined
   }
 }
 
