@@ -46,6 +46,7 @@ describe(fetchPrnListDetails, () => {
       wasteProcessingType: 'reprocessor',
       processToBeUsed: '',
       accreditationYear: 2026,
+      obligationYear: 2026,
       issuedAt: '2026-01-28T09:00:00.000Z',
       issuedBy: null
     }

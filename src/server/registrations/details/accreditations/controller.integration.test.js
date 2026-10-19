@@ -123,6 +123,7 @@ const packagingRecyclingNotes = [
     wasteProcessingType: 'reprocessor',
     processToBeUsed: '',
     accreditationYear: 2026,
+    obligationYear: 2026,
     isDecemberWaste: false
   },
   {
@@ -139,6 +140,7 @@ const packagingRecyclingNotes = [
     wasteProcessingType: 'reprocessor',
     processToBeUsed: '',
     accreditationYear: 2026,
+    obligationYear: 2026,
     isDecemberWaste: false
   }
 ]
