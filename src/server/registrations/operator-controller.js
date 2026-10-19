@@ -7,7 +7,10 @@ import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-i
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { isAccreditationViewActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
-import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
+import {
+  accreditationIn,
+  latestAccreditationYear
+} from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
 import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
@@ -296,16 +299,31 @@ const buildRegisteredOnlyViewModel = ({ request, keys, registration }) => ({
 })
 
 /**
- * The registration's page for the year: its accreditation where it holds one.
+ * The year's accreditation page, where the registration holds one. Until a
+ * year can hold both streams, such a year has only that page.
  * @param {RegistrationKeys} keys
  * @param {RegistrationView} registration
  * @param {number} year
- * @returns {string}
+ * @returns {string | null}
  */
-const yearPathOf = (keys, registration, year) =>
+const accreditationPathIn = (keys, registration, year) =>
   Object.hasOwn(registration.accreditations, year)
     ? accreditationPath({ ...keys, year: String(year) })
-    : registrationYearPath({ ...keys, year })
+    : null
+
+/**
+ * The latest year the registration was approved in, else its latest
+ * accreditation year.
+ * @param {RegistrationView} registration
+ * @returns {number | undefined}
+ */
+const latestYearOf = (registration) => {
+  // The backend dates an approval from its start date, which may not have come yet.
+  const year =
+    registeredYears(registration)[0] ?? latestAccreditationYear(registration)
+
+  return year === undefined ? undefined : Number(year)
+}
 
 /**
  * The operator's registration page with no year: a registration redirects to
@@ -325,13 +343,14 @@ export const registrationController = {
       ...keys,
       backendToken: request.auth.credentials.backendToken
     })
-    const [year] = registeredYears(registration)
+    const year = latestYearOf(registration)
 
     if (year) {
       return redirectPreservingMethod(
         request,
         h,
-        yearPathOf(keys, registration, year)
+        accreditationPathIn(keys, registration, year) ??
+          registrationYearPath({ ...keys, year })
       )
     }
 
@@ -373,13 +392,10 @@ export const registrationYearController = {
       backendToken: request.auth.credentials.backendToken
     })
 
-    // Until a year can hold both streams, a year with an accreditation has only that page.
-    if (Object.hasOwn(registration.accreditations, year)) {
-      return redirectPreservingMethod(
-        request,
-        h,
-        accreditationPath({ ...keys, year: String(year) })
-      )
+    const accredited = accreditationPathIn(keys, registration, year)
+
+    if (accredited) {
+      return redirectPreservingMethod(request, h, accredited)
     }
 
     if (!registeredYears(registration).includes(year)) {

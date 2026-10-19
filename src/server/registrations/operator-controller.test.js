@@ -607,6 +607,28 @@ describe("the operator's registration page with no year", () => {
     expect(getByText(body, registrationNumber)).toBeDefined()
   })
 
+  it('sends an operator whose registration starts next year to that accreditation', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      registration: {
+        ...reprocessor,
+        status: approvedSince(thisYear + 1),
+        accreditations: {
+          [thisYear + 1]: {
+            accreditationNumber,
+            status: approvedSince(thisYear + 1)
+          }
+        }
+      }
+    })
+
+    const { location } = await locationOf(server)
+
+    expect(location).toBe(`${registrationPath}/accreditations/${thisYear + 1}`)
+  })
+
   it('is not found for an organisation number the backend does not know', async ({
     server,
     msw
@@ -791,7 +813,7 @@ describe("the operator's registered-only page for a year", () => {
     expect(response.headers.location).toBe(accreditationPath)
   })
 
-  it('sends an operator accredited in one year but not the next to that accreditation', async ({
+  it('keeps a Welsh reader in Welsh when a year sends them to its accreditation', async ({
     server,
     msw
   }) => {

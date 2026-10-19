@@ -55,7 +55,7 @@ const registrationController = {
 }
 
 /**
- * Answers nothing to a regulator: their registration view has no year.
+ * Answers nothing to a regulator, whose view of a year is its registered-only period.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const registrationYearRoute = {
