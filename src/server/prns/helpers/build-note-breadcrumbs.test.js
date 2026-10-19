@@ -5,7 +5,6 @@ import { buildNoteBreadcrumbs } from './build-note-breadcrumbs.js'
 /**
  * @import { TFunction } from 'i18next'
  * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
  */
 
 const localise = /** @type {TFunction} */ (
@@ -22,56 +21,43 @@ const organisation = /** @type {Organisation} */ (
   })
 )
 
-const registration = /** @type {Registration} */ (
-  /** @type {unknown} */ ({ id: 'reg-1' })
-)
-
 const context = {
   organisation,
-  registration,
-  accreditationId: 'acc-1',
+  keys: {
+    organisationNumber: '500123',
+    registrationNumber: 'R26EN0000000001PL',
+    year: '2026'
+  },
   noteTypePlural: 'PRNs',
   prn: { id: 'prn-1', prnNumber: 'EX123456' },
   localise,
   localiseUrl
 }
 
+const registration = '/en/organisations/500123/registrations/R26EN0000000001PL'
+
 describe(buildNoteBreadcrumbs, () => {
-  it('walks from all organisations down to the note', () => {
+  it('walks from all organisations down to the note by natural keys', () => {
     expect(buildNoteBreadcrumbs(context)).toStrictEqual([
       {
         text: 'registrations:details:allOrganisations',
         href: '/en/regulators/home'
       },
-      { text: 'Acme', href: '/en/organisations/org-1' },
+      { text: 'Acme', href: '/en/organisations/500123' },
       {
         text: 'registrations:details:heading',
-        href: '/en/organisations/org-1/registrations/reg-1'
+        href: registration
       },
       {
         text: 'registrations:details:accreditation:breadcrumb',
-        href: '/en/organisations/org-1/registrations/reg-1/accreditations/acc-1'
+        href: `${registration}/accreditations/2026`
       },
       {
         text: 'registrations:details:accreditation:prns:listHeading',
-        href: '/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes'
+        href: `${registration}/accreditations/2026/packaging-recycling-notes`
       },
       { text: 'EX123456' }
     ])
-  })
-
-  it('links the notes list, so a regulator can reach its own list', () => {
-    const crumbs = buildNoteBreadcrumbs(context)
-
-    expect(crumbs.at(-2)?.href).toBe(
-      '/en/organisations/org-1/registrations/reg-1/accreditations/acc-1/packaging-recycling-notes'
-    )
-  })
-
-  it('names the note by its number, unlinked', () => {
-    expect(buildNoteBreadcrumbs(context).at(-1)).toStrictEqual({
-      text: 'EX123456'
-    })
   })
 
   it('falls back to the note id where it carries no number yet', () => {

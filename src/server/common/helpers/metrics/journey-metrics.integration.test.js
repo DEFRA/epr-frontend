@@ -2,13 +2,13 @@ import { StorageResolution, Unit } from 'aws-embedded-metrics'
 import { describe, expect, vi } from 'vitest'
 
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import {
   asPackagingRecyclingNote,
+  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { fetchPackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-note.js'
@@ -111,15 +111,22 @@ describe('journey metrics emit-once, driven through a real session', () => {
   describe('summary log upload journey (success page re-renders on every poll)', () => {
     const organisationId = '123'
     const registrationId = '456'
+    const organisationNumber = '500118'
+    const registrationNumber = 'R26ER5001180041PL'
+    const operatorAuth = buildMockAuth({
+      backendToken: 'test-id-token',
+      linkedOrganisationId: organisationId
+    })
     const summaryLogId = '789'
-    const uploadUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-    const submitUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
+    const uploadUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
+    const submitUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}/submit`
 
     const mockOrganisationData = /** @type {Organisation} */ (
       /** @type {unknown} */ ({
         id: organisationId,
+        orgId: Number(organisationNumber),
         registrations: [
-          { id: registrationId, status: 'approved', validFrom: '2026-01-01' }
+          { id: registrationId, registrationNumber, status: 'approved' }
         ],
         accreditations: []
       })
@@ -137,13 +144,13 @@ describe('journey metrics emit-once, driven through a real session', () => {
       server
     }) => {
       const { cookie } = await getCsrfToken(server, uploadUrl, {
-        auth: mockAuth
+        auth: operatorAuth
       })
 
       await server.inject({
         method: 'GET',
         url: uploadUrl,
-        auth: mockAuth,
+        auth: operatorAuth,
         headers: { cookie }
       })
 
@@ -166,20 +173,20 @@ describe('journey metrics emit-once, driven through a real session', () => {
       const { cookie: startCookie, crumb } = await getCsrfToken(
         server,
         uploadUrl,
-        { auth: mockAuth }
+        { auth: operatorAuth }
       )
 
       const firstSubmit = await server.inject({
         method: 'POST',
         url: submitUrl,
-        auth: mockAuth,
+        auth: operatorAuth,
         headers: { cookie: startCookie },
         payload: { crumb }
       })
       await server.inject({
         method: 'POST',
         url: submitUrl,
-        auth: mockAuth,
+        auth: operatorAuth,
         headers: { cookie: nextSessionCookie(startCookie, firstSubmit) },
         payload: { crumb }
       })
@@ -200,20 +207,20 @@ describe('journey metrics emit-once, driven through a real session', () => {
       const { cookie: startCookie, crumb } = await getCsrfToken(
         server,
         uploadUrl,
-        { auth: mockAuth }
+        { auth: operatorAuth }
       )
 
       const submitResponse = await server.inject({
         method: 'POST',
         url: submitUrl,
-        auth: mockAuth,
+        auth: operatorAuth,
         headers: { cookie: startCookie },
         payload: { crumb }
       })
       await server.inject({
         method: 'GET',
         url: uploadUrl,
-        auth: mockAuth,
+        auth: operatorAuth,
         headers: { cookie: nextSessionCookie(startCookie, submitResponse) }
       })
 
@@ -225,28 +232,27 @@ describe('journey metrics emit-once, driven through a real session', () => {
   })
 
   describe('delete a PRN journey (redirect-ended, no confirmation page)', () => {
-    const organisationId = 'org-123'
-    const registrationId = 'reg-456'
-    const accreditationId = 'acc-001'
     const prnId = 'prn-789'
-    const deleteUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/delete`
+    const deleteUrl = `/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes/${prnId}/delete`
 
     beforeEach(() => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asGetRequiredRegistrationResult({
+      vi.mocked(
+        getRequiredRegistrationWithAccreditationByNumber
+      ).mockResolvedValue(
+        asRegistrationWithLiveAccreditation({
           organisationData: {
-            id: organisationId,
+            id: 'org-123',
             name: 'Reprocessor Organisation'
           },
           registration: {
-            id: registrationId,
+            id: 'reg-456',
             wasteProcessingType: 'reprocessor-input',
             material: 'plastic',
             nation: 'england',
             site: { address: { line1: 'Reprocessing Site' } },
-            accreditationId
+            accreditationId: 'acc-001'
           },
-          accreditation: { id: accreditationId, status: 'approved' }
+          accreditation: { id: 'acc-001', status: 'approved' }
         })
       )
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(

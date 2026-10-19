@@ -6,14 +6,17 @@ import { it } from '#vite/fixtures/server.js'
 import { submitSummaryLog } from './submit-summary-log.js'
 
 describe(submitSummaryLog, () => {
-  it('should submit the summary log the ids name and resolve to the outcome', async ({
+  it('should submit the summary log the keys name and resolve to the outcome', async ({
     msw
   }) => {
-    /** @type {string[]} */
-    const pathnames = []
+    /** @type {{ authorization: string | null, pathname: string }[]} */
+    const received = []
     msw.use(
       http.post(/\/submit$/, ({ request }) => {
-        pathnames.push(new URL(request.url).pathname)
+        received.push({
+          authorization: request.headers.get('authorization'),
+          pathname: new URL(request.url).pathname
+        })
         return HttpResponse.json({
           status: 'submitted',
           accreditationNumber: '493021'
@@ -21,14 +24,22 @@ describe(submitSummaryLog, () => {
       })
     )
 
-    const result = await submitSummaryLog('org/1', 'reg&2', 'log#3', 'a-token')
+    const result = await submitSummaryLog(
+      { organisationNumber: '500118', registrationNumber: 'R26/1' },
+      'log#3',
+      'a-token'
+    )
 
     expect(result).toStrictEqual({
       status: 'submitted',
       accreditationNumber: '493021'
     })
-    expect(pathnames).toStrictEqual([
-      '/v1/organisations/org%2F1/registrations/reg%262/summary-logs/log%233/submit'
+    expect(received).toStrictEqual([
+      {
+        authorization: 'Bearer a-token',
+        pathname:
+          '/organisations/500118/registrations/R26%2F1/summary-logs/log%233/submit'
+      }
     ])
   })
 })

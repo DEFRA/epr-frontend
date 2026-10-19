@@ -5,7 +5,7 @@ import { year } from '#server/common/helpers/year.js'
 /** @import { Year } from '#server/common/helpers/year.js' */
 
 /**
- * Fetches the years an organisation held approved registrations in
+ * Fetches the years an organisation was active in
  * @param {OrganisationNumber} organisationNumber - The organisation number
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<Year[]>} Years, newest first

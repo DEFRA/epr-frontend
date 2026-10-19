@@ -1,4 +1,5 @@
-import { backend, path } from '#server/common/helpers/backend-client.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import { prnsPath } from './prn-resource.js'
 
 /**
  * @typedef {object} DecemberPrnEligibility
@@ -12,20 +13,15 @@ import { backend, path } from '#server/common/helpers/backend-client.js'
  * halves of the rule, decided by the backend (see
  * resolve-december-waste-choice.js, which composes the two facts this
  * returns into the control to render).
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {string} accreditationId
+ * @param {AccreditationKeys} keys
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<DecemberPrnEligibility>}
  */
-const fetchDecemberPrnEligibility = (
-  organisationId,
-  registrationId,
-  accreditationId,
-  backendToken
-) =>
-  backend(backendToken).get(
-    path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/december-prn-eligibility`
-  )
+const fetchDecemberPrnEligibility = (keys, backendToken) =>
+  backend(backendToken).get(`${prnsPath(keys)}/december-prn-eligibility`)
 
 export { fetchDecemberPrnEligibility }
+
+/**
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ */

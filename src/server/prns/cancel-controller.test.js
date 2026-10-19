@@ -1,12 +1,12 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import {
   asPackagingRecyclingNote,
+  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -31,7 +31,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
+const fixtureReprocessor = asRegistrationWithLiveAccreditation({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-456',
@@ -44,7 +44,7 @@ const fixtureReprocessor = asGetRequiredRegistrationResult({
   accreditation: { id: 'acc-001', status: 'approved' }
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
+const fixtureExporter = asRegistrationWithLiveAccreditation({
   organisationData: { id: 'org-123', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-456',
@@ -57,11 +57,11 @@ const fixtureExporter = asGetRequiredRegistrationResult({
   accreditation: { id: 'acc-001', status: 'approved' }
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const organisationNumber = '500123'
+const registrationNumber = 'R26EN0000000001PL'
+const year = '2026'
 const prnId = 'prn-789'
-const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+const basePath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes`
 const listUrl = basePath
 const cancelUrl = `${basePath}/${prnId}/cancel`
 
@@ -86,9 +86,9 @@ vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 describe('#cancelController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(
+      getRequiredRegistrationWithAccreditationByNumber
+    ).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
       asPackagingRecyclingNote(mockPrnAwaitingCancellation)
     )
@@ -196,9 +196,9 @@ describe('#cancelController', () => {
       it('displays PERN wording for exporter registration', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -267,9 +267,7 @@ describe('#cancelController', () => {
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(`${basePath}/${prnId}/cancelled`)
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          { organisationNumber, registrationNumber, year },
           prnId,
           { status: 'cancelled' },
           mockCredentials.backendToken

@@ -1,4 +1,4 @@
-import { backend, path } from '#server/common/helpers/backend-client.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import {
   accreditationPath,
   registrationPath
@@ -59,46 +59,16 @@ import {
  */
 
 /**
- * Reads the events of the ledger at a backend endpoint.
- * @param {string} endpoint
+ * Reads the events of the ledger at a backend path.
+ * @param {string} path
  * @param {string} backendToken
  * @returns {Promise<LedgerEvent[]>}
  */
-const readEvents = async (endpoint, backendToken) => {
+const readEvents = async (path, backendToken) => {
   /** @type {{ events: LedgerEvent[] }} */
-  const { events } = await backend(backendToken).get(endpoint)
+  const { events } = await backend(backendToken).get(path)
 
   return events
-}
-
-/**
- * Reads the events of one waste balance ledger, in the order the backend
- * appended them.
- *
- * A ledger is partitioned by accreditation, the registered-only phase
- * included, and each partition has its own address. The accreditation is
- * therefore taken from the address rather than derived from the registration:
- * the id is constitutive of the ledger, so deriving it would make the same
- * address name a different ledger once the accreditation changes.
- * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId?: string,
- *   backendToken: string
- * }} params
- * @returns {Promise<LedgerEvent[]>}
- */
-export const fetchLedgerEvents = async ({
-  organisationId,
-  registrationId,
-  accreditationId,
-  backendToken
-}) => {
-  const ledgerPath = accreditationId
-    ? path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`
-    : path`/v1/organisations/${organisationId}/registrations/${registrationId}/waste-balance-ledger`
-
-  return readEvents(ledgerPath, backendToken)
 }
 
 /**
