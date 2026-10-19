@@ -69,13 +69,26 @@ export const asRegistrationWithLiveAccreditation = (data) =>
  */
 export const buildPrnResource = (overrides = {}) => ({
   id: 'prn-789',
-  status: 'draft',
+  status: {
+    current: 'draft',
+    timeline: [
+      {
+        status: 'draft',
+        at: '2026-01-15T10:00:00.000Z',
+        by: { name: 'Creator User' }
+      }
+    ]
+  },
   issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
-  accreditation: {
-    accreditationNumber: 'ACC-001',
-    accreditationYear: 2026,
-    wasteProcessingType: 'reprocessor',
-    material: 'plastic'
+  issuer: {
+    registration: {
+      accreditation: {
+        accreditationNumber: 'ACC-001',
+        accreditationYear: 2026,
+        wasteProcessingType: 'reprocessor',
+        material: 'plastic'
+      }
+    }
   },
   tonnage: 100,
   processToBeUsed: 'R3',

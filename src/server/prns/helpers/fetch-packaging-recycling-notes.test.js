@@ -37,7 +37,7 @@ describe(fetchPackagingRecyclingNotes, () => {
           items: [
             buildPrnResource({
               id: 'prn-001',
-              status: 'awaiting_authorisation'
+              status: { current: 'awaiting_authorisation', timeline: [] }
             })
           ]
         })

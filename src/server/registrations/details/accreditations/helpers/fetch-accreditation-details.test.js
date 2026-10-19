@@ -90,13 +90,17 @@ describe(fetchAccreditationDetails, () => {
   const prnResource = {
     id: 'prn-001',
     prnNumber: '240000123',
-    status: 'accepted',
+    status: { current: 'accepted', timeline: [] },
     issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
-    accreditation: {
-      accreditationNumber: accreditation.accreditationNumber,
-      accreditationYear: 2026,
-      wasteProcessingType: 'reprocessor',
-      material: 'paper'
+    issuer: {
+      registration: {
+        accreditation: {
+          accreditationNumber: accreditation.accreditationNumber,
+          accreditationYear: 2026,
+          wasteProcessingType: 'reprocessor',
+          material: 'paper'
+        }
+      }
     },
     tonnage: 12.5,
     processToBeUsed: '',

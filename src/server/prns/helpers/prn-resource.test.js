@@ -39,21 +39,22 @@ describe(toPackagingRecyclingNote, () => {
   it('reads an issued PRN with its number, notes and issuer', () => {
     const note = toPackagingRecyclingNote(
       buildPrnResource({
-        status: 'awaiting_acceptance',
+        status: { current: 'awaiting_acceptance', timeline: [] },
         prnNumber: 'ER2625001A',
         notes: 'Some notes',
         issued: {
           at: '2026-01-16T14:30:00.000Z',
-          by: { name: 'John Smith', position: 'Director' }
+          by: { name: 'John Smith' }
         }
       })
     )
 
     expect(note).toMatchObject({
+      status: 'awaiting_acceptance',
       prnNumber: 'ER2625001A',
       notes: 'Some notes',
       issuedAt: '2026-01-16T14:30:00.000Z',
-      issuedBy: { name: 'John Smith', position: 'Director' }
+      issuedBy: { name: 'John Smith' }
     })
   })
 })

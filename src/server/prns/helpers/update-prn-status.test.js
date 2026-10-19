@@ -43,7 +43,7 @@ describe(updatePrnStatus, () => {
   it('resolves to the updated note in the page shape', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(
       buildPrnResource({
-        status: 'awaiting_acceptance',
+        status: { current: 'awaiting_acceptance', timeline: [] },
         prnNumber: 'ER2625001A'
       })
     )

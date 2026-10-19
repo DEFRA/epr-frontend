@@ -22,7 +22,10 @@ describe(fetchPackagingRecyclingNote, () => {
       http.get(/packaging-recycling-notes\/[^/]+$/, ({ request }) => {
         pathnames.push(new URL(request.url).pathname)
         return HttpResponse.json(
-          buildPrnResource({ id: 'prn-4', status: 'awaiting_authorisation' })
+          buildPrnResource({
+            id: 'prn-4',
+            status: { current: 'awaiting_authorisation', timeline: [] }
+          })
         )
       })
     )
