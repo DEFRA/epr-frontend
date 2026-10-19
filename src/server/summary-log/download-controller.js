@@ -5,14 +5,16 @@ import {
   badGateway,
   notFound
 } from '#server/common/helpers/logging/cdp-boom.js'
+import { registrationPath as toRegistrationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 export const summaryLogDownloadPath =
-  '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/files/{fileId}/download'
+  '/organisations/{organisationNumber}/registrations/{registrationNumber}/summary-logs/files/{fileId}/download'
 
 /**
  * The address of one summary log's download, addressed by its file - which is
@@ -76,16 +78,12 @@ const noSuchDownload = (reason) => {
 export const summaryLogDownloadController = {
   /**
    * @param {HapiRequest & {
-   *   params: {
-   *     organisationId: string,
-   *     registrationId: string,
-   *     fileId: string
-   *   }
+   *   params: RegistrationKeys & { fileId: string }
    * }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, fileId } = request.params
+    const { fileId, ...keys } = request.params
     const { backendToken } = request.auth.credentials
 
     if (!readsAsARegulator(request.auth.credentials)) {
@@ -93,7 +91,7 @@ export const summaryLogDownloadController = {
     }
 
     const downloadUrl = await fetchRedirectFromBackend(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/files/${fileId}`,
+      `${toRegistrationPath(keys)}/summary-logs/files/${fileId}`,
       { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
     )
 

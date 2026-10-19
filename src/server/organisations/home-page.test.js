@@ -1,11 +1,16 @@
 import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { year } from '#server/common/helpers/year.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { homePath } from './home-page.js'
 import Boom from '@hapi/boom'
@@ -32,6 +37,12 @@ const PATH = `${BARE_PATH}/2026`
 const mockAuth = buildMockAuth({
   idToken: 'test-id-token',
   backendToken: 'test-backend-token'
+})
+
+const regulator = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
+  ...sessionIdentity(IDENTITIES.regulator)
 })
 
 /**
@@ -179,7 +190,7 @@ describe('the organisation home page', () => {
       }
     )
 
-    it('shows no registrations when the organisation has no approved year', async ({
+    it('shows no registrations when the organisation has no active year', async ({
       server
     }) => {
       vi.mocked(fetchOrganisationYears).mockResolvedValue([])
@@ -538,6 +549,22 @@ describe('the organisation home page', () => {
       }
     )
 
+    it.for(['/2026', '/2026/exporting'])(
+      'is not found for a regulator at "%s"',
+      async (page, { server }) => {
+        config.set('featureFlags.regulatorAccess', true)
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: `${BARE_PATH}${page}`,
+          auth: regulator
+        })
+
+        config.set('featureFlags.regulatorAccess', false)
+        expect(statusCode).toBe(statusCodes.notFound)
+      }
+    )
+
     it('links the tabs within the year the address names', async ({
       server
     }) => {
@@ -570,7 +597,7 @@ describe('the organisation home page', () => {
       }
     )
 
-    it('shows the page without a year address when the organisation has no approved year', async ({
+    it('shows the page without a year address when the organisation has no active year', async ({
       server
     }) => {
       vi.mocked(fetchOrganisationYears).mockResolvedValue([])
@@ -603,12 +630,46 @@ describe('the organisation home page', () => {
 
       const { payload } = await visit(server)
 
-      expect(load(payload)('p.govuk-heading-m').text()).toBe(
+      expect(load(payload)('span.govuk-heading-m').text()).toBe(
         'This is 2026 data'
       )
     })
 
-    it('hides the year line when the organisation has no approved year', async ({
+    it('links the year line to choosing a different year while the flag is on', async ({
+      server
+    }) => {
+      config.set('featureFlags.navigateAcrossYears', true)
+
+      const { payload } = await visit(server)
+
+      expect(
+        load(payload)('a:contains("Choose a different year")').attr('href')
+      ).toBe(`${PATH}/choose-year`)
+    })
+
+    it('offers no link while the flag is off', async ({ server }) => {
+      config.set('featureFlags.navigateAcrossYears', false)
+
+      const { payload } = await visit(server)
+
+      expect(payload).not.toContain('Choose a different year')
+    })
+
+    it('offers no other year when the organisation has only one', async ({
+      server
+    }) => {
+      config.set('featureFlags.navigateAcrossYears', true)
+      vi.mocked(fetchOrganisationYears).mockResolvedValue([year(2026)])
+
+      const { payload } = await visit(server)
+
+      expect(load(payload)('span.govuk-heading-m').text()).toBe(
+        'This is 2026 data'
+      )
+      expect(payload).not.toContain('Choose a different year')
+    })
+
+    it('hides the year line when the organisation has no active year', async ({
       server
     }) => {
       config.set('featureFlags.navigateAcrossYears', true)
