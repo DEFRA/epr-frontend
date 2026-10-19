@@ -32,16 +32,6 @@ export const asRegistrationWithAccreditation = (data) =>
   /** @type {RegistrationWithAccreditation} */ (data)
 
 /**
- * Casts a partial mock object to `Required<RegistrationWithAccreditation>`, the
- * type `getRequiredRegistrationWithAccreditation` resolves. As above, it does
- * not enforce that shape, so tests may still inject `accreditation: null` etc.
- * @param {unknown} data
- * @returns {Required<RegistrationWithAccreditation>}
- */
-export const asGetRequiredRegistrationResult = (data) =>
-  /** @type {Required<RegistrationWithAccreditation>} */ (data)
-
-/**
  * Extracts a registration and its linked accreditation from an organisation
  * fixture, returning the full `RegistrationWithAccreditation` shape that
  * `fetchRegistrationAndAccreditation` resolves. It mirrors that split: the

@@ -47,9 +47,9 @@
 /**
  * Route params for the PRN list and create endpoints.
  * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string
+ *   organisationNumber: string,
+ *   registrationNumber: string,
+ *   year: string
  * }} PrnListParams
  */
 

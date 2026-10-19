@@ -57,12 +57,12 @@ export const accreditationIdPath = ({ accreditationId, ...ids }) =>
   `${registrationIdPath(ids)}/accreditations/${encodeURIComponent(accreditationId)}`
 
 /**
- * The summary log upload page, by id until it moves to natural keys.
- * @param {{ organisationId: string, registrationId: string }} ids
+ * The summary log upload page.
+ * @param {RegistrationKeys} keys
  * @returns {string}
  */
-export const summaryLogUploadPath = (ids) =>
-  `${registrationIdPath(ids)}/summary-logs/upload`
+export const summaryLogUploadPath = (keys) =>
+  `${registrationPath(keys)}/summary-logs/upload`
 
 /**
  * The report list page for a registration.

@@ -1,6 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -11,18 +10,20 @@ import { describe, expect, vi } from 'vitest'
 
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
- * @import { CreatePrnResponse } from './helpers/create-prn.js'
+ * @import { RegistrationWithLiveAccreditation } from '#server/common/test-helpers/prn-fixtures.js'
+ * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  */
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
-vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
+const { fetchPrnWasteBalance } =
+  await import('./helpers/fetch-prn-waste-balance.js')
 const { fetchDecemberPrnEligibility } =
   await import('./helpers/fetch-december-prn-eligibility.js')
 
@@ -30,23 +31,26 @@ const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
   /** @type {unknown} */ (buildMockAuth())
 )
 
-const fixtureReprocessor =
-  /** @type {Required<RegistrationWithAccreditation>} */ (
-    /** @type {unknown} */ ({
-      organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
-      registration: {
-        id: 'reg-456',
-        wasteProcessingType: 'reprocessor-input',
-        material: 'plastic',
-        nation: 'england',
-        site: { address: { line1: 'Reprocessing Site' } },
-        accreditationId: 'acc-001'
-      },
-      accreditation: { id: 'acc-001', status: 'approved' }
-    })
-  )
+const fixtureReprocessor = /** @type {RegistrationWithLiveAccreditation} */ (
+  /** @type {unknown} */ ({
+    organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
+    registration: {
+      id: 'reg-456',
+      wasteProcessingType: 'reprocessor-input',
+      material: 'plastic',
+      nation: 'england',
+      site: { address: { line1: 'Reprocessing Site' } },
+      accreditationId: 'acc-001'
+    },
+    accreditation: {
+      id: 'acc-001',
+      accreditationNumber: 'ACC-001',
+      status: 'approved'
+    }
+  })
+)
 
-const fixtureExporter = /** @type {Required<RegistrationWithAccreditation>} */ (
+const fixtureExporter = /** @type {RegistrationWithLiveAccreditation} */ (
   /** @type {unknown} */ ({
     organisationData: { id: 'org-123', name: 'Exporter Organisation' },
     registration: {
@@ -57,14 +61,22 @@ const fixtureExporter = /** @type {Required<RegistrationWithAccreditation>} */ (
       site: { address: { line1: 'Export Site' } },
       accreditationId: 'acc-001'
     },
-    accreditation: { id: 'acc-001', status: 'approved' }
+    accreditation: {
+      id: 'acc-001',
+      accreditationNumber: 'ACC-001',
+      status: 'approved'
+    }
   })
 )
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
-const url = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+const keys = {
+  organisationNumber: '500123',
+  registrationNumber: 'R26EN0000000001PL',
+  year: '2026'
+}
+const prnsBase =
+  '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'
+const url = `${prnsBase}/create`
 
 const validPayload = {
   tonnage: '100',
@@ -77,9 +89,9 @@ const validPayload = {
 describe('#postCreatePrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(
+      getRequiredRegistrationWithAccreditationByNumber
+    ).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
       mode: 'none',
       windowOpen: false
@@ -107,7 +119,7 @@ describe('#postCreatePrnController', () => {
         server
       }) => {
         vi.mocked(createPrn).mockResolvedValue(
-          /** @type {CreatePrnResponse} */ (
+          /** @type {PackagingRecyclingNote} */ (
             /** @type {unknown} */ ({
               id: 'prn-789',
               tonnage: 100,
@@ -133,14 +145,12 @@ describe('#postCreatePrnController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-789/view`
-        )
+        expect(headers.location).toBe(`${prnsBase}/prn-789/view`)
       })
 
       it('calls createPrn with correct parameters', async ({ server }) => {
         vi.mocked(createPrn).mockResolvedValue(
-          /** @type {CreatePrnResponse} */ (
+          /** @type {PackagingRecyclingNote} */ (
             /** @type {unknown} */ ({
               id: 'prn-789',
               tonnage: 100,
@@ -166,9 +176,7 @@ describe('#postCreatePrnController', () => {
         })
 
         expect(createPrn).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           {
             issuedToOrganisation: {
               id: validPayload.recipient,
@@ -186,7 +194,7 @@ describe('#postCreatePrnController', () => {
 
       it('omits notes when notes is empty', async ({ server }) => {
         vi.mocked(createPrn).mockResolvedValue(
-          /** @type {CreatePrnResponse} */ (
+          /** @type {PackagingRecyclingNote} */ (
             /** @type {unknown} */ ({
               id: 'prn-789',
               tonnage: 100,
@@ -212,9 +220,7 @@ describe('#postCreatePrnController', () => {
         })
 
         expect(createPrn).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           expect.objectContaining({
             notes: undefined
           }),
@@ -429,9 +435,9 @@ describe('#postCreatePrnController', () => {
       it('shows PERN-specific tonnage error for exporter registrations', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
 
         const { cookie, crumb } = await getCsrfToken(server, url, {
           auth: mockAuth
@@ -530,10 +536,10 @@ describe('#postCreatePrnController', () => {
 
     describe('waste balance on error', () => {
       beforeEach(() => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureReprocessor
-        )
-        vi.mocked(getWasteBalance).mockResolvedValue({
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
           amount: 1000,
           availableAmount: 500
         })
@@ -573,7 +579,7 @@ describe('#postCreatePrnController', () => {
         // Back link should have correct URL
         const backLink = body.querySelector('.govuk-back-link')
         expect(backLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}`
+          '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026'
         )
       })
 
@@ -614,7 +620,7 @@ describe('#postCreatePrnController', () => {
         // Back link should have correct URL
         const backLink = body.querySelector('.govuk-back-link')
         expect(backLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}`
+          '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026'
         )
       })
     })
@@ -624,10 +630,10 @@ describe('#postCreatePrnController', () => {
         'The tonnage you entered exceeds your available waste balance'
 
       beforeEach(() => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureReprocessor
-        )
-        vi.mocked(getWasteBalance).mockResolvedValue({
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
           amount: 1000,
           availableAmount: 500
         })
@@ -654,9 +660,7 @@ describe('#postCreatePrnController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
         expect(createPrn).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           expect.objectContaining({ tonnage: 600 }),
           'mock-backend-token'
         )
@@ -772,7 +776,7 @@ describe('#postCreatePrnController', () => {
           mode: 'pool',
           windowOpen: true
         })
-        vi.mocked(getWasteBalance).mockResolvedValue({
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
           amount: 60,
           availableAmount: 60,
           decemberAmount: 20,
@@ -818,7 +822,7 @@ describe('#postCreatePrnController', () => {
           mode: 'pool',
           windowOpen: true
         })
-        vi.mocked(getWasteBalance).mockResolvedValue({
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
           amount: 60,
           availableAmount: 60,
           decemberAmount: 50,

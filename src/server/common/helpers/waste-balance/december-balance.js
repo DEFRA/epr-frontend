@@ -2,6 +2,7 @@ import { fetchDecemberPrnEligibility } from '#server/prns/helpers/fetch-december
 import { showsDecemberPool } from '#server/prns/helpers/december-waste-control.js'
 
 /** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
+/** @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js' */
 /** @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js' */
 
 /**
@@ -19,28 +20,15 @@ import { showsDecemberPool } from '#server/prns/helpers/december-waste-control.j
  * The panel is display-only, so a failed eligibility read falls back to the
  * single balance rather than failing the page.
  * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string,
+ *   keys: AccreditationKeys,
  *   backendToken: string,
  *   logger: TypedLogger
  * }} params
  * @returns {Promise<boolean>}
  */
-async function showsDecemberBalance({
-  organisationId,
-  registrationId,
-  accreditationId,
-  backendToken,
-  logger
-}) {
+async function showsDecemberBalance({ keys, backendToken, logger }) {
   try {
-    const eligibility = await fetchDecemberPrnEligibility(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
-    )
+    const eligibility = await fetchDecemberPrnEligibility(keys, backendToken)
 
     return showsDecemberPool(eligibility)
   } catch (error) {

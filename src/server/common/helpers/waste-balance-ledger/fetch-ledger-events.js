@@ -78,37 +78,6 @@ const readEvents = async (path, backendToken) => {
 }
 
 /**
- * Reads the events of one waste balance ledger, in the order the backend
- * appended them.
- *
- * A ledger is partitioned by accreditation, the registered-only phase
- * included, and each partition has its own address. The accreditation is
- * therefore taken from the address rather than derived from the registration:
- * the id is constitutive of the ledger, so deriving it would make the same
- * address name a different ledger once the accreditation changes.
- * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId?: string,
- *   backendToken: string
- * }} params
- * @returns {Promise<LedgerEvent[]>}
- */
-export const fetchLedgerEvents = async ({
-  organisationId,
-  registrationId,
-  accreditationId,
-  backendToken
-}) => {
-  const registrationIdPath = `/v1/organisations/${organisationId}/registrations/${registrationId}`
-  const ledgerPath = accreditationId
-    ? `${registrationIdPath}/accreditations/${accreditationId}/waste-balance-ledger`
-    : `${registrationIdPath}/waste-balance-ledger`
-
-  return readEvents(ledgerPath, backendToken)
-}
-
-/**
  * Reads the accreditation's ledger by natural key.
  * @param {AccreditationKeys} keys
  * @param {string} backendToken
