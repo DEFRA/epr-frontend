@@ -1,9 +1,14 @@
 /** @import { ServerFixtures } from '#vite/fixtures/server.js'; */
 import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { year } from '#server/common/helpers/year.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
@@ -17,6 +22,12 @@ const PATH = '/organisations/500123/2025/choose-year'
 const mockAuth = buildMockAuth({
   idToken: 'test-id-token',
   backendToken: 'test-backend-token'
+})
+
+const regulator = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
+  ...sessionIdentity(IDENTITIES.regulator)
 })
 
 /**
@@ -78,6 +89,19 @@ describe('choosing a different year', () => {
         '/organisations/500123/1999/choose-year'
       )
 
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('is not found for a regulator', async ({ server }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: PATH,
+        auth: regulator
+      })
+
+      config.set('featureFlags.regulatorAccess', false)
       expect(statusCode).toBe(statusCodes.notFound)
     })
 

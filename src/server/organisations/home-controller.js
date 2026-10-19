@@ -1,8 +1,6 @@
-import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
-import { controller as detailsController } from './details/controller.js'
 import { homePath, renderHome } from './home-page.js'
 
 /**
@@ -12,9 +10,9 @@ import { homePath, renderHome } from './home-page.js'
  */
 
 /**
- * The organisation's home page with no year in the address. Regulators get
- * the details view. Operators are sent to their latest year, or shown an
- * organisation with no active year its empty page.
+ * The organisation's home page with no year in the address. Operators are
+ * sent to their latest year, or shown an organisation with no active year its
+ * empty page.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const homeController = {
@@ -23,10 +21,6 @@ export const homeController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    if (readsAsARegulator(request.auth.credentials)) {
-      return detailsController.handler(request, h)
-    }
-
     const orgNumber = organisationNumber(
       Number(request.params.organisationNumber)
     )
