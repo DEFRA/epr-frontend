@@ -611,6 +611,31 @@ describe('backend-client', () => {
         expect(searches).toStrictEqual(['?unredacted=true'])
       }
     )
+
+    it.for(/** @type {const} */ (['redirect', 'stream']))(
+      'should %s carrying the token and the trace id',
+      async (method, { msw }) => {
+        /** @type {{ authorization: string | null, traceId: string | null }[]} */
+        const requests = []
+        msw.use(
+          http.get(`${backendUrl}/v1/file`, ({ request }) => {
+            requests.push({
+              authorization: request.headers.get('authorization'),
+              traceId: request.headers.get('x-cdp-request-id')
+            })
+            return new HttpResponse('bytes', {
+              headers: { location: 'https://storage.test/file' }
+            })
+          })
+        )
+
+        await backend('a-token')[method]('/v1/file')
+
+        expect(requests).toStrictEqual([
+          { authorization: 'Bearer a-token', traceId: 'mock-trace-id-1' }
+        ])
+      }
+    )
   })
 
   describe(path, () => {
