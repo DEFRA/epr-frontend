@@ -96,7 +96,7 @@ describe('who a registration renders for', () => {
     msw.use(
       http.get(`${backendUrl}/organisations/500118`, () =>
         HttpResponse.json({
-          organisationNumber: 500118,
+          organisationNumber: '500118',
           name: 'Kirkby Plastics Ltd',
           registrations: { [registrationNumber]: registeredOnly }
         })
@@ -236,7 +236,7 @@ describe('who an accreditation renders for', () => {
       /** @type {Awaited<ReturnType<typeof fetchAccreditationDetails>>} */ (
         /** @type {unknown} */ ({
           organisation: {
-            organisationNumber: 500118,
+            organisationNumber: '500118',
             name: 'Kirkby Plastics Ltd',
             registrations: {}
           },
@@ -274,7 +274,7 @@ describe('who an accreditation renders for', () => {
     msw.use(
       http.get(`${backendUrl}/organisations/500118`, () =>
         HttpResponse.json({
-          organisationNumber: 500118,
+          organisationNumber: '500118',
           name: 'Kirkby Plastics Ltd',
           registrations: { [registrationNumber]: registration }
         })

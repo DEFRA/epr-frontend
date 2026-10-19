@@ -18,7 +18,7 @@ import { registrationIn, registrationNotFound } from './registration-in-view.js'
  */
 export const fetchRegistration = async ({ backendToken, ...keys }) => {
   const organisation = await fetchOrganisation(
-    organisationNumber(Number(keys.organisationNumber)),
+    organisationNumber(keys.organisationNumber),
     backendToken
   ).catch((error) => {
     if (!Boom.isBoom(error, statusCodes.notFound)) {

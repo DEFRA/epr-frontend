@@ -51,7 +51,7 @@ const organisation = {
 }
 
 const organisationView = {
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Acme Recycling Ltd',
   registrations: {
     [registrationNumber]: {

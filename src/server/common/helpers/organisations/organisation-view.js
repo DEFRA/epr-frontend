@@ -77,7 +77,7 @@
  * The organisation as `GET /organisations/{organisationNumber}` serves it.
  * Registrations are keyed by registration number, accreditations by year.
  * @typedef {{
- *   organisationNumber: number,
+ *   organisationNumber: string,
  *   name: string,
  *   displayName: string,
  *   registrations: Record<string, RegistrationView>

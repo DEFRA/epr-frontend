@@ -30,7 +30,7 @@ vi.mock(
   import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
 )
 
-const ORGANISATION_NUMBER = 500123
+const ORGANISATION_NUMBER = '500123'
 const BARE_PATH = `/organisations/${ORGANISATION_NUMBER}`
 const PATH = `${BARE_PATH}/2026`
 

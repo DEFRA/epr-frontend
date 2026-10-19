@@ -85,7 +85,7 @@ const backendHolds = (msw, overrides = {}) =>
   msw.use(
     http.get(`${backendUrl}/organisations/500118`, () =>
       HttpResponse.json({
-        organisationNumber: 500118,
+        organisationNumber: '500118',
         name: 'Kirkby Plastics Ltd',
         displayName: overrides.displayName ?? 'Kirkby Plastics Ltd',
         registrations: {

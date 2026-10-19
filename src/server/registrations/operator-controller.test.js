@@ -61,7 +61,7 @@ const reprocessor = {
  * @param {Record<string, unknown>} registration
  */
 const organisationView = (registration) => ({
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Acme Recycling Ltd',
   registrations: { [registrationNumber]: registration }
 })

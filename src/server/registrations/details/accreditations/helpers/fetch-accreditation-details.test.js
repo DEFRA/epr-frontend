@@ -53,7 +53,7 @@ describe(fetchAccreditationDetails, () => {
     accreditations: { 2026: accreditation }
   }
   const organisation = {
-    organisationNumber: 500118,
+    organisationNumber: '500118',
     name: 'Acme Recycling Ltd',
     registrations: { [keys.registrationNumber]: registration }
   }

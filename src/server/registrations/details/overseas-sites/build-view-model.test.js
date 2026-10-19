@@ -46,7 +46,7 @@ const aRegistration = {
 const anOrganisation = (overrides) => ({
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
-  organisationNumber: 500123,
+  organisationNumber: '500123',
   registrations: { [registrationNumber]: aRegistration },
   ...overrides
 })

@@ -38,9 +38,7 @@ export const chooseYearController = {
 
     const { t: localise } = request
     const { year: chosen, continue: pressedContinue } = request.query
-    const orgNumber = organisationNumber(
-      Number(request.params.organisationNumber)
-    )
+    const orgNumber = organisationNumber(request.params.organisationNumber)
     const addressYear = yearOf(String(request.params.year))
     const years = await fetchOrganisationYears(
       orgNumber,

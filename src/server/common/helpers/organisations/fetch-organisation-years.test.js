@@ -18,7 +18,7 @@ describe(fetchOrganisationYears, () => {
     )
 
     const result = await fetchOrganisationYears(
-      organisationNumber(50002),
+      organisationNumber('50002'),
       'test-id-token'
     )
 

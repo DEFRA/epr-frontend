@@ -23,7 +23,7 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 const backendUrl = config.get('eprBackendUrl')
-const organisationNumber = 500118
+const organisationNumber = '500118'
 const path = `/organisations/${organisationNumber}`
 
 const operator = buildMockAuth()

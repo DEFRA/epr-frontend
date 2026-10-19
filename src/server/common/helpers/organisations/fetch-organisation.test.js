@@ -11,7 +11,7 @@ import { fetchOrganisation } from './fetch-organisation.js'
 const backendUrl = config.get('eprBackendUrl')
 
 const organisation = {
-  organisationNumber: 50002,
+  organisationNumber: '50002',
   name: 'ACME ltd',
   registrations: {}
 }
@@ -25,7 +25,7 @@ describe(fetchOrganisation, () => {
     )
 
     const result = await fetchOrganisation(
-      organisationNumber(50002),
+      organisationNumber('50002'),
       'test-id-token'
     )
 
@@ -41,7 +41,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber(50002), 'test-id-token')
+    await fetchOrganisation(organisationNumber('50002'), 'test-id-token')
 
     expect(search).toBe('')
   })
@@ -57,7 +57,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber(50002), 'test-id-token', {
+    await fetchOrganisation(organisationNumber('50002'), 'test-id-token', {
       year: year(2026)
     })
 
@@ -73,7 +73,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber(50002), 'test-id-token')
+    await fetchOrganisation(organisationNumber('50002'), 'test-id-token')
 
     expect(authorization).toBe('Bearer test-id-token')
   })

@@ -40,7 +40,7 @@ const registrationPath = `/organisations/${organisationNumber}/registrations/${r
  * @returns {OrganisationView}
  */
 const anOrganisation = (overrides) => ({
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
   registrations: {},

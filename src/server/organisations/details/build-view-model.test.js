@@ -12,7 +12,7 @@ const localise = createMockLocalise({
 
 const localiseUrl = (/** @type {string} */ path) => `/en${path}`
 
-const organisationNumber = 500123
+const organisationNumber = '500123'
 
 /**
  * @param {Partial<RegistrationView>} [overrides]

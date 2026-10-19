@@ -31,7 +31,7 @@ const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
 
 /** @type {OrganisationView} */
 const organisation = {
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
   registrations: {}

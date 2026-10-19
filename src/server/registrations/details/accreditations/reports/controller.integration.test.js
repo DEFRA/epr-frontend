@@ -58,7 +58,7 @@ const aPeriod = (period, { submitted, year = 2026 }) =>
 /** @type {ReportListDetails} */
 const details = {
   organisation: {
-    organisationNumber: 500118,
+    organisationNumber: '500118',
     name: 'Kirkby Plastics Ltd',
     displayName: 'Kirkby Plastics Ltd',
     registrations: {}

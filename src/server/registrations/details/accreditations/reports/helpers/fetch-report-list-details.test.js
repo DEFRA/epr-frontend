@@ -29,7 +29,7 @@ describe(fetchReportListDetails, () => {
 
   /** @type {OrganisationView} */
   const organisation = {
-    organisationNumber: 500118,
+    organisationNumber: '500118',
     name: 'Kirkby Plastics Ltd',
     displayName: 'Kirkby Plastics Ltd',
     registrations: {
@@ -91,7 +91,7 @@ describe(fetchReportListDetails, () => {
   it('reads the organisation and the calendar by number', async () => {
     await fetchDetails()
 
-    expect(fetchOrganisation).toHaveBeenCalledWith(500118, backendToken)
+    expect(fetchOrganisation).toHaveBeenCalledWith('500118', backendToken)
     expect(fetchReportingPeriodsByNumber).toHaveBeenCalledWith(
       { organisationNumber, registrationNumber },
       backendToken

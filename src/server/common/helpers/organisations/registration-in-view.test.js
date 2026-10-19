@@ -42,7 +42,7 @@ const registration = /** @type {RegistrationView} */ ({
 })
 
 const organisation = /** @type {OrganisationView} */ ({
-  organisationNumber: 500001,
+  organisationNumber: '500001',
   name: 'Kirkby Plastics',
   displayName: 'Kirkby Plastics',
   registrations: { R25SR500030912PA: registration }

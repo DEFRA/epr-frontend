@@ -39,7 +39,7 @@ const registration = /** @type {RegistrationView} */ (
 
 /** @type {OrganisationView} */
 const organisation = {
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
   registrations: { [registrationNumber]: registration }
@@ -88,7 +88,7 @@ describe(fetchRegisteredOnlyPeriod, () => {
   it('reads the organisation by its number', async () => {
     await fetchRegisteredOnlyPeriod(params)
 
-    expect(fetchOrganisation).toHaveBeenCalledWith(500118, backendToken)
+    expect(fetchOrganisation).toHaveBeenCalledWith('500118', backendToken)
   })
 
   // The same address the operator's own reports page reads, asked nothing

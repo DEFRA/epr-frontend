@@ -105,7 +105,7 @@ export const buildViewModel = ({
 }) => {
   const name = organisation.displayName
   const pageName = localise('registrations:details:overseasSites:heading')
-  const organisationNumber = String(organisation.organisationNumber)
+  const { organisationNumber } = organisation
 
   return {
     breadcrumbs: [

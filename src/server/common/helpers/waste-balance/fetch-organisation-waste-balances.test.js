@@ -23,7 +23,7 @@ describe(fetchOrganisationWasteBalances, () => {
     )
 
     const result = await fetchOrganisationWasteBalances(
-      organisationNumber(50002),
+      organisationNumber('50002'),
       year(2026),
       'test-id-token'
     )

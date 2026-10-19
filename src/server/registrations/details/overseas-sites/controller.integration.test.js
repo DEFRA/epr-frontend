@@ -80,7 +80,7 @@ const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
     organisation: {
       name: 'Kirkby Plastics Ltd',
       displayName: 'Kirkby Plastics Ltd',
-      organisationNumber: 500123,
+      organisationNumber: '500123',
       registrations: { [registrationNumber]: registration }
     },
     registration
