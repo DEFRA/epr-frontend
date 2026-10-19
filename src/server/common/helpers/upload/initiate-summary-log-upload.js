@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import {
   accreditationPath,
   registrationPath
@@ -18,23 +18,17 @@ const UPLOAD_YEAR = 2026
  * @param {string} options.backendToken
  * @returns {Promise<{summaryLogId: string, uploadId: string, uploadUrl: string, statusUrl: string}>}
  */
-async function initiateSummaryLogUpload({
+const initiateSummaryLogUpload = ({
   keys,
   accredited,
   redirectUrl,
   backendToken
-}) {
-  const path = accredited
-    ? `${accreditationPath({ ...keys, year: String(UPLOAD_YEAR) })}/summary-log`
-    : `${registrationPath(keys)}/summary-logs/${UPLOAD_YEAR}`
-
-  return fetchJsonFromBackend(path, {
-    method: 'POST',
-    body: JSON.stringify({ redirectUrl }),
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
-}
+}) =>
+  backend(backendToken).post(
+    accredited
+      ? `${accreditationPath({ ...keys, year: String(UPLOAD_YEAR) })}/summary-log`
+      : `${registrationPath(keys)}/summary-logs/${UPLOAD_YEAR}`,
+    { redirectUrl }
+  )
 
 export { initiateSummaryLogUpload }

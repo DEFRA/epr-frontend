@@ -1,6 +1,6 @@
 import { mapValues } from 'lodash-es'
 
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /** @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js' */
 /** @import { Year } from '#server/common/helpers/year.js' */
@@ -50,22 +50,18 @@ const nestStatuses = (organisation) =>
  * @param {{ year?: Year }} [options]
  * @returns {Promise<OrganisationView>}
  */
-async function fetchOrganisation(
+const fetchOrganisation = async (
   organisationNumber,
   backendToken,
   { year } = {}
-) {
-  const query = year ? `?year=${year}` : ''
-  const path = `/organisations/${organisationNumber}${query}`
+) => {
+  /** @type {ServedOrganisation} */
+  const organisation = await backend(backendToken).get(
+    path`/organisations/${organisationNumber}`,
+    { query: { year } }
+  )
 
-  const organisation = await fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
-
-  return nestStatuses(/** @type {ServedOrganisation} */ (organisation))
+  return nestStatuses(organisation)
 }
 
 export { fetchOrganisation }
