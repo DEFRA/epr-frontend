@@ -4,7 +4,7 @@ import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { getRequiredRegistrationWithAnyAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
@@ -102,14 +102,14 @@ export const controller = {
 }
 
 /**
- * The year's accreditation and its ledger; 404 without a live one.
+ * The year's accreditation, whatever its status, and its ledger.
  * @param {AccreditationKeys} keys
  * @param {UserSession} session
  * @returns {Promise<LedgerRead>}
  */
 async function readAccreditedLedger(keys, session) {
   const { organisationData, registration, accreditation } =
-    await getRequiredRegistrationWithAccreditationByNumber(keys, session)
+    await getRequiredRegistrationWithAnyAccreditationByNumber(keys, session)
   const events = await fetchAccreditationLedgerEvents(
     keys,
     session.backendToken
@@ -187,14 +187,14 @@ function toRegisteredOnlyPage({ heading, localise, localiseUrl, name, paths }) {
  * @typedef {{
  *   organisationData: Organisation,
  *   registration: Registration,
- *   accreditation?: AccreditationApproved,
+ *   accreditation?: NumberedAccreditation,
  *   events: LedgerEvent[]
  * }} LedgerRead
  */
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { AccreditationApproved } from '#domain/organisations/accreditation.js'
+ * @import { NumberedAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { UserSession } from '#server/auth/types/session.js'

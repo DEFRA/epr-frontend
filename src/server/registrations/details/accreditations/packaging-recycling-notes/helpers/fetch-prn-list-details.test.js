@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { getRequiredRegistrationWithAnyAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
 
 import { fetchPrnListDetails } from './fetch-prn-list-details.js'
 
 /**
- * @import { AccreditationApproved } from '#domain/organisations/accreditation.js'
  * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { NumberedAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { PrnListDetails } from './fetch-prn-list-details.js'
  */
@@ -42,11 +42,11 @@ describe(fetchPrnListDetails, () => {
     })
   )
 
-  const accreditation = /** @type {AccreditationApproved} */ (
+  const accreditation = /** @type {NumberedAccreditation} */ (
     /** @type {unknown} */ ({
       id: 'acc-789',
       accreditationNumber: 'A26ER5001180114PL',
-      status: 'approved'
+      status: 'cancelled'
     })
   )
 
@@ -73,12 +73,11 @@ describe(fetchPrnListDetails, () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(
-      getRequiredRegistrationWithAccreditationByNumber
+      getRequiredRegistrationWithAnyAccreditationByNumber
     ).mockResolvedValue({
       organisationData: organisation,
       registration,
-      accreditation,
-      rawAccreditation: accreditation
+      accreditation
     })
     vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(notes)
   })
@@ -93,7 +92,7 @@ describe(fetchPrnListDetails, () => {
       packagingRecyclingNotes: notes
     })
     expect(
-      getRequiredRegistrationWithAccreditationByNumber
+      getRequiredRegistrationWithAnyAccreditationByNumber
     ).toHaveBeenCalledWith(keys, credentials)
     expect(fetchPackagingRecyclingNotes).toHaveBeenCalledWith(
       keys,

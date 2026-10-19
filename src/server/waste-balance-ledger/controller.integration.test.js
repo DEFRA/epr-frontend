@@ -589,7 +589,35 @@ describe('the waste balance ledger page', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it('refuses the accredited address for a registration with no live accreditation', async ({
+    it('serves the ledger of a cancelled accreditation, which keeps its ledger', async ({
+      msw,
+      server
+    }) => {
+      const linked = accreditedIn2026()
+      const cancelled = { ...linked.rawAccreditation, status: 'cancelled' }
+      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        asRegistrationWithAccreditation({
+          ...linked,
+          accreditation: undefined,
+          rawAccreditation: cancelled
+        })
+      )
+      msw.use(
+        http.get(accreditedLedgerUrl, () =>
+          HttpResponse.json(ledgerOf([summaryLogSubmitted]))
+        )
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: accreditedPath,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    it('refuses the accredited address for a registration with no accreditation', async ({
       server
     }) => {
       readsRegisteredOnly()
