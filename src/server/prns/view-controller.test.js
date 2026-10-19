@@ -1,10 +1,10 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import {
   asCreatePrnResponse,
   asPackagingRecyclingNote,
+  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import {
@@ -34,11 +34,10 @@ import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
-vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
-// The create endpoint (used here only to seed a draft) runs a submission-time
-// balance pre-check via getWasteBalance. Auto-mock it so that check fails open
-// during seeding; confirm-step balance is driven by fetchWasteBalances.
-vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+vi.mock(
+  import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
+)
+vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
@@ -49,8 +48,19 @@ vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
-const { fetchWasteBalances } =
-  await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
+const { fetchOrganisationWasteBalances } =
+  await import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
+
+/** @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js' */
+
+/**
+ * The organisation's balances, holding this accreditation's when given one.
+ * @param {WasteBalance | null} balance
+ */
+const mockBalance = (balance) =>
+  vi
+    .mocked(fetchOrganisationWasteBalances)
+    .mockResolvedValue(balance ? { 'ACC-001': balance } : {})
 const { fetchDecemberPrnEligibility } =
   await import('./helpers/fetch-december-prn-eligibility.js')
 
@@ -61,7 +71,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
+const fixtureReprocessor = asRegistrationWithLiveAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -74,10 +84,14 @@ const fixtureReprocessor = asGetRequiredRegistrationResult({
     site: { address: { line1: 'Reprocessing Site' } },
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  accreditation: {
+    id: 'acc-001',
+    accreditationNumber: 'ACC-001',
+    status: 'approved'
+  }
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
+const fixtureExporter = asRegistrationWithLiveAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -90,19 +104,24 @@ const fixtureExporter = asGetRequiredRegistrationResult({
     site: null,
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  accreditation: {
+    id: 'acc-001',
+    accreditationNumber: 'ACC-001',
+    status: 'approved'
+  }
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const organisationNumber = '500123'
+const registrationNumber = 'R26EN0000000001PL'
+const year = '2026'
+const keys = { organisationNumber, registrationNumber, year }
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issue`
-const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/view`
-const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+const createUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/create`
+const viewUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/view`
+const issueUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issue`
+const pernViewUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${pernId}/view`
+const listUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes`
 
 const validPayload = {
   tonnage: '100',
@@ -166,14 +185,15 @@ const mockPernFromBackend = asPackagingRecyclingNote({
 describe('#viewController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(
+      getRequiredRegistrationWithAccreditationByNumber
+    ).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnFromBackend)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
-    vi.mocked(fetchWasteBalances).mockResolvedValue({
-      'acc-001': { amount: 1000, availableAmount: 500 }
+    mockBalance({
+      amount: 1000,
+      availableAmount: 500
     })
     vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
       mode: 'none',
@@ -250,8 +270,10 @@ describe('#viewController', () => {
       it('displays issuer tradingName when present on certificate page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult({
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(
+          asRegistrationWithLiveAccreditation({
             ...fixtureReprocessor,
             organisationData: {
               id: 'org-123',
@@ -282,8 +304,10 @@ describe('#viewController', () => {
       it('displays empty issuer when company details are missing on certificate page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult({
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(
+          asRegistrationWithLiveAccreditation({
             ...fixtureReprocessor,
             organisationData: { id: 'org-123', companyDetails: null }
           })
@@ -622,9 +646,9 @@ describe('#viewController', () => {
             )
           ).toStrictEqual([
             '/regulators/home',
-            `/organisations/${organisationId}`,
-            `/organisations/${organisationId}/registrations/${registrationId}`,
-            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}`,
+            `/organisations/${organisationNumber}`,
+            `/organisations/${organisationNumber}/registrations/${registrationNumber}`,
+            `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}`,
             listUrl
           ])
         })
@@ -643,9 +667,9 @@ describe('#viewController', () => {
       it('displays PERN details for exporter registration', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -673,9 +697,9 @@ describe('#viewController', () => {
       })
 
       it('displays issued date for issued PERN', async ({ server }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -700,9 +724,9 @@ describe('#viewController', () => {
       it('displays issued by and position for issued PERN', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -740,8 +764,10 @@ describe('#viewController', () => {
             }
           }
         }
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult(reprocessorWithAddress)
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(
+          asRegistrationWithLiveAccreditation(reprocessorWithAddress)
         )
 
         const { result, statusCode } = await server.inject({
@@ -772,8 +798,10 @@ describe('#viewController', () => {
             site: null
           }
         }
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult(reprocessorWithoutAddress)
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(
+          asRegistrationWithLiveAccreditation(reprocessorWithoutAddress)
         )
 
         const { statusCode } = await server.inject({
@@ -788,9 +816,9 @@ describe('#viewController', () => {
       it('hides reprocessing site address for exporters', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -889,9 +917,9 @@ describe('#viewController', () => {
 
       it('returns 404 when registration not found', async ({ server }) => {
         const Boom = await import('@hapi/boom')
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
-          Boom.default.notFound('Registration not found')
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockRejectedValue(Boom.default.notFound('Registration not found'))
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -1205,12 +1233,10 @@ describe('#viewController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issued`
         )
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'awaiting_acceptance' },
           mockCredentials.backendToken
@@ -1352,7 +1378,7 @@ describe('#viewController', () => {
         const discardLink = getByText(main, /Discard and start again/i)
         expect(discardLink.tagName).toBe('A')
         expect(discardLink.classList.contains('govuk-link')).toBe(true)
-        const expectedDiscardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/discard`
+        const expectedDiscardUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/discard`
         expect(discardLink.getAttribute('href')).toBe(expectedDiscardUrl)
         expect(main.querySelector('.govuk-button--warning')).toBeNull()
       })
@@ -1401,8 +1427,10 @@ describe('#viewController', () => {
       it('displays issuer tradingName when present on check page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult({
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(
+          asRegistrationWithLiveAccreditation({
             ...fixtureReprocessor,
             organisationData: {
               id: 'org-123',
@@ -1463,8 +1491,10 @@ describe('#viewController', () => {
       it('displays empty issuer when company details are missing', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult({
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(
+          asRegistrationWithLiveAccreditation({
             ...fixtureReprocessor,
             organisationData: { id: 'org-123', companyDetails: null }
           })
@@ -1614,9 +1644,9 @@ describe('#viewController', () => {
       it('displays PERN check page for exporter registration', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
         vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
 
         const exporterPayload = {
@@ -1697,14 +1727,12 @@ describe('#viewController', () => {
           payload: { crumb }
         })
 
-        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+        const createdUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/created`
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createdUrl)
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'awaiting_authorisation' },
           mockCredentials.backendToken
@@ -1822,8 +1850,9 @@ describe('#viewController', () => {
       it('cancels draft and redirects to error when tonnage exceeds available waste balance', async ({
         server
       }) => {
-        vi.mocked(fetchWasteBalances).mockResolvedValue({
-          'acc-001': { amount: 1000, availableAmount: 50 }
+        mockBalance({
+          amount: 1000,
+          availableAmount: 50
         })
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
@@ -1857,9 +1886,7 @@ describe('#viewController', () => {
         expect(headers.location).toContain(createUrl)
         expect(headers.location).toContain('error=insufficient_balance')
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'discarded' },
           mockCredentials.backendToken
@@ -1878,8 +1905,9 @@ describe('#viewController', () => {
       it('proceeds when tonnage is within available waste balance', async ({
         server
       }) => {
-        vi.mocked(fetchWasteBalances).mockResolvedValue({
-          'acc-001': { amount: 1000, availableAmount: 100 }
+        mockBalance({
+          amount: 1000,
+          availableAmount: 100
         })
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
@@ -1909,14 +1937,12 @@ describe('#viewController', () => {
           payload: { crumb }
         })
 
-        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+        const createdUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/created`
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createdUrl)
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'awaiting_authorisation' },
           mockCredentials.backendToken
@@ -1929,13 +1955,11 @@ describe('#viewController', () => {
         vi.mocked(createPrn).mockResolvedValue(
           asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: true })
         )
-        vi.mocked(fetchWasteBalances).mockResolvedValue({
-          'acc-001': {
-            amount: 1000,
-            availableAmount: 1000,
-            decemberAmount: 60,
-            decemberAvailableAmount: 60
-          }
+        mockBalance({
+          amount: 1000,
+          availableAmount: 1000,
+          decemberAmount: 60,
+          decemberAvailableAmount: 60
         })
         vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
           mode: 'pool',
@@ -1979,14 +2003,12 @@ describe('#viewController', () => {
         vi.mocked(createPrn).mockResolvedValue(
           asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: false })
         )
-        vi.mocked(fetchWasteBalances).mockResolvedValue({
-          'acc-001': {
-            amount: 1000,
-            availableAmount: 1100,
-            decemberAmount: 50,
-            decemberAvailableAmount: 50,
-            nonDecemberAvailableAmount: 1050
-          }
+        mockBalance({
+          amount: 1000,
+          availableAmount: 1100,
+          decemberAmount: 50,
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 1050
         })
         vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
           mode: 'pool',
@@ -2020,7 +2042,7 @@ describe('#viewController', () => {
           payload: { crumb }
         })
 
-        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+        const createdUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/created`
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createdUrl)
@@ -2032,14 +2054,12 @@ describe('#viewController', () => {
         vi.mocked(createPrn).mockResolvedValue(
           asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: false })
         )
-        vi.mocked(fetchWasteBalances).mockResolvedValue({
-          'acc-001': {
-            amount: 1000,
-            availableAmount: 130,
-            decemberAmount: 50,
-            decemberAvailableAmount: 50,
-            nonDecemberAvailableAmount: 80
-          }
+        mockBalance({
+          amount: 1000,
+          availableAmount: 130,
+          decemberAmount: 50,
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 80
         })
         vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
           mode: 'pool',
@@ -2083,11 +2103,9 @@ describe('#viewController', () => {
         vi.mocked(createPrn).mockResolvedValue(
           asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: true })
         )
-        vi.mocked(fetchWasteBalances).mockResolvedValue({
-          'acc-001': {
-            amount: 1000,
-            availableAmount: 1000
-          }
+        mockBalance({
+          amount: 1000,
+          availableAmount: 1000
         })
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
@@ -2117,16 +2135,16 @@ describe('#viewController', () => {
           payload: { crumb }
         })
 
-        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+        const createdUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/created`
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createdUrl)
       })
 
-      it('treats missing waste balance as zero available', async ({
+      it('treats an accreditation with no balance as zero available', async ({
         server
       }) => {
-        vi.mocked(fetchWasteBalances).mockResolvedValue({})
+        mockBalance(null)
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,
@@ -2158,13 +2176,49 @@ describe('#viewController', () => {
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toContain('error=insufficient_balance')
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'discarded' },
           mockCredentials.backendToken
         )
+      })
+
+      it('keeps the draft when the waste balance cannot be read', async ({
+        server
+      }) => {
+        vi.mocked(fetchOrganisationWasteBalances).mockRejectedValue(
+          new Error('backend unavailable')
+        )
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const cookies = mergeCookies(
+          csrfCookie,
+          ...extractCookieValues(createResponse.headers['set-cookie'])
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(updatePrnStatus).not.toHaveBeenCalled()
       })
     })
   })
@@ -2203,7 +2257,7 @@ describe('#viewController', () => {
       expect(metrics.journey.end).toHaveBeenCalledWith(
         expect.anything(),
         JOURNEY.createPrn,
-        accreditationId
+        listUrl
       )
     })
   })

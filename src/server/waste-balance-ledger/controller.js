@@ -1,31 +1,34 @@
+import Boom from '@hapi/boom'
+
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
-import { errorCodes } from '#server/common/enums/error-codes.js'
-import { loggingEventActions } from '#server/common/enums/event.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
-import { fetchLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+import {
+  fetchAccreditationLedgerEvents,
+  fetchRegisteredOnlyLedgerEvents
+} from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
 import {
   toAccreditationChildPage,
   toRegistrationTrail
 } from '#server/registrations/details/helpers/accreditation-child-page.js'
 import { organisationName } from '#server/registrations/details/helpers/caption.js'
 import {
-  accreditationIdPath,
-  organisationIdPath,
-  registrationIdPath
+  accreditationPath,
+  organisationPath,
+  registrationPath
 } from '#server/reports/helpers/report-paths.js'
 
 /**
- * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId?: string
- * }} WasteBalanceLedgerParams
+ * @typedef {RegistrationKeys & { year?: string }} WasteBalanceLedgerParams
  */
+
+// Fixed until the registered-only ledger page is year-configured.
+const REGISTERED_ONLY_LEDGER_YEAR = '2026'
 
 /**
  * One waste balance ledger, read as business events.
@@ -38,45 +41,24 @@ export const controller = {
    */
   async handler(request, h) {
     const session = request.auth.credentials
+    const { organisationNumber, registrationNumber, year } = request.params
+    const registrationKeys = { organisationNumber, registrationNumber }
 
-    const { organisationId, registrationId, accreditationId } = request.params
-
-    const { organisationData, registration, rawAccreditation } =
-      await fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.backendToken
-      )
-
-    const accreditation = accreditationId
-      ? requireCurrentAccreditation({
-          accreditationId,
-          registration,
-          rawAccreditation
-        })
-      : undefined
-
-    const events = await fetchLedgerEvents({
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken: session.backendToken
-    })
+    const { organisationData, registration, accreditation, events } = year
+      ? await readAccreditedLedger({ ...registrationKeys, year }, session)
+      : await readRegisteredOnlyLedger(registrationKeys, request)
 
     const { t: localise } = request
     const { noteType } = getNoteTypeDisplayNames(registration)
     const heading = localise('waste-balance-ledger:heading')
     const name = organisationName(organisationData)
-    const registrationPath = registrationIdPath({
-      organisationId,
-      registrationId
-    })
-    const accreditationPath = accreditationId
-      ? accreditationIdPath({ organisationId, registrationId, accreditationId })
+    const ledgerRegistrationPath = registrationPath(registrationKeys)
+    const ledgerAccreditationPath = year
+      ? accreditationPath({ ...registrationKeys, year })
       : undefined
     const recordPaths = {
-      organisation: organisationIdPath({ organisationId }),
-      registration: registrationPath
+      organisation: organisationPath(registrationKeys),
+      registration: ledgerRegistrationPath
     }
 
     // The registered-only partition sits under no accreditation, so its trail
@@ -91,7 +73,7 @@ export const controller = {
           accreditationNumber: accreditation.accreditationNumber,
           paths: {
             ...recordPaths,
-            accreditation: /** @type {string} */ (accreditationPath)
+            accreditation: /** @type {string} */ (ledgerAccreditationPath)
           }
         })
       : toRegisteredOnlyPage({
@@ -105,7 +87,7 @@ export const controller = {
     return h.view('waste-balance-ledger/index', {
       ...page,
       ledgerRows: buildLedgerRows({
-        accreditationPath,
+        accreditationPath: ledgerAccreditationPath,
         events,
         localise,
         localiseUrl: request.localiseUrl,
@@ -113,9 +95,65 @@ export const controller = {
         offersCsvDownloads: readsWasteRecordsDownloads(session),
         // An operator reaches this page too, and may not fetch the file.
         offersDownloads: readsAsARegulator(session),
-        registrationPath
+        registrationPath: ledgerRegistrationPath
       })
     })
+  }
+}
+
+/**
+ * The year's accreditation and its ledger; 404 without a live one.
+ * @param {AccreditationKeys} keys
+ * @param {UserSession} session
+ * @returns {Promise<LedgerRead>}
+ */
+async function readAccreditedLedger(keys, session) {
+  const { organisationData, registration, accreditation } =
+    await getRequiredRegistrationWithAccreditationByNumber(keys, session)
+  const events = await fetchAccreditationLedgerEvents(
+    keys,
+    session.backendToken
+  )
+
+  return { organisationData, registration, accreditation, events }
+}
+
+/**
+ * The registration and its registered-only ledger; a 404 ledger reads as empty.
+ * @param {RegistrationKeys} keys
+ * @param {HapiRequest} request
+ * @returns {Promise<LedgerRead>}
+ */
+async function readRegisteredOnlyLedger(keys, request) {
+  const session = request.auth.credentials
+  const { organisationData, registration } =
+    await fetchRegistrationAndAccreditationByNumber(
+      keys.organisationNumber,
+      keys.registrationNumber,
+      session
+    )
+
+  try {
+    const events = await fetchRegisteredOnlyLedgerEvents(
+      { ...keys, year: REGISTERED_ONLY_LEDGER_YEAR },
+      session.backendToken
+    )
+
+    return { organisationData, registration, events }
+  } catch (error) {
+    if (!Boom.isBoom(error, statusCodes.notFound)) {
+      throw error
+    }
+
+    request.logger.info({
+      message: 'No registered-only ledger for the year, showing it empty',
+      event: {
+        action: 'fetch_registered_only_ledger',
+        reason: `organisationNumber=${keys.organisationNumber} registrationNumber=${keys.registrationNumber} year=${REGISTERED_ONLY_LEDGER_YEAR}`
+      }
+    })
+
+    return { organisationData, registration, events: [] }
   }
 }
 
@@ -146,58 +184,21 @@ function toRegisteredOnlyPage({ heading, localise, localiseUrl, name, paths }) {
 }
 
 /**
- * The accreditation the address names, whatever its status. A closed
- * accreditation keeps its ledger, so the page must still name it.
- *
- * Only the ledger the registration writes to now is reachable from the
- * registration page, so an address pairing a registration with any other
- * accreditation names no ledger at all. Refusing it matters more than it
- * looks: the backend answers that pair with an empty array, so rendering it
- * would tell a regulator that nothing has moved a balance that does not exist.
- * @param {{
- *   accreditationId: string,
+ * @typedef {{
+ *   organisationData: Organisation,
  *   registration: Registration,
- *   rawAccreditation: Accreditation | undefined
- * }} params
- * @returns {Accreditation}
+ *   accreditation?: AccreditationApproved,
+ *   events: LedgerEvent[]
+ * }} LedgerRead
  */
-function requireCurrentAccreditation({
-  accreditationId,
-  registration,
-  rawAccreditation
-}) {
-  if (registration.accreditationId !== accreditationId) {
-    throw notFound(
-      'Accreditation ID mismatch',
-      errorCodes.accreditationIdMismatch,
-      {
-        event: {
-          action: loggingEventActions.checkAccreditation,
-          reason: `registrationId=${registration.id} accreditationId=${accreditationId}`
-        }
-      }
-    )
-  }
-
-  if (!rawAccreditation) {
-    throw notFound(
-      'Accreditation not found',
-      errorCodes.accreditationNotFound,
-      {
-        event: {
-          action: loggingEventActions.checkAccreditation,
-          reason: `registrationId=${registration.id} accreditationId=${accreditationId}`
-        }
-      }
-    )
-  }
-
-  return rawAccreditation
-}
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { AccreditationApproved } from '#domain/organisations/accreditation.js'
+ * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+ * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */

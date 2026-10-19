@@ -1,49 +1,28 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
 
 /**
  * Fetches packaging recycling notes for an accreditation from EPR Backend
- * @param {string} organisationId - The organisation ID
- * @param {string} registrationId - The registration ID
- * @param {string} accreditationId - The accreditation ID
+ * @param {AccreditationKeys} keys
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<PackagingRecyclingNote[]>} List of packaging recycling notes
  */
-async function fetchPackagingRecyclingNotes(
-  organisationId,
-  registrationId,
-  accreditationId,
-  backendToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes`
+async function fetchPackagingRecyclingNotes(keys, backendToken) {
+  const { items } = /** @type {{ items: PrnResource[] }} */ (
+    await fetchJsonFromBackend(prnsPath(keys), {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${backendToken}`
+      }
+    })
+  )
 
-  return fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
+  return items.map(toPackagingRecyclingNote)
 }
 
 export { fetchPackagingRecyclingNotes }
 
 /**
- * @typedef {object} IssuedToOrganisation
- * @property {string} id
- * @property {string} name
- * @property {string} [tradingName]
- */
-
-/**
- * @typedef {object} PackagingRecyclingNote
- * @property {string} id
- * @property {string|null} prnNumber
- * @property {IssuedToOrganisation} issuedToOrganisation
- * @property {number} tonnage
- * @property {string} material
- * @property {string} status
- * @property {string} createdAt
- * @property {string|null} issuedAt
- * @property {string} wasteProcessingType
- * @property {string} processToBeUsed
- * @property {boolean} isDecemberWaste
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { PackagingRecyclingNote, PrnResource } from './prn-resource.js'
  */

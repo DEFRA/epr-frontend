@@ -13,7 +13,7 @@ import { fetchAccreditationDetails } from './fetch-accreditation-details.js'
  * @import { HttpHandler } from 'msw'
  * @import { SetupServer } from 'msw/node'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
- * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
+ * @import { PackagingRecyclingNote, PrnResource } from '#server/prns/helpers/prn-resource.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { ReportingCalendar } from './fetch-accreditation-details.js'
  */
@@ -27,13 +27,7 @@ describe(fetchAccreditationDetails, () => {
     year: '2026'
   }
   const backendToken = 'test-token'
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-789'
-  const credentials = buildMockAuth({
-    linkedOrganisationId: organisationId,
-    backendToken
-  }).credentials
+  const credentials = buildMockAuth({ backendToken }).credentials
   const logger = createMockLogger()
 
   const organisationUrl = `${backendUrl}/organisations/500118`
@@ -41,8 +35,7 @@ describe(fetchAccreditationDetails, () => {
   const balancesUrl = `${organisationUrl}/waste-balances/2026`
   const calendarUrl = `${registrationUrl}/reports/calendar`
   const ledgerUrl = `${registrationUrl}/accreditations/2026/ledger`
-  const organisationRecordUrl = `${backendUrl}/v1/organisations/${organisationId}`
-  const notesUrl = `${organisationRecordUrl}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+  const notesUrl = `${registrationUrl}/accreditations/2026/packaging-recycling-notes`
 
   const accreditation = {
     accreditationNumber: 'A26ER5001180114PL',
@@ -63,24 +56,6 @@ describe(fetchAccreditationDetails, () => {
     organisationNumber: 500118,
     name: 'Acme Recycling Ltd',
     registrations: { [keys.registrationNumber]: registration }
-  }
-  const organisationRecord = {
-    id: organisationId,
-    orgId: 500118,
-    registrations: [
-      {
-        id: registrationId,
-        registrationNumber: keys.registrationNumber,
-        accreditationId
-      }
-    ],
-    accreditations: [
-      {
-        id: accreditationId,
-        accreditationNumber: accreditation.accreditationNumber,
-        validFrom: '2026-01-01'
-      }
-    ]
   }
   const wasteBalance = { amount: 120.5, availableAmount: 80.25 }
   /** @type {ReportingPeriod[]} */
@@ -111,6 +86,25 @@ describe(fetchAccreditationDetails, () => {
       }
     }
   ]
+  /** @type {PrnResource} */
+  const prnResource = {
+    id: 'prn-001',
+    prnNumber: '240000123',
+    status: 'accepted',
+    issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+    accreditation: {
+      accreditationNumber: accreditation.accreditationNumber,
+      accreditationYear: 2026,
+      wasteProcessingType: 'reprocessor',
+      material: 'paper'
+    },
+    tonnage: 12.5,
+    processToBeUsed: '',
+    isDecemberWaste: false,
+    obligationYear: 2026,
+    createdAt: '2026-02-14T15:09:00.000Z',
+    issued: { at: '2026-02-15T15:09:00.000Z', by: { name: 'Ada Lovelace' } }
+  }
   /** @type {PackagingRecyclingNote[]} */
   const packagingRecyclingNotes = [
     {
@@ -121,10 +115,13 @@ describe(fetchAccreditationDetails, () => {
       material: 'paper',
       status: 'accepted',
       createdAt: '2026-02-14T15:09:00.000Z',
-      issuedAt: '2026-02-15T15:09:00.000Z',
+      notes: null,
+      isDecemberWaste: false,
       wasteProcessingType: 'reprocessor',
       processToBeUsed: '',
-      isDecemberWaste: false
+      accreditationYear: 2026,
+      issuedAt: '2026-02-15T15:09:00.000Z',
+      issuedBy: { name: 'Ada Lovelace' }
     }
   ]
 
@@ -132,9 +129,6 @@ describe(fetchAccreditationDetails, () => {
     output: expect.objectContaining({
       statusCode: statusCodes.internalServerError
     })
-  })
-  const notFound = expect.objectContaining({
-    output: expect.objectContaining({ statusCode: statusCodes.notFound })
   })
 
   /** @param {string} url */
@@ -167,10 +161,10 @@ describe(fetchAccreditationDetails, () => {
         `${organisationUrl}/registrations/:registrationNumber/accreditations/:year/ledger`,
         () => HttpResponse.json({ events: ledgerEvents })
       ),
-      http.get(organisationRecordUrl, () =>
-        HttpResponse.json(organisationRecord)
-      ),
-      http.get(notesUrl, () => HttpResponse.json(packagingRecyclingNotes))
+      http.get(
+        `${organisationUrl}/registrations/:registrationNumber/accreditations/:year/packaging-recycling-notes`,
+        () => HttpResponse.json({ items: [prnResource] })
+      )
     )
 
   /**
@@ -317,16 +311,24 @@ describe(fetchAccreditationDetails, () => {
   })
 
   describe('the packaging recycling notes', () => {
-    test('reads the notes by the ids the numbers resolve to', async ({
+    test('reads the notes by number with the session backend token', async ({
       msw
     }) => {
-      backendHolds(msw)
+      let authorization
+      backendHolds(
+        msw,
+        http.get(notesUrl, ({ request }) => {
+          authorization = request.headers.get('Authorization')
+          return HttpResponse.json({ items: [prnResource] })
+        })
+      )
 
       const result = await fetchDetails()
 
       expect(result.packagingRecyclingNotes).toStrictEqual(
         packagingRecyclingNotes
       )
+      expect(authorization).toBe(`Bearer ${backendToken}`)
     })
 
     test('reports notes it could not read as none rather than failing the page', async ({
@@ -339,22 +341,10 @@ describe(fetchAccreditationDetails, () => {
       expect(result.packagingRecyclingNotes).toStrictEqual([])
       expect(logger.error).toHaveBeenCalledWith({
         message:
-          'Failed to fetch packaging recycling notes for organisation org-123 accreditation acc-789',
+          'Failed to fetch packaging recycling notes for organisation 500118 registration R26ER5001180041PL year 2026',
         err: backendFailure
       })
       expect(result.ledgerEvents).toStrictEqual(ledgerEvents)
-    })
-
-    test('fails the page where the ids could not be found', async ({ msw }) => {
-      backendHolds(
-        msw,
-        http.get(
-          organisationRecordUrl,
-          () => new HttpResponse(null, { status: statusCodes.notFound })
-        )
-      )
-
-      await expect(fetchDetails()).rejects.toThrow(notFound)
     })
   })
 

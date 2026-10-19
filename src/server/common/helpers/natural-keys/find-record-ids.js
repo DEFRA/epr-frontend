@@ -22,7 +22,7 @@ const unresolved = ({ organisationNumber, registrationNumber, year }) =>
   })
 
 /**
- * Ids for the reads with no natural-key route yet (PAE-2045 removes them).
+ * Ids for the reapply link only, until the registration service accepts numbers.
  * @param {AccreditationKeys} keys
  * @param {UserSession} credentials
  * @returns {Promise<{ organisationId: string, registrationId: string, accreditationId: string, registration: Registration }>}

@@ -1,64 +1,47 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from './fetch-registration-and-accreditation.js'
 
 /**
+ * @import {AccreditationApproved} from '#domain/organisations/accreditation.js'
+ * @import {UserSession} from '#server/auth/types/session.js'
+ * @import {AccreditationKeys} from '#server/reports/helpers/report-paths.js'
  * @import {RegistrationWithAccreditation} from './fetch-registration-and-accreditation.js'
  */
 
 /**
- * Fetches registration and accreditation, throwing 404 if either is missing.
- * @param {{ organisationId: string, registrationId: string, backendToken: string, accreditationId?: string }} params
- * @returns {Promise<Required<RegistrationWithAccreditation>>}
+ * The registration and its live accreditation for the year, by number, or 404.
+ * @param {AccreditationKeys} keys
+ * @param {UserSession} credentials
+ * @returns {Promise<RegistrationWithAccreditation & { accreditation: AccreditationApproved, rawAccreditation: AccreditationApproved }>}
  */
-export async function getRequiredRegistrationWithAccreditation({
-  organisationId,
-  registrationId,
-  accreditationId,
-  backendToken
-}) {
+export async function getRequiredRegistrationWithAccreditationByNumber(
+  { organisationNumber, registrationNumber, year },
+  credentials
+) {
   const { registration, accreditation, organisationData } =
-    await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      backendToken
+    await fetchRegistrationAndAccreditationByNumber(
+      organisationNumber,
+      registrationNumber,
+      credentials
     )
+  // `accreditation` is present only when it is live, so approved or suspended
+  const live = /** @type {AccreditationApproved | undefined} */ (accreditation)
 
-  if (!accreditation) {
-    throw notFound(
-      'Not accredited for this registration',
-      errorCodes.notAccredited,
-      {
-        event: {
-          action: loggingEventActions.checkAccreditation,
-          reason: `registrationId=${registrationId}`
-        }
+  if (!live || new Date(live.validFrom).getUTCFullYear() !== Number(year)) {
+    throw notFound('Not accredited for this year', errorCodes.notAccredited, {
+      event: {
+        action: loggingEventActions.checkAccreditation,
+        reason: `registrationNumber=${registrationNumber} year=${year}`
       }
-    )
-  }
-
-  if (accreditation.id !== accreditationId) {
-    throw notFound(
-      'Accreditation ID mismatch',
-      errorCodes.accreditationIdMismatch,
-      {
-        event: {
-          action: loggingEventActions.checkAccreditation,
-          reason: `registrationId=${registrationId} accreditationId=${accreditationId}`
-        }
-      }
-    )
+    })
   }
 
   return {
     registration,
-    accreditation,
-    // This path only returns once `accreditation` is confirmed present (and
-    // therefore live), so the raw and filtered records are the same object
-    // here. We echo it into `rawAccreditation` purely to satisfy the
-    // `Required<RegistrationWithAccreditation>` return type.
-    rawAccreditation: accreditation,
+    accreditation: live,
+    rawAccreditation: live,
     organisationData
   }
 }

@@ -1,43 +1,42 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { fetchPackagingRecyclingNote } from './fetch-packaging-recycling-note.js'
 
+const keys = {
+  organisationNumber: '500123',
+  registrationNumber: 'R26EN0000000001PL',
+  year: '2026'
+}
+
 describe(fetchPackagingRecyclingNote, () => {
-  it('should get the note the ids name and resolve to it', async ({ msw }) => {
-    const note = {
-      id: 'prn-4',
-      issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
-      tonnage: 100,
-      status: 'awaiting_authorisation'
-    }
+  it('should get the note under its accreditation and resolve to the page shape', async ({
+    msw
+  }) => {
     /** @type {string[]} */
     const pathnames = []
     msw.use(
       http.get(/packaging-recycling-notes\/[^/]+$/, ({ request }) => {
         pathnames.push(new URL(request.url).pathname)
-        return HttpResponse.json(note)
+        return HttpResponse.json(
+          buildPrnResource({ id: 'prn-4', status: 'awaiting_authorisation' })
+        )
       })
     )
 
-    const result = await fetchPackagingRecyclingNote(
-      'org/1',
-      'reg&2',
-      'acc#3',
-      'prn@4',
-      'a-token'
-    )
+    const result = await fetchPackagingRecyclingNote(keys, 'prn@4', 'a-token')
 
-    expect(result).toStrictEqual({
+    expect(result).toMatchObject({
       id: 'prn-4',
-      issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
-      tonnage: 100,
-      status: 'awaiting_authorisation'
+      status: 'awaiting_authorisation',
+      material: 'plastic',
+      prnNumber: null
     })
     expect(pathnames).toStrictEqual([
-      '/v1/organisations/org%2F1/registrations/reg%262/accreditations/acc%233/packaging-recycling-notes/prn%404'
+      '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes/prn%404'
     ])
   })
 })

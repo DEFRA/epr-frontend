@@ -1,4 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
 
 /**
  * @typedef {object} UpdatePrnStatusPayload
@@ -6,53 +7,32 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  */
 
 /**
- * @typedef {object} IssuedToOrganisation
- * @property {string} id
- * @property {string} name
- * @property {string} [tradingName]
- */
-
-/**
- * @typedef {object} UpdatePrnStatusResponse
- * @property {string} id - The PRN ID
- * @property {string|null} prnNumber - The PRN number
- * @property {number} tonnage - Tonnage amount
- * @property {string} material - Material type
- * @property {IssuedToOrganisation} issuedToOrganisation - Recipient organisation
- * @property {string} status - Current PRN status
- * @property {string} updatedAt - Update timestamp
- * @property {string} wasteProcessingType - Processing type
- * @property {string} processToBeUsed - The recycling process code
- * @property {boolean} isDecemberWaste - Whether this is December waste
- */
-
-/**
  * Updates the status of a PRN/PERN via the backend API
- * @param {string} organisationId - The issuing organisation ID
- * @param {string} registrationId - The registration ID
- * @param {string} accreditationId - The accreditation ID
+ * @param {AccreditationKeys} keys
  * @param {string} prnId - The PRN ID
  * @param {UpdatePrnStatusPayload} payload - Status update data
  * @param {string} backendToken - Bearer token for the backend
- * @returns {Promise<UpdatePrnStatusResponse>}
+ * @returns {Promise<PackagingRecyclingNote>}
  */
-async function updatePrnStatus(
-  organisationId,
-  registrationId,
-  accreditationId,
-  prnId,
-  payload,
-  backendToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes/${encodeURIComponent(prnId)}/status`
+async function updatePrnStatus(keys, prnId, payload, backendToken) {
+  const path = `${prnsPath(keys)}/${encodeURIComponent(prnId)}/status`
 
-  return fetchJsonFromBackend(path, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    },
-    body: JSON.stringify(payload)
-  })
+  return toPackagingRecyclingNote(
+    /** @type {PrnResource} */ (
+      await fetchJsonFromBackend(path, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${backendToken}`
+        },
+        body: JSON.stringify(payload)
+      })
+    )
+  )
 }
 
 export { updatePrnStatus }
+
+/**
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { PackagingRecyclingNote, PrnResource } from './prn-resource.js'
+ */

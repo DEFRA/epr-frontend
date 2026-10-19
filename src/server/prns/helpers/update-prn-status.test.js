@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
 import { updatePrnStatus } from './update-prn-status.js'
 
 vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
@@ -10,44 +11,25 @@ const { fetchJsonFromBackend } =
   await import('#server/common/helpers/fetch-json-from-backend.js')
 
 describe(updatePrnStatus, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-abc'
-  const prnId = 'prn-789'
+  const keys = {
+    organisationNumber: '500123',
+    registrationNumber: 'R26EN0000000001PL',
+    year: '2026'
+  }
   const backendToken = 'test-token'
-
-  const payload = {
-    status: 'awaiting_authorisation'
-  }
-
-  const mockResponse = {
-    id: 'prn-789',
-    prnNumber: 'PRN-2026-001',
-    tonnage: 100,
-    material: 'plastic',
-    issuedToOrganisation: 'producer-org',
-    status: 'awaiting_authorisation',
-    updatedAt: '2026-01-28T12:00:00.000Z'
-  }
+  const payload = { status: 'awaiting_acceptance' }
 
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('calls fetchJsonFromBackend with correct path and options', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
+  it('posts the status to the note under its accreditation', async () => {
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(buildPrnResource())
 
-    await updatePrnStatus(
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      payload,
-      backendToken
-    )
+    await updatePrnStatus(keys, 'prn#789', payload, backendToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-abc/packaging-recycling-notes/prn-789/status',
+      '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes/prn%23789/status',
       {
         method: 'POST',
         headers: {
@@ -58,52 +40,31 @@ describe(updatePrnStatus, () => {
     )
   })
 
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updatePrnStatus(
-      'org/123',
-      'reg&456',
-      'acc@abc',
-      'prn#789',
-      payload,
-      backendToken
+  it('resolves to the updated note in the page shape', async () => {
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(
+      buildPrnResource({
+        status: 'awaiting_acceptance',
+        prnNumber: 'ER2625001A'
+      })
     )
 
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%40abc/packaging-recycling-notes/prn%23789/status',
-      expect.any(Object)
-    )
-  })
+    const result = await updatePrnStatus(keys, 'prn-789', payload, backendToken)
 
-  it('returns the response from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    const result = await updatePrnStatus(
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      payload,
-      backendToken
-    )
-
-    expect(result).toStrictEqual(mockResponse)
+    expect(result).toMatchObject({
+      id: 'prn-789',
+      status: 'awaiting_acceptance',
+      prnNumber: 'ER2625001A',
+      material: 'plastic'
+    })
   })
 
   it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
+      new Error('Network error')
+    )
 
     await expect(
-      updatePrnStatus(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        payload,
-        backendToken
-      )
+      updatePrnStatus(keys, 'prn-789', payload, backendToken)
     ).rejects.toThrow('Network error')
   })
 })

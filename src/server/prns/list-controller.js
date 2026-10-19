@@ -1,7 +1,8 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { showsDecemberBalance } from '#server/common/helpers/waste-balance/december-balance.js'
-import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
 import { toNoteRows } from './helpers/note-rows.js'
 import { buildListViewData } from './list-view-data.js'
 
@@ -12,46 +13,26 @@ export const listController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
-    const session = request.auth.credentials
+    const keys = toAccreditationKeys(request.params)
+    const credentials = request.auth.credentials
+    const { backendToken } = credentials
 
-    const { registration } = await getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      backendToken: session.backendToken,
-      accreditationId
-    })
+    const { registration, accreditation } =
+      await getRequiredRegistrationWithAccreditationByNumber(keys, credentials)
 
     const [wasteBalance, prns, showsDecember] = await Promise.all([
-      registration.accreditationId
-        ? getWasteBalance(
-            organisationId,
-            registration.accreditationId,
-            session.backendToken,
-            request.logger
-          )
-        : null,
-      fetchPackagingRecyclingNotes(
-        organisationId,
-        registrationId,
-        accreditationId,
-        session.backendToken
-      ),
-      registration.accreditationId
-        ? showsDecemberBalance({
-            organisationId,
-            registrationId,
-            accreditationId: registration.accreditationId,
-            backendToken: session.backendToken,
-            logger: request.logger
-          })
-        : false
+      fetchPrnWasteBalance({
+        keys,
+        accreditationNumber: accreditation.accreditationNumber,
+        backendToken,
+        logger: request.logger
+      }),
+      fetchPackagingRecyclingNotes(keys, backendToken),
+      showsDecemberBalance({ keys, backendToken, logger: request.logger })
     ])
 
     const viewData = buildListViewData(request, {
-      organisationId,
-      registrationId,
-      accreditationId,
+      keys,
       registration,
       ...toNoteRows(prns),
       wasteBalance,

@@ -10,54 +10,32 @@ const { fetchJsonFromBackend } =
   await import('#server/common/helpers/fetch-json-from-backend.js')
 
 describe(fetchDecemberPrnEligibility, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-789'
+  const keys = {
+    organisationNumber: '500123',
+    registrationNumber: 'R26EN0000000001PL',
+    year: '2026'
+  }
   const backendToken = 'test-token'
 
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('calls fetchJsonFromBackend with correct path and options', async () => {
+  it('gets the eligibility under the accreditation PRNs', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       mode: 'manual',
       windowOpen: true
     })
 
-    await fetchDecemberPrnEligibility(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
-    )
+    await fetchDecemberPrnEligibility(keys, backendToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes/december-prn-eligibility',
+      '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes/december-prn-eligibility',
       {
         headers: {
           Authorization: `Bearer ${backendToken}`
         }
       }
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
-      mode: 'none',
-      windowOpen: false
-    })
-
-    await fetchDecemberPrnEligibility(
-      'org/123',
-      'reg&456',
-      'acc#789',
-      backendToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789/packaging-recycling-notes/december-prn-eligibility',
-      expect.any(Object)
     )
   })
 
@@ -68,27 +46,18 @@ describe(fetchDecemberPrnEligibility, () => {
     }
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(eligibility)
 
-    const result = await fetchDecemberPrnEligibility(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
-    )
+    const result = await fetchDecemberPrnEligibility(keys, backendToken)
 
     expect(result).toStrictEqual(eligibility)
   })
 
   it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
+      new Error('Network error')
+    )
 
     await expect(
-      fetchDecemberPrnEligibility(
-        organisationId,
-        registrationId,
-        accreditationId,
-        backendToken
-      )
+      fetchDecemberPrnEligibility(keys, backendToken)
     ).rejects.toThrow('Network error')
   })
 })
