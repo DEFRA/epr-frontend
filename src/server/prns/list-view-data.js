@@ -5,10 +5,10 @@ import { toDecemberBalanceBreakdown } from '#server/common/helpers/waste-balance
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
-import {
-  accreditationIdPath,
-  registrationIdPath
-} from '#server/reports/helpers/report-paths.js'
+import { accreditationPath } from '#server/reports/helpers/report-paths.js'
+import { prnsPath } from './helpers/prn-resource.js'
+
+/** @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js' */
 
 /**
  * @param {{
@@ -17,9 +17,7 @@ import {
  *   auth: { credentials?: { scope?: string[] } | null }
  * }} request
  * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string,
+ *   keys: AccreditationKeys,
  *   registration: { wasteProcessingType: string },
  *   prns: object[],
  *   cancellationPrns?: object[],
@@ -33,9 +31,7 @@ import {
 export function buildListViewData(
   request,
   {
-    organisationId,
-    registrationId,
-    accreditationId,
+    keys,
     registration,
     prns,
     cancellationPrns = [],
@@ -52,9 +48,7 @@ export function buildListViewData(
 
   const buildAwaiting = (prnList) =>
     buildAwaitingTable(request, {
-      organisationId,
-      registrationId,
-      accreditationId,
+      keys,
       prns: prnList,
       localise,
       canWrite
@@ -62,9 +56,7 @@ export function buildListViewData(
 
   const buildDetail = (prnList, i18nPrefix) =>
     buildDetailTable(request, {
-      organisationId,
-      registrationId,
-      accreditationId,
+      keys,
       prns: prnList,
       localise,
       noteType,
@@ -73,13 +65,9 @@ export function buildListViewData(
 
   return {
     ...buildListLabels(localise, { noteType, noteTypePlural }),
-    backUrl: request.localiseUrl(
-      registrationIdPath({ organisationId, registrationId })
-    ),
+    backUrl: request.localiseUrl(accreditationPath(keys)),
     createLink: {
-      href: request.localiseUrl(
-        `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/create`
-      ),
+      href: request.localiseUrl(`${prnsPath(keys)}/create`),
       text: localise('prns:list:createLink', { noteType })
     },
     wasteBalance: {
@@ -137,9 +125,7 @@ function buildListLabels(localise, { noteType, noteTypePlural }) {
  * at this call site.
  * @param {{ localiseUrl: (url: string) => string }} request
  * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string,
+ *   keys: AccreditationKeys,
  *   prns: Array<{
  *     id: string,
  *     recipient: string,
@@ -152,10 +138,7 @@ function buildListLabels(localise, { noteType, noteTypePlural }) {
  *   canWrite: boolean
  * }} options
  */
-function buildAwaitingTable(
-  request,
-  { organisationId, registrationId, accreditationId, prns, localise, canWrite }
-) {
+function buildAwaitingTable(request, { keys, prns, localise, canWrite }) {
   const headings = {
     recipient: localise('prns:list:table:recipientHeading'),
     createdAt: localise('prns:list:table:dateHeading'),
@@ -169,7 +152,7 @@ function buildAwaitingTable(
   const viewText = localise('prns:list:table:viewText')
 
   const dataRows = prns.map((prn) => {
-    const notePath = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prn.id}`
+    const notePath = `${prnsPath(keys)}/${prn.id}`
     const actionUrl = request.localiseUrl(notePath)
     const viewUrl = request.localiseUrl(`${notePath}/view`)
     return [
@@ -208,15 +191,7 @@ function buildAwaitingTable(
 
 function buildDetailTable(
   request,
-  {
-    organisationId,
-    registrationId,
-    accreditationId,
-    prns,
-    localise,
-    noteType,
-    i18nPrefix
-  }
+  { keys, prns, localise, noteType, i18nPrefix }
 ) {
   const headings = {
     prnNumber: localise(`prns:list:${i18nPrefix}:noteNumberHeading`, {
@@ -233,9 +208,7 @@ function buildDetailTable(
   const selectText = localise(`prns:list:${i18nPrefix}:selectText`)
 
   const rows = prns.map((prn) => {
-    const viewUrl = request.localiseUrl(
-      `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prn.id}/view`
-    )
+    const viewUrl = request.localiseUrl(`${prnsPath(keys)}/${prn.id}/view`)
     return [
       { text: prn.prnNumber },
       { text: prn.recipient, classes: cssClasses.wrap.breakWord },

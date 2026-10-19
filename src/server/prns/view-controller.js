@@ -5,9 +5,8 @@ import {
   badImplementation,
   classifierTail
 } from '#server/common/helpers/logging/cdp-boom.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { availableForPool } from '#server/common/helpers/waste-balance/available-for-pool.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
@@ -21,14 +20,21 @@ import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisa
 import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { buildPrnBasePath } from './helpers/fetch-prn-context.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
+import { year } from '#server/common/helpers/year.js'
 import { buildNoteBreadcrumbs } from './helpers/build-note-breadcrumbs.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { noteReturn } from './helpers/note-return-path.js'
+import { prnsPath } from './helpers/prn-resource.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { accreditationIdPath } from '#server/reports/helpers/report-paths.js'
+
+/**
+ * @typedef {{ keys: AccreditationKeys, prnId: string, prnDraft: PrnDraftSession }} DraftParams
+ */
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
@@ -37,8 +43,8 @@ export const viewController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
+    const keys = toAccreditationKeys(request.params)
+    const { prnId } = request.params
     const { t: localise } = request
     const session = request.auth.credentials
 
@@ -48,25 +54,11 @@ export const viewController = {
 
     if (prnDraft?.id === prnId) {
       // Creation flow - show check page with draft data
-      return handleDraftView(h, {
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnDraft,
-        localise,
-        session
-      })
+      return handleDraftView(h, { keys, prnDraft, localise, session })
     }
 
     // View existing PRN - fetch from backend
-    return handleExistingView(request, h, {
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      localise,
-      session
-    })
+    return handleExistingView(request, h, { keys, prnId, localise, session })
   }
 }
 
@@ -77,34 +69,30 @@ export const viewPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
-    const session = request.auth.credentials
+    const keys = toAccreditationKeys(request.params)
+    const { prnId } = request.params
+    const credentials = request.auth.credentials
+    const { backendToken } = credentials
 
     /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
 
     if (prnDraft?.id !== prnId) {
-      return h.redirect(
-        `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create`
-      )
+      return h.redirect(`${prnsPath(keys)}/create`)
     }
 
     try {
-      const [wasteBalanceMap, eligibility] = await Promise.all([
-        fetchWasteBalances(
-          organisationId,
-          [accreditationId],
-          session.backendToken
-        ),
-        fetchDecemberPrnEligibility(
-          organisationId,
-          registrationId,
-          accreditationId,
-          session.backendToken
-        )
+      const [{ accreditation }, eligibility] = await Promise.all([
+        getRequiredRegistrationWithAccreditationByNumber(keys, credentials),
+        fetchDecemberPrnEligibility(keys, backendToken)
       ])
-      const balance = wasteBalanceMap[accreditationId] ?? {
+      // A failed read fails the confirmation, so an outage never discards a draft
+      const balances = await fetchOrganisationWasteBalances(
+        organisationNumber(Number(keys.organisationNumber)),
+        year(Number(keys.year)),
+        backendToken
+      )
+      const balance = balances[accreditation.accreditationNumber] ?? {
         amount: 0,
         availableAmount: 0
       }
@@ -113,20 +101,14 @@ export const viewPostController = {
         prnDraft.isDecemberWaste &&
           eligibility.mode === DECEMBER_WASTE_CONTROL.selectPool
       )
-      const prnParams = {
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId
-      }
+      const draftParams = { keys, prnId, prnDraft }
 
       return await (prnDraft.tonnage > availableAmount
         ? discardDraftOverBalance(request, h, {
-            ...prnParams,
-            availableAmount,
-            prnDraft
+            ...draftParams,
+            availableAmount
           })
-        : confirmDraft(request, h, { ...prnParams, prnDraft }))
+        : confirmDraft(request, h, draftParams))
     } catch (error) {
       if (error.isBoom) {
         throw error
@@ -150,19 +132,12 @@ export const viewPostController = {
  * Discards a draft whose tonnage no longer fits the available waste balance.
  * @param {HapiRequest} request
  * @param {ResponseToolkit} h
- * @param {PrnDetailParams & { availableAmount: number, prnDraft: PrnDraftSession }} params
+ * @param {DraftParams & { availableAmount: number }} params
  */
 const discardDraftOverBalance = async (
   request,
   h,
-  {
-    organisationId,
-    registrationId,
-    accreditationId,
-    prnId,
-    availableAmount,
-    prnDraft
-  }
+  { keys, prnId, availableAmount, prnDraft }
 ) => {
   request.logger.warn({
     message: 'PRN tonnage exceeds available waste balance',
@@ -174,9 +149,7 @@ const discardDraftOverBalance = async (
   })
 
   await updatePrnStatus(
-    organisationId,
-    registrationId,
-    accreditationId,
+    keys,
     prnId,
     { status: 'discarded' },
     request.auth.credentials.backendToken
@@ -187,7 +160,7 @@ const discardDraftOverBalance = async (
   const poolParam = prnDraft.isDecemberWaste ? '&pool=december' : ''
 
   return h.redirect(
-    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/create?error=insufficient_balance${poolParam}`
+    `${prnsPath(keys)}/create?error=insufficient_balance${poolParam}`
   )
 }
 
@@ -195,17 +168,11 @@ const discardDraftOverBalance = async (
  * Moves a draft to awaiting authorisation, ending the create journey.
  * @param {HapiRequest} request
  * @param {ResponseToolkit} h
- * @param {PrnDetailParams & { prnDraft: PrnDraftSession }} params
+ * @param {DraftParams} params
  */
-const confirmDraft = async (
-  request,
-  h,
-  { organisationId, registrationId, accreditationId, prnId, prnDraft }
-) => {
+const confirmDraft = async (request, h, { keys, prnId, prnDraft }) => {
   const result = await updatePrnStatus(
-    organisationId,
-    registrationId,
-    accreditationId,
+    keys,
     prnId,
     { status: 'awaiting_authorisation' },
     request.auth.credentials.backendToken
@@ -221,43 +188,24 @@ const confirmDraft = async (
     isDecemberWaste: prnDraft.isDecemberWaste
   })
 
-  await metrics.journey.end(request, JOURNEY.createPrn, accreditationId)
+  await metrics.journey.end(request, JOURNEY.createPrn, prnsPath(keys))
 
-  return h.redirect(
-    `${buildPrnBasePath({ organisationId, registrationId, accreditationId })}/${prnId}/created`
-  )
+  return h.redirect(`${prnsPath(keys)}/${prnId}/created`)
 }
 
 /**
  * Handle viewing a draft PRN (creation flow)
  * @param {ResponseToolkit} h
  * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string,
+ *   keys: AccreditationKeys,
  *   prnDraft: PrnDraftSession,
  *   localise: TFunction,
  *   session: UserSession
  * }} params
  */
-async function handleDraftView(
-  h,
-  {
-    organisationId,
-    registrationId,
-    accreditationId,
-    prnDraft,
-    localise,
-    session
-  }
-) {
+async function handleDraftView(h, { keys, prnDraft, localise, session }) {
   const { organisationData, registration, accreditation } =
-    await getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      backendToken: session.backendToken,
-      accreditationId
-    })
+    await getRequiredRegistrationWithAccreditationByNumber(keys, session)
 
   const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
 
@@ -295,11 +243,8 @@ async function handleDraftView(
     },
     discardLink: {
       text: localise('prns:create:discardLink'),
-      href: `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnDraft.id}/discard`
-    },
-    organisationId,
-    registrationId,
-    accreditationId
+      href: `${prnsPath(keys)}/${prnDraft.id}/discard`
+    }
   })
 }
 
@@ -308,9 +253,7 @@ async function handleDraftView(
  * @param {HapiRequest} request
  * @param {ResponseToolkit} h
  * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string,
+ *   keys: AccreditationKeys,
  *   prnId: string,
  *   localise: TFunction,
  *   session: UserSession
@@ -319,24 +262,13 @@ async function handleDraftView(
 async function handleExistingView(
   request,
   h,
-  { organisationId, registrationId, accreditationId, prnId, localise, session }
+  { keys, prnId, localise, session }
 ) {
   // Fetch PRN and registration data from backend
   const [{ organisationData, registration, accreditation }, prn] =
     await Promise.all([
-      getRequiredRegistrationWithAccreditation({
-        organisationId,
-        registrationId,
-        backendToken: session.backendToken,
-        accreditationId
-      }),
-      fetchPackagingRecyclingNote(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        session.backendToken
-      )
+      getRequiredRegistrationWithAccreditationByNumber(keys, session),
+      fetchPackagingRecyclingNote(keys, prnId, session.backendToken)
     ])
 
   const recipientDisplayName = getIssuedToOrgDisplayName(
@@ -348,7 +280,7 @@ async function handleExistingView(
 
   const isRegulator = readsAsARegulator(session)
 
-  const back = noteReturn({ organisationId, registrationId, accreditationId })
+  const back = noteReturn(keys)
 
   // A regulator walks the trail back instead, so the page offers them neither
   // the back link nor the return link. An operator reads a note from their own
@@ -358,8 +290,7 @@ async function handleExistingView(
   const breadcrumbs = isRegulator
     ? buildNoteBreadcrumbs({
         organisation: organisationData,
-        registration,
-        accreditationId,
+        keys,
         noteTypePlural,
         prn,
         localise,
@@ -568,6 +499,7 @@ function buildExistingPrnDetailRows({
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { UserSession } from '#server/auth/types/session.js'
- * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'
  */

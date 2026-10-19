@@ -2,9 +2,9 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { toNoteRows } from '#server/prns/helpers/note-rows.js'
 import { buildListViewData } from '#server/prns/list-view-data.js'
 import {
-  accreditationIdPath,
-  organisationIdPath,
-  registrationIdPath
+  accreditationPath,
+  organisationPath,
+  registrationPath
 } from '#server/reports/helpers/report-paths.js'
 
 import { toAccreditationChildPage } from '../../helpers/accreditation-child-page.js'
@@ -14,8 +14,9 @@ import { organisationName } from '../../helpers/caption.js'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
- * @import { AccreditationResource } from '../../helpers/types.js'
+ * @import { NumberedAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+ * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 const KEY = 'registrations:details:accreditation:prns'
@@ -30,14 +31,16 @@ const KEY = 'registrations:details:accreditation:prns'
  * button or inset copy.
  * @param {{
  *   request: HapiRequest,
+ *   keys: AccreditationKeys,
  *   organisation: Organisation,
  *   registration: Registration,
- *   accreditation: AccreditationResource,
+ *   accreditation: NumberedAccreditation,
  *   packagingRecyclingNotes: PackagingRecyclingNote[]
  * }} params
  */
 export const buildViewModel = ({
   request,
+  keys,
   organisation,
   registration,
   accreditation,
@@ -46,16 +49,9 @@ export const buildViewModel = ({
   const { t: localise, localiseUrl } = request
   const { noteTypePlural } = getNoteTypeDisplayNames(registration)
   const heading = localise(`${KEY}:listHeading`, { noteTypePlural })
-  const ids = {
-    organisationId: organisation.id,
-    registrationId: registration.id,
-    accreditationId: accreditation.id
-  }
 
   const list = buildListViewData(request, {
-    organisationId: organisation.id,
-    registrationId: registration.id,
-    accreditationId: accreditation.id,
+    keys,
     registration,
     ...toNoteRows(packagingRecyclingNotes)
   })
@@ -72,9 +68,9 @@ export const buildViewModel = ({
       registrationNumber: registration.registrationNumber,
       accreditationNumber: accreditation.accreditationNumber,
       paths: {
-        organisation: organisationIdPath(ids),
-        registration: registrationIdPath(ids),
-        accreditation: accreditationIdPath(ids)
+        organisation: organisationPath(keys),
+        registration: registrationPath(keys),
+        accreditation: accreditationPath(keys)
       }
     }),
     // Three strings in the operator's set address the person who created the

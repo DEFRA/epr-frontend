@@ -5,7 +5,6 @@ import {
   classifierTail
 } from '#server/common/helpers/logging/cdp-boom.js'
 import {
-  buildPrnBasePath,
   fetchPrnContext,
   fetchPrnForUpdate
 } from './helpers/fetch-prn-context.js'
@@ -23,10 +22,9 @@ export const deleteGetController = {
     const { registration, prn, basePath, prnId } =
       await fetchPrnContext(request)
     const { t: localise } = request
-    const redirectBasePath = buildPrnBasePath(request.params)
 
     if (prn.status !== 'awaiting_authorisation') {
-      return h.redirect(redirectBasePath)
+      return h.redirect(basePath)
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
@@ -50,33 +48,19 @@ export const deletePostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      prn,
-      backendToken
-    } = await fetchPrnForUpdate(request)
-    const redirectBasePath = buildPrnBasePath(request.params)
+    const { keys, prnId, prn, basePath, backendToken } =
+      await fetchPrnForUpdate(request)
 
     if (prn.status !== 'awaiting_authorisation') {
-      return h.redirect(redirectBasePath)
+      return h.redirect(basePath)
     }
 
     try {
-      await updatePrnStatus(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        { status: 'deleted' },
-        backendToken
-      )
+      await updatePrnStatus(keys, prnId, { status: 'deleted' }, backendToken)
 
       await metrics.journey.end(request, JOURNEY.deletePrn, prnId)
 
-      return h.redirect(redirectBasePath)
+      return h.redirect(basePath)
     } catch (error) {
       if (error.isBoom) {
         throw error

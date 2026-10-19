@@ -1,4 +1,5 @@
-import { backend, path } from '#server/common/helpers/backend-client.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
 
 /**
  * @typedef {object} UpdatePrnStatusPayload
@@ -6,47 +7,26 @@ import { backend, path } from '#server/common/helpers/backend-client.js'
  */
 
 /**
- * @typedef {object} IssuedToOrganisation
- * @property {string} id
- * @property {string} name
- * @property {string} [tradingName]
- */
-
-/**
- * @typedef {object} UpdatePrnStatusResponse
- * @property {string} id - The PRN ID
- * @property {string|null} prnNumber - The PRN number
- * @property {number} tonnage - Tonnage amount
- * @property {string} material - Material type
- * @property {IssuedToOrganisation} issuedToOrganisation - Recipient organisation
- * @property {string} status - Current PRN status
- * @property {string} updatedAt - Update timestamp
- * @property {string} wasteProcessingType - Processing type
- * @property {string} processToBeUsed - The recycling process code
- * @property {boolean} isDecemberWaste - Whether this is December waste
- */
-
-/**
  * Updates the status of a PRN/PERN via the backend API
- * @param {string} organisationId - The issuing organisation ID
- * @param {string} registrationId - The registration ID
- * @param {string} accreditationId - The accreditation ID
+ * @param {AccreditationKeys} keys
  * @param {string} prnId - The PRN ID
  * @param {UpdatePrnStatusPayload} payload - Status update data
  * @param {string} backendToken - Bearer token for the backend
- * @returns {Promise<UpdatePrnStatusResponse>}
+ * @returns {Promise<PackagingRecyclingNote>}
  */
-const updatePrnStatus = (
-  organisationId,
-  registrationId,
-  accreditationId,
-  prnId,
-  payload,
-  backendToken
-) =>
-  backend(backendToken).post(
-    path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/status`,
+const updatePrnStatus = async (keys, prnId, payload, backendToken) => {
+  /** @type {PrnResource} */
+  const note = await backend(backendToken).post(
+    `${prnsPath(keys)}/${encodeURIComponent(prnId)}/status`,
     payload
   )
 
+  return toPackagingRecyclingNote(note)
+}
+
 export { updatePrnStatus }
+
+/**
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { PackagingRecyclingNote, PrnResource } from './prn-resource.js'
+ */

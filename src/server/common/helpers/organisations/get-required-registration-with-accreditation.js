@@ -1,64 +1,97 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
+import { fetchRegistrationAndAccreditationByNumber } from './fetch-registration-and-accreditation.js'
 
 /**
+ * @import {Accreditation, AccreditationApproved} from '#domain/organisations/accreditation.js'
+ * @import {UserSession} from '#server/auth/types/session.js'
+ * @import {AccreditationKeys} from '#server/reports/helpers/report-paths.js'
  * @import {RegistrationWithAccreditation} from './fetch-registration-and-accreditation.js'
  */
 
 /**
- * Fetches registration and accreditation, throwing 404 if either is missing.
- * @param {{ organisationId: string, registrationId: string, backendToken: string, accreditationId?: string }} params
- * @returns {Promise<Required<RegistrationWithAccreditation>>}
+ * @typedef {Accreditation & { accreditationNumber: string }} NumberedAccreditation
  */
-export async function getRequiredRegistrationWithAccreditation({
-  organisationId,
-  registrationId,
-  accreditationId,
-  backendToken
-}) {
+
+/**
+ * The registration and its live accreditation for the year, by number, or 404.
+ * @param {AccreditationKeys} keys
+ * @param {UserSession} credentials
+ * @returns {Promise<RegistrationWithAccreditation & { accreditation: AccreditationApproved, rawAccreditation: AccreditationApproved }>}
+ */
+export async function getRequiredRegistrationWithAccreditationByNumber(
+  keys,
+  credentials
+) {
   const { registration, accreditation, organisationData } =
-    await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      backendToken
+    await fetchRegistrationAndAccreditationByNumber(
+      keys.organisationNumber,
+      keys.registrationNumber,
+      credentials
     )
+  // `accreditation` is present only when it is live, so approved or suspended
+  const live = /** @type {AccreditationApproved | undefined} */ (accreditation)
 
-  if (!accreditation) {
-    throw notFound(
-      'Not accredited for this registration',
-      errorCodes.notAccredited,
-      {
-        event: {
-          action: loggingEventActions.checkAccreditation,
-          reason: `registrationId=${registrationId}`
-        }
-      }
-    )
-  }
-
-  if (accreditation.id !== accreditationId) {
-    throw notFound(
-      'Accreditation ID mismatch',
-      errorCodes.accreditationIdMismatch,
-      {
-        event: {
-          action: loggingEventActions.checkAccreditation,
-          reason: `registrationId=${registrationId} accreditationId=${accreditationId}`
-        }
-      }
-    )
+  if (!live || !isForYear(live.validFrom, keys.year)) {
+    throw notAccredited(keys)
   }
 
   return {
     registration,
-    accreditation,
-    // This path only returns once `accreditation` is confirmed present (and
-    // therefore live), so the raw and filtered records are the same object
-    // here. We echo it into `rawAccreditation` purely to satisfy the
-    // `Required<RegistrationWithAccreditation>` return type.
-    rawAccreditation: accreditation,
+    accreditation: live,
+    rawAccreditation: live,
     organisationData
   }
 }
+
+/**
+ * The registration and its accreditation for the year whatever its status, by
+ * number, or 404. A closed accreditation keeps its ledger and its notes.
+ * @param {AccreditationKeys} keys
+ * @param {UserSession} credentials
+ * @returns {Promise<RegistrationWithAccreditation & { accreditation: NumberedAccreditation }>}
+ */
+export async function getRequiredRegistrationWithAnyAccreditationByNumber(
+  keys,
+  credentials
+) {
+  const { registration, rawAccreditation, organisationData } =
+    await fetchRegistrationAndAccreditationByNumber(
+      keys.organisationNumber,
+      keys.registrationNumber,
+      credentials
+    )
+
+  if (
+    !rawAccreditation?.validFrom ||
+    !isForYear(rawAccreditation.validFrom, keys.year)
+  ) {
+    throw notAccredited(keys)
+  }
+
+  return {
+    registration,
+    // Only approval sets `validFrom`, and the number with it
+    accreditation: /** @type {NumberedAccreditation} */ (rawAccreditation),
+    organisationData
+  }
+}
+
+/**
+ * @param {string} validFrom
+ * @param {string} year
+ */
+const isForYear = (validFrom, year) =>
+  new Date(validFrom).getUTCFullYear() === Number(year)
+
+/**
+ * @param {AccreditationKeys} keys
+ */
+const notAccredited = ({ registrationNumber, year }) =>
+  notFound('Not accredited for this year', errorCodes.notAccredited, {
+    event: {
+      action: loggingEventActions.checkAccreditation,
+      reason: `registrationNumber=${registrationNumber} year=${year}`
+    }
+  })
