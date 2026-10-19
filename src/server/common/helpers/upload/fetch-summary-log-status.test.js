@@ -7,8 +7,10 @@ import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 
 describe(fetchSummaryLogStatus, () => {
   const backendUrl = config.get('eprBackendUrl')
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
+  const keys = {
+    organisationNumber: '500118',
+    registrationNumber: 'R26ER5001180041PL'
+  }
   const summaryLogId = 'log-789'
 
   it('should return the summary log status when the backend responds successfully', async ({
@@ -23,7 +25,7 @@ describe(fetchSummaryLogStatus, () => {
     let capturedRequest
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
         ({ request }) => {
           capturedRequest = request
           return HttpResponse.json(mockResponse)
@@ -31,12 +33,9 @@ describe(fetchSummaryLogStatus, () => {
       )
     )
 
-    const result = await fetchSummaryLogStatus(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      { backendToken: 'test-id-token' }
-    )
+    const result = await fetchSummaryLogStatus(keys, summaryLogId, {
+      backendToken: 'test-id-token'
+    })
 
     expect(capturedRequest).toBeDefined()
     expect(capturedRequest?.headers.get('content-type')).toBe(
@@ -76,7 +75,7 @@ describe(fetchSummaryLogStatus, () => {
 
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
         () =>
           HttpResponse.json({
             status: 'validated',
@@ -86,12 +85,9 @@ describe(fetchSummaryLogStatus, () => {
       )
     )
 
-    const result = await fetchSummaryLogStatus(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      { backendToken: 'test-id-token' }
-    )
+    const result = await fetchSummaryLogStatus(keys, summaryLogId, {
+      backendToken: 'test-id-token'
+    })
 
     expect(
       result.loadsByReportingPeriod?.openPeriodLoads.added.nonBalanceAffecting
@@ -102,7 +98,7 @@ describe(fetchSummaryLogStatus, () => {
   it('should strip unknown fields from the response', async ({ msw }) => {
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
         () =>
           HttpResponse.json({
             status: 'validated',
@@ -111,12 +107,9 @@ describe(fetchSummaryLogStatus, () => {
       )
     )
 
-    const result = await fetchSummaryLogStatus(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      { backendToken: 'test-id-token' }
-    )
+    const result = await fetchSummaryLogStatus(keys, summaryLogId, {
+      backendToken: 'test-id-token'
+    })
 
     expect(result).not.toHaveProperty('unknownField')
   })
@@ -130,7 +123,7 @@ describe(fetchSummaryLogStatus, () => {
 
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
         () =>
           HttpResponse.json({
             status: 'validated',
@@ -139,12 +132,9 @@ describe(fetchSummaryLogStatus, () => {
       )
     )
 
-    const result = await fetchSummaryLogStatus(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      { backendToken: 'test-id-token' }
-    )
+    const result = await fetchSummaryLogStatus(keys, summaryLogId, {
+      backendToken: 'test-id-token'
+    })
 
     expect(warnSpy).toHaveBeenCalledTimes(1)
     expect(result.status).toBe('validated')
@@ -157,13 +147,13 @@ describe(fetchSummaryLogStatus, () => {
   }) => {
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
         () => new HttpResponse(null, { status: 404, statusText: 'Not Found' })
       )
     )
 
     await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
+      fetchSummaryLogStatus(keys, summaryLogId, {
         backendToken: 'test-id-token'
       })
     ).rejects.toMatchObject({
@@ -177,7 +167,7 @@ describe(fetchSummaryLogStatus, () => {
   }) => {
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
         () =>
           new HttpResponse(null, {
             status: 500,
@@ -187,7 +177,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
+      fetchSummaryLogStatus(keys, summaryLogId, {
         backendToken: 'test-id-token'
       })
     ).rejects.toMatchObject({
