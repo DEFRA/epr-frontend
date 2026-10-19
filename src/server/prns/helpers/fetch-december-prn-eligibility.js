@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { prnsPath } from './prn-resource.js'
 
 /**
@@ -17,13 +17,8 @@ import { prnsPath } from './prn-resource.js'
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<DecemberPrnEligibility>}
  */
-async function fetchDecemberPrnEligibility(keys, backendToken) {
-  return fetchJsonFromBackend(`${prnsPath(keys)}/december-prn-eligibility`, {
-    headers: {
-      Authorization: `Bearer ${backendToken}`
-    }
-  })
-}
+const fetchDecemberPrnEligibility = (keys, backendToken) =>
+  backend(backendToken).get(`${prnsPath(keys)}/december-prn-eligibility`)
 
 export { fetchDecemberPrnEligibility }
 

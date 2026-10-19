@@ -1,63 +1,42 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { it } from '#vite/fixtures/server.js'
 
 import { fetchDecemberPrnEligibility } from './fetch-december-prn-eligibility.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(fetchDecemberPrnEligibility, () => {
-  const keys = {
-    organisationNumber: '500123',
-    registrationNumber: 'R26EN0000000001PL',
-    year: '2026'
-  }
-  const backendToken = 'test-token'
+  it('should get the eligibility of the accreditation the keys name and resolve to it', async ({
+    msw
+  }) => {
+    /** @type {{ authorization: string | null, pathname: string }[]} */
+    const received = []
+    msw.use(
+      http.get(/december-prn-eligibility$/, ({ request }) => {
+        received.push({
+          authorization: request.headers.get('authorization'),
+          pathname: new URL(request.url).pathname
+        })
+        return HttpResponse.json({ mode: 'manual', windowOpen: true })
+      })
+    )
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('gets the eligibility under the accreditation PRNs', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
-      mode: 'manual',
-      windowOpen: true
-    })
-
-    await fetchDecemberPrnEligibility(keys, backendToken)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes/december-prn-eligibility',
+    const result = await fetchDecemberPrnEligibility(
       {
-        headers: {
-          Authorization: `Bearer ${backendToken}`
-        }
+        organisationNumber: '500123',
+        registrationNumber: 'R26/1',
+        year: '2026'
+      },
+      'a-token'
+    )
+
+    expect(result).toStrictEqual({ mode: 'manual', windowOpen: true })
+    expect(received).toStrictEqual([
+      {
+        authorization: 'Bearer a-token',
+        pathname:
+          '/organisations/500123/registrations/R26%2F1/accreditations/2026/packaging-recycling-notes/december-prn-eligibility'
       }
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    const eligibility = {
-      mode: 'manual',
-      windowOpen: true
-    }
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(eligibility)
-
-    const result = await fetchDecemberPrnEligibility(keys, backendToken)
-
-    expect(result).toStrictEqual(eligibility)
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
-      new Error('Network error')
-    )
-
-    await expect(
-      fetchDecemberPrnEligibility(keys, backendToken)
-    ).rejects.toThrow('Network error')
+    ])
   })
 })
