@@ -1,7 +1,7 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import {
   asPackagingRecyclingNote,
+  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -31,7 +31,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
+const fixtureReprocessor = asRegistrationWithLiveAccreditation({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-456',
@@ -44,7 +44,7 @@ const fixtureReprocessor = asGetRequiredRegistrationResult({
   accreditation: { id: 'acc-001', status: 'approved' }
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
+const fixtureExporter = asRegistrationWithLiveAccreditation({
   organisationData: { id: 'org-123', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-456',
@@ -57,11 +57,11 @@ const fixtureExporter = asGetRequiredRegistrationResult({
   accreditation: { id: 'acc-001', status: 'approved' }
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const organisationNumber = '500123'
+const registrationNumber = 'R26EN0000000001PL'
+const year = '2026'
 const prnId = 'prn-789'
-const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+const basePath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes`
 const listUrl = basePath
 const deleteUrl = `${basePath}/${prnId}/delete`
 
@@ -85,9 +85,9 @@ vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 describe('#deleteController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(
+      getRequiredRegistrationWithAccreditationByNumber
+    ).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
       asPackagingRecyclingNote(mockPrnAwaitingAuth)
     )
@@ -177,9 +177,9 @@ describe('#deleteController', () => {
       it('displays PERN wording for exporter registration', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(
+          getRequiredRegistrationWithAccreditationByNumber
+        ).mockResolvedValue(fixtureExporter)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -248,9 +248,7 @@ describe('#deleteController', () => {
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(listUrl)
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          { organisationNumber, registrationNumber, year },
           prnId,
           { status: 'deleted' },
           mockCredentials.backendToken

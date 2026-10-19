@@ -1,9 +1,6 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import {
-  buildPrnBasePath,
-  fetchPrnContext
-} from './helpers/fetch-prn-context.js'
-import { registrationIdPath } from '#server/reports/helpers/report-paths.js'
+import { fetchPrnContext } from './helpers/fetch-prn-context.js'
+import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const cancelledController = {
@@ -12,18 +9,14 @@ export const cancelledController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, registration, prn, basePath } =
-      await fetchPrnContext(request)
+    const { keys, registration, prn, basePath } = await fetchPrnContext(request)
     const { t: localise } = request
-    const redirectBasePath = buildPrnBasePath(request.params)
 
     if (prn.status !== 'cancelled') {
-      return h.redirect(redirectBasePath)
+      return h.redirect(basePath)
     }
 
     const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
-
-    const homeUrl = registrationIdPath({ organisationId, registrationId })
 
     return h.view('prns/cancelled', {
       pageTitle: localise('prns:cancelled:pageTitle', { noteType }),
@@ -38,7 +31,7 @@ export const cancelledController = {
       },
       returnHomeLink: {
         text: localise('prns:cancelled:returnHomeLink'),
-        href: homeUrl
+        href: accreditationPath(keys)
       }
     })
   }

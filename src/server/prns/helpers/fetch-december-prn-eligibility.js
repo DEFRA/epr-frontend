@@ -1,4 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { prnsPath } from './prn-resource.js'
 
 /**
  * @typedef {object} DecemberPrnEligibility
@@ -12,21 +13,12 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * halves of the rule, decided by the backend (see
  * resolve-december-waste-choice.js, which composes the two facts this
  * returns into the control to render).
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {string} accreditationId
+ * @param {AccreditationKeys} keys
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<DecemberPrnEligibility>}
  */
-async function fetchDecemberPrnEligibility(
-  organisationId,
-  registrationId,
-  accreditationId,
-  backendToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes/december-prn-eligibility`
-
-  return fetchJsonFromBackend(path, {
+async function fetchDecemberPrnEligibility(keys, backendToken) {
+  return fetchJsonFromBackend(`${prnsPath(keys)}/december-prn-eligibility`, {
     headers: {
       Authorization: `Bearer ${backendToken}`
     }
@@ -34,3 +26,7 @@ async function fetchDecemberPrnEligibility(
 }
 
 export { fetchDecemberPrnEligibility }
+
+/**
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ */

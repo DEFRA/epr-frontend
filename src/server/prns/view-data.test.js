@@ -56,12 +56,23 @@ const exporterRegistration = /** @type {Registration} */ ({
   material: 'plastic'
 })
 
+const reprocessorKeys = {
+  organisationNumber: '500123',
+  registrationNumber: 'R26EN0000000001PL',
+  year: '2026'
+}
+
+const exporterKeys = {
+  organisationNumber: '500456',
+  registrationNumber: 'E26EN0000000002PL',
+  year: '2026'
+}
+
 describe('#buildCreatePrnViewData', () => {
   describe('decemberWaste', () => {
     it('is null in none mode', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         recipients: stubRecipients,
         decemberWasteControl: noDecemberControl
@@ -72,8 +83,7 @@ describe('#buildCreatePrnViewData', () => {
 
     it('is present in manual mode', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         recipients: stubRecipients,
         decemberWasteControl: {
@@ -96,8 +106,7 @@ describe('#buildCreatePrnViewData', () => {
 
     it('is present in pool mode, and the inset text switches to the either-balance wording', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         recipients: stubRecipients,
         wasteBalance: { amount: 60, availableAmount: 60 },
@@ -128,8 +137,7 @@ describe('#buildCreatePrnViewData', () => {
   describe('for reprocessor (PRN)', () => {
     it('should return caption, page title and heading with PRN text', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         recipients: stubRecipients,
         decemberWasteControl: noDecemberControl
@@ -142,8 +150,7 @@ describe('#buildCreatePrnViewData', () => {
 
     it('should return material with display name', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         recipients: stubRecipients,
         decemberWasteControl: noDecemberControl
@@ -155,8 +162,7 @@ describe('#buildCreatePrnViewData', () => {
 
     it('should return form labels with PRN text', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         recipients: stubRecipients,
         decemberWasteControl: noDecemberControl
@@ -169,24 +175,22 @@ describe('#buildCreatePrnViewData', () => {
       expect(result.help.intro).toContain('PRNs can only be issued')
     })
 
-    it('should return backUrl from organisationId and registrationId', () => {
+    it('should return backUrl to the registration page for the year', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         recipients: stubRecipients,
         decemberWasteControl: noDecemberControl
       })
 
       expect(result.backUrl).toBe(
-        '/organisations/org-123/registrations/reg-001'
+        '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026'
       )
     })
 
     it('should include recipient options with placeholder', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         recipients: stubRecipients,
         decemberWasteControl: noDecemberControl
@@ -207,8 +211,7 @@ describe('#buildCreatePrnViewData', () => {
   describe('for exporter (PERN)', () => {
     it('should return caption, page title and heading with PERN text', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
+        keys: exporterKeys,
         registration: exporterRegistration,
         recipients: stubRecipients,
         decemberWasteControl: noDecemberControl
@@ -221,8 +224,7 @@ describe('#buildCreatePrnViewData', () => {
 
     it('should return material with display name for non-glass', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
+        keys: exporterKeys,
         registration: exporterRegistration,
         recipients: stubRecipients,
         decemberWasteControl: noDecemberControl
@@ -234,8 +236,7 @@ describe('#buildCreatePrnViewData', () => {
 
     it('should return form labels with PERN text', () => {
       const result = buildCreatePrnViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
+        keys: exporterKeys,
         registration: exporterRegistration,
         recipients: stubRecipients,
         decemberWasteControl: noDecemberControl
@@ -257,8 +258,7 @@ describe('#buildCreatePrnViewData', () => {
       'should detect PERN=$expected for wasteProcessingType=$type',
       ({ type, expected }) => {
         const result = buildCreatePrnViewData(createMockRequest(), {
-          organisationId: 'org-123',
-          registrationId: 'reg-001',
+          keys: reprocessorKeys,
           registration: {
             ...reprocessorRegistration,
             wasteProcessingType: type

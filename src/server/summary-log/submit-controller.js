@@ -3,7 +3,10 @@ import { sessionNames } from '#server/common/constants/session-names.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { registrationIdPath } from '#server/reports/helpers/report-paths.js'
+import {
+  organisationPath,
+  registrationPath
+} from '#server/reports/helpers/report-paths.js'
 
 const UPLOAD_CONFLICT_VIEW = 'summary-log/upload-conflict'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
@@ -16,9 +19,9 @@ export const submitSummaryLogController = {
    */
   handler: async (request, h) => {
     const localise = request.t
-    const { organisationId, registrationId, summaryLogId } = request.params
+    const { summaryLogId, ...keys } = request.params
 
-    const redirectUrl = `${registrationIdPath({ organisationId, registrationId })}/summary-logs/${summaryLogId}`
+    const redirectUrl = `${registrationPath(keys)}/summary-logs/${summaryLogId}`
 
     /** @type {SummaryLogsSession | null} */
     const storedSession = request.yar.get(sessionNames.summaryLogs)
@@ -32,8 +35,7 @@ export const submitSummaryLogController = {
 
     try {
       const responseData = await submitSummaryLog(
-        organisationId,
-        registrationId,
+        keys,
         summaryLogId,
         session.backendToken
       )
@@ -49,7 +51,7 @@ export const submitSummaryLogController = {
       await metrics.journey.end(
         request,
         JOURNEY.uploadSummaryLog,
-        registrationId
+        keys.registrationNumber
       )
 
       return h.redirect(redirectUrl)
@@ -57,7 +59,7 @@ export const submitSummaryLogController = {
       if (err.output?.statusCode === statusCodes.conflict) {
         return h.view(UPLOAD_CONFLICT_VIEW, {
           pageTitle: localise(PAGE_TITLE_KEY),
-          organisationId
+          organisationPath: organisationPath(keys)
         })
       }
 

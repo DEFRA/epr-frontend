@@ -599,7 +599,7 @@ describe('#detailReportsController', () => {
       expect(link).not.toBeNull()
       expect(link?.textContent).toContain('Upload new summary log')
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/summary-logs/upload'
+        '/organisations/500001/registrations/R25SR500030912PA/summary-logs/upload'
       )
     })
 
