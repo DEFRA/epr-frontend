@@ -46,14 +46,14 @@ const DOWNLOADS = [
     url: paths.regulators.marketInsightsWorkbook,
     query: '',
     disposition:
-      'attachment; filename="market-insights-2026-monthly-8-2026-09-18-090000.xlsx"'
+      'attachment; filename="market-insights-2026-monthly-3-2026-04-10-090000.xlsx"'
   },
   {
     download: 'unredacted workbook',
     url: paths.regulators.marketInsightsUnredactedWorkbook,
     query: '?unredacted=true',
     disposition:
-      'attachment; filename="market-insights-2026-monthly-8-unredacted-2026-09-18-090000.xlsx"'
+      'attachment; filename="market-insights-2026-monthly-3-unredacted-2026-04-10-090000.xlsx"'
   }
 ]
 

@@ -16,7 +16,7 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
  */
 
 const disposition =
-  'attachment; filename="market-insights-2026-monthly-8-2026-09-18-090000.zip"'
+  'attachment; filename="market-insights-2026-monthly-3-2026-04-10-090000.zip"'
 
 const zip = 'zip-bytes'
 
