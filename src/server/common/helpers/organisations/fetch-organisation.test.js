@@ -77,4 +77,20 @@ describe(fetchOrganisation, () => {
 
     expect(authorization).toBe('Bearer test-id-token')
   })
+
+  test('keeps the organisation number inside its own path segment', async ({
+    msw
+  }) => {
+    let pathname
+    msw.use(
+      http.get(`${backendUrl}/*`, ({ request }) => {
+        pathname = new URL(request.url).pathname
+        return HttpResponse.json(organisation)
+      })
+    )
+
+    await fetchOrganisation(organisationNumber('../admin'), 'test-id-token')
+
+    expect(pathname).toBe('/organisations/..%2Fadmin')
+  })
 })
