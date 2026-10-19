@@ -41,6 +41,14 @@ describe(routeKeyForm, () => {
     ).toStrictEqual({ form: 'naturalKeys', segments: accreditationSegments })
   })
 
+  it('reads a PRN step route by its three record keys, not the note id', () => {
+    expect(
+      routeKeyForm(
+        '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/packaging-recycling-notes/{prnId}/view'
+      )
+    ).toStrictEqual({ form: 'naturalKeys', segments: accreditationSegments })
+  })
+
   it('reads a route that names only the organisation', () => {
     expect(routeKeyForm('/organisations/{organisationId}')).toStrictEqual({
       form: 'ids',

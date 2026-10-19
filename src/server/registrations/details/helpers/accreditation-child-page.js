@@ -59,7 +59,7 @@ export const toRegistrationTrail = ({
  *   localiseUrl: (path: string) => string,
  *   organisationName: string,
  *   registrationNumber?: string | null,
- *   accreditationNumber?: string | null,
+ *   accreditationNumber: string,
  *   paths: RecordPaths & { accreditation: string }
  * }} params
  * @returns {AccreditationChildPage}
@@ -92,7 +92,5 @@ export const toAccreditationChildPage = ({
     accreditationNumber
   ]),
   heading,
-  pageTitle: accreditationNumber
-    ? `${accreditationNumber}: ${heading}`
-    : heading
+  pageTitle: `${accreditationNumber}: ${heading}`
 })

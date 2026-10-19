@@ -352,13 +352,7 @@ export const controller = {
         backendToken,
         logger: request.logger
       }),
-      showsDecemberBalance({
-        organisationId: ids.organisationId,
-        registrationId: ids.registrationId,
-        accreditationId: ids.accreditationId,
-        backendToken,
-        logger: request.logger
-      })
+      showsDecemberBalance({ keys, backendToken, logger: request.logger })
     ])
 
     const { windowStart, windowEnd, baseUrl } = config.get(

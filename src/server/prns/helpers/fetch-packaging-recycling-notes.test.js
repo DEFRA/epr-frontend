@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
 
+import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
 import { test } from '#vite/fixtures/server.js'
 
 import { fetchPackagingRecyclingNotes } from './fetch-packaging-recycling-notes.js'
@@ -21,87 +22,73 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 const backendUrl = config.get('eprBackendUrl')
 
 describe(fetchPackagingRecyclingNotes, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-789'
+  const keys = {
+    organisationNumber: '500123',
+    registrationNumber: 'R26EN0000000001PL',
+    year: '2026'
+  }
   const backendToken = 'test-id-token'
+  const notesUrl = `${backendUrl}/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes`
 
-  test('returns packaging recycling notes when backend responds successfully', async ({
-    msw
-  }) => {
-    const mockPrnData = [
-      {
-        id: 'prn-001',
-        issuedToOrganisation: 'Acme Ltd',
-        tonnage: 100,
-        material: 'plastic',
-        status: 'awaiting_authorisation',
-        createdAt: '2026-01-15T10:00:00.000Z'
-      }
-    ]
-
+  test('returns the accreditation notes in the page shape', async ({ msw }) => {
     msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes`,
-        () => HttpResponse.json(mockPrnData)
+      http.get(notesUrl, () =>
+        HttpResponse.json({
+          items: [
+            buildPrnResource({
+              id: 'prn-001',
+              status: { current: 'awaiting_authorisation', timeline: [] }
+            })
+          ]
+        })
       )
     )
 
-    const result = await fetchPackagingRecyclingNotes(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
-    )
+    const result = await fetchPackagingRecyclingNotes(keys, backendToken)
 
-    expect(result).toStrictEqual(mockPrnData)
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      id: 'prn-001',
+      status: 'awaiting_authorisation',
+      material: 'plastic',
+      wasteProcessingType: 'reprocessor'
+    })
   })
 
-  test('calls backend with correct path including organisation and registration IDs', async ({
-    msw
-  }) => {
-    let capturedUrl
+  test('lists the notes in the order they were raised', async ({ msw }) => {
     msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes`,
-        ({ request }) => {
-          capturedUrl = request.url
-          return HttpResponse.json([])
-        }
+      http.get(notesUrl, () =>
+        HttpResponse.json({
+          items: [
+            buildPrnResource({
+              id: 'newer',
+              createdAt: '2026-03-01T00:00:00.000Z'
+            }),
+            buildPrnResource({
+              id: 'older',
+              createdAt: '2026-02-01T00:00:00.000Z'
+            })
+          ]
+        })
       )
     )
 
-    await fetchPackagingRecyclingNotes(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
-    )
+    const result = await fetchPackagingRecyclingNotes(keys, backendToken)
 
-    expect(capturedUrl).toMatch(
-      /\/v1\/organisations\/org-123\/registrations\/reg-456\/accreditations\/acc-789\/packaging-recycling-notes$/
-    )
+    expect(result.map(({ id }) => id)).toStrictEqual(['older', 'newer'])
   })
 
   test('includes Authorization and tracing headers', async ({ msw }) => {
     /** @type {Request | undefined} */
     let capturedRequest
     msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes`,
-        ({ request }) => {
-          capturedRequest = request
-          return HttpResponse.json([])
-        }
-      )
+      http.get(notesUrl, ({ request }) => {
+        capturedRequest = request
+        return HttpResponse.json({ items: [] })
+      })
     )
 
-    await fetchPackagingRecyclingNotes(
-      organisationId,
-      registrationId,
-      accreditationId,
-      backendToken
-    )
+    await fetchPackagingRecyclingNotes(keys, backendToken)
 
     const request = /** @type {Request} */ (capturedRequest)
 
@@ -110,33 +97,10 @@ describe(fetchPackagingRecyclingNotes, () => {
     expect(request.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
   })
 
-  test('encodes URL path parameters with special characters', async ({
-    msw
-  }) => {
-    let capturedUrl
-    msw.use(
-      http.get(/.*packaging-recycling-notes$/, ({ request }) => {
-        capturedUrl = request.url
-        return HttpResponse.json([])
-      })
-    )
-
-    await fetchPackagingRecyclingNotes(
-      'org/123',
-      'reg&456',
-      'acc#789',
-      backendToken
-    )
-
-    expect(capturedUrl).toContain(
-      'organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789'
-    )
-  })
-
   test('throws Boom error when backend returns 500', async ({ msw }) => {
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes`,
+        notesUrl,
         () =>
           new HttpResponse(null, {
             status: 500,
@@ -146,12 +110,7 @@ describe(fetchPackagingRecyclingNotes, () => {
     )
 
     await expect(
-      fetchPackagingRecyclingNotes(
-        organisationId,
-        registrationId,
-        accreditationId,
-        backendToken
-      )
+      fetchPackagingRecyclingNotes(keys, backendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }
@@ -161,18 +120,13 @@ describe(fetchPackagingRecyclingNotes, () => {
   test('throws Boom error when backend returns 404', async ({ msw }) => {
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes`,
+        notesUrl,
         () => new HttpResponse(null, { status: 404, statusText: 'Not Found' })
       )
     )
 
     await expect(
-      fetchPackagingRecyclingNotes(
-        organisationId,
-        registrationId,
-        accreditationId,
-        backendToken
-      )
+      fetchPackagingRecyclingNotes(keys, backendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }

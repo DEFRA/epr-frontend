@@ -1,12 +1,5 @@
-import { backend, path } from '#server/common/helpers/backend-client.js'
-
-/**
- * @typedef {object} IssuedToOrganisation
- * @property {string} id - The recipient organisation ID
- * @property {string} name - The recipient organisation name
- * @property {string | null} [tradingName] - The recipient organisation trading name
- * @property {string} [registrationType] - Producer/compliance scheme classification
- */
+import { backend } from '#server/common/helpers/backend-client.js'
+import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
 
 /**
  * @typedef {object} CreatePrnPayload
@@ -17,38 +10,22 @@ import { backend, path } from '#server/common/helpers/backend-client.js'
  */
 
 /**
- * @typedef {object} CreatePrnResponse
- * @property {string} id - The created PRN ID
- * @property {string|null} prnNumber - The PRN number (assigned when issued)
- * @property {number} tonnage - Tonnage amount
- * @property {string} material - Material type
- * @property {IssuedToOrganisation} issuedToOrganisation - Recipient organisation
- * @property {string} status - Current PRN status
- * @property {string} createdAt - Creation timestamp
- * @property {string} processToBeUsed - The recycling process code
- * @property {boolean} isDecemberWaste - Whether this is December waste
- * @property {string} wasteProcessingType - Processing type ('reprocessor' or 'exporter')
- */
-
-/**
  * Creates a new PRN/PERN via the backend API
- * @param {string} organisationId - The issuing organisation ID
- * @param {string} registrationId - The registration ID
- * @param {string} accreditationId - The accreditation ID
+ * @param {AccreditationKeys} keys
  * @param {CreatePrnPayload} payload - PRN creation data
  * @param {string} backendToken - Bearer token for the backend
- * @returns {Promise<CreatePrnResponse>}
+ * @returns {Promise<PackagingRecyclingNote>}
  */
-const createPrn = (
-  organisationId,
-  registrationId,
-  accreditationId,
-  payload,
-  backendToken
-) =>
-  backend(backendToken).post(
-    path`/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`,
-    payload
+const createPrn = async (keys, payload, backendToken) =>
+  toPackagingRecyclingNote(
+    /** @type {PrnResource} */ (
+      await backend(backendToken).post(prnsPath(keys), payload)
+    )
   )
 
 export { createPrn }
+
+/**
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { IssuedToOrganisation, PackagingRecyclingNote, PrnResource } from './prn-resource.js'
+ */

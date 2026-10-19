@@ -1,10 +1,11 @@
 /**
- * @import { PackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-note.js'
- * @import { PackagingRecyclingNote as PackagingRecyclingNoteListItem } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
- * @import { CreatePrnResponse } from '#server/prns/helpers/create-prn.js'
- * @import { UpdatePrnStatusResponse } from '#server/prns/helpers/update-prn-status.js'
- * @import { IssuedToOrganisation } from '#server/prns/helpers/fetch-packaging-recycling-note.js'
+ * @import { IssuedToOrganisation, PackagingRecyclingNote, PrnResource } from '#server/prns/helpers/prn-resource.js'
+ * @import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
+ */
+
+/**
+ * @typedef {Awaited<ReturnType<typeof getRequiredRegistrationWithAccreditationByNumber>>} RegistrationWithLiveAccreditation
  */
 
 /**
@@ -20,28 +21,28 @@ export const asPackagingRecyclingNote = (data) =>
  * Casts an array of partial mock objects to the `PackagingRecyclingNote[]` shape
  * that `fetchPackagingRecyclingNotes` resolves.
  * @param {unknown} data
- * @returns {PackagingRecyclingNoteListItem[]}
+ * @returns {PackagingRecyclingNote[]}
  */
 export const asPackagingRecyclingNotes = (data) =>
-  /** @type {PackagingRecyclingNoteListItem[]} */ (data)
+  /** @type {PackagingRecyclingNote[]} */ (data)
 
 /**
- * Casts a partial mock object to the `CreatePrnResponse` shape that `createPrn`
- * resolves.
+ * Casts a partial mock object to the `PackagingRecyclingNote` shape that
+ * `createPrn` resolves.
  * @param {unknown} data
- * @returns {CreatePrnResponse}
+ * @returns {PackagingRecyclingNote}
  */
 export const asCreatePrnResponse = (data) =>
-  /** @type {CreatePrnResponse} */ (data)
+  /** @type {PackagingRecyclingNote} */ (data)
 
 /**
- * Casts a partial mock object to the `UpdatePrnStatusResponse` shape that
+ * Casts a partial mock object to the `PackagingRecyclingNote` shape that
  * `updatePrnStatus` resolves.
  * @param {unknown} data
- * @returns {UpdatePrnStatusResponse}
+ * @returns {PackagingRecyclingNote}
  */
 export const asUpdatePrnStatusResponse = (data) =>
-  /** @type {UpdatePrnStatusResponse} */ (data)
+  /** @type {PackagingRecyclingNote} */ (data)
 
 /**
  * Casts a partial mock object to the `IssuedToOrganisation` shape used on PRN
@@ -53,8 +54,53 @@ export const asIssuedToOrganisation = (data) =>
   /** @type {IssuedToOrganisation} */ (data)
 
 /**
- * Casts a partial mock object to the `WasteBalance` shape that `getWasteBalance`
- * resolves.
+ * Casts a partial mock object to what
+ * `getRequiredRegistrationWithAccreditationByNumber` resolves.
+ * @param {unknown} data
+ * @returns {RegistrationWithLiveAccreditation}
+ */
+export const asRegistrationWithLiveAccreditation = (data) =>
+  /** @type {RegistrationWithLiveAccreditation} */ (data)
+
+/**
+ * A draft PRN as the backend serves it.
+ * @param {Partial<PrnResource>} [overrides]
+ * @returns {PrnResource}
+ */
+export const buildPrnResource = (overrides = {}) => ({
+  id: 'prn-789',
+  status: {
+    current: 'draft',
+    timeline: [
+      {
+        status: 'draft',
+        at: '2026-01-15T10:00:00.000Z',
+        by: { name: 'Creator User' }
+      }
+    ]
+  },
+  issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
+  issuer: {
+    registration: {
+      accreditation: {
+        accreditationNumber: 'ACC-001',
+        accreditationYear: 2026,
+        wasteProcessingType: 'reprocessor',
+        material: 'plastic'
+      }
+    }
+  },
+  tonnage: 100,
+  processToBeUsed: 'R3',
+  isDecemberWaste: false,
+  obligationYear: 2026,
+  createdAt: '2026-01-15T10:00:00.000Z',
+  ...overrides
+})
+
+/**
+ * Casts a partial mock object to the `WasteBalance` shape that
+ * `fetchPrnWasteBalance` resolves.
  * @param {unknown} data
  * @returns {WasteBalance}
  */
