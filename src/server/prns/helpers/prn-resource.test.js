@@ -31,6 +31,7 @@ describe(toPackagingRecyclingNote, () => {
       wasteProcessingType: 'reprocessor',
       processToBeUsed: 'R3',
       accreditationYear: 2026,
+      obligationYear: 2026,
       issuedAt: null,
       issuedBy: null
     })

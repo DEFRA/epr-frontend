@@ -124,6 +124,7 @@ describe(fetchAccreditationDetails, () => {
       wasteProcessingType: 'reprocessor',
       processToBeUsed: '',
       accreditationYear: 2026,
+      obligationYear: 2026,
       issuedAt: '2026-02-15T15:09:00.000Z',
       issuedBy: { name: 'Ada Lovelace' }
     }
