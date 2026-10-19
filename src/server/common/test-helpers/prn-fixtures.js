@@ -99,8 +99,8 @@ export const buildPrnResource = (overrides = {}) => ({
 })
 
 /**
- * Casts a partial mock object to the `WasteBalance` shape that `getWasteBalance`
- * resolves.
+ * Casts a partial mock object to the `WasteBalance` shape that
+ * `fetchPrnWasteBalance` resolves.
  * @param {unknown} data
  * @returns {WasteBalance}
  */
