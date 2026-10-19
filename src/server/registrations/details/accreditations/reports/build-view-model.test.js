@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { buildViewModel } from './build-view-model.js'
 
 /**
- * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -58,7 +58,7 @@ const anOrganisation = (overrides) => ({
   ...overrides
 })
 
-/** @type {AccreditationView} */
+/** @type {Accreditation} */
 const accreditation = {
   accreditationNumber: 'A26ER5001180114PL',
   status: {

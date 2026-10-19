@@ -2,12 +2,12 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
-import { isAccreditationViewActive } from './accreditation-helpers.js'
+import { isAccreditationActive } from './accreditation-helpers.js'
 import { fetchRegistration } from './fetch-registration.js'
 
 /**
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
- * @import { AccreditationView, OrganisationView, RegistrationView } from './organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
 // Fixed until pages without a year in their URL become year-configured.
@@ -18,7 +18,7 @@ export const ACCREDITATION_YEAR = '2026'
  * @typedef {{
  *   organisation: OrganisationView,
  *   registration: RegistrationView,
- *   accreditation?: AccreditationView
+ *   accreditation?: Accreditation
  * }} RegistrationWithAccreditation
  */
 
@@ -41,7 +41,7 @@ export const fetchRegistrationWithAccreditation = async (
   return {
     organisation,
     registration,
-    accreditation: isAccreditationViewActive(accreditation)
+    accreditation: isAccreditationActive(accreditation)
       ? accreditation
       : undefined
   }
@@ -63,7 +63,7 @@ export const fetchRequiredAccreditation = async (
   })
   const accreditation = ownAccreditation(registration, year)
 
-  if (!isAccreditationViewActive(accreditation)) {
+  if (!isAccreditationActive(accreditation)) {
     throw notAccredited(keys.registrationNumber, year)
   }
 

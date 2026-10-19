@@ -1,11 +1,11 @@
 /**
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
  */
 
 /**
- * @param {Partial<AccreditationView>} [overrides]
- * @returns {AccreditationView}
+ * @param {Partial<Accreditation>} [overrides]
+ * @returns {Accreditation}
  */
 export const buildAccreditationView = (overrides = {}) => ({
   accreditationNumber: 'A26EN0000000001PL',
@@ -53,7 +53,7 @@ export const buildOrganisationView = (overrides = {}) => ({
  * registration, with its live accreditation when it has one.
  * @param {{
  *   registration?: RegistrationView,
- *   accreditation?: AccreditationView,
+ *   accreditation?: Accreditation,
  *   organisation?: Partial<OrganisationView>,
  *   registrationNumber?: string
  * }} [parts]

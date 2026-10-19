@@ -23,7 +23,7 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 /**
  * @import { SetupServer } from 'msw/node'
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -61,7 +61,7 @@ const regulatorWithoutLedgerScope = buildMockAuth({
 /**
  * An accreditation approved on `approvedOn` and never cancelled.
  * @param {string} approvedOn
- * @returns {AccreditationView}
+ * @returns {Accreditation}
  */
 const anAccreditation = (approvedOn) => ({
   accreditationNumber: 'A26ER5001180114PL',
@@ -115,7 +115,7 @@ const approvedSinceYear = {
 
 /**
  * @param {{
- *   accreditations?: Record<string, AccreditationView>,
+ *   accreditations?: Record<string, Accreditation>,
  *   status?: RegistrationView['status']
  * }} [overrides]
  * @returns {OrganisationView}
@@ -145,7 +145,7 @@ const anOrganisation = ({
  * Answers the read model, the calendar and the year's ledger by number.
  * @param {SetupServer} msw
  * @param {{
- *   accreditations?: Record<string, AccreditationView>,
+ *   accreditations?: Record<string, Accreditation>,
  *   status?: RegistrationView['status'],
  *   cadence?: CadenceValue,
  *   reportingPeriods?: ReportingPeriod[],

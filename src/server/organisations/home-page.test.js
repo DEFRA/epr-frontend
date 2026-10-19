@@ -20,7 +20,7 @@ import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 /** @import { DOMWindow } from 'jsdom' */
-/** @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
+/** @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
 
 vi.mock(import('#server/common/helpers/organisations/fetch-organisation.js'))
 vi.mock(
@@ -86,7 +86,7 @@ const organisationOf = (overrides = {}) => ({
   ...overrides
 })
 
-/** @type {AccreditationView} */
+/** @type {Accreditation} */
 const approved2026 = {
   accreditationNumber: 'A26ER1',
   status: { current: 'approved', timeline: {} }

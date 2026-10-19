@@ -3,7 +3,7 @@ import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packagi
 
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
@@ -12,7 +12,7 @@ import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packagi
  * @typedef {{
  *   organisation: OrganisationView,
  *   registration: RegistrationView,
- *   accreditation: AccreditationView,
+ *   accreditation: Accreditation,
  *   packagingRecyclingNotes: PackagingRecyclingNote[]
  * }} PrnListDetails
  */

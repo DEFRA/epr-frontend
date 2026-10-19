@@ -22,7 +22,7 @@
  * @typedef {{
  *   accreditationNumber: string,
  *   status: Status<AccreditationStatus>
- * }} AccreditationView
+ * }} Accreditation
  */
 
 /**
@@ -50,7 +50,7 @@
  *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },
- *   accreditations: Record<string, AccreditationView>,
+ *   accreditations: Record<string, Accreditation>,
  *   overseasSites?: OverseasSitesByOrsId
  * }} RegistrationViewCommon
  */

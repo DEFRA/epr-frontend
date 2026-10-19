@@ -20,7 +20,7 @@ const localise = createMockLocalise({
 })
 
 /**
- * @import { AccreditationView, OrganisationView, RegistrationView, ReprocessorRegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView, ReprocessorRegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
 const keys = {
@@ -69,8 +69,8 @@ const anExporter = {
 }
 
 /**
- * @param {Partial<AccreditationView>} overrides
- * @returns {AccreditationView}
+ * @param {Partial<Accreditation>} overrides
+ * @returns {Accreditation}
  */
 const anAccreditation = (overrides) => ({
   accreditationNumber: 'A26ER5001180114PL',
