@@ -2,8 +2,8 @@ import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { buildActionLinkHtml } from './helpers/build-action-link-html.js'
 import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
@@ -31,7 +31,7 @@ import { registrationPath, reportPath } from './helpers/report-paths.js'
  * template scan that hides write controls cannot see it and the decision has to
  * be made at this call site.
  * @param {{
- *   accreditation: Accreditation | undefined,
+ *   accreditation: AccreditationView | undefined,
  *   cadence: CadenceValue,
  *   canWrite: boolean,
  *   label: string,
@@ -39,7 +39,7 @@ import { registrationPath, reportPath } from './helpers/report-paths.js'
  *   localiseUrl: (url: string) => string,
  *   period: ReportingPeriod,
  *   periodPath: string,
- *   registration: Pick<Registration, 'wasteProcessingType'>
+ *   registration: Pick<RegistrationView, 'wasteProcessingType'>
  * }} options
  * @returns {TableCell}
  */
@@ -74,13 +74,13 @@ const buildActionCell = ({
 /**
  * Build table rows for the govukTable macro, partitioned by submission status.
  * @param {{
- *   accreditation: Accreditation | undefined,
+ *   accreditation: AccreditationView | undefined,
  *   cadence: CadenceValue,
  *   canWrite: boolean,
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
  *   keys: RegistrationKeys,
- *   registration: Registration,
+ *   registration: RegistrationView,
  *   reportingPeriods: ReportingPeriod[]
  * }} options
  * @returns {{ activeRows: TableRow[], submittedRows: TableRow[] }}
@@ -221,18 +221,17 @@ export const listController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { organisationData, registration, accreditation } =
-      await fetchRegistrationAndAccreditationByNumber(
-        organisationNumber,
-        registrationNumber,
-        session
+    const { organisation, registration, accreditation } =
+      await fetchRegistrationWithAccreditation(
+        { organisationNumber, registrationNumber },
+        session.backendToken
       )
     const { cadence, reportingPeriods } = await fetchReportingPeriodsByNumber(
       request.params,
       session.backendToken
     )
 
-    const material = getRegistrationMaterialDisplayName(registration)
+    const material = getMaterialDisplayName(registration.material)
 
     const { activeHeader, submittedHeader } = buildHeaders(localise)
 
@@ -262,8 +261,9 @@ export const listController = {
       backUrl: request.localiseUrl(registrationPath(request.params)),
       breadcrumbs: readsAsARegulator(session)
         ? buildReportBreadcrumbs({
-            organisation: organisationData,
+            organisation,
             registration,
+            keys: request.params,
             pageName: localise('reports:heading'),
             localise,
             localiseUrl: (url) => request.localiseUrl(url)
@@ -286,8 +286,7 @@ export const listController = {
 /**
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from './constants.js'
  * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
  * @import { RegistrationKeys } from './helpers/report-paths.js'

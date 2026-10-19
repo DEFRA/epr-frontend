@@ -7,19 +7,19 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 /** @import { HapiServer } from '#server/common/hapi-types.js' */
-/** @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js' */
+/** @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js' */
 
 vi.mock(import('./helpers/delete-report.js'))
 vi.mock(import('./helpers/fetch-report-detail.js'))
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 
 const { deleteReport } = await import('./helpers/delete-report.js')
 const { fetchReportDetail } = await import('./helpers/fetch-report-detail.js')
 const { ReportStaleError, STALE_REASON } = await import('./helpers/stale.js')
-const { fetchRegistrationAndAccreditationByNumber } =
-  await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+const { fetchRegistrationWithAccreditation } =
+  await import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 
 const mockAuth = buildMockAuth()
 
@@ -59,7 +59,7 @@ function refreshedCookie(setCookies) {
 describe('#reportStaleErrorController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       /** @type {RegistrationWithAccreditation} */ (
         /** @type {unknown} */ ({
           registration: { wasteProcessingType: 'reprocessor' },
@@ -275,7 +275,7 @@ describe('#reportStaleErrorController', () => {
       })
 
       it('names the note type as PERN for an exporter', async ({ server }) => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           /** @type {RegistrationWithAccreditation} */ (
             /** @type {unknown} */ ({
               registration: { wasteProcessingType: 'exporter' },

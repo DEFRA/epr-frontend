@@ -1,6 +1,6 @@
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
@@ -48,11 +48,12 @@ export const controller = {
    */
   async handler(request, h) {
     const keys = toAccreditationKeys(request.params)
-    const credentials = request.auth.credentials
-    const { backendToken } = credentials
+    const { backendToken } = request.auth.credentials
 
-    const { registration, accreditation } =
-      await getRequiredRegistrationWithAccreditationByNumber(keys, credentials)
+    const { registration, accreditation } = await fetchRequiredAccreditation(
+      keys,
+      backendToken
+    )
 
     const [{ organisations }, wasteBalance, decemberPrnEligibility] =
       await Promise.all([

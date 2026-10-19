@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { buildRegistrationView } from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 import { buildCreatePrnViewData } from './view-data.js'
@@ -6,7 +7,7 @@ import { buildCreatePrnViewData } from './view-data.js'
 const noDecemberControl = { mode: DECEMBER_WASTE_CONTROL.none }
 
 /**
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
 const createMockRequest = () =>
@@ -43,15 +44,14 @@ const stubRecipients = [
   { value: 'org-3', text: 'Green Waste Solutions' }
 ]
 
-const reprocessorRegistration = /** @type {Registration} */ ({
-  id: 'reg-001',
-  wasteProcessingType: 'reprocessor-input', // PRN
-  material: 'glass',
-  glassRecyclingProcess: ['glass_re_melt']
+const reprocessorRegistration = buildRegistrationView({
+  wasteProcessingType: 'reprocessor', // PRN
+  reprocessingType: 'input',
+  material: 'glass_re_melt',
+  site: { address: { fullAddress: 'Unit 4, Leeds' } }
 })
 
-const exporterRegistration = /** @type {Registration} */ ({
-  id: 'reg-002',
+const exporterRegistration = buildRegistrationView({
   wasteProcessingType: 'exporter', // PERN
   material: 'plastic'
 })
@@ -252,17 +252,16 @@ describe('#buildCreatePrnViewData', () => {
   describe('noteType detection', () => {
     it.for([
       { type: 'exporter', expected: true },
-      { type: 'reprocessor-input', expected: false },
-      { type: 'reprocessor-output', expected: false }
+      { type: 'reprocessor', expected: false }
     ])(
       'should detect PERN=$expected for wasteProcessingType=$type',
       ({ type, expected }) => {
         const result = buildCreatePrnViewData(createMockRequest(), {
           keys: reprocessorKeys,
-          registration: {
+          registration: /** @type {RegistrationView} */ ({
             ...reprocessorRegistration,
             wasteProcessingType: type
-          },
+          }),
           recipients: stubRecipients,
           decemberWasteControl: noDecemberControl
         })

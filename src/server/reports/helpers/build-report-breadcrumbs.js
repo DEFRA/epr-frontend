@@ -1,18 +1,18 @@
 import { paths } from '#server/paths.js'
-import { organisationName } from '#server/registrations/details/helpers/caption.js'
+import { organisationViewName } from '#server/registrations/details/helpers/caption.js'
 
 import { CADENCE } from '../constants.js'
 import {
-  accreditationIdPath,
-  organisationIdPath,
-  registrationIdPath
+  accreditationPath,
+  organisationPath,
+  registrationPath
 } from './report-paths.js'
 
 /**
  * @import { TFunction } from 'i18next'
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from '../constants.js'
+ * @import { RegistrationKeys } from './report-paths.js'
  */
 
 /**
@@ -75,8 +75,9 @@ const periodCrumb = ({
  * The trail a regulator walks to reach a report page. An operator gets a back
  * link instead and never calls this.
  * @param {{
- *   organisation: Organisation,
- *   registration: Registration,
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
+ *   keys: RegistrationKeys,
  *   pageName: string,
  *   year?: number | string,
  *   cadence?: CadenceValue,
@@ -88,18 +89,18 @@ const periodCrumb = ({
 export const buildReportBreadcrumbs = ({
   organisation,
   registration,
+  keys,
   pageName,
   year,
   cadence,
   localise,
   localiseUrl
 }) => {
-  const ids = {
-    organisationId: organisation.id,
-    registrationId: registration.id
-  }
-  const registrationPath = registrationIdPath(ids)
-  const { accreditationId } = registration
+  const registrationUrl = registrationPath(keys)
+  const listedOnAccreditation = Object.hasOwn(
+    registration.accreditations,
+    String(year)
+  )
 
   return [
     {
@@ -107,17 +108,17 @@ export const buildReportBreadcrumbs = ({
       href: localiseUrl(paths.regulators.home)
     },
     {
-      text: organisationName(organisation),
-      href: localiseUrl(organisationIdPath(ids))
+      text: organisationViewName(organisation),
+      href: localiseUrl(organisationPath(keys))
     },
     {
       text: localise('registrations:details:heading'),
-      href: localiseUrl(registrationPath)
+      href: localiseUrl(registrationUrl)
     },
     ...periodCrumb({
-      registrationPath,
-      accreditationPath: accreditationId
-        ? accreditationIdPath({ ...ids, accreditationId })
+      registrationPath: registrationUrl,
+      accreditationPath: listedOnAccreditation
+        ? accreditationPath({ ...keys, year: String(year) })
         : undefined,
       year,
       cadence,

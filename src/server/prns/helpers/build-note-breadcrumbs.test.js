@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
+import { buildOrganisationView } from '#server/common/test-helpers/organisation-view-fixtures.js'
+
 import { buildNoteBreadcrumbs } from './build-note-breadcrumbs.js'
 
 /**
  * @import { TFunction } from 'i18next'
- * @import { Organisation } from '#domain/organisations/model.js'
  */
 
 const localise = /** @type {TFunction} */ (
@@ -14,12 +15,10 @@ const localise = /** @type {TFunction} */ (
 /** @param {string} path */
 const localiseUrl = (path) => `/en${path}`
 
-const organisation = /** @type {Organisation} */ (
-  /** @type {unknown} */ ({
-    id: 'org-1',
-    companyDetails: { name: 'Acme Recycling Ltd', tradingName: 'Acme' }
-  })
-)
+const organisation = buildOrganisationView({
+  name: 'Acme Recycling Ltd',
+  tradingName: 'Acme'
+})
 
 const context = {
   organisation,
@@ -72,12 +71,7 @@ describe(buildNoteBreadcrumbs, () => {
   it('falls back to the registered name where there is no trading name', () => {
     const crumbs = buildNoteBreadcrumbs({
       ...context,
-      organisation: /** @type {Organisation} */ (
-        /** @type {unknown} */ ({
-          ...organisation,
-          companyDetails: { name: 'Acme Recycling Ltd' }
-        })
-      )
+      organisation: buildOrganisationView({ name: 'Acme Recycling Ltd' })
     })
 
     expect(crumbs[1].text).toBe('Acme Recycling Ltd')

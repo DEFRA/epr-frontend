@@ -1,9 +1,13 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  asRegistrationWithAccreditation,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { createReport } from '#server/reports/helpers/create-report.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
@@ -13,7 +17,7 @@ import Boom from '@hapi/boom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('#server/reports/helpers/create-report.js'))
@@ -28,48 +32,23 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const reprocessorRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'reprocessor',
-    registrationNumber: 'REG001234',
-    site: {
-      address: {
-        line1: 'North Road',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
-      }
-    }
-  },
-  accreditation: undefined
-})
-
-const registeredOnlyExporterRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: undefined
-})
-
-const accreditedExporterRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: {
-    id: 'acc-001',
-    accreditationNumber: 'ER992415095748M'
+const reprocessorView = buildRegistrationView({
+  wasteProcessingType: 'reprocessor',
+  reprocessingType: 'input',
+  site: {
+    address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
   }
 })
+
+const reprocessorRegistration = buildRegistrationWithAccreditation({
+  registration: { ...reprocessorView, accreditations: {} }
+})
+
+const registeredOnlyExporterRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
+})
+
+const accreditedExporterRegistration = buildRegistrationWithAccreditation()
 
 const reportDetail = {
   cadence: 'quarterly',
@@ -102,7 +81,7 @@ describe('#createReportController', () => {
 
   describe('successful report creation', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -168,7 +147,7 @@ describe('#createReportController', () => {
       '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1'
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedExporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -209,7 +188,7 @@ describe('#createReportController', () => {
     it('should return 404 when accredited registration uses quarterly cadence', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedExporterRegistration
       )
 
@@ -231,7 +210,7 @@ describe('#createReportController', () => {
     it('should not call createReport when cadence mismatches', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedExporterRegistration
       )
 
@@ -256,7 +235,7 @@ describe('#createReportController', () => {
       const monthlyUrl =
         '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1'
 
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
 
@@ -280,16 +259,13 @@ describe('#createReportController', () => {
     const monthlyDetailUrl =
       '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1'
 
-    const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
-      ...reprocessorRegistration,
-      accreditation: {
-        id: 'acc-001',
-        accreditationNumber: 'ER992415095748M'
-      }
-    })
+    const accreditedReprocessorRegistration =
+      buildRegistrationWithAccreditation({
+        registration: reprocessorView
+      })
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedReprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -326,7 +302,7 @@ describe('#createReportController', () => {
 
   describe('for registered-only exporter', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -359,13 +335,15 @@ describe('#createReportController', () => {
 
   describe('for unknown wasteProcessingType (fallback branch)', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue({
-        ...registeredOnlyExporterRegistration,
-        registration: {
-          ...registeredOnlyExporterRegistration.registration,
-          wasteProcessingType: 'unknown'
-        }
-      })
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        asRegistrationWithAccreditation({
+          ...registeredOnlyExporterRegistration,
+          registration: {
+            ...registeredOnlyExporterRegistration.registration,
+            wasteProcessingType: 'unknown'
+          }
+        })
+      )
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse(reportDetail)
       )
@@ -396,7 +374,7 @@ describe('#createReportController', () => {
 
   describe('when backend returns 409 conflict', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -431,7 +409,7 @@ describe('#createReportController', () => {
 
   describe('when backend returns a non-409 error', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -461,7 +439,7 @@ describe('#createReportController', () => {
 
   describe('when backend returns report_data_incomplete 400', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -519,7 +497,7 @@ describe('#createReportController', () => {
 
   describe('journey events', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(createReport).mockResolvedValue({

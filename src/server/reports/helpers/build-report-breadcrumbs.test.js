@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
+import {
+  buildOrganisationView,
+  buildRegistrationView
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { CADENCE } from '../constants.js'
 import { buildReportBreadcrumbs } from './build-report-breadcrumbs.js'
 
 /**
  * @import { TFunction } from 'i18next'
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
  */
 
 const localise = /** @type {TFunction} */ (
@@ -18,20 +20,18 @@ const localise = /** @type {TFunction} */ (
 /** @param {string} path */
 const localiseUrl = (path) => `/en${path}`
 
-const organisation = /** @type {Organisation} */ (
-  /** @type {unknown} */ ({
-    id: 'org-1',
-    companyDetails: { name: 'Acme Recycling Ltd', tradingName: 'Acme' }
-  })
-)
-
-const registration = /** @type {Registration} */ (
-  /** @type {unknown} */ ({ id: 'reg-1', accreditationId: 'acc-1' })
-)
+const organisation = buildOrganisationView({
+  name: 'Acme Recycling Ltd',
+  tradingName: 'Acme'
+})
 
 const context = {
   organisation,
-  registration,
+  registration: buildRegistrationView(),
+  keys: {
+    organisationNumber: '500123',
+    registrationNumber: 'R26EN0000000001PL'
+  },
   pageName: 'Reports',
   localise,
   localiseUrl
@@ -52,19 +52,14 @@ describe(buildReportBreadcrumbs, () => {
 
     expect(organisationCrumb).toStrictEqual({
       text: 'Acme',
-      href: '/en/organisations/org-1'
+      href: '/en/organisations/500123'
     })
   })
 
   it('falls back to the registered name where there is no trading name', () => {
     const [, organisationCrumb] = buildReportBreadcrumbs({
       ...context,
-      organisation: /** @type {Organisation} */ (
-        /** @type {unknown} */ ({
-          ...organisation,
-          companyDetails: { name: 'Acme Recycling Ltd' }
-        })
-      )
+      organisation: buildOrganisationView({ name: 'Acme Recycling Ltd' })
     })
 
     expect(organisationCrumb.text).toBe('Acme Recycling Ltd')
@@ -75,7 +70,7 @@ describe(buildReportBreadcrumbs, () => {
 
     expect(registrationCrumb).toStrictEqual({
       text: 'registrations:details:heading',
-      href: '/en/organisations/org-1/registrations/reg-1'
+      href: '/en/organisations/500123/registrations/R26EN0000000001PL'
     })
   })
 
@@ -85,7 +80,7 @@ describe(buildReportBreadcrumbs, () => {
     expect(crumbs.at(-1)).toStrictEqual({ text: 'Reports' })
   })
 
-  it('hangs a monthly report off the accreditation that listed it', () => {
+  it('hangs a monthly report off the accreditation for its year', () => {
     const crumbs = buildReportBreadcrumbs({
       ...context,
       cadence: CADENCE.MONTHLY,
@@ -95,7 +90,7 @@ describe(buildReportBreadcrumbs, () => {
 
     expect(crumbs.at(-2)).toStrictEqual({
       text: 'registrations:details:accreditation:breadcrumb',
-      href: '/en/organisations/org-1/registrations/reg-1/accreditations/acc-1'
+      href: '/en/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026'
     })
   })
 
@@ -109,16 +104,14 @@ describe(buildReportBreadcrumbs, () => {
 
     expect(crumbs.at(-2)).toStrictEqual({
       text: 'registrations:details:registeredOnlyPeriod:breadcrumb:2026',
-      href: '/en/organisations/org-1/registrations/reg-1/registered-only-periods/2026'
+      href: '/en/organisations/500123/registrations/R26EN0000000001PL/registered-only-periods/2026'
     })
   })
 
-  it('stops at the registration for a monthly report with no accreditation', () => {
+  it('stops at the registration for a monthly report with no accreditation that year', () => {
     const crumbs = buildReportBreadcrumbs({
       ...context,
-      registration: /** @type {Registration} */ (
-        /** @type {unknown} */ ({ id: 'reg-1' })
-      ),
+      registration: buildRegistrationView({ accreditations: {} }),
       cadence: CADENCE.MONTHLY,
       year: 2026,
       pageName: 'Report for January 2026'
@@ -126,7 +119,7 @@ describe(buildReportBreadcrumbs, () => {
 
     expect(crumbs).toHaveLength(4)
     expect(crumbs.at(-2)?.href).toBe(
-      '/en/organisations/org-1/registrations/reg-1'
+      '/en/organisations/500123/registrations/R26EN0000000001PL'
     )
   })
 

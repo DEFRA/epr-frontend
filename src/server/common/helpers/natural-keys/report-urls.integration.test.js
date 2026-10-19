@@ -52,6 +52,30 @@ const organisation = {
   ]
 }
 
+const organisationView = {
+  organisationNumber: 500118,
+  name: 'Acme Recycling Ltd',
+  registrations: {
+    [registrationNumber]: {
+      status: { current: 'approved', timeline: {} },
+      validFrom: '2026-01-01',
+      material: 'plastic',
+      submittedToRegulator: { code: 'ea' },
+      wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
+      site: {
+        address: { line1: 'North Road', town: 'Leeds', postcode: 'LS1 1AA' }
+      },
+      accreditations: {
+        2026: {
+          accreditationNumber: 'A26ER5001180114PL',
+          status: { current: 'approved', timeline: {} }
+        }
+      }
+    }
+  }
+}
+
 const byIds = `/organisations/${organisationId}/registrations/${registrationId}`
 const byNumbers = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
 const quarterlyPage = `${byNumbers}/reports/2026/quarterly/1/submissions/1`
@@ -96,6 +120,9 @@ const backendHolds = (msw) =>
   msw.use(
     http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
       HttpResponse.json(organisation)
+    ),
+    http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
+      HttpResponse.json(organisationView)
     ),
     http.get(`${backendUrl}${quarterlyPage}`, () =>
       HttpResponse.json(submittedReport)
@@ -221,11 +248,17 @@ describe('old report page URLs', () => {
     )
   })
 
-  it("is 403 for another organisation's report, without fetching it", async ({
+  it("is 403 for another organisation's report the backend refuses", async ({
     server,
     msw
   }) => {
     backendHolds(msw)
+    msw.use(
+      http.get(
+        `${backendUrl}/organisations/500999`,
+        () => new HttpResponse(null, { status: statusCodes.forbidden })
+      )
+    )
 
     const response = await server.inject({
       method: 'GET',

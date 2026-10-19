@@ -1,8 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
@@ -11,7 +14,7 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./update-report.js'))
@@ -47,23 +50,18 @@ const organisationNumber = '500001'
 const registrationNumber = 'R25SR500030912PA'
 
 describe.each(subtrees)('$name free tonnage page', (subtree) => {
-  const accreditedOperator = asRegistrationWithAccreditation({
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: subtree.registrationType,
-      registrationNumber: 'REG001234'
-    },
-    accreditation: {
-      id: 'acc-001',
-      accreditationNumber: 'ER992415095748M'
-    }
+  const operatorView = buildRegistrationView({
+    wasteProcessingType: /** @type {'exporter' | 'reprocessor'} */ (
+      subtree.registrationType
+    )
   })
 
-  const registeredOnlyOperator = asRegistrationWithAccreditation({
-    ...accreditedOperator,
-    accreditation: undefined
+  const accreditedOperator = buildRegistrationWithAccreditation({
+    registration: operatorView
+  })
+
+  const registeredOnlyOperator = buildRegistrationWithAccreditation({
+    registration: { ...operatorView, accreditations: {} }
   })
 
   const reportDetail = {
@@ -108,7 +106,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedOperator
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -228,7 +226,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
     it(`should return 404 for ${subtree.registeredOnlyDescription}`, async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyOperator
       )
 
@@ -292,7 +290,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedOperator
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(

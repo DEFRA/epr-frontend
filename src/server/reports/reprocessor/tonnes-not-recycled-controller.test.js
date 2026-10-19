@@ -1,8 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
@@ -11,7 +14,7 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('../helpers/update-report.js'))
@@ -25,23 +28,16 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const reprocessorRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'reprocessor',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: {
-    id: 'acc-001',
-    accreditationNumber: 'ER992415095748M'
-  }
+const reprocessorView = buildRegistrationView({
+  wasteProcessingType: 'reprocessor'
 })
 
-const registeredOnlyReprocessor = asRegistrationWithAccreditation({
-  ...reprocessorRegistration,
-  accreditation: undefined
+const reprocessorRegistration = buildRegistrationWithAccreditation({
+  registration: reprocessorView
+})
+
+const registeredOnlyReprocessor = buildRegistrationWithAccreditation({
+  registration: { ...reprocessorView, accreditations: {} }
 })
 
 const reportDetail = {
@@ -76,7 +72,7 @@ describe('#tonnesNotRecycledController', () => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -183,7 +179,7 @@ describe('#tonnesNotRecycledController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -254,7 +250,7 @@ describe('#tonnesNotRecycledController', () => {
       it('should redirect to supporting-information on continue', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           registeredOnlyReprocessor
         )
 

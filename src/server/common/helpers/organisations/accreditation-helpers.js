@@ -16,7 +16,7 @@ export const isAccreditationActive = (accreditation) =>
 /**
  * Returns true when the accreditation in the organisation view is live.
  * @param {AccreditationView | undefined} accreditation
- * @returns {boolean}
+ * @returns {accreditation is AccreditationView}
  */
 export const isAccreditationViewActive = (accreditation) =>
   !!accreditation &&

@@ -1,5 +1,10 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
@@ -8,47 +13,32 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 /**
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
  * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
  */
 
 const mockAuth = buildMockAuth()
 
-const mockRegistration = /** @type {RegistrationWithAccreditation} */ (
-  /** @type {unknown} */ ({
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234'
-    },
-    accreditation: undefined
-  })
-)
+const mockRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
+})
 
-const accreditedReprocessorWithSite =
-  /** @type {RegistrationWithAccreditation} */ (
-    /** @type {unknown} */ ({
-      organisationData: { id: 'org-123' },
-      registration: {
-        id: 'reg-001',
-        material: 'plastic',
-        wasteProcessingType: 'reprocessor',
-        registrationNumber: 'REG001234',
-        site: { address: { line1: 'North Road' } }
-      },
-      accreditation: {
-        id: 'acc-001',
-        accreditationNumber: 'ER992415095748M'
-      }
-    })
-  )
+const accreditedReprocessorWithSite = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: {
+      address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
+    },
+    accreditations: {
+      2026: buildAccreditationView({ accreditationNumber: 'ER992415095748M' })
+    }
+  })
+})
 
 const mockReportDetail = /** @type {ReportDetailResponse} */ (
   /** @type {unknown} */ ({
@@ -90,7 +80,7 @@ const listUrl = `/organisations/${organisationNumber}/registrations/${registrati
 describe('#createdController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       mockRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(mockReportDetail)
@@ -168,7 +158,7 @@ describe('#createdController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain('Registration:')
-      expect(body.textContent).toContain('REG001234')
+      expect(body.textContent).toContain(registrationNumber)
     })
 
     it('should display material', async ({ server }) => {
@@ -338,7 +328,7 @@ describe('#createdController', () => {
 
   describe('accredited reprocessor with a site', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedReprocessorWithSite
       )
     })

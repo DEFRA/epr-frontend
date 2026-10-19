@@ -7,7 +7,12 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  asRegistrationWithAccreditation,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
 import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { it } from '#vite/fixtures/server.js'
@@ -19,11 +24,10 @@ import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
  * @import { DOMWindow } from 'jsdom'
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-reporting-periods.js'))
 
@@ -59,82 +63,38 @@ const regulatorAuth = buildMockAuth({
   ...sessionIdentity(IDENTITIES.regulator)
 })
 
-const accreditedRegistration = /** @type {RegistrationWithAccreditation} */ (
-  /** @type {unknown} */ ({
-    organisationData: {
-      id: 'org-123',
-      companyDetails: { name: 'Acme Recycling Ltd' }
-    },
-    registration: {
-      id: 'reg-001',
-      material: 'glass',
-      glassRecyclingProcess: ['glass_re_melt'],
-      wasteProcessingType: 'reprocessor',
-      accreditationId: 'acc-001',
-      registrationNumber: 'REG001234',
-      site: {
-        address: {
-          line1: 'Manchester Glass Facility',
-          town: 'Manchester',
-          postcode: 'M1 1AA'
-        }
+const accreditedRegistration = buildRegistrationWithAccreditation({
+  organisation: { name: 'Acme Recycling Ltd' },
+  registration: buildRegistrationView({
+    material: 'glass_re_melt',
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: {
+      address: {
+        line1: 'Manchester Glass Facility',
+        town: 'Manchester',
+        postcode: 'M1 1AA'
       }
-    },
-    accreditation: {
-      id: 'acc-001',
-      status: 'approved'
     }
   })
-)
+})
 
-const accreditedExporter = /** @type {RegistrationWithAccreditation} */ (
-  /** @type {unknown} */ ({
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234'
-    },
-    accreditation: {
-      id: 'acc-002',
-      status: 'approved'
-    }
-  })
-)
+const accreditedExporter = buildRegistrationWithAccreditation()
 
-const registeredOnlyExporter = /** @type {RegistrationWithAccreditation} */ (
-  /** @type {unknown} */ ({
-    organisationData: { id: 'org-456' },
-    registration: {
-      id: 'reg-002',
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationNumber: 'REG002345'
-    },
-    accreditation: undefined
-  })
-)
+const registeredOnlyExporter = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
+})
 
-const registeredOnlyReprocessor = /** @type {RegistrationWithAccreditation} */ (
-  /** @type {unknown} */ ({
-    organisationData: { id: 'org-789' },
-    registration: {
-      id: 'reg-003',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor',
-      registrationNumber: 'REG003456',
-      site: {
-        address: {
-          line1: 'North Road',
-          town: 'Manchester',
-          postcode: 'M1 1AA'
-        }
-      }
+const registeredOnlyReprocessor = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: {
+      address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
     },
-    accreditation: undefined
+    accreditations: {}
   })
-)
+})
 
 const monthlyResponse = {
   cadence: CADENCE.MONTHLY,
@@ -389,7 +349,7 @@ describe('#listReportsController', () => {
 
   describe('for accredited operator (monthly periods)', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -567,7 +527,7 @@ describe('#listReportsController', () => {
 
   describe('for ended period with in_progress report', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -616,7 +576,7 @@ describe('#listReportsController', () => {
     it('should link Continue to prn-summary for accredited exporter', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedExporter
       )
 
@@ -657,7 +617,7 @@ describe('#listReportsController', () => {
 
   describe('for ended period with ready_to_submit report', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -725,7 +685,7 @@ describe('#listReportsController', () => {
 
   describe('for multiple ready_to_submit reports', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -755,7 +715,7 @@ describe('#listReportsController', () => {
 
   describe('for ended period with submitted report', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -848,7 +808,7 @@ describe('#listReportsController', () => {
 
   describe('for mixed-status periods', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -930,7 +890,7 @@ describe('#listReportsController', () => {
 
   describe('when only active periods exist', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -998,7 +958,7 @@ describe('#listReportsController', () => {
 
   describe('when only submitted periods exist', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -1051,7 +1011,7 @@ describe('#listReportsController', () => {
 
   describe('for registered-only exporter (quarterly)', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -1147,13 +1107,15 @@ describe('#listReportsController', () => {
     it('should default Continue link to supporting-information for unknown processing type', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue({
-        ...registeredOnlyExporter,
-        registration: {
-          ...registeredOnlyExporter.registration,
-          wasteProcessingType: 'unknown'
-        }
-      })
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        asRegistrationWithAccreditation({
+          ...registeredOnlyExporter,
+          registration: {
+            ...registeredOnlyExporter.registration,
+            wasteProcessingType: 'unknown'
+          }
+        })
+      )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
         cadence: CADENCE.QUARTERLY,
         reportingPeriods: [
@@ -1194,7 +1156,7 @@ describe('#listReportsController', () => {
 
   describe('for registered-only reprocessor (quarterly)', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyReprocessor
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -1229,7 +1191,7 @@ describe('#listReportsController', () => {
 
   describe('when no periods have data', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(emptyResponse)
@@ -1305,7 +1267,7 @@ describe('#listReportsController', () => {
 
   describe('error handling', () => {
     it('should return 404 when registration not found', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockRejectedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockRejectedValue(
         Boom.notFound('Registration not found')
       )
 
@@ -1360,7 +1322,7 @@ describe('#listReportsController', () => {
     }
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -1580,7 +1542,7 @@ describe('#listReportsController', () => {
     }
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -1632,7 +1594,7 @@ describe('#listReportsController', () => {
 
   describe('for a session holding no write scope', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
@@ -1712,7 +1674,7 @@ describe('#listReportsController', () => {
 
   describe('the route back', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(

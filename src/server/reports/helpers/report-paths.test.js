@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import { CADENCE } from '../constants.js'
 import {
-  accreditationIdPath,
   accreditationPath,
   organisationIdPath,
   organisationPath,
@@ -123,8 +122,7 @@ describe(summaryLogUploadPath, () => {
 
 const ids = {
   organisationId: 'org-1',
-  registrationId: 'reg-1',
-  accreditationId: 'acc-1'
+  registrationId: 'reg-1'
 }
 
 describe(organisationIdPath, () => {
@@ -146,24 +144,6 @@ describe(registrationIdPath, () => {
     expect(
       registrationIdPath({ organisationId: 'o&1', registrationId: 'r/1' })
     ).toBe('/organisations/o%261/registrations/r%2F1')
-  })
-})
-
-describe(accreditationIdPath, () => {
-  it('gives the accreditation page by id', () => {
-    expect(accreditationIdPath(ids)).toBe(
-      '/organisations/org-1/registrations/reg-1/accreditations/acc-1'
-    )
-  })
-
-  it('encodes every id', () => {
-    expect(
-      accreditationIdPath({
-        organisationId: 'o&1',
-        registrationId: 'r/1',
-        accreditationId: 'a?1'
-      })
-    ).toBe('/organisations/o%261/registrations/r%2F1/accreditations/a%3F1')
   })
 })
 

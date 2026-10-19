@@ -1,12 +1,15 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
-// Setup-only mock: fetchRegistrationAndAccreditationByNumber supplies the registration
+// Setup-only mock: fetchRegistrationWithAccreditation supplies the registration
 // the detail page needs. fetchReportDetail is deliberately NOT mocked — this
 // test drives the real fetch-report-detail -> fetch-report-backend client stack
 // against an MSW-stubbed backend, so the whole wire contract runs: a real 200
@@ -15,11 +18,11 @@ import { beforeEach, describe, expect, vi } from 'vitest'
 // The controller/render permutations are covered by the other suites; this is
 // the end-to-end contract anchor for the create-draft entry point.
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 
-const { fetchRegistrationAndAccreditationByNumber } =
-  await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+const { fetchRegistrationWithAccreditation } =
+  await import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 
 const backendUrl = config.get('eprBackendUrl')
 const mockAuth = buildMockAuth()
@@ -29,15 +32,8 @@ const registrationNumber = 'R25SR500030912PA'
 const periodUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 const backendPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 
-const exporterRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: undefined
+const exporterRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
 })
 
 const incompletePreview = {
@@ -103,7 +99,7 @@ async function createDraftAgainstIncompleteBackend(server, msw) {
 describe('report-data-incomplete (end to end via real backend client)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       exporterRegistration
     )
   })

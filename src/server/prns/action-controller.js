@@ -1,6 +1,6 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
-import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
+import { organisationViewName } from '#server/registrations/details/helpers/caption.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnCoreRows,
@@ -11,7 +11,7 @@ import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { fetchPrnContext } from './helpers/fetch-prn-context.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const actionController = {
@@ -21,14 +21,8 @@ export const actionController = {
    */
   async handler(request, h) {
     const { t: localise } = request
-    const {
-      organisationData,
-      registration,
-      accreditation,
-      prn,
-      basePath,
-      prnId
-    } = await fetchPrnContext(request)
+    const { organisation, registration, accreditation, prn, basePath, prnId } =
+      await fetchPrnContext(request)
 
     const recipientDisplayName = getIssuedToOrgDisplayName(
       prn.issuedToOrganisation
@@ -38,7 +32,7 @@ export const actionController = {
       accreditation,
       basePath,
       localise,
-      organisationData,
+      organisation,
       prn,
       prnId,
       recipientDisplayName,
@@ -57,14 +51,14 @@ export const actionController = {
 /**
  * Builds the complete view data for the action page
  * @param {{
- *   accreditation: RegistrationWithAccreditation['accreditation'],
+ *   accreditation: AccreditationView,
  *   basePath: string,
  *   localise: TFunction,
- *   organisationData: RegistrationWithAccreditation['organisationData'],
+ *   organisation: OrganisationView,
  *   prn: PackagingRecyclingNote,
  *   prnId: string,
  *   recipientDisplayName: string,
- *   registration: RegistrationWithAccreditation['registration'],
+ *   registration: RegistrationView,
  *   request: HapiRequest
  * }} params
  */
@@ -72,16 +66,15 @@ function buildActionViewData({
   accreditation,
   basePath,
   localise,
-  organisationData,
+  organisation,
   prn,
   prnId,
   recipientDisplayName,
   registration,
   request
 }) {
-  const { isExporter, noteType, noteTypeFull } =
-    getNoteTypeDisplayNames(registration)
-  const displayMaterial = getRegistrationMaterialDisplayName(registration)
+  const { noteType, noteTypeFull } = getNoteTypeDisplayNames(registration)
+  const displayMaterial = getMaterialDisplayName(registration.material)
   const isNotDraft = prn.status !== 'draft'
   const statusConfig = getStatusConfig(prn.status, localise)
 
@@ -92,15 +85,14 @@ function buildActionViewData({
     statusConfig,
     isNotDraft,
     recipientDisplayName,
-    organisationData
+    organisation
   })
 
   const accreditationRows = buildAccreditationRows({
     registration,
     accreditation,
     displayMaterial,
-    localise,
-    isExporter
+    localise
   })
 
   const viewData = {
@@ -198,7 +190,7 @@ function buildActionPrnDetailRows({
   statusConfig,
   isNotDraft,
   recipientDisplayName,
-  organisationData
+  organisation
 }) {
   const rows = [
     {
@@ -214,9 +206,7 @@ function buildActionPrnDetailRows({
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
-      issuerName: organisationData.companyDetails
-        ? getIssuingOrgDisplayName(organisationData.companyDetails)
-        : ''
+      issuerName: organisationViewName(organisation)
     })
   )
 
@@ -227,7 +217,7 @@ function buildActionPrnDetailRows({
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'
  */

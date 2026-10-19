@@ -8,7 +8,11 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -83,26 +87,22 @@ const packagingRecyclingNotes = [
   aNote({ status: 'discarded' })
 ]
 
+const reprocessor = buildRegistrationView({
+  wasteProcessingType: 'reprocessor',
+  reprocessingType: 'input',
+  site: { address: { fullAddress: 'Kirkby Industrial Estate' } }
+})
+
 /** @type {PrnListDetails} */
 const details = {
-  organisation: asOrganisation({
-    id: organisationId,
-    companyDetails: { name: 'Kirkby Plastics Ltd' }
+  ...buildRegistrationWithAccreditation({
+    organisation: { organisationNumber: 50002, name: 'Kirkby Plastics Ltd' },
+    registration: reprocessor,
+    accreditation: buildAccreditationView({
+      accreditationNumber: 'A26ER5001180114PL'
+    }),
+    registrationNumber: keys.registrationNumber
   }),
-  registration: /** @type {PrnListDetails['registration']} */ (
-    /** @type {unknown} */ ({
-      id: 'reg-001-glass-approved',
-      registrationNumber: 'R26ER5001180041PL',
-      wasteProcessingType: 'reprocessor'
-    })
-  ),
-  accreditation: /** @type {PrnListDetails['accreditation']} */ (
-    /** @type {unknown} */ ({
-      id: 'acc-001-glass-approved',
-      accreditationNumber: 'A26ER5001180114PL',
-      status: 'approved'
-    })
-  ),
   packagingRecyclingNotes
 }
 
@@ -234,7 +234,7 @@ describe('the regulator PRNs detailed view', () => {
     expect(
       documentOf(body).querySelector('h1 [class^="govuk-caption-"]')
         ?.textContent
-    ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL - A26ER5001180114PL')
+    ).toBe('Kirkby Plastics Ltd - REG001234 - A26ER5001180114PL')
   })
 
   it('reads the details by the numbers and year in the address', async ({
@@ -251,10 +251,7 @@ describe('the regulator PRNs detailed view', () => {
   it("names an exporter's notes PERNs", async ({ server }) => {
     vi.mocked(fetchPrnListDetails).mockResolvedValue({
       ...details,
-      registration: /** @type {PrnListDetails['registration']} */ ({
-        ...details.registration,
-        wasteProcessingType: 'exporter'
-      })
+      registration: buildRegistrationView()
     })
 
     const { body } = await visit(server, regulator)
@@ -310,18 +307,10 @@ describe('the regulator PRNs detailed view', () => {
   describe('the fork with the operator list', () => {
     beforeEach(({ msw }) => {
       const backendUrl = config.get('eprBackendUrl')
-      const accreditedIn2026 = {
-        ...organisationData,
-        accreditations: organisationData.accreditations.map((accreditation) =>
-          accreditation.id === 'acc-001-glass-approved'
-            ? { ...accreditation, validFrom: '2026-01-01' }
-            : accreditation
-        )
-      }
 
       msw.use(
-        http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
-          HttpResponse.json(accreditedIn2026)
+        http.get(`${backendUrl}${organisationPath}`, () =>
+          HttpResponse.json(details.organisation)
         ),
         http.get(`${backendUrl}${organisationPath}/waste-balances/2026`, () =>
           HttpResponse.json({})

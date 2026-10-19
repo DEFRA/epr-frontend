@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  asRegistrationWithAccreditation,
+  buildAccreditationView,
+  buildRegistrationView
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 
@@ -10,7 +14,7 @@ import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.j
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
@@ -25,17 +29,9 @@ const rejectingGuards = createPageGuards({
   reportType: 'exporter'
 })
 
-const registration = {
-  id: 'reg-001',
-  material: 'plastic',
-  wasteProcessingType: 'exporter',
-  registrationNumber: 'REG001234'
-}
+const registration = buildRegistrationView()
 
-const accreditation = {
-  id: 'acc-001',
-  accreditationNumber: 'ER992415095748M'
-}
+const accreditation = buildAccreditationView()
 
 const reportDetail = {
   version: 1,
@@ -78,7 +74,7 @@ describe('#fetchGuardedData', () => {
   })
 
   it('returns registration, accreditation, and report data when predicate matches', async () => {
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       asRegistrationWithAccreditation({
         registration,
         accreditation
@@ -96,7 +92,7 @@ describe('#fetchGuardedData', () => {
   })
 
   it('returns data when accreditation is absent (registered-only)', async () => {
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       asRegistrationWithAccreditation({
         registration,
         accreditation: undefined
@@ -113,7 +109,7 @@ describe('#fetchGuardedData', () => {
   })
 
   it('throws 404 when predicate rejects the registration', async () => {
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       asRegistrationWithAccreditation({
         registration,
         accreditation
@@ -131,7 +127,7 @@ describe('#fetchGuardedData', () => {
   })
 
   it('throws 404 when report does not exist', async () => {
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       asRegistrationWithAccreditation({
         registration,
         accreditation
@@ -149,7 +145,7 @@ describe('#fetchGuardedData', () => {
   })
 
   it('throws 404 when report is not in_progress', async () => {
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       asRegistrationWithAccreditation({
         registration,
         accreditation
@@ -173,7 +169,7 @@ describe('#fetchGuardedData', () => {
 describe('#buildViewData', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       asRegistrationWithAccreditation({
         registration,
         accreditation
@@ -222,7 +218,7 @@ describe('#buildViewData', () => {
   })
 
   it('throws 404 with accreditedOnly when accreditation is absent', async () => {
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       asRegistrationWithAccreditation({
         registration,
         accreditation: undefined
@@ -318,7 +314,7 @@ describe('#buildViewData', () => {
   })
 
   it('succeeds when registeredOnly is true and no accreditation', async () => {
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       asRegistrationWithAccreditation({
         registration,
         accreditation: undefined

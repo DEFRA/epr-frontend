@@ -1,20 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getRequiredRegistrationWithAnyAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAnyAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { buildRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
 
 import { fetchPrnListDetails } from './fetch-prn-list-details.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { NumberedAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
  * @import { PrnListDetails } from './fetch-prn-list-details.js'
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/prns/helpers/fetch-packaging-recycling-notes.js'))
 
@@ -27,28 +25,11 @@ describe(fetchPrnListDetails, () => {
   const backendToken = 'token'
   const credentials = buildMockAuth({ backendToken }).credentials
 
-  const organisation = /** @type {Organisation} */ (
-    /** @type {unknown} */ ({
-      id: 'org-123',
-      companyDetails: { name: 'Kirkby Plastics Ltd' }
+  const { organisation, registration, accreditation } =
+    buildRegistrationWithAccreditation({
+      organisation: { name: 'Kirkby Plastics Ltd' },
+      registrationNumber: keys.registrationNumber
     })
-  )
-
-  const registration = /** @type {Registration} */ (
-    /** @type {unknown} */ ({
-      id: 'reg-456',
-      registrationNumber: keys.registrationNumber,
-      wasteProcessingType: 'reprocessor'
-    })
-  )
-
-  const accreditation = /** @type {NumberedAccreditation} */ (
-    /** @type {unknown} */ ({
-      id: 'acc-789',
-      accreditationNumber: 'A26ER5001180114PL',
-      status: 'cancelled'
-    })
-  )
 
   /** @type {PrnListDetails['packagingRecyclingNotes']} */
   const notes = [
@@ -72,10 +53,8 @@ describe(fetchPrnListDetails, () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(
-      getRequiredRegistrationWithAnyAccreditationByNumber
-    ).mockResolvedValue({
-      organisationData: organisation,
+    vi.mocked(fetchRequiredAnyAccreditation).mockResolvedValue({
+      organisation,
       registration,
       accreditation
     })
@@ -91,9 +70,7 @@ describe(fetchPrnListDetails, () => {
       accreditation,
       packagingRecyclingNotes: notes
     })
-    expect(
-      getRequiredRegistrationWithAnyAccreditationByNumber
-    ).toHaveBeenCalledWith(keys, credentials)
+    expect(fetchRequiredAnyAccreditation).toHaveBeenCalledWith(keys, backendToken)
     expect(fetchPackagingRecyclingNotes).toHaveBeenCalledWith(
       keys,
       backendToken

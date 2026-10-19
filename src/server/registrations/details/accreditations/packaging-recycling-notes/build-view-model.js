@@ -8,13 +8,11 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 import { toAccreditationChildPage } from '../../helpers/accreditation-child-page.js'
-import { organisationName } from '../../helpers/caption.js'
+import { organisationViewName } from '../../helpers/caption.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { NumberedAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
@@ -32,9 +30,9 @@ const KEY = 'registrations:details:accreditation:prns'
  * @param {{
  *   request: HapiRequest,
  *   keys: AccreditationKeys,
- *   organisation: Organisation,
- *   registration: Registration,
- *   accreditation: NumberedAccreditation,
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
+ *   accreditation: AccreditationView,
  *   packagingRecyclingNotes: PackagingRecyclingNote[]
  * }} params
  */
@@ -64,8 +62,8 @@ export const buildViewModel = ({
       heading,
       localise,
       localiseUrl,
-      organisationName: organisationName(organisation),
-      registrationNumber: registration.registrationNumber,
+      organisationName: organisationViewName(organisation),
+      registrationNumber: keys.registrationNumber,
       accreditationNumber: accreditation.accreditationNumber,
       paths: {
         organisation: organisationPath(keys),

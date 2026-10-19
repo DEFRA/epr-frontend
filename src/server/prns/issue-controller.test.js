@@ -6,8 +6,11 @@ import {
 } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
+import {
   asPackagingRecyclingNote,
-  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
@@ -18,7 +21,7 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
@@ -26,8 +29,8 @@ vi.mock(import('./helpers/update-prn-status.js'))
 vi.spyOn(metrics.journey, 'start').mockResolvedValue()
 vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
-const { getRequiredRegistrationWithAccreditationByNumber } =
-  await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+const { fetchRequiredAccreditation } =
+  await import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
@@ -58,23 +61,14 @@ const mockPrnIssued = asUpdatePrnStatusResponse({
 describe('#issueController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(
-      getRequiredRegistrationWithAccreditationByNumber
-    ).mockResolvedValue(
-      asRegistrationWithLiveAccreditation({
-        organisationData: {
-          id: 'org-123',
-          companyDetails: { name: 'Test Org' }
-        },
-        registration: {
-          id: 'reg-456',
-          wasteProcessingType: 'reprocessor-input',
-          material: 'plastic',
-          nation: 'england',
-          site: { address: { line1: 'Test Site' } },
-          accreditationId: 'acc-001'
-        },
-        accreditation: { id: 'acc-001', status: 'approved' }
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+      buildRegistrationWithAccreditation({
+        organisation: { name: 'Test Org' },
+        registration: buildRegistrationView({
+          wasteProcessingType: 'reprocessor',
+          reprocessingType: 'input',
+          site: { address: { fullAddress: 'Test Site' } }
+        })
       })
     )
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(

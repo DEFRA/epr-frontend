@@ -1,10 +1,13 @@
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { latestAccreditationYear } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
+import { year } from '#server/common/helpers/year.js'
 import {
   organisationPath as toOrganisationPath,
   registrationPath as toRegistrationPath
@@ -317,10 +320,9 @@ const getUploadUrl = async (status, keys, redirectUrl, session) => {
     return {}
   }
 
-  const { accreditation } = await fetchRegistrationAndAccreditationByNumber(
-    keys.organisationNumber,
-    keys.registrationNumber,
-    session
+  const { accreditation } = await fetchRegistrationWithAccreditation(
+    keys,
+    session.backendToken
   )
 
   const { uploadUrl } = await initiateSummaryLogUpload({
@@ -359,24 +361,21 @@ const getWasteBalanceData = async (status, keys, session, logger) => {
   }
 
   try {
-    const { organisationData, registration } =
-      await fetchRegistrationAndAccreditationByNumber(
-        keys.organisationNumber,
-        keys.registrationNumber,
-        session
-      )
+    const { organisation, registration, accreditation } =
+      await fetchRegistrationWithAccreditation(keys, session.backendToken)
 
-    if (!registration.accreditationId) {
+    if (!accreditation) {
       return {}
     }
 
-    const wasteBalances = await fetchWasteBalances(
-      organisationData.id,
-      [registration.accreditationId],
+    // The route has no year, so read the live accreditation's.
+    const wasteBalances = await fetchOrganisationWasteBalances(
+      organisationNumber(organisation.organisationNumber),
+      year(Number(latestAccreditationYear(registration))),
       session.backendToken
     )
 
-    const balance = wasteBalances[registration.accreditationId]
+    const balance = wasteBalances[accreditation.accreditationNumber]
 
     if (!balance) {
       return {}

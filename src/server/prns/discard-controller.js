@@ -1,4 +1,4 @@
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
   badImplementation,
@@ -29,11 +29,10 @@ export const discardGetController = {
       return h.redirect(`${prnsPath(keys)}/create`)
     }
 
-    const { registration } =
-      await getRequiredRegistrationWithAccreditationByNumber(
-        keys,
-        request.auth.credentials
-      )
+    const { registration } = await fetchRequiredAccreditation(
+      keys,
+      request.auth.credentials.backendToken
+    )
 
     const { noteType } = getNoteTypeDisplayNames(registration)
 

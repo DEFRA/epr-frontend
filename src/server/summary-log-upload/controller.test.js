@@ -5,10 +5,14 @@ import {
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
+import {
+  buildAccreditationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByLabelText, getByRole, getByText } from '@testing-library/dom'
@@ -17,13 +21,9 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js'),
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js'),
   () => ({
-    fetchRegistrationAndAccreditationByNumber: vi.fn().mockResolvedValue({
-      organisationData: { id: '123' },
-      registration: { id: '456', status: 'approved', validFrom: '2026-01-01' },
-      accreditation: undefined
-    })
+    fetchRegistrationWithAccreditation: vi.fn()
   })
 )
 
@@ -38,10 +38,14 @@ vi.mock(
   })
 )
 
-const mockFetchRegistrationAndAccreditationByNumber = vi.mocked(
-  fetchRegistrationAndAccreditationByNumber,
-  { partial: true, deep: true }
+const mockFetchRegistrationWithAccreditation = vi.mocked(
+  fetchRegistrationWithAccreditation
 )
+
+const registeredOnly = {
+  ...buildRegistrationWithAccreditation(),
+  accreditation: undefined
+}
 
 vi.spyOn(metrics.journey, 'start').mockResolvedValue()
 vi.spyOn(metrics.journey, 'end').mockResolvedValue()
@@ -56,11 +60,7 @@ describe('#summaryLogUploadController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFetchRegistrationAndAccreditationByNumber.mockResolvedValue({
-      organisationData: { id: 'org-id' },
-      registration: { id: 'reg-id', registrationNumber, status: 'approved' },
-      accreditation: undefined
-    })
+    mockFetchRegistrationWithAccreditation.mockResolvedValue(registeredOnly)
   })
 
   it('should provide expected response', async ({ server }) => {
@@ -209,10 +209,9 @@ describe('#summaryLogUploadController', () => {
   it('looks the registration up by its numbers', async ({ server }) => {
     await server.inject({ method: 'GET', url, auth: mockAuth })
 
-    expect(mockFetchRegistrationAndAccreditationByNumber).toHaveBeenCalledWith(
-      organisationNumber,
-      registrationNumber,
-      expect.objectContaining({ backendToken: 'test-id-token' })
+    expect(mockFetchRegistrationWithAccreditation).toHaveBeenCalledWith(
+      { organisationNumber, registrationNumber },
+      'test-id-token'
     )
   })
 
@@ -220,26 +219,14 @@ describe('#summaryLogUploadController', () => {
     { kind: 'registered-only', accreditation: undefined, accredited: false },
     {
       kind: 'accredited',
-      accreditation: {
-        id: 'acc-id',
-        status: /** @type {const} */ ('approved')
-      },
-      accredited: true
-    },
-    {
-      kind: 'accredited (suspended)',
-      accreditation: {
-        id: 'acc-id',
-        status: /** @type {const} */ ('suspended')
-      },
+      accreditation: buildAccreditationView(),
       accredited: true
     }
   ])(
     'starts a $kind upload',
     async ({ accreditation, accredited }, { server }) => {
-      mockFetchRegistrationAndAccreditationByNumber.mockResolvedValue({
-        organisationData: { id: 'org-id' },
-        registration: { id: 'reg-id', status: 'approved' },
+      mockFetchRegistrationWithAccreditation.mockResolvedValue({
+        ...registeredOnly,
         accreditation
       })
 
@@ -417,7 +404,7 @@ describe('#summaryLogUploadController', () => {
     it('should return 404 when registration not found for organisation', async ({
       server
     }) => {
-      mockFetchRegistrationAndAccreditationByNumber.mockRejectedValueOnce(
+      mockFetchRegistrationWithAccreditation.mockRejectedValueOnce(
         Boom.notFound('Registration not found')
       )
 
@@ -433,7 +420,7 @@ describe('#summaryLogUploadController', () => {
     it('should not call initiateSummaryLogUpload when registration not found', async ({
       server
     }) => {
-      mockFetchRegistrationAndAccreditationByNumber.mockRejectedValueOnce(
+      mockFetchRegistrationWithAccreditation.mockRejectedValueOnce(
         Boom.notFound('Registration not found')
       )
 

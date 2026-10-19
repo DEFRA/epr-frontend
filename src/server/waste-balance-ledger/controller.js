@@ -3,8 +3,8 @@ import Boom from '@hapi/boom'
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getRequiredRegistrationWithAnyAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
+import { fetchRequiredAnyAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
@@ -16,7 +16,7 @@ import {
   toAccreditationChildPage,
   toRegistrationTrail
 } from '#server/registrations/details/helpers/accreditation-child-page.js'
-import { organisationName } from '#server/registrations/details/helpers/caption.js'
+import { organisationViewName } from '#server/registrations/details/helpers/caption.js'
 import {
   accreditationPath,
   organisationPath,
@@ -44,14 +44,17 @@ export const controller = {
     const { organisationNumber, registrationNumber, year } = request.params
     const registrationKeys = { organisationNumber, registrationNumber }
 
-    const { organisationData, registration, accreditation, events } = year
-      ? await readAccreditedLedger({ ...registrationKeys, year }, session)
+    const { organisation, registration, accreditation, events } = year
+      ? await readAccreditedLedger(
+          { ...registrationKeys, year },
+          session.backendToken
+        )
       : await readRegisteredOnlyLedger(registrationKeys, request)
 
     const { t: localise } = request
     const { noteType } = getNoteTypeDisplayNames(registration)
     const heading = localise('waste-balance-ledger:heading')
-    const name = organisationName(organisationData)
+    const name = organisationViewName(organisation)
     const ledgerRegistrationPath = registrationPath(registrationKeys)
     const ledgerAccreditationPath = year
       ? accreditationPath({ ...registrationKeys, year })
@@ -69,7 +72,7 @@ export const controller = {
           localise,
           localiseUrl: request.localiseUrl,
           organisationName: name,
-          registrationNumber: registration.registrationNumber,
+          registrationNumber,
           accreditationNumber: accreditation.accreditationNumber,
           paths: {
             ...recordPaths,
@@ -104,18 +107,15 @@ export const controller = {
 /**
  * The year's accreditation, whatever its status, and its ledger.
  * @param {AccreditationKeys} keys
- * @param {UserSession} session
+ * @param {string} backendToken
  * @returns {Promise<LedgerRead>}
  */
-async function readAccreditedLedger(keys, session) {
-  const { organisationData, registration, accreditation } =
-    await getRequiredRegistrationWithAnyAccreditationByNumber(keys, session)
-  const events = await fetchAccreditationLedgerEvents(
-    keys,
-    session.backendToken
-  )
+async function readAccreditedLedger(keys, backendToken) {
+  const { organisation, registration, accreditation } =
+    await fetchRequiredAnyAccreditation(keys, backendToken)
+  const events = await fetchAccreditationLedgerEvents(keys, backendToken)
 
-  return { organisationData, registration, accreditation, events }
+  return { organisation, registration, accreditation, events }
 }
 
 /**
@@ -126,12 +126,10 @@ async function readAccreditedLedger(keys, session) {
  */
 async function readRegisteredOnlyLedger(keys, request) {
   const session = request.auth.credentials
-  const { organisationData, registration } =
-    await fetchRegistrationAndAccreditationByNumber(
-      keys.organisationNumber,
-      keys.registrationNumber,
-      session
-    )
+  const { organisation, registration } = await fetchRegistration({
+    ...keys,
+    backendToken: session.backendToken
+  })
 
   try {
     const events = await fetchRegisteredOnlyLedgerEvents(
@@ -139,7 +137,7 @@ async function readRegisteredOnlyLedger(keys, request) {
       session.backendToken
     )
 
-    return { organisationData, registration, events }
+    return { organisation, registration, events }
   } catch (error) {
     if (!Boom.isBoom(error, statusCodes.notFound)) {
       throw error
@@ -153,7 +151,7 @@ async function readRegisteredOnlyLedger(keys, request) {
       }
     })
 
-    return { organisationData, registration, events: [] }
+    return { organisation, registration, events: [] }
   }
 }
 
@@ -185,20 +183,17 @@ function toRegisteredOnlyPage({ heading, localise, localiseUrl, name, paths }) {
 
 /**
  * @typedef {{
- *   organisationData: Organisation,
- *   registration: Registration,
- *   accreditation?: NumberedAccreditation,
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
+ *   accreditation?: AccreditationView,
  *   events: LedgerEvent[]
  * }} LedgerRead
  */
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { NumberedAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
- * @import { UserSession } from '#server/auth/types/session.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */

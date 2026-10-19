@@ -2,6 +2,7 @@ import { capitalize } from 'lodash-es'
 
 import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteLineOf } from '#server/common/helpers/organisations/site-name.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 import {
@@ -19,7 +20,6 @@ import {
 
 /**
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
- * @import { SiteAddress } from '#server/common/helpers/organisations/registration-resource.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Localise } from './helpers/types.js'
@@ -50,17 +50,6 @@ import {
  */
 
 /**
- * @param {SiteAddress} address
- * @returns {string}
- */
-const toSiteLine = ({ line1, line2, town, county, postcode, fullAddress }) =>
-  fullAddress?.trim() ||
-  [line1, line2, town, county, postcode]
-    .map((part) => part?.trim())
-    .filter(Boolean)
-    .join(', ')
-
-/**
  * @param {RegistrationView} registration
  * @returns {string}
  */
@@ -84,8 +73,10 @@ const toSitesRow = ({
   registrationPath,
   localise,
   localiseUrl
-}) =>
-  registration.wasteProcessingType === WASTE_PROCESSING_TYPE.EXPORTER
+}) => {
+  const siteLine = siteLineOf(registration)
+
+  return siteLine === null
     ? {
         key: localise('registrations:details:summary:overseasSites'),
         link: {
@@ -95,8 +86,9 @@ const toSitesRow = ({
       }
     : {
         key: localise('registrations:details:summary:site'),
-        value: toSiteLine(registration.site.address)
+        value: siteLine
       }
+}
 
 /**
  * @param {{

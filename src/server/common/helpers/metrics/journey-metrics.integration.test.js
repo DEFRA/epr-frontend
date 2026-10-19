@@ -1,14 +1,16 @@
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 import { describe, expect, vi } from 'vitest'
 
-import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
+  buildOrganisationView,
+  buildRegistrationView
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
+import {
   asPackagingRecyclingNote,
-  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { fetchPackagingRecyclingNote } from '#server/prns/helpers/fetch-packaging-recycling-note.js'
@@ -16,7 +18,6 @@ import { updatePrnStatus } from '#server/prns/helpers/update-prn-status.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
  * @import { ServerInjectResponse } from '@hapi/hapi'
  */
 
@@ -31,9 +32,7 @@ vi.hoisted(() => {
 // one that catches a lost start marker or a double-firing route. Mocks the
 // aws-embedded-metrics sink alone.
 
-vi.mock(
-  import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
-)
+vi.mock(import('#server/common/helpers/organisations/fetch-organisation.js'))
 vi.mock(
   import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
   () => ({
@@ -48,9 +47,6 @@ vi.mock(
 vi.mock(
   import('#server/common/helpers/summary-log/submit-summary-log.js'),
   () => ({ submitSummaryLog: vi.fn() })
-)
-vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/prns/helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('#server/prns/helpers/update-prn-status.js'))
@@ -109,31 +105,22 @@ describe('journey metrics emit-once, driven through a real session', () => {
   })
 
   describe('summary log upload journey (success page re-renders on every poll)', () => {
-    const organisationId = '123'
-    const registrationId = '456'
     const organisationNumber = '500118'
     const registrationNumber = 'R26ER5001180041PL'
-    const operatorAuth = buildMockAuth({
-      backendToken: 'test-id-token',
-      linkedOrganisationId: organisationId
-    })
+    const operatorAuth = buildMockAuth({ backendToken: 'test-id-token' })
     const summaryLogId = '789'
     const uploadUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
     const submitUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}/submit`
 
-    const mockOrganisationData = /** @type {Organisation} */ (
-      /** @type {unknown} */ ({
-        id: organisationId,
-        orgId: Number(organisationNumber),
-        registrations: [
-          { id: registrationId, registrationNumber, status: 'approved' }
-        ],
-        accreditations: []
-      })
-    )
-
     beforeEach(() => {
-      vi.mocked(fetchOrganisationById).mockResolvedValue(mockOrganisationData)
+      vi.mocked(fetchOrganisation).mockResolvedValue(
+        buildOrganisationView({
+          organisationNumber: Number(organisationNumber),
+          registrations: {
+            [registrationNumber]: buildRegistrationView({ accreditations: {} })
+          }
+        })
+      )
       vi.mocked(submitSummaryLog).mockResolvedValue({
         status: 'submitted',
         accreditationNumber: '493021'
@@ -236,24 +223,8 @@ describe('journey metrics emit-once, driven through a real session', () => {
     const deleteUrl = `/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes/${prnId}/delete`
 
     beforeEach(() => {
-      vi.mocked(
-        getRequiredRegistrationWithAccreditationByNumber
-      ).mockResolvedValue(
-        asRegistrationWithLiveAccreditation({
-          organisationData: {
-            id: 'org-123',
-            name: 'Reprocessor Organisation'
-          },
-          registration: {
-            id: 'reg-456',
-            wasteProcessingType: 'reprocessor-input',
-            material: 'plastic',
-            nation: 'england',
-            site: { address: { line1: 'Reprocessing Site' } },
-            accreditationId: 'acc-001'
-          },
-          accreditation: { id: 'acc-001', status: 'approved' }
-        })
+      vi.mocked(fetchOrganisation).mockResolvedValue(
+        buildOrganisationView({ name: 'Reprocessor Organisation' })
       )
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
         asPackagingRecyclingNote({

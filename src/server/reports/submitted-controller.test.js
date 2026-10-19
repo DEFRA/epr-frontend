@@ -1,7 +1,10 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -17,21 +20,14 @@ import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 const mockAuth = buildMockAuth()
 
-const mockRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: undefined
+const mockRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
 })
 
 const mockReportDetail = {
@@ -69,7 +65,7 @@ const reportsUrl = `/organisations/${organisationNumber}/registrations/${registr
 describe('#submittedController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       mockRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -171,7 +167,7 @@ describe('#submittedController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain('Registration:')
-      expect(body.textContent).toContain('REG001234')
+      expect(body.textContent).toContain(registrationNumber)
     })
 
     it('should display material', async ({ server }) => {

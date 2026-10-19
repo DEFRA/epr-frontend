@@ -41,6 +41,26 @@ const organisation = {
   ]
 }
 
+const organisationView = {
+  organisationNumber: 500118,
+  name: 'Acme Recycling Ltd',
+  registrations: {
+    [registrationNumber]: {
+      status: { current: 'approved', timeline: {} },
+      validFrom: '2026-01-01',
+      material: 'plastic',
+      submittedToRegulator: { code: 'ea' },
+      wasteProcessingType: 'exporter',
+      accreditations: {
+        2026: {
+          accreditationNumber: 'A26ER5001180114PL',
+          status: { current: 'approved', timeline: {} }
+        }
+      }
+    }
+  }
+}
+
 const byIds = `/organisations/${organisationId}/registrations/${registrationId}`
 const byNumbers = `/organisations/500118/registrations/${registrationNumber}`
 
@@ -53,6 +73,9 @@ const backendHolds = (msw) =>
   msw.use(
     http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
       HttpResponse.json(organisation)
+    ),
+    http.get(`${backendUrl}/organisations/500118`, () =>
+      HttpResponse.json(organisationView)
     ),
     http.post(`${backendUrl}${byNumbers}/accreditations/2026/summary-log`, () =>
       HttpResponse.json({

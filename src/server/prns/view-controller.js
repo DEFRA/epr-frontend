@@ -5,7 +5,7 @@ import {
   badImplementation,
   classifierTail
 } from '#server/common/helpers/logging/cdp-boom.js'
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { availableForPool } from '#server/common/helpers/waste-balance/available-for-pool.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
@@ -17,7 +17,7 @@ import {
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
-import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
+import { organisationViewName } from '#server/registrations/details/helpers/caption.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
@@ -30,7 +30,7 @@ import { getStatusConfig } from './helpers/get-status-config.js'
 import { noteReturn } from './helpers/note-return-path.js'
 import { prnsPath } from './helpers/prn-resource.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
 /**
  * @typedef {{ keys: AccreditationKeys, prnId: string, prnDraft: PrnDraftSession }} DraftParams
@@ -71,8 +71,7 @@ export const viewPostController = {
   async handler(request, h) {
     const keys = toAccreditationKeys(request.params)
     const { prnId } = request.params
-    const credentials = request.auth.credentials
-    const { backendToken } = credentials
+    const { backendToken } = request.auth.credentials
 
     /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
@@ -83,7 +82,7 @@ export const viewPostController = {
 
     try {
       const [{ accreditation }, eligibility] = await Promise.all([
-        getRequiredRegistrationWithAccreditationByNumber(keys, credentials),
+        fetchRequiredAccreditation(keys, backendToken),
         fetchDecemberPrnEligibility(keys, backendToken)
       ])
       // A failed read fails the confirmation, so an outage never discards a draft
@@ -204,25 +203,24 @@ const confirmDraft = async (request, h, { keys, prnId, prnDraft }) => {
  * }} params
  */
 async function handleDraftView(h, { keys, prnDraft, localise, session }) {
-  const { organisationData, registration, accreditation } =
-    await getRequiredRegistrationWithAccreditationByNumber(keys, session)
+  const { organisation, registration, accreditation } =
+    await fetchRequiredAccreditation(keys, session.backendToken)
 
-  const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
+  const { noteType } = getNoteTypeDisplayNames(registration)
 
-  const displayMaterial = getRegistrationMaterialDisplayName(registration)
+  const displayMaterial = getMaterialDisplayName(registration.material)
 
   const prnDetailRows = buildDraftPrnDetailRows({
     prnDraft,
     localise,
-    organisationData
+    organisation
   })
 
   const accreditationRows = buildAccreditationRows({
     registration,
     accreditation,
     displayMaterial,
-    localise,
-    isExporter
+    localise
   })
 
   return h.view('prns/view', {
@@ -265,9 +263,9 @@ async function handleExistingView(
   { keys, prnId, localise, session }
 ) {
   // Fetch PRN and registration data from backend
-  const [{ organisationData, registration, accreditation }, prn] =
+  const [{ organisation, registration, accreditation }, prn] =
     await Promise.all([
-      getRequiredRegistrationWithAccreditationByNumber(keys, session),
+      fetchRequiredAccreditation(keys, session.backendToken),
       fetchPackagingRecyclingNote(keys, prnId, session.backendToken)
     ])
 
@@ -275,7 +273,7 @@ async function handleExistingView(
     prn.issuedToOrganisation
   )
 
-  const { isExporter, noteType, noteTypeFull, noteTypePlural, wasteAction } =
+  const { noteType, noteTypeFull, noteTypePlural, wasteAction } =
     getNoteTypeDisplayNames(registration)
 
   const isRegulator = readsAsARegulator(session)
@@ -289,7 +287,7 @@ async function handleExistingView(
 
   const breadcrumbs = isRegulator
     ? buildNoteBreadcrumbs({
-        organisation: organisationData,
+        organisation,
         keys,
         noteTypePlural,
         prn,
@@ -298,7 +296,7 @@ async function handleExistingView(
       })
     : []
 
-  const displayMaterial = getRegistrationMaterialDisplayName(registration)
+  const displayMaterial = getMaterialDisplayName(registration.material)
 
   const statusConfig = getStatusConfig(prn.status, localise)
   const isNotDraft = prn.status !== 'draft'
@@ -310,15 +308,14 @@ async function handleExistingView(
     statusConfig,
     isNotDraft,
     recipientDisplayName,
-    organisationData
+    organisation
   })
 
   const accreditationRows = buildAccreditationRows({
     registration,
     accreditation,
     displayMaterial,
-    localise,
-    isExporter
+    localise
   })
 
   const viewData = buildExistingPrnViewData({
@@ -402,11 +399,11 @@ function buildExistingPrnViewData({
  * @param {{
  *   prnDraft: PrnDraftSession,
  *   localise: TFunction,
- *   organisationData: { companyDetails?: { name: string, tradingName?: string | null, registrationType?: string } }
+ *   organisation: OrganisationView
  * }} params
  * @returns {Array} Summary list rows
  */
-function buildDraftPrnDetailRows({ prnDraft, localise, organisationData }) {
+function buildDraftPrnDetailRows({ prnDraft, localise, organisation }) {
   return [
     {
       key: { text: localise('prns:issuedToLabel') },
@@ -434,11 +431,7 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisationData }) {
     },
     {
       key: { text: localise('prns:issuerLabel') },
-      value: {
-        text: organisationData.companyDetails
-          ? getIssuingOrgDisplayName(organisationData.companyDetails)
-          : ''
-      }
+      value: { text: organisationViewName(organisation) }
     },
     {
       key: { text: localise('prns:issuedDateLabel') },
@@ -469,7 +462,7 @@ function buildExistingPrnDetailRows({
   statusConfig,
   isNotDraft,
   recipientDisplayName,
-  organisationData
+  organisation
 }) {
   const rows = [
     {
@@ -485,9 +478,7 @@ function buildExistingPrnDetailRows({
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
-      issuerName: organisationData?.companyDetails
-        ? getIssuingOrgDisplayName(organisationData.companyDetails)
-        : ''
+      issuerName: organisationViewName(organisation)
     })
   )
 
@@ -500,6 +491,7 @@ function buildExistingPrnDetailRows({
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { UserSession } from '#server/auth/types/session.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'
  */

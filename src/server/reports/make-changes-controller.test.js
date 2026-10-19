@@ -1,8 +1,12 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -11,7 +15,7 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/request-resubmission.js'))
@@ -22,22 +26,22 @@ const { requestResubmission } =
 const mockCredentials = buildMockAuth().credentials
 const mockAuth = { strategy: 'session', credentials: mockCredentials }
 
-const registrationWith = (wasteProcessingType, accreditation) =>
-  asRegistrationWithAccreditation({
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
+/**
+ * @param {'exporter' | 'reprocessor'} wasteProcessingType
+ * @param {boolean} accredited
+ */
+const registrationWith = (wasteProcessingType, accredited) =>
+  buildRegistrationWithAccreditation({
+    registration: buildRegistrationView({
       wasteProcessingType,
-      registrationNumber: 'REG001234'
-    },
-    accreditation
+      accreditations: accredited ? { 2026: buildAccreditationView() } : {}
+    })
   })
 
-const registeredOnlyExporter = registrationWith('exporter', undefined)
-const registeredOnlyReprocessor = registrationWith('reprocessor', undefined)
-const accreditedExporter = registrationWith('exporter', { id: 'acc-001' })
-const accreditedReprocessor = registrationWith('reprocessor', { id: 'acc-001' })
+const registeredOnlyExporter = registrationWith('exporter', false)
+const registeredOnlyReprocessor = registrationWith('reprocessor', false)
+const accreditedExporter = registrationWith('exporter', true)
+const accreditedReprocessor = registrationWith('reprocessor', true)
 
 const accreditedScenarios = [
   {
@@ -109,7 +113,7 @@ const submittedEligibleReportDetail = buildReportDetail('submitted', true)
 describe('#makeChangesController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       registeredOnlyExporter
     )
   })
@@ -192,9 +196,9 @@ describe('#makeChangesController', () => {
           { registration, heading, bodyText, summaryLogText },
           { server }
         ) => {
-          vi.mocked(
-            fetchRegistrationAndAccreditationByNumber
-          ).mockResolvedValue(registration)
+          vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+            registration
+          )
 
           const { result } = await server.inject({
             method: 'GET',

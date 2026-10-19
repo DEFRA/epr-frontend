@@ -1,7 +1,7 @@
 import Joi from 'joi'
 
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -52,8 +52,8 @@ const payloadSchema = Joi.object({
  * registered-only operators have no notes, so it is omitted for them. Both
  * variants share the same character limit.
  * @param {number} submissionNumber
- * @param {Registration} registration
- * @param {Accreditation | undefined} accreditation
+ * @param {RegistrationView} registration
+ * @param {AccreditationView | undefined} accreditation
  * @param {Localise} localise
  * @returns {SupportingInfoCopy}
  */
@@ -118,8 +118,8 @@ function buildSupportingInfoCopy(
 
 /**
  * @param {string} basePath
- * @param {Registration} registration
- * @param {Accreditation | undefined} accreditation
+ * @param {RegistrationView} registration
+ * @param {AccreditationView | undefined} accreditation
  * @returns {string}
  */
 function getBackPage(basePath, registration, accreditation) {
@@ -171,10 +171,9 @@ async function buildViewData(request, options = {}) {
   const { t: localise } = request
 
   const { registration, accreditation } =
-    await fetchRegistrationAndAccreditationByNumber(
-      organisationNumber,
-      registrationNumber,
-      session
+    await fetchRegistrationWithAccreditation(
+      { organisationNumber, registrationNumber },
+      session.backendToken
     )
 
   const reportDetail = await fetchReportDetail(
@@ -182,7 +181,7 @@ async function buildViewData(request, options = {}) {
     session.backendToken
   )
 
-  const material = getRegistrationMaterialDisplayName(registration)
+  const material = getMaterialDisplayName(registration.material)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
   const basePath = reportPath(request.params)
@@ -287,8 +286,7 @@ export const supportingInformationPostController = {
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Localise } from './helpers/format-period-label.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  */

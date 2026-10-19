@@ -2,21 +2,22 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
-  asPackagingRecyclingNote,
-  asRegistrationWithLiveAccreditation
-} from '#server/common/test-helpers/prn-fixtures.js'
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
+import { asPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 
-const { getRequiredRegistrationWithAccreditationByNumber } =
-  await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+const { fetchRequiredAccreditation } =
+  await import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
 
@@ -27,36 +28,17 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asRegistrationWithLiveAccreditation({
-  organisationData: {
-    id: 'org-123',
-    companyDetails: { name: 'Reprocessor Organisation' }
-  },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'reprocessor-input',
-    material: 'plastic',
-    nation: 'england',
-    site: { address: { line1: 'Reprocessing Site' } },
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
+const fixtureReprocessor = buildRegistrationWithAccreditation({
+  organisation: { name: 'Reprocessor Organisation' },
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: { address: { fullAddress: 'Reprocessing Site' } }
+  })
 })
 
-const fixtureExporter = asRegistrationWithLiveAccreditation({
-  organisationData: {
-    id: 'org-123',
-    companyDetails: { name: 'Exporter Organisation' }
-  },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'exporter',
-    material: 'plastic',
-    nation: 'england',
-    site: null,
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
+const fixtureExporter = buildRegistrationWithAccreditation({
+  organisation: { name: 'Exporter Organisation' }
 })
 
 const organisationNumber = '500123'
@@ -90,9 +72,7 @@ const mockCancelledPern = asPackagingRecyclingNote({
 describe('#cancelledController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(
-      getRequiredRegistrationWithAccreditationByNumber
-    ).mockResolvedValue(fixtureReprocessor)
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockCancelledPrn)
   })
 
@@ -229,9 +209,7 @@ describe('#cancelledController', () => {
     })
 
     it('displays PERN text for exporter registration', async ({ server }) => {
-      vi.mocked(
-        getRequiredRegistrationWithAccreditationByNumber
-      ).mockResolvedValue(fixtureExporter)
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
         mockCancelledPern
       )

@@ -1,8 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
@@ -11,7 +14,7 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('../helpers/update-report.js'))
@@ -25,15 +28,8 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const registeredOnlyExporter = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'EX992415095748P'
-  },
-  accreditation: undefined
+const registeredOnlyExporter = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
 })
 
 const reportDetail = {
@@ -77,7 +73,7 @@ describe('#tonnesNotExportedController', () => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -180,11 +176,8 @@ describe('#tonnesNotExportedController', () => {
     })
 
     it('should return 404 for accredited exporter', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
-        asRegistrationWithAccreditation({
-          ...registeredOnlyExporter,
-          accreditation: { id: 'acc-001', accreditationNumber: 'ACC123' }
-        })
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        buildRegistrationWithAccreditation()
       )
 
       const { statusCode } = await server.inject({
@@ -197,13 +190,14 @@ describe('#tonnesNotExportedController', () => {
     })
 
     it('should return 404 for reprocessor', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue({
-        ...registeredOnlyExporter,
-        registration: {
-          ...registeredOnlyExporter.registration,
-          wasteProcessingType: 'reprocessor'
-        }
-      })
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        buildRegistrationWithAccreditation({
+          registration: buildRegistrationView({
+            wasteProcessingType: 'reprocessor',
+            accreditations: {}
+          })
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -217,7 +211,7 @@ describe('#tonnesNotExportedController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(

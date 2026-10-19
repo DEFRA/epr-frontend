@@ -1,4 +1,4 @@
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { badRequest } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchPackagingRecyclingNote } from './fetch-packaging-recycling-note.js'
@@ -44,12 +44,12 @@ const toAccreditationKeys = ({
  */
 async function fetchPrnContext(request) {
   const keys = toAccreditationKeys(request.params)
-  const credentials = request.auth.credentials
+  const { backendToken } = request.auth.credentials
   const safePrnId = getSafePathSegment(request.params.prnId, 'prnId')
 
   const [registrationData, prn] = await Promise.all([
-    getRequiredRegistrationWithAccreditationByNumber(keys, credentials),
-    fetchPackagingRecyclingNote(keys, safePrnId, credentials.backendToken)
+    fetchRequiredAccreditation(keys, backendToken),
+    fetchPackagingRecyclingNote(keys, safePrnId, backendToken)
   ])
 
   return {

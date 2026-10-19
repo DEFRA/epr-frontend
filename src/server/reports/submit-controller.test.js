@@ -1,5 +1,10 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
@@ -12,14 +17,10 @@ import { beforeEach, describe, expect, vi } from 'vitest'
 
 /** @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js' */
 
-/**
- * @import { Organisation, User } from '#domain/organisations/model.js'
- * @import { Registration, RegistrationApproved } from '#domain/organisations/registration.js'
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
- */
+/** @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/update-report-status.js'))
@@ -31,87 +32,31 @@ const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
 const mockAuth = buildMockAuth()
 
-/** @type {User} */
-const stubUser = {
-  fullName: 'Test User',
-  email: 'test@example.com',
-  phone: '0123 456789'
-}
-
-/** @type {RegistrationApproved} */
-const baseRegistration = {
-  id: 'reg-001',
-  approvedPersons: [],
-  formSubmissionTime: '2026-01-01T00:00:00.000Z',
-  material: 'plastic',
-  orgName: 'Test Organisation',
-  site: {
-    address: {},
-    gridReference: 'SJ 000 000',
-    siteCapacity: []
-  },
-  submittedToRegulator: 'ea',
-  submitterContactDetails: stubUser,
-  wasteProcessingType: 'exporter',
-  registrationNumber: 'REG001234',
-  status: 'approved',
-  validFrom: '2026-01-01'
-}
-
-/** @type {Organisation} */
-const baseOrganisation = {
-  id: 'org-123',
-  accreditations: [],
-  companyDetails: { name: 'Test Organisation' },
-  formSubmissionTime: '2026-01-01T00:00:00.000Z',
-  orgId: 1,
-  registrations: [],
-  schemaVersion: 1,
-  status: 'approved',
-  statusHistory: [],
-  submittedToRegulator: 'ea',
-  submitterContactDetails: stubUser,
-  users: [],
-  version: 1,
-  wasteProcessingTypes: ['exporter']
-}
-
 /**
- * @param {{ organisationData?: Partial<Organisation>, registration?: Partial<Registration>, accreditation?: object }} [overrides]
- * @returns {RegistrationWithAccreditation}
+ * @param {Partial<RegistrationView>} registration
+ * @param {boolean} [accredited]
  */
-function buildRegistration(overrides = {}) {
-  return {
-    organisationData: /** @type {Organisation} */ ({
-      ...baseOrganisation,
-      ...overrides.organisationData
-    }),
-    registration: /** @type {RegistrationApproved} */ ({
-      ...baseRegistration,
-      ...overrides.registration
-    }),
-    accreditation: overrides.accreditation
+const buildRegistration = (registration, accredited = false) =>
+  buildRegistrationWithAccreditation({
+    organisation: { name: 'Test Organisation' },
+    registration: buildRegistrationView({
+      ...registration,
+      accreditations: accredited ? { 2026: buildAccreditationView() } : {}
+    })
+  })
+
+/** @type {Partial<RegistrationView>} */
+const reprocessor = {
+  wasteProcessingType: 'reprocessor',
+  reprocessingType: 'input',
+  site: {
+    address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
   }
 }
 
-const exporterRegistration = buildRegistration({
-  registration: { wasteProcessingType: 'exporter', site: undefined }
-})
+const exporterRegistration = buildRegistration({})
 
-const reprocessorRegistration = buildRegistration({
-  registration: {
-    wasteProcessingType: 'reprocessor',
-    site: {
-      address: {
-        line1: 'North Road',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
-      },
-      gridReference: 'SJ 000 000',
-      siteCapacity: []
-    }
-  }
-})
+const reprocessorRegistration = buildRegistration(reprocessor)
 
 /** @type {ReportDetailResponse} */
 const exporterReportDetail = {
@@ -192,13 +137,7 @@ const exporterReportDetail = {
   }
 }
 
-const accreditedReprocessorRegistration = buildRegistration({
-  registration: {
-    ...reprocessorRegistration.registration,
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001' }
-})
+const accreditedReprocessorRegistration = buildRegistration(reprocessor, true)
 
 /** @type {ReportDetailResponse} */
 const reprocessorReportDetail = {
@@ -257,13 +196,7 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
-const accreditedExporterRegistration = buildRegistration({
-  registration: {
-    ...exporterRegistration.registration,
-    accreditationId: 'acc-002'
-  },
-  accreditation: { id: 'acc-002' }
-})
+const accreditedExporterRegistration = buildRegistration({}, true)
 
 /** @type {ReportDetailResponse} */
 const accreditedExporterReportDetail = {
@@ -314,7 +247,7 @@ describe('#submitController', () => {
   describe('GET', () => {
     describe('for exporter with supporting information', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -833,7 +766,7 @@ describe('#submitController', () => {
 
     describe('for exporter with no export activity', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue({
@@ -895,7 +828,7 @@ describe('#submitController', () => {
 
     describe('for accredited exporter', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           accreditedExporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -1026,7 +959,7 @@ describe('#submitController', () => {
 
     describe('for reprocessor without supporting information', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           reprocessorRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(reprocessorReportDetail)
@@ -1147,7 +1080,7 @@ describe('#submitController', () => {
 
     describe('for accredited reprocessor', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           accreditedReprocessorRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -1257,9 +1190,9 @@ describe('#submitController', () => {
       ])(
         'should display warning button for $label',
         async ({ registration, report, periodPath }, { server }) => {
-          vi.mocked(
-            fetchRegistrationAndAccreditationByNumber
-          ).mockResolvedValue(registration)
+          vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+            registration
+          )
           vi.mocked(fetchReportDetail).mockResolvedValue(report)
 
           const { result } = await server.inject({
@@ -1282,7 +1215,7 @@ describe('#submitController', () => {
 
     describe('when report is already submitted', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue({
@@ -1308,7 +1241,7 @@ describe('#submitController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -1583,7 +1516,7 @@ describe('#submitController', () => {
     const resubmitUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/2/submit`
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -1735,7 +1668,7 @@ describe('#submitController', () => {
     const attempt = 'R25SR500030912PA/2026/quarterly/1/1'
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)

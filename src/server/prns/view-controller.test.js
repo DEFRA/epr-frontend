@@ -1,10 +1,14 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import {
   asCreatePrnResponse,
   asPackagingRecyclingNote,
-  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import {
@@ -32,7 +36,7 @@ import { afterEach, describe, expect, vi } from 'vitest'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(
   import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
@@ -71,44 +75,19 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asRegistrationWithLiveAccreditation({
-  organisationData: {
-    id: 'org-123',
-    companyDetails: { name: 'Reprocessor Organisation' }
-  },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'reprocessor-input',
-    material: 'plastic',
-    nation: 'england',
-    site: { address: { line1: 'Reprocessing Site' } },
-    accreditationId: 'acc-001'
-  },
-  accreditation: {
-    id: 'acc-001',
-    accreditationNumber: 'ACC-001',
-    status: 'approved'
-  }
+const fixtureReprocessor = buildRegistrationWithAccreditation({
+  organisation: { name: 'Reprocessor Organisation' },
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: { address: { fullAddress: 'Reprocessing Site' } }
+  }),
+  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
 })
 
-const fixtureExporter = asRegistrationWithLiveAccreditation({
-  organisationData: {
-    id: 'org-123',
-    companyDetails: { name: 'Exporter Organisation' }
-  },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'exporter',
-    material: 'plastic',
-    nation: 'england',
-    site: null,
-    accreditationId: 'acc-001'
-  },
-  accreditation: {
-    id: 'acc-001',
-    accreditationNumber: 'ACC-001',
-    status: 'approved'
-  }
+const fixtureExporter = buildRegistrationWithAccreditation({
+  organisation: { name: 'Exporter Organisation' },
+  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
 })
 
 const organisationNumber = '500123'
@@ -127,7 +106,6 @@ const validPayload = {
   tonnage: '100',
   recipient: 'producer-1',
   notes: 'Test notes',
-  nation: 'england',
   wasteProcessingType: 'reprocessor-input'
 }
 
@@ -185,9 +163,7 @@ const mockPernFromBackend = asPackagingRecyclingNote({
 describe('#viewController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(
-      getRequiredRegistrationWithAccreditationByNumber
-    ).mockResolvedValue(fixtureReprocessor)
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnFromBackend)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
@@ -270,17 +246,12 @@ describe('#viewController', () => {
       it('displays issuer tradingName when present on certificate page', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(
-          asRegistrationWithLiveAccreditation({
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          buildRegistrationWithAccreditation({
             ...fixtureReprocessor,
-            organisationData: {
-              id: 'org-123',
-              companyDetails: {
-                name: 'Legal Reprocessor Ltd',
-                tradingName: 'Reprocessor Trading'
-              }
+            organisation: {
+              name: 'Legal Reprocessor Ltd',
+              tradingName: 'Reprocessor Trading'
             }
           })
         )
@@ -299,43 +270,6 @@ describe('#viewController', () => {
 
         expect(getByText(main, /Reprocessor Trading/i)).toBeDefined()
         expect(body.innerHTML).not.toContain('>Legal Reprocessor Ltd<')
-      })
-
-      it('displays empty issuer when company details are missing on certificate page', async ({
-        server
-      }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(
-          asRegistrationWithLiveAccreditation({
-            ...fixtureReprocessor,
-            organisationData: { id: 'org-123', companyDetails: null }
-          })
-        )
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const rows = body.querySelectorAll('.govuk-summary-list__row')
-        const issuerRow = Array.from(rows).find((row) =>
-          row
-            .querySelector('.govuk-summary-list__key')
-            ?.textContent?.includes('Issuer')
-        )
-
-        expect(issuerRow).toBeDefined()
-        expect(
-          issuerRow
-            .querySelector('.govuk-summary-list__value')
-            ?.textContent?.trim()
-        ).toBe('')
       })
 
       it('displays PRN number when provided', async ({ server }) => {
@@ -667,9 +601,7 @@ describe('#viewController', () => {
       it('displays PERN details for exporter registration', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -697,9 +629,7 @@ describe('#viewController', () => {
       })
 
       it('displays issued date for issued PERN', async ({ server }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -724,9 +654,7 @@ describe('#viewController', () => {
       it('displays issued by and position for issued PERN', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -751,23 +679,21 @@ describe('#viewController', () => {
       it('shows reprocessing site address for reprocessors', async ({
         server
       }) => {
-        const reprocessorWithAddress = {
-          ...fixtureReprocessor,
-          registration: {
-            ...fixtureReprocessor.registration,
-            site: {
-              address: {
-                line1: '123 Reprocessing Lane',
-                town: 'Manchester',
-                postcode: 'M1 1AA'
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          buildRegistrationWithAccreditation({
+            ...fixtureReprocessor,
+            registration: buildRegistrationView({
+              wasteProcessingType: 'reprocessor',
+              reprocessingType: 'input',
+              site: {
+                address: {
+                  line1: '123 Reprocessing Lane',
+                  town: 'Manchester',
+                  postcode: 'M1 1AA'
+                }
               }
-            }
-          }
-        }
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(
-          asRegistrationWithLiveAccreditation(reprocessorWithAddress)
+            })
+          })
         )
 
         const { result, statusCode } = await server.inject({
@@ -788,37 +714,10 @@ describe('#viewController', () => {
         ).toBeDefined()
       })
 
-      it('shows empty reprocessing site address when site address is null', async ({
-        server
-      }) => {
-        const reprocessorWithoutAddress = {
-          ...fixtureReprocessor,
-          registration: {
-            ...fixtureReprocessor.registration,
-            site: null
-          }
-        }
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(
-          asRegistrationWithLiveAccreditation(reprocessorWithoutAddress)
-        )
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-      })
-
       it('hides reprocessing site address for exporters', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -917,9 +816,9 @@ describe('#viewController', () => {
 
       it('returns 404 when registration not found', async ({ server }) => {
         const Boom = await import('@hapi/boom')
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockRejectedValue(Boom.default.notFound('Registration not found'))
+        vi.mocked(fetchRequiredAccreditation).mockRejectedValue(
+          Boom.default.notFound('Registration not found')
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -1427,17 +1326,12 @@ describe('#viewController', () => {
       it('displays issuer tradingName when present on check page', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(
-          asRegistrationWithLiveAccreditation({
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          buildRegistrationWithAccreditation({
             ...fixtureReprocessor,
-            organisationData: {
-              id: 'org-123',
-              companyDetails: {
-                name: 'Legal Reprocessor Ltd',
-                tradingName: 'Reprocessor Trading'
-              }
+            organisation: {
+              name: 'Legal Reprocessor Ltd',
+              tradingName: 'Reprocessor Trading'
             }
           })
         )
@@ -1486,63 +1380,6 @@ describe('#viewController', () => {
             ?.textContent?.trim()
         ).toBe('Reprocessor Trading')
         expect(body.innerHTML).not.toContain('>Legal Reprocessor Ltd<')
-      })
-
-      it('displays empty issuer when company details are missing', async ({
-        server
-      }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(
-          asRegistrationWithLiveAccreditation({
-            ...fixtureReprocessor,
-            organisationData: { id: 'org-123', companyDetails: null }
-          })
-        )
-
-        const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
-          createUrl,
-          { auth: mockAuth }
-        )
-
-        const postResponse = await server.inject({
-          method: 'POST',
-          url: createUrl,
-          auth: mockAuth,
-          headers: { cookie: csrfCookie },
-          payload: { ...validPayload, crumb }
-        })
-
-        const postCookieValues = extractCookieValues(
-          postResponse.headers['set-cookie']
-        )
-        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const rows = body.querySelectorAll('.govuk-summary-list__row')
-        const issuerRow = Array.from(rows).find((row) =>
-          row
-            .querySelector('.govuk-summary-list__key')
-            ?.textContent?.includes('Issuer')
-        )
-
-        expect(issuerRow).toBeDefined()
-        expect(
-          issuerRow
-            .querySelector('.govuk-summary-list__value')
-            ?.textContent?.trim()
-        ).toBe('')
       })
 
       it('displays PRN details rows in correct order per design', async ({
@@ -1644,9 +1481,7 @@ describe('#viewController', () => {
       it('displays PERN check page for exporter registration', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
 
         const exporterPayload = {

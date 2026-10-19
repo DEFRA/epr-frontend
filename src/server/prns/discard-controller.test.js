@@ -1,8 +1,12 @@
 import { config } from '#config/config.js'
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import {
   asCreatePrnResponse,
-  asRegistrationWithLiveAccreditation,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -21,7 +25,7 @@ import { metrics } from '#server/common/helpers/metrics/index.js'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
@@ -39,38 +43,19 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asRegistrationWithLiveAccreditation({
-  organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'reprocessor-input',
-    material: 'plastic',
-    nation: 'england',
-    site: { address: { line1: 'Reprocessing Site' } },
-    accreditationId: 'acc-001'
-  },
-  accreditation: {
-    id: 'acc-001',
-    accreditationNumber: 'ACC-001',
-    status: 'approved'
-  }
+const fixtureReprocessor = buildRegistrationWithAccreditation({
+  organisation: { name: 'Reprocessor Organisation' },
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: { address: { fullAddress: 'Reprocessing Site' } }
+  }),
+  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
 })
 
-const fixtureExporter = asRegistrationWithLiveAccreditation({
-  organisationData: { id: 'org-123', name: 'Exporter Organisation' },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'exporter',
-    material: 'plastic',
-    nation: 'england',
-    site: null,
-    accreditationId: 'acc-001'
-  },
-  accreditation: {
-    id: 'acc-001',
-    accreditationNumber: 'ACC-001',
-    status: 'approved'
-  }
+const fixtureExporter = buildRegistrationWithAccreditation({
+  organisation: { name: 'Exporter Organisation' },
+  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
 })
 
 const keys = {
@@ -91,7 +76,6 @@ const validPayload = {
   tonnage: '100',
   recipient: 'producer-1',
   notes: 'Test notes',
-  nation: 'england',
   wasteProcessingType: 'reprocessor-input'
 }
 
@@ -123,9 +107,7 @@ describe('#discardController', () => {
         () => HttpResponse.json({ mode: 'pool', windowOpen: false })
       )
     )
-    vi.mocked(
-      getRequiredRegistrationWithAccreditationByNumber
-    ).mockResolvedValue(fixtureReprocessor)
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPrnWasteBalance).mockResolvedValue(null)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(
@@ -289,9 +271,7 @@ describe('#discardController', () => {
       it('displays PERN wording for exporter registration', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
 
         const exporterPayload = {

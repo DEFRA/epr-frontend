@@ -1,5 +1,5 @@
 import { hasWriteScope } from '#server/auth/scopes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -19,10 +19,9 @@ export const summaryLogUploadController = {
 
     const session = request.auth.credentials
 
-    const { accreditation } = await fetchRegistrationAndAccreditationByNumber(
-      organisationNumber,
-      registrationNumber,
-      session
+    const { accreditation } = await fetchRegistrationWithAccreditation(
+      keys,
+      session.backendToken
     )
 
     try {
