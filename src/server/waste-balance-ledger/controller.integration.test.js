@@ -422,6 +422,40 @@ describe('the waste balance ledger page', () => {
       expect(body.ownerDocument.title).toContain('Waste balance ledger')
     })
 
+    it('encodes a registration id holding reserved characters once in its links', async ({
+      msw,
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        findRegistrationAndAccreditation(
+          fixtureData,
+          registeredOnlyRegistrationId
+        )
+      )
+      msw.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/reg&1/waste-balance-ledger`,
+          () => HttpResponse.json(registeredOnlyLedgerOf([summaryLogSubmitted]))
+        )
+      )
+      const encodedPath = `/organisations/${organisationId}/registrations/reg%261`
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `${encodedPath}/waste-balance-ledger`,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+
+      expect(
+        crumbsOf(body).at(2)?.querySelector('a')?.getAttribute('href')
+      ).toBe(encodedPath)
+      expect(
+        getByRole(body, 'link', { name: /^Download XLSX/ }).getAttribute('href')
+      ).toBe(`${encodedPath}/summary-logs/files/log-1/download`)
+    })
+
     it('reads the registered-only ledger, and says the period carries no accreditation', async ({
       msw,
       server

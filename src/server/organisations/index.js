@@ -1,7 +1,10 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
-import { controller } from './controller.js'
+import Boom from '@hapi/boom'
+import { chooseYearController } from './choose-year-controller.js'
 import { controller as detailsController } from './details/controller.js'
 import { errorController } from './error-controller.js'
+import { homeController } from './home-controller.js'
+import { yearController } from './year-controller.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -9,13 +12,15 @@ import { errorController } from './error-controller.js'
  */
 
 /**
- * @typedef {{ organisationNumber: string }} OrganisationParams
+ * @typedef {{ organisationNumber: string, year?: string }} OrganisationParams
  */
 
 /**
+ * One address, two audiences: a regulator gets the details page, anyone else
+ * their own home page.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
-const organisationController = {
+const homeRoute = {
   /**
    * @param {HapiRequest & { params: OrganisationParams }} request
    * @param {ResponseToolkit} h
@@ -23,9 +28,28 @@ const organisationController = {
   handler(request, h) {
     return readsAsARegulator(request.auth.credentials)
       ? detailsController.handler(request, h)
-      : controller.handler(request, h)
+      : homeController.handler(request, h)
   }
 }
+
+/**
+ * A regulator has no page at this address, so it answers them nothing.
+ * @param {{ handler: (request: HapiRequest & { params: OrganisationParams }, h: ResponseToolkit) => unknown }} controller
+ * @returns {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const operatorOnly = (controller) => ({
+  /**
+   * @param {HapiRequest & { params: OrganisationParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    if (readsAsARegulator(request.auth.credentials)) {
+      throw Boom.notFound()
+    }
+
+    return controller.handler(request, h)
+  }
+})
 
 /**
  * Sets up the routes used in the organisations page.
@@ -38,14 +62,29 @@ export const organisations = {
     register(server) {
       server.route([
         {
-          ...organisationController,
+          ...homeRoute,
           method: 'GET',
           path: '/organisations/{organisationNumber}'
         },
         {
-          ...organisationController,
+          ...homeRoute,
           method: 'GET',
           path: '/organisations/{organisationNumber}/exporting'
+        },
+        {
+          ...operatorOnly(yearController),
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/{year}'
+        },
+        {
+          ...operatorOnly(yearController),
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/{year}/exporting'
+        },
+        {
+          ...operatorOnly(chooseYearController),
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/{year}/choose-year'
         },
         {
           ...errorController,

@@ -14,6 +14,7 @@ import {
 } from '#server/auth/plugins/entra-id.js'
 import { holdsNoRole } from '#server/auth/roles.js'
 import { paths } from '#server/paths.js'
+import { organisationPath } from '#server/reports/helpers/report-paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -98,7 +99,9 @@ const defraIdCallbackController = {
 
       const redirectUrl = referrerIfPresentElseDefault(
         request,
-        request.localiseUrl(`/organisations/${organisations.linked.orgId}`)
+        request.localiseUrl(
+          organisationPath({ organisationNumber: organisations.linked.orgId })
+        )
       )
 
       return h.redirect(redirectUrl)

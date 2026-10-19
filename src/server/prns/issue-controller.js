@@ -2,6 +2,10 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
+import {
+  accreditationIdPath,
+  organisationIdPath
+} from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const issueController = {
@@ -35,15 +39,15 @@ export const issueController = {
       await metrics.journey.end(request, JOURNEY.issuePrn, prnId)
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
+        `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnId}/issued`
       )
     } catch (error) {
       request.logger.error({ message: 'Failed to issue PRN', err: error })
 
-      const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}`
+      const basePath = `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes/${prnId}`
 
       if (error.isBoom && error.output.statusCode === statusCodes.conflict) {
-        return h.redirect(`/organisations/${organisationId}/error`)
+        return h.redirect(`${organisationIdPath({ organisationId })}/error`)
       }
 
       // All other errors (including WB calculation failures) redirect to action page

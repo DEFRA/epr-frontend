@@ -20,13 +20,13 @@ import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
-import { fetchOverseasSites } from './helpers/fetch-overseas-sites.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 
 /**
- * @import { OverseasSiteView, OverseasSitesByOrsId, OverseasSitesDetails } from './helpers/fetch-overseas-sites.js'
+ * @import { OrganisationView, OverseasSiteView, OverseasSitesByOrsId, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
-vi.mock(import('./helpers/fetch-overseas-sites.js'))
+vi.mock(import('#server/common/helpers/organisations/fetch-registration.js'))
 
 const backendUrl = config.get('eprBackendUrl')
 
@@ -62,10 +62,19 @@ const bahiaPlasticos = {
 
 /**
  * @param {{ sites?: OverseasSitesByOrsId }} [overrides]
- * @returns {OverseasSitesDetails}
+ * @returns {{ organisation: OrganisationView, registration: RegistrationView }}
  */
 const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
-  const registration = { material: 'plastic', overseasSites: sites }
+  /** @type {RegistrationView} */
+  const registration = {
+    status: { current: 'approved', timeline: {} },
+    validFrom: '2026-01-01',
+    material: 'plastic',
+    submittedToRegulator: { code: 'ea' },
+    accreditations: {},
+    wasteProcessingType: 'exporter',
+    overseasSites: sites
+  }
 
   return {
     organisation: {
@@ -73,7 +82,6 @@ const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
       organisationNumber: 500123,
       registrations: { [registrationNumber]: registration }
     },
-    registrationNumber,
     registration
   }
 }
@@ -101,7 +109,7 @@ describe('the overseas reprocessing sites page', () => {
   })
 
   beforeEach(() => {
-    vi.mocked(fetchOverseasSites).mockResolvedValue(overseasSitesDetails())
+    vi.mocked(fetchRegistration).mockResolvedValue(overseasSitesDetails())
   })
 
   afterAll(() => {
@@ -178,7 +186,7 @@ describe('the overseas reprocessing sites page', () => {
   it('lists the sites in ORS id order whatever order they arrive in', async ({
     server
   }) => {
-    vi.mocked(fetchOverseasSites).mockResolvedValue(
+    vi.mocked(fetchRegistration).mockResolvedValue(
       overseasSitesDetails({
         sites: {
           '021': { ...bahiaPlasticos, name: 'Third' },
@@ -197,7 +205,7 @@ describe('the overseas reprocessing sites page', () => {
   })
 
   it('dashes the parts of an address a site leaves out', async ({ server }) => {
-    vi.mocked(fetchOverseasSites).mockResolvedValue(
+    vi.mocked(fetchRegistration).mockResolvedValue(
       overseasSitesDetails({
         sites: {
           '014': {
@@ -234,7 +242,7 @@ describe('the overseas reprocessing sites page', () => {
   it('says so where the registration reprocesses overseas nowhere', async ({
     server
   }) => {
-    vi.mocked(fetchOverseasSites).mockResolvedValue(
+    vi.mocked(fetchRegistration).mockResolvedValue(
       overseasSitesDetails({ sites: {} })
     )
 
@@ -293,6 +301,19 @@ describe('the overseas reprocessing sites page', () => {
     ).toHaveLength(0)
   })
 
+  it('does not exist for an organisation number that is not digits, and reads nothing', async ({
+    server
+  }) => {
+    const response = await server.inject({
+      method: 'GET',
+      url: `/organisations/5001x3/registrations/${registrationNumber}/overseas-sites`,
+      auth: regulator
+    })
+
+    expect(response.statusCode).toBe(statusCodes.notFound)
+    expect(fetchRegistration).not.toHaveBeenCalled()
+  })
+
   it('does not exist for an operator', async ({ server }) => {
     const { statusCode } = await visit(server, operator)
 
@@ -302,7 +323,7 @@ describe('the overseas reprocessing sites page', () => {
   it('reads nothing from the backend for an operator', async ({ server }) => {
     await visit(server, operator)
 
-    expect(fetchOverseasSites).not.toHaveBeenCalled()
+    expect(fetchRegistration).not.toHaveBeenCalled()
   })
 
   // The two cases below are the gate's whole subject. A session's role and its

@@ -1,3 +1,5 @@
+import { accreditationIdPath } from '#server/reports/helpers/report-paths.js'
+
 /**
  * Where a note's back and return links go, and what they read.
  *
@@ -17,6 +19,6 @@ export const noteReturn = ({
   registrationId,
   accreditationId
 }) => ({
-  path: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`,
+  path: `${accreditationIdPath({ organisationId, registrationId, accreditationId })}/packaging-recycling-notes`,
   textKey: 'prns:view:returnLink'
 })
