@@ -27,7 +27,6 @@ import {
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { reportAttempt } from './helpers/report-attempt.js'
 import { reportPath, reportsListPath } from './helpers/report-paths.js'
-import { organisationViewName } from '#server/registrations/details/helpers/caption.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { isResubmission } from './helpers/resubmission.js'
@@ -282,10 +281,7 @@ function buildViewModel({
     ...activityViewData,
     prn: buildPrnSummaryViewData(reportDetail.prn),
     supportingInformation: reportDetail.supportingInformation || fallbackText,
-    declarationItems: buildDeclarationItems(
-      localise,
-      organisationViewName(organisation)
-    ),
+    declarationItems: buildDeclarationItems(localise, organisation.displayName),
     version: reportDetail.version,
     submissionDeclaredBy: submissionDeclaredBy ?? null,
     errors: errors ?? null,

@@ -42,6 +42,7 @@ const registrationPath = `/organisations/${organisationNumber}/registrations/${r
 const anOrganisation = (overrides) => ({
   organisationNumber: 500118,
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   registrations: {},
   ...overrides
 })
@@ -162,18 +163,12 @@ describe(buildViewModel, () => {
     expect(build().caption).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
   })
 
-  it('names the organisation by its trading name where it holds one', () => {
+  it('names the organisation by its display name', () => {
     expect(
       build({
-        organisation: anOrganisation({ tradingName: 'Kirkby Recycling' })
+        organisation: anOrganisation({ displayName: 'Kirkby Recycling' })
       }).caption
     ).toBe('Kirkby Recycling - R26ER5001180041PL')
-  })
-
-  it('names the organisation by its name where the trading name is blank', () => {
-    expect(
-      build({ organisation: anOrganisation({ tradingName: '  ' }) }).caption
-    ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
   })
 
   it('walks back to the registration it sits under, by number', () => {

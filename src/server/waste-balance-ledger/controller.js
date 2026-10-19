@@ -16,7 +16,6 @@ import {
   toAccreditationChildPage,
   toRegistrationTrail
 } from '#server/registrations/details/helpers/accreditation-child-page.js'
-import { organisationViewName } from '#server/registrations/details/helpers/caption.js'
 import {
   accreditationPath,
   organisationPath,
@@ -54,7 +53,7 @@ export const controller = {
     const { t: localise } = request
     const { noteType } = getNoteTypeDisplayNames(registration)
     const heading = localise('waste-balance-ledger:heading')
-    const name = organisationViewName(organisation)
+    const name = organisation.displayName
     const ledgerRegistrationPath = registrationPath(registrationKeys)
     const ledgerAccreditationPath = year
       ? accreditationPath({ ...registrationKeys, year })

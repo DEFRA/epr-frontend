@@ -64,7 +64,10 @@ const regulatorAuth = buildMockAuth({
 })
 
 const accreditedRegistration = buildRegistrationWithAccreditation({
-  organisation: { name: 'Acme Recycling Ltd' },
+  organisation: {
+    name: 'Acme Recycling Ltd',
+    displayName: 'Acme Recycling Ltd'
+  },
   registration: buildRegistrationView({
     material: 'glass_re_melt',
     wasteProcessingType: 'reprocessor',

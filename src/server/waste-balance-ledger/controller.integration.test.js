@@ -28,6 +28,7 @@ const registeredOnlyRegistration = buildRegistrationView({
 const organisation = buildOrganisationView({
   organisationNumber: 50002,
   name: 'ACME ltd',
+  displayName: 'ACME ltd',
   registrations: {
     REG001234: buildRegistrationView({
       wasteProcessingType: 'reprocessor',

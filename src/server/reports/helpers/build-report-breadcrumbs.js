@@ -1,5 +1,4 @@
 import { paths } from '#server/paths.js'
-import { organisationViewName } from '#server/registrations/details/helpers/caption.js'
 
 import { CADENCE } from '../constants.js'
 import {
@@ -108,7 +107,7 @@ export const buildReportBreadcrumbs = ({
       href: localiseUrl(paths.regulators.home)
     },
     {
-      text: organisationViewName(organisation),
+      text: organisation.displayName,
       href: localiseUrl(organisationPath(keys))
     },
     {

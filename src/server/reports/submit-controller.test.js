@@ -38,7 +38,10 @@ const mockAuth = buildMockAuth()
  */
 const buildRegistration = (registration, accredited = false) =>
   buildRegistrationWithAccreditation({
-    organisation: { name: 'Test Organisation' },
+    organisation: {
+      name: 'Test Organisation',
+      displayName: 'Test Organisation'
+    },
     registration: buildRegistrationView({
       ...registration,
       accreditations: accredited ? { 2026: buildAccreditationView() } : {}

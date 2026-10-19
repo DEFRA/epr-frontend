@@ -22,7 +22,7 @@ const localiseUrl = (path) => `/en${path}`
 
 const organisation = buildOrganisationView({
   name: 'Acme Recycling Ltd',
-  tradingName: 'Acme'
+  displayName: 'Acme'
 })
 
 const context = {
@@ -47,22 +47,13 @@ describe(buildReportBreadcrumbs, () => {
     })
   })
 
-  it('names the organisation by its trading name', () => {
+  it('names the organisation by its display name', () => {
     const [, organisationCrumb] = buildReportBreadcrumbs(context)
 
     expect(organisationCrumb).toStrictEqual({
       text: 'Acme',
       href: '/en/organisations/500123'
     })
-  })
-
-  it('falls back to the registered name where there is no trading name', () => {
-    const [, organisationCrumb] = buildReportBreadcrumbs({
-      ...context,
-      organisation: buildOrganisationView({ name: 'Acme Recycling Ltd' })
-    })
-
-    expect(organisationCrumb.text).toBe('Acme Recycling Ltd')
   })
 
   it('links the registration above the page', () => {

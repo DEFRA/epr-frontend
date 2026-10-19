@@ -17,7 +17,6 @@ import {
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
-import { organisationViewName } from '#server/registrations/details/helpers/caption.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
@@ -431,7 +430,7 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisation }) {
     },
     {
       key: { text: localise('prns:issuerLabel') },
-      value: { text: organisationViewName(organisation) }
+      value: { text: organisation.displayName }
     },
     {
       key: { text: localise('prns:issuedDateLabel') },
@@ -478,7 +477,7 @@ function buildExistingPrnDetailRows({
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
-      issuerName: organisationViewName(organisation)
+      issuerName: organisation.displayName
     })
   )
 

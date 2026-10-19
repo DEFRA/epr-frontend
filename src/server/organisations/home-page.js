@@ -295,7 +295,7 @@ function getActiveSitesAndTitle({
  * @param {ResponseToolkit} h
  * @param {{
  *   orgNumber: OrganisationNumber,
- *   organisation: { name: string, tradingName?: string },
+ *   organisation: { displayName: string },
  *   displayedRegistrations: DisplayedRegistration[],
  *   wasteBalanceMap: WasteBalanceMap,
  *   year: Year | null,
@@ -344,7 +344,7 @@ export function renderHome(
     localise
   })
 
-  const organisationName = organisation.tradingName?.trim() || organisation.name
+  const organisationName = organisation.displayName
 
   return h.view('organisations/index', {
     pageTitle: localise('organisations:pageTitle', {

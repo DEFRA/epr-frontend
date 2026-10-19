@@ -8,7 +8,6 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 import { toAccreditationChildPage } from '../../helpers/accreditation-child-page.js'
-import { organisationViewName } from '../../helpers/caption.js'
 
 /**
  * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
@@ -62,7 +61,7 @@ export const buildViewModel = ({
       heading,
       localise,
       localiseUrl,
-      organisationName: organisationViewName(organisation),
+      organisationName: organisation.displayName,
       registrationNumber: keys.registrationNumber,
       accreditationNumber: accreditation.accreditationNumber,
       paths: {

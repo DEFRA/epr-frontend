@@ -57,6 +57,7 @@ const build = ({
     organisation: {
       organisationNumber,
       name: 'Kirkby Plastics Ltd',
+      displayName: 'Kirkby Plastics Ltd',
       registrations
     },
     activeTab,

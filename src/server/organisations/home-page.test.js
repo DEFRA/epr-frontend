@@ -81,7 +81,7 @@ const exporter = (overrides = {}) =>
 const organisationOf = (overrides = {}) => ({
   organisationNumber: ORGANISATION_NUMBER,
   name: 'ACME ltd',
-  tradingName: 'ACME trading',
+  displayName: 'ACME trading',
   registrations: {},
   ...overrides
 })
@@ -210,7 +210,7 @@ describe('the organisation home page', () => {
   })
 
   describe('the name it shows', () => {
-    it('names the organisation by its trading name', async ({ server }) => {
+    it('names the organisation by its display name', async ({ server }) => {
       serve({})
 
       const { payload } = await visit(server)
@@ -218,26 +218,6 @@ describe('the organisation home page', () => {
 
       expect($('title').text()).toMatch(/^Home: ACME trading/)
       expect($('h1').text()).toMatch(/ACME trading/)
-    })
-
-    it('falls back to the name when there is no trading name', async ({
-      server
-    }) => {
-      serve({}, { tradingName: undefined })
-
-      const { payload } = await visit(server)
-
-      expect(load(payload)('title').text()).toMatch(/^Home: ACME ltd/)
-    })
-
-    it('falls back to the name when the trading name is blank', async ({
-      server
-    }) => {
-      serve({}, { tradingName: '   ' })
-
-      const { payload } = await visit(server)
-
-      expect(load(payload)('h1').text()).toMatch(/ACME ltd/)
     })
   })
 

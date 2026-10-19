@@ -43,6 +43,7 @@ export const buildRegistrationView = (overrides = {}) =>
 export const buildOrganisationView = (overrides = {}) => ({
   organisationNumber: 500123,
   name: 'Test Organisation Ltd',
+  displayName: 'Test Organisation Ltd',
   registrations: { R26EN0000000001PL: buildRegistrationView() },
   ...overrides
 })

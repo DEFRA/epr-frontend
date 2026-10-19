@@ -79,7 +79,7 @@
  * @typedef {{
  *   organisationNumber: number,
  *   name: string,
- *   tradingName?: string,
+ *   displayName: string,
  *   registrations: Record<string, RegistrationView>
  * }} OrganisationView
  */

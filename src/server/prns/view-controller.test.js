@@ -76,7 +76,10 @@ const mockAuth = {
 }
 
 const fixtureReprocessor = buildRegistrationWithAccreditation({
-  organisation: { name: 'Reprocessor Organisation' },
+  organisation: {
+    name: 'Reprocessor Organisation',
+    displayName: 'Reprocessor Organisation'
+  },
   registration: buildRegistrationView({
     wasteProcessingType: 'reprocessor',
     reprocessingType: 'input',
@@ -243,7 +246,7 @@ describe('#viewController', () => {
         expect(getByText(main, /Reprocessor Organisation/i)).toBeDefined()
       })
 
-      it('displays issuer tradingName when present on certificate page', async ({
+      it('displays the issuer display name on certificate page', async ({
         server
       }) => {
         vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
@@ -251,7 +254,7 @@ describe('#viewController', () => {
             ...fixtureReprocessor,
             organisation: {
               name: 'Legal Reprocessor Ltd',
-              tradingName: 'Reprocessor Trading'
+              displayName: 'Reprocessor Trading'
             }
           })
         )
@@ -1323,7 +1326,7 @@ describe('#viewController', () => {
         expect(getByText(main, /Not provided/i)).toBeDefined()
       })
 
-      it('displays issuer tradingName when present on check page', async ({
+      it('displays the issuer display name on check page', async ({
         server
       }) => {
         vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
@@ -1331,7 +1334,7 @@ describe('#viewController', () => {
             ...fixtureReprocessor,
             organisation: {
               name: 'Legal Reprocessor Ltd',
-              tradingName: 'Reprocessor Trading'
+              displayName: 'Reprocessor Trading'
             }
           })
         )

@@ -1,5 +1,4 @@
 import { paths } from '#server/paths.js'
-import { organisationViewName } from '#server/registrations/details/helpers/caption.js'
 import {
   accreditationPath,
   organisationPath,
@@ -48,7 +47,7 @@ export const buildNoteBreadcrumbs = ({
     href: localiseUrl(paths.regulators.home)
   },
   {
-    text: organisationViewName(organisation),
+    text: organisation.displayName,
     href: localiseUrl(organisationPath(keys))
   },
   {

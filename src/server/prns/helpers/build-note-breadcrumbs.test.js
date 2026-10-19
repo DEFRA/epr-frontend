@@ -17,7 +17,7 @@ const localiseUrl = (path) => `/en${path}`
 
 const organisation = buildOrganisationView({
   name: 'Acme Recycling Ltd',
-  tradingName: 'Acme'
+  displayName: 'Acme'
 })
 
 const context = {
@@ -66,14 +66,5 @@ describe(buildNoteBreadcrumbs, () => {
     })
 
     expect(crumbs.at(-1)).toStrictEqual({ text: 'prn-1' })
-  })
-
-  it('falls back to the registered name where there is no trading name', () => {
-    const crumbs = buildNoteBreadcrumbs({
-      ...context,
-      organisation: buildOrganisationView({ name: 'Acme Recycling Ltd' })
-    })
-
-    expect(crumbs[1].text).toBe('Acme Recycling Ltd')
   })
 })

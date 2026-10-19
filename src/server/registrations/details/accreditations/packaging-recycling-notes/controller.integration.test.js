@@ -96,7 +96,11 @@ const reprocessor = buildRegistrationView({
 /** @type {PrnListDetails} */
 const details = {
   ...buildRegistrationWithAccreditation({
-    organisation: { organisationNumber: 50002, name: 'Kirkby Plastics Ltd' },
+    organisation: {
+      organisationNumber: 50002,
+      name: 'Kirkby Plastics Ltd',
+      displayName: 'Kirkby Plastics Ltd'
+    },
     registration: reprocessor,
     accreditation: buildAccreditationView({
       accreditationNumber: 'A26ER5001180114PL'

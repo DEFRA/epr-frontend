@@ -465,7 +465,7 @@ describe('#actionController', () => {
       expect(tag).toBeNull()
     })
 
-    it('displays issuer tradingName when present on action page', async ({
+    it('displays the issuer display name on action page', async ({
       server
     }) => {
       vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
@@ -473,7 +473,7 @@ describe('#actionController', () => {
           ...fixtureReprocessor,
           organisation: {
             name: 'Legal Reprocessor Ltd',
-            tradingName: 'Reprocessor Trading'
+            displayName: 'Reprocessor Trading'
           }
         })
       )

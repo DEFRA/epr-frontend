@@ -11,7 +11,7 @@ import {
   registrationPath as toRegistrationPath
 } from '#server/reports/helpers/report-paths.js'
 
-import { organisationViewName, toCaption } from './helpers/caption.js'
+import { toCaption } from './helpers/caption.js'
 import { toDateRange } from './helpers/date-range.js'
 import {
   accreditedDateRange,
@@ -178,7 +178,7 @@ export const buildViewModel = ({
   localise,
   localiseUrl
 }) => {
-  const name = organisationViewName(organisation)
+  const name = organisation.displayName
   const path = toRegistrationPath(keys)
   const heading = localise('registrations:details:heading')
 

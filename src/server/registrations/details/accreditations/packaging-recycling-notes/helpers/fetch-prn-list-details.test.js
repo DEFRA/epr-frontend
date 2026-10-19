@@ -70,7 +70,10 @@ describe(fetchPrnListDetails, () => {
       accreditation,
       packagingRecyclingNotes: notes
     })
-    expect(fetchRequiredAnyAccreditation).toHaveBeenCalledWith(keys, backendToken)
+    expect(fetchRequiredAnyAccreditation).toHaveBeenCalledWith(
+      keys,
+      backendToken
+    )
     expect(fetchPackagingRecyclingNotes).toHaveBeenCalledWith(
       keys,
       backendToken

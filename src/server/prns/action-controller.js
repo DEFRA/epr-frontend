@@ -1,6 +1,5 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
-import { organisationViewName } from '#server/registrations/details/helpers/caption.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnCoreRows,
@@ -206,7 +205,7 @@ function buildActionPrnDetailRows({
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
-      issuerName: organisationViewName(organisation)
+      issuerName: organisation.displayName
     })
   )
 
