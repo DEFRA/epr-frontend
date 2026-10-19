@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 import { year } from '#server/common/helpers/year.js'
 
 /** @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js' */
@@ -10,16 +10,10 @@ import { year } from '#server/common/helpers/year.js'
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<Year[]>} Years, newest first
  */
-async function fetchOrganisationYears(organisationNumber, backendToken) {
-  const path = `/organisations/${organisationNumber}/years`
-
-  const { years } = /** @type {{ years: number[] }} */ (
-    await fetchJsonFromBackend(path, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${backendToken}`
-      }
-    })
+const fetchOrganisationYears = async (organisationNumber, backendToken) => {
+  /** @type {{ years: number[] }} */
+  const { years } = await backend(backendToken).get(
+    path`/organisations/${organisationNumber}/years`
   )
 
   return years.map(year)
