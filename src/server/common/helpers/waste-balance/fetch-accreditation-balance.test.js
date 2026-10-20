@@ -18,7 +18,7 @@ const logger = createMockLogger()
 const balance = { amount: 20.5, availableAmount: 10.3 }
 
 const params = {
-  organisationNumber: organisationNumber(500001),
+  organisationNumber: organisationNumber('500001'),
   year: year(2026),
   accreditationNumber: 'A26ER5001180114PL',
   backendToken: 'mock-token',

@@ -1,13 +1,13 @@
 /**
- * The numeric natural key of an organisation, such as 500123.
+ * The natural key of an organisation, such as '500123'.
  *
- * Branded so it cannot be confused with other numbers, such as a year.
+ * Branded so it cannot be confused with other keys, such as a registration number.
  * `organisationNumber` is the only constructor.
- * @typedef {number & { readonly __brand: 'OrganisationNumber' }} OrganisationNumber
+ * @typedef {string & { readonly __brand: 'OrganisationNumber' }} OrganisationNumber
  */
 
 /**
- * @param {number} value
+ * @param {string} value
  * @returns {OrganisationNumber}
  */
 export const organisationNumber = (value) =>

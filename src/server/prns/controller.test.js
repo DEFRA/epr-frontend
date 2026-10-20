@@ -49,7 +49,7 @@ const fixtureReprocessor = buildRegistrationWithAccreditation({
 })
 
 const fixtureExporter = buildRegistrationWithAccreditation({
-  organisation: { organisationNumber: 500456, name: 'Exporter Organisation' },
+  organisation: { organisationNumber: '500456', name: 'Exporter Organisation' },
   registration: buildRegistrationView({ material: 'plastic' }), // PERN
   accreditation: buildAccreditationView({ accreditationNumber: 'ACC-002' }),
   registrationNumber: 'E26EN0000000002PL'

@@ -78,7 +78,7 @@ describe(fetchRegistrationWithAccreditation, () => {
       buildRegistrationView({
         accreditations: {
           2026: buildAccreditationView({
-            status: { current: 'cancelled', timeline: {} }
+            status: { current: 'cancelled', timeline: [] }
           })
         }
       })
@@ -122,10 +122,10 @@ describe(fetchRequiredAccreditation, () => {
       buildRegistrationView({
         accreditations: {
           2026: buildAccreditationView({
-            status: { current: 'suspended', timeline: {} }
+            status: { current: 'suspended', timeline: [] }
           }),
           2027: buildAccreditationView({
-            status: { current: 'created', timeline: {} }
+            status: { current: 'created', timeline: [] }
           })
         }
       })
@@ -177,7 +177,7 @@ describe(fetchRequiredAnyAccreditation, () => {
     const registration = buildRegistrationView({
       accreditations: {
         2026: buildAccreditationView({
-          status: { current: 'cancelled', timeline: {} }
+          status: { current: 'cancelled', timeline: [] }
         })
       }
     })

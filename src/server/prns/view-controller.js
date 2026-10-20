@@ -85,7 +85,7 @@ export const viewPostController = {
       ])
       // A failed read fails the confirmation, so an outage never discards a draft
       const balances = await fetchOrganisationWasteBalances(
-        organisationNumber(Number(keys.organisationNumber)),
+        organisationNumber(keys.organisationNumber),
         year(Number(keys.year)),
         backendToken
       )

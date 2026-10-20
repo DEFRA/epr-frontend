@@ -19,7 +19,7 @@ export const fetchPrnWasteBalance = ({
   logger
 }) =>
   fetchAccreditationBalance({
-    organisationNumber: organisationNumber(Number(keys.organisationNumber)),
+    organisationNumber: organisationNumber(keys.organisationNumber),
     year: year(Number(keys.year)),
     accreditationNumber,
     backendToken,

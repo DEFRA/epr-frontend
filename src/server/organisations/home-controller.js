@@ -21,9 +21,7 @@ export const homeController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const orgNumber = organisationNumber(
-      Number(request.params.organisationNumber)
-    )
+    const orgNumber = organisationNumber(request.params.organisationNumber)
     const { backendToken } = request.auth.credentials
 
     const [latestYear] = await fetchOrganisationYears(orgNumber, backendToken)

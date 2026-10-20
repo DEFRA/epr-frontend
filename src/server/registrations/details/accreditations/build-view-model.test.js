@@ -77,7 +77,7 @@ const accreditationPath = `${registrationPath}/accreditations/2026`
 
 /** @type {OrganisationView} */
 const organisation = {
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
   registrations: {}
@@ -90,7 +90,7 @@ const organisation = {
 const aRegistration = (overrides) =>
   /** @type {RegistrationView} */ (
     /** @type {unknown} */ ({
-      status: { current: 'approved', timeline: {} },
+      status: { current: 'approved', timeline: [] },
       validFrom: '2026-01-01',
       material: 'plastic',
       wasteProcessingType: 'reprocessor',
@@ -107,7 +107,7 @@ const anAccreditation = (overrides) => ({
   accreditationNumber: 'A26ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
   },
   ...overrides
 })
@@ -278,7 +278,7 @@ describe('the accreditation details view model', () => {
       build({
         status: {
           current: 'approved',
-          timeline: { '2025-12-15T09:00:00.000Z': { status: 'approved' } }
+          timeline: [{ status: 'approved', at: '2025-12-15T09:00:00.000Z' }]
         }
       }).period
     ).toBe('1 January to 31 December 2026')
@@ -289,10 +289,10 @@ describe('the accreditation details view model', () => {
       build({
         status: {
           current: 'cancelled',
-          timeline: {
-            '2026-07-01T09:00:00.000Z': { status: 'approved' },
-            '2026-09-10T09:00:00.000Z': { status: 'cancelled' }
-          }
+          timeline: [
+            { status: 'approved', at: '2026-07-01T09:00:00.000Z' },
+            { status: 'cancelled', at: '2026-09-10T09:00:00.000Z' }
+          ]
         }
       }).period
     ).toBe('1 July to 10 September 2026')
@@ -303,12 +303,12 @@ describe('the accreditation details view model', () => {
       build({
         status: {
           current: 'suspended',
-          timeline: {
-            '2026-03-01T09:00:00.000Z': { status: 'approved' },
-            '2026-05-10T09:00:00.000Z': { status: 'cancelled' },
-            '2026-06-01T09:00:00.000Z': { status: 'approved' },
-            '2026-08-01T09:00:00.000Z': { status: 'suspended' }
-          }
+          timeline: [
+            { status: 'approved', at: '2026-03-01T09:00:00.000Z' },
+            { status: 'cancelled', at: '2026-05-10T09:00:00.000Z' },
+            { status: 'approved', at: '2026-06-01T09:00:00.000Z' },
+            { status: 'suspended', at: '2026-08-01T09:00:00.000Z' }
+          ]
         }
       }).period
     ).toBe('1 March to 31 December 2026')
