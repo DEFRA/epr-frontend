@@ -53,6 +53,7 @@ const accreditationPath = `${registrationPath}/accreditations/2026`
 const anOrganisation = (overrides) => ({
   organisationNumber: 500118,
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   registrations: {},
   ...overrides
 })
@@ -114,10 +115,10 @@ describe('the accreditation reports view model', () => {
     )
   })
 
-  it('names the organisation by its trading name where it holds one', () => {
+  it('names the organisation by its display name', () => {
     expect(
       build({
-        organisation: anOrganisation({ tradingName: 'Kirkby Recycling' })
+        organisation: anOrganisation({ displayName: 'Kirkby Recycling' })
       }).caption
     ).toBe('Kirkby Recycling - R26ER5001180041PL - A26ER5001180114PL')
   })

@@ -1,10 +1,14 @@
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
+import {
   asIssuedToOrganisation,
   asPackagingRecyclingNotes,
-  asRegistrationWithLiveAccreditation,
   asWasteBalance
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
@@ -22,7 +26,7 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-notes.js'))
@@ -41,39 +45,30 @@ const reprocessorKeys = {
   year: '2026'
 }
 
-const fixtureReprocessor = asRegistrationWithLiveAccreditation({
-  organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
-  registration: {
-    id: 'reg-001',
-    registrationNumber: reprocessorKeys.registrationNumber,
-    wasteProcessingType: 'reprocessor-input',
-    material: 'glass',
-    glassRecyclingProcess: ['glass_re_melt'],
-    site: { address: { line1: 'Reprocessing Site' } },
-    accreditationId: 'acc-001'
+const fixtureReprocessor = buildRegistrationWithAccreditation({
+  organisation: {
+    organisationNumber: 500001,
+    name: 'Reprocessor Organisation'
   },
-  accreditation: {
-    id: 'acc-001',
-    accreditationNumber: 'A26ER5000010001GL',
-    status: 'approved'
-  }
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    material: 'glass_re_melt',
+    site: { address: { fullAddress: 'Reprocessing Site' } }
+  }),
+  accreditation: buildAccreditationView({
+    accreditationNumber: 'A26ER5000010001GL'
+  }),
+  registrationNumber: reprocessorKeys.registrationNumber
 })
 
-const fixtureExporter = asRegistrationWithLiveAccreditation({
-  organisationData: { id: 'org-456', name: 'Exporter Organisation' },
-  registration: {
-    id: 'reg-002',
-    registrationNumber: 'R26EX5000020002PL',
-    wasteProcessingType: 'exporter',
-    material: 'plastic',
-    site: null,
-    accreditationId: 'acc-002'
-  },
-  accreditation: {
-    id: 'acc-002',
-    accreditationNumber: 'A26EX5000020002PL',
-    status: 'approved'
-  }
+const fixtureExporter = buildRegistrationWithAccreditation({
+  organisation: { organisationNumber: 500002, name: 'Exporter Organisation' },
+  registration: buildRegistrationView({ material: 'plastic' }),
+  accreditation: buildAccreditationView({
+    accreditationNumber: 'A26EX5000020002PL'
+  }),
+  registrationNumber: 'R26EX5000020002PL'
 })
 
 const mockWasteBalance = asWasteBalance({ availableAmount: 150.5 })
@@ -181,9 +176,9 @@ describe('#listPrnsController', () => {
   describe('request handling', () => {
     describe('page rendering', () => {
       beforeEach(() => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
       })
 
       it('should render page with correct title and heading', async ({
@@ -471,9 +466,9 @@ describe('#listPrnsController', () => {
 
     describe('awaiting cancellation section', () => {
       beforeEach(() => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           mockPrnsWithCancellation
         )
@@ -640,9 +635,9 @@ describe('#listPrnsController', () => {
 
     describe('cancelled tab', () => {
       beforeEach(() => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           mockPrnsWithCancelled
         )
@@ -786,9 +781,7 @@ describe('#listPrnsController', () => {
       it('should render "Cancelled PERNs" heading for exporter', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           mockPrnsWithCancelled
         )
@@ -811,9 +804,7 @@ describe('#listPrnsController', () => {
       it('should render "PERN number" column heading for exporter', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           mockPrnsWithCancelled
         )
@@ -836,9 +827,7 @@ describe('#listPrnsController', () => {
       it('should show "You have not cancelled any PERNs" empty message for exporter', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
 
         const { result } = await server.inject({
@@ -861,9 +850,9 @@ describe('#listPrnsController', () => {
 
     describe('conditional tabs', () => {
       beforeEach(() => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
       })
 
       it('should render tabs when non-draft PRNs exist even without issued PRNs', async ({
@@ -1029,9 +1018,9 @@ describe('#listPrnsController', () => {
       it('should return 404 when the year names no live accreditation', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockRejectedValue(Boom.notFound('Not accredited for this year'))
+        vi.mocked(fetchRequiredAccreditation).mockRejectedValue(
+          Boom.notFound('Not accredited for this year')
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -1046,9 +1035,9 @@ describe('#listPrnsController', () => {
       it('reads the records, notes and balance by the numbers and year', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
 
         await server.inject({
           method: 'GET',
@@ -1056,9 +1045,10 @@ describe('#listPrnsController', () => {
           auth: mockAuth
         })
 
-        expect(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).toHaveBeenCalledWith(reprocessorKeys, mockCredentials)
+        expect(fetchRequiredAccreditation).toHaveBeenCalledWith(
+          reprocessorKeys,
+          mockCredentials.backendToken
+        )
         expect(fetchPackagingRecyclingNotes).toHaveBeenCalledWith(
           reprocessorKeys,
           mockCredentials.backendToken
@@ -1075,9 +1065,9 @@ describe('#listPrnsController', () => {
       it('should handle waste balance fetch failure gracefully', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPrnWasteBalance).mockResolvedValue(null)
 
         const { statusCode } = await server.inject({
@@ -1090,9 +1080,9 @@ describe('#listPrnsController', () => {
       })
 
       it('should propagate error when PRN fetch fails', async ({ server }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPackagingRecyclingNotes).mockRejectedValue(
           new Error('Backend unavailable')
         )
@@ -1109,9 +1099,9 @@ describe('#listPrnsController', () => {
       it('should show no PRNs message when no PRNs exist', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
 
         const { result, statusCode } = await server.inject({
@@ -1134,9 +1124,9 @@ describe('#listPrnsController', () => {
       it('should not render tabs when no PRNs have been created', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
 
         const { result } = await server.inject({
@@ -1155,9 +1145,9 @@ describe('#listPrnsController', () => {
       it('should render tabs when PRNs exist with issued status', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           asPackagingRecyclingNotes([
             {
@@ -1192,9 +1182,9 @@ describe('#listPrnsController', () => {
       it('should render tabs when non-draft PRNs exist even if none are issued', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           asPackagingRecyclingNotes([
             {
@@ -1227,9 +1217,9 @@ describe('#listPrnsController', () => {
       it('should not render tabs when only draft PRNs exist', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           asPackagingRecyclingNotes([
             {
@@ -1263,9 +1253,7 @@ describe('#listPrnsController', () => {
       it('should show PERN-specific empty message for exporters', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
 
         const { result } = await server.inject({
@@ -1299,9 +1287,9 @@ describe('#listPrnsController', () => {
     describe('dynamic PRN/PERN text', () => {
       describe('for reprocessor (PRN)', () => {
         beforeEach(() => {
-          vi.mocked(
-            getRequiredRegistrationWithAccreditationByNumber
-          ).mockResolvedValue(fixtureReprocessor)
+          vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+            fixtureReprocessor
+          )
         })
 
         it('should display PRN in title and heading', async ({ server }) => {
@@ -1339,9 +1327,9 @@ describe('#listPrnsController', () => {
 
       describe('for exporter (PERN)', () => {
         beforeEach(() => {
-          vi.mocked(
-            getRequiredRegistrationWithAccreditationByNumber
-          ).mockResolvedValue(fixtureExporter)
+          vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+            fixtureExporter
+          )
         })
 
         it('should display PERN in title and heading', async ({ server }) => {
@@ -1396,9 +1384,9 @@ describe('#listPrnsController', () => {
       body.querySelector(`[data-testid="${testId}"]`)
 
     beforeEach(() => {
-      vi.mocked(
-        getRequiredRegistrationWithAccreditationByNumber
-      ).mockResolvedValue(fixtureReprocessor)
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
       // Which operator types see the breakdown is the backend's decision,
       // carried by `mode`: 'manual' only for an output reprocessor, so
       // 'pool' here means an exporter or an input reprocessor, in window,
@@ -1461,9 +1449,7 @@ describe('#listPrnsController', () => {
     it('tells an exporter it can create PERNs from either balance', async ({
       server
     }) => {
-      vi.mocked(
-        getRequiredRegistrationWithAccreditationByNumber
-      ).mockResolvedValue(fixtureExporter)
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
 
       const { body } = await openList(server, exporterListUrl)
 

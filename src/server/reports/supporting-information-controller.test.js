@@ -1,5 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
@@ -9,7 +13,7 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/update-report.js'))
@@ -17,34 +21,16 @@ vi.mock(import('./helpers/update-report.js'))
 const { updateReport } = await import('./helpers/update-report.js')
 
 /**
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
  * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
  */
 
 const mockAuth = buildMockAuth()
 
-const registeredOnlyExporter = /** @type {RegistrationWithAccreditation} */ (
-  /** @type {unknown} */ ({
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234'
-    },
-    accreditation: undefined
-  })
-)
+const registeredOnlyExporter = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
+})
 
-const accreditedExporter = /** @type {RegistrationWithAccreditation} */ (
-  /** @type {unknown} */ ({
-    ...registeredOnlyExporter,
-    accreditation: {
-      id: 'acc-001',
-      accreditationNumber: 'ER992415095748M'
-    }
-  })
-)
+const accreditedExporter = buildRegistrationWithAccreditation()
 
 const reportDetailWithoutSupportingInfo = /** @type {ReportDetailResponse} */ (
   /** @type {unknown} */ ({
@@ -101,7 +87,7 @@ describe('#supportingInformationController', () => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
     })
@@ -303,13 +289,13 @@ describe('#supportingInformationController', () => {
       it('should display back link to free-prns for accredited reprocessor', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue({
-          ...accreditedExporter,
-          registration: {
-            ...accreditedExporter.registration,
-            wasteProcessingType: 'reprocessor'
-          }
-        })
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+          buildRegistrationWithAccreditation({
+            registration: buildRegistrationView({
+              wasteProcessingType: 'reprocessor'
+            })
+          })
+        )
 
         const monthlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/supporting-information`
 
@@ -332,13 +318,14 @@ describe('#supportingInformationController', () => {
       it('should display back link to tonnes-not-recycled for registered-only reprocessor', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue({
-          ...registeredOnlyExporter,
-          registration: {
-            ...registeredOnlyExporter.registration,
-            wasteProcessingType: 'reprocessor'
-          }
-        })
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+          buildRegistrationWithAccreditation({
+            registration: buildRegistrationView({
+              wasteProcessingType: 'reprocessor',
+              accreditations: {}
+            })
+          })
+        )
 
         const quarterlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/supporting-information`
 
@@ -361,7 +348,7 @@ describe('#supportingInformationController', () => {
       it('should display back link to free-perns for accredited exporter', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           accreditedExporter
         )
 
@@ -415,7 +402,7 @@ describe('#supportingInformationController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -726,7 +713,7 @@ describe('#supportingInformationController', () => {
     const resubmissionUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/2/submissions/2/supporting-information`
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -813,7 +800,7 @@ describe('#supportingInformationController', () => {
       it('should include the note-type bullet for an accredited operator', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           accreditedExporter
         )
 

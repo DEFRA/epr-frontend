@@ -4,6 +4,10 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import {
+  buildOrganisationView,
+  buildRegistrationView
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -35,8 +39,6 @@ const mockAuth = buildMockAuth({
 })
 
 describe('#submitSummaryLogController', () => {
-  const organisationId = '123'
-  const registrationId = '456'
   const organisationNumber = '500118'
   const registrationNumber = 'R26ER5001180041PL'
   const summaryLogId = '789'
@@ -46,14 +48,18 @@ describe('#submitSummaryLogController', () => {
     vi.clearAllMocks()
     msw.use(
       http.get(
-        `${config.get('eprBackendUrl')}/v1/organisations/${organisationId}`,
+        `${config.get('eprBackendUrl')}/organisations/${organisationNumber}`,
         () =>
-          HttpResponse.json({
-            id: organisationId,
-            orgId: Number(organisationNumber),
-            registrations: [{ id: registrationId, registrationNumber }],
-            accreditations: []
-          })
+          HttpResponse.json(
+            buildOrganisationView({
+              organisationNumber: Number(organisationNumber),
+              registrations: {
+                [registrationNumber]: buildRegistrationView({
+                  accreditations: {}
+                })
+              }
+            })
+          )
       )
     )
   })

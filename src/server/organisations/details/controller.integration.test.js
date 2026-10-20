@@ -50,6 +50,7 @@ const unrecognised = buildMockAuth({
 const organisation = {
   organisationNumber,
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   registrations: {
     R26ER5001180041PL: {
       status: {

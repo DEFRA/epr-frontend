@@ -1,15 +1,16 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
 import {
   buildMockAuth,
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
+import { buildRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { extractCookieValues } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
@@ -67,20 +68,17 @@ vi.mock(
 )
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js'),
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js'),
   () => ({
-    fetchRegistrationAndAccreditationByNumber: vi.fn().mockResolvedValue({
-      organisationData: undefined,
-      registration: { id: '456', validFrom: '2026-01-01' },
-      accreditation: undefined
-    })
+    ACCREDITATION_YEAR: /** @type {const} */ ('2026'),
+    fetchRegistrationWithAccreditation: vi.fn()
   })
 )
 
 vi.mock(
-  import('#server/common/helpers/waste-balance/fetch-waste-balances.js'),
+  import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'),
   () => ({
-    fetchWasteBalances: vi.fn()
+    fetchOrganisationWasteBalances: vi.fn()
   })
 )
 
@@ -96,14 +94,16 @@ const mockSubmitSummaryLog = vi.mocked(submitSummaryLog, {
   partial: true,
   deep: true
 })
-const mockFetchRegistrationAndAccreditationByNumber = vi.mocked(
-  fetchRegistrationAndAccreditationByNumber,
-  { partial: true, deep: true }
+const mockFetchRegistrationWithAccreditation = vi.mocked(
+  fetchRegistrationWithAccreditation
 )
-const mockFetchWasteBalances = vi.mocked(fetchWasteBalances, {
-  partial: true,
-  deep: true
-})
+const mockFetchOrganisationWasteBalances = vi.mocked(
+  fetchOrganisationWasteBalances
+)
+
+const accredited = buildRegistrationWithAccreditation()
+const registeredOnly = { ...accredited, accreditation: undefined }
+const { accreditationNumber } = accredited.accreditation
 
 const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
@@ -111,8 +111,6 @@ const enablesClientSidePolling = () =>
   expect.stringContaining('meta http-equiv="refresh"')
 
 describe('#summaryLogUploadProgressController', () => {
-  const organisationId = '123'
-  const registrationId = '456'
   const organisationNumber = '500118'
   const registrationNumber = 'R26ER5001180041PL'
   const summaryLogId = '789'
@@ -131,6 +129,11 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     mockSubmitSummaryLog.mockReset()
+
+    mockFetchRegistrationWithAccreditation
+      .mockReset()
+      .mockResolvedValue(registeredOnly)
+    mockFetchOrganisationWasteBalances.mockReset()
   })
 
   it('should provide expected response', async ({ server }) => {
@@ -325,27 +328,16 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('waste balance', () => {
-      it('status: submitted - should fetch waste balance data', async ({
-        server
-      }) => {
-        const accreditationId = 'accreditation-id-456'
-
+      it('status: submitted - reads the 2026 balance', async ({ server }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId, accreditationId },
-          accreditation: {
-            id: accreditationId,
-            accreditationNumber: 'ACC-2025-001'
-          }
-        })
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(accredited)
 
-        mockFetchWasteBalances.mockResolvedValueOnce({
-          [accreditationId]: {
+        mockFetchOrganisationWasteBalances.mockResolvedValueOnce({
+          [accreditationNumber]: {
             amount: 1000,
             availableAmount: 1234.56
           }
@@ -358,14 +350,13 @@ describe('#summaryLogUploadProgressController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(fetchRegistrationAndAccreditationByNumber).toHaveBeenCalledWith(
-          organisationNumber,
-          registrationNumber,
-          expect.objectContaining({ backendToken: 'test-id-token' })
+        expect(fetchRegistrationWithAccreditation).toHaveBeenCalledWith(
+          { organisationNumber, registrationNumber },
+          'test-id-token'
         )
-        expect(fetchWasteBalances).toHaveBeenCalledWith(
-          organisationId,
-          [accreditationId],
+        expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
+          accredited.organisation.organisationNumber,
+          2026,
           'test-id-token'
         )
       })
@@ -376,24 +367,17 @@ describe('#summaryLogUploadProgressController', () => {
       ])(
         'status: submitted - should display $label in the confirmation panel',
         async ({ availableAmount, expected }, { server }) => {
-          const accreditationId = 'accreditation-id-456'
-
           mockFetchSummaryLogStatus.mockResolvedValueOnce({
             status: summaryLogStatuses.submitted,
             accreditationNumber: 'ACC-2025-001'
           })
 
-          mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
-            organisationData: { id: organisationId },
-            registration: { id: registrationId, accreditationId },
-            accreditation: {
-              id: accreditationId,
-              accreditationNumber: 'ACC-2025-001'
-            }
-          })
+          mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+            accredited
+          )
 
-          mockFetchWasteBalances.mockResolvedValueOnce({
-            [accreditationId]: {
+          mockFetchOrganisationWasteBalances.mockResolvedValueOnce({
+            [accreditationNumber]: {
               amount: 1000,
               availableAmount
             }
@@ -427,11 +411,9 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId },
-          accreditation: undefined
-        })
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+          registeredOnly
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -450,23 +432,14 @@ describe('#summaryLogUploadProgressController', () => {
       it('status: submitted - should not display waste balance when balance not found', async ({
         server
       }) => {
-        const accreditationId = 'accreditation-id-456'
-
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId, accreditationId },
-          accreditation: {
-            id: accreditationId,
-            accreditationNumber: 'ACC-2025-001'
-          }
-        })
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(accredited)
 
-        mockFetchWasteBalances.mockResolvedValueOnce({})
+        mockFetchOrganisationWasteBalances.mockResolvedValueOnce({})
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -478,27 +451,19 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).not.toContain('Your updated waste balance')
       })
 
-      it('status: submitted - should handle waste balance fetch failure gracefully', async ({
+      it('status: submitted - shows the page without the balance when the backend fails to serve it', async ({
         server
       }) => {
-        const accreditationId = 'accreditation-id-456'
-        const fetchError = new Error('Waste balance service unavailable')
+        const fetchError = Boom.badGateway('Waste balance service unavailable')
 
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId, accreditationId },
-          accreditation: {
-            id: accreditationId,
-            accreditationNumber: 'ACC-2025-001'
-          }
-        })
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(accredited)
 
-        mockFetchWasteBalances.mockRejectedValueOnce(fetchError)
+        mockFetchOrganisationWasteBalances.mockRejectedValueOnce(fetchError)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -510,10 +475,12 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).toContain('Summary log uploaded')
         expect(result).not.toContain('Your updated waste balance')
 
-        expect(server.loggerMocks.error).toHaveBeenCalledWith({
-          message: 'Failed to fetch waste balance data',
-          err: fetchError
-        })
+        expect(server.loggerMocks.error).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'Failed to fetch waste balance',
+            err: fetchError
+          })
+        )
       })
 
       it('status: submitted - should propagate 404 when registration not found', async ({
@@ -524,7 +491,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditationByNumber.mockRejectedValueOnce(
+        mockFetchRegistrationWithAccreditation.mockRejectedValueOnce(
           Boom.notFound('Registration not found')
         )
 
@@ -2365,11 +2332,7 @@ describe('#summaryLogUploadProgressController', () => {
           validation: { failures: [{ errorCode: 'REGISTRATION_MISMATCH' }] }
         })
 
-        mockFetchRegistrationAndAccreditationByNumber.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId },
-          accreditation: { id: 'acc-id', status: 'approved' }
-        })
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(accredited)
 
         await server.inject({ method: 'GET', url, auth: mockAuth })
 
@@ -2538,11 +2501,10 @@ describe('summary log check view', () => {
 
   /** Make the current accredited waste balance available to the check page. */
   const givenWasteBalance = (availableAmount) => {
-    mockFetchRegistrationAndAccreditationByNumber.mockResolvedValue({
-      organisationData: { id: 'org-1' },
-      registration: { accreditationId: 'acc-1' }
+    mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited)
+    mockFetchOrganisationWasteBalances.mockResolvedValue({
+      [accreditationNumber]: { amount: availableAmount, availableAmount }
     })
-    mockFetchWasteBalances.mockResolvedValue({ 'acc-1': { availableAmount } })
   }
 
   const renderMain = async (server) => {
@@ -2573,12 +2535,10 @@ describe('summary log check view', () => {
     })
     // No accreditation by default, so the projection panel stays hidden unless a
     // test opts in via givenWasteBalance().
-    mockFetchRegistrationAndAccreditationByNumber
+    mockFetchRegistrationWithAccreditation
       .mockReset()
-      .mockResolvedValue({
-        registration: { accreditationId: undefined }
-      })
-    mockFetchWasteBalances.mockReset().mockResolvedValue({})
+      .mockResolvedValue(registeredOnly)
+    mockFetchOrganisationWasteBalances.mockReset().mockResolvedValue({})
   })
 
   it('status: validated - should render the check page without client-side polling', async ({
@@ -3112,7 +3072,7 @@ describe('summary log check view', () => {
   it('renders the page without the panel when the waste balance is unavailable', async ({
     server
   }) => {
-    // Default mocks: no accreditationId, so no balance can be fetched.
+    // Default mocks: no live accreditation, so no balance can be fetched.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'EXPORTER',

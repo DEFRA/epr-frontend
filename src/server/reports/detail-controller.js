@@ -2,8 +2,9 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -108,8 +109,8 @@ function buildSectionIntros(
 /**
  * @param {RegistrationKeys} keys
  * @param {string} uploadPath
- * @param {object} registration
- * @param {object | undefined} accreditation
+ * @param {RegistrationView} registration
+ * @param {AccreditationView | undefined} accreditation
  * @param {object} reportDetail
  * @param {(key: string, params?: object) => string} localise
  * @param {(path: string) => string} localiseUrl
@@ -123,7 +124,7 @@ function buildViewData(
   localise,
   localiseUrl
 ) {
-  const material = getRegistrationMaterialDisplayName(registration)
+  const material = getMaterialDisplayName(registration.material)
   const periodLabel = formatPeriodLabelWithComma(
     { year: reportDetail.year, period: reportDetail.period },
     reportDetail.cadence,
@@ -156,8 +157,8 @@ function buildViewData(
         }
       : null,
     accreditation: accreditation?.accreditationNumber,
-    registrationNumber: registration.registrationNumber,
-    site: registration.site,
+    registrationNumber: keys.registrationNumber,
+    site: siteNameOf(registration),
     wasteReceived: {
       totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
       supplierRows: buildSupplierRows(recyclingActivity.suppliers, fallbackText)
@@ -204,11 +205,10 @@ export const detailController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { organisationData, registration, accreditation } =
-      await fetchRegistrationAndAccreditationByNumber(
-        organisationNumber,
-        registrationNumber,
-        session
+    const { organisation, registration, accreditation } =
+      await fetchRegistrationWithAccreditation(
+        { organisationNumber, registrationNumber },
+        session.backendToken
       )
 
     validateCadenceForRegistration(cadence, accreditation)
@@ -250,8 +250,9 @@ export const detailController = {
       ...viewData,
       breadcrumbs: readsAsARegulator(session)
         ? buildReportBreadcrumbs({
-            organisation: organisationData,
+            organisation,
             registration,
+            keys: request.params,
             pageName: viewData.heading,
             year,
             cadence,
@@ -265,6 +266,7 @@ export const detailController = {
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { RegistrationKeys } from './helpers/report-paths.js'
