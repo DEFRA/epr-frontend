@@ -10,9 +10,6 @@ permissions:
   contents: write
   pull-requests: write
 
-concurrency:
-  group: publish
-
 env:
   AWS_REGION: eu-west-2
   AWS_ACCOUNT_ID: "094954420758"
@@ -22,11 +19,39 @@ jobs:
     if: github.run_number != 1
     name: CDP-build-workflow
     runs-on: ubuntu-latest
+    concurrency:
+      group: publish
     steps:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # Depth 0 is required for branch-based versioning
+
+      - name: Build and Publish
+        uses: DEFRA/cdp-build-action/build@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  scan:
+    if: github.run_number != 1
+    name: Test and scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: publish-scan
+      cancel-in-progress: false
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # Depth 0 is required for the Sonar version baseline
+
+      # The parallel build may already have tagged this commit. Sonar's baseline
+      # is the newest tag reachable from HEAD, so drop any tag on HEAD itself to
+      # keep it the previous publish's tag.
+      - name: Ignore this commit's own release tag
+        run: git tag --points-at HEAD | xargs -r git tag -d
 
       - name: Test and Scan
         uses: DEFRA/epr-re-ex-service/.github/actions/test-and-scan@main
@@ -34,8 +59,3 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           build-command: npm run build
-
-      - name: Build and Publish
-        uses: DEFRA/cdp-build-action/build@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
