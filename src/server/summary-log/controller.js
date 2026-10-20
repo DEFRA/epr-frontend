@@ -8,7 +8,7 @@ import {
 } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
+import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import { year } from '#server/common/helpers/year.js'
 import {
   organisationPath as toOrganisationPath,
@@ -362,34 +362,22 @@ const getWasteBalanceData = async (status, keys, session, logger) => {
     return {}
   }
 
-  try {
-    const { organisation, accreditation } =
-      await fetchRegistrationWithAccreditation(keys, session.backendToken)
+  const { organisation, accreditation } =
+    await fetchRegistrationWithAccreditation(keys, session.backendToken)
 
-    if (!accreditation) {
-      return {}
-    }
-
-    const wasteBalances = await fetchOrganisationWasteBalances(
-      organisationNumber(organisation.organisationNumber),
-      year(Number(ACCREDITATION_YEAR)),
-      session.backendToken
-    )
-
-    const balance = wasteBalances[accreditation.accreditationNumber]
-
-    if (!balance) {
-      return {}
-    }
-
-    return { wasteBalance: balance.availableAmount }
-  } catch (error) {
-    if (error.isBoom) {
-      throw error
-    }
-    logger.error({ message: 'Failed to fetch waste balance data', err: error })
+  if (!accreditation) {
     return {}
   }
+
+  const balance = await fetchAccreditationBalance({
+    organisationNumber: organisationNumber(organisation.organisationNumber),
+    year: year(Number(ACCREDITATION_YEAR)),
+    accreditationNumber: accreditation.accreditationNumber,
+    backendToken: session.backendToken,
+    logger
+  })
+
+  return balance ? { wasteBalance: balance.availableAmount } : {}
 }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */

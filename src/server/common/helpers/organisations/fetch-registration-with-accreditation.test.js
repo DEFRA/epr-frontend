@@ -153,6 +153,17 @@ describe(fetchRequiredAccreditation, () => {
       code: 'not_accredited'
     })
   })
+
+  it('throws 404 for a year that names an inherited property', async () => {
+    resolveRegistration(buildRegistrationView())
+
+    await expect(
+      fetchRequiredAccreditation({ ...keys, year: 'constructor' }, backendToken)
+    ).rejects.toMatchObject({
+      output: { statusCode: 404 },
+      code: 'not_accredited'
+    })
+  })
 })
 
 describe(fetchRequiredAnyAccreditation, () => {
@@ -197,6 +208,20 @@ describe(fetchRequiredAnyAccreditation, () => {
         action: 'check_accreditation',
         reason: 'registrationNumber=R26EN0000000001PL year=2025'
       }
+    })
+  })
+
+  it('throws 404 for a year that names an inherited property', async () => {
+    resolveRegistration(buildRegistrationView())
+
+    await expect(
+      fetchRequiredAnyAccreditation(
+        { ...keys, year: 'constructor' },
+        backendToken
+      )
+    ).rejects.toMatchObject({
+      output: { statusCode: 404 },
+      code: 'not_accredited'
     })
   })
 })

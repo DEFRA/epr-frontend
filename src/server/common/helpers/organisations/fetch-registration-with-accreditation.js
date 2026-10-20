@@ -61,7 +61,7 @@ export const fetchRequiredAccreditation = async (
     ...keys,
     backendToken
   })
-  const accreditation = registration.accreditations[year]
+  const accreditation = ownAccreditation(registration, year)
 
   if (!isAccreditationViewActive(accreditation)) {
     throw notAccredited(keys.registrationNumber, year)
@@ -85,7 +85,7 @@ export const fetchRequiredAnyAccreditation = async (
     ...keys,
     backendToken
   })
-  const accreditation = registration.accreditations[year]
+  const accreditation = ownAccreditation(registration, year)
 
   if (!accreditation) {
     throw notAccredited(keys.registrationNumber, year)
@@ -93,6 +93,17 @@ export const fetchRequiredAnyAccreditation = async (
 
   return { organisation, registration, accreditation }
 }
+
+/**
+ * The year's accreditation, ignoring inherited keys such as `constructor`.
+ * @param {RegistrationView} registration
+ * @param {string} year
+ * @returns {AccreditationView | undefined}
+ */
+const ownAccreditation = (registration, year) =>
+  Object.hasOwn(registration.accreditations, year)
+    ? registration.accreditations[year]
+    : undefined
 
 /**
  * @param {string} registrationNumber

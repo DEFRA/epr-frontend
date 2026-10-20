@@ -451,10 +451,10 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).not.toContain('Your updated waste balance')
       })
 
-      it('status: submitted - should handle waste balance fetch failure gracefully', async ({
+      it('status: submitted - shows the page without the balance when the backend fails to serve it', async ({
         server
       }) => {
-        const fetchError = new Error('Waste balance service unavailable')
+        const fetchError = Boom.badGateway('Waste balance service unavailable')
 
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
@@ -475,10 +475,12 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).toContain('Summary log uploaded')
         expect(result).not.toContain('Your updated waste balance')
 
-        expect(server.loggerMocks.error).toHaveBeenCalledWith({
-          message: 'Failed to fetch waste balance data',
-          err: fetchError
-        })
+        expect(server.loggerMocks.error).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'Failed to fetch waste balance',
+            err: fetchError
+          })
+        )
       })
 
       it('status: submitted - should propagate 404 when registration not found', async ({
