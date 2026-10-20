@@ -40,6 +40,8 @@ import { capitalize } from 'lodash-es'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
+const VIEW = 'registrations/index'
+
 /** @typedef {{ href: string; text: string }} Link */
 
 /**
@@ -317,7 +319,7 @@ export const registrationController = {
     }
 
     return h.view(
-      'registrations/index',
+      VIEW,
       buildRegisteredOnlyViewModel({ request, keys, registration })
     )
   }
@@ -361,7 +363,7 @@ export const registeredOnlyYearController = {
     }
 
     return h.view(
-      'registrations/index',
+      VIEW,
       buildRegisteredOnlyViewModel({ request, keys, registration })
     )
   }
@@ -417,7 +419,7 @@ export const controller = {
     })
 
     return h.view(
-      'registrations/index',
+      VIEW,
       buildViewModel({
         request,
         keys,
