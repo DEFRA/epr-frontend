@@ -59,7 +59,7 @@ describe(toPackagingRecyclingNote, () => {
     })
   })
 
-  it('reads the obligation year RPD accepted, which can follow the accreditation year', () => {
+  it('reads an accepted December PRN whose obligation year follows its accreditation year', () => {
     const resource = buildPrnResource({
       status: { current: 'accepted', timeline: [] },
       isDecemberWaste: true
