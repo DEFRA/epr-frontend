@@ -365,7 +365,7 @@ export const controller = {
       baseUrl,
       organisationId: ids.organisationId,
       registrationId: ids.registrationId,
-      material: ids.registration.material,
+      material: ids.material,
       registrationStatus: registration.status.current,
       year: Number(year)
     })

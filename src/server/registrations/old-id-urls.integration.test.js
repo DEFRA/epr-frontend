@@ -87,8 +87,8 @@ const regulator = buildMockAuth({
 })
 
 /**
- * Answers the id lookup and regulator search the redirect makes, and the
- * natural-key reads the pages make.
+ * Answers the id lookup the redirect makes, and the natural-key reads the
+ * pages make.
  * @param {SetupServer} msw
  * @param {object} [held]
  */
@@ -96,13 +96,6 @@ const backendHolds = (msw, held = organisation) =>
   msw.use(
     http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
       HttpResponse.json(held)
-    ),
-    http.get(`${backendUrl}/v1/organisations`, () =>
-      HttpResponse.json({
-        items: [{ id: organisationId, orgId: 500118 }],
-        page: 1,
-        pageSize: 1
-      })
     ),
     http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
       HttpResponse.json(organisationView)

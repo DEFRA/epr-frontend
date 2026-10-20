@@ -63,8 +63,6 @@ const regulator = buildMockAuth({
 })
 
 /**
- * Pages that have moved end `/moved-page`, pages that have not end
- * `/unmoved-page`: the two forms of one path would clash in hapi.
  * @param {HapiServer} server
  */
 const registerPages = (server) => {
@@ -91,21 +89,6 @@ const registerPages = (server) => {
       path: '/organisations/{organisationNumber}/moved-page',
       options: { plugins: { crumb: false } },
       handler: ok
-    },
-    {
-      method: 'GET',
-      path: '/organisations/{organisationId}/unmoved-page',
-      handler: ok
-    },
-    {
-      method: 'GET',
-      path: '/organisations/{organisationId}/registrations/{registrationId}/unmoved-page',
-      handler: ok
-    },
-    {
-      method: 'GET',
-      path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/unmoved-page',
-      handler: ok
     }
   ])
 }
@@ -129,14 +112,12 @@ const backendHolds = (msw, held = organisation) =>
 const visit = (server, url, { method = 'GET', auth = operator } = {}) =>
   server.inject({ method, url, auth: /** @type {never} */ (auth) })
 
-describe('redirecting a page URL to the key form its route wants', () => {
-  describe.each(
+describe('redirecting an old page URL to its natural keys', () => {
+  it.for(
     /** @type {const} */ (['organisation', 'registration', 'accreditation'])
-  )('to a page for the %s', (depth) => {
-    it('sends ids on a moved page to its natural keys', async ({
-      server,
-      msw
-    }) => {
+  )(
+    'sends ids for the %s to its natural keys',
+    async (depth, { server, msw }) => {
       registerPages(server)
       backendHolds(msw)
 
@@ -146,40 +127,20 @@ describe('redirecting a page URL to the key form its route wants', () => {
       expect(response.headers.location).toBe(
         `${byNaturalKeys[depth]}/moved-page`
       )
-    })
-
-    it('sends natural keys on an unmoved page to its ids', async ({
-      server,
-      msw
-    }) => {
-      registerPages(server)
-      backendHolds(msw)
-
-      const response = await visit(
-        server,
-        `${byNaturalKeys[depth]}/unmoved-page`
-      )
-
-      expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers.location).toBe(`${byIds[depth]}/unmoved-page`)
-    })
-  })
+    }
+  )
 
   // The msw fixture fails any backend call it has no handler for, so a 200
   // also shows that no lookup was made.
   it.for([
-    ['ids on an unmoved page', `${byIds.accreditation}/unmoved-page`],
+    ['natural keys', `${byNaturalKeys.accreditation}/moved-page`],
     [
-      'natural keys on a moved page',
-      `${byNaturalKeys.accreditation}/moved-page`
-    ],
-    [
-      'a mix of the two',
-      `/organisations/${organisationNumber}/registrations/${registrationId}/unmoved-page`
+      'a mix of ids and natural keys',
+      `/organisations/${organisationNumber}/registrations/${registrationId}/moved-page`
     ],
     [
       'made-up ids',
-      '/organisations/org-123/registrations/reg-001/accreditations/acc-001/unmoved-page'
+      '/organisations/org-123/registrations/reg-001/accreditations/acc-001/moved-page'
     ]
   ])('serves %s as it is', async ([, url], { server }) => {
     registerPages(server)
@@ -191,10 +152,7 @@ describe('redirecting a page URL to the key form its route wants', () => {
   })
 
   describe('counting old page URLs', () => {
-    it('counts ids arriving at a moved page, even when they find nothing', async ({
-      server,
-      msw
-    }) => {
+    it('counts ids, even when they find nothing', async ({ server, msw }) => {
       const oldRequested = vi.spyOn(metrics.pageUrl, 'oldRequested')
       registerPages(server)
       msw.use(
@@ -209,15 +167,11 @@ describe('redirecting a page URL to the key form its route wants', () => {
       expect(oldRequested).toHaveBeenCalledExactlyOnceWith()
     })
 
-    it('does not count natural keys arriving at an unmoved page', async ({
-      server,
-      msw
-    }) => {
+    it('does not count natural keys', async ({ server }) => {
       const oldRequested = vi.spyOn(metrics.pageUrl, 'oldRequested')
       registerPages(server)
-      backendHolds(msw)
 
-      await visit(server, `${byNaturalKeys.organisation}/unmoved-page`)
+      await visit(server, `${byNaturalKeys.organisation}/moved-page`)
 
       expect(oldRequested).not.toHaveBeenCalled()
     })
@@ -288,18 +242,6 @@ describe('redirecting a page URL to the key form its route wants', () => {
   })
 
   describe('a record that cannot be found', () => {
-    it("shows an operator the not-found page for another organisation's number", async ({
-      server,
-      msw
-    }) => {
-      registerPages(server)
-      backendHolds(msw)
-
-      const response = await visit(server, '/organisations/500999/unmoved-page')
-
-      expect(response.statusCode).toBe(statusCodes.notFound)
-    })
-
     it("shows the not-found page for an organisation's id the backend refuses", async ({
       server,
       msw
@@ -332,17 +274,17 @@ describe('redirecting a page URL to the key form its route wants', () => {
       expect(response.statusCode).toBe(statusCodes.notFound)
     })
 
-    it('shows the not-found page for an accreditation in another year', async ({
+    it('shows the not-found page for an accreditation the registration does not link to', async ({
       server,
       msw
     }) => {
       registerPages(server)
-      backendHolds(msw)
+      backendHolds(msw, {
+        ...organisation,
+        registrations: [{ ...registration, accreditationId: undefined }]
+      })
 
-      const response = await visit(
-        server,
-        `${byNaturalKeys.registration}/accreditations/2027/unmoved-page`
-      )
+      const response = await visit(server, `${byIds.accreditation}/moved-page`)
 
       expect(response.statusCode).toBe(statusCodes.notFound)
     })
@@ -357,51 +299,20 @@ describe('redirecting a page URL to the key form its route wants', () => {
       config.set('featureFlags.regulatorAccess', false)
     })
 
-    /**
-     * @param {SetupServer} msw
-     * @param {object[]} items
-     */
-    const searchFinds = (msw, items) =>
-      msw.use(
-        http.get(`${backendUrl}/v1/organisations`, () =>
-          HttpResponse.json({ items, page: 1, pageSize: 1 })
-        )
-      )
-
-    it('sends natural keys on an unmoved page to its ids', async ({
-      server,
-      msw
-    }) => {
+    it('sends ids to their natural keys', async ({ server, msw }) => {
       registerPages(server)
-      searchFinds(msw, [{ id: organisationId, orgId: 500118 }])
       backendHolds(msw)
 
       const response = await visit(
         server,
-        `${byNaturalKeys.accreditation}/unmoved-page`,
+        `${byIds.accreditation}/moved-page`,
         { auth: regulator }
       )
 
       expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers.location).toBe(
-        `${byIds.accreditation}/unmoved-page`
+        `${byNaturalKeys.accreditation}/moved-page`
       )
-    })
-
-    it('shows the not-found page for a number no organisation has', async ({
-      server,
-      msw
-    }) => {
-      registerPages(server)
-      searchFinds(msw, [])
-
-      const response = await visit(
-        server,
-        `${byNaturalKeys.organisation}/unmoved-page`,
-        { auth: regulator }
-      )
-
-      expect(response.statusCode).toBe(statusCodes.notFound)
     })
   })
 })

@@ -1,20 +1,19 @@
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { NaturalKeys, RecordIds } from './types.js'
+ * @import { NaturalKeys, OrganisationById, RecordIds } from './types.js'
  */
 
 /**
- * @param {Organisation} organisation
+ * @param {OrganisationById} organisation
  * @param {string} registrationNumber
  */
-const registrationsNumbered = (organisation, registrationNumber) =>
+export const registrationsNumbered = (organisation, registrationNumber) =>
   organisation.registrations.filter(
     (registration) => registration.registrationNumber === registrationNumber
   )
 
 /**
  * The year a numbered accreditation is for: the UTC year it starts in.
- * @param {Organisation} organisation
+ * @param {OrganisationById} organisation
  * @param {string} accreditationId
  * @returns {string | null}
  */
@@ -31,7 +30,7 @@ const accreditationYear = (organisation, accreditationId) => {
 }
 
 /**
- * @param {Organisation} organisation
+ * @param {OrganisationById} organisation
  * @param {RecordIds} ids
  * @returns {NaturalKeys | null}
  */
@@ -67,38 +66,4 @@ export const toNaturalKeys = (
       : null
 
   return year ? { organisationNumber, registrationNumber, year } : null
-}
-
-/**
- * @param {Organisation} organisation
- * @param {NaturalKeys} keys
- * @returns {RecordIds | null}
- */
-export const toIds = (organisation, { registrationNumber, year }) => {
-  const organisationId = organisation.id
-
-  if (registrationNumber === undefined) {
-    return { organisationId }
-  }
-
-  const matches = registrationsNumbered(organisation, registrationNumber)
-
-  if (matches.length !== 1) {
-    return null
-  }
-
-  const [{ id: registrationId, accreditationId }] = matches
-
-  if (year === undefined) {
-    return { organisationId, registrationId }
-  }
-
-  if (
-    !accreditationId ||
-    accreditationYear(organisation, accreditationId) !== year
-  ) {
-    return null
-  }
-
-  return { organisationId, registrationId, accreditationId }
 }
