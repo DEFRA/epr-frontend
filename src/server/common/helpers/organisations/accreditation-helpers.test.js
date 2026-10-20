@@ -17,7 +17,7 @@ describe(isAccreditationViewActive, () => {
         accreditationNumber: 'ACC-001',
         status: {
           current: /** @type {AccreditationStatus} */ (current),
-          timeline: {}
+          timeline: []
         }
       }
 

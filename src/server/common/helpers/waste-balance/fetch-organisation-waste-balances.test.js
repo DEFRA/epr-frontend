@@ -23,7 +23,7 @@ describe(fetchOrganisationWasteBalances, () => {
     )
 
     const result = await fetchOrganisationWasteBalances(
-      organisationNumber(50002),
+      organisationNumber('50002'),
       year(2026),
       'test-id-token'
     )
@@ -31,5 +31,25 @@ describe(fetchOrganisationWasteBalances, () => {
     expect(result).toStrictEqual({
       A26ER5001180114PL: { amount: 20, availableAmount: 12.5 }
     })
+  })
+
+  test('keeps the organisation number inside its own path segment', async ({
+    msw
+  }) => {
+    let pathname
+    msw.use(
+      http.get(`${backendUrl}/*`, ({ request }) => {
+        pathname = new URL(request.url).pathname
+        return HttpResponse.json({})
+      })
+    )
+
+    await fetchOrganisationWasteBalances(
+      organisationNumber('../admin'),
+      year(2026),
+      'test-id-token'
+    )
+
+    expect(pathname).toBe('/organisations/..%2Fadmin/waste-balances/2026')
   })
 })

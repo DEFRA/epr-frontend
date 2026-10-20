@@ -52,7 +52,7 @@ const unrecognised = buildMockAuth({
 const registeredOnly = {
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   validFrom: '2026-01-01',
   material: 'plastic',
@@ -96,7 +96,7 @@ describe('who a registration renders for', () => {
     msw.use(
       http.get(`${backendUrl}/organisations/500118`, () =>
         HttpResponse.json({
-          organisationNumber: 500118,
+          organisationNumber: '500118',
           name: 'Kirkby Plastics Ltd',
           registrations: { [registrationNumber]: registeredOnly }
         })
@@ -213,11 +213,11 @@ describe('who an accreditation renders for', () => {
     accreditationNumber,
     status: {
       current: 'approved',
-      timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+      timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
     }
   }
   const registration = {
-    status: { current: 'approved', timeline: {} },
+    status: { current: 'approved', timeline: [] },
     validFrom: '2026-01-01',
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
@@ -236,7 +236,7 @@ describe('who an accreditation renders for', () => {
       /** @type {Awaited<ReturnType<typeof fetchAccreditationDetails>>} */ (
         /** @type {unknown} */ ({
           organisation: {
-            organisationNumber: 500118,
+            organisationNumber: '500118',
             name: 'Kirkby Plastics Ltd',
             registrations: {}
           },
@@ -274,7 +274,7 @@ describe('who an accreditation renders for', () => {
     msw.use(
       http.get(`${backendUrl}/organisations/500118`, () =>
         HttpResponse.json({
-          organisationNumber: 500118,
+          organisationNumber: '500118',
           name: 'Kirkby Plastics Ltd',
           registrations: { [registrationNumber]: registration }
         })

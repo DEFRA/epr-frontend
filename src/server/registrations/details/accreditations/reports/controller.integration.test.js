@@ -58,7 +58,7 @@ const aPeriod = (period, { submitted, year = 2026 }) =>
 /** @type {ReportListDetails} */
 const details = {
   organisation: {
-    organisationNumber: 500118,
+    organisationNumber: '500118',
     name: 'Kirkby Plastics Ltd',
     displayName: 'Kirkby Plastics Ltd',
     registrations: {}
@@ -67,7 +67,7 @@ const details = {
     accreditationNumber: 'A26ER5001180114PL',
     status: {
       current: 'approved',
-      timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+      timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
     }
   },
   cadence: 'monthly',

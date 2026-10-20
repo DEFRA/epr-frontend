@@ -26,7 +26,7 @@ const registeredOnlyRegistration = buildRegistrationView({
 })
 
 const organisation = buildOrganisationView({
-  organisationNumber: 50002,
+  organisationNumber: '50002',
   name: 'ACME ltd',
   displayName: 'ACME ltd',
   registrations: {
@@ -575,12 +575,12 @@ describe('the waste balance ledger page', () => {
       server
     }) => {
       const cancelled = buildOrganisationView({
-        organisationNumber: 50002,
+        organisationNumber: '50002',
         registrations: {
           REG001234: buildRegistrationView({
             accreditations: {
               2026: buildAccreditationView({
-                status: { current: 'cancelled', timeline: {} }
+                status: { current: 'cancelled', timeline: [] }
               })
             }
           })

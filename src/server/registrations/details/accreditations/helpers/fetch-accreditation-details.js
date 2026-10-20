@@ -60,7 +60,7 @@ const fetchAccreditation = async ({ keys, backendToken, logger }) => {
   const accreditation = accreditationIn(registration, keys.year)
 
   const wasteBalance = await fetchAccreditationBalance({
-    organisationNumber: organisationNumber(Number(keys.organisationNumber)),
+    organisationNumber: organisationNumber(keys.organisationNumber),
     year: toYear(Number(keys.year)),
     accreditationNumber: accreditation.accreditationNumber,
     backendToken,

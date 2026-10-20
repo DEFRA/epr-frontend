@@ -336,7 +336,7 @@ export const controller = {
     const keys = { organisationNumber: number, registrationNumber, year }
     const credentials = request.auth.credentials
     const { backendToken } = credentials
-    const numberKey = organisationNumber(Number(number))
+    const numberKey = organisationNumber(number)
 
     const [{ registration }, ids] = await Promise.all([
       fetchRegistration({ ...keys, backendToken }),
