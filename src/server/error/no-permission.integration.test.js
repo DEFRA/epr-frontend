@@ -72,19 +72,24 @@ describe('the no-permission page', () => {
     expect(navigation).not.toContain('Manage account')
   })
 
-  it('reads the same to an operator refused a regulators page', async ({
-    server
-  }) => {
-    const response = await server.inject({
-      method: 'GET',
-      url: '/regulators/home',
-      auth: operator
-    })
+  it.for([
+    { url: '/regulators/home', lang: 'en' },
+    { url: '/cy/regulators/home', lang: 'cy' }
+  ])(
+    'reads the same to an operator refused $url, in lang="$lang"',
+    async ({ url, lang }, { server }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url,
+        auth: operator
+      })
 
-    expect(response.statusCode).toBe(statusCodes.forbidden)
+      expect(response.statusCode).toBe(statusCodes.forbidden)
 
-    const $ = load(asHtml(response.result))
-    expect($('h1').text().trim()).toBe('You do not have permission')
-    expect($('.govuk-service-navigation').text()).toContain('Manage account')
-  })
+      const $ = load(asHtml(response.result))
+      expect($('html').attr('lang')).toBe(lang)
+      expect($('h1').text().trim()).toBe('You do not have permission')
+      expect($('.govuk-service-navigation').text()).toContain('Manage account')
+    }
+  )
 })
