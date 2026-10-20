@@ -303,15 +303,6 @@ describe('old report page URLs', () => {
       msw
     }) => {
       backendHolds(msw)
-      msw.use(
-        http.get(`${backendUrl}/v1/organisations`, () =>
-          HttpResponse.json({
-            items: [{ id: organisationId, orgId: 500118 }],
-            page: 1,
-            pageSize: 1
-          })
-        )
-      )
       const link = buildPeriodPath({
         organisationId,
         registrationId,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { routeKeyForm, urlKeyForm } from './key-form.js'
+import { routeKeySegments, urlKeyForm } from './key-form.js'
 
 /** @import { KeyedSegment } from './key-form.js' */
 
@@ -24,65 +24,46 @@ const pathOf = ([organisation, registration, accreditation]) =>
     '/'
   )
 
-describe(routeKeyForm, () => {
-  it('reads a route addressed by ids', () => {
-    expect(
-      routeKeyForm(
-        '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/packaging-recycling-notes'
-      )
-    ).toStrictEqual({ form: 'ids', segments: accreditationSegments })
-  })
-
+describe(routeKeySegments, () => {
   it('reads a route addressed by natural keys', () => {
     expect(
-      routeKeyForm(
+      routeKeySegments(
         '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/packaging-recycling-notes'
       )
-    ).toStrictEqual({ form: 'naturalKeys', segments: accreditationSegments })
+    ).toStrictEqual(accreditationSegments)
   })
 
   it('reads a PRN step route by its three record keys, not the note id', () => {
     expect(
-      routeKeyForm(
+      routeKeySegments(
         '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/packaging-recycling-notes/{prnId}/view'
       )
-    ).toStrictEqual({ form: 'naturalKeys', segments: accreditationSegments })
+    ).toStrictEqual(accreditationSegments)
   })
 
   it('reads a route that names only the organisation', () => {
-    expect(routeKeyForm('/organisations/{organisationId}')).toStrictEqual({
-      form: 'ids',
-      segments: [{ index: 2, record: 'organisation' }]
-    })
+    expect(
+      routeKeySegments('/organisations/{organisationNumber}')
+    ).toStrictEqual([{ index: 2, record: 'organisation' }])
   })
 
   it('does not count a report year as the accreditation', () => {
     expect(
-      routeKeyForm(
-        '/organisations/{organisationId}/registrations/{registrationId}/reports/{year}/{cadence}'
+      routeKeySegments(
+        '/organisations/{organisationNumber}/registrations/{registrationNumber}/reports/{year}/{cadence}'
       )
-    ).toStrictEqual({
-      form: 'ids',
-      segments: [
-        { index: 2, record: 'organisation' },
-        { index: 4, record: 'registration' }
-      ]
-    })
+    ).toStrictEqual([
+      { index: 2, record: 'organisation' },
+      { index: 4, record: 'registration' }
+    ])
   })
 
-  it.each(['/regulators/home', '/account/linking'])(
-    'ignores %s, which names no record',
-    (routePath) => {
-      expect(routeKeyForm(routePath)).toBeNull()
-    }
-  )
-
-  it('ignores a route that mixes ids and natural keys', () => {
-    expect(
-      routeKeyForm(
-        '/organisations/{organisationNumber}/registrations/{registrationId}'
-      )
-    ).toBeNull()
+  it.each([
+    '/regulators/home',
+    '/account/linking',
+    '/organisations/{organisationId}/registrations/{registrationId}'
+  ])('ignores %s, which names no record by natural key', (routePath) => {
+    expect(routeKeySegments(routePath)).toBeNull()
   })
 })
 
