@@ -144,6 +144,8 @@ const mockPrnFromBackend = asPackagingRecyclingNote({
   createdAt: '2026-01-15T10:00:00.000Z',
   notes: 'Additional notes for this PRN',
   isDecemberWaste: true,
+  accreditationYear: 2026,
+  obligationYear: 2026,
   issuedAt: '2026-01-16T14:30:00.000Z',
   issuedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
@@ -158,6 +160,8 @@ const mockPernFromBackend = asPackagingRecyclingNote({
   createdAt: '2026-01-20T14:30:00.000Z',
   notes: null,
   isDecemberWaste: false,
+  accreditationYear: 2026,
+  obligationYear: 2026,
   issuedAt: '2026-01-21T09:00:00.000Z',
   issuedBy: { name: 'Jane Doe', position: 'Operations Manager' },
   wasteProcessingType: 'exporter'
@@ -1059,7 +1063,8 @@ describe('#viewController', () => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           asPackagingRecyclingNote({
             ...mockPrnFromBackend,
-            accreditationYear: 2026
+            accreditationYear: 2026,
+            obligationYear: 2026
           })
         )
 
@@ -1078,6 +1083,31 @@ describe('#viewController', () => {
         const complianceText = main.querySelector('.govuk-body')
         expect(complianceText.innerHTML).toBe(
           'This PRN relates to waste accepted for reprocessing in <strong>2026</strong> and can count towards <strong>2026</strong> obligations.'
+        )
+      })
+
+      it('should display the obligation year when it differs from the accreditation year', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            status: 'accepted',
+            accreditationYear: 2026,
+            obligationYear: 2027
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(main.querySelector('.govuk-body').innerHTML).toBe(
+          'This PRN relates to waste accepted for reprocessing in <strong>2026</strong> and can count towards <strong>2027</strong> obligations.'
         )
       })
 

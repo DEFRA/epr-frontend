@@ -1,4 +1,3 @@
-import { isNil } from '#server/common/helpers/is-nil.js'
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
@@ -371,14 +370,14 @@ function buildExistingPrnViewData({
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
     heading: noteTypeFull,
     showRegulatorLogos: isNotDraft,
-    complianceYearText:
-      isNotDraft && !isNil(prn.accreditationYear)
-        ? localise('prns:view:complianceYearText', {
-            noteType,
-            wasteAction,
-            year: `<strong>${prn.accreditationYear}</strong>`
-          })
-        : null,
+    complianceYear: isNotDraft
+      ? {
+          noteType,
+          wasteAction,
+          accreditationYear: prn.accreditationYear,
+          obligationYear: prn.obligationYear
+        }
+      : null,
     prnDetailsHeading: localise('prns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
