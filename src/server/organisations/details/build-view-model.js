@@ -156,7 +156,7 @@ export const buildViewModel = ({
 }) => {
   const { name } = organisation
   const heading = localise('organisations:details:heading')
-  const organisationNumber = String(organisation.organisationNumber)
+  const { organisationNumber } = organisation
   const homePath = organisationPath({ organisationNumber })
   const registrations = Object.entries(organisation.registrations)
 

@@ -98,7 +98,7 @@ const reprocessor = buildRegistrationView({
 const details = {
   ...buildRegistrationWithAccreditation({
     organisation: {
-      organisationNumber: 50002,
+      organisationNumber: '50002',
       name: 'Kirkby Plastics Ltd',
       displayName: 'Kirkby Plastics Ltd'
     },

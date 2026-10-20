@@ -18,7 +18,7 @@ export const controller = {
     const { backendToken } = request.auth.credentials
 
     const organisation = await fetchOrganisation(
-      organisationNumber(Number(request.params.organisationNumber)),
+      organisationNumber(request.params.organisationNumber),
       backendToken
     )
 

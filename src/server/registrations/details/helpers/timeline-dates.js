@@ -34,9 +34,7 @@ import {
  */
 export const dailyTimeline = (timeline) =>
   Object.fromEntries(
-    Object.entries(timeline)
-      .sort(([one], [other]) => one.localeCompare(other))
-      .map(([at, entry]) => [calendarDate(at), entry])
+    timeline.map(({ at, status }) => [calendarDate(at), { status }])
   )
 
 /**
@@ -119,14 +117,12 @@ const accreditedFrom = (statusTimeline, yearStart) => {
     return yearStart
   }
 
-  const approvedAt = /** @type {string} */ (
-    Object.keys(statusTimeline)
-      .sort((one, other) => one.localeCompare(other))
-      .find(
-        (at) =>
-          statusTimeline[at].status === ACCREDITATION_STATUS.APPROVED &&
-          calendarDate(at).localeCompare(yearStart) >= 0
-      )
+  const { at: approvedAt } = /** @type {StatusTimeline[number]} */ (
+    statusTimeline.find(
+      ({ at, status }) =>
+        status === ACCREDITATION_STATUS.APPROVED &&
+        calendarDate(at).localeCompare(yearStart) >= 0
+    )
   )
 
   return calendarDate(approvedAt)
@@ -139,15 +135,13 @@ const accreditedFrom = (statusTimeline, yearStart) => {
  * @returns {{ validFrom: string, validTo: string }}
  */
 export const accreditedDateRange = ({ status: { timeline } }, year) => {
-  const [lastDate, { status }] = /** @type {[string, { status: string }]} */ (
-    Object.entries(dailyTimeline(timeline)).at(-1)
-  )
+  const { at, status } = /** @type {StatusTimeline[number]} */ (timeline.at(-1))
 
   return {
     validFrom: accreditedFrom(timeline, firstDayOf(Number(year))),
     validTo:
       status === ACCREDITATION_STATUS.CANCELLED
-        ? lastDate
+        ? calendarDate(at)
         : lastDayOf(Number(year))
   }
 }

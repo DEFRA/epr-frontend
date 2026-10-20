@@ -68,7 +68,7 @@ describe('the chrome around an organisation page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchOrganisation).mockResolvedValue({
-      organisationNumber: 500123,
+      organisationNumber: '500123',
       name: 'ACME ltd',
       displayName: 'ACME ltd',
       registrations: {}
