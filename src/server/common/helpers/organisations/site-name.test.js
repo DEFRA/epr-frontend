@@ -56,6 +56,7 @@ describe(siteLineOf, () => {
     const registration = /** @type {RegistrationView} */ ({
       ...common,
       wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
       site: {
         address: {
           line1: '7 Glass Lane',
@@ -76,6 +77,7 @@ describe(siteLineOf, () => {
     const registration = /** @type {RegistrationView} */ ({
       ...common,
       wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
       site: {
         address: {
           line1: '7 Glass Lane',
@@ -93,6 +95,7 @@ describe(siteLineOf, () => {
     const registration = /** @type {RegistrationView} */ ({
       ...common,
       wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
       site: { address: { fullAddress: ' 7 Glass Lane, Leeds LS10 1AB ' } }
     })
 
