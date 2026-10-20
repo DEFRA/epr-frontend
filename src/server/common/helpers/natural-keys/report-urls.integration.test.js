@@ -300,15 +300,6 @@ describe('old report page URLs', () => {
       msw
     }) => {
       backendHolds(msw)
-      msw.use(
-        http.get(`${backendUrl}/v1/organisations`, () =>
-          HttpResponse.json({
-            items: [{ id: organisationId, orgId: 500118 }],
-            page: 1,
-            pageSize: 1
-          })
-        )
-      )
       const link = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/8/submissions/1`
 
       const { hops, final } = await follow(server, `${link}/view`, {

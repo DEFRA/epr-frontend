@@ -10,21 +10,17 @@ import { paths } from '#server/paths.js'
  */
 
 /**
- * A session from before the organisation number was stored links by id, which
- * the natural-key redirect forwards.
  * @param {HapiRequest} request
  * @param {UserSession} session
  * @returns {NavigationItem[]}
  */
 const home = ({ localiseUrl, t: localise }, session) => {
-  if (!session.linkedOrganisationId) {
+  if (!session.linkedOrganisationNumber) {
     return []
   }
-  const organisationKey =
-    session.linkedOrganisationNumber ?? session.linkedOrganisationId
   return [
     {
-      href: localiseUrl(`/organisations/${organisationKey}`),
+      href: localiseUrl(`/organisations/${session.linkedOrganisationNumber}`),
       text: localise('common:navigation:home')
     }
   ]
