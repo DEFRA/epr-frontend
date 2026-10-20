@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -27,10 +27,9 @@ export const submittedController = {
 
     const reportsUrl = reportsListPath(request.params)
 
-    const { registration } = await fetchRegistrationAndAccreditationByNumber(
-      organisationNumber,
-      registrationNumber,
-      session
+    const { registration } = await fetchRegistrationWithAccreditation(
+      { organisationNumber, registrationNumber },
+      session.backendToken
     )
     const reportDetail = await fetchReportDetail(
       request.params,
@@ -41,7 +40,7 @@ export const submittedController = {
       throw Boom.notFound()
     }
 
-    const material = getRegistrationMaterialDisplayName(registration)
+    const material = getMaterialDisplayName(registration.material)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
     return h.view('reports/submitted', {
@@ -52,7 +51,7 @@ export const submittedController = {
       heading: localise('reports:submittedHeading', { periodLabel }),
       detailsHeading: localise('reports:submittedDetailsHeading'),
       registrationLabel: localise('reports:submittedRegistrationLabel'),
-      registrationNumber: registration.registrationNumber,
+      registrationNumber,
       materialLabel: localise('reports:submittedMaterialLabel'),
       material,
       futureChangesGuidance: localise('reports:submittedFutureChangesGuidance'),

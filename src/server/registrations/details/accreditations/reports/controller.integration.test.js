@@ -60,6 +60,7 @@ const details = {
   organisation: {
     organisationNumber: 500118,
     name: 'Kirkby Plastics Ltd',
+    displayName: 'Kirkby Plastics Ltd',
     registrations: {}
   },
   accreditation: {

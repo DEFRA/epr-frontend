@@ -24,7 +24,7 @@ import { buildWasteRecordsCsvDownloadPath } from '#server/registrations/waste-re
 import { buildSummaryLogDownloadPath } from '#server/summary-log/download-controller.js'
 
 import { toRegistrationTrail } from '../helpers/accreditation-child-page.js'
-import { organisationViewName, toCaption } from '../helpers/caption.js'
+import { toCaption } from '../helpers/caption.js'
 import { toDateRange } from '../helpers/date-range.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
 import { accreditedDateRange } from '../helpers/timeline-dates.js'
@@ -401,7 +401,7 @@ export const buildViewModel = ({
   localise,
   localiseUrl
 }) => {
-  const name = organisationViewName(organisation)
+  const name = organisation.displayName
   const pageName = localise('registrations:details:accreditation:breadcrumb')
   const paths = {
     organisation: organisationPath(keys),

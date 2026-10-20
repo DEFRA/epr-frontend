@@ -33,6 +33,7 @@ const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
 const organisation = {
   organisationNumber: 500118,
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   registrations: {}
 }
 
@@ -370,20 +371,12 @@ describe(buildViewModel, () => {
   })
 
   describe('the organisation', () => {
-    it('is named by its trading name where it holds one', () => {
+    it('is named by its display name', () => {
       const viewModel = build({
-        organisation: { ...organisation, tradingName: 'Kirkby Recycling' }
+        organisation: { ...organisation, displayName: 'Kirkby Recycling' }
       })
 
       expect(viewModel.caption).toBe('Kirkby Recycling - R26ER5001180041PL')
-    })
-
-    it('is named by its own name where the trading name is blank', () => {
-      const viewModel = build({
-        organisation: { ...organisation, tradingName: '  ' }
-      })
-
-      expect(viewModel.caption).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
     })
   })
 

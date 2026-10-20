@@ -45,6 +45,7 @@ const aRegistration = {
  */
 const anOrganisation = (overrides) => ({
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   organisationNumber: 500123,
   registrations: { [registrationNumber]: aRegistration },
   ...overrides
@@ -67,30 +68,13 @@ const viewModel = ({ organisation, registration } = {}) =>
 
 describe(buildViewModel, () => {
   describe('the name it knows the organisation by', () => {
-    // An organisation that trades under another name is known by it, so the
-    // regulator reads the name they would recognise rather than the registered
-    // one. The two pages above this resolve it the same way.
-    it('prefers the trading name where the organisation has one', () => {
+    it("uses the organisation's display name", () => {
       const { caption, breadcrumbs } = viewModel({
-        organisation: anOrganisation({ tradingName: 'Kirkby Plastics' })
+        organisation: anOrganisation({ displayName: 'Kirkby Plastics' })
       })
 
       expect(caption).toBe('Kirkby Plastics - R26ER5001180041PL')
       expect(breadcrumbs[1].text).toBe('Kirkby Plastics')
-    })
-
-    it('falls back to the registered name where the trading name is blank', () => {
-      const { caption } = viewModel({
-        organisation: anOrganisation({ tradingName: '   ' })
-      })
-
-      expect(caption).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
-    })
-
-    it('falls back to the registered name where there is no trading name', () => {
-      const { caption } = viewModel()
-
-      expect(caption).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
     })
   })
 
