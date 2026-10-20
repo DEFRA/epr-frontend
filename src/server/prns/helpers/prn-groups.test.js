@@ -15,6 +15,7 @@ const aNote = (note) => ({
   createdAt: '2026-01-01T00:00:00.000Z',
   notes: null,
   accreditationYear: 2026,
+  obligationYear: 2026,
   issuedAt: null,
   issuedBy: null,
   wasteProcessingType: 'reprocessor',
