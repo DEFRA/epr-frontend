@@ -98,7 +98,7 @@ export const fetchRequiredAnyAccreditation = async (
  * The year's accreditation, ignoring inherited keys such as `constructor`.
  * @param {RegistrationView} registration
  * @param {string} year
- * @returns {AccreditationView | undefined}
+ * @returns {Accreditation | undefined}
  */
 const ownAccreditation = (registration, year) =>
   Object.hasOwn(registration.accreditations, year)
