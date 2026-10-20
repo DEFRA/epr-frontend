@@ -110,7 +110,7 @@ function buildSectionIntros(
  * @param {RegistrationKeys} keys
  * @param {string} uploadPath
  * @param {RegistrationView} registration
- * @param {AccreditationView | undefined} accreditation
+ * @param {Accreditation | undefined} accreditation
  * @param {object} reportDetail
  * @param {(key: string, params?: object) => string} localise
  * @param {(path: string) => string} localiseUrl
@@ -266,7 +266,7 @@ export const detailController = {
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { RegistrationKeys } from './helpers/report-paths.js'

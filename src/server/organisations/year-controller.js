@@ -1,5 +1,5 @@
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { isAccreditationViewActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
+import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
@@ -44,7 +44,7 @@ function getDisplayedRegistrations(registrations, selectedYear) {
     return {
       number,
       registration,
-      accreditation: isAccreditationViewActive(accreditation)
+      accreditation: isAccreditationActive(accreditation)
         ? accreditation
         : undefined
     }

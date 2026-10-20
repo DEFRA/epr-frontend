@@ -11,7 +11,7 @@ import {
 } from './timeline-dates.js'
 
 /**
- * @import { AccreditationView, RegistrationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
 /**
@@ -23,7 +23,7 @@ const toStatusTimeline = (timeline) =>
 
 /**
  * @param {StatusTimeline} timeline
- * @returns {AccreditationView}
+ * @returns {Accreditation}
  */
 const accreditationWith = (timeline) => ({
   accreditationNumber: 'A26ER5001180114PL',
@@ -32,14 +32,14 @@ const accreditationWith = (timeline) => ({
 
 /**
  * @param {Record<string, string>} timeline - status by ISO datetime
- * @returns {AccreditationView}
+ * @returns {Accreditation}
  */
 const anAccreditation = (timeline) =>
   accreditationWith(toStatusTimeline(timeline))
 
 /**
  * @param {Record<string, string>} timeline - status by ISO datetime
- * @param {Record<string, AccreditationView>} [accreditations]
+ * @param {Record<string, Accreditation>} [accreditations]
  * @returns {RegistrationView}
  */
 const aRegistration = (timeline, accreditations = {}) => ({
@@ -53,7 +53,7 @@ const aRegistration = (timeline, accreditations = {}) => ({
 
 /**
  * @param {string} date
- * @param {Record<string, AccreditationView>} [accreditations]
+ * @param {Record<string, Accreditation>} [accreditations]
  * @returns {RegistrationView}
  */
 const approvedOn = (date, accreditations = {}) =>

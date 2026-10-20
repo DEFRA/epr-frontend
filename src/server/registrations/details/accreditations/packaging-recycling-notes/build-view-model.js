@@ -10,7 +10,7 @@ import {
 import { toAccreditationChildPage } from '../../helpers/accreditation-child-page.js'
 
 /**
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
@@ -31,7 +31,7 @@ const KEY = 'registrations:details:accreditation:prns'
  *   keys: AccreditationKeys,
  *   organisation: OrganisationView,
  *   registration: RegistrationView,
- *   accreditation: AccreditationView,
+ *   accreditation: Accreditation,
  *   packagingRecyclingNotes: PackagingRecyclingNote[]
  * }} params
  */

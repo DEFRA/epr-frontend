@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { buildViewModel } from './build-view-model.js'
 
 /**
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod, ReportListItem } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -100,8 +100,8 @@ const aRegistration = (overrides) =>
   )
 
 /**
- * @param {Partial<AccreditationView>} [overrides]
- * @returns {AccreditationView}
+ * @param {Partial<Accreditation>} [overrides]
+ * @returns {Accreditation}
  */
 const anAccreditation = (overrides) => ({
   accreditationNumber: 'A26ER5001180114PL',
@@ -161,7 +161,7 @@ const summaryLogSubmitted = {
 }
 
 /**
- * @param {Partial<AccreditationView>} [accreditationOverrides]
+ * @param {Partial<Accreditation>} [accreditationOverrides]
  * @param {Partial<RegistrationView>} [registrationOverrides]
  * @param {WasteBalance | null} [wasteBalance]
  * @param {{ cadence: CadenceValue | null, reportingPeriods: ReportingPeriod[] }} [calendar]

@@ -31,7 +31,7 @@ import { registrationPath, reportPath } from './helpers/report-paths.js'
  * template scan that hides write controls cannot see it and the decision has to
  * be made at this call site.
  * @param {{
- *   accreditation: AccreditationView | undefined,
+ *   accreditation: Accreditation | undefined,
  *   cadence: CadenceValue,
  *   canWrite: boolean,
  *   label: string,
@@ -74,7 +74,7 @@ const buildActionCell = ({
 /**
  * Build table rows for the govukTable macro, partitioned by submission status.
  * @param {{
- *   accreditation: AccreditationView | undefined,
+ *   accreditation: Accreditation | undefined,
  *   cadence: CadenceValue,
  *   canWrite: boolean,
  *   localise: TFunction,
@@ -286,7 +286,7 @@ export const listController = {
 /**
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from './constants.js'
  * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
  * @import { RegistrationKeys } from './helpers/report-paths.js'

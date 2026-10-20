@@ -30,7 +30,7 @@ import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
 import { accreditedDateRange } from '../helpers/timeline-dates.js'
 
 /**
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
@@ -160,7 +160,7 @@ const toLatestSummaryLogRow = ({
 
 /**
  * @param {{
- *   accreditation: AccreditationView,
+ *   accreditation: Accreditation,
  *   ledgerEvents: LedgerEvent[] | null,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
@@ -377,7 +377,7 @@ const toLedger = ({
  *   keys: AccreditationKeys,
  *   organisation: OrganisationView,
  *   registration: RegistrationView,
- *   accreditation: AccreditationView,
+ *   accreditation: Accreditation,
  *   wasteBalance: WasteBalance | null,
  *   reportingPeriods: ReportingPeriod[],
  *   cadence: CadenceValue | null,

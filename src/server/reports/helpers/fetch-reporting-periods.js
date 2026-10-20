@@ -3,26 +3,6 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { reportsCalendarApiPath } from './report-paths.js'
 
 /**
- * Fetches available reporting periods for a registration from the backend.
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {string} backendToken
- * @returns {Promise<ReportingPeriodsResponse>}
- */
-export async function fetchReportingPeriods(
-  organisationId,
-  registrationId,
-  backendToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/calendar`
-
-  return fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${backendToken}` }
-  })
-}
-
-/**
  * Fetches available reporting periods for a registration by its natural keys.
  * @param {RegistrationKeys} keys
  * @param {string} backendToken
