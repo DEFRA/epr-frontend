@@ -9,7 +9,7 @@ import { isAccreditationActive } from '#server/common/helpers/organisations/accr
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
   accreditationIn,
-  materialsHomepagePath
+  materialsHomepage
 } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
@@ -25,7 +25,6 @@ import { registeredYears } from '#server/registrations/details/helpers/timeline-
 import {
   accreditationPath,
   organisationPath,
-  registeredOnlyPath,
   registrationPath,
   reportsListPath
 } from '#server/reports/helpers/report-paths.js'
@@ -294,10 +293,7 @@ const buildRegisteredOnlyViewModel = ({ request, keys, registration }) => ({
   wasteBalanceLedgerUrl: toLedgerUrl(request, registrationPath(keys))
 })
 
-/**
- * Kept for old bookmarks: links carry the year.
- * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const registrationController = {
   /**
    * @param {HapiRequest & { params: OperatorRegistrationParams }} request
@@ -312,12 +308,12 @@ export const registrationController = {
       backendToken: request.auth.credentials.backendToken
     })
     const [latestYear] = registeredYears(registration)
-    const path = latestYear
-      ? materialsHomepagePath(keys, registration, latestYear)
+    const homepage = latestYear
+      ? materialsHomepage(keys, registration, latestYear)
       : null
 
-    if (path) {
-      return redirectPreservingMethod(request, h, path)
+    if (homepage) {
+      return redirectPreservingMethod(request, h, homepage.path)
     }
 
     return h.view(
@@ -345,9 +341,9 @@ export const registeredOnlyYearController = {
       ...keys,
       backendToken: request.auth.credentials.backendToken
     })
-    const path = materialsHomepagePath(keys, registration, year)
+    const homepage = materialsHomepage(keys, registration, year)
 
-    if (path === null) {
+    if (homepage === null) {
       throw notFound(
         'Registered-only year not found',
         errorCodes.registrationNotFound,
@@ -360,8 +356,8 @@ export const registeredOnlyYearController = {
       )
     }
 
-    if (path !== registeredOnlyPath({ ...keys, year })) {
-      return redirectPreservingMethod(request, h, path)
+    if (homepage.kind === 'accredited') {
+      return redirectPreservingMethod(request, h, homepage.path)
     }
 
     return h.view(

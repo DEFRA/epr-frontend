@@ -198,8 +198,9 @@ describe('who a registration renders for', () => {
   it('keeps a session the backend named nobody on the operator page', async ({
     server
   }) => {
-    const { body } = await visit(server, unrecognised, yearPath)
+    const { statusCode, body } = await visit(server, unrecognised, yearPath)
 
+    expect(statusCode).toBe(statusCodes.ok)
     expect(headingOf(body)).not.toContain('Registration details')
   })
 

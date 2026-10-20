@@ -65,21 +65,28 @@ export const accreditationIn = (registration, year) => {
 }
 
 /**
+ * @typedef {{ kind: 'accredited' | 'registeredOnly', path: string }} MaterialsHomepage
+ */
+
+/**
  * @param {RegistrationKeys} keys
  * @param {RegistrationView} registration
  * @param {number} year
- * @returns {string | null}
+ * @returns {MaterialsHomepage | null}
  */
-export const materialsHomepagePath = (keys, registration, year) => {
+export const materialsHomepage = (keys, registration, year) => {
   const accreditation = Object.hasOwn(registration.accreditations, year)
     ? registration.accreditations[year]
     : undefined
 
   if (isAccreditationActive(accreditation)) {
-    return accreditationPath({ ...keys, year: String(year) })
+    return {
+      kind: 'accredited',
+      path: accreditationPath({ ...keys, year: String(year) })
+    }
   }
 
   return registeredYears(registration).includes(year)
-    ? registeredOnlyPath({ ...keys, year })
+    ? { kind: 'registeredOnly', path: registeredOnlyPath({ ...keys, year }) }
     : null
 }

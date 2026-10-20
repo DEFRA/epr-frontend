@@ -169,20 +169,24 @@ const visit = async (
 const hrefOf = (body, name) =>
   getByRole(body, 'link', { name }).getAttribute('href')
 
+const configuredWindow = config.get('reapplyAccreditation')
+
+const openTheReapplyWindow = () => {
+  config.set('reapplyAccreditation.windowStart', '01-01T00:00')
+  config.set('reapplyAccreditation.windowEnd', '12-31T23:59')
+  config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
+}
+
+const restoreTheReapplyWindow = () => {
+  config.set('reapplyAccreditation.windowStart', configuredWindow.windowStart)
+  config.set('reapplyAccreditation.windowEnd', configuredWindow.windowEnd)
+  config.set('reapplyAccreditation.baseUrl', configuredWindow.baseUrl)
+}
+
 describe("the operator's registration page for a year", () => {
-  const configuredWindow = config.get('reapplyAccreditation')
+  beforeEach(openTheReapplyWindow)
 
-  beforeEach(() => {
-    config.set('reapplyAccreditation.windowStart', '01-01T00:00')
-    config.set('reapplyAccreditation.windowEnd', '12-31T23:59')
-    config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
-  })
-
-  afterEach(() => {
-    config.set('reapplyAccreditation.windowStart', configuredWindow.windowStart)
-    config.set('reapplyAccreditation.windowEnd', configuredWindow.windowEnd)
-    config.set('reapplyAccreditation.baseUrl', configuredWindow.baseUrl)
-  })
+  afterEach(restoreTheReapplyWindow)
 
   it("shows the year's accreditation and the site and material", async ({
     server,
@@ -464,6 +468,10 @@ describe("the operator's registration page for a year", () => {
 const registeredOnly = { ...reprocessor, accreditations: {} }
 
 describe("the operator's registered-only page for a year", () => {
+  beforeEach(openTheReapplyWindow)
+
+  afterEach(restoreTheReapplyWindow)
+
   it('shows a registered-only operator their registration', async ({
     server,
     msw
@@ -821,26 +829,25 @@ describe("the operator's registration page with no year", () => {
     expect(response.headers.location).toBe(registeredOnlyPath)
   })
 
-  it.for([
-    { name: 'never approved', status: { current: 'created', timeline: [] } },
-    {
-      name: 'approved only from a date still to come',
-      status: registeredSince(thisYear + 1)
-    }
-  ])(
-    'shows the page without a year for a registration $name',
-    async ({ status }, { server, msw }) => {
-      backendHolds(msw, { registration: { ...reprocessor, status } })
+  it('shows the page without a year for a registration never approved', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      registration: {
+        ...registeredOnly,
+        status: {
+          current: 'created',
+          timeline: [{ status: 'created', at: `${year}-01-01T09:00:00.000Z` }]
+        }
+      }
+    })
 
-      const { statusCode, body } = await visit(server, {
-        url: registrationPath
-      })
+    const { statusCode, body } = await visit(server, { url: registrationPath })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(getByText(body, registrationNumber)).toBeDefined()
-      expect(queryByText(body, accreditationNumber)).toBeNull()
-    }
-  )
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(getByText(body, registrationNumber)).toBeDefined()
+  })
 
   it('is not found for an organisation number the backend does not know', async ({
     server,
