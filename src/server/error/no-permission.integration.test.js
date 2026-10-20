@@ -27,7 +27,8 @@ describe('the no-permission page', () => {
     profile: {
       id: 'defra-user-2',
       email: 'operator@example.com'
-    }
+    },
+    linkedOrganisationNumber: '500123'
   })
 
   beforeAll(() => {
@@ -72,24 +73,48 @@ describe('the no-permission page', () => {
     expect(navigation).not.toContain('Manage account')
   })
 
-  it.for([
-    { url: '/regulators/home', lang: 'en' },
-    { url: '/cy/regulators/home', lang: 'cy' }
-  ])(
-    'reads the same to an operator refused $url, in lang="$lang"',
-    async ({ url, lang }, { server }) => {
-      const response = await server.inject({
+  describe.for([
+    { prefix: '', lang: 'en' },
+    { prefix: '/cy', lang: 'cy' }
+  ])('an operator at $prefix/regulators/home', ({ prefix, lang }) => {
+    /** @param {ServerFixtures['server']} server */
+    const refuse = (server) =>
+      server.inject({
         method: 'GET',
-        url,
+        url: `${prefix}/regulators/home`,
         auth: operator
       })
+
+    it(`is refused in lang="${lang}"`, async ({ server }) => {
+      const response = await refuse(server)
 
       expect(response.statusCode).toBe(statusCodes.forbidden)
 
       const $ = load(asHtml(response.result))
       expect($('html').attr('lang')).toBe(lang)
       expect($('h1').text().trim()).toBe('You do not have permission')
-      expect($('.govuk-service-navigation').text()).toContain('Manage account')
-    }
-  )
+    })
+
+    it('keeps the operator shell, because the role picks the shell and the route never does', async ({
+      server
+    }) => {
+      const $ = load(asHtml((await refuse(server)).result))
+
+      const serviceName = $('.govuk-service-navigation__service-name a')
+      expect(serviceName.text().trim()).toBe(
+        'Record reprocessed or exported packaging waste'
+      )
+      expect(serviceName.attr('href')).toBe(`${prefix}/start`)
+
+      const navigation = $('.govuk-service-navigation__item')
+      expect(
+        navigation.map((_, item) => $(item).text().trim()).get()
+      ).toStrictEqual(['Home', 'Manage account', 'Sign out'])
+      expect(navigation.last().find('a').attr('href')).toBe(`${prefix}/logout`)
+    })
+  })
 })
+
+/**
+ * @import { ServerFixtures } from '#vite/fixtures/server.js'
+ */
