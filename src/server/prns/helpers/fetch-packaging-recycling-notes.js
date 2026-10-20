@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
 
 /**
@@ -7,15 +7,9 @@ import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<PackagingRecyclingNote[]>} List of packaging recycling notes
  */
-async function fetchPackagingRecyclingNotes(keys, backendToken) {
-  const { items } = /** @type {{ items: PrnResource[] }} */ (
-    await fetchJsonFromBackend(prnsPath(keys), {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${backendToken}`
-      }
-    })
-  )
+const fetchPackagingRecyclingNotes = async (keys, backendToken) => {
+  /** @type {{ items: PrnResource[] }} */
+  const { items } = await backend(backendToken).get(prnsPath(keys))
 
   // The backend lists newest first; the pages show notes in the order raised.
   return items.map(toPackagingRecyclingNote).sort(oldestFirst)
