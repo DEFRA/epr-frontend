@@ -18,7 +18,7 @@ import {
 
 /**
  * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
- * @import { AccreditationView, RegistrationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Stretch } from './registered-only.js'
  */
 
@@ -89,7 +89,7 @@ const REGISTERED_STATUSES = new Set([REGISTRATION_STATUS.APPROVED])
 
 /**
  * The runs of approved or suspended days within the accreditation's year.
- * @param {AccreditationView} accreditation
+ * @param {Accreditation} accreditation
  * @param {string} year
  * @returns {Stretch[]}
  */
@@ -130,7 +130,7 @@ const accreditedFrom = (statusTimeline, yearStart) => {
 
 /**
  * The period an accreditation is shown as covering within its year.
- * @param {AccreditationView} accreditation
+ * @param {Accreditation} accreditation
  * @param {string} year
  * @returns {{ validFrom: string, validTo: string }}
  */

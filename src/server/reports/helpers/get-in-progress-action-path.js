@@ -5,7 +5,7 @@ import {
 import { CADENCE } from '../constants.js'
 
 /**
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from '../constants.js'
  */
 
@@ -13,7 +13,7 @@ import { CADENCE } from '../constants.js'
  * Gets the report-flow action path an in-progress report should target.
  * The destination varies by registration type, accreditation and cadence.
  * @param {Pick<RegistrationView, 'wasteProcessingType'>} registration
- * @param {AccreditationView | undefined} accreditation
+ * @param {Accreditation | undefined} accreditation
  * @param {CadenceValue} cadence
  * @returns {string}
  */

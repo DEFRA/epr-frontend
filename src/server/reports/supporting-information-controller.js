@@ -53,7 +53,7 @@ const payloadSchema = Joi.object({
  * variants share the same character limit.
  * @param {number} submissionNumber
  * @param {RegistrationView} registration
- * @param {AccreditationView | undefined} accreditation
+ * @param {Accreditation | undefined} accreditation
  * @param {Localise} localise
  * @returns {SupportingInfoCopy}
  */
@@ -119,7 +119,7 @@ function buildSupportingInfoCopy(
 /**
  * @param {string} basePath
  * @param {RegistrationView} registration
- * @param {AccreditationView | undefined} accreditation
+ * @param {Accreditation | undefined} accreditation
  * @returns {string}
  */
 function getBackPage(basePath, registration, accreditation) {
@@ -286,7 +286,7 @@ export const supportingInformationPostController = {
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Localise } from './helpers/format-period-label.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  */

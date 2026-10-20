@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchReportListDetails } from './fetch-report-list-details.js'
 
 /**
- * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { ReportListDetails } from './fetch-report-list-details.js'
  */
 
@@ -18,7 +18,7 @@ describe(fetchReportListDetails, () => {
   const registrationNumber = 'R26ER5001180041PL'
   const backendToken = 'token'
 
-  /** @type {AccreditationView} */
+  /** @type {Accreditation} */
   const accreditation = {
     accreditationNumber: 'A26ER5001180114PL',
     status: {

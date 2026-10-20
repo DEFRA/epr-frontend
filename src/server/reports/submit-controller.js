@@ -35,7 +35,7 @@ import { buildValidationErrors } from './helpers/validation.js'
 import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /** @import { Localise } from './helpers/format-period-label.js' */
-/** @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
+/** @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
 /** @import { ValidationError } from 'joi' */
 
 /**
@@ -141,7 +141,7 @@ function buildActivityViewData(
  * @typedef {{
  *   organisation: OrganisationView,
  *   registration: RegistrationView,
- *   accreditation: AccreditationView | undefined,
+ *   accreditation: Accreditation | undefined,
  *   reportDetail: ReportDetailResponse,
  *   reportsUrl: string,
  *   deleteUrl: string,
