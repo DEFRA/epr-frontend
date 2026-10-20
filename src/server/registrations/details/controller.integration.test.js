@@ -78,7 +78,7 @@ const accreditation = {
  * @param {SetupServer} msw
  * @param {{
  *   registration?: Record<string, unknown>,
- *   tradingName?: string
+ *   displayName?: string
  * }} [overrides]
  */
 const backendHolds = (msw, overrides = {}) =>
@@ -87,7 +87,7 @@ const backendHolds = (msw, overrides = {}) =>
       HttpResponse.json({
         organisationNumber: 500118,
         name: 'Kirkby Plastics Ltd',
-        tradingName: overrides.tradingName,
+        displayName: overrides.displayName ?? 'Kirkby Plastics Ltd',
         registrations: {
           [registrationNumber]: overrides.registration ?? registration
         }
@@ -331,11 +331,8 @@ describe('the registration details page a regulator reads', () => {
     }
   })
 
-  it('names the organisation by its trading name where it holds one', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw, { tradingName: 'Kirkby Recycling' })
+  it('names the organisation by its display name', async ({ server, msw }) => {
+    backendHolds(msw, { displayName: 'Kirkby Recycling' })
 
     const { body } = await visit(server)
 

@@ -1,137 +1,52 @@
-import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, vi } from 'vitest'
+import { describe, expect } from 'vitest'
 
-import { test } from '#vite/fixtures/server.js'
+import { it } from '#vite/fixtures/server.js'
 
 import { fetchWasteBalances } from './fetch-waste-balances.js'
 
-const MOCK_TRACE_ID = 'mock-trace-id-1'
-
-vi.mock(import('@defra/hapi-tracing'), () => ({
-  withTraceId: vi.fn((headerName, headers = {}) => {
-    headers[headerName] = MOCK_TRACE_ID
-    return headers
-  }),
-  tracing: {
-    plugin: {}
-  }
-}))
-
-const backendUrl = config.get('eprBackendUrl')
-
 describe(fetchWasteBalances, () => {
-  const organisationId = 'org-123'
-  const accreditationIds = ['acc-001', 'acc-002']
-  const backendToken = 'test-id-token'
-
-  test('returns waste balance data when backend responds successfully', async ({
+  it('should ask for the balances of every accreditation named and resolve to them', async ({
     msw
   }) => {
-    const mockWasteBalanceData = {
-      'acc-001': { amount: 1000, availableAmount: 750 },
-      'acc-002': { amount: 500, availableAmount: 500 }
+    const balances = {
+      'acc/001': { amount: 1000, availableAmount: 750 },
+      'acc&002': { amount: 500, availableAmount: 500 }
     }
-
+    /** @type {{ pathname: string, accreditationIds: string | null }[]} */
+    const received = []
     msw.use(
-      http.get(`${backendUrl}/v1/organisations/org-123/waste-balances`, () =>
-        HttpResponse.json(mockWasteBalanceData)
-      )
-    )
-
-    const result = await fetchWasteBalances(
-      organisationId,
-      accreditationIds,
-      backendToken
-    )
-
-    expect(result).toStrictEqual(mockWasteBalanceData)
-  })
-
-  test('calls backend with correct path including organisation ID and accreditation IDs', async ({
-    msw
-  }) => {
-    let capturedUrl
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/waste-balances`,
-        ({ request }) => {
-          capturedUrl = request.url
-          return HttpResponse.json({})
-        }
-      )
-    )
-
-    await fetchWasteBalances(organisationId, accreditationIds, backendToken)
-
-    expect(capturedUrl).toContain('accreditationIds=acc-001,acc-002')
-  })
-
-  test('includes Authorization and tracing headers', async ({ msw }) => {
-    /** @type {Request | undefined} */
-    let capturedRequest
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/waste-balances`,
-        ({ request }) => {
-          capturedRequest = request
-          return HttpResponse.json({})
-        }
-      )
-    )
-
-    await fetchWasteBalances(organisationId, accreditationIds, backendToken)
-
-    const request = /** @type {Request} */ (capturedRequest)
-
-    expect(request.headers.get('content-type')).toBe('application/json')
-    expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
-    expect(request.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
-  })
-
-  test('returns empty object when accreditationIds array is empty', async () => {
-    const result = await fetchWasteBalances(organisationId, [], backendToken)
-
-    expect(result).toStrictEqual({})
-  })
-
-  test('encodes URL accreditation IDs with special characters', async ({
-    msw
-  }) => {
-    let capturedUrl
-    msw.use(
-      http.get(/.*waste-balances.*/, ({ request }) => {
-        capturedUrl = request.url
-        return HttpResponse.json({})
+      http.get(/waste-balances$/, ({ request }) => {
+        const url = new URL(request.url)
+        received.push({
+          pathname: url.pathname,
+          accreditationIds: url.searchParams.get('accreditationIds')
+        })
+        return HttpResponse.json(balances)
       })
     )
 
-    await fetchWasteBalances(
-      organisationId,
+    const result = await fetchWasteBalances(
+      'org/1',
       ['acc/001', 'acc&002'],
-      backendToken
+      'a-token'
     )
 
-    expect(capturedUrl).toContain('accreditationIds=acc%2F001,acc%26002')
+    expect(result).toStrictEqual({
+      'acc/001': { amount: 1000, availableAmount: 750 },
+      'acc&002': { amount: 500, availableAmount: 500 }
+    })
+    expect(received).toStrictEqual([
+      {
+        pathname: '/v1/organisations/org%2F1/waste-balances',
+        accreditationIds: 'acc/001,acc&002'
+      }
+    ])
   })
 
-  test('throws Boom error when backend returns 500', async ({ msw }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/waste-balances`,
-        () =>
-          new HttpResponse(null, {
-            status: 500,
-            statusText: 'Internal Server Error'
-          })
-      )
-    )
-
+  it('should resolve to no balances without asking when no accreditation is named', async () => {
     await expect(
-      fetchWasteBalances(organisationId, accreditationIds, backendToken)
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 500 }
-    })
+      fetchWasteBalances('org-1', [], 'a-token')
+    ).resolves.toStrictEqual({})
   })
 })

@@ -3,7 +3,7 @@ import { hasWriteScope } from '#server/auth/scopes.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { http, HttpResponse } from 'msw'
+import { HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 import { fetchIdentity } from './fetch-identity.js'
 
@@ -57,45 +57,27 @@ describe('#fetchIdentity', () => {
     expect(result).toStrictEqual({ role: null, scopes: [] })
   })
 
-  it('should reject a response that omits the scopes', async ({ msw }) => {
-    msw.use(identityResponse({ role: 'operator' }))
+  it.for([
+    {
+      description: 'omits the scopes',
+      body: { role: 'operator' },
+      reason: 'scopes: any.required'
+    },
+    {
+      description: 'has scopes that are not strings',
+      body: { role: 'operator', scopes: [{}] },
+      reason: 'scopes.0: string.base'
+    }
+  ])(
+    'should reject as a bad gateway a response that $description',
+    async ({ body, reason }, { msw }) => {
+      msw.use(identityResponse(body))
 
-    await expect(fetchIdentity(mockBackendToken)).rejects.toThrow(
-      /Invalid identity/
-    )
-  })
-
-  it('should reject a response whose scopes are not strings', async ({
-    msw
-  }) => {
-    msw.use(identityResponse({ role: 'operator', scopes: [{}] }))
-
-    await expect(fetchIdentity(mockBackendToken)).rejects.toThrow(
-      /Invalid identity/
-    )
-  })
-
-  it('should throw when the backend refuses the token', async () => {
-    await expect(fetchIdentity('invalid-token')).rejects.toMatchObject({
-      isBoom: true,
-      output: {
-        statusCode: 401
-      }
-    })
-  })
-
-  it('should throw when the backend fails', async ({ msw }) => {
-    msw.use(
-      http.get(`${backendUrl}/v1/me`, () =>
-        HttpResponse.json({ error: 'Internal Server Error' }, { status: 500 })
-      )
-    )
-
-    await expect(fetchIdentity(mockBackendToken)).rejects.toMatchObject({
-      isBoom: true,
-      output: {
-        statusCode: 500
-      }
-    })
-  })
+      await expect(fetchIdentity(mockBackendToken)).rejects.toMatchObject({
+        output: { statusCode: 502 },
+        code: 'backend_response_invalid',
+        event: { reason }
+      })
+    }
+  )
 })

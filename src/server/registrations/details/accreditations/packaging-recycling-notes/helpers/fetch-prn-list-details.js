@@ -1,20 +1,18 @@
-import { getRequiredRegistrationWithAnyAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAnyAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
 
 /**
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
  * @import { UserSession } from '#server/auth/types/session.js'
- * @import { NumberedAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+ * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
  * @typedef {{
- *   organisation: Organisation,
- *   registration: Registration,
- *   accreditation: NumberedAccreditation,
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
+ *   accreditation: AccreditationView,
  *   packagingRecyclingNotes: PackagingRecyclingNote[]
  * }} PrnListDetails
  */
@@ -27,15 +25,10 @@ import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packagi
  * @returns {Promise<PrnListDetails>}
  */
 export const fetchPrnListDetails = async ({ keys, credentials }) => {
-  const [linked, packagingRecyclingNotes] = await Promise.all([
-    getRequiredRegistrationWithAnyAccreditationByNumber(keys, credentials),
+  const [records, packagingRecyclingNotes] = await Promise.all([
+    fetchRequiredAnyAccreditation(keys, credentials.backendToken),
     fetchPackagingRecyclingNotes(keys, credentials.backendToken)
   ])
 
-  return {
-    organisation: linked.organisationData,
-    registration: linked.registration,
-    accreditation: linked.accreditation,
-    packagingRecyclingNotes
-  }
+  return { ...records, packagingRecyclingNotes }
 }

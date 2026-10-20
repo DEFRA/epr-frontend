@@ -1,7 +1,11 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -18,7 +22,7 @@ import { JSDOM } from 'jsdom'
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
@@ -46,7 +50,7 @@ async function loadPage({
   auth = mockAuth,
   cadence = 'monthly'
 }) {
-  vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+  vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
     registrationAndAccreditation
   )
   return await server.inject({
@@ -74,76 +78,33 @@ async function loadPageBody({
 }
 
 describe('#viewController', () => {
-  const mockAccreditedReprocessor = {
-    organisationData: {
-      id: 'org-123',
-      companyDetails: { name: 'Acme Recycling Ltd' }
-    },
-    registration: {
-      id: 'reg-001',
-      accreditationId: 'acc-001',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor',
-      registrationNumber: 'REG001234',
-      site: {
-        address: {
-          line1: 'North Road',
-          town: 'Manchester',
-          postcode: 'M1 1AA'
-        }
-      }
-    },
-    accreditation: { id: 'acc-001' }
-  }
+  const reprocessorView = buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: {
+      address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
+    }
+  })
+  const organisation = { name: 'Acme Recycling Ltd' }
 
-  const mockAccreditedExporter = {
-    organisationData: {
-      id: 'org-123',
-      companyDetails: { name: 'Acme Recycling Ltd' }
-    },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234'
-    },
-    accreditation: { id: 'acc-001' }
-  }
+  const mockAccreditedReprocessor = buildRegistrationWithAccreditation({
+    organisation,
+    registration: reprocessorView
+  })
 
-  const mockRegisteredOnlyReprocessor = {
-    organisationData: {
-      id: 'org-123',
-      companyDetails: { name: 'Acme Recycling Ltd' }
-    },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor',
-      registrationNumber: 'REG001234',
-      site: {
-        address: {
-          line1: 'North Road',
-          town: 'Manchester',
-          postcode: 'M1 1AA'
-        }
-      }
-    },
-    accreditation: undefined
-  }
+  const mockAccreditedExporter = buildRegistrationWithAccreditation({
+    organisation
+  })
 
-  const mockRegisteredOnlyExporter = {
-    organisationData: {
-      id: 'org-123',
-      companyDetails: { name: 'Acme Recycling Ltd' }
-    },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234'
-    },
-    accreditation: undefined
-  }
+  const mockRegisteredOnlyReprocessor = buildRegistrationWithAccreditation({
+    organisation,
+    registration: { ...reprocessorView, accreditations: {} }
+  })
+
+  const mockRegisteredOnlyExporter = buildRegistrationWithAccreditation({
+    organisation,
+    registration: buildRegistrationView({ accreditations: {} })
+  })
 
   const reprocessors = [
     {
@@ -522,9 +483,9 @@ describe('#viewController', () => {
 
         expect(trailHrefs(body)).toStrictEqual([
           '/regulators/home',
-          '/organisations/org-123',
-          '/organisations/org-123/registrations/reg-001',
-          '/organisations/org-123/registrations/reg-001/accreditations/acc-001'
+          '/organisations/500001',
+          '/organisations/500001/registrations/R25SR500030912PA',
+          '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
         ])
       })
 
@@ -536,7 +497,7 @@ describe('#viewController', () => {
         })
 
         expect(trailHrefs(body).at(-1)).toBe(
-          '/organisations/org-123/registrations/reg-001/accreditations/acc-001'
+          '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
         )
       })
 
@@ -551,7 +512,7 @@ describe('#viewController', () => {
         })
 
         expect(trailHrefs(body).at(-1)).toBe(
-          '/organisations/org-123/registrations/reg-001/registered-only-periods/2026'
+          '/organisations/500001/registrations/R25SR500030912PA/registered-only-periods/2026'
         )
       })
 
@@ -565,7 +526,7 @@ describe('#viewController', () => {
         })
 
         expect(trailHrefs(body).at(-1)).toBe(
-          '/organisations/org-123/registrations/reg-001'
+          '/organisations/500001/registrations/R25SR500030912PA'
         )
       })
     })

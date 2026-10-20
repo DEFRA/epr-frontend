@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
 
 /**
@@ -14,20 +14,14 @@ import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
  * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<PackagingRecyclingNote>}
  */
-async function updatePrnStatus(keys, prnId, payload, backendToken) {
-  const path = `${prnsPath(keys)}/${encodeURIComponent(prnId)}/status`
-
-  return toPackagingRecyclingNote(
-    /** @type {PrnResource} */ (
-      await fetchJsonFromBackend(path, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${backendToken}`
-        },
-        body: JSON.stringify(payload)
-      })
-    )
+const updatePrnStatus = async (keys, prnId, payload, backendToken) => {
+  /** @type {PrnResource} */
+  const note = await backend(backendToken).post(
+    `${prnsPath(keys)}/${encodeURIComponent(prnId)}/status`,
+    payload
   )
+
+  return toPackagingRecyclingNote(note)
 }
 
 export { updatePrnStatus }

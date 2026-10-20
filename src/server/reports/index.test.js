@@ -1,5 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
@@ -12,15 +16,11 @@ import Boom from '@hapi/boom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 /**
- * @import { RegistrationApproved } from '#domain/organisations/registration.js'
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
@@ -31,23 +31,21 @@ const periodBase = `${registrationPath}/reports/2026/quarterly/1/submissions/1`
 const accreditedPeriodBase = `${registrationPath}/accreditations/2026/reports/monthly/1/submissions/1`
 const detailUrl = periodBase
 
-/** @type {RegistrationWithAccreditation} */
-const mockRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
-  registration: /** @type {RegistrationApproved} */ ({
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'reprocessor',
-    registrationNumber: 'R25SR500030912PA'
-  }),
-  accreditation: undefined
-}
+const reprocessorView = buildRegistrationView({
+  wasteProcessingType: 'reprocessor',
+  reprocessingType: 'input',
+  site: {
+    address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
+  }
+})
 
-/** @type {RegistrationWithAccreditation} */
-const mockAccreditedRegistration = {
-  ...mockRegistration,
-  accreditation: /** @type {Accreditation} */ ({ id: 'acc-001' })
-}
+const mockRegistration = buildRegistrationWithAccreditation({
+  registration: { ...reprocessorView, accreditations: {} }
+})
+
+const mockAccreditedRegistration = buildRegistrationWithAccreditation({
+  registration: reprocessorView
+})
 
 describe('reports plugin routes', () => {
   beforeEach(() => {
@@ -70,7 +68,7 @@ describe('reports plugin routes', () => {
   it('keeps a page payload validation on the accredited base', async ({
     server
   }) => {
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       mockAccreditedRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -168,7 +166,7 @@ describe('a monthly report URL on the registered-only base', () => {
 describe('reports plugin onPreResponse lifecycle', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       mockRegistration
     )
   })
@@ -176,7 +174,7 @@ describe('reports plugin onPreResponse lifecycle', () => {
   it('redirects a stale monthly report to report-stale-error on the accredited base', async ({
     server
   }) => {
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       mockAccreditedRegistration
     )
     vi.mocked(fetchReportDetail).mockRejectedValue(

@@ -1,6 +1,6 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
 /**
@@ -45,19 +45,11 @@ export const findOrganisationById = async (organisationId, backendToken) =>
  * @returns {Promise<Organisation | null>}
  */
 const searchByNumber = async (organisationNumber, backendToken) => {
-  const query = new URLSearchParams({
-    orgId: organisationNumber,
-    page: '1',
-    pageSize: '1'
-  })
-
-  const page = /** @type {OrganisationsPage | null} */ (
-    await nullWhenRefused(
-      fetchJsonFromBackend(`/v1/organisations?${query}`, {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${backendToken}` }
-      })
-    )
+  /** @type {OrganisationsPage | null} */
+  const page = await nullWhenRefused(
+    backend(backendToken).get('/v1/organisations', {
+      query: { orgId: organisationNumber, page: 1, pageSize: 1 }
+    })
   )
 
   const [match] = page?.items ?? []

@@ -5,13 +5,11 @@
 export const errorCodes = {
   accreditationIdMismatch: 'accreditation_id_mismatch',
   accreditationNotFound: 'accreditation_not_found',
+  backendResponseInvalid: 'backend_response_invalid',
   externalFetchFailed: 'external_fetch_failed',
   externalRedirectInvalid: 'external_redirect_invalid',
-  glassRecyclingProcessMissing: 'glass_recycling_process_missing',
-  glassRecyclingProcessUnknown: 'glass_recycling_process_unknown',
   invalidPrnField: 'invalid_prn_field',
   notAccredited: 'not_accredited',
-  organisationForbidden: 'organisation_forbidden',
   prnCancelFailed: 'prn_cancel_failed',
   prnConfirmFailed: 'prn_confirm_failed',
   prnCreateFailed: 'prn_create_failed',
@@ -20,6 +18,5 @@ export const errorCodes = {
   prnDiscardFailed: 'prn_discard_failed',
   recordKeyUnresolved: 'record_key_unresolved',
   registrationNotFound: 'registration_not_found',
-  summaryLogNotFound: 'summary_log_not_found',
-  unknownMaterial: 'unknown_material'
+  summaryLogNotFound: 'summary_log_not_found'
 }

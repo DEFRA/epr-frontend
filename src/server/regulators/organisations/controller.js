@@ -33,7 +33,11 @@ export const controller = {
     const credentials = request.auth.credentials
     const { backendToken } = credentials
 
-    const results = await fetchOrganisations({ page, search, backendToken })
+    const results = await fetchOrganisations({
+      page,
+      backendToken,
+      ...(search && { search })
+    })
     const basePath = request.localiseUrl(paths.regulators.home)
     const lastPage = lastPageOf(results.totalPages)
 

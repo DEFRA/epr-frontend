@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import {
   accreditationPath,
   registrationPath
@@ -65,14 +65,8 @@ import {
  * @returns {Promise<LedgerEvent[]>}
  */
 const readEvents = async (path, backendToken) => {
-  const { events } = /** @type {{ events: LedgerEvent[] }} */ (
-    await fetchJsonFromBackend(path, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${backendToken}`
-      }
-    })
-  )
+  /** @type {{ events: LedgerEvent[] }} */
+  const { events } = await backend(backendToken).get(path)
 
   return events
 }

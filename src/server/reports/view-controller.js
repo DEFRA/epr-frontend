@@ -3,7 +3,7 @@ import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
   buildPrnSummaryViewData,
@@ -12,7 +12,8 @@ import {
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -27,8 +28,7 @@ import { SUBMISSION_STATUS } from './constants.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Localise } from './helpers/format-period-label.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
@@ -136,8 +136,8 @@ function buildStatusDetails(reportDetail, status, localise) {
  */
 
 /**
- * @param {Registration} registration
- * @param {Accreditation | undefined} accreditation
+ * @param {RegistrationView} registration
+ * @param {AccreditationView | undefined} accreditation
  * @returns {RegistrationFlags}
  */
 function buildRegistrationFlags(registration, accreditation) {
@@ -243,7 +243,7 @@ function buildViewData({
   localise
 }) {
   const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
-  const material = getRegistrationMaterialDisplayName(registration)
+  const material = getMaterialDisplayName(registration.material)
   const periodLabel = formatPeriodLabelWithComma(
     { year, period },
     cadence,
@@ -269,7 +269,7 @@ function buildViewData({
 
     material,
     periodLabel,
-    site: registration.site?.address?.line1,
+    site: siteNameOf(registration),
 
     ...buildActivityViewData({
       reportDetail,
@@ -313,11 +313,10 @@ export const viewGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { organisationData, registration, accreditation } =
-      await fetchRegistrationAndAccreditationByNumber(
-        organisationNumber,
-        registrationNumber,
-        session
+    const { organisation, registration, accreditation } =
+      await fetchRegistrationWithAccreditation(
+        { organisationNumber, registrationNumber },
+        session.backendToken
       )
     const reportDetail = await fetchReportDetail(
       request.params,
@@ -358,8 +357,9 @@ export const viewGetController = {
       }),
       breadcrumbs: isRegulator
         ? buildReportBreadcrumbs({
-            organisation: organisationData,
+            organisation,
             registration,
+            keys: request.params,
             pageName: localise('reports:view:pageTitle'),
             year,
             cadence,

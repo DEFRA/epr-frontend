@@ -2,7 +2,7 @@ import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { deleteReport } from './helpers/delete-report.js'
 import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { STALE_REASON } from './helpers/stale.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 /**
@@ -61,10 +61,9 @@ export const reportStaleErrorGetController = {
     // same period overwrites it.
     const prefix = translationKeyPrefixFor(context.reasons)
 
-    const { registration } = await fetchRegistrationAndAccreditationByNumber(
-      organisationNumber,
-      registrationNumber,
-      session
+    const { registration } = await fetchRegistrationWithAccreditation(
+      { organisationNumber, registrationNumber },
+      session.backendToken
     )
     const { noteType } = getNoteTypeDisplayNames(registration)
 

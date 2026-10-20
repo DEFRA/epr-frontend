@@ -1,11 +1,6 @@
 /**
  * @import { IssuedToOrganisation, PackagingRecyclingNote, PrnResource } from '#server/prns/helpers/prn-resource.js'
- * @import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
- */
-
-/**
- * @typedef {Awaited<ReturnType<typeof getRequiredRegistrationWithAccreditationByNumber>>} RegistrationWithLiveAccreditation
  */
 
 /**
@@ -52,15 +47,6 @@ export const asUpdatePrnStatusResponse = (data) =>
  */
 export const asIssuedToOrganisation = (data) =>
   /** @type {IssuedToOrganisation} */ (data)
-
-/**
- * Casts a partial mock object to what
- * `getRequiredRegistrationWithAccreditationByNumber` resolves.
- * @param {unknown} data
- * @returns {RegistrationWithLiveAccreditation}
- */
-export const asRegistrationWithLiveAccreditation = (data) =>
-  /** @type {RegistrationWithLiveAccreditation} */ (data)
 
 /**
  * A draft PRN as the backend serves it.

@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 
 /** @import { ReprocessorExporterData } from './to-reprocessor-exporter-tables.js' */
 
@@ -41,15 +41,7 @@ export const fetchReprocessorExporterFigures = async ({
 }) => {
   const narrowedTo = nation === undefined ? '' : `/${nation}`
 
-  return /** @type {Promise<ReprocessorExporterAggregate>} */ (
-    fetchJsonFromBackend(
-      `/v1/market-insights/${year}/monthly/${month}/reprocessor-exporter-figures${narrowedTo}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${backendToken}`
-        }
-      }
-    )
+  return backend(backendToken).get(
+    `/v1/market-insights/${year}/monthly/${month}/reprocessor-exporter-figures${narrowedTo}`
   )
 }

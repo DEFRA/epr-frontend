@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 
 import { PAGE_SIZE } from './pagination.js'
 
@@ -23,22 +23,7 @@ import { PAGE_SIZE } from './pagination.js'
  * @param {{ page: number, search?: string, backendToken: string }} query
  * @returns {Promise<OrganisationsPage>}
  */
-export const fetchOrganisations = async ({ page, search, backendToken }) => {
-  const params = new URLSearchParams({
-    page: String(page),
-    pageSize: String(PAGE_SIZE)
+export const fetchOrganisations = ({ page, search, backendToken }) =>
+  backend(backendToken).get('/v1/organisations', {
+    query: { page, pageSize: PAGE_SIZE, search }
   })
-
-  if (search) {
-    params.set('search', search)
-  }
-
-  return /** @type {Promise<OrganisationsPage>} */ (
-    fetchJsonFromBackend(`/v1/organisations?${params}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${backendToken}`
-      }
-    })
-  )
-}

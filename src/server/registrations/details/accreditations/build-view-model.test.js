@@ -79,6 +79,7 @@ const accreditationPath = `${registrationPath}/accreditations/2026`
 const organisation = {
   organisationNumber: 500118,
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   registrations: {}
 }
 
@@ -245,10 +246,10 @@ describe('the accreditation details view model', () => {
     )
   })
 
-  it('knows an organisation by its trading name where it has one', () => {
+  it('knows an organisation by its display name', () => {
     const model = buildViewModel({
       keys,
-      organisation: { ...organisation, tradingName: 'Kirkby Recycling' },
+      organisation: { ...organisation, displayName: 'Kirkby Recycling' },
       registration: aRegistration(),
       accreditation: anAccreditation(),
       wasteBalance: aWasteBalance,

@@ -1,6 +1,7 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -36,7 +37,7 @@ function getSupportingInformation(reportDetail, localise) {
 }
 
 /**
- * @param {Pick<Registration, 'wasteProcessingType'>} registration
+ * @param {Pick<RegistrationView, 'wasteProcessingType'>} registration
  * @param {TFunction} localise
  * @returns {{
  *   freeLabel: string,
@@ -69,14 +70,15 @@ function buildNoteTypeLabels(registration, localise) {
 
 /**
  * @param {{
- *   accreditation: Accreditation | undefined,
+ *   accreditation: AccreditationView | undefined,
  *   basePath: string,
  *   cadenceLabel: string,
  *   localise: TFunction,
  *   localiseUrl: (path: string) => string,
  *   material: string,
  *   periodLabel: string,
- *   registration: Registration,
+ *   registration: RegistrationView,
+ *   registrationNumber: string,
  *   reportDetail: ReportDetailResponse
  * }} params
  * @returns {object}
@@ -90,6 +92,7 @@ function buildCheckViewData({
   material,
   periodLabel,
   registration,
+  registrationNumber,
   reportDetail
 }) {
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
@@ -124,9 +127,9 @@ function buildCheckViewData({
       tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
       tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
     },
-    registrationNumber: registration.registrationNumber,
+    registrationNumber,
     showApprovalColumn: isAccreditedExporter,
-    site: registration.site,
+    site: siteNameOf(registration),
     supportingInformation: getSupportingInformation(reportDetail, localise),
     supportingInformationLabel: localise('reports:supportingInformationLabel'),
     tonnageNotExportedChangeUrl: localiseUrl(`${basePath}/tonnes-not-exported`),
@@ -164,10 +167,9 @@ export const checkGetController = {
     const { t: localise } = request
 
     const { registration, accreditation } =
-      await fetchRegistrationAndAccreditationByNumber(
-        organisationNumber,
-        registrationNumber,
-        session
+      await fetchRegistrationWithAccreditation(
+        { organisationNumber, registrationNumber },
+        session.backendToken
       )
 
     const reportDetail = await fetchReportDetail(
@@ -180,7 +182,7 @@ export const checkGetController = {
     }
 
     const basePath = reportPath(request.params)
-    const material = getRegistrationMaterialDisplayName(registration)
+    const material = getMaterialDisplayName(registration.material)
     const periodLabel = formatPeriodLabelWithComma(
       { year, period },
       cadence,
@@ -190,6 +192,7 @@ export const checkGetController = {
 
     const viewData = buildCheckViewData({
       registration,
+      registrationNumber,
       accreditation,
       reportDetail,
       basePath,
@@ -242,8 +245,7 @@ export const checkPostController = {
 /**
  * @import { TFunction } from 'i18next'
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { VersionedPayload } from './helpers/versioned-payload-schema.js'

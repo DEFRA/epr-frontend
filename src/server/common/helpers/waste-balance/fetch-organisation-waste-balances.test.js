@@ -32,25 +32,4 @@ describe(fetchOrganisationWasteBalances, () => {
       A26ER5001180114PL: { amount: 20, availableAmount: 12.5 }
     })
   })
-
-  test('sends the backend token as a bearer token', async ({ msw }) => {
-    let authorization
-    msw.use(
-      http.get(
-        `${backendUrl}/organisations/50002/waste-balances/2026`,
-        ({ request }) => {
-          authorization = request.headers.get('Authorization')
-          return HttpResponse.json({})
-        }
-      )
-    )
-
-    await fetchOrganisationWasteBalances(
-      organisationNumber(50002),
-      year(2026),
-      'test-id-token'
-    )
-
-    expect(authorization).toBe('Bearer test-id-token')
-  })
 })

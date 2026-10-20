@@ -61,7 +61,7 @@
       {% if site %}
         {% set yourReportRows = yourReportRows.concat([{
           key: { text: localise("reports:siteLabel") },
-          value: { text: site.address.line1 }
+          value: { text: site }
         }]) %}
       {% endif %}
       {{ govukSummaryList({ rows: yourReportRows }) }}
