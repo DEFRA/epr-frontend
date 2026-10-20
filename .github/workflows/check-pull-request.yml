@@ -174,7 +174,7 @@ jobs:
           outcome: ${{ needs.test-journey.result }}
 
   # Aggregate gate carrying the exact name the branch ruleset requires; matrix
-  # legs report as "Run Journey Tests (<name>)" and can't
+  # legs report as "Run Journey Tests (<leg>)" and can't
   # match it. `if: always()` so a failing leg fails the gate rather than
   # skipping it (a skipped required check doesn't block).
   journey-tests:
