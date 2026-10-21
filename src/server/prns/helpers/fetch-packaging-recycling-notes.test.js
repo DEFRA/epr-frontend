@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 
@@ -35,7 +36,10 @@ describe(fetchPackagingRecyclingNotes, () => {
       })
     )
 
-    const result = await fetchPackagingRecyclingNotes(keys, 'a-token')
+    const result = await fetchPackagingRecyclingNotes(
+      keys,
+      toBackendToken('a-token')
+    )
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
@@ -71,7 +75,10 @@ describe(fetchPackagingRecyclingNotes, () => {
       )
     )
 
-    const result = await fetchPackagingRecyclingNotes(keys, 'a-token')
+    const result = await fetchPackagingRecyclingNotes(
+      keys,
+      toBackendToken('a-token')
+    )
 
     expect(result.map(({ id }) => id)).toStrictEqual(['older', 'newer'])
   })

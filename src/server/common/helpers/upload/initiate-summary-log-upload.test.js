@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -40,7 +41,7 @@ describe(initiateSummaryLogUpload, () => {
         keys,
         accredited: isAccredited,
         redirectUrl: '/redirect/path',
-        backendToken: 'test-id-token'
+        backendToken: toBackendToken('test-id-token')
       })
 
       const request = /** @type {Request} */ (capturedRequest)
@@ -69,7 +70,7 @@ describe(initiateSummaryLogUpload, () => {
       keys,
       accredited: false,
       redirectUrl: '/redirect/path',
-      backendToken: 'test-id-token'
+      backendToken: toBackendToken('test-id-token')
     })
 
     expect(result).toStrictEqual(mockResponse)
@@ -94,7 +95,7 @@ describe(initiateSummaryLogUpload, () => {
         keys,
         accredited: false,
         redirectUrl: '/redirect/path',
-        backendToken: 'test-id-token'
+        backendToken: toBackendToken('test-id-token')
       })
     ).rejects.toMatchObject({
       isBoom: true,

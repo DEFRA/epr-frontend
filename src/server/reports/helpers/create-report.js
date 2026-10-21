@@ -4,12 +4,13 @@ import { reportApiPath } from './report-paths.js'
 
 /**
  * @import { SubmissionKeys } from './report-paths.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  */
 
 /**
  * Creates an in-progress report for a specific period via the backend API.
  * @param {SubmissionKeys} keys
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<unknown>}
  */
 export const createReport = (keys, backendToken) =>

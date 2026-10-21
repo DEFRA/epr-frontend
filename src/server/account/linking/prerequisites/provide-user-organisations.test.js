@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
@@ -63,7 +64,7 @@ describe('#provideUserOrganisations', () => {
     )
 
     const mockRequest = {
-      auth: buildMockAuth({ backendToken: 'invalid-token' })
+      auth: buildMockAuth({ backendToken: toBackendToken('invalid-token') })
     }
 
     await expect(provideUserOrganisations.method(mockRequest)).rejects.toThrow(

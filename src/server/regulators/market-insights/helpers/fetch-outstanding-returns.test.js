@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { test } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
@@ -9,7 +10,7 @@ import { fetchOutstandingReturns } from './fetch-outstanding-returns.js'
 
 const backendUrl = config.get('eprBackendUrl')
 const outstandingReturnsUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/outstanding-returns`
-const backendToken = 'test-backend-token'
+const backendToken = toBackendToken('test-backend-token')
 
 /** @type {OutstandingReturnsAggregate} */
 const januaryAggregate = {

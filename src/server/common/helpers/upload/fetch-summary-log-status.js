@@ -4,6 +4,7 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { registrationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { SummaryLogStatusResponse } from '#server/summary-log/types.js'
  */
@@ -33,7 +34,7 @@ const tolerantly = (payload) => {
  * @param {RegistrationKeys} keys
  * @param {string} summaryLogId
  * @param {object} options
- * @param {string} options.backendToken - Bearer token for the backend
+ * @param {BackendToken} options.backendToken - Bearer token for the backend
  * @returns {Promise<SummaryLogStatusResponse>}
  */
 const fetchSummaryLogStatus = (keys, summaryLogId, { backendToken }) =>

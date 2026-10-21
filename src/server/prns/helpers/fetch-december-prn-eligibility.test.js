@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { fetchDecemberPrnEligibility } from './fetch-december-prn-eligibility.js'
@@ -27,7 +28,7 @@ describe(fetchDecemberPrnEligibility, () => {
         registrationNumber: 'R26/1',
         year: '2026'
       },
-      'a-token'
+      toBackendToken('a-token')
     )
 
     expect(result).toStrictEqual({ mode: 'manual', windowOpen: true })

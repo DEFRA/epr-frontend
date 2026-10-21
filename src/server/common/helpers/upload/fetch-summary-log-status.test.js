@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -29,7 +30,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: 'test-id-token'
+      backendToken: toBackendToken('test-id-token')
     })
 
     expect(result).toStrictEqual(mockResponse)
@@ -74,7 +75,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: 'test-id-token'
+      backendToken: toBackendToken('test-id-token')
     })
 
     expect(
@@ -96,7 +97,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: 'test-id-token'
+      backendToken: toBackendToken('test-id-token')
     })
 
     expect(result).not.toHaveProperty('unknownField')
@@ -121,7 +122,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: 'test-id-token'
+      backendToken: toBackendToken('test-id-token')
     })
 
     expect(warnSpy).toHaveBeenCalledTimes(1)

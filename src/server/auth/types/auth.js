@@ -1,4 +1,7 @@
-/** @import { UserProfile } from './session.js' */
+/**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { UserProfile } from './session.js'
+ */
 /**
  * Bell credentials from standard OAuth2 provider (e.g., Defra ID stub)
  * @typedef {{
@@ -90,7 +93,7 @@
  *   profile?: UserProfile
  *   expiresAt?: string
  *   idToken?: string
- *   backendToken?: string
+ *   backendToken?: BackendToken
  *   scope: string[]
  *   urls?: { token: string, logout: string }
  * }} BellProfileTarget

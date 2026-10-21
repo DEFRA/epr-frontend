@@ -1,5 +1,6 @@
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -50,7 +51,9 @@ const registeredOnly = {
 vi.spyOn(metrics.journey, 'start').mockResolvedValue()
 vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
-const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
+const mockAuth = buildMockAuth({
+  backendToken: toBackendToken('test-id-token')
+})
 
 describe('#summaryLogUploadController', () => {
   const organisationNumber = '500118'

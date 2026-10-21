@@ -1,6 +1,7 @@
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { paths } from '#server/paths.js'
@@ -96,7 +97,7 @@ describe('#logoutController - integration', () => {
   describe('when user is logged in to Entra ID', () => {
     const mockAuth = buildMockAuth({
       idToken: 'test-id-token',
-      backendToken: 'test-access-token',
+      backendToken: toBackendToken('test-access-token'),
       profile: {
         id: 'user-id',
         email: 'user@email.com'

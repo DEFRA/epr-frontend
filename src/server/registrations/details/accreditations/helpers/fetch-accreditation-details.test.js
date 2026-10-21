@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { test } from '#vite/fixtures/server.js'
@@ -26,7 +27,7 @@ describe(fetchAccreditationDetails, () => {
     registrationNumber: 'R26ER5001180041PL',
     year: '2026'
   }
-  const backendToken = 'test-token'
+  const backendToken = toBackendToken('test-token')
   const credentials = buildMockAuth({ backendToken }).credentials
   const logger = createMockLogger()
 

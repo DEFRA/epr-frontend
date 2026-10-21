@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 
@@ -36,7 +37,7 @@ describe(updatePrnStatus, () => {
       },
       'prn#789',
       { status: 'awaiting_acceptance' },
-      'a-token'
+      toBackendToken('a-token')
     )
 
     expect(result).toMatchObject({

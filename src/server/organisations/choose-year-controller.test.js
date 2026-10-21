@@ -2,6 +2,7 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { year } from '#server/common/helpers/year.js'
 import {
@@ -21,7 +22,7 @@ const PATH = '/organisations/500123/2025/choose-year'
 
 const mockAuth = buildMockAuth({
   idToken: 'test-id-token',
-  backendToken: 'test-backend-token'
+  backendToken: toBackendToken('test-backend-token')
 })
 
 const regulator = buildMockAuth({

@@ -4,6 +4,7 @@ import {
   registrationPath
 } from '#server/reports/helpers/report-paths.js'
 
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 /** @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js' */
 
 /**
@@ -61,7 +62,7 @@ import {
 /**
  * Reads the events of the ledger at a backend path.
  * @param {string} path
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<LedgerEvent[]>}
  */
 const readEvents = async (path, backendToken) => {
@@ -74,7 +75,7 @@ const readEvents = async (path, backendToken) => {
 /**
  * Reads the accreditation's ledger by natural key.
  * @param {AccreditationKeys} keys
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<LedgerEvent[]>}
  */
 export const fetchAccreditationLedgerEvents = async (keys, backendToken) =>
@@ -83,7 +84,7 @@ export const fetchAccreditationLedgerEvents = async (keys, backendToken) =>
 /**
  * Reads the registered-only ledger events in a year by natural key.
  * @param {AccreditationKeys} keys
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<LedgerEvent[]>}
  */
 export const fetchRegisteredOnlyLedgerEvents = async (

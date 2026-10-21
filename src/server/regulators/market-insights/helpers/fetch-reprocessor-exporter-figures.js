@@ -1,6 +1,7 @@
 import { backend } from '#server/common/helpers/backend-client.js'
 
 /** @import { ReprocessorExporterData } from './to-reprocessor-exporter-tables.js' */
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 
 /**
  * The reprocessor and exporter figures for a reporting period, as the backend
@@ -29,7 +30,7 @@ import { backend } from '#server/common/helpers/backend-client.js'
  *   year: number,
  *   month: number,
  *   nation?: Nation,
- *   backendToken: string
+ *   backendToken: BackendToken
  * }} period
  * @returns {Promise<ReprocessorExporterAggregate>}
  */

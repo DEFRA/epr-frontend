@@ -1,6 +1,7 @@
 import { fetchOrganisationWasteBalances } from './fetch-organisation-waste-balances.js'
 
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { Year } from '#server/common/helpers/year.js'
@@ -13,7 +14,7 @@ import { fetchOrganisationWasteBalances } from './fetch-organisation-waste-balan
  *   organisationNumber: OrganisationNumber,
  *   year: Year,
  *   accreditationNumber: string,
- *   backendToken: string,
+ *   backendToken: BackendToken,
  *   logger: TypedLogger
  * }} params
  * @returns {Promise<WasteBalance | null>}

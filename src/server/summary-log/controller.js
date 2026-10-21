@@ -20,6 +20,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
 
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
@@ -110,7 +111,7 @@ const getProgressViewData = (localise, status) => {
  * @param {HapiRequest} request - Hapi request object
  * @param {RegistrationKeys} keys
  * @param {string} summaryLogId - Summary log ID
- * @param {string} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken - Bearer token for the backend
  * @returns {Promise<SummaryLogStatusResponse>}
  */
 const getStatusData = async (request, keys, summaryLogId, backendToken) => {

@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { year } from '#server/common/helpers/year.js'
 import { test } from '#vite/fixtures/server.js'
@@ -26,7 +27,7 @@ describe(fetchOrganisation, () => {
 
     const result = await fetchOrganisation(
       organisationNumber('50002'),
-      'test-id-token'
+      toBackendToken('test-id-token')
     )
 
     expect(result).toStrictEqual(organisation)
@@ -41,7 +42,10 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber('50002'), 'test-id-token')
+    await fetchOrganisation(
+      organisationNumber('50002'),
+      toBackendToken('test-id-token')
+    )
 
     expect(search).toBe('')
   })
@@ -57,9 +61,13 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber('50002'), 'test-id-token', {
-      year: year(2026)
-    })
+    await fetchOrganisation(
+      organisationNumber('50002'),
+      toBackendToken('test-id-token'),
+      {
+        year: year(2026)
+      }
+    )
 
     expect(search).toBe('?year=2026')
   })
@@ -73,7 +81,10 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber('50002'), 'test-id-token')
+    await fetchOrganisation(
+      organisationNumber('50002'),
+      toBackendToken('test-id-token')
+    )
 
     expect(authorization).toBe('Bearer test-id-token')
   })
@@ -89,7 +100,10 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber('../admin'), 'test-id-token')
+    await fetchOrganisation(
+      organisationNumber('../admin'),
+      toBackendToken('test-id-token')
+    )
 
     expect(pathname).toBe('/organisations/..%2Fadmin')
   })

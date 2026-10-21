@@ -4,6 +4,7 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
 /**
  * @import { Boom } from '@hapi/boom'
  * @import { OrganisationById } from './types.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  */
 
 const REFUSED = Object.freeze([statusCodes.forbidden, statusCodes.notFound])
@@ -12,7 +13,7 @@ const REFUSED = Object.freeze([statusCodes.forbidden, statusCodes.notFound])
  * A 403 or 404 means the user cannot see the record, which is the same as no
  * record.
  * @param {string} organisationId
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<OrganisationById | null>}
  */
 export const findOrganisationById = async (organisationId, backendToken) => {

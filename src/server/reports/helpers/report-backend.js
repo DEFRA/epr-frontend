@@ -5,6 +5,10 @@ import { backend } from '#server/common/helpers/backend-client.js'
 import { ReportStaleError, staleReasonsFromCode } from './stale.js'
 
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ */
+
+/**
  * A 409's `code` is not always a stale reason (e.g. a version conflict), so
  * only one carrying a recognised reason becomes a ReportStaleError.
  * @param {unknown} error
@@ -25,7 +29,7 @@ const asReportStale = (error) => {
 /**
  * The backend client for a report, which raises a stale report as
  * ReportStaleError.
- * @param {string} token
+ * @param {BackendToken} token
  */
 export const reportBackend = (token) =>
   backend(token, { onError: asReportStale })

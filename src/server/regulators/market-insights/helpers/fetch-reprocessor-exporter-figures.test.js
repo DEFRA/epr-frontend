@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import {
   exporterOf,
   reprocessorOf,
@@ -14,7 +15,7 @@ import { fetchReprocessorExporterFigures } from './fetch-reprocessor-exporter-fi
 
 const backendUrl = config.get('eprBackendUrl')
 const figuresUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/reprocessor-exporter-figures`
-const backendToken = 'test-backend-token'
+const backendToken = toBackendToken('test-backend-token')
 
 /** @type {ReprocessorExporterAggregate} */
 const januaryAggregate = {

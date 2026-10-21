@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { createReport } from './create-report.js'
@@ -31,7 +32,7 @@ describe(createReport, () => {
         period: 3,
         submissionNumber: 1
       },
-      'a-token'
+      toBackendToken('a-token')
     )
 
     expect(result).toStrictEqual({ id: 'report-1' })

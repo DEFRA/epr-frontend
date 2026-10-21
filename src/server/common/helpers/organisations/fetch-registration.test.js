@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -15,7 +16,7 @@ import { fetchRegistration } from './fetch-registration.js'
 const backendUrl = config.get('eprBackendUrl')
 
 const registrationNumber = 'R26ER5001180041PL'
-const backendToken = 'test-token'
+const backendToken = toBackendToken('test-token')
 
 const organisationUrl = `${backendUrl}/organisations/500118`
 

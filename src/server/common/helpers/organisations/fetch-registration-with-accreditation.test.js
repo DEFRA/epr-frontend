@@ -1,6 +1,7 @@
 /** @import { RegistrationView } from './organisation-view.js'; */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import {
   buildAccreditationView,
   buildOrganisationView,
@@ -16,7 +17,7 @@ import {
 
 vi.mock(import('./fetch-registration.js'))
 
-const backendToken = 'test-token'
+const backendToken = toBackendToken('test-token')
 const registrationKeys = {
   organisationNumber: '500123',
   registrationNumber: 'R26EN0000000001PL'

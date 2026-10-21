@@ -12,6 +12,7 @@ import { renderHome } from './home-page.js'
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Year } from '#server/common/helpers/year.js'
@@ -55,7 +56,7 @@ function getDisplayedRegistrations(registrations, selectedYear) {
  * Fetches the year's waste balances. A failure leaves the page without them.
  * @param {OrganisationNumber} orgNumber
  * @param {Year} selectedYear
- * @param {string} backendToken - JWT token
+ * @param {BackendToken} backendToken - JWT token
  * @param {TypedLogger} logger - Request logger
  * @returns {Promise<WasteBalanceMap>}
  */

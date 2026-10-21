@@ -1,6 +1,7 @@
 import { fetchDecemberPrnEligibility } from '#server/prns/helpers/fetch-december-prn-eligibility.js'
 import { showsDecemberPool } from '#server/prns/helpers/december-waste-control.js'
 
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 /** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
 /** @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js' */
 /** @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js' */
@@ -21,7 +22,7 @@ import { showsDecemberPool } from '#server/prns/helpers/december-waste-control.j
  * single balance rather than failing the page.
  * @param {{
  *   keys: AccreditationKeys,
- *   backendToken: string,
+ *   backendToken: BackendToken,
  *   logger: TypedLogger
  * }} params
  * @returns {Promise<boolean>}

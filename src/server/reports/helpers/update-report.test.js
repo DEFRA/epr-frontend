@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { ReportStaleError, STALE_REASON } from './stale.js'
@@ -41,7 +42,7 @@ describe(updateReport, () => {
     const result = await updateReport(
       keys,
       { supportingInformation: 'notes' },
-      'a-token'
+      toBackendToken('a-token')
     )
 
     expect(result).toStrictEqual({ id: 'report-1' })
@@ -66,7 +67,11 @@ describe(updateReport, () => {
     )
 
     await expect(
-      updateReport(keys, { supportingInformation: 'notes' }, 'a-token')
+      updateReport(
+        keys,
+        { supportingInformation: 'notes' },
+        toBackendToken('a-token')
+      )
     ).rejects.toStrictEqual(
       new ReportStaleError([STALE_REASON.SUMMARY_LOG_CHANGED])
     )

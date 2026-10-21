@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { submitSummaryLog } from './submit-summary-log.js'
@@ -27,7 +28,7 @@ describe(submitSummaryLog, () => {
     const result = await submitSummaryLog(
       { organisationNumber: '500118', registrationNumber: 'R26/1' },
       'log#3',
-      'a-token'
+      toBackendToken('a-token')
     )
 
     expect(result).toStrictEqual({

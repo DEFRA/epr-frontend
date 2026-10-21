@@ -106,7 +106,7 @@ export const controller = {
 /**
  * The year's accreditation, whatever its status, and its ledger.
  * @param {AccreditationKeys} keys
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<LedgerRead>}
  */
 async function readAccreditedLedger(keys, backendToken) {
@@ -192,6 +192,7 @@ function toRegisteredOnlyPage({ heading, localise, localiseUrl, name, paths }) {
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
