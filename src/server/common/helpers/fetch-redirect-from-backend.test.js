@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { fetchRedirectFromBackend } from './fetch-redirect-from-backend.js'
 
@@ -23,10 +23,6 @@ const backendAnswers = ({
   )
 
 describe(fetchRedirectFromBackend, () => {
-  beforeEach(() => {
-    vi.unstubAllGlobals()
-  })
-
   it('answers the location the backend redirected to', async () => {
     backendAnswers()
 

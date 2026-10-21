@@ -76,7 +76,6 @@ describe('the summary log download', () => {
   })
 
   beforeEach(() => {
-    vi.unstubAllGlobals()
     vi.mocked(fetchRedirectFromBackend).mockResolvedValue(signedUrl)
     storageAnswers()
   })

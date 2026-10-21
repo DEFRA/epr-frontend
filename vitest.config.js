@@ -37,6 +37,7 @@ export default defineConfig({
     ],
     environment: 'node',
     clearMocks: true,
+    unstubGlobals: true,
     testTimeout: 10000,
     hookTimeout: 60000,
     fileParallelism: true,

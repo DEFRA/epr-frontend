@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { fetchStreamFromBackend } from './fetch-stream-from-backend.js'
 
@@ -53,10 +53,6 @@ const backendAnswers = ({
   )
 
 describe(fetchStreamFromBackend, () => {
-  beforeEach(() => {
-    vi.unstubAllGlobals()
-  })
-
   // Hapi understands Node Readables; handed the Web stream `fetch` returns it
   // serialises the object and the browser receives `{}` instead of the CSV.
   it('answers with the body as a Node stream', async () => {
