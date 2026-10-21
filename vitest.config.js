@@ -1,8 +1,40 @@
+import { globSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { configDefaults, defineConfig } from 'vitest/config'
 
+const root = fileURLToPath(new URL('.', import.meta.url))
+
+const usesModuleMocks = (file) =>
+  /vi\.(mock|doMock)\(/.test(readFileSync(`${root}${file}`, 'utf8'))
+
+// A module mock only reaches importers evaluated after it, so these files
+// need a fresh module graph; everything else shares one per worker. Shared
+// files run first: a worker that has run a mocking file keeps its mocks.
+const moduleMockingTests = globSync('{src,scripts}/**/*.test.js', {
+  cwd: root
+}).filter(usesModuleMocks)
+
 export default defineConfig({
   test: {
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'shared',
+          isolate: false,
+          sequence: { groupOrder: 0 },
+          exclude: [...configDefaults.exclude, ...moduleMockingTests]
+        }
+      },
+      {
+        extends: true,
+        test: {
+          name: 'isolated',
+          include: moduleMockingTests,
+          sequence: { groupOrder: 1 }
+        }
+      }
+    ],
     environment: 'node',
     clearMocks: true,
     testTimeout: 10000,
@@ -44,7 +76,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '~': fileURLToPath(new URL('.', import.meta.url))
+      '~': root
     }
   }
 })
