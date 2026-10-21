@@ -1,7 +1,5 @@
 import { config } from '#config/config.js'
 import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
-import { errorCodes } from '#server/common/enums/error-codes.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -9,7 +7,7 @@ import { isAccreditationActive } from '#server/common/helpers/organisations/accr
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
   accreditationIn,
-  materialsHomepage
+  latestAccreditationYear
 } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
@@ -21,11 +19,9 @@ import {
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import { year as toYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
-import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
   accreditationPath,
   organisationPath,
-  registeredOnlyPath,
   registrationPath,
   reportsListPath
 } from '#server/reports/helpers/report-paths.js'
@@ -40,8 +36,6 @@ import { capitalize } from 'lodash-es'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
-
-const VIEW = 'registrations/index'
 
 /** @typedef {{ href: string; text: string }} Link */
 
@@ -97,10 +91,6 @@ const VIEW = 'registrations/index'
  *   organisationNumber: string,
  *   registrationNumber: string
  * }} OperatorRegistrationParams
- */
-
-/**
- * @typedef {OperatorRegistrationParams & { year: number }} OperatorRegisteredOnlyParams
  */
 
 /**
@@ -296,7 +286,11 @@ const buildRegisteredOnlyViewModel = ({ request, keys, registration }) => ({
   wasteBalanceLedgerUrl: toLedgerUrl(request, registrationPath(keys))
 })
 
-/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
+/**
+ * The operator's registration page with no year: an accredited registration
+ * redirects to its latest year.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
 export const registrationController = {
   /**
    * @param {HapiRequest & { params: OperatorRegistrationParams }} request
@@ -310,59 +304,18 @@ export const registrationController = {
       ...keys,
       backendToken: request.auth.credentials.backendToken
     })
-    const [latestYear] = registeredYears(registration)
-    const homepage = latestYear
-      ? materialsHomepage(keys, registration, latestYear)
-      : null
+    const year = latestAccreditationYear(registration)
 
-    return redirectPreservingMethod(
-      request,
-      h,
-      homepage?.path ??
-        registeredOnlyPath({ ...keys, year: new Date().getUTCFullYear() })
-    )
-  }
-}
-
-/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
-export const registeredOnlyYearController = {
-  /**
-   * @param {HapiRequest & { params: OperatorRegisteredOnlyParams }} request
-   * @param {ResponseToolkit} h
-   */
-  async handler(request, h) {
-    const {
-      organisationNumber: number,
-      registrationNumber,
-      year
-    } = request.params
-    const keys = { organisationNumber: number, registrationNumber }
-
-    const { registration } = await fetchRegistration({
-      ...keys,
-      backendToken: request.auth.credentials.backendToken
-    })
-    const homepage = materialsHomepage(keys, registration, year)
-
-    if (homepage === null) {
-      throw notFound(
-        'Registered-only year not found',
-        errorCodes.registrationNotFound,
-        {
-          event: {
-            action: 'fetch_registered_only_year',
-            reason: `year=${year}`
-          }
-        }
+    if (year) {
+      return redirectPreservingMethod(
+        request,
+        h,
+        accreditationPath({ ...keys, year })
       )
     }
 
-    if (homepage.kind === 'accredited') {
-      return redirectPreservingMethod(request, h, homepage.path)
-    }
-
     return h.view(
-      VIEW,
+      'registrations/index',
       buildRegisteredOnlyViewModel({ request, keys, registration })
     )
   }
@@ -418,7 +371,7 @@ export const controller = {
     })
 
     return h.view(
-      VIEW,
+      'registrations/index',
       buildViewModel({
         request,
         keys,

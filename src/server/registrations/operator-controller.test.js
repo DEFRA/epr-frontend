@@ -34,35 +34,10 @@ const accreditationNumber = 'A26ER5001180114GL'
 
 const registrationPath = `/organisations/500118/registrations/${registrationNumber}`
 const accreditationPath = `${registrationPath}/accreditations/${year}`
-const registeredOnlyPath = `${registrationPath}/${year}`
-
-/**
- * @param {number} fromYear
- */
-const registeredSince = (fromYear) => ({
-  current: 'approved',
-  timeline: [{ status: 'approved', at: `${fromYear}-01-01T09:00:00.000Z` }]
-})
-
-/**
- * @param {string} current
- * @param {ReadonlyArray<string>} statuses
- * @param {number} [forYear]
- */
-const accreditationWith = (current, statuses, forYear = thisYear) => ({
-  accreditationNumber,
-  status: {
-    current,
-    timeline: statuses.map((status, month) => ({
-      status,
-      at: `${forYear}-0${month + 1}-01T09:00:00.000Z`
-    }))
-  }
-})
 
 /** @type {Record<string, unknown>} */
 const reprocessor = {
-  status: registeredSince(thisYear),
+  status: { current: 'approved', timeline: [] },
   validFrom: `${year}-01-01`,
   material: 'glass_re_melt',
   submittedToRegulator: { code: 'ea' },
@@ -169,24 +144,20 @@ const visit = async (
 const hrefOf = (body, name) =>
   getByRole(body, 'link', { name }).getAttribute('href')
 
-const configuredWindow = config.get('reapplyAccreditation')
-
-const openTheReapplyWindow = () => {
-  config.set('reapplyAccreditation.windowStart', '01-01T00:00')
-  config.set('reapplyAccreditation.windowEnd', '12-31T23:59')
-  config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
-}
-
-const restoreTheReapplyWindow = () => {
-  config.set('reapplyAccreditation.windowStart', configuredWindow.windowStart)
-  config.set('reapplyAccreditation.windowEnd', configuredWindow.windowEnd)
-  config.set('reapplyAccreditation.baseUrl', configuredWindow.baseUrl)
-}
-
 describe("the operator's registration page for a year", () => {
-  beforeEach(openTheReapplyWindow)
+  const configuredWindow = config.get('reapplyAccreditation')
 
-  afterEach(restoreTheReapplyWindow)
+  beforeEach(() => {
+    config.set('reapplyAccreditation.windowStart', '01-01T00:00')
+    config.set('reapplyAccreditation.windowEnd', '12-31T23:59')
+    config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
+  })
+
+  afterEach(() => {
+    config.set('reapplyAccreditation.windowStart', configuredWindow.windowStart)
+    config.set('reapplyAccreditation.windowEnd', configuredWindow.windowEnd)
+    config.set('reapplyAccreditation.baseUrl', configuredWindow.baseUrl)
+  })
 
   it("shows the year's accreditation and the site and material", async ({
     server,
@@ -464,281 +435,31 @@ describe("the operator's registration page for a year", () => {
   })
 })
 
-/** @type {Record<string, unknown>} */
-const registeredOnly = { ...reprocessor, accreditations: {} }
-
-describe("the operator's registered-only page for a year", () => {
-  beforeEach(openTheReapplyWindow)
-
-  afterEach(restoreTheReapplyWindow)
-
-  it('shows a registered-only operator their registration', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw, { registration: registeredOnly })
-
-    const { statusCode, body } = await visit(server, {
-      url: registeredOnlyPath
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(
-      getByRole(body, 'heading', { level: 1, name: /Glass remelt/ })
-    ).toBeDefined()
-    expect(getByText(body, registrationNumber)).toBeDefined()
-  })
-
-  it.for(['created', 'rejected', 'cancelled'])(
-    'shows the registered-only page for a year whose accreditation is %s',
-    async (current, { server, msw }) => {
-      backendHolds(msw, {
-        registration: {
-          ...reprocessor,
-          accreditations: {
-            [year]: accreditationWith(current, ['created', current])
-          }
-        }
-      })
-
-      const { statusCode, body } = await visit(server, {
-        url: registeredOnlyPath
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(queryByText(body, accreditationNumber)).toBeNull()
-      expect(
-        queryByRole(body, 'link', {
-          name: `apply for ${thisYear + 1} accreditation`
-        })
-      ).toBeNull()
-    }
-  )
-
-  it('shows a registered-only operator no accreditation, balance or notes', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw, { registration: registeredOnly })
-
-    const { body } = await visit(server, { url: registeredOnlyPath })
-
-    expect(queryByText(body, accreditationNumber)).toBeNull()
-    expect(queryByTestId(body, 'waste-balance-amount')).toBeNull()
-    expect(queryByRole(body, 'link', { name: 'Create new PRN' })).toBeNull()
-  })
-
-  it('names every link by number', async ({ server, msw }) => {
-    backendHolds(msw, { registration: registeredOnly })
-
-    const { body } = await visit(server, {
-      url: registeredOnlyPath,
-      auth: buildMockAuth({
-        linkedOrganisationId: organisationId,
-        scope: [SCOPES.organisationLinkedWrite, SCOPES.wasteBalanceLedgerRead]
-      })
-    })
-
-    expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
-      '/organisations/500118'
-    )
-    expect(hrefOf(body, 'Upload your summary log')).toBe(
-      `${registrationPath}/summary-logs/upload`
-    )
-    expect(hrefOf(body, 'Manage reports')).toBe(`${registrationPath}/reports`)
-    expect(hrefOf(body, 'View waste balance ledger')).toBe(
-      `${registrationPath}/waste-balance-ledger`
-    )
-  })
-
-  it('offers no ledger link to a session that may not read it', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw, { registration: registeredOnly })
-
-    const { body } = await visit(server, { url: registeredOnlyPath })
-
-    expect(
-      queryByRole(body, 'link', { name: 'View waste balance ledger' })
-    ).toBeNull()
-  })
-
-  it('offers a registered-only operator no reapply link', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw, { registration: registeredOnly })
-
-    const { body } = await visit(server, { url: registeredOnlyPath })
-
-    expect(
-      queryByRole(body, 'link', {
-        name: `apply for ${thisYear + 1} accreditation`
-      })
-    ).toBeNull()
-  })
-
-  it('reads no ids, balance or December eligibility for a registered-only operator', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw, {
-      registration: registeredOnly,
-      ids: () =>
-        new HttpResponse(null, { status: statusCodes.internalServerError }),
-      balances: () =>
-        new HttpResponse(null, { status: statusCodes.internalServerError })
-    })
-
-    const { statusCode } = await visit(server, { url: registeredOnlyPath })
-
-    expect(statusCode).toBe(statusCodes.ok)
-  })
-
-  it.for([
-    { current: 'approved', statuses: ['created', 'approved'] },
-    { current: 'suspended', statuses: ['created', 'approved', 'suspended'] }
-  ])(
-    'sends an operator whose accreditation for the year is $current to it',
-    async ({ current, statuses }, { server, msw }) => {
-      backendHolds(msw, {
-        registration: {
-          ...reprocessor,
-          accreditations: { [year]: accreditationWith(current, statuses) }
-        }
-      })
-
-      const response = await server.inject({
-        method: 'GET',
-        url: registeredOnlyPath,
-        auth: operator
-      })
-
-      expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers.location).toBe(accreditationPath)
-    }
-  )
-
-  it('sends an operator to an approved accreditation whose year is still to come', async ({
-    server,
-    msw
-  }) => {
-    const nextYear = thisYear + 1
-    backendHolds(msw, {
-      registration: {
-        ...reprocessor,
-        accreditations: {
-          [nextYear]: accreditationWith('approved', ['approved'], thisYear)
-        }
-      }
-    })
-
-    const response = await server.inject({
-      method: 'GET',
-      url: `${registrationPath}/${nextYear}`,
-      auth: operator
-    })
-
-    expect(response.headers.location).toBe(
-      `${registrationPath}/accreditations/${nextYear}`
-    )
-  })
-
-  it('keeps a Welsh reader in Welsh', async ({ server, msw }) => {
-    backendHolds(msw)
-
-    const response = await server.inject({
-      method: 'GET',
-      url: `/cy${registeredOnlyPath}`,
-      auth: operator
-    })
-
-    expect(response.headers.location).toBe(`/cy${accreditationPath}`)
-  })
-
-  it('keeps the query string', async ({ server, msw }) => {
-    backendHolds(msw)
-
-    const response = await server.inject({
-      method: 'GET',
-      url: `${registeredOnlyPath}?from=dashboard`,
-      auth: operator
-    })
-
-    expect(response.headers.location).toBe(
-      `${accreditationPath}?from=dashboard`
-    )
-  })
-
-  it.for([
-    {
-      name: 'a year it was neither registered nor accredited in',
-      segment: String(thisYear - 1)
-    },
-    {
-      name: 'a year still to come it is not accredited in',
-      segment: String(thisYear + 1)
-    },
-    { name: 'a value that is not a year', segment: 'abcd' }
-  ])('is not found for $name', async ({ segment }, { server, msw }) => {
-    backendHolds(msw, { registration: registeredOnly })
-
-    const { statusCode } = await visit(server, {
-      url: `${registrationPath}/${segment}`
-    })
-
-    expect(statusCode).toBe(statusCodes.notFound)
-  })
-
-  it('is not found for an organisation number the backend does not know', async ({
-    server,
-    msw
-  }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/organisations/500999`,
-        () => new HttpResponse(null, { status: statusCodes.notFound })
-      )
-    )
-
-    const { statusCode } = await visit(server, {
-      url: `/organisations/500999/registrations/${registrationNumber}/${year}`
-    })
-
-    expect(statusCode).toBe(statusCodes.notFound)
-  })
-
-  it('is not found for a registration number the organisation does not hold', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw)
-
-    const { statusCode } = await visit(server, {
-      url: `/organisations/500118/registrations/R99XX/${year}`
-    })
-
-    expect(statusCode).toBe(statusCodes.notFound)
-  })
-})
-
 describe("the operator's registration page with no year", () => {
-  it('sends an operator accredited in their latest registered year to its accreditation', async ({
+  /** @type {Record<string, unknown>} */
+  const registeredOnly = { ...reprocessor, accreditations: {} }
+
+  it('sends an accredited operator to the latest year', async ({
     server,
     msw
   }) => {
     backendHolds(msw, {
       registration: {
         ...reprocessor,
-        status: registeredSince(thisYear - 1),
         accreditations: {
-          [thisYear - 1]: accreditationWith(
-            'approved',
-            ['approved'],
-            thisYear - 1
-          ),
-          [year]: accreditationWith('approved', ['approved'])
+          [thisYear - 1]: {
+            accreditationNumber: 'A25ER5001180114GL',
+            status: {
+              current: 'approved',
+              timeline: [
+                {
+                  status: 'approved',
+                  at: `${thisYear - 1}-01-01T09:00:00.000Z`
+                }
+              ]
+            }
+          },
+          .../** @type {object} */ (reprocessor.accreditations)
         }
       }
     })
@@ -751,34 +472,6 @@ describe("the operator's registration page with no year", () => {
 
     expect(response.statusCode).toBe(statusCodes.found)
     expect(response.headers.location).toBe(accreditationPath)
-  })
-
-  it('sends an operator registered-only in their latest registered year to its page', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw, {
-      registration: {
-        ...reprocessor,
-        status: registeredSince(thisYear - 1),
-        accreditations: {
-          [thisYear - 1]: accreditationWith(
-            'approved',
-            ['approved'],
-            thisYear - 1
-          )
-        }
-      }
-    })
-
-    const response = await server.inject({
-      method: 'GET',
-      url: registrationPath,
-      auth: operator
-    })
-
-    expect(response.statusCode).toBe(statusCodes.found)
-    expect(response.headers.location).toBe(registeredOnlyPath)
   })
 
   it('keeps a Welsh reader in Welsh', async ({ server, msw }) => {
@@ -807,7 +500,7 @@ describe("the operator's registration page with no year", () => {
     )
   })
 
-  it('sends an operator whose accreditation is cancelled to the registered-only page for its year', async ({
+  it('sends an operator whose accreditation is cancelled to its year', async ({
     server,
     msw
   }) => {
@@ -815,7 +508,16 @@ describe("the operator's registration page with no year", () => {
       registration: {
         ...reprocessor,
         accreditations: {
-          [year]: accreditationWith('cancelled', ['approved', 'cancelled'])
+          [year]: {
+            accreditationNumber,
+            status: {
+              current: 'cancelled',
+              timeline: [
+                { status: 'approved', at: `${year}-01-01T09:00:00.000Z` },
+                { status: 'cancelled', at: `${year}-03-01T09:00:00.000Z` }
+              ]
+            }
+          }
         }
       }
     })
@@ -826,25 +528,103 @@ describe("the operator's registration page with no year", () => {
       auth: operator
     })
 
-    expect(response.headers.location).toBe(registeredOnlyPath)
+    expect(response.headers.location).toBe(accreditationPath)
   })
 
-  it('sends an operator whose registration is still to start to the current year', async ({
+  it('shows a registered-only operator their registration', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { statusCode, body } = await visit(server, { url: registrationPath })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(
+      getByRole(body, 'heading', { level: 1, name: /Glass remelt/ })
+    ).toBeDefined()
+    expect(getByText(body, registrationNumber)).toBeDefined()
+  })
+
+  it('shows a registered-only operator no accreditation, balance or notes', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body } = await visit(server, { url: registrationPath })
+
+    expect(queryByText(body, accreditationNumber)).toBeNull()
+    expect(queryByTestId(body, 'waste-balance-amount')).toBeNull()
+    expect(queryByRole(body, 'link', { name: 'Create new PRN' })).toBeNull()
+  })
+
+  it('names every link by number', async ({ server, msw }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body } = await visit(server, {
+      url: registrationPath,
+      auth: buildMockAuth({
+        linkedOrganisationId: organisationId,
+        scope: [SCOPES.organisationLinkedWrite, SCOPES.wasteBalanceLedgerRead]
+      })
+    })
+
+    expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+      '/organisations/500118'
+    )
+    expect(hrefOf(body, 'Upload your summary log')).toBe(
+      `${registrationPath}/summary-logs/upload`
+    )
+    expect(hrefOf(body, 'Manage reports')).toBe(`${registrationPath}/reports`)
+    expect(hrefOf(body, 'View waste balance ledger')).toBe(
+      `${registrationPath}/waste-balance-ledger`
+    )
+  })
+
+  it('offers no ledger link to a session that may not read it', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body } = await visit(server, { url: registrationPath })
+
+    expect(
+      queryByRole(body, 'link', { name: 'View waste balance ledger' })
+    ).toBeNull()
+  })
+
+  it('offers a registered-only operator no reapply link', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body } = await visit(server, { url: registrationPath })
+
+    expect(
+      queryByRole(body, 'link', {
+        name: `apply for ${thisYear + 1} accreditation`
+      })
+    ).toBeNull()
+  })
+
+  it('reads no ids, balance or December eligibility for a registered-only operator', async ({
     server,
     msw
   }) => {
     backendHolds(msw, {
-      registration: { ...registeredOnly, status: registeredSince(thisYear + 1) }
+      registration: registeredOnly,
+      ids: () =>
+        new HttpResponse(null, { status: statusCodes.internalServerError }),
+      balances: () =>
+        new HttpResponse(null, { status: statusCodes.internalServerError })
     })
 
-    const response = await server.inject({
-      method: 'GET',
-      url: registrationPath,
-      auth: operator
-    })
+    const { statusCode } = await visit(server, { url: registrationPath })
 
-    expect(response.statusCode).toBe(statusCodes.found)
-    expect(response.headers.location).toBe(registeredOnlyPath)
+    expect(statusCode).toBe(statusCodes.ok)
   })
 
   it('is not found for an organisation number the backend does not know', async ({

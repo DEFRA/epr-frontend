@@ -1,15 +1,7 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
-import {
-  accreditationPath,
-  registeredOnlyPath
-} from '#server/reports/helpers/report-paths.js'
-
-import { isAccreditationActive } from './accreditation-helpers.js'
 
 /**
- * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
@@ -65,28 +57,11 @@ export const accreditationIn = (registration, year) => {
 }
 
 /**
- * @typedef {{ kind: 'accredited' | 'registeredOnly', path: string }} MaterialsHomepage
- */
-
-/**
- * @param {RegistrationKeys} keys
+ * The most recent year the registration holds an accreditation for.
  * @param {RegistrationView} registration
- * @param {number} year
- * @returns {MaterialsHomepage | null}
+ * @returns {string | undefined}
  */
-export const materialsHomepage = (keys, registration, year) => {
-  const accreditation = Object.hasOwn(registration.accreditations, year)
-    ? registration.accreditations[year]
-    : undefined
-
-  if (isAccreditationActive(accreditation)) {
-    return {
-      kind: 'accredited',
-      path: accreditationPath({ ...keys, year: String(year) })
-    }
-  }
-
-  return registeredYears(registration).includes(year)
-    ? { kind: 'registeredOnly', path: registeredOnlyPath({ ...keys, year }) }
-    : null
-}
+export const latestAccreditationYear = (registration) =>
+  Object.keys(registration.accreditations)
+    .sort((one, other) => one.localeCompare(other))
+    .at(-1)
