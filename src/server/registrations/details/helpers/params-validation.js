@@ -1,6 +1,7 @@
 import Joi from 'joi'
 
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { YEAR_SEGMENT } from '#server/common/helpers/year.js'
 import {
   MAX_YEAR,
   MIN_YEAR
@@ -21,6 +22,17 @@ export const registrationParamsSchema = Joi.object({
  */
 export const yearParamsSchema = registrationParamsSchema.keys({
   year: Joi.number().integer().min(MIN_YEAR).max(MAX_YEAR).required()
+})
+
+/**
+ * The params of a registration's `{year}` address, read the way the
+ * organisation's year address reads its year.
+ */
+export const yearSegmentParamsSchema = registrationParamsSchema.keys({
+  year: Joi.string()
+    .pattern(YEAR_SEGMENT)
+    .custom((value) => Number(value))
+    .required()
 })
 
 /**

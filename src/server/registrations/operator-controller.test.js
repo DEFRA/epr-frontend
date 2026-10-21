@@ -680,7 +680,10 @@ describe("the operator's registered-only page for a year", () => {
       name: 'a year still to come it is not accredited in',
       segment: String(thisYear + 1)
     },
-    { name: 'a value that is not a year', segment: 'abcd' }
+    { name: 'a value that is not a year', segment: 'abcd' },
+    { name: 'a year with a leading zero', segment: `0${thisYear}` },
+    { name: 'a year with a decimal point', segment: `${thisYear}.0` },
+    { name: 'a year with a plus sign', segment: `+${thisYear}` }
   ])('is not found for $name', async ({ segment }, { server, msw }) => {
     backendHolds(msw, { registration: registeredOnly })
 
