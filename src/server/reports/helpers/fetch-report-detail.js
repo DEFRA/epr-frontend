@@ -1,4 +1,4 @@
-import { fetchReportBackend } from './fetch-report-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import { reportApiPath } from './report-paths.js'
 import { ReportStaleError, staleReasons } from './stale.js'
 
@@ -16,10 +16,8 @@ import { ReportStaleError, staleReasons } from './stale.js'
  * @returns {Promise<ReportDetailResponse>}
  */
 export async function fetchReportDetail(keys, backendToken) {
-  const report = await fetchReportBackend(reportApiPath(keys), {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${backendToken}` }
-  })
+  /** @type {ReportDetailResponse} */
+  const report = await backend(backendToken).get(reportApiPath(keys))
 
   const reasons = staleReasons(report.stale)
   if (reasons.length > 0) {

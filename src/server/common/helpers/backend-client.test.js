@@ -8,6 +8,7 @@ import { it } from '#vite/fixtures/server.js'
 import { backend, path, strictly } from './backend-client.js'
 
 /**
+ * @import { Readable } from 'node:stream'
  * @import { SetupServer } from 'msw/node'
  */
 
@@ -171,6 +172,29 @@ describe('backend-client', () => {
           await expect(
             backend('a-token').get('/v1/thing')
           ).rejects.toMatchObject({ isBoom: true, output: expected })
+        }
+      )
+
+      it.for([302, 304])(
+        'should reject as a bad gateway a %s',
+        async (status, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/thing`,
+              () => new HttpResponse(null, { status })
+            )
+          )
+
+          await expect(
+            backend('a-token').get('/v1/thing')
+          ).rejects.toMatchObject({
+            output: { statusCode: 502 },
+            code: 'external_fetch_failed',
+            event: {
+              action: 'external_fetch',
+              reason: `backend_responded_${status}`
+            }
+          })
         }
       )
 
@@ -387,6 +411,278 @@ describe('backend-client', () => {
         ).rejects.toBeInstanceOf(Mapped)
       })
     })
+
+    describe('redirect', () => {
+      it('should resolve to where the backend redirects without following it', async ({
+        msw
+      }) => {
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/file`,
+            () =>
+              new HttpResponse(null, {
+                status: 302,
+                headers: { location: 'https://storage/signed' }
+              })
+          )
+        )
+
+        await expect(backend('a-token').redirect('/v1/file')).resolves.toBe(
+          'https://storage/signed'
+        )
+      })
+
+      it.for([404, 403])(
+        'should reject a %s as that status rather than a gateway fault',
+        async (status, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/file`,
+              () => new HttpResponse(null, { status })
+            )
+          )
+
+          await expect(
+            backend('a-token').redirect('/v1/file')
+          ).rejects.toMatchObject({
+            output: { statusCode: status },
+            code: 'external_fetch_failed',
+            event: {
+              action: 'external_redirect',
+              reason: `backend_responded_${status}`
+            }
+          })
+        }
+      )
+
+      it.for([200, 302])(
+        'should reject as a bad gateway a %s that names no location',
+        async (status, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/file`,
+              () => new HttpResponse(null, { status })
+            )
+          )
+
+          await expect(
+            backend('a-token').redirect('/v1/file')
+          ).rejects.toMatchObject({
+            output: { statusCode: 502 },
+            code: 'external_redirect_invalid',
+            event: {
+              action: 'external_redirect',
+              reason: 'missing_location_header'
+            }
+          })
+        }
+      )
+    })
+
+    describe('stream', () => {
+      /**
+       * @param {Readable} body
+       */
+      const read = async (body) =>
+        Buffer.concat(await body.toArray()).toString()
+
+      it('should resolve to the body as a node stream with the type and name the backend gave it', async ({
+        msw
+      }) => {
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/export.csv`,
+            () =>
+              new HttpResponse('a,b\n1,2\n', {
+                headers: {
+                  'content-type': 'text/csv',
+                  'content-disposition': 'attachment; filename="export.csv"'
+                }
+              })
+          )
+        )
+
+        const { body, contentType, contentDisposition } =
+          await backend('a-token').stream('/v1/export.csv')
+
+        expect({
+          body: await read(body),
+          contentType,
+          contentDisposition
+        }).toStrictEqual({
+          body: 'a,b\n1,2\n',
+          contentType: 'text/csv',
+          contentDisposition: 'attachment; filename="export.csv"'
+        })
+      })
+
+      it('should resolve to nulls where the backend named no type or name', async ({
+        msw
+      }) => {
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/export.csv`,
+            () => new HttpResponse(new Blob(['a']))
+          )
+        )
+
+        const { contentType, contentDisposition } =
+          await backend('a-token').stream('/v1/export.csv')
+
+        expect({ contentType, contentDisposition }).toStrictEqual({
+          contentType: null,
+          contentDisposition: null
+        })
+      })
+
+      it('should reject as a bad gateway an answer with no body', async ({
+        msw
+      }) => {
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/export.csv`,
+            () => new HttpResponse(null, { status: 204 })
+          )
+        )
+
+        await expect(
+          backend('a-token').stream('/v1/export.csv')
+        ).rejects.toMatchObject({
+          output: { statusCode: 502 },
+          code: 'external_fetch_failed',
+          event: { action: 'external_fetch', reason: 'missing_body' }
+        })
+      })
+
+      it.for([302, 304])(
+        'should reject as a bad gateway a %s',
+        async (status, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/export.csv`,
+              () => new HttpResponse(null, { status })
+            )
+          )
+
+          await expect(
+            backend('a-token').stream('/v1/export.csv')
+          ).rejects.toMatchObject({
+            output: { statusCode: 502 },
+            code: 'external_fetch_failed',
+            event: {
+              action: 'external_fetch',
+              reason: `backend_responded_${status}`
+            }
+          })
+        }
+      )
+
+      it('should not ask for json', async ({ msw }) => {
+        /** @type {(string | null)[]} */
+        const accepted = []
+        msw.use(
+          http.get(`${backendUrl}/v1/export.csv`, ({ request }) => {
+            accepted.push(request.headers.get('accept'))
+            return new HttpResponse('a')
+          })
+        )
+
+        await backend('a-token').stream('/v1/export.csv')
+
+        expect(accepted).not.toContain('application/json')
+      })
+
+      it.for([404, 403])(
+        'should reject a %s as that status rather than a gateway fault',
+        async (status, { msw }) => {
+          msw.use(
+            http.get(
+              `${backendUrl}/v1/export.csv`,
+              () => new HttpResponse(null, { status })
+            )
+          )
+
+          await expect(
+            backend('a-token').stream('/v1/export.csv')
+          ).rejects.toMatchObject({
+            output: { statusCode: status },
+            code: 'external_fetch_failed',
+            event: {
+              action: 'external_fetch',
+              reason: `backend_responded_${status}`
+            }
+          })
+        }
+      )
+    })
+
+    it.for(/** @type {const} */ (['redirect', 'stream']))(
+      'should %s through the client onError',
+      async (method, { msw }) => {
+        class Mapped extends Error {}
+        msw.use(
+          http.get(
+            `${backendUrl}/v1/file`,
+            () => new HttpResponse(null, { status: 404 })
+          )
+        )
+
+        await expect(
+          backend('a-token', {
+            onError: () => {
+              throw new Mapped()
+            }
+          })[method]('/v1/file')
+        ).rejects.toBeInstanceOf(Mapped)
+      }
+    )
+
+    it.for(/** @type {const} */ (['redirect', 'stream']))(
+      'should %s with the query',
+      async (method, { msw }) => {
+        /** @type {string[]} */
+        const searches = []
+        msw.use(
+          http.get(`${backendUrl}/v1/file`, ({ request }) => {
+            searches.push(new URL(request.url).search)
+            return new HttpResponse('bytes', {
+              headers: { location: 'https://storage.test/file' }
+            })
+          })
+        )
+
+        await backend('a-token')[method]('/v1/file', {
+          query: { unredacted: 'true', year: undefined }
+        })
+
+        expect(searches).toStrictEqual(['?unredacted=true'])
+      }
+    )
+
+    it.for(/** @type {const} */ (['redirect', 'stream']))(
+      'should %s carrying the token and the trace id',
+      async (method, { msw }) => {
+        /** @type {{ authorization: string | null, traceId: string | null }[]} */
+        const requests = []
+        msw.use(
+          http.get(`${backendUrl}/v1/file`, ({ request }) => {
+            requests.push({
+              authorization: request.headers.get('authorization'),
+              traceId: request.headers.get('x-cdp-request-id')
+            })
+            return new HttpResponse('bytes', {
+              headers: { location: 'https://storage.test/file' }
+            })
+          })
+        )
+
+        await backend('a-token')[method]('/v1/file')
+
+        expect(requests).toStrictEqual([
+          { authorization: 'Bearer a-token', traceId: 'mock-trace-id-1' }
+        ])
+      }
+    )
   })
 
   describe(path, () => {

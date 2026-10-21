@@ -33,6 +33,13 @@ export const accreditationPath = ({ year, ...keys }) =>
   `${registrationPath(keys)}/accreditations/${encodeURIComponent(year)}`
 
 /**
+ * @param {RegistrationKeys & { year: number }} keys
+ * @returns {string}
+ */
+export const registeredOnlyPath = ({ year, ...keys }) =>
+  `${registrationPath(keys)}/${year}`
+
+/**
  * The summary log upload page.
  * @param {RegistrationKeys} keys
  * @returns {string}

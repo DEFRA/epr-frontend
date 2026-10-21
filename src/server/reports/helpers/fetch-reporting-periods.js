@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 
 import { reportsCalendarApiPath } from './report-paths.js'
 
@@ -8,12 +8,8 @@ import { reportsCalendarApiPath } from './report-paths.js'
  * @param {string} backendToken
  * @returns {Promise<ReportingPeriodsResponse>}
  */
-export async function fetchReportingPeriodsByNumber(keys, backendToken) {
-  return fetchJsonFromBackend(reportsCalendarApiPath(keys), {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${backendToken}` }
-  })
-}
+export const fetchReportingPeriodsByNumber = (keys, backendToken) =>
+  backend(backendToken).get(reportsCalendarApiPath(keys))
 
 /**
  * @typedef {{ name: string }} ReportSubmitter
