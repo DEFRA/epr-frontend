@@ -1,4 +1,4 @@
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { showsDecemberBalance } from '#server/common/helpers/waste-balance/december-balance.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
@@ -14,11 +14,12 @@ export const listController = {
    */
   async handler(request, h) {
     const keys = toAccreditationKeys(request.params)
-    const credentials = request.auth.credentials
-    const { backendToken } = credentials
+    const { backendToken } = request.auth.credentials
 
-    const { registration, accreditation } =
-      await getRequiredRegistrationWithAccreditationByNumber(keys, credentials)
+    const { registration, accreditation } = await fetchRequiredAccreditation(
+      keys,
+      backendToken
+    )
 
     const [wasteBalance, prns, showsDecember] = await Promise.all([
       fetchPrnWasteBalance({

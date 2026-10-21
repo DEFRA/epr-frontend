@@ -39,6 +39,7 @@ describe('#buildNavigation', () => {
     authedWithLinkedOrg: {
       displayName: 'Test User',
       linkedOrganisationId: 'org-123',
+      linkedOrganisationNumber: '500123',
       provider: OIDC_DEFRA_ID,
       role: 'operator'
     },
@@ -154,7 +155,7 @@ describe('#buildNavigation', () => {
       const [home] = buildNavigation(request)
 
       expect(home).toStrictEqual({
-        href: '/organisations/org-123',
+        href: '/organisations/500123',
         text: 'Home'
       })
     })
@@ -168,23 +169,25 @@ describe('#buildNavigation', () => {
       const [home] = buildNavigation(request)
 
       expect(home).toStrictEqual({
-        href: '/organisations/org-123',
+        href: '/organisations/500123',
         text: 'Home'
       })
     })
 
-    it('links home by organisation number when the session holds it', () => {
+    it('should not include home link when the session holds no organisation number', () => {
       const request = mockRequest({
         auth: {
           credentials: {
-            ...credentials.authedWithLinkedOrg,
-            linkedOrganisationNumber: '500123'
+            ...credentials.authedWithoutLinkedOrg,
+            linkedOrganisationId: 'org-123'
           }
         }
       })
-      const [home] = buildNavigation(request)
+      const navigation = buildNavigation(request)
 
-      expect(home.href).toBe('/organisations/500123')
+      expect(navigation).not.toStrictEqual(
+        expect.arrayContaining([expect.objectContaining({ text: 'Home' })])
+      )
     })
 
     it('should not include home link when user has no linked organisation', () => {
@@ -206,7 +209,7 @@ describe('#buildNavigation', () => {
 
       const [home] = buildNavigation(request)
 
-      expect(home.href).toBe('/cy/organisations/org-123')
+      expect(home.href).toBe('/cy/organisations/500123')
     })
   })
 

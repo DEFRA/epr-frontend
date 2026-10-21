@@ -20,7 +20,7 @@ const localise = createMockLocalise({
 })
 
 /**
- * @import { AccreditationView, OrganisationView, RegistrationView, ReprocessorRegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView, ReprocessorRegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
 const keys = {
@@ -31,8 +31,9 @@ const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
 
 /** @type {OrganisationView} */
 const organisation = {
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   registrations: {}
 }
 
@@ -43,7 +44,7 @@ const organisation = {
 const aReprocessorAt = (address) => ({
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   validFrom: '2026-01-01',
   material: 'plastic',
@@ -58,7 +59,7 @@ const aReprocessorAt = (address) => ({
 const anExporter = {
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   validFrom: '2026-01-01',
   material: 'plastic',
@@ -68,14 +69,14 @@ const anExporter = {
 }
 
 /**
- * @param {Partial<AccreditationView>} overrides
- * @returns {AccreditationView}
+ * @param {Partial<Accreditation>} overrides
+ * @returns {Accreditation}
  */
 const anAccreditation = (overrides) => ({
   accreditationNumber: 'A26ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
   },
   ...overrides
 })
@@ -207,9 +208,9 @@ describe(buildViewModel, () => {
               accreditationNumber: 'A25ER5001180114PL',
               status: {
                 current: 'approved',
-                timeline: {
-                  '2025-03-01T09:00:00.000Z': { status: 'approved' }
-                }
+                timeline: [
+                  { status: 'approved', at: '2025-03-01T09:00:00.000Z' }
+                ]
               }
             }),
             2026: anAccreditation({})
@@ -241,9 +242,9 @@ describe(buildViewModel, () => {
             2026: anAccreditation({
               status: {
                 current: 'approved',
-                timeline: {
-                  '2025-12-15T09:00:00.000Z': { status: 'approved' }
-                }
+                timeline: [
+                  { status: 'approved', at: '2025-12-15T09:00:00.000Z' }
+                ]
               }
             })
           }
@@ -263,10 +264,10 @@ describe(buildViewModel, () => {
             2026: anAccreditation({
               status: {
                 current: 'cancelled',
-                timeline: {
-                  '2026-02-15T09:00:00.000Z': { status: 'approved' },
-                  '2026-03-31T09:00:00.000Z': { status: 'cancelled' }
-                }
+                timeline: [
+                  { status: 'approved', at: '2026-02-15T09:00:00.000Z' },
+                  { status: 'cancelled', at: '2026-03-31T09:00:00.000Z' }
+                ]
               }
             })
           }
@@ -306,7 +307,7 @@ describe(buildViewModel, () => {
           ...anExporter,
           status: {
             current: 'approved',
-            timeline: { '2024-06-01T00:00:00.000Z': { status: 'approved' } }
+            timeline: [{ status: 'approved', at: '2024-06-01T00:00:00.000Z' }]
           }
         }
       })
@@ -335,9 +336,9 @@ describe(buildViewModel, () => {
             2026: anAccreditation({
               status: {
                 current: 'approved',
-                timeline: {
-                  '2026-01-01T09:00:00.000Z': { status: 'approved' }
-                }
+                timeline: [
+                  { status: 'approved', at: '2026-01-01T09:00:00.000Z' }
+                ]
               }
             })
           }
@@ -355,10 +356,10 @@ describe(buildViewModel, () => {
           ...anExporter,
           status: {
             current: 'cancelled',
-            timeline: {
-              '2025-01-01T00:00:00.000Z': { status: 'approved' },
-              '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
-            }
+            timeline: [
+              { status: 'approved', at: '2025-01-01T00:00:00.000Z' },
+              { status: 'cancelled', at: '2025-06-01T09:00:00.000Z' }
+            ]
           }
         }
       })
@@ -370,20 +371,12 @@ describe(buildViewModel, () => {
   })
 
   describe('the organisation', () => {
-    it('is named by its trading name where it holds one', () => {
+    it('is named by its display name', () => {
       const viewModel = build({
-        organisation: { ...organisation, tradingName: 'Kirkby Recycling' }
+        organisation: { ...organisation, displayName: 'Kirkby Recycling' }
       })
 
       expect(viewModel.caption).toBe('Kirkby Recycling - R26ER5001180041PL')
-    })
-
-    it('is named by its own name where the trading name is blank', () => {
-      const viewModel = build({
-        organisation: { ...organisation, tradingName: '  ' }
-      })
-
-      expect(viewModel.caption).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
     })
   })
 

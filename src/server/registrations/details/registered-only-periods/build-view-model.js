@@ -11,7 +11,7 @@ import {
   reportPath
 } from '#server/reports/helpers/report-paths.js'
 
-import { organisationViewName, toCaption } from '../helpers/caption.js'
+import { toCaption } from '../helpers/caption.js'
 import { registeredOnlyStretches } from '../helpers/registered-only.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
 import {
@@ -147,7 +147,7 @@ export const buildViewModel = ({
   localise,
   localiseUrl
 }) => {
-  const name = organisationViewName(organisation)
+  const name = organisation.displayName
   const registrationAddress = toRegistrationPath(keys)
   const heading = localise(
     'registrations:details:registeredOnlyPeriod:heading',

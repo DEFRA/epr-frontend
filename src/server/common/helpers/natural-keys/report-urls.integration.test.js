@@ -6,8 +6,6 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { CADENCE } from '#server/reports/constants.js'
-import { buildPeriodPath } from '#server/reports/helpers/build-period-path.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
@@ -15,7 +13,6 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
 /**
  * @import { SetupServer } from 'msw/node'
  * @import { HapiServer } from '#server/common/hapi-types.js'
- * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -50,6 +47,30 @@ const organisation = {
       status: 'approved'
     }
   ]
+}
+
+const organisationView = {
+  organisationNumber: 500118,
+  name: 'Acme Recycling Ltd',
+  registrations: {
+    [registrationNumber]: {
+      status: { current: 'approved', timeline: {} },
+      validFrom: '2026-01-01',
+      material: 'plastic',
+      submittedToRegulator: { code: 'ea' },
+      wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
+      site: {
+        address: { line1: 'North Road', town: 'Leeds', postcode: 'LS1 1AA' }
+      },
+      accreditations: {
+        2026: {
+          accreditationNumber: 'A26ER5001180114PL',
+          status: { current: 'approved', timeline: {} }
+        }
+      }
+    }
+  }
 }
 
 const byIds = `/organisations/${organisationId}/registrations/${registrationId}`
@@ -96,6 +117,9 @@ const backendHolds = (msw) =>
   msw.use(
     http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
       HttpResponse.json(organisation)
+    ),
+    http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
+      HttpResponse.json(organisationView)
     ),
     http.get(`${backendUrl}${quarterlyPage}`, () =>
       HttpResponse.json(submittedReport)
@@ -221,11 +245,17 @@ describe('old report page URLs', () => {
     )
   })
 
-  it("is 403 for another organisation's report, without fetching it", async ({
+  it("is 403 for another organisation's report the backend refuses", async ({
     server,
     msw
   }) => {
     backendHolds(msw)
+    msw.use(
+      http.get(
+        `${backendUrl}/organisations/500999`,
+        () => new HttpResponse(null, { status: statusCodes.forbidden })
+      )
+    )
 
     const response = await server.inject({
       method: 'GET',
@@ -270,27 +300,7 @@ describe('old report page URLs', () => {
       msw
     }) => {
       backendHolds(msw)
-      msw.use(
-        http.get(`${backendUrl}/v1/organisations`, () =>
-          HttpResponse.json({
-            items: [{ id: organisationId, orgId: 500118 }],
-            page: 1,
-            pageSize: 1
-          })
-        )
-      )
-      const link = buildPeriodPath({
-        organisationId,
-        registrationId,
-        period: /** @type {ReportingPeriod} */ (
-          /** @type {unknown} */ ({
-            year: 2026,
-            period: 8,
-            submissionNumber: 1
-          })
-        ),
-        cadence: CADENCE.MONTHLY
-      })
+      const link = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/8/submissions/1`
 
       const { hops, final } = await follow(server, `${link}/view`, {
         auth: regulator

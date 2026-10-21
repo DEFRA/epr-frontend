@@ -40,7 +40,7 @@ const regulator = buildMockAuth({
 const registration = {
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   validFrom: '2026-01-01',
   material: 'plastic',
@@ -57,7 +57,7 @@ const registration = {
 const exporterRegistration = {
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   validFrom: '2026-01-01',
   material: 'plastic',
@@ -70,7 +70,7 @@ const accreditation = {
   accreditationNumber: 'A26ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
   }
 }
 
@@ -78,16 +78,16 @@ const accreditation = {
  * @param {SetupServer} msw
  * @param {{
  *   registration?: Record<string, unknown>,
- *   tradingName?: string
+ *   displayName?: string
  * }} [overrides]
  */
 const backendHolds = (msw, overrides = {}) =>
   msw.use(
     http.get(`${backendUrl}/organisations/500118`, () =>
       HttpResponse.json({
-        organisationNumber: 500118,
+        organisationNumber: '500118',
         name: 'Kirkby Plastics Ltd',
-        tradingName: overrides.tradingName,
+        displayName: overrides.displayName ?? 'Kirkby Plastics Ltd',
         registrations: {
           [registrationNumber]: overrides.registration ?? registration
         }
@@ -246,17 +246,17 @@ describe('the registration details page a regulator reads', () => {
             accreditationNumber: 'A25ER5001180097PL',
             status: {
               current: 'cancelled',
-              timeline: {
-                '2025-02-15T09:00:00.000Z': { status: 'approved' },
-                '2025-03-31T09:00:00.000Z': { status: 'cancelled' }
-              }
+              timeline: [
+                { status: 'approved', at: '2025-02-15T09:00:00.000Z' },
+                { status: 'cancelled', at: '2025-03-31T09:00:00.000Z' }
+              ]
             }
           },
           2026: {
             ...accreditation,
             status: {
               current: 'approved',
-              timeline: { '2025-12-15T09:00:00.000Z': { status: 'approved' } }
+              timeline: [{ status: 'approved', at: '2025-12-15T09:00:00.000Z' }]
             }
           }
         }
@@ -315,7 +315,7 @@ describe('the registration details page a regulator reads', () => {
           ...registration,
           status: {
             current: 'approved',
-            timeline: { '2025-03-01T00:00:00.000Z': { status: 'approved' } }
+            timeline: [{ status: 'approved', at: '2025-03-01T00:00:00.000Z' }]
           }
         }
       })
@@ -331,11 +331,8 @@ describe('the registration details page a regulator reads', () => {
     }
   })
 
-  it('names the organisation by its trading name where it holds one', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw, { tradingName: 'Kirkby Recycling' })
+  it('names the organisation by its display name', async ({ server, msw }) => {
+    backendHolds(msw, { displayName: 'Kirkby Recycling' })
 
     const { body } = await visit(server)
 

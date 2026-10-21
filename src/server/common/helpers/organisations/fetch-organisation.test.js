@@ -11,7 +11,7 @@ import { fetchOrganisation } from './fetch-organisation.js'
 const backendUrl = config.get('eprBackendUrl')
 
 const organisation = {
-  organisationNumber: 50002,
+  organisationNumber: '50002',
   name: 'ACME ltd',
   registrations: {}
 }
@@ -25,7 +25,7 @@ describe(fetchOrganisation, () => {
     )
 
     const result = await fetchOrganisation(
-      organisationNumber(50002),
+      organisationNumber('50002'),
       'test-id-token'
     )
 
@@ -41,7 +41,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber(50002), 'test-id-token')
+    await fetchOrganisation(organisationNumber('50002'), 'test-id-token')
 
     expect(search).toBe('')
   })
@@ -57,82 +57,11 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber(50002), 'test-id-token', {
+    await fetchOrganisation(organisationNumber('50002'), 'test-id-token', {
       year: year(2026)
     })
 
     expect(search).toBe('?year=2026')
-  })
-
-  test('nests a flat status and statusTimeline as status.current and status.timeline', async ({
-    msw
-  }) => {
-    const timeline = { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
-    msw.use(
-      http.get(`${backendUrl}/organisations/50002`, () =>
-        HttpResponse.json({
-          ...organisation,
-          registrations: {
-            R25SR500000912PL: {
-              material: 'plastic',
-              status: 'approved',
-              statusTimeline: timeline,
-              accreditations: {
-                2026: {
-                  accreditationNumber: 'ACC-1',
-                  status: 'approved',
-                  statusTimeline: timeline
-                }
-              }
-            }
-          }
-        })
-      )
-    )
-
-    const result = await fetchOrganisation(
-      organisationNumber(50002),
-      'test-id-token'
-    )
-
-    expect(result.registrations).toStrictEqual({
-      R25SR500000912PL: {
-        material: 'plastic',
-        status: { current: 'approved', timeline },
-        accreditations: {
-          2026: {
-            accreditationNumber: 'ACC-1',
-            status: { current: 'approved', timeline }
-          }
-        }
-      }
-    })
-  })
-
-  test('keeps a status already nested', async ({ msw }) => {
-    const status = {
-      current: 'approved',
-      timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
-    }
-    const registrations = {
-      R25SR500000912PL: {
-        material: 'plastic',
-        status,
-        accreditations: { 2026: { accreditationNumber: 'ACC-1', status } }
-      }
-    }
-    msw.use(
-      http.get(`${backendUrl}/organisations/50002`, () =>
-        HttpResponse.json({ ...organisation, registrations })
-      )
-    )
-
-    const result = await fetchOrganisation(
-      organisationNumber(50002),
-      'test-id-token'
-    )
-
-    expect(result.registrations).toStrictEqual(registrations)
   })
 
   test('sends the backend token as a bearer token', async ({ msw }) => {
@@ -144,8 +73,24 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber(50002), 'test-id-token')
+    await fetchOrganisation(organisationNumber('50002'), 'test-id-token')
 
     expect(authorization).toBe('Bearer test-id-token')
+  })
+
+  test('keeps the organisation number inside its own path segment', async ({
+    msw
+  }) => {
+    let pathname
+    msw.use(
+      http.get(`${backendUrl}/*`, ({ request }) => {
+        pathname = new URL(request.url).pathname
+        return HttpResponse.json(organisation)
+      })
+    )
+
+    await fetchOrganisation(organisationNumber('../admin'), 'test-id-token')
+
+    expect(pathname).toBe('/organisations/..%2Fadmin')
   })
 })

@@ -7,11 +7,10 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 import { toAccreditationChildPage } from '../../helpers/accreditation-child-page.js'
-import { organisationViewName } from '../../helpers/caption.js'
 import { toReportRows, toReportsHead } from '../../helpers/report-rows.js'
 
 /**
- * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -33,7 +32,7 @@ const NAMESPACE = 'registrations:details:accreditation:reports'
  *   request: HapiRequest,
  *   keys: AccreditationKeys,
  *   organisation: OrganisationView,
- *   accreditation: AccreditationView,
+ *   accreditation: Accreditation,
  *   cadence: CadenceValue,
  *   reportingPeriods: ReportingPeriod[]
  * }} params
@@ -55,7 +54,7 @@ export const buildViewModel = ({
       heading,
       localise,
       localiseUrl,
-      organisationName: organisationViewName(organisation),
+      organisationName: organisation.displayName,
       registrationNumber: keys.registrationNumber,
       accreditationNumber: accreditation.accreditationNumber,
       paths: {

@@ -11,3 +11,5 @@
  * @returns {Year}
  */
 export const year = (value) => /** @type {Year} */ (value)
+
+export const YEAR_SEGMENT = /^\d{4}$/

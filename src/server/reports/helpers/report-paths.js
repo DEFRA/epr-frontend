@@ -33,28 +33,11 @@ export const accreditationPath = ({ year, ...keys }) =>
   `${registrationPath(keys)}/accreditations/${encodeURIComponent(year)}`
 
 /**
- * The organisation's address by id, for pages not yet on natural keys.
- * @param {{ organisationId: string }} ids
+ * @param {RegistrationKeys & { year: number }} keys
  * @returns {string}
  */
-export const organisationIdPath = ({ organisationId }) =>
-  `/organisations/${encodeURIComponent(organisationId)}`
-
-/**
- * The registration's address by id.
- * @param {{ organisationId: string, registrationId: string }} ids
- * @returns {string}
- */
-export const registrationIdPath = ({ registrationId, ...ids }) =>
-  `${organisationIdPath(ids)}/registrations/${encodeURIComponent(registrationId)}`
-
-/**
- * The accreditation's address by id.
- * @param {{ organisationId: string, registrationId: string, accreditationId: string }} ids
- * @returns {string}
- */
-export const accreditationIdPath = ({ accreditationId, ...ids }) =>
-  `${registrationIdPath(ids)}/accreditations/${encodeURIComponent(accreditationId)}`
+export const registeredOnlyPath = ({ year, ...keys }) =>
+  `${registrationPath(keys)}/${year}`
 
 /**
  * The summary log upload page.

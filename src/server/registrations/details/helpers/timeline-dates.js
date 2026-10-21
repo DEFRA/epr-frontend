@@ -18,7 +18,7 @@ import {
 
 /**
  * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
- * @import { AccreditationView, RegistrationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Stretch } from './registered-only.js'
  */
 
@@ -34,9 +34,7 @@ import {
  */
 export const dailyTimeline = (timeline) =>
   Object.fromEntries(
-    Object.entries(timeline)
-      .sort(([one], [other]) => one.localeCompare(other))
-      .map(([at, entry]) => [calendarDate(at), entry])
+    timeline.map(({ at, status }) => [calendarDate(at), { status }])
   )
 
 /**
@@ -91,7 +89,7 @@ const REGISTERED_STATUSES = new Set([REGISTRATION_STATUS.APPROVED])
 
 /**
  * The runs of approved or suspended days within the accreditation's year.
- * @param {AccreditationView} accreditation
+ * @param {Accreditation} accreditation
  * @param {string} year
  * @returns {Stretch[]}
  */
@@ -119,14 +117,12 @@ const accreditedFrom = (statusTimeline, yearStart) => {
     return yearStart
   }
 
-  const approvedAt = /** @type {string} */ (
-    Object.keys(statusTimeline)
-      .sort((one, other) => one.localeCompare(other))
-      .find(
-        (at) =>
-          statusTimeline[at].status === ACCREDITATION_STATUS.APPROVED &&
-          calendarDate(at).localeCompare(yearStart) >= 0
-      )
+  const { at: approvedAt } = /** @type {StatusTimeline[number]} */ (
+    statusTimeline.find(
+      ({ at, status }) =>
+        status === ACCREDITATION_STATUS.APPROVED &&
+        calendarDate(at).localeCompare(yearStart) >= 0
+    )
   )
 
   return calendarDate(approvedAt)
@@ -134,20 +130,18 @@ const accreditedFrom = (statusTimeline, yearStart) => {
 
 /**
  * The period an accreditation is shown as covering within its year.
- * @param {AccreditationView} accreditation
+ * @param {Accreditation} accreditation
  * @param {string} year
  * @returns {{ validFrom: string, validTo: string }}
  */
 export const accreditedDateRange = ({ status: { timeline } }, year) => {
-  const [lastDate, { status }] = /** @type {[string, { status: string }]} */ (
-    Object.entries(dailyTimeline(timeline)).at(-1)
-  )
+  const { at, status } = /** @type {StatusTimeline[number]} */ (timeline.at(-1))
 
   return {
     validFrom: accreditedFrom(timeline, firstDayOf(Number(year))),
     validTo:
       status === ACCREDITATION_STATUS.CANCELLED
-        ? lastDate
+        ? calendarDate(at)
         : lastDayOf(Number(year))
   }
 }

@@ -1,8 +1,16 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
+import {
+  accreditationPath,
+  registeredOnlyPath
+} from '#server/reports/helpers/report-paths.js'
+
+import { isAccreditationActive } from './accreditation-helpers.js'
 
 /**
- * @import { AccreditationView, OrganisationView, RegistrationView } from './organisation-view.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
 /**
@@ -40,7 +48,7 @@ export const registrationIn = (organisation, registrationNumber) => {
  * The registration's accreditation for that year.
  * @param {RegistrationView} registration
  * @param {string} year
- * @returns {AccreditationView}
+ * @returns {Accreditation}
  */
 export const accreditationIn = (registration, year) => {
   if (!Object.hasOwn(registration.accreditations, year)) {
@@ -57,11 +65,28 @@ export const accreditationIn = (registration, year) => {
 }
 
 /**
- * The most recent year the registration holds an accreditation for.
- * @param {RegistrationView} registration
- * @returns {string | undefined}
+ * @typedef {{ kind: 'accredited' | 'registeredOnly', path: string }} MaterialsHomepage
  */
-export const latestAccreditationYear = (registration) =>
-  Object.keys(registration.accreditations)
-    .sort((one, other) => one.localeCompare(other))
-    .at(-1)
+
+/**
+ * @param {RegistrationKeys} keys
+ * @param {RegistrationView} registration
+ * @param {number} year
+ * @returns {MaterialsHomepage | null}
+ */
+export const materialsHomepage = (keys, registration, year) => {
+  const accreditation = Object.hasOwn(registration.accreditations, year)
+    ? registration.accreditations[year]
+    : undefined
+
+  if (isAccreditationActive(accreditation)) {
+    return {
+      kind: 'accredited',
+      path: accreditationPath({ ...keys, year: String(year) })
+    }
+  }
+
+  return registeredYears(registration).includes(year)
+    ? { kind: 'registeredOnly', path: registeredOnlyPath({ ...keys, year }) }
+    : null
+}

@@ -1,7 +1,10 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
@@ -11,13 +14,13 @@ import { beforeEach, describe, expect, vi } from 'vitest'
 /** @import { HapiServer } from '#server/common/hapi-types.js' */
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/create-report.js'))
 
-const { fetchRegistrationAndAccreditationByNumber } =
-  await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+const { fetchRegistrationWithAccreditation } =
+  await import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 const { fetchReportDetail } = await import('./helpers/fetch-report-detail.js')
 const { createReport } = await import('./helpers/create-report.js')
 
@@ -28,15 +31,8 @@ const registrationNumber = 'R25SR500030912PA'
 const periodUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 const baseUrl = `${periodUrl}/report-data-incomplete`
 
-const exporterRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: undefined
+const exporterRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
 })
 
 const reportDetail = {
@@ -115,7 +111,7 @@ const twoIssues = {
 describe('#reportDataIncompleteController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       exporterRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(

@@ -57,6 +57,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  *   wasteProcessingType: string,
  *   processToBeUsed: string,
  *   accreditationYear: number,
+ *   obligationYear: number,
  *   issuedAt: string | null,
  *   issuedBy: { name?: string, position?: string } | null
  * }} PackagingRecyclingNote
@@ -89,6 +90,7 @@ export const toPackagingRecyclingNote = (prn) => {
     wasteProcessingType: accreditation.wasteProcessingType,
     processToBeUsed: prn.processToBeUsed,
     accreditationYear: accreditation.accreditationYear,
+    obligationYear: prn.obligationYear,
     issuedAt: prn.issued?.at ?? null,
     issuedBy: prn.issued?.by ?? null
   }

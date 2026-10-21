@@ -18,10 +18,29 @@ describe(fetchOrganisationYears, () => {
     )
 
     const result = await fetchOrganisationYears(
-      organisationNumber(50002),
+      organisationNumber('50002'),
       'test-id-token'
     )
 
     expect(result).toStrictEqual([2027, 2026])
+  })
+
+  test('keeps the organisation number inside its own path segment', async ({
+    msw
+  }) => {
+    let pathname
+    msw.use(
+      http.get(`${backendUrl}/*`, ({ request }) => {
+        pathname = new URL(request.url).pathname
+        return HttpResponse.json({ years: [] })
+      })
+    )
+
+    await fetchOrganisationYears(
+      organisationNumber('../admin'),
+      'test-id-token'
+    )
+
+    expect(pathname).toBe('/organisations/..%2Fadmin/years')
   })
 })

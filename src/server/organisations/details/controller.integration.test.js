@@ -23,7 +23,7 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 const backendUrl = config.get('eprBackendUrl')
-const organisationNumber = 500118
+const organisationNumber = '500118'
 const path = `/organisations/${organisationNumber}`
 
 const operator = buildMockAuth()
@@ -50,11 +50,12 @@ const unrecognised = buildMockAuth({
 const organisation = {
   organisationNumber,
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   registrations: {
     R26ER5001180041PL: {
       status: {
         current: 'approved',
-        timeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } }
+        timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
       },
       validFrom: '2025-01-01',
       material: 'glass_re_melt',
@@ -69,17 +70,17 @@ const organisation = {
           accreditationNumber: 'A25ER5001180114GR',
           status: {
             current: 'cancelled',
-            timeline: {
-              '2025-01-01T09:00:00.000Z': { status: 'approved' },
-              '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
-            }
+            timeline: [
+              { status: 'approved', at: '2025-01-01T09:00:00.000Z' },
+              { status: 'cancelled', at: '2025-06-01T09:00:00.000Z' }
+            ]
           }
         },
         2026: {
           accreditationNumber: 'A26ER5001180114GR',
           status: {
             current: 'approved',
-            timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+            timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
           }
         }
       }
@@ -87,10 +88,10 @@ const organisation = {
     R26ER5001180042AL: {
       status: {
         current: 'cancelled',
-        timeline: {
-          '2025-01-01T00:00:00.000Z': { status: 'approved' },
-          '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
-        }
+        timeline: [
+          { status: 'approved', at: '2025-01-01T00:00:00.000Z' },
+          { status: 'cancelled', at: '2025-06-01T09:00:00.000Z' }
+        ]
       },
       validFrom: '2025-01-01',
       material: 'aluminium',
@@ -105,7 +106,7 @@ const organisation = {
     R26EX5001180041PA: {
       status: {
         current: 'approved',
-        timeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } }
+        timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
       },
       validFrom: '2025-01-01',
       material: 'paper',

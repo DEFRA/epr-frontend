@@ -19,7 +19,10 @@ vi.mock(
 
 const ORGANISATION_URL = '/organisations/500123'
 
-const operatorAuth = buildMockAuth({ linkedOrganisationId: 'org-123' })
+const operatorAuth = buildMockAuth({
+  linkedOrganisationId: 'org-123',
+  linkedOrganisationNumber: '500123'
+})
 
 const regulatorAuth = buildMockAuth({
   provider: OIDC_ENTRA_ID,
@@ -68,8 +71,9 @@ describe('the chrome around an organisation page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchOrganisation).mockResolvedValue({
-      organisationNumber: 500123,
+      organisationNumber: '500123',
       name: 'ACME ltd',
+      displayName: 'ACME ltd',
       registrations: {}
     })
     vi.mocked(fetchOrganisationYears).mockResolvedValue([])
@@ -166,7 +170,7 @@ describe('the chrome around an organisation page', () => {
 
       expect(getByRole(body, 'link', { name: 'Home' })).toHaveAttribute(
         'href',
-        '/organisations/org-123'
+        ORGANISATION_URL
       )
     })
 

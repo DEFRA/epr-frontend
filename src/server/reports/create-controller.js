@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { createReport } from './helpers/create-report.js'
 import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -22,10 +22,9 @@ export const createController = {
     const session = request.auth.credentials
 
     const { registration, accreditation } =
-      await fetchRegistrationAndAccreditationByNumber(
-        organisationNumber,
-        registrationNumber,
-        session
+      await fetchRegistrationWithAccreditation(
+        { organisationNumber, registrationNumber },
+        session.backendToken
       )
 
     validateCadenceForRegistration(cadence, accreditation)

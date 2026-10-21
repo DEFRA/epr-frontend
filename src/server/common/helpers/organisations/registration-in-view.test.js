@@ -3,11 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 
-import {
-  accreditationIn,
-  latestAccreditationYear,
-  registrationIn
-} from './registration-in-view.js'
+import { accreditationIn, registrationIn } from './registration-in-view.js'
 
 /**
  * @import { OrganisationView, RegistrationView } from './organisation-view.js'
@@ -17,7 +13,7 @@ const accreditation2025 = /** @type {const} */ ({
   accreditationNumber: 'A25ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: { '2025-01-01T09:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2025-01-01T09:00:00.000Z' }]
   }
 })
 
@@ -25,14 +21,14 @@ const accreditation2026 = /** @type {const} */ ({
   accreditationNumber: 'A26ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
   }
 })
 
 const registration = /** @type {RegistrationView} */ ({
   status: {
     current: 'approved',
-    timeline: { '2025-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
   },
   validFrom: '2025-01-01',
   material: 'plastic',
@@ -42,8 +38,9 @@ const registration = /** @type {RegistrationView} */ ({
 })
 
 const organisation = /** @type {OrganisationView} */ ({
-  organisationNumber: 500001,
+  organisationNumber: '500001',
   name: 'Kirkby Plastics',
+  displayName: 'Kirkby Plastics',
   registrations: { R25SR500030912PA: registration }
 })
 
@@ -86,17 +83,5 @@ describe(accreditationIn, () => {
     expect(() => accreditationIn(registration, 'constructor')).toThrow(
       expect.objectContaining({ code: errorCodes.accreditationNotFound })
     )
-  })
-})
-
-describe(latestAccreditationYear, () => {
-  it('returns the highest year', () => {
-    expect(latestAccreditationYear(registration)).toBe('2026')
-  })
-
-  it('returns undefined for a registration with no accreditations', () => {
-    expect(
-      latestAccreditationYear({ ...registration, accreditations: {} })
-    ).toBeUndefined()
   })
 })

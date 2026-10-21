@@ -3,8 +3,9 @@ import Boom from '@hapi/boom'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -34,7 +35,7 @@ import { buildValidationErrors } from './helpers/validation.js'
 import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /** @import { Localise } from './helpers/format-period-label.js' */
-/** @import { Registration } from '#domain/organisations/registration.js' */
+/** @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
 /** @import { ValidationError } from 'joi' */
 
 /**
@@ -138,8 +139,9 @@ function buildActivityViewData(
 
 /**
  * @typedef {{
- *   registration: Registration,
- *   accreditation: object | null,
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
+ *   accreditation: Accreditation | undefined,
  *   reportDetail: ReportDetailResponse,
  *   reportsUrl: string,
  *   deleteUrl: string,
@@ -199,7 +201,7 @@ function getReportSummaryFields({
   period,
   localise
 }) {
-  const material = getRegistrationMaterialDisplayName(registration)
+  const material = getMaterialDisplayName(registration.material)
   const periodLabel = formatPeriodLabelWithComma(
     { year, period },
     cadence,
@@ -214,6 +216,7 @@ function getReportSummaryFields({
  * @returns {object}
  */
 function buildViewModel({
+  organisation,
   registration,
   accreditation,
   reportDetail,
@@ -274,11 +277,11 @@ function buildViewModel({
     createdOn,
     periodLabel,
     material,
-    site: registration.site,
+    site: siteNameOf(registration),
     ...activityViewData,
     prn: buildPrnSummaryViewData(reportDetail.prn),
     supportingInformation: reportDetail.supportingInformation || fallbackText,
-    declarationItems: buildDeclarationItems(localise, registration.orgName),
+    declarationItems: buildDeclarationItems(localise, organisation.displayName),
     version: reportDetail.version,
     submissionDeclaredBy: submissionDeclaredBy ?? null,
     errors: errors ?? null,
@@ -304,11 +307,10 @@ async function buildViewData(request, options = {}) {
   const session = request.auth.credentials
   const { t: localise } = request
 
-  const { registration, accreditation } =
-    await fetchRegistrationAndAccreditationByNumber(
-      organisationNumber,
-      registrationNumber,
-      session
+  const { organisation, registration, accreditation } =
+    await fetchRegistrationWithAccreditation(
+      { organisationNumber, registrationNumber },
+      session.backendToken
     )
   const reportDetail = await fetchReportDetail(
     request.params,
@@ -316,6 +318,7 @@ async function buildViewData(request, options = {}) {
   )
 
   return buildViewModel({
+    organisation,
     registration,
     accreditation,
     reportDetail,

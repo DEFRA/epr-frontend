@@ -67,7 +67,7 @@ const bahiaPlasticos = {
 const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
   /** @type {RegistrationView} */
   const registration = {
-    status: { current: 'approved', timeline: {} },
+    status: { current: 'approved', timeline: [] },
     validFrom: '2026-01-01',
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
@@ -79,7 +79,8 @@ const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
   return {
     organisation: {
       name: 'Kirkby Plastics Ltd',
-      organisationNumber: 500123,
+      displayName: 'Kirkby Plastics Ltd',
+      organisationNumber: '500123',
       registrations: { [registrationNumber]: registration }
     },
     registration

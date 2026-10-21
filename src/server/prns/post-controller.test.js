@@ -1,6 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -10,12 +15,11 @@ import { describe, expect, vi } from 'vitest'
 
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
- * @import { RegistrationWithLiveAccreditation } from '#server/common/test-helpers/prn-fixtures.js'
  * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
@@ -31,43 +35,20 @@ const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
   /** @type {unknown} */ (buildMockAuth())
 )
 
-const fixtureReprocessor = /** @type {RegistrationWithLiveAccreditation} */ (
-  /** @type {unknown} */ ({
-    organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
-    registration: {
-      id: 'reg-456',
-      wasteProcessingType: 'reprocessor-input',
-      material: 'plastic',
-      nation: 'england',
-      site: { address: { line1: 'Reprocessing Site' } },
-      accreditationId: 'acc-001'
-    },
-    accreditation: {
-      id: 'acc-001',
-      accreditationNumber: 'ACC-001',
-      status: 'approved'
-    }
-  })
-)
+const fixtureReprocessor = buildRegistrationWithAccreditation({
+  organisation: { name: 'Reprocessor Organisation' },
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: { address: { fullAddress: 'Reprocessing Site' } }
+  }),
+  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
+})
 
-const fixtureExporter = /** @type {RegistrationWithLiveAccreditation} */ (
-  /** @type {unknown} */ ({
-    organisationData: { id: 'org-123', name: 'Exporter Organisation' },
-    registration: {
-      id: 'reg-456',
-      wasteProcessingType: 'exporter',
-      material: 'plastic',
-      nation: 'england',
-      site: { address: { line1: 'Export Site' } },
-      accreditationId: 'acc-001'
-    },
-    accreditation: {
-      id: 'acc-001',
-      accreditationNumber: 'ACC-001',
-      status: 'approved'
-    }
-  })
-)
+const fixtureExporter = buildRegistrationWithAccreditation({
+  organisation: { name: 'Exporter Organisation' },
+  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
+})
 
 const keys = {
   organisationNumber: '500123',
@@ -82,16 +63,13 @@ const validPayload = {
   tonnage: '100',
   recipient: 'dd793573-b218-47a7-be85-1c777ca0d0d8',
   notes: 'Test notes',
-  nation: 'england',
   wasteProcessingType: 'reprocessor-input'
 }
 
 describe('#postCreatePrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(
-      getRequiredRegistrationWithAccreditationByNumber
-    ).mockResolvedValue(fixtureReprocessor)
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
       mode: 'none',
       windowOpen: false
@@ -435,9 +413,7 @@ describe('#postCreatePrnController', () => {
       it('shows PERN-specific tonnage error for exporter registrations', async ({
         server
       }) => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
 
         const { cookie, crumb } = await getCsrfToken(server, url, {
           auth: mockAuth
@@ -536,9 +512,9 @@ describe('#postCreatePrnController', () => {
 
     describe('waste balance on error', () => {
       beforeEach(() => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
           amount: 1000,
           availableAmount: 500
@@ -630,9 +606,9 @@ describe('#postCreatePrnController', () => {
         'The tonnage you entered exceeds your available waste balance'
 
       beforeEach(() => {
-        vi.mocked(
-          getRequiredRegistrationWithAccreditationByNumber
-        ).mockResolvedValue(fixtureReprocessor)
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
         vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
           amount: 1000,
           availableAmount: 500

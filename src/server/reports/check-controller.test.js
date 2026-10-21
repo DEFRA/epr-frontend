@@ -1,6 +1,11 @@
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -21,14 +26,11 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 /**
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
  * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/update-report-status.js'))
@@ -45,34 +47,20 @@ const regulatorAuth = buildMockAuth({
   ...sessionIdentity(IDENTITIES.regulator)
 })
 
-const exporterRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
-  registration: /** @type {Registration} */ ({
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  }),
-  accreditation: undefined
-}
+const exporterRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
+})
 
-const reprocessorRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
-  registration: /** @type {Registration} */ ({
-    id: 'reg-001',
-    material: 'plastic',
+const reprocessorRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
     wasteProcessingType: 'reprocessor',
-    registrationNumber: 'REG001234',
+    reprocessingType: 'input',
     site: {
-      address: {
-        line1: 'North Road',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
-      }
-    }
-  }),
-  accreditation: undefined
-}
+      address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
+    },
+    accreditations: {}
+  })
+})
 
 /** @type {ReportDetailResponse} */
 const exporterReportDetail = {
@@ -192,38 +180,26 @@ const reprocessorReportDetail = {
   }
 }
 
-const accreditedReprocessorRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
-  registration: /** @type {Registration} */ ({
-    id: 'reg-001',
-    material: 'plastic',
+const accreditedReprocessorRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
     wasteProcessingType: 'reprocessor',
-    registrationNumber: 'REG001234',
-    accreditationId: 'acc-001',
+    reprocessingType: 'input',
     site: {
       address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
+    },
+    accreditations: {
+      2026: buildAccreditationView({ accreditationNumber: 'ER992415095748M' })
     }
-  }),
-  accreditation: /** @type {Accreditation} */ ({
-    id: 'acc-001',
-    accreditationNumber: 'ER992415095748M'
   })
-}
+})
 
-const accreditedExporterRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
-  registration: /** @type {Registration} */ ({
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234',
-    accreditationId: 'acc-002'
-  }),
-  accreditation: /** @type {Accreditation} */ ({
-    id: 'acc-002',
-    accreditationNumber: 'EE992415095748M'
+const accreditedExporterRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
+    accreditations: {
+      2026: buildAccreditationView({ accreditationNumber: 'EE992415095748M' })
+    }
   })
-}
+})
 
 /** @type {ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
@@ -284,7 +260,7 @@ describe('#checkController', () => {
   describe('GET', () => {
     describe('for exporter with supporting information', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -369,7 +345,7 @@ describe('#checkController', () => {
         expect(headerSummaryList).not.toBeNull()
         expect(headerSummaryList?.textContent).toContain('Period')
         expect(headerSummaryList?.textContent).toContain('Quarter 1, 2026')
-        expect(headerSummaryList?.textContent).toContain('REG001234')
+        expect(headerSummaryList?.textContent).toContain(registrationNumber)
         expect(headerSummaryList?.textContent).toContain('Plastic')
       })
 
@@ -1007,7 +983,7 @@ describe('#checkController', () => {
 
     describe('for registered-only exporter', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -1031,7 +1007,7 @@ describe('#checkController', () => {
 
     describe('for exporter with no export activity', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue({
@@ -1122,7 +1098,7 @@ describe('#checkController', () => {
 
     describe('for reprocessor without supporting information', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           reprocessorRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(reprocessorReportDetail)
@@ -1289,7 +1265,7 @@ describe('#checkController', () => {
 
     describe('for registered-only reprocessor recycling activity', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           reprocessorRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue({
@@ -1428,7 +1404,7 @@ describe('#checkController', () => {
 
     describe('for registered-only reprocessor with unanswered recycling tonnages', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           reprocessorRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(reprocessorReportDetail)
@@ -1485,7 +1461,7 @@ describe('#checkController', () => {
 
     describe('for accredited reprocessor', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           accreditedReprocessorRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -1662,7 +1638,7 @@ describe('#checkController', () => {
 
     describe('for accredited exporter', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           accreditedExporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -1842,7 +1818,7 @@ describe('#checkController', () => {
 
     describe('when report status is not in_progress', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue({
@@ -1868,7 +1844,7 @@ describe('#checkController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -1981,7 +1957,7 @@ describe('#checkController', () => {
 
   describe('journey events', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditationByNumber).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)

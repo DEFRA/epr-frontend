@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildViewModel } from './build-view-model.js'
 
 /**
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -40,34 +40,33 @@ const registrationPath = `/organisations/${organisationNumber}/registrations/${r
  * @returns {OrganisationView}
  */
 const anOrganisation = (overrides) => ({
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   registrations: {},
   ...overrides
 })
 
 /**
  * @param {Record<string, string>} timeline - status by ISO datetime
- * @returns {AccreditationView}
+ * @returns {Accreditation}
  */
 const anAccreditation = (timeline) => ({
   accreditationNumber: 'A26ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: Object.fromEntries(
-      Object.entries(timeline).map(([date, status]) => [date, { status }])
-    )
+    timeline: Object.entries(timeline).map(([at, status]) => ({ status, at }))
   }
 })
 
 /**
- * @param {Record<string, AccreditationView>} [accreditations]
+ * @param {Record<string, Accreditation>} [accreditations]
  * @returns {RegistrationView}
  */
 const aRegistration = (accreditations = {}) => ({
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   validFrom: '2026-01-01',
   material: 'plastic',
@@ -162,18 +161,12 @@ describe(buildViewModel, () => {
     expect(build().caption).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
   })
 
-  it('names the organisation by its trading name where it holds one', () => {
+  it('names the organisation by its display name', () => {
     expect(
       build({
-        organisation: anOrganisation({ tradingName: 'Kirkby Recycling' })
+        organisation: anOrganisation({ displayName: 'Kirkby Recycling' })
       }).caption
     ).toBe('Kirkby Recycling - R26ER5001180041PL')
-  })
-
-  it('names the organisation by its name where the trading name is blank', () => {
-    expect(
-      build({ organisation: anOrganisation({ tradingName: '  ' }) }).caption
-    ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
   })
 
   it('walks back to the registration it sits under, by number', () => {

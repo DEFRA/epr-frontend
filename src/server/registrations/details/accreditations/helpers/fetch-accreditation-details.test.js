@@ -41,11 +41,11 @@ describe(fetchAccreditationDetails, () => {
     accreditationNumber: 'A26ER5001180114PL',
     status: {
       current: 'approved',
-      timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+      timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
     }
   }
   const registration = {
-    status: { current: 'approved', timeline: {} },
+    status: { current: 'approved', timeline: [] },
     validFrom: '2026-01-01',
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
@@ -53,7 +53,7 @@ describe(fetchAccreditationDetails, () => {
     accreditations: { 2026: accreditation }
   }
   const organisation = {
-    organisationNumber: 500118,
+    organisationNumber: '500118',
     name: 'Acme Recycling Ltd',
     registrations: { [keys.registrationNumber]: registration }
   }
@@ -124,6 +124,7 @@ describe(fetchAccreditationDetails, () => {
       wasteProcessingType: 'reprocessor',
       processToBeUsed: '',
       accreditationYear: 2026,
+      obligationYear: 2026,
       issuedAt: '2026-02-15T15:09:00.000Z',
       issuedBy: { name: 'Ada Lovelace' }
     }

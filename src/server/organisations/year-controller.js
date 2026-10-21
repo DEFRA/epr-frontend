@@ -1,9 +1,9 @@
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { isAccreditationViewActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
+import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
-import { year as toYear } from '#server/common/helpers/year.js'
+import { YEAR_SEGMENT, year as toYear } from '#server/common/helpers/year.js'
 import Boom from '@hapi/boom'
 import { renderHome } from './home-page.js'
 
@@ -25,7 +25,7 @@ import { renderHome } from './home-page.js'
  * @returns {Year}
  */
 const yearOf = (segment) => {
-  if (!/^\d{4}$/.test(segment)) {
+  if (!YEAR_SEGMENT.test(segment)) {
     throw Boom.notFound()
   }
 
@@ -44,7 +44,7 @@ function getDisplayedRegistrations(registrations, selectedYear) {
     return {
       number,
       registration,
-      accreditation: isAccreditationViewActive(accreditation)
+      accreditation: isAccreditationActive(accreditation)
         ? accreditation
         : undefined
     }
@@ -87,9 +87,7 @@ export const yearController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const orgNumber = organisationNumber(
-      Number(request.params.organisationNumber)
-    )
+    const orgNumber = organisationNumber(request.params.organisationNumber)
     const { backendToken } = request.auth.credentials
     const year = yearOf(String(request.params.year))
 
