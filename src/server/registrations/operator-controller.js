@@ -328,7 +328,7 @@ export const registrationController = {
     })
     const [latestYear] = registeredYears(registration)
     const homepage = latestYear
-      ? materialsHomepage(keys, registration, latestYear)
+      ? materialsHomepage(keys, registration, toYear(latestYear))
       : null
 
     return redirectPreservingMethod(
@@ -358,7 +358,7 @@ export const registeredOnlyYearController = {
       ...keys,
       backendToken: request.auth.credentials.backendToken
     })
-    const homepage = materialsHomepage(keys, registration, year)
+    const homepage = materialsHomepage(keys, registration, toYear(year))
 
     if (homepage === null) {
       throw notFound(

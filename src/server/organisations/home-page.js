@@ -83,11 +83,11 @@ const createAccreditationTag = (accreditation, localise) =>
 /**
  * @param {RegistrationView} registration
  * @param {RegistrationKeys} keys
- * @param {Year | null} selectedYear
+ * @param {Year} selectedYear
  * @returns {string}
  */
 const registrationRowPath = (registration, keys, selectedYear) =>
-  materialsHomepage(keys, registration, Number(selectedYear))?.path ??
+  materialsHomepage(keys, registration, selectedYear)?.path ??
   registrationPath(keys)
 
 /**
@@ -96,7 +96,7 @@ const registrationRowPath = (registration, keys, selectedYear) =>
  * @param {OrganisationNumber} orgNumber
  * @param {DisplayedRegistration} displayed
  * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditation number to balance data
- * @param {Year | null} selectedYear
+ * @param {Year} selectedYear
  * @returns {TableCell[]} - Array of table cells
  */
 function createRow(
@@ -208,7 +208,7 @@ function addRowToSites(sites, registration, row, localise) {
  * @param {DisplayedRegistration[]} displayedRegistrations
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
  * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditation number to balance data
- * @param {Year | null} selectedYear
+ * @param {Year} selectedYear
  * @returns {Array} Array of sites with their materials
  */
 function getRegistrationSites(
@@ -314,23 +314,21 @@ export function renderHome(
   const isExporterTab = request.path.endsWith('/exporting')
   const activeTab = isExporterTab ? tabTypes.EXPORTER : tabTypes.REPROCESSOR
 
-  const reprocessorSites = getRegistrationSites(
-    request,
-    orgNumber,
-    displayedRegistrations,
-    'reprocessor',
-    wasteBalanceMap,
-    year
-  )
+  /** @param {string} wasteProcessingType */
+  const sitesFor = (wasteProcessingType) =>
+    year === null
+      ? []
+      : getRegistrationSites(
+          request,
+          orgNumber,
+          displayedRegistrations,
+          wasteProcessingType,
+          wasteBalanceMap,
+          year
+        )
 
-  const exporterSites = getRegistrationSites(
-    request,
-    orgNumber,
-    displayedRegistrations,
-    'exporter',
-    wasteBalanceMap,
-    year
-  )
+  const reprocessorSites = sitesFor('reprocessor')
+  const exporterSites = sitesFor('exporter')
 
   const { sites, tableTitle, shouldRenderTabs } = getActiveSitesAndTitle({
     reprocessorSites,

@@ -9,6 +9,7 @@ import {
 import { isAccreditationActive } from './accreditation-helpers.js'
 
 /**
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from './organisation-view.js'
  */
@@ -71,7 +72,7 @@ export const accreditationIn = (registration, year) => {
 /**
  * @param {RegistrationKeys} keys
  * @param {RegistrationView} registration
- * @param {number} year
+ * @param {Year} year
  * @returns {MaterialsHomepage | null}
  */
 export const materialsHomepage = (keys, registration, year) => {
