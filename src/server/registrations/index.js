@@ -4,11 +4,13 @@ import { controller as detailsController } from './details/controller.js'
 import { controller as overseasSitesController } from './details/overseas-sites/controller.js'
 import {
   paramsOrNotFound,
-  registrationParamsSchema
+  registrationParamsSchema,
+  yearParamsSchema
 } from './details/helpers/params-validation.js'
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
 import {
   controller as operatorController,
+  registeredOnlyYearController,
   registrationController as operatorRegistrationController
 } from './operator-controller.js'
 import {
@@ -27,6 +29,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  * @import { OverseasSitesParams } from './details/overseas-sites/controller.js'
  * @import { AccreditationParams } from './details/accreditations/controller.js'
  * @import { AccreditationParams as AccreditationReportsParams } from './details/accreditations/reports/controller.js'
+ * @import { OperatorRegisteredOnlyParams } from './operator-controller.js'
  */
 
 /**
@@ -49,6 +52,38 @@ const registrationController = {
     return readsAsARegulator(request.auth.credentials)
       ? detailsController.handler(request, h)
       : operatorRegistrationController.handler(request, h)
+  }
+}
+
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
+const registeredOnlyYearRoute = {
+  options: {
+    validate: paramsOrNotFound(yearParamsSchema, {
+      message: 'Registered-only year not found',
+      code: errorCodes.registrationNotFound,
+      action: 'fetch_registered_only_year',
+      reason: 'the address holds no such organisation number or year'
+    })
+  },
+  /**
+   * @param {HapiRequest & { params: OperatorRegisteredOnlyParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    if (readsAsARegulator(request.auth.credentials)) {
+      throw notFound(
+        'Registered-only year not found',
+        errorCodes.registrationNotFound,
+        {
+          event: {
+            action: 'fetch_registered_only_year',
+            reason: 'caller reads as a regulator'
+          }
+        }
+      )
+    }
+
+    return registeredOnlyYearController.handler(request, h)
   }
 }
 
@@ -187,6 +222,11 @@ export const registrations = {
           ...registrationController,
           method: 'GET',
           path: '/organisations/{organisationNumber}/registrations/{registrationNumber}'
+        },
+        {
+          ...registeredOnlyYearRoute,
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/{year}'
         },
         {
           ...accreditationRoute,
