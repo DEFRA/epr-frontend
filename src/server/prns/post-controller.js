@@ -1,4 +1,4 @@
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
@@ -59,7 +59,6 @@ const payloadSchema = Joi.object({
     .messages({
       'string.max': `Notes must be ${NOTES_MAX_LENGTH} characters or fewer`
     }),
-  nation: Joi.string().required(),
   wasteProcessingType: Joi.string().required(),
   isDecemberWaste: Joi.boolean().default(false)
 })
@@ -73,7 +72,6 @@ const payloadSchema = Joi.object({
  *   tonnage: string,
  *   recipient: string,
  *   notes?: string,
- *   nation: string,
  *   wasteProcessingType: string,
  *   isDecemberWaste?: boolean
  * }} CreatePrnPayload
@@ -145,15 +143,14 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
  * make.
  * @param {HapiRequest} request
  * @param {AccreditationKeys} keys
- * @returns {Promise<{ registration: Registration, wasteBalance: WasteBalance | null, decemberWasteControl: DecemberWasteControl }>}
+ * @returns {Promise<{ registration: RegistrationView, wasteBalance: WasteBalance | null, decemberWasteControl: DecemberWasteControl }>}
  */
 async function fetchCreatePrnViewDataInputs(request, keys) {
-  const credentials = request.auth.credentials
-  const { backendToken } = credentials
+  const { backendToken } = request.auth.credentials
 
   const [{ registration, accreditation }, decemberPrnEligibility] =
     await Promise.all([
-      getRequiredRegistrationWithAccreditationByNumber(keys, credentials),
+      fetchRequiredAccreditation(keys, backendToken),
       fetchDecemberPrnEligibility(keys, backendToken)
     ])
 
@@ -422,7 +419,7 @@ export const postController = {
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnListParams } from './helpers/session-types.js'

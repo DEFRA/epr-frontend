@@ -23,7 +23,7 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 /**
  * @import { SetupServer } from 'msw/node'
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -61,13 +61,13 @@ const regulatorWithoutLedgerScope = buildMockAuth({
 /**
  * An accreditation approved on `approvedOn` and never cancelled.
  * @param {string} approvedOn
- * @returns {AccreditationView}
+ * @returns {Accreditation}
  */
 const anAccreditation = (approvedOn) => ({
   accreditationNumber: 'A26ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: { [`${approvedOn}T09:00:00.000Z`]: { status: 'approved' } }
+    timeline: [{ status: 'approved', at: `${approvedOn}T09:00:00.000Z` }]
   }
 })
 
@@ -110,12 +110,12 @@ const aLedgerEvent = (createdAt = `${YEAR}-05-04T09:00:00.000Z`) => ({
  */
 const approvedSinceYear = {
   current: 'approved',
-  timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+  timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
 }
 
 /**
  * @param {{
- *   accreditations?: Record<string, AccreditationView>,
+ *   accreditations?: Record<string, Accreditation>,
  *   status?: RegistrationView['status']
  * }} [overrides]
  * @returns {OrganisationView}
@@ -124,8 +124,9 @@ const anOrganisation = ({
   accreditations = {},
   status = approvedSinceYear
 } = {}) => ({
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   registrations: {
     [registrationNumber]: {
       status,
@@ -144,7 +145,7 @@ const anOrganisation = ({
  * Answers the read model, the calendar and the year's ledger by number.
  * @param {SetupServer} msw
  * @param {{
- *   accreditations?: Record<string, AccreditationView>,
+ *   accreditations?: Record<string, Accreditation>,
  *   status?: RegistrationView['status'],
  *   cadence?: CadenceValue,
  *   reportingPeriods?: ReportingPeriod[],
@@ -427,10 +428,10 @@ describe('the registered-only period page', () => {
     backendHolds(msw, {
       status: {
         current: 'cancelled',
-        timeline: {
-          '2025-01-01T00:00:00.000Z': { status: 'approved' },
-          '2025-06-01T09:00:00.000Z': { status: 'cancelled' }
-        }
+        timeline: [
+          { status: 'approved', at: '2025-01-01T00:00:00.000Z' },
+          { status: 'cancelled', at: '2025-06-01T09:00:00.000Z' }
+        ]
       }
     })
 

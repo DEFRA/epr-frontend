@@ -1,7 +1,8 @@
 import Boom from '@hapi/boom'
 
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -39,10 +40,9 @@ export const createdController = {
     const reportsUrl = reportsListPath(request.params)
 
     const { registration, accreditation } =
-      await fetchRegistrationAndAccreditationByNumber(
-        organisationNumber,
-        registrationNumber,
-        session
+      await fetchRegistrationWithAccreditation(
+        { organisationNumber, registrationNumber },
+        session.backendToken
       )
     const reportDetail = await fetchReportDetail(
       request.params,
@@ -53,7 +53,7 @@ export const createdController = {
       throw Boom.notFound()
     }
 
-    const material = getRegistrationMaterialDisplayName(registration)
+    const material = getMaterialDisplayName(registration.material)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
     // A resubmission draft keeps the period in its Requires resubmission state,
@@ -80,11 +80,11 @@ export const createdController = {
       accreditationLabel: localise('reports:accreditationLabel'),
       accreditationNumber: accreditation?.accreditationNumber,
       registrationLabel: localise('reports:createdRegistrationLabel'),
-      registrationNumber: registration.registrationNumber,
+      registrationNumber,
       materialLabel: localise('reports:createdMaterialLabel'),
       material,
       siteLabel: localise('reports:siteLabel'),
-      site: registration.site,
+      site: siteNameOf(registration),
       nextStepsHeading: localise('reports:createdNextStepsHeading'),
       nextStepsGuidance: localise('reports:createdNextStepsGuidance'),
       selfSubmitGuidance: localise('reports:createdSelfSubmitGuidance'),

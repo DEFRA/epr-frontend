@@ -1,56 +1,53 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
-import { findOrganisationByNumber } from './find-organisation.js'
-import { toIds } from './swap-keys.js'
+import { registrationsNumbered } from './swap-keys.js'
 
 /**
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { AppliedForMaterial } from '#domain/organisations/model.js'
  * @import { UserSession } from '#server/auth/types/session.js'
- * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
- * @param {AccreditationKeys} keys
+ * @param {RegistrationKeys} keys
  */
-const unresolved = ({ organisationNumber, registrationNumber, year }) =>
+const unresolved = ({ organisationNumber, registrationNumber }) =>
   notFound('Record not found by key', errorCodes.recordKeyUnresolved, {
     event: {
       action: 'find_record_ids',
-      reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber} year=${year}`
+      reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber}`
     }
   })
 
 /**
- * Ids for the reapply link only, until the registration service accepts numbers.
- * @param {AccreditationKeys} keys
+ * Ids for the renewal link only, until the registration service accepts
+ * numbers. Only an operator reaches that page, so the organisation is the one
+ * their session is linked to.
+ * @param {RegistrationKeys} keys
  * @param {UserSession} credentials
- * @returns {Promise<{ organisationId: string, registrationId: string, accreditationId: string, registration: Registration }>}
+ * @returns {Promise<{ organisationId: string, registrationId: string, material: AppliedForMaterial }>}
  */
 export const findRecordIds = async (keys, credentials) => {
-  const organisation = await findOrganisationByNumber(
-    keys.organisationNumber,
-    credentials
-  )
-
-  if (!organisation) {
+  if (!credentials.linkedOrganisationId) {
     throw unresolved(keys)
   }
 
-  const ids = toIds(organisation, keys)
+  const organisation = await fetchOrganisationById(
+    credentials.linkedOrganisationId,
+    credentials.backendToken
+  )
+  const matches = registrationsNumbered(organisation, keys.registrationNumber)
 
-  if (!ids) {
+  if (
+    organisation.orgId !== Number(keys.organisationNumber) ||
+    matches.length !== 1
+  ) {
     throw unresolved(keys)
   }
 
-  // toIds names all three ids when given a year
-  const { organisationId, registrationId, accreditationId } =
-    /** @type {{ organisationId: string, registrationId: string, accreditationId: string }} */ (
-      ids
-    )
-  const registration = /** @type {Registration} */ (
-    organisation.registrations.find(({ id }) => id === registrationId)
-  )
+  const [{ id: registrationId, material }] = matches
 
-  return { organisationId, registrationId, accreditationId, registration }
+  return { organisationId: organisation.id, registrationId, material }
 }

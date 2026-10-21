@@ -1,10 +1,15 @@
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import {
+  ACCREDITATION_YEAR,
+  fetchRegistrationWithAccreditation
+} from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
+import { year } from '#server/common/helpers/year.js'
 import {
   organisationPath as toOrganisationPath,
   registrationPath as toRegistrationPath
@@ -317,10 +322,9 @@ const getUploadUrl = async (status, keys, redirectUrl, session) => {
     return {}
   }
 
-  const { accreditation } = await fetchRegistrationAndAccreditationByNumber(
-    keys.organisationNumber,
-    keys.registrationNumber,
-    session
+  const { accreditation } = await fetchRegistrationWithAccreditation(
+    keys,
+    session.backendToken
   )
 
   const { uploadUrl } = await initiateSummaryLogUpload({
@@ -358,38 +362,22 @@ const getWasteBalanceData = async (status, keys, session, logger) => {
     return {}
   }
 
-  try {
-    const { organisationData, registration } =
-      await fetchRegistrationAndAccreditationByNumber(
-        keys.organisationNumber,
-        keys.registrationNumber,
-        session
-      )
+  const { organisation, accreditation } =
+    await fetchRegistrationWithAccreditation(keys, session.backendToken)
 
-    if (!registration.accreditationId) {
-      return {}
-    }
-
-    const wasteBalances = await fetchWasteBalances(
-      organisationData.id,
-      [registration.accreditationId],
-      session.backendToken
-    )
-
-    const balance = wasteBalances[registration.accreditationId]
-
-    if (!balance) {
-      return {}
-    }
-
-    return { wasteBalance: balance.availableAmount }
-  } catch (error) {
-    if (error.isBoom) {
-      throw error
-    }
-    logger.error({ message: 'Failed to fetch waste balance data', err: error })
+  if (!accreditation) {
     return {}
   }
+
+  const balance = await fetchAccreditationBalance({
+    organisationNumber: organisationNumber(organisation.organisationNumber),
+    year: year(Number(ACCREDITATION_YEAR)),
+    accreditationNumber: accreditation.accreditationNumber,
+    backendToken: session.backendToken,
+    logger
+  })
+
+  return balance ? { wasteBalance: balance.availableAmount } : {}
 }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */

@@ -1,6 +1,6 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 import { accreditationPath } from '#server/reports/helpers/report-paths.js'
@@ -10,7 +10,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  * @param {HapiRequest} request
  * @param {object} options
  * @param {AccreditationKeys} options.keys
- * @param {Registration & { nation?: string }} options.registration
+ * @param {RegistrationView} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
  * @param {WasteBalance | null} [options.wasteBalance]
  * @param {DecemberWasteControl} options.decemberWasteControl
@@ -24,7 +24,7 @@ export function buildCreatePrnViewData(
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
   const pageTitle = localise('prns:create:pageTitle', { noteType })
-  const material = getRegistrationMaterialDisplayName(registration)
+  const material = getMaterialDisplayName(registration.material)
 
   const isPoolMode =
     decemberWasteControl.mode === DECEMBER_WASTE_CONTROL.selectPool
@@ -57,7 +57,6 @@ export function buildCreatePrnViewData(
       value: material
     },
     hiddenFields: {
-      nation: registration.nation || 'england',
       wasteProcessingType: registration.wasteProcessingType
     },
     tonnage: {
@@ -90,7 +89,7 @@ export function buildCreatePrnViewData(
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { DecemberWasteControl } from './helpers/resolve-december-waste-choice.js'

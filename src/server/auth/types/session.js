@@ -31,6 +31,9 @@
  * at sign-in and again on every token refresh. `role` says who the user is and
  * decides where they land; `scope` says what they may do and every guard reads
  * it. `role` is `null` for an identity the backend does not recognise.
+ *
+ * `linkedOrganisationId` is only for the accreditation renewal link, until the
+ * registration service accepts organisation and registration numbers.
  * @typedef {Omit<BellCredentials, 'expiresIn' | 'token'> & {
  *   profile: UserProfile
  *   linkedOrganisationId?: string

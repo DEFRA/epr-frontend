@@ -51,13 +51,13 @@ const organisation = {
 }
 
 const organisationView = {
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Acme Recycling Ltd',
   registrations: {
     [registrationNumber]: {
       status: {
         current: 'approved',
-        timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+        timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
       },
       validFrom: '2026-01-01',
       material: 'plastic',
@@ -70,7 +70,7 @@ const organisationView = {
           accreditationNumber: 'A26ER5001180114PL',
           status: {
             current: 'approved',
-            timeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+            timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
           }
         }
       }
@@ -87,8 +87,8 @@ const regulator = buildMockAuth({
 })
 
 /**
- * Answers the id lookup and regulator search the redirect makes, and the
- * natural-key reads the pages make.
+ * Answers the id lookup the redirect makes, and the natural-key reads the
+ * pages make.
  * @param {SetupServer} msw
  * @param {object} [held]
  */
@@ -96,13 +96,6 @@ const backendHolds = (msw, held = organisation) =>
   msw.use(
     http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
       HttpResponse.json(held)
-    ),
-    http.get(`${backendUrl}/v1/organisations`, () =>
-      HttpResponse.json({
-        items: [{ id: organisationId, orgId: 500118 }],
-        page: 1,
-        pageSize: 1
-      })
     ),
     http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
       HttpResponse.json(organisationView)

@@ -2,8 +2,7 @@ import { SUBMISSION_STATUS } from '../constants.js'
 import { getInProgressActionPath } from './get-in-progress-action-path.js'
 
 /**
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue, SubmissionStatusValue } from '../constants.js'
  * @import { ReportingPeriod } from './fetch-reporting-periods.js'
  */
@@ -113,7 +112,7 @@ export const getActionLabel = (action, localise) =>
  * path. Continue varies by registration type, accreditation and cadence; the
  * others are fixed, and create-draft has no destination yet.
  * @param {ReportActionValue} action
- * @param {Pick<Registration, 'wasteProcessingType'>} registration
+ * @param {Pick<RegistrationView, 'wasteProcessingType'>} registration
  * @param {Accreditation | undefined} accreditation
  * @param {CadenceValue} cadence
  * @returns {string}

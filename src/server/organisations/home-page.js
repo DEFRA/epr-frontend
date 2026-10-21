@@ -15,7 +15,7 @@ import { getStatusClass } from './helpers/status-helpers.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
@@ -46,7 +46,7 @@ export const chooseYearPath = (orgNumber, year) =>
  */
 
 /**
- * @typedef {{ number: string, registration: RegistrationView, accreditation: AccreditationView | undefined }} DisplayedRegistration
+ * @typedef {{ number: string, registration: RegistrationView, accreditation: Accreditation | undefined }} DisplayedRegistration
  */
 
 /**
@@ -59,7 +59,7 @@ function createTag(status) {
 }
 
 /**
- * @param {AccreditationView | undefined} accreditation
+ * @param {Accreditation | undefined} accreditation
  * @param {{ availableAmount?: number } | undefined} wasteBalance
  * @param {(key: string) => string} localise
  * @returns {string}
@@ -70,7 +70,7 @@ const formatWasteBalance = (accreditation, wasteBalance, localise) =>
     : localise('organisations:table:notApplicable')
 
 /**
- * @param {AccreditationView | undefined} accreditation
+ * @param {Accreditation | undefined} accreditation
  * @param {(key: string) => string} localise
  * @returns {string}
  */
@@ -295,7 +295,7 @@ function getActiveSitesAndTitle({
  * @param {ResponseToolkit} h
  * @param {{
  *   orgNumber: OrganisationNumber,
- *   organisation: { name: string, tradingName?: string },
+ *   organisation: { displayName: string },
  *   displayedRegistrations: DisplayedRegistration[],
  *   wasteBalanceMap: WasteBalanceMap,
  *   year: Year | null,
@@ -344,7 +344,7 @@ export function renderHome(
     localise
   })
 
-  const organisationName = organisation.tradingName?.trim() || organisation.name
+  const organisationName = organisation.displayName
 
   return h.view('organisations/index', {
     pageTitle: localise('organisations:pageTitle', {

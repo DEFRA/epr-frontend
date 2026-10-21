@@ -1,5 +1,4 @@
 import { paths } from '#server/paths.js'
-import { organisationName } from '#server/registrations/details/helpers/caption.js'
 import {
   accreditationPath,
   organisationPath,
@@ -9,7 +8,7 @@ import { prnsPath } from './prn-resource.js'
 
 /**
  * @import { TFunction } from 'i18next'
- * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
@@ -26,7 +25,7 @@ import { prnsPath } from './prn-resource.js'
  * with its last crumb linked so the list stays reachable from a note. The
  * address it points at serves a regulator their own list, not the operator's.
  * @param {{
- *   organisation: Organisation,
+ *   organisation: OrganisationView,
  *   keys: AccreditationKeys,
  *   noteTypePlural: string,
  *   prn: { id: string, prnNumber?: string | null },
@@ -48,7 +47,7 @@ export const buildNoteBreadcrumbs = ({
     href: localiseUrl(paths.regulators.home)
   },
   {
-    text: organisationName(organisation),
+    text: organisation.displayName,
     href: localiseUrl(organisationPath(keys))
   },
   {

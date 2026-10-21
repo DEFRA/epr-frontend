@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { buildViewModel } from './build-view-model.js'
 
 /**
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod, ReportListItem } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -77,8 +77,9 @@ const accreditationPath = `${registrationPath}/accreditations/2026`
 
 /** @type {OrganisationView} */
 const organisation = {
-  organisationNumber: 500118,
+  organisationNumber: '500118',
   name: 'Kirkby Plastics Ltd',
+  displayName: 'Kirkby Plastics Ltd',
   registrations: {}
 }
 
@@ -89,7 +90,7 @@ const organisation = {
 const aRegistration = (overrides) =>
   /** @type {RegistrationView} */ (
     /** @type {unknown} */ ({
-      status: { current: 'approved', timeline: {} },
+      status: { current: 'approved', timeline: [] },
       validFrom: '2026-01-01',
       material: 'plastic',
       wasteProcessingType: 'reprocessor',
@@ -99,14 +100,14 @@ const aRegistration = (overrides) =>
   )
 
 /**
- * @param {Partial<AccreditationView>} [overrides]
- * @returns {AccreditationView}
+ * @param {Partial<Accreditation>} [overrides]
+ * @returns {Accreditation}
  */
 const anAccreditation = (overrides) => ({
   accreditationNumber: 'A26ER5001180114PL',
   status: {
     current: 'approved',
-    timeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
   },
   ...overrides
 })
@@ -160,7 +161,7 @@ const summaryLogSubmitted = {
 }
 
 /**
- * @param {Partial<AccreditationView>} [accreditationOverrides]
+ * @param {Partial<Accreditation>} [accreditationOverrides]
  * @param {Partial<RegistrationView>} [registrationOverrides]
  * @param {WasteBalance | null} [wasteBalance]
  * @param {{ cadence: CadenceValue | null, reportingPeriods: ReportingPeriod[] }} [calendar]
@@ -206,6 +207,7 @@ const aNote = (note) => ({
   wasteProcessingType: 'reprocessor',
   processToBeUsed: '',
   accreditationYear: 2026,
+  obligationYear: 2026,
   isDecemberWaste: false,
   ...note
 })
@@ -245,10 +247,10 @@ describe('the accreditation details view model', () => {
     )
   })
 
-  it('knows an organisation by its trading name where it has one', () => {
+  it('knows an organisation by its display name', () => {
     const model = buildViewModel({
       keys,
-      organisation: { ...organisation, tradingName: 'Kirkby Recycling' },
+      organisation: { ...organisation, displayName: 'Kirkby Recycling' },
       registration: aRegistration(),
       accreditation: anAccreditation(),
       wasteBalance: aWasteBalance,
@@ -276,7 +278,7 @@ describe('the accreditation details view model', () => {
       build({
         status: {
           current: 'approved',
-          timeline: { '2025-12-15T09:00:00.000Z': { status: 'approved' } }
+          timeline: [{ status: 'approved', at: '2025-12-15T09:00:00.000Z' }]
         }
       }).period
     ).toBe('1 January to 31 December 2026')
@@ -287,10 +289,10 @@ describe('the accreditation details view model', () => {
       build({
         status: {
           current: 'cancelled',
-          timeline: {
-            '2026-07-01T09:00:00.000Z': { status: 'approved' },
-            '2026-09-10T09:00:00.000Z': { status: 'cancelled' }
-          }
+          timeline: [
+            { status: 'approved', at: '2026-07-01T09:00:00.000Z' },
+            { status: 'cancelled', at: '2026-09-10T09:00:00.000Z' }
+          ]
         }
       }).period
     ).toBe('1 July to 10 September 2026')
@@ -301,12 +303,12 @@ describe('the accreditation details view model', () => {
       build({
         status: {
           current: 'suspended',
-          timeline: {
-            '2026-03-01T09:00:00.000Z': { status: 'approved' },
-            '2026-05-10T09:00:00.000Z': { status: 'cancelled' },
-            '2026-06-01T09:00:00.000Z': { status: 'approved' },
-            '2026-08-01T09:00:00.000Z': { status: 'suspended' }
-          }
+          timeline: [
+            { status: 'approved', at: '2026-03-01T09:00:00.000Z' },
+            { status: 'cancelled', at: '2026-05-10T09:00:00.000Z' },
+            { status: 'approved', at: '2026-06-01T09:00:00.000Z' },
+            { status: 'suspended', at: '2026-08-01T09:00:00.000Z' }
+          ]
         }
       }).period
     ).toBe('1 March to 31 December 2026')

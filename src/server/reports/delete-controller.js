@@ -1,7 +1,7 @@
 import Joi from 'joi'
 
-import { fetchRegistrationAndAccreditationByNumber } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getRegistrationMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { sameSiteReferrer } from '#server/common/helpers/same-site-referrer.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -42,13 +42,12 @@ export const deleteGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { registration } = await fetchRegistrationAndAccreditationByNumber(
-      organisationNumber,
-      registrationNumber,
-      session
+    const { registration } = await fetchRegistrationWithAccreditation(
+      { organisationNumber, registrationNumber },
+      session.backendToken
     )
 
-    const material = getRegistrationMaterialDisplayName(registration)
+    const material = getMaterialDisplayName(registration.material)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
     const viewData = {

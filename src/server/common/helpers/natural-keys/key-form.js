@@ -6,39 +6,12 @@
 
 /**
  * Each parameter that addresses a record, with the literal it must follow.
- * @type {Record<string, { literal: string, record: KeyedRecord, form: KeyForm }>}
+ * @type {Record<string, { literal: string, record: KeyedRecord }>}
  */
 const KEYED_PARAMS = {
-  '{organisationId}': {
-    literal: 'organisations',
-    record: 'organisation',
-    form: 'ids'
-  },
-  '{registrationId}': {
-    literal: 'registrations',
-    record: 'registration',
-    form: 'ids'
-  },
-  '{accreditationId}': {
-    literal: 'accreditations',
-    record: 'accreditation',
-    form: 'ids'
-  },
-  '{organisationNumber}': {
-    literal: 'organisations',
-    record: 'organisation',
-    form: 'naturalKeys'
-  },
-  '{registrationNumber}': {
-    literal: 'registrations',
-    record: 'registration',
-    form: 'naturalKeys'
-  },
-  '{year}': {
-    literal: 'accreditations',
-    record: 'accreditation',
-    form: 'naturalKeys'
-  }
+  '{organisationNumber}': { literal: 'organisations', record: 'organisation' },
+  '{registrationNumber}': { literal: 'registrations', record: 'registration' },
+  '{year}': { literal: 'accreditations', record: 'accreditation' }
 }
 
 const ID = /^[0-9a-f]{24}$/
@@ -51,33 +24,24 @@ const NATURAL_KEY = {
 }
 
 /**
- * The key form a route addresses its records by, or `null` when it names none
- * or mixes the two.
+ * The segments a route addresses its records by, or `null` when it names none.
+ * Every page route is addressed by natural keys.
  * @param {string} routePath - `request.route.path`
- * @returns {{ form: KeyForm, segments: KeyedSegment[] } | null}
+ * @returns {KeyedSegment[] | null}
  */
-export const routeKeyForm = (routePath) => {
+export const routeKeySegments = (routePath) => {
   const parts = routePath.split('/')
 
   // `previous` is the segment before `part`, so the first segment is skipped
-  const keyed = parts.slice(1).flatMap((part, previous) => {
+  const segments = parts.slice(1).flatMap((part, previous) => {
     const param = KEYED_PARAMS[part]
 
     return param?.literal === parts[previous]
-      ? [{ index: previous + 1, record: param.record, form: param.form }]
+      ? [{ index: previous + 1, record: param.record }]
       : []
   })
 
-  const forms = new Set(keyed.map(({ form }) => form))
-
-  if (forms.size !== 1) {
-    return null
-  }
-
-  return {
-    form: keyed[0].form,
-    segments: keyed.map(({ index, record }) => ({ index, record }))
-  }
+  return segments.length > 0 ? segments : null
 }
 
 /**

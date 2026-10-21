@@ -3,7 +3,7 @@ import { accreditationIn } from '#server/common/helpers/organisations/registrati
 import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
- * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
@@ -12,7 +12,7 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
 /**
  * @typedef {{
  *   organisation: OrganisationView,
- *   accreditation: AccreditationView,
+ *   accreditation: Accreditation,
  *   cadence: CadenceValue,
  *   reportingPeriods: ReportingPeriod[]
  * }} ReportListDetails

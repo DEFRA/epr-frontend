@@ -45,14 +45,6 @@ const COLUMNS = Object.freeze([
 ])
 
 /**
- * An organisation trading under another name is known by it, so that is the
- * name the regulator is shown. Matches the two pages above.
- * @param {OrganisationView} organisation
- * @returns {string}
- */
-const organisationName = ({ name, tradingName }) => tradingName?.trim() || name
-
-/**
  * @param {string | undefined} value
  * @returns {TableCell}
  */
@@ -111,9 +103,9 @@ export const buildViewModel = ({
   localise,
   localiseUrl
 }) => {
-  const name = organisationName(organisation)
+  const name = organisation.displayName
   const pageName = localise('registrations:details:overseasSites:heading')
-  const organisationNumber = String(organisation.organisationNumber)
+  const { organisationNumber } = organisation
 
   return {
     breadcrumbs: [

@@ -27,7 +27,7 @@ describe(fetchPrnWasteBalance, () => {
 
     expect(result).toBe(balance)
     expect(fetchAccreditationBalance).toHaveBeenCalledWith({
-      organisationNumber: 500123,
+      organisationNumber: '500123',
       year: 2026,
       accreditationNumber: 'A26EN0000000001PL',
       backendToken: 'token',

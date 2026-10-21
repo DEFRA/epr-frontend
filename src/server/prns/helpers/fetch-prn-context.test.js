@@ -1,9 +1,7 @@
-import { getRequiredRegistrationWithAccreditationByNumber } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import {
-  asPackagingRecyclingNote,
-  asRegistrationWithLiveAccreditation
-} from '#server/common/test-helpers/prn-fixtures.js'
+import { buildRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-view-fixtures.js'
+import { asPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchPackagingRecyclingNote } from './fetch-packaging-recycling-note.js'
@@ -20,7 +18,7 @@ import {
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./fetch-packaging-recycling-note.js'))
 
@@ -33,12 +31,7 @@ const basePath =
   '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'
 const credentials = buildMockAuth().credentials
 const prn = asPackagingRecyclingNote({ id: 'prn-1', status: 'draft' })
-const registrationData = asRegistrationWithLiveAccreditation({
-  organisationData: { id: 'org-1' },
-  registration: { id: 'reg-1' },
-  accreditation: { id: 'acc-1' },
-  rawAccreditation: { id: 'acc-1' }
-})
+const registrationData = buildRegistrationWithAccreditation()
 
 /**
  * @param {string} prnId
@@ -60,9 +53,7 @@ describe(toAccreditationKeys, () => {
 
 describe(fetchPrnContext, () => {
   beforeEach(() => {
-    vi.mocked(
-      getRequiredRegistrationWithAccreditationByNumber
-    ).mockResolvedValue(registrationData)
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(registrationData)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(prn)
   })
 
@@ -76,9 +67,10 @@ describe(fetchPrnContext, () => {
       basePath,
       prnId: 'prn-1'
     })
-    expect(
-      getRequiredRegistrationWithAccreditationByNumber
-    ).toHaveBeenCalledWith(keys, credentials)
+    expect(fetchRequiredAccreditation).toHaveBeenCalledWith(
+      keys,
+      credentials.backendToken
+    )
     expect(fetchPackagingRecyclingNote).toHaveBeenCalledWith(
       keys,
       'prn-1',

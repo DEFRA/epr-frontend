@@ -20,7 +20,7 @@ import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 /** @import { DOMWindow } from 'jsdom' */
-/** @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
+/** @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
 
 vi.mock(import('#server/common/helpers/organisations/fetch-organisation.js'))
 vi.mock(
@@ -30,7 +30,7 @@ vi.mock(
   import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
 )
 
-const ORGANISATION_NUMBER = 500123
+const ORGANISATION_NUMBER = '500123'
 const BARE_PATH = `/organisations/${ORGANISATION_NUMBER}`
 const PATH = `${BARE_PATH}/2026`
 
@@ -51,7 +51,7 @@ const regulator = buildMockAuth({
  */
 const reprocessor = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
-    status: { current: 'approved', timeline: {} },
+    status: { current: 'approved', timeline: [] },
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'reprocessor',
@@ -66,7 +66,7 @@ const reprocessor = (overrides = {}) =>
  */
 const exporter = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
-    status: { current: 'approved', timeline: {} },
+    status: { current: 'approved', timeline: [] },
     material: 'paper',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'exporter',
@@ -81,15 +81,15 @@ const exporter = (overrides = {}) =>
 const organisationOf = (overrides = {}) => ({
   organisationNumber: ORGANISATION_NUMBER,
   name: 'ACME ltd',
-  tradingName: 'ACME trading',
+  displayName: 'ACME trading',
   registrations: {},
   ...overrides
 })
 
-/** @type {AccreditationView} */
+/** @type {Accreditation} */
 const approved2026 = {
   accreditationNumber: 'A26ER1',
-  status: { current: 'approved', timeline: {} }
+  status: { current: 'approved', timeline: [] }
 }
 
 /**
@@ -210,7 +210,7 @@ describe('the organisation home page', () => {
   })
 
   describe('the name it shows', () => {
-    it('names the organisation by its trading name', async ({ server }) => {
+    it('names the organisation by its display name', async ({ server }) => {
       serve({})
 
       const { payload } = await visit(server)
@@ -218,26 +218,6 @@ describe('the organisation home page', () => {
 
       expect($('title').text()).toMatch(/^Home: ACME trading/)
       expect($('h1').text()).toMatch(/ACME trading/)
-    })
-
-    it('falls back to the name when there is no trading name', async ({
-      server
-    }) => {
-      serve({}, { tradingName: undefined })
-
-      const { payload } = await visit(server)
-
-      expect(load(payload)('title').text()).toMatch(/^Home: ACME ltd/)
-    })
-
-    it('falls back to the name when the trading name is blank', async ({
-      server
-    }) => {
-      serve({}, { tradingName: '   ' })
-
-      const { payload } = await visit(server)
-
-      expect(load(payload)('h1').text()).toMatch(/ACME ltd/)
     })
   })
 
@@ -299,7 +279,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: 'A26ER1',
-              status: { current: 'cancelled', timeline: {} }
+              status: { current: 'cancelled', timeline: [] }
             }
           }
         })
@@ -320,7 +300,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2025: {
               accreditationNumber: 'A25ER1',
-              status: { current: 'approved', timeline: {} }
+              status: { current: 'approved', timeline: [] }
             }
           }
         })
@@ -401,7 +381,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2025: {
               accreditationNumber: 'A25ER1',
-              status: { current: 'suspended', timeline: {} }
+              status: { current: 'suspended', timeline: [] }
             }
           }
         })
@@ -419,7 +399,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: 'A26ER1',
-              status: { current: 'suspended', timeline: {} }
+              status: { current: 'suspended', timeline: [] }
             }
           }
         })
@@ -435,11 +415,11 @@ describe('the organisation home page', () => {
     }) => {
       serve({
         R26ER1: reprocessor({
-          status: { current: 'cancelled', timeline: {} },
+          status: { current: 'cancelled', timeline: [] },
           accreditations: {
             2026: {
               accreditationNumber: 'A26ER1',
-              status: { current: 'cancelled', timeline: {} }
+              status: { current: 'cancelled', timeline: [] }
             }
           }
         })
