@@ -829,24 +829,22 @@ describe("the operator's registration page with no year", () => {
     expect(response.headers.location).toBe(registeredOnlyPath)
   })
 
-  it('shows the page without a year for a registration never approved', async ({
+  it('sends an operator whose registration is still to start to the current year', async ({
     server,
     msw
   }) => {
     backendHolds(msw, {
-      registration: {
-        ...registeredOnly,
-        status: {
-          current: 'created',
-          timeline: [{ status: 'created', at: `${year}-01-01T09:00:00.000Z` }]
-        }
-      }
+      registration: { ...registeredOnly, status: registeredSince(thisYear + 1) }
     })
 
-    const { statusCode, body } = await visit(server, { url: registrationPath })
+    const response = await server.inject({
+      method: 'GET',
+      url: registrationPath,
+      auth: operator
+    })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(getByText(body, registrationNumber)).toBeDefined()
+    expect(response.statusCode).toBe(statusCodes.found)
+    expect(response.headers.location).toBe(registeredOnlyPath)
   })
 
   it('is not found for an organisation number the backend does not know', async ({

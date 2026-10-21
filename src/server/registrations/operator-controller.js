@@ -25,6 +25,7 @@ import { registeredYears } from '#server/registrations/details/helpers/timeline-
 import {
   accreditationPath,
   organisationPath,
+  registeredOnlyPath,
   registrationPath,
   reportsListPath
 } from '#server/reports/helpers/report-paths.js'
@@ -314,13 +315,11 @@ export const registrationController = {
       ? materialsHomepage(keys, registration, latestYear)
       : null
 
-    if (homepage) {
-      return redirectPreservingMethod(request, h, homepage.path)
-    }
-
-    return h.view(
-      VIEW,
-      buildRegisteredOnlyViewModel({ request, keys, registration })
+    return redirectPreservingMethod(
+      request,
+      h,
+      homepage?.path ??
+        registeredOnlyPath({ ...keys, year: new Date().getUTCFullYear() })
     )
   }
 }
