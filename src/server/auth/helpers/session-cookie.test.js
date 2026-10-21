@@ -9,7 +9,7 @@ import {
   IDENTITIES,
   identityHandler
 } from '#server/common/test-helpers/identity-helper.js'
-import { beforeEach, it } from '#vite/fixtures/server.js'
+import { beforeAll, beforeEach, it } from '#vite/fixtures/server.js'
 import { Metrics } from '@defra/cdp-metrics'
 import Iron from '@hapi/iron'
 import { addSeconds } from 'date-fns'
@@ -66,6 +66,21 @@ const defaultJwtPayload = {
 }
 
 describe('#sessionCookie - integration', () => {
+  beforeAll(({ server }) => {
+    server.route({
+      method: 'GET',
+      path: '/test-auth',
+      options: {
+        auth: 'session'
+      },
+      handler: (request) => ({
+        userId: request.auth.credentials.profile.id,
+        email: request.auth.credentials.profile.email,
+        idToken: request.auth.credentials.idToken
+      })
+    })
+  })
+
   beforeEach(({ msw }) => {
     msw.use(identityHandler())
   })
@@ -96,21 +111,6 @@ describe('#sessionCookie - integration', () => {
           logout: 'http://defra-id.auth/logout'
         }
       }
-    })
-
-    beforeEach(({ server }) => {
-      server.route({
-        method: 'GET',
-        path: '/test-auth',
-        options: {
-          auth: 'session'
-        },
-        handler: (request) => ({
-          userId: request.auth.credentials.profile.id,
-          email: request.auth.credentials.profile.email,
-          idToken: request.auth.credentials.idToken
-        })
-      })
     })
 
     it('should refresh token in background when token expires within 5 minutes', async ({
@@ -771,17 +771,6 @@ describe('#sessionCookie - integration', () => {
   })
 
   describe('a session stored before the identity fields existed', () => {
-    beforeEach(({ server }) => {
-      server.route({
-        method: 'GET',
-        path: '/test-auth',
-        options: {
-          auth: 'session'
-        },
-        handler: () => ({ reached: true })
-      })
-    })
-
     it('is refused, so the user signs in again instead of calling the backend with no token', async ({
       server
     }) => {
@@ -821,17 +810,6 @@ describe('#sessionCookie - integration', () => {
   })
 
   describe('an Entra ID session while regulator access is off', () => {
-    beforeEach(({ server }) => {
-      server.route({
-        method: 'GET',
-        path: '/test-auth',
-        options: {
-          auth: 'session'
-        },
-        handler: () => ({ reached: true })
-      })
-    })
-
     it('is signed out rather than refreshed against a provider this server does not hold', async ({
       server
     }) => {

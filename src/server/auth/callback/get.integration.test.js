@@ -10,7 +10,7 @@ import { identityHandler } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
-import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
+import { generateKeyPairSync, randomUUID } from 'node:crypto'
 
 /**
  * @import { ServerInjectResponse } from '@hapi/hapi'
@@ -78,20 +78,16 @@ const regulatorBrowserCookie = `${SIGN_IN_PROVIDER_COOKIE}=${OIDC_ENTRA_ID}`
 const signInProviderCookieFrom = (response) =>
   findSetCookie(response.headers['set-cookie'], SIGN_IN_PROVIDER_COOKIE)
 
+// One key for the file: the server caches the JWKS it fetches, so a second key
+// published under the same kid would never be seen.
+const signingKey = generateKeyPairSync('rsa', { modulusLength: 4096 })
+const publicKey = signingKey.publicKey.export({ format: 'jwk' })
+
 async function generateIdToken(/** @type {Record<string, unknown>} */ payload) {
-  const { privateKey: privateKeyObject, publicKey: publicKeyObject } =
-    generateKeyPairSync('rsa', { modulusLength: 4096 })
-
-  const publicKey = publicKeyObject.export({ format: 'jwk' })
-  const privateKeyPem = privateKeyObject.export({
-    type: 'pkcs8',
-    format: 'pem'
-  })
-
   const jwt = await new jose.SignJWT(payload)
     .setProtectedHeader({ alg: 'RS256', kid: 'test-key-id' })
     .setExpirationTime('2h')
-    .sign(createPrivateKey(privateKeyPem))
+    .sign(signingKey.privateKey)
 
   return { idToken: jwt, publicKey }
 }
