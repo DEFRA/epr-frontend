@@ -70,7 +70,7 @@ function buildNoteTypeLabels(registration, localise) {
 
 /**
  * @param {{
- *   accreditation: AccreditationView | undefined,
+ *   accreditation: Accreditation | undefined,
  *   basePath: string,
  *   cadenceLabel: string,
  *   localise: TFunction,
@@ -245,7 +245,7 @@ export const checkPostController = {
 /**
  * @import { TFunction } from 'i18next'
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { VersionedPayload } from './helpers/versioned-payload-schema.js'

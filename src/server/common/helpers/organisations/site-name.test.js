@@ -5,7 +5,8 @@ import { siteLineOf, siteNameOf } from './site-name.js'
 /** @import { RegistrationView } from './organisation-view.js' */
 
 const common = {
-  status: { current: 'approved', timeline: {} },
+  status: { current: 'approved', timeline: [] },
+  validFrom: '2025-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   accreditations: {}
@@ -16,7 +17,14 @@ describe(siteNameOf, () => {
     const registration = /** @type {RegistrationView} */ ({
       ...common,
       wasteProcessingType: 'reprocessor',
-      site: { address: { line1: '7 Glass processing site' } }
+      reprocessingType: 'input',
+      site: {
+        address: {
+          line1: '7 Glass processing site',
+          town: 'London',
+          postcode: 'SW1A 1AA'
+        }
+      }
     })
 
     expect(siteNameOf(registration)).toBe('7 Glass processing site')
@@ -26,6 +34,7 @@ describe(siteNameOf, () => {
     const registration = /** @type {RegistrationView} */ ({
       ...common,
       wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
       site: { address: { fullAddress: '7 Glass processing site, London' } }
     })
 
@@ -47,6 +56,7 @@ describe(siteLineOf, () => {
     const registration = /** @type {RegistrationView} */ ({
       ...common,
       wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
       site: {
         address: {
           line1: '7 Glass Lane',
@@ -67,6 +77,7 @@ describe(siteLineOf, () => {
     const registration = /** @type {RegistrationView} */ ({
       ...common,
       wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
       site: {
         address: {
           line1: '7 Glass Lane',
@@ -84,6 +95,7 @@ describe(siteLineOf, () => {
     const registration = /** @type {RegistrationView} */ ({
       ...common,
       wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
       site: { address: { fullAddress: ' 7 Glass Lane, Leeds LS10 1AB ' } }
     })
 

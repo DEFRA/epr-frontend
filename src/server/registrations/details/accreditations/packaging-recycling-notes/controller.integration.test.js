@@ -65,6 +65,7 @@ const aNote = (note) => ({
   wasteProcessingType: 'reprocessor',
   processToBeUsed: '',
   accreditationYear: 2026,
+  obligationYear: 2026,
   isDecemberWaste: false,
   ...note
 })
@@ -97,7 +98,7 @@ const reprocessor = buildRegistrationView({
 const details = {
   ...buildRegistrationWithAccreditation({
     organisation: {
-      organisationNumber: 50002,
+      organisationNumber: '50002',
       name: 'Kirkby Plastics Ltd',
       displayName: 'Kirkby Plastics Ltd'
     },

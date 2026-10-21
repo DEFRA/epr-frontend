@@ -10,7 +10,7 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
@@ -30,7 +30,7 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
  * @typedef {{
  *   organisation: OrganisationView,
  *   registration: RegistrationView,
- *   accreditation: AccreditationView,
+ *   accreditation: Accreditation,
  *   wasteBalance: WasteBalance | null,
  *   reportingPeriods: ReportingPeriod[],
  *   cadence: CadenceValue | null,
@@ -60,7 +60,7 @@ const fetchAccreditation = async ({ keys, backendToken, logger }) => {
   const accreditation = accreditationIn(registration, keys.year)
 
   const wasteBalance = await fetchAccreditationBalance({
-    organisationNumber: organisationNumber(Number(keys.organisationNumber)),
+    organisationNumber: organisationNumber(keys.organisationNumber),
     year: toYear(Number(keys.year)),
     accreditationNumber: accreditation.accreditationNumber,
     backendToken,

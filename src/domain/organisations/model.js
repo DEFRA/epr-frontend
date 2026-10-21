@@ -1,8 +1,5 @@
 // copied from matching file in epr-backend - keep in sync (as much as we need)
 
-/** @import {Accreditation} from '#domain/organisations/accreditation.js' */
-/** @import {Registration} from '#domain/organisations/registration.js' */
-
 /**
  * Status values a registration can hold.
  * @typedef {typeof REGISTRATION_STATUS[keyof typeof REGISTRATION_STATUS]} RegistrationStatus
@@ -27,12 +24,7 @@ export const ACCREDITATION_STATUS = Object.freeze({
 })
 
 /**
- * @typedef {RegistrationStatus | AccreditationStatus} RegOrAccStatus
- */
-
-/**
  * Status values for organisations
- * @typedef {typeof ORGANISATION_STATUS[keyof typeof ORGANISATION_STATUS]} OrganisationStatus
  */
 export const ORGANISATION_STATUS = Object.freeze({
   CREATED: 'created',
@@ -41,6 +33,9 @@ export const ORGANISATION_STATUS = Object.freeze({
   REJECTED: 'rejected'
 })
 
+/**
+ * @typedef {typeof REGULATOR[keyof typeof REGULATOR]} RegulatorValue
+ */
 export const REGULATOR = Object.freeze({
   EA: 'ea',
   NRW: 'nrw',
@@ -63,9 +58,6 @@ export const MATERIAL = Object.freeze({
   WOOD: 'wood'
 })
 
-/**
- * @typedef {typeof WASTE_PROCESSING_TYPE[keyof typeof WASTE_PROCESSING_TYPE]} WasteProcessingTypeValue
- */
 export const WASTE_PROCESSING_TYPE = Object.freeze({
   REPROCESSOR: 'reprocessor',
   EXPORTER: 'exporter'
@@ -77,48 +69,6 @@ export const WASTE_PROCESSING_TYPE = Object.freeze({
 export const REPROCESSING_TYPE = Object.freeze({
   INPUT: 'input',
   OUTPUT: 'output'
-})
-
-export const NATION = Object.freeze({
-  ENGLAND: 'england',
-  WALES: 'wales',
-  SCOTLAND: 'scotland',
-  NORTHERN_IRELAND: 'northern_ireland'
-})
-
-export const BUSINESS_TYPE = Object.freeze({
-  INDIVIDUAL: 'individual',
-  UNINCORPORATED: 'unincorporated',
-  PARTNERSHIP: 'partnership'
-})
-
-/**
- * @typedef {typeof PARTNER_TYPE[keyof typeof PARTNER_TYPE]} PartnerType
- */
-export const PARTNER_TYPE = Object.freeze({
-  COMPANY: 'company',
-  INDIVIDUAL: 'individual',
-  CORPORATE: 'corporate'
-})
-
-/**
- * @typedef {typeof PARTNERSHIP_TYPE[keyof typeof PARTNERSHIP_TYPE]} PartnershipType
- */
-export const PARTNERSHIP_TYPE = Object.freeze({
-  LTD: 'ltd',
-  LTD_LIABILITY: 'ltd_liability'
-})
-
-export const TIME_SCALE = Object.freeze({
-  WEEKLY: 'weekly',
-  MONTHLY: 'monthly',
-  YEARLY: 'yearly'
-})
-
-export const WASTE_PERMIT_TYPE = Object.freeze({
-  ENVIRONMENTAL_PERMIT: 'environmental_permit',
-  INSTALLATION_PERMIT: 'installation_permit',
-  WASTE_EXEMPTION: 'waste_exemption'
 })
 
 /**
@@ -146,137 +96,3 @@ export const TONNAGE_BAND = Object.freeze({
   UP_TO_10000: 'up_to_10000',
   OVER_10000: 'over_10000'
 })
-
-export const VALUE_TYPE = Object.freeze({
-  ACTUAL: 'actual',
-  ESTIMATED: 'estimated'
-})
-
-/**
- * @typedef {typeof USER_ROLES[keyof typeof USER_ROLES]} UserRoles
- */
-export const USER_ROLES = Object.freeze({
-  INITIAL: 'initial_user',
-  STANDARD: 'standard_user'
-})
-
-/**
- * @typedef {{
- *   line1?: string;
- *   line2?: string;
- *   town?: string;
- *   county?: string;
- *   country?: string;
- *   postcode?: string;
- *   region?: string;
- *   fullAddress?: string;
- * }} Address
- */
-
-/**
- * @typedef {{
- *   name: string;
- *   tradingName?: string;
- *   registrationNumber?: string;
- *   companiesHouseNumber?: string;
- *   registeredAddress?: Address;
- *   address?: Address;
- * }} CompanyDetails
- */
-
-/**
- * @typedef {{
- *   fullName: string;
- *   email: string;
- *   phone: string;
- *   role?: string;
- *   title?: string;
- * }} User
- */
-
-/**
- * @typedef {{
- *   contactId?: string;
- *   fullName: string;
- *   email: string;
- *   roles: UserRoles[];
- * }} CollatedUser
- */
-
-/**
- * @typedef {{
- *   orgId: string;
- *   orgName: string;
- *   linkedAt: string;
- *   linkedBy: {
- *     email: string
- *     id: string
- *   }
- * }} LinkedDefraOrganisation
- */
-
-/**
- * @typedef {typeof REGULATOR[keyof typeof REGULATOR]} RegulatorValue
- */
-
-/**
- * @typedef {typeof BUSINESS_TYPE[keyof typeof BUSINESS_TYPE]} BusinessTypeValue
- */
-
-/**
- * @typedef {typeof NATION[keyof typeof NATION]} NationValue
- */
-
-/**
- * @typedef {{
- *   status: RegOrAccStatus;
- *   updatedAt: string;
- *   updatedBy?: string;
- * }} StatusHistoryItem
- */
-
-/**
- * @typedef {{
- *   name: string;
- *   type: Extract<PartnerType, 'company' | 'individual'>;
- * }} Partner
- */
-
-/**
- * @typedef {{
- *   type: PartnershipType;
- *   partners?: Partner[];
- * }} Partnership
- */
-
-/**
- * @typedef {{
- *   id: string;
- *   accreditations: Accreditation[];
- *   businessType?: BusinessTypeValue;
- *   companyDetails: CompanyDetails;
- *   formSubmissionTime: string;
- *   linkedDefraOrganisation?: LinkedDefraOrganisation;
- *   managementContactDetails?: User;
- *   orgId: number;
- *   partnership?: Partnership;
- *   registrations: Registration[];
- *   reprocessingNations?: NationValue[];
- *   schemaVersion: number;
- *   statusHistory: StatusHistoryItem[];
- *   submittedToRegulator: RegulatorValue;
- *   submitterContactDetails: User;
- *   version: number;
- *   wasteProcessingTypes: WasteProcessingTypeValue[];
- * }} OrganisationBase
- */
-
-/**
- * @typedef {(OrganisationBase & {
- *   status: 'created' | 'rejected';
- *   users: [];
- * }) | (OrganisationBase & {
- *   status: 'approved' | 'active';
- *   users: CollatedUser[];
- * })} Organisation
- */

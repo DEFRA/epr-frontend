@@ -50,7 +50,7 @@ export const actionController = {
 /**
  * Builds the complete view data for the action page
  * @param {{
- *   accreditation: AccreditationView,
+ *   accreditation: Accreditation,
  *   basePath: string,
  *   localise: TFunction,
  *   organisation: OrganisationView,
@@ -216,7 +216,7 @@ function buildActionPrnDetailRows({
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'
  */

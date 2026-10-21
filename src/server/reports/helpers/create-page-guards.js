@@ -17,7 +17,7 @@ import { reportPath, reportsListPath } from './report-paths.js'
  * @param {HapiRequest & { params: PeriodParams }} request
  * @returns {Promise<{
  *   registration: RegistrationView,
- *   accreditation: AccreditationView | undefined,
+ *   accreditation: Accreditation | undefined,
  *   reportDetail: ReportDetailResponse
  * }>}
  */
@@ -52,7 +52,7 @@ async function fetchGuardedData(isMatchingRegistration, request) {
  * @param {HapiRequest & { params: PeriodParams }} request
  * @returns {Promise<{
  *   registration: RegistrationView,
- *   accreditation: AccreditationView,
+ *   accreditation: Accreditation,
  *   reportDetail: ReportDetailResponse
  * }>}
  */
@@ -91,7 +91,7 @@ async function fetchGuardedAccreditedData(
 /**
  * @typedef {{
  *   registration: RegistrationView,
- *   accreditation: AccreditationView | undefined,
+ *   accreditation: Accreditation | undefined,
  *   reportDetail: ReportDetailResponse,
  *   material: string,
  *   periodLabel: string,
@@ -230,7 +230,7 @@ export function createPageGuards({ isMatchingRegistration, reportType }) {
 
 /**
  * @import { TFunction } from 'i18next'
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './period-params-schema.js'
  * @import { ReportDetailResponse } from './fetch-report-detail.js'

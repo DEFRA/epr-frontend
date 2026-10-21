@@ -9,8 +9,8 @@
  */
 
 /**
- * Statuses keyed by the ISO datetime each took effect.
- * @typedef {Record<string, { status: string }>} StatusTimeline
+ * Status changes oldest first, each with the ISO datetime it took effect.
+ * @typedef {ReadonlyArray<{ status: string, at: string }>} StatusTimeline
  */
 
 /**
@@ -22,7 +22,7 @@
  * @typedef {{
  *   accreditationNumber: string,
  *   status: Status<AccreditationStatus>
- * }} AccreditationView
+ * }} Accreditation
  */
 
 /**
@@ -50,7 +50,7 @@
  *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },
- *   accreditations: Record<string, AccreditationView>,
+ *   accreditations: Record<string, Accreditation>,
  *   overseasSites?: OverseasSitesByOrsId
  * }} RegistrationViewCommon
  */
@@ -77,7 +77,7 @@
  * The organisation as `GET /organisations/{organisationNumber}` serves it.
  * Registrations are keyed by registration number, accreditations by year.
  * @typedef {{
- *   organisationNumber: number,
+ *   organisationNumber: string,
  *   name: string,
  *   displayName: string,
  *   registrations: Record<string, RegistrationView>

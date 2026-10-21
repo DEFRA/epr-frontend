@@ -123,6 +123,7 @@ const packagingRecyclingNotes = [
     wasteProcessingType: 'reprocessor',
     processToBeUsed: '',
     accreditationYear: 2026,
+    obligationYear: 2026,
     isDecemberWaste: false
   },
   {
@@ -139,6 +140,7 @@ const packagingRecyclingNotes = [
     wasteProcessingType: 'reprocessor',
     processToBeUsed: '',
     accreditationYear: 2026,
+    obligationYear: 2026,
     isDecemberWaste: false
   }
 ]
@@ -146,14 +148,14 @@ const packagingRecyclingNotes = [
 /** @type {AccreditationDetails} */
 const accreditationDetails = {
   organisation: {
-    organisationNumber: 500118,
+    organisationNumber: '500118',
     name: 'Kirkby Plastics Ltd',
     displayName: 'Kirkby Plastics Ltd',
     registrations: {}
   },
   registration: /** @type {AccreditationDetails['registration']} */ (
     /** @type {unknown} */ ({
-      status: { current: 'approved', timeline: {} },
+      status: { current: 'approved', timeline: [] },
       validFrom: '2026-01-01',
       material: 'plastic',
       wasteProcessingType: 'reprocessor',
@@ -164,7 +166,7 @@ const accreditationDetails = {
     accreditationNumber: 'A26ER5001180114PL',
     status: {
       current: 'approved',
-      timeline: { '2026-07-01T09:00:00.000Z': { status: 'approved' } }
+      timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
     }
   },
   wasteBalance: { amount: 1234.5, availableAmount: 987.25 },

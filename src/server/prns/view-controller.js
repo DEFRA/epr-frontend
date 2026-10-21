@@ -1,4 +1,3 @@
-import { isNil } from '#server/common/helpers/is-nil.js'
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
@@ -86,7 +85,7 @@ export const viewPostController = {
       ])
       // A failed read fails the confirmation, so an outage never discards a draft
       const balances = await fetchOrganisationWasteBalances(
-        organisationNumber(Number(keys.organisationNumber)),
+        organisationNumber(keys.organisationNumber),
         year(Number(keys.year)),
         backendToken
       )
@@ -371,14 +370,14 @@ function buildExistingPrnViewData({
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
     heading: noteTypeFull,
     showRegulatorLogos: isNotDraft,
-    complianceYearText:
-      isNotDraft && !isNil(prn.accreditationYear)
-        ? localise('prns:view:complianceYearText', {
-            noteType,
-            wasteAction,
-            year: `<strong>${prn.accreditationYear}</strong>`
-          })
-        : null,
+    complianceYear: isNotDraft
+      ? {
+          noteType,
+          wasteAction,
+          accreditationYear: prn.accreditationYear,
+          obligationYear: prn.obligationYear
+        }
+      : null,
     prnDetailsHeading: localise('prns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),

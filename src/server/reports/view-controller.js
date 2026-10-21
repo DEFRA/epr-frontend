@@ -28,7 +28,7 @@ import { SUBMISSION_STATUS } from './constants.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Localise } from './helpers/format-period-label.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
@@ -137,7 +137,7 @@ function buildStatusDetails(reportDetail, status, localise) {
 
 /**
  * @param {RegistrationView} registration
- * @param {AccreditationView | undefined} accreditation
+ * @param {Accreditation | undefined} accreditation
  * @returns {RegistrationFlags}
  */
 function buildRegistrationFlags(registration, accreditation) {

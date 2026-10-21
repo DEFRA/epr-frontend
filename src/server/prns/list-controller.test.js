@@ -47,7 +47,7 @@ const reprocessorKeys = {
 
 const fixtureReprocessor = buildRegistrationWithAccreditation({
   organisation: {
-    organisationNumber: 500001,
+    organisationNumber: '500001',
     name: 'Reprocessor Organisation'
   },
   registration: buildRegistrationView({
@@ -63,7 +63,7 @@ const fixtureReprocessor = buildRegistrationWithAccreditation({
 })
 
 const fixtureExporter = buildRegistrationWithAccreditation({
-  organisation: { organisationNumber: 500002, name: 'Exporter Organisation' },
+  organisation: { organisationNumber: '500002', name: 'Exporter Organisation' },
   registration: buildRegistrationView({ material: 'plastic' }),
   accreditation: buildAccreditationView({
     accreditationNumber: 'A26EX5000020002PL'

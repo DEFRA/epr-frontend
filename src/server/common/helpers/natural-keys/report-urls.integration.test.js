@@ -6,8 +6,6 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { CADENCE } from '#server/reports/constants.js'
-import { buildPeriodPath } from '#server/reports/helpers/build-period-path.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
@@ -15,7 +13,6 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
 /**
  * @import { SetupServer } from 'msw/node'
  * @import { HapiServer } from '#server/common/hapi-types.js'
- * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -303,27 +300,7 @@ describe('old report page URLs', () => {
       msw
     }) => {
       backendHolds(msw)
-      msw.use(
-        http.get(`${backendUrl}/v1/organisations`, () =>
-          HttpResponse.json({
-            items: [{ id: organisationId, orgId: 500118 }],
-            page: 1,
-            pageSize: 1
-          })
-        )
-      )
-      const link = buildPeriodPath({
-        organisationId,
-        registrationId,
-        period: /** @type {ReportingPeriod} */ (
-          /** @type {unknown} */ ({
-            year: 2026,
-            period: 8,
-            submissionNumber: 1
-          })
-        ),
-        cadence: CADENCE.MONTHLY
-      })
+      const link = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/8/submissions/1`
 
       const { hops, final } = await follow(server, `${link}/view`, {
         auth: regulator

@@ -1,17 +1,17 @@
 /**
- * @import { AccreditationView, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
  */
 
 /**
- * @param {Partial<AccreditationView>} [overrides]
- * @returns {AccreditationView}
+ * @param {Partial<Accreditation>} [overrides]
+ * @returns {Accreditation}
  */
 export const buildAccreditationView = (overrides = {}) => ({
   accreditationNumber: 'A26EN0000000001PL',
   status: {
     current: 'approved',
-    timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+    timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   ...overrides
 })
@@ -26,7 +26,7 @@ export const buildRegistrationView = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
     status: {
       current: 'approved',
-      timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+      timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
     },
     validFrom: '2026-01-01',
     material: 'plastic',
@@ -41,7 +41,7 @@ export const buildRegistrationView = (overrides = {}) =>
  * @returns {OrganisationView}
  */
 export const buildOrganisationView = (overrides = {}) => ({
-  organisationNumber: 500123,
+  organisationNumber: '500123',
   name: 'Test Organisation Ltd',
   displayName: 'Test Organisation Ltd',
   registrations: { R26EN0000000001PL: buildRegistrationView() },
@@ -53,7 +53,7 @@ export const buildOrganisationView = (overrides = {}) => ({
  * registration, with its live accreditation when it has one.
  * @param {{
  *   registration?: RegistrationView,
- *   accreditation?: AccreditationView,
+ *   accreditation?: Accreditation,
  *   organisation?: Partial<OrganisationView>,
  *   registrationNumber?: string
  * }} [parts]

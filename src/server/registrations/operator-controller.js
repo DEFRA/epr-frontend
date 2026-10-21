@@ -3,7 +3,7 @@ import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { isAccreditationViewActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
+import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
   accreditationIn,
@@ -30,7 +30,7 @@ import { capitalize } from 'lodash-es'
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { ReapplyLink } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
  * @import { DecemberBalanceBreakdown } from '#server/common/helpers/waste-balance/december-balance.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
@@ -105,11 +105,11 @@ const buildTaggedReference = ({ reference, status }) => ({
 
 /**
  * The accreditation's tag, or none once it is no longer live.
- * @param {AccreditationView} accreditation
+ * @param {Accreditation} accreditation
  * @returns {MaybeTaggedReference}
  */
 const toAccreditationTag = (accreditation) =>
-  isAccreditationViewActive(accreditation)
+  isAccreditationActive(accreditation)
     ? {
         ...buildTaggedReference({
           reference: accreditation.accreditationNumber,
@@ -232,7 +232,7 @@ const buildRegistrationViewModel = ({ request, keys, registration }) => {
  *   request: HapiRequest,
  *   keys: AccreditationKeys,
  *   registration: RegistrationView,
- *   accreditation: AccreditationView,
+ *   accreditation: Accreditation,
  *   wasteBalance: WasteBalance | null,
  *   showsDecember: boolean,
  *   reapplyAccreditation: ReapplyLink | null
@@ -336,7 +336,7 @@ export const controller = {
     const keys = { organisationNumber: number, registrationNumber, year }
     const credentials = request.auth.credentials
     const { backendToken } = credentials
-    const numberKey = organisationNumber(Number(number))
+    const numberKey = organisationNumber(number)
 
     const [{ registration }, ids] = await Promise.all([
       fetchRegistration({ ...keys, backendToken }),
@@ -365,7 +365,7 @@ export const controller = {
       baseUrl,
       organisationId: ids.organisationId,
       registrationId: ids.registrationId,
-      material: ids.registration.material,
+      material: ids.material,
       registrationStatus: registration.status.current,
       year: Number(year)
     })

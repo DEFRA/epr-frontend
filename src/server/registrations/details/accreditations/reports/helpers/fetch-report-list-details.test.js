@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchReportListDetails } from './fetch-report-list-details.js'
 
 /**
- * @import { AccreditationView, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { ReportListDetails } from './fetch-report-list-details.js'
  */
 
@@ -18,25 +18,25 @@ describe(fetchReportListDetails, () => {
   const registrationNumber = 'R26ER5001180041PL'
   const backendToken = 'token'
 
-  /** @type {AccreditationView} */
+  /** @type {Accreditation} */
   const accreditation = {
     accreditationNumber: 'A26ER5001180114PL',
     status: {
       current: 'approved',
-      timeline: { '2026-01-01T09:00:00.000Z': { status: 'approved' } }
+      timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
     }
   }
 
   /** @type {OrganisationView} */
   const organisation = {
-    organisationNumber: 500118,
+    organisationNumber: '500118',
     name: 'Kirkby Plastics Ltd',
     displayName: 'Kirkby Plastics Ltd',
     registrations: {
       [registrationNumber]: {
         status: {
           current: 'approved',
-          timeline: { '2026-01-01T00:00:00.000Z': { status: 'approved' } }
+          timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
         },
         validFrom: '2026-01-01',
         material: 'plastic',
@@ -91,7 +91,7 @@ describe(fetchReportListDetails, () => {
   it('reads the organisation and the calendar by number', async () => {
     await fetchDetails()
 
-    expect(fetchOrganisation).toHaveBeenCalledWith(500118, backendToken)
+    expect(fetchOrganisation).toHaveBeenCalledWith('500118', backendToken)
     expect(fetchReportingPeriodsByNumber).toHaveBeenCalledWith(
       { organisationNumber, registrationNumber },
       backendToken

@@ -1,14 +1,14 @@
 import { siteLineOf } from '#server/common/helpers/organisations/site-name.js'
 
 /**
- * @import { AccreditationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
 
 /**
  * Builds the accreditation details rows for the summary list
  * @param {object} params
  * @param {RegistrationView} params.registration
- * @param {AccreditationView} params.accreditation
+ * @param {Accreditation} params.accreditation
  * @param {string} params.displayMaterial - Formatted material name
  * @param {(key: string) => string} params.localise - Translation function
  * @returns {Array} Summary list rows

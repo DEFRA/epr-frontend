@@ -52,7 +52,7 @@ describe('#submitSummaryLogController', () => {
         () =>
           HttpResponse.json(
             buildOrganisationView({
-              organisationNumber: Number(organisationNumber),
+              organisationNumber,
               registrations: {
                 [registrationNumber]: buildRegistrationView({
                   accreditations: {}

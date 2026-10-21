@@ -115,7 +115,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
     beforeEach(() => {
       vi.mocked(fetchOrganisation).mockResolvedValue(
         buildOrganisationView({
-          organisationNumber: Number(organisationNumber),
+          organisationNumber,
           registrations: {
             [registrationNumber]: buildRegistrationView({ accreditations: {} })
           }
