@@ -504,16 +504,23 @@ describe("the operator's registered-only page for a year", () => {
     expect(getByText(body, registrationNumber)).toBeDefined()
   })
 
-  it('shows the year in the heading and page title', async ({
+  it('shows the year in the address in the heading and page title', async ({
     server,
     msw
   }) => {
-    backendHolds(msw, { registration: registeredOnly })
+    const lastYear = String(thisYear - 1)
+    backendHolds(msw, {
+      registration: { ...registeredOnly, status: registeredSince(thisYear - 1) }
+    })
 
-    const { body, title } = await visit(server, { url: registeredOnlyPath })
+    const { body, title } = await visit(server, {
+      url: `${registrationPath}/${lastYear}`
+    })
 
-    expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(year)
-    expect(title).toContain(year)
+    expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(
+      lastYear
+    )
+    expect(title).toContain(lastYear)
   })
 
   it.for(['created', 'rejected', 'cancelled'])(
