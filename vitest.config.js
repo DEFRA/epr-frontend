@@ -4,15 +4,18 @@ import { configDefaults, defineConfig } from 'vitest/config'
 
 const root = fileURLToPath(new URL('.', import.meta.url))
 
-const usesModuleMocks = (file) =>
-  /vi\.(mock|doMock)\(/.test(readFileSync(`${root}${file}`, 'utf8'))
+const changesSharedState = (file) =>
+  /vi\.(mock|doMock|resetModules|stubEnv)\(|config\.(set|load)\(/.test(
+    readFileSync(`${root}${file}`, 'utf8')
+  )
 
-// A module mock only reaches importers evaluated after it, so these files
-// need a fresh module graph; everything else shares one per worker. Shared
-// files run first: a worker that has run a mocking file keeps its mocks.
-const moduleMockingTests = globSync('{src,scripts}/**/*.test.js', {
+// Most test files share one module graph per worker. A file that mocks
+// modules or changes config or env would leak into the files after it, and
+// modules that read config when first loaded would keep whatever it set, so
+// those files run isolated, after the shared ones.
+const testsNeedingIsolation = globSync('{src,scripts}/**/*.test.js', {
   cwd: root
-}).filter(usesModuleMocks)
+}).filter(changesSharedState)
 
 export default defineConfig({
   test: {
@@ -23,14 +26,14 @@ export default defineConfig({
           name: 'shared',
           isolate: false,
           sequence: { groupOrder: 0 },
-          exclude: [...configDefaults.exclude, ...moduleMockingTests]
+          exclude: [...configDefaults.exclude, ...testsNeedingIsolation]
         }
       },
       {
         extends: true,
         test: {
           name: 'isolated',
-          include: moduleMockingTests,
+          include: testsNeedingIsolation,
           sequence: { groupOrder: 1 }
         }
       }
