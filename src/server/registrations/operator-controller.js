@@ -66,8 +66,8 @@ const VIEW = 'registrations/index'
  *   backUrl: string;
  *   contactRegulatorUrl: string;
  *   hasSiteName: boolean;
+ *   heading: string;
  *   isExporter: boolean;
- *   material: string;
  *   pageTitle: string;
  *   prns: { description: string; link: Link; manageLink: Link; title: string } | null;
  *   reapplyAccreditation: ReapplyLink | null;
@@ -200,11 +200,12 @@ const toPrns = (request, { noteType, noteTypePlural }, notesPath) => {
  * @param {{
  *   request: HapiRequest,
  *   keys: RegistrationKeys,
- *   registration: RegistrationView
+ *   registration: RegistrationView,
+ *   year: number
  * }} params
  * @returns {Omit<RegistrationViewModel, 'accreditation' | 'prns' | 'reapplyAccreditation' | 'wasteBalanceLedgerUrl'>}
  */
-const buildRegistrationViewModel = ({ request, keys, registration }) => {
+const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
   const { t: localise, localiseUrl } = request
   const { isExporter, noteTypePlural } = getNoteTypeDisplayNames(registration)
   const siteName = toSiteName(registration, localise)
@@ -215,9 +216,13 @@ const buildRegistrationViewModel = ({ request, keys, registration }) => {
     backUrl: localiseUrl(isExporter ? `${homePath}/exporting` : homePath),
     contactRegulatorUrl: localiseUrl('/contact'),
     hasSiteName: !!siteName,
+    heading: localise('registrations:heading', { material, year }),
     isExporter,
-    material,
-    pageTitle: localise('registrations:pageTitle', { siteName, material }),
+    pageTitle: localise('registrations:pageTitle', {
+      siteName,
+      material,
+      year
+    }),
     registration: buildTaggedReference({
       reference: keys.registrationNumber,
       status: registration.status.current
@@ -262,7 +267,12 @@ const buildViewModel = ({
   const path = accreditationPath(keys)
 
   return {
-    ...buildRegistrationViewModel({ request, keys, registration }),
+    ...buildRegistrationViewModel({
+      request,
+      keys,
+      registration,
+      year: Number(keys.year)
+    }),
     accreditation: toAccreditationTag(accreditation),
     prns: toPrns(
       request,
@@ -284,12 +294,18 @@ const buildViewModel = ({
  * @param {{
  *   request: HapiRequest,
  *   keys: RegistrationKeys,
- *   registration: RegistrationView
+ *   registration: RegistrationView,
+ *   year: number
  * }} params
  * @returns {RegistrationViewModel}
  */
-const buildRegisteredOnlyViewModel = ({ request, keys, registration }) => ({
-  ...buildRegistrationViewModel({ request, keys, registration }),
+const buildRegisteredOnlyViewModel = ({
+  request,
+  keys,
+  registration,
+  year
+}) => ({
+  ...buildRegistrationViewModel({ request, keys, registration, year }),
   accreditation: { exists: false },
   prns: null,
   reapplyAccreditation: null,
@@ -363,7 +379,7 @@ export const registeredOnlyYearController = {
 
     return h.view(
       VIEW,
-      buildRegisteredOnlyViewModel({ request, keys, registration })
+      buildRegisteredOnlyViewModel({ request, keys, registration, year })
     )
   }
 }

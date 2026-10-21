@@ -155,10 +155,13 @@ const visit = async (
   { url = accreditationPath, auth = operator } = {}
 ) => {
   const response = await server.inject({ method: 'GET', url, auth })
+  const { document } = new JSDOM(asHtml(response.result)).window
 
   return {
     statusCode: response.statusCode,
-    body: new JSDOM(asHtml(response.result)).window.document.body
+    body: document.body,
+    title: document.title,
+    location: response.headers.location
   }
 }
 
@@ -203,6 +206,18 @@ describe("the operator's registration page for a year", () => {
     expect(body.textContent).toContain('Unit 4 Mill Road')
     expect(body.textContent).toContain(registrationNumber)
     expect(body.textContent).toContain(accreditationNumber)
+  })
+
+  it('shows the year in the heading and page title', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
+    const { body, title } = await visit(server)
+
+    expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(year)
+    expect(title).toContain(year)
   })
 
   it("shows the year's balance", async ({ server, msw }) => {
@@ -487,6 +502,18 @@ describe("the operator's registered-only page for a year", () => {
       getByRole(body, 'heading', { level: 1, name: /Glass remelt/ })
     ).toBeDefined()
     expect(getByText(body, registrationNumber)).toBeDefined()
+  })
+
+  it('shows the year in the heading and page title', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body, title } = await visit(server, { url: registeredOnlyPath })
+
+    expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(year)
+    expect(title).toContain(year)
   })
 
   it.for(['created', 'rejected', 'cancelled'])(
@@ -831,6 +858,26 @@ describe("the operator's registration page with no year", () => {
 
     expect(response.headers.location).toBe(registeredOnlyPath)
   })
+
+  it.for(
+    /** @type {const} */ ([
+      ['a registered-only', {}],
+      ['an accredited', { [year]: accreditationWith('approved', ['approved']) }]
+    ])
+  )(
+    'shows the year it sends %s operator to in the heading and page title',
+    async ([, accreditations], { server, msw }) => {
+      backendHolds(msw, { registration: { ...reprocessor, accreditations } })
+
+      const { location } = await visit(server, { url: registrationPath })
+      const { body, title } = await visit(server, { url: String(location) })
+
+      expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(
+        year
+      )
+      expect(title).toContain(year)
+    }
+  )
 
   it('sends an operator whose registration is still to start to the current year', async ({
     server,

@@ -3,9 +3,9 @@ import { capitalize } from 'lodash-es'
 import { config } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { materialsHomepage } from '#server/common/helpers/organisations/registration-in-view.js'
 import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import {
-  accreditationPath,
   organisationPath,
   registrationPath
 } from '#server/reports/helpers/report-paths.js'
@@ -81,19 +81,14 @@ const createAccreditationTag = (accreditation, localise) =>
   )
 
 /**
- * The registration's page: its accreditation for the year where it holds one, whatever its status.
  * @param {RegistrationView} registration
  * @param {RegistrationKeys} keys
  * @param {Year | null} selectedYear
  * @returns {string}
  */
-const registrationRowPath = (registration, keys, selectedYear) => {
-  const year = String(selectedYear)
-
-  return Object.hasOwn(registration.accreditations, year)
-    ? accreditationPath({ ...keys, year })
-    : registrationPath(keys)
-}
+const registrationRowPath = (registration, keys, selectedYear) =>
+  materialsHomepage(keys, registration, Number(selectedYear))?.path ??
+  registrationPath(keys)
 
 /**
  * Creates a row for a given registration
