@@ -29,10 +29,7 @@ export const yearParamsSchema = registrationParamsSchema.keys({
  * organisation's year address reads its year.
  */
 export const yearSegmentParamsSchema = registrationParamsSchema.keys({
-  year: Joi.string()
-    .pattern(YEAR_SEGMENT)
-    .custom((value) => Number(value))
-    .required()
+  year: Joi.string().pattern(YEAR_SEGMENT).custom(Number).required()
 })
 
 /**
