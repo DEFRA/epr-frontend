@@ -1,4 +1,8 @@
 /**
+ * @import { Brand } from './brand.js'
+ */
+
+/**
  * A bare `YYYY-MM-DD` calendar date.
  *
  * Branded, and lifted from the backend helper of the same name, because the
@@ -8,7 +12,7 @@
  *
  * `calendarDate` is the only constructor, so a raw string cannot reach a
  * comparison without being normalised on the way in.
- * @typedef {string & { readonly __brand: 'CalendarDate' }} CalendarDate
+ * @typedef {Brand<string, 'CalendarDate'>} CalendarDate
  */
 
 /**
