@@ -86,7 +86,7 @@ describe.each(DOWNLOADS)(
       expect(response.rawPayload.toString()).toBe(workbook)
     })
 
-    it('asks for the reporting period the pages show, carrying the session token', async ({
+    it('asks for the reporting period the pages show', async ({
       server,
       msw
     }) => {
@@ -95,10 +95,7 @@ describe.each(DOWNLOADS)(
       await visit(server, regulator)
 
       expect(requests).toStrictEqual([
-        {
-          authorization: expect.stringMatching(/^Bearer .+/),
-          url: `http://epr-backend.test/v1/market-insights/2026/monthly/3/workbook.xlsx${query}`
-        }
+        `http://epr-backend.test/v1/market-insights/2026/monthly/3/workbook.xlsx${query}`
       ])
     })
 

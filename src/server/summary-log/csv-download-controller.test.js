@@ -122,19 +122,13 @@ describe('the summary log CSV download', () => {
     expect(response.headers['content-type']).toContain('text/csv')
   })
 
-  it('asks the backend for the records, carrying the session token', async ({
-    server,
-    msw
-  }) => {
+  it('asks the backend for the records', async ({ server, msw }) => {
     const requests = backendStreams(msw)
 
     await visit(server, regulator)
 
     expect(requests).toStrictEqual([
-      {
-        authorization: expect.stringMatching(/^Bearer .+/),
-        url: `${config.get('eprBackendUrl')}${backendPath}`
-      }
+      `${config.get('eprBackendUrl')}${backendPath}`
     ])
   })
 

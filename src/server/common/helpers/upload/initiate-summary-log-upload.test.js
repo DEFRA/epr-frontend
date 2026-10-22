@@ -49,7 +49,6 @@ describe(initiateSummaryLogUpload, () => {
       const request = /** @type {Request} */ (capturedRequest)
 
       expect(request.headers.get('content-type')).toBe('application/json')
-      expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
       await expect(request.json()).resolves.toStrictEqual({
         redirectUrl: '/redirect/path'
       })

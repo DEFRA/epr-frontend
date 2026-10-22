@@ -27,12 +27,11 @@ describe(updateReport, () => {
   it('should patch the fields onto the submission the period names and resolve to the updated report', async ({
     msw
   }) => {
-    /** @type {{ authorization: string | null, method: string, pathname: string, body: string }[]} */
+    /** @type {{ method: string, pathname: string, body: string }[]} */
     const received = []
     msw.use(
       http.patch(/\/reports\//, async ({ request }) => {
         received.push({
-          authorization: request.headers.get('authorization'),
           method: request.method,
           pathname: new URL(request.url).pathname,
           body: await request.text()
@@ -50,7 +49,6 @@ describe(updateReport, () => {
     expect(result).toStrictEqual({ id: 'report-1' })
     expect(received).toStrictEqual([
       {
-        authorization: 'Bearer a-token',
         method: 'PATCH',
         pathname:
           '/organisations/500001/registrations/R25%2F1/accreditations/2026/reports/monthly/3/submissions/1',

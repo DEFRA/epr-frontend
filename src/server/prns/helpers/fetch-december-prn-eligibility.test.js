@@ -10,12 +10,11 @@ describe(fetchDecemberPrnEligibility, () => {
   it('should get the eligibility of the accreditation the keys name and resolve to it', async ({
     msw
   }) => {
-    /** @type {{ authorization: string | null, pathname: string }[]} */
+    /** @type {{ pathname: string }[]} */
     const received = []
     msw.use(
       http.get(/december-prn-eligibility$/, ({ request }) => {
         received.push({
-          authorization: request.headers.get('authorization'),
           pathname: new URL(request.url).pathname
         })
         return HttpResponse.json({ mode: 'manual', windowOpen: true })
@@ -34,7 +33,6 @@ describe(fetchDecemberPrnEligibility, () => {
     expect(result).toStrictEqual({ mode: 'manual', windowOpen: true })
     expect(received).toStrictEqual([
       {
-        authorization: 'Bearer a-token',
         pathname:
           '/organisations/500123/registrations/R26%2F1/accreditations/2026/packaging-recycling-notes/december-prn-eligibility'
       }

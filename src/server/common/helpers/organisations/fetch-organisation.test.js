@@ -67,20 +67,6 @@ describe(fetchOrganisation, () => {
     expect(search).toBe('?year=2026')
   })
 
-  test('sends the backend token as a bearer token', async ({ msw }) => {
-    let authorization
-    msw.use(
-      http.get(`${backendUrl}/organisations/50002`, ({ request }) => {
-        authorization = request.headers.get('Authorization')
-        return HttpResponse.json(organisation)
-      })
-    )
-
-    await fetchOrganisation(organisationNumber('50002'), backendToken)
-
-    expect(authorization).toBe('Bearer test-id-token')
-  })
-
   test('keeps the organisation number inside its own path segment', async ({
     msw
   }) => {

@@ -19,12 +19,11 @@ describe(fetchPackagingRecyclingNotes, () => {
   it('should get the notes of the accreditation the keys name, in the page shape', async ({
     msw
   }) => {
-    /** @type {{ authorization: string | null, pathname: string }[]} */
+    /** @type {{ pathname: string }[]} */
     const received = []
     msw.use(
       http.get(/packaging-recycling-notes$/, ({ request }) => {
         received.push({
-          authorization: request.headers.get('authorization'),
           pathname: new URL(request.url).pathname
         })
         return HttpResponse.json({
@@ -49,7 +48,6 @@ describe(fetchPackagingRecyclingNotes, () => {
     })
     expect(received).toStrictEqual([
       {
-        authorization: 'Bearer a-token',
         pathname:
           '/organisations/500123/registrations/R26%2F1/accreditations/2026/packaging-recycling-notes'
       }

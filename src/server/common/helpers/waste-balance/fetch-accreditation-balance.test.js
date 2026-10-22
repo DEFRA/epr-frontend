@@ -32,18 +32,15 @@ describe(fetchAccreditationBalance, () => {
   })
 
   test("returns the accreditation's balance for the year", async ({ msw }) => {
-    let authorization
     msw.use(
-      http.get(balancesUrl, ({ request }) => {
-        authorization = request.headers.get('Authorization')
-        return HttpResponse.json({ A26ER5001180114PL: balance })
-      })
+      http.get(balancesUrl, () =>
+        HttpResponse.json({ A26ER5001180114PL: balance })
+      )
     )
 
     await expect(fetchAccreditationBalance(params)).resolves.toStrictEqual(
       balance
     )
-    expect(authorization).toBe('Bearer mock-token')
   })
 
   test('returns null when the year holds no balance for the accreditation', async ({

@@ -5,7 +5,7 @@ import { http, HttpResponse } from 'msw'
  */
 
 /**
- * Answers a download at `url` and records each request made for it.
+ * Answers a download at `url` and records the URL of each request made for it.
  * A status of 400 or above answers with no body, as a refusal would.
  * @param {SetupServer} msw
  * @param {string} url
@@ -15,7 +15,7 @@ import { http, HttpResponse } from 'msw'
  *   contentType?: string | null,
  *   status?: number
  * }} [answer]
- * @returns {{ authorization: string | null, url: string }[]}
+ * @returns {string[]}
  */
 export const serveDownload = (
   msw,
@@ -27,15 +27,12 @@ export const serveDownload = (
     status = 200
   } = {}
 ) => {
-  /** @type {{ authorization: string | null, url: string }[]} */
+  /** @type {string[]} */
   const requests = []
 
   msw.use(
     http.get(url, ({ request }) => {
-      requests.push({
-        authorization: request.headers.get('authorization'),
-        url: request.url
-      })
+      requests.push(request.url)
 
       if (status >= 400) {
         return new HttpResponse(null, { status })

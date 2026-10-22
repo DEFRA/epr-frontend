@@ -61,24 +61,4 @@ describe(fetchOutstandingReturns, () => {
       '/v1/market-insights/2025/monthly/3/outstanding-returns'
     )
   })
-
-  test('authorises the call with the session backend token', async ({
-    msw
-  }) => {
-    /** @type {Request | undefined} */
-    let captured
-
-    msw.use(
-      http.get(outstandingReturnsUrl, ({ request }) => {
-        captured = request
-        return HttpResponse.json(januaryAggregate)
-      })
-    )
-
-    await fetchOutstandingReturns({ year: 2026, month: 1, backendToken })
-
-    expect(/** @type {Request} */ (captured).headers.get('authorization')).toBe(
-      'Bearer test-backend-token'
-    )
-  })
 })

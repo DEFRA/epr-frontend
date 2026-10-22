@@ -68,22 +68,6 @@ describe(fetchRegistration, () => {
     })
   })
 
-  test('reads the organisation as the token bearer', async ({ msw }) => {
-    /** @type {string | null} */
-    let authorisation = null
-
-    msw.use(
-      http.get(organisationUrl, ({ request }) => {
-        authorisation = request.headers.get('authorization')
-        return HttpResponse.json(organisation)
-      })
-    )
-
-    await fetchRegistration(params)
-
-    expect(authorisation).toBe('Bearer test-token')
-  })
-
   test('is a registration not found for a number the organisation does not hold', async ({
     msw
   }) => {

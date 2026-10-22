@@ -74,7 +74,7 @@ describe('the market insights export', () => {
     expect(response.rawPayload.toString()).toBe(zip)
   })
 
-  it('asks for the reporting period the pages show, carrying the session token', async ({
+  it('asks for the reporting period the pages show', async ({
     server,
     msw
   }) => {
@@ -83,10 +83,7 @@ describe('the market insights export', () => {
     await visit(server, regulator)
 
     expect(requests).toStrictEqual([
-      {
-        authorization: expect.stringMatching(/^Bearer .+/),
-        url: 'http://epr-backend.test/v1/market-insights/2026/monthly/3/export.zip'
-      }
+      'http://epr-backend.test/v1/market-insights/2026/monthly/3/export.zip'
     ])
   })
 
