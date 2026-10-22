@@ -5,7 +5,11 @@ import { paths } from '#server/paths.js'
 import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { SIGN_IN_PROVIDER_COOKIE, signedOutPage } from './sign-in-provider.js'
 
-const buildRequest = (/** @type {Record<string, unknown>} */ state = {}) => ({
+const buildRequest = (
+  /** @type {Record<string, unknown>} */ state = {},
+  /** @type {string | undefined} */ cookieHeader = undefined
+) => ({
+  headers: cookieHeader === undefined ? {} : { cookie: cookieHeader },
   state,
   logger: { info: vi.fn() }
 })
@@ -14,7 +18,7 @@ const expectedLog = (
   /** @type {string} */ page,
   /** @type {string} */ reason
 ) => ({
-  message: `Signed-out redirect to ${page}, ${reason}`,
+  message: 'Signed-out redirect',
   event: {
     action: 'signed-out-redirect',
     kind: 'event',
@@ -86,8 +90,42 @@ describe(signedOutPage, () => {
     )
   })
 
+  test.each([
+    ['not a string', { nested: 'object' }],
+    ['not shaped like a provider id', 'x'.repeat(33)],
+    ['carrying markup', '<script>alert(1)</script>']
+  ])('logs a provider value that is %s as invalid', (_label, value) => {
+    const request = buildRequest({ [SIGN_IN_PROVIDER_COOKIE]: value })
+
+    signedOutPage(mockHapiRequest(request))
+
+    expect(request.logger.info).toHaveBeenCalledWith(
+      expectedLog(
+        paths.loggedOut,
+        'signInProvider cookie invalid, session cookie absent'
+      )
+    )
+  })
+
+  test('logs a provider cookie sent twice as a duplicate', () => {
+    const request = buildRequest({
+      [SIGN_IN_PROVIDER_COOKIE]: [OIDC_ENTRA_ID, 'Not A Provider']
+    })
+
+    expect(signedOutPage(mockHapiRequest(request))).toBe(paths.loggedOut)
+    expect(request.logger.info).toHaveBeenCalledWith(
+      expectedLog(
+        paths.loggedOut,
+        `signInProvider cookie duplicate(${OIDC_ENTRA_ID},invalid), session cookie absent`
+      )
+    )
+  })
+
   test('logs that the session cookie arrived', () => {
-    const request = buildRequest({ userSession: { sessionId: 'a-session' } })
+    const request = buildRequest(
+      { userSession: { sessionId: 'a-session' } },
+      'other=1; userSession=sealed'
+    )
 
     signedOutPage(mockHapiRequest(request))
 
@@ -99,19 +137,15 @@ describe(signedOutPage, () => {
     )
   })
 
-  test.each([
-    ['not a string', { nested: 'object' }],
-    ['not shaped like a provider id', 'x'.repeat(33)],
-    ['carries markup', '<script>alert(1)</script>']
-  ])('logs a provider value that is %s as invalid', (_label, value) => {
-    const request = buildRequest({ [SIGN_IN_PROVIDER_COOKIE]: value })
+  test('logs a session cookie that was sent but could not be read as unreadable', () => {
+    const request = buildRequest({}, 'userSession=Fe26.2**old-password-seal')
 
     signedOutPage(mockHapiRequest(request))
 
     expect(request.logger.info).toHaveBeenCalledWith(
       expectedLog(
         paths.loggedOut,
-        'signInProvider cookie invalid, session cookie absent'
+        'signInProvider cookie absent, session cookie unreadable'
       )
     )
   })

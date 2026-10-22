@@ -59,7 +59,7 @@ export const loggerOptions = {
           method: request.method.toUpperCase()
         }
       },
-      url: { path: request.path, domain: request.info.hostname },
+      url: { path: request.path },
       ...(traceId ? { trace: { id: traceId } } : {})
     }
   },

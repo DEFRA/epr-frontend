@@ -54,8 +54,17 @@ export const forgetSignInProvider = (h) => {
 const PROVIDER_ID_PATTERN = /^[a-z0-9-]{1,32}$/
 
 /**
+ * @param {unknown} value
+ * @returns {string}
+ */
+const describeProviderValue = (value) =>
+  typeof value === 'string' && PROVIDER_ID_PATTERN.test(value)
+    ? value
+    : 'invalid'
+
+/**
  * The cookie is writable by the browser, so only a value shaped like a
- * provider id is logged as itself.
+ * provider id is logged as itself. A cookie sent twice arrives as an array.
  * @param {unknown} value
  * @returns {string}
  */
@@ -63,9 +72,25 @@ const describeProviderCookie = (value) => {
   if (value === undefined) {
     return 'absent'
   }
-  return typeof value === 'string' && PROVIDER_ID_PATTERN.test(value)
-    ? value
-    : 'invalid'
+  return Array.isArray(value)
+    ? `duplicate(${value.map(describeProviderValue).join(',')})`
+    : describeProviderValue(value)
+}
+
+/**
+ * The parsed state is empty both when no cookie was sent and when one was sent
+ * that could not be unsealed, so the raw header tells the two apart.
+ * @param {HapiRequest} request
+ * @returns {string}
+ */
+const describeSessionCookie = (request) => {
+  const sent = String(request.headers.cookie ?? '')
+    .split(';')
+    .some((cookie) => cookie.trim().startsWith('userSession='))
+  if (!sent) {
+    return 'absent'
+  }
+  return request.state.userSession ? 'present' : 'unreadable'
 }
 
 /**
@@ -83,11 +108,11 @@ export const signedOutPage = (request) => {
     config.get('featureFlags.regulatorAccess') && cookieValue === OIDC_ENTRA_ID
   const page = isRegulator ? paths.regulators.loggedOut : paths.loggedOut
   const providerCookie = describeProviderCookie(cookieValue)
-  const sessionCookie = request.state.userSession ? 'present' : 'absent'
+  const sessionCookie = describeSessionCookie(request)
   const reason = `signInProvider cookie ${providerCookie}, session cookie ${sessionCookie}`
 
   request.logger.info({
-    message: `Signed-out redirect to ${page}, ${reason}`,
+    message: 'Signed-out redirect',
     event: {
       action: 'signed-out-redirect',
       kind: 'event',
