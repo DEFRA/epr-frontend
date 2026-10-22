@@ -83,7 +83,6 @@ describe(getSafeRedirect, () => {
     )
 
     expect(getSafeRedirect('/dashboard')).toBe('/')
-    vi.unstubAllGlobals()
   })
 
   it('should return "/" when URL parsing throws', () => {
@@ -97,7 +96,6 @@ describe(getSafeRedirect, () => {
     )
 
     expect(getSafeRedirect('/dashboard')).toBe('/')
-    vi.unstubAllGlobals()
   })
 })
 
