@@ -12,12 +12,66 @@ const testOnlyImports = {
   message: 'Test helpers and fixtures are for tests only.'
 }
 
-const mintsBackendToken = {
-  group: ['**/backend-token.js'],
-  importNames: ['toBackendToken'],
-  message:
-    'Only a sign-in provider mints a backend token - take one from the session instead.'
-}
+/**
+ * Each brand is minted only where its value enters the app; everywhere else
+ * takes it already branded.
+ */
+const brandConstructors = [
+  {
+    name: 'toBackendToken',
+    module: 'backend-token.js',
+    mintedIn: [
+      'src/server/auth/plugins/defra-id.js',
+      'src/server/auth/plugins/entra-id.js'
+    ],
+    message:
+      'Only a sign-in provider mints a backend token - take one from the session instead.'
+  },
+  {
+    name: 'toOrganisationNumber',
+    module: 'organisation-number.js',
+    mintedIn: ['src/server/common/helpers/natural-keys/swap-keys.js'],
+    message:
+      'An organisation number arrives branded from route params or the backend - type it there instead.'
+  },
+  {
+    name: 'toRegistrationNumber',
+    module: 'registration-number.js',
+    mintedIn: [
+      'src/server/common/helpers/organisations/registration-in-view.js'
+    ],
+    message:
+      'A registration number arrives branded from route params or the backend - type it there instead.'
+  },
+  {
+    name: 'toAccreditationNumber',
+    module: 'accreditation-number.js',
+    mintedIn: [],
+    message:
+      'An accreditation number arrives branded from the backend - type it there instead.'
+  }
+]
+
+/**
+ * @param {typeof brandConstructors} constructors
+ */
+const restrictedImports = (constructors) => [
+  'error',
+  {
+    patterns: [
+      testOnlyImports,
+      ...constructors.map(({ name, module, message }) => ({
+        group: [`**/${module}`],
+        importNames: [name],
+        message
+      }))
+    ]
+  }
+]
+
+const mintingFiles = [
+  ...new Set(brandConstructors.flatMap(({ mintedIn }) => mintedIn))
+]
 
 export default [
   // ESLint recommended rules
@@ -134,27 +188,23 @@ export default [
     }
   },
 
-  // Production code takes nothing from tests, and only a sign-in provider
-  // decides which token a session presents
+  // Production code takes nothing from tests, and mints a brand only where
+  // its value enters the app
   {
     files: ['src/**/*.js'],
     ignores: ['src/**/test-helpers/**', '**/*.test.js'],
     rules: {
-      'no-restricted-imports': [
-        'error',
-        { patterns: [testOnlyImports, mintsBackendToken] }
-      ]
+      'no-restricted-imports': restrictedImports(brandConstructors)
     }
   },
-  {
-    files: [
-      'src/server/auth/plugins/defra-id.js',
-      'src/server/auth/plugins/entra-id.js'
-    ],
+  ...mintingFiles.map((file) => ({
+    files: [file],
     rules: {
-      'no-restricted-imports': ['error', { patterns: [testOnlyImports] }]
+      'no-restricted-imports': restrictedImports(
+        brandConstructors.filter(({ mintedIn }) => !mintedIn.includes(file))
+      )
     }
-  },
+  })),
 
   // CommonJS type for .cjs files
   {
