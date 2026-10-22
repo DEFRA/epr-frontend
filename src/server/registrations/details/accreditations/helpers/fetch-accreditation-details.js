@@ -1,9 +1,9 @@
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import { fetchAccreditationLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
-import { year as toYear } from '#server/common/helpers/year.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
 import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
 
@@ -61,7 +61,7 @@ const fetchAccreditation = async ({ keys, backendToken, logger }) => {
   const accreditation = accreditationIn(registration, keys.year)
 
   const wasteBalance = await fetchAccreditationBalance({
-    organisationNumber: organisationNumber(keys.organisationNumber),
+    organisationNumber: toOrganisationNumber(keys.organisationNumber),
     year: toYear(Number(keys.year)),
     accreditationNumber: accreditation.accreditationNumber,
     backendToken,

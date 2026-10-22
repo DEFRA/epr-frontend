@@ -1,4 +1,4 @@
-import { calendarDate } from '#server/common/helpers/calendar-date.js'
+import { toCalendarDate } from '#server/common/helpers/calendar-date.js'
 import { describe, expect, it } from 'vitest'
 
 import { registeredOnlyStretches } from './registered-only.js'
@@ -14,8 +14,8 @@ describe(registeredOnlyStretches, () => {
    * @returns {Stretch}
    */
   const stretch = (from, to) => ({
-    from: calendarDate(from),
-    to: calendarDate(to)
+    from: toCalendarDate(from),
+    to: toCalendarDate(to)
   })
 
   const firstHalf = stretch('2026-01-01', '2026-06-15')

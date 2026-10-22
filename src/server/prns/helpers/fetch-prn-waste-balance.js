@@ -1,6 +1,6 @@
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { year } from '#server/common/helpers/year.js'
+import { toYear } from '#server/common/helpers/year.js'
 
 /**
  * The accreditation's balance for the year, or null when it cannot be read.
@@ -19,8 +19,8 @@ export const fetchPrnWasteBalance = ({
   logger
 }) =>
   fetchAccreditationBalance({
-    organisationNumber: organisationNumber(keys.organisationNumber),
-    year: year(Number(keys.year)),
+    organisationNumber: toOrganisationNumber(keys.organisationNumber),
+    year: toYear(Number(keys.year)),
     accreditationNumber,
     backendToken,
     logger

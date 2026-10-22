@@ -4,7 +4,7 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
@@ -19,7 +19,7 @@ import {
   toDecemberBalanceBreakdown
 } from '#server/common/helpers/waste-balance/december-balance.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { year as toYear } from '#server/common/helpers/year.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
@@ -399,7 +399,7 @@ export const controller = {
     const keys = { organisationNumber: number, registrationNumber, year }
     const credentials = request.auth.credentials
     const { backendToken } = credentials
-    const numberKey = organisationNumber(number)
+    const numberKey = toOrganisationNumber(number)
 
     const [{ registration }, ids] = await Promise.all([
       fetchRegistration({ ...keys, backendToken }),
