@@ -63,14 +63,19 @@ export const signedOutPage = (request) => {
   const cookieValue = request.state[SIGN_IN_PROVIDER_COOKIE]
   const isRegulator =
     config.get('featureFlags.regulatorAccess') && cookieValue === OIDC_ENTRA_ID
-  const outcome = isRegulator ? 'regulator' : 'operator'
+  const page = isRegulator ? paths.regulators.loggedOut : paths.loggedOut
   const cookie = cookieValue === undefined ? 'absent' : 'present'
 
   request.logger.info({
-    message: `Signed-out redirect to the ${outcome} page, signInProvider cookie ${cookie}`,
-    event: { action: 'signed-out-redirect', kind: 'event', outcome },
-    url: { path: request.path, domain: request.info.hostname }
+    message: `Signed-out redirect to ${page}, signInProvider cookie ${cookie}`,
+    event: {
+      action: 'signed-out-redirect',
+      kind: 'event',
+      outcome: 'success',
+      reason: `signInProvider cookie ${cookie}`,
+      reference: page
+    }
   })
 
-  return isRegulator ? paths.regulators.loggedOut : paths.loggedOut
+  return page
 }

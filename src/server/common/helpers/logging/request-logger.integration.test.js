@@ -2,6 +2,8 @@ import pino from 'pino'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { config } from '#config/config.js'
+import { signedOutPage } from '#server/auth/helpers/sign-in-provider.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { createLogCaptureServer } from '#server/common/test-helpers/log-capture-server.js'
 import { loggerOptions } from './logger-options.js'
 import { createLogger } from './logger.js'
@@ -81,6 +83,31 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
         .id
     ).toStrictEqual(expect.any(String))
     expect(out).not.toHaveProperty('req')
+  })
+
+  it('should emit the signed-out redirect line with one url key that carries the host', async () => {
+    config.set('cdpEnvironment', 'dev')
+    const { server, lines } = await createLogCaptureServer()
+    server.route({
+      method: 'GET',
+      path: '/test',
+      handler: (request) => signedOutPage(mockHapiRequest(request))
+    })
+
+    await server.inject({ url: '/test', headers: { host: 'epr.example.test' } })
+    const line = /** @type {string} */ (
+      lines.find((l) => l.includes('signed-out-redirect'))
+    )
+
+    expect(line.match(/"url":/g)).toHaveLength(1)
+    expect(JSON.parse(line)).toMatchObject({
+      url: { path: '/test', domain: 'epr.example.test' },
+      event: {
+        action: 'signed-out-redirect',
+        reason: 'signInProvider cookie absent',
+        reference: '/logged-out'
+      }
+    })
   })
 
   it('should emit ECS http.response.* and url.path on the hapi-pino response auto-log', async () => {

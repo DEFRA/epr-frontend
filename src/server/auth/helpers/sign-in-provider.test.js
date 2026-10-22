@@ -6,19 +6,22 @@ import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js
 import { SIGN_IN_PROVIDER_COOKIE, signedOutPage } from './sign-in-provider.js'
 
 const buildRequest = (state = {}) => ({
-  path: paths.regulators.home,
-  info: { hostname: 'epr-frontend.example.test' },
   state,
   logger: { info: vi.fn() }
 })
 
 const expectedLog = (
-  /** @type {string} */ outcome,
+  /** @type {string} */ page,
   /** @type {string} */ cookie
 ) => ({
-  message: `Signed-out redirect to the ${outcome} page, signInProvider cookie ${cookie}`,
-  event: { action: 'signed-out-redirect', kind: 'event', outcome },
-  url: { path: paths.regulators.home, domain: 'epr-frontend.example.test' }
+  message: `Signed-out redirect to ${page}, signInProvider cookie ${cookie}`,
+  event: {
+    action: 'signed-out-redirect',
+    kind: 'event',
+    outcome: 'success',
+    reason: `signInProvider cookie ${cookie}`,
+    reference: page
+  }
 })
 
 describe(signedOutPage, () => {
@@ -37,7 +40,7 @@ describe(signedOutPage, () => {
       paths.regulators.loggedOut
     )
     expect(request.logger.info).toHaveBeenCalledWith(
-      expectedLog('regulator', 'present')
+      expectedLog(paths.regulators.loggedOut, 'present')
     )
   })
 
@@ -46,7 +49,7 @@ describe(signedOutPage, () => {
 
     expect(signedOutPage(mockHapiRequest(request))).toBe(paths.loggedOut)
     expect(request.logger.info).toHaveBeenCalledWith(
-      expectedLog('operator', 'absent')
+      expectedLog(paths.loggedOut, 'absent')
     )
   })
 
@@ -56,7 +59,7 @@ describe(signedOutPage, () => {
 
     expect(signedOutPage(mockHapiRequest(request))).toBe(paths.loggedOut)
     expect(request.logger.info).toHaveBeenCalledWith(
-      expectedLog('operator', 'present')
+      expectedLog(paths.loggedOut, 'present')
     )
   })
 })
