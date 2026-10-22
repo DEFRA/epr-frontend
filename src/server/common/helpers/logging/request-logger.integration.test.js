@@ -104,7 +104,7 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
       url: { path: '/test', domain: 'epr.example.test' },
       event: {
         action: 'signed-out-redirect',
-        reason: 'signInProvider cookie absent',
+        reason: 'signInProvider cookie absent, session cookie absent',
         reference: '/logged-out'
       }
     })

@@ -55,7 +55,8 @@ export const forgetSignInProvider = (h) => {
  * The signed-out page for a user who holds no session. The cookie grants
  * nothing, so a forged one buys only the other page. The flag is read because
  * the regulator page is registered only when it is on. Each choice is logged
- * with the host and whether the cookie arrived, never its value.
+ * with the provider cookie's value, which names a provider and nothing about
+ * the user, and whether the session cookie arrived.
  * @param {HapiRequest} request
  * @returns {string}
  */
@@ -64,15 +65,17 @@ export const signedOutPage = (request) => {
   const isRegulator =
     config.get('featureFlags.regulatorAccess') && cookieValue === OIDC_ENTRA_ID
   const page = isRegulator ? paths.regulators.loggedOut : paths.loggedOut
-  const cookie = cookieValue === undefined ? 'absent' : 'present'
+  const providerCookie = cookieValue ?? 'absent'
+  const sessionCookie = request.state.userSession ? 'present' : 'absent'
+  const reason = `signInProvider cookie ${providerCookie}, session cookie ${sessionCookie}`
 
   request.logger.info({
-    message: `Signed-out redirect to ${page}, signInProvider cookie ${cookie}`,
+    message: `Signed-out redirect to ${page}, ${reason}`,
     event: {
       action: 'signed-out-redirect',
       kind: 'event',
       outcome: 'success',
-      reason: `signInProvider cookie ${cookie}`,
+      reason,
       reference: page
     }
   })
