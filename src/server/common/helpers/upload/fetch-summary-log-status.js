@@ -34,7 +34,7 @@ const tolerantly = (payload) => {
  * @param {RegistrationKeys} keys
  * @param {string} summaryLogId
  * @param {object} options
- * @param {BackendToken} options.backendToken - Bearer token for the backend
+ * @param {BackendToken} options.backendToken
  * @returns {Promise<SummaryLogStatusResponse>}
  */
 const fetchSummaryLogStatus = (keys, summaryLogId, { backendToken }) =>
