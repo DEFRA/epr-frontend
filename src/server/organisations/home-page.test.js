@@ -5,8 +5,8 @@ import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { year } from '#server/common/helpers/year.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toYear } from '#server/common/helpers/year.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -139,20 +139,20 @@ const cellInColumn = (table) => {
 }
 
 describe('#homePath', () => {
-  const organisation = organisationNumber(ORGANISATION_NUMBER)
+  const organisation = toOrganisationNumber(ORGANISATION_NUMBER)
 
   it('builds the path when it has no year', () => {
     expect(homePath(organisation)).toBe(BARE_PATH)
   })
 
   it('builds the path when it has a year', () => {
-    expect(homePath(organisation, { year: year(2026) })).toBe(PATH)
+    expect(homePath(organisation, { year: toYear(2026) })).toBe(PATH)
   })
 
   it('builds the path when it has a year and exporting', () => {
-    expect(homePath(organisation, { year: year(2026), exporting: true })).toBe(
-      `${PATH}/exporting`
-    )
+    expect(
+      homePath(organisation, { year: toYear(2026), exporting: true })
+    ).toBe(`${PATH}/exporting`)
   })
 
   it('builds the path when it has exporting and no year', () => {
@@ -166,8 +166,8 @@ describe('the organisation home page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchOrganisationYears).mockResolvedValue([
-      year(2026),
-      year(2025)
+      toYear(2026),
+      toYear(2025)
     ])
     vi.mocked(fetchOrganisationWasteBalances).mockResolvedValue({})
   })
@@ -718,7 +718,7 @@ describe('the organisation home page', () => {
       server
     }) => {
       config.set('featureFlags.navigateAcrossYears', true)
-      vi.mocked(fetchOrganisationYears).mockResolvedValue([year(2026)])
+      vi.mocked(fetchOrganisationYears).mockResolvedValue([toYear(2026)])
 
       const { payload } = await visit(server)
 

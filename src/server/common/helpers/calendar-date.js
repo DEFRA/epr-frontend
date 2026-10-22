@@ -10,7 +10,7 @@
  * sorts *after* the bare date for the same day, so an unnormalised value reads
  * as later than it is and silently drops or keeps the wrong records.
  *
- * `calendarDate` is the only constructor, so a raw string cannot reach a
+ * `toCalendarDate` is the only constructor, so a raw string cannot reach a
  * comparison without being normalised on the way in.
  * @typedef {Brand<string, 'CalendarDate'>} CalendarDate
  */
@@ -23,7 +23,7 @@
  * @param {string} value
  * @returns {CalendarDate}
  */
-export const calendarDate = (value) =>
+export const toCalendarDate = (value) =>
   /** @type {CalendarDate} */ (value.slice(0, 10))
 
 /**
@@ -33,4 +33,4 @@ export const calendarDate = (value) =>
  * @param {Date} date
  * @returns {CalendarDate}
  */
-export const utcCalendarDate = (date) => calendarDate(date.toISOString())
+export const utcCalendarDate = (date) => toCalendarDate(date.toISOString())

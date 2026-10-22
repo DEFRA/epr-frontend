@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
-import { year as toYear } from '#server/common/helpers/year.js'
+import { toYear } from '#server/common/helpers/year.js'
 import Boom from '@hapi/boom'
 import { homePath } from './home-page.js'
 import { buildYearChoices } from './year-choices.js'
@@ -38,7 +38,7 @@ export const chooseYearController = {
 
     const { t: localise } = request
     const { year: chosen, continue: pressedContinue } = request.query
-    const orgNumber = organisationNumber(request.params.organisationNumber)
+    const orgNumber = toOrganisationNumber(request.params.organisationNumber)
     const addressYear = yearOf(String(request.params.year))
     const years = await fetchOrganisationYears(
       orgNumber,

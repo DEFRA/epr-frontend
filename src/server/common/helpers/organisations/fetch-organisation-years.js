@@ -1,5 +1,5 @@
 import { backend, path } from '#server/common/helpers/backend-client.js'
-import { year } from '#server/common/helpers/year.js'
+import { toYear } from '#server/common/helpers/year.js'
 
 /** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 /** @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js' */
@@ -17,7 +17,7 @@ const fetchOrganisationYears = async (organisationNumber, backendToken) => {
     path`/organisations/${organisationNumber}/years`
   )
 
-  return years.map(year)
+  return years.map(toYear)
 }
 
 export { fetchOrganisationYears }

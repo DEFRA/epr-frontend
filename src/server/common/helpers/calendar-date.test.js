@@ -1,23 +1,23 @@
 import { describe, expect, it } from 'vitest'
 
-import { calendarDate, utcCalendarDate } from './calendar-date.js'
+import { toCalendarDate, utcCalendarDate } from './calendar-date.js'
 
-describe(calendarDate, () => {
+describe(toCalendarDate, () => {
   it('keeps a bare date as it is', () => {
-    expect(calendarDate('2026-06-15')).toBe('2026-06-15')
+    expect(toCalendarDate('2026-06-15')).toBe('2026-06-15')
   })
 
   // Older persisted documents carry a full ISO datetime, from historical Joi
   // coercion, and a caller cannot know which shape it has.
   it('reads a full ISO datetime as the day it names', () => {
-    expect(calendarDate('2026-06-15T23:59:59.999Z')).toBe('2026-06-15')
+    expect(toCalendarDate('2026-06-15T23:59:59.999Z')).toBe('2026-06-15')
   })
 
   // The whole point of the type: the two shapes for one day must compare equal,
   // because a datetime sorts after the bare date and would read as later.
   it('makes the two shapes for one day compare equal', () => {
-    expect(calendarDate('2026-06-15T00:00:00.000Z')).toBe(
-      calendarDate('2026-06-15')
+    expect(toCalendarDate('2026-06-15T00:00:00.000Z')).toBe(
+      toCalendarDate('2026-06-15')
     )
   })
 })

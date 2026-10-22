@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { year } from './year.js'
+import { toYear } from './year.js'
 
-describe('#year', () => {
+describe(toYear, () => {
   it('should keep the value it is given', () => {
-    expect(year(2027)).toBe(2027)
+    expect(toYear(2027)).toBe(2027)
   })
 })
