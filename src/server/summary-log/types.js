@@ -271,6 +271,7 @@
  *   processingType?: ProcessingType
  *   status: string,
  *   validation?: ValidationResponse,
+ *   year?: number,
  * }} SummaryLogStatusResponse
  */
 

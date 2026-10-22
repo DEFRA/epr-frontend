@@ -312,26 +312,83 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    it('status: submitted - should link to organisation root', async ({
+    it.for([
+      { label: "the summary log's year", year: 2027, expected: '2027' },
+      { label: '2026 for a summary log without a year', expected: '2026' }
+    ])(
+      'status: submitted - should show $label in the heading',
+      async ({ year, expected }, { server }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          year
+        })
+
+        const main = await getMain(server)
+
+        expect(
+          getByRole(main, 'heading', { level: 1 }).textContent?.trim()
+        ).toBe(`Summary log uploaded (${expected})`)
+      }
+    )
+
+    it("status: submitted - should link to the home page for the summary log's year", async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submitted,
+        year: 2027
+      })
+
+      const main = await getMain(server)
+
+      expect(
+        getByRole(main, 'link', { name: 'Return to home' }).getAttribute('href')
+      ).toBe(`/organisations/${organisationNumber}/2027`)
+    })
+
+    it('status: submitted - should link to the 2026 home page for a summary log without a year', async ({
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted
       })
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
+      const main = await getMain(server)
 
-      expect(result).toStrictEqual(
-        expect.stringContaining(`href="/organisations/${organisationNumber}"`)
-      )
+      expect(
+        getByRole(main, 'link', { name: 'Return to home' }).getAttribute('href')
+      ).toBe(`/organisations/${organisationNumber}/2026`)
     })
 
     describe('waste balance', () => {
-      it('status: submitted - reads the 2026 balance', async ({ server }) => {
+      it("status: submitted - reads the balance for the summary log's year", async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          year: 2027
+        })
+
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(accredited)
+
+        mockFetchOrganisationWasteBalances.mockResolvedValueOnce({})
+
+        await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
+          accredited.organisation.organisationNumber,
+          2027,
+          'test-id-token'
+        )
+      })
+
+      it('status: submitted - reads the 2026 balance for a summary log without a year', async ({
+        server
+      }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'

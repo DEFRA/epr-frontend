@@ -22,6 +22,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
@@ -52,7 +53,8 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   pollUrl: string,
  *   uploadUrl?: string,
  *   cancelUrl: string,
- *   wasteBalance?: number
+ *   wasteBalance?: number,
+ *   year: Year
  * }} RenderContext
  */
 
@@ -112,7 +114,7 @@ const getProgressViewData = (localise, status) => {
  * @param {RegistrationKeys} keys
  * @param {string} summaryLogId - Summary log ID
  * @param {BackendToken} backendToken
- * @returns {Promise<SummaryLogStatusResponse>}
+ * @returns {Promise<Omit<SummaryLogStatusResponse, 'year'> & { year: Year }>}
  */
 const getStatusData = async (request, keys, summaryLogId, backendToken) => {
   /** @type {SummaryLogsSession | null} */
@@ -146,7 +148,8 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
     loadsByReportingPeriod,
     processingType,
     status,
-    validation
+    validation,
+    year: toYear(data.year ?? Number(ACCREDITATION_YEAR))
   }
 }
 
@@ -171,18 +174,25 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
 /**
  * Renders the success page after successful submission
  * @param {ResponseToolkit} h - Hapi response toolkit
- * @param {(key: string) => string} localise - i18n localisation function
+ * @param {(key: string, params?: object) => string} localise - i18n localisation function
  * @param {RenderContext} context - View context
  * @returns {ResponseObject} Hapi view response
  */
 const renderSuccessView = (
   h,
   localise,
-  { organisationPath, registrationPath, wasteBalance, loadsByReportingPeriod }
+  {
+    organisationPath,
+    registrationPath,
+    wasteBalance,
+    loadsByReportingPeriod,
+    year
+  }
 ) => {
   return h.view(SUCCESS_VIEW_NAME, {
     pageTitle: localise('summary-log:successPageTitle'),
-    organisationPath,
+    heading: localise('summary-log:successHeading', { year }),
+    organisationPath: `${organisationPath}/${year}`,
     registrationPath,
     wasteBalance,
     showFurtherAction: requiresResubmission(loadsByReportingPeriod)
@@ -354,11 +364,18 @@ const needsWasteBalance = (status) =>
  * where it drives the projected balance panel.
  * @param {string} status - Current summary log status
  * @param {RegistrationKeys} keys
+ * @param {Year} balanceYear
  * @param {UserSession} session
  * @param {TypedLogger} logger - Request logger
  * @returns {Promise<{wasteBalance?: number}>} Waste balance, or empty object if not applicable
  */
-const getWasteBalanceData = async (status, keys, session, logger) => {
+const getWasteBalanceData = async (
+  status,
+  keys,
+  balanceYear,
+  session,
+  logger
+) => {
   if (!needsWasteBalance(status)) {
     return {}
   }
@@ -372,7 +389,7 @@ const getWasteBalanceData = async (status, keys, session, logger) => {
 
   const balance = await fetchAccreditationBalance({
     organisationNumber: organisation.organisationNumber,
-    year: toYear(Number(ACCREDITATION_YEAR)),
+    year: balanceYear,
     accreditationNumber: accreditation.accreditationNumber,
     backendToken: session.backendToken,
     logger
@@ -398,7 +415,8 @@ export const summaryLogUploadProgressController = {
       loadsByReportingPeriod,
       processingType,
       status,
-      validation
+      validation,
+      year: summaryLogYear
     } = await getStatusData(request, keys, summaryLogId, session.backendToken)
 
     const registrationPath = toRegistrationPath(keys)
@@ -416,6 +434,7 @@ export const summaryLogUploadProgressController = {
     const { wasteBalance } = await getWasteBalanceData(
       status,
       keys,
+      summaryLogYear,
       session,
       request.logger
     )
@@ -434,7 +453,8 @@ export const summaryLogUploadProgressController = {
       pollUrl,
       uploadUrl,
       cancelUrl,
-      wasteBalance
+      wasteBalance,
+      year: summaryLogYear
     })
   }
 }
