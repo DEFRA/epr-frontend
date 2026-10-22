@@ -210,7 +210,7 @@ const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
   const { isExporter, noteTypePlural } = getNoteTypeDisplayNames(registration)
   const siteName = toSiteName(registration, localise)
   const material = getMaterialDisplayName(registration.material)
-  const homePath = organisationPath(keys)
+  const homePath = `${organisationPath(keys)}/${year}`
 
   return {
     backUrl: localiseUrl(isExporter ? `${homePath}/exporting` : homePath),
