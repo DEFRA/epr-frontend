@@ -14,7 +14,7 @@ import { prnsPath } from './prn-resource.js'
  * resolve-december-waste-choice.js, which composes the two facts this
  * returns into the control to render).
  * @param {AccreditationKeys} keys
- * @param {BackendToken} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken
  * @returns {Promise<DecemberPrnEligibility>}
  */
 const fetchDecemberPrnEligibility = (keys, backendToken) =>

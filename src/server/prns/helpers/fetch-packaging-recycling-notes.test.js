@@ -7,6 +7,8 @@ import { it } from '#vite/fixtures/server.js'
 
 import { fetchPackagingRecyclingNotes } from './fetch-packaging-recycling-notes.js'
 
+const backendToken = toBackendToken('a-token')
+
 describe(fetchPackagingRecyclingNotes, () => {
   const keys = {
     organisationNumber: '500123',
@@ -36,10 +38,7 @@ describe(fetchPackagingRecyclingNotes, () => {
       })
     )
 
-    const result = await fetchPackagingRecyclingNotes(
-      keys,
-      toBackendToken('a-token')
-    )
+    const result = await fetchPackagingRecyclingNotes(keys, backendToken)
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
@@ -75,10 +74,7 @@ describe(fetchPackagingRecyclingNotes, () => {
       )
     )
 
-    const result = await fetchPackagingRecyclingNotes(
-      keys,
-      toBackendToken('a-token')
-    )
+    const result = await fetchPackagingRecyclingNotes(keys, backendToken)
 
     expect(result.map(({ id }) => id)).toStrictEqual(['older', 'newer'])
   })

@@ -22,12 +22,14 @@ const organisationHeld = () =>
 const organisationRefused = (status) =>
   http.get(organisationUrl, () => new HttpResponse(null, { status }))
 
+const backendToken = toBackendToken('token')
+
 describe(findOrganisationById, () => {
   it('returns the organisation', async ({ msw }) => {
     msw.use(organisationHeld())
 
     await expect(
-      findOrganisationById(organisationId, toBackendToken('token'))
+      findOrganisationById(organisationId, backendToken)
     ).resolves.toStrictEqual(organisation)
   })
 
@@ -37,7 +39,7 @@ describe(findOrganisationById, () => {
       msw.use(organisationRefused(status))
 
       await expect(
-        findOrganisationById(organisationId, toBackendToken('token'))
+        findOrganisationById(organisationId, backendToken)
       ).resolves.toBeNull()
     }
   )
@@ -48,7 +50,7 @@ describe(findOrganisationById, () => {
       msw.use(organisationRefused(status))
 
       await expect(
-        findOrganisationById(organisationId, toBackendToken('token'))
+        findOrganisationById(organisationId, backendToken)
       ).rejects.toThrow(
         expect.objectContaining({
           output: expect.objectContaining({ statusCode: status })

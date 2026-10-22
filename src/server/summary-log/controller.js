@@ -111,7 +111,7 @@ const getProgressViewData = (localise, status) => {
  * @param {HapiRequest} request - Hapi request object
  * @param {RegistrationKeys} keys
  * @param {string} summaryLogId - Summary log ID
- * @param {BackendToken} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken
  * @returns {Promise<SummaryLogStatusResponse>}
  */
 const getStatusData = async (request, keys, summaryLogId, backendToken) => {

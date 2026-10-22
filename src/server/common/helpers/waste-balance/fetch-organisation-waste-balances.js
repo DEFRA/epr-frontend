@@ -9,7 +9,7 @@ import { backend, path } from '#server/common/helpers/backend-client.js'
  * Fetches the balance of each accreditation for the year
  * @param {OrganisationNumber} organisationNumber
  * @param {Year} year
- * @param {BackendToken} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken
  * @returns {Promise<WasteBalanceMap>} Balances keyed by accreditation number
  */
 const fetchOrganisationWasteBalances = (

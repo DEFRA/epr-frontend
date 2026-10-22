@@ -14,6 +14,8 @@ import { ReportStaleError, STALE_REASON } from './stale.js'
 
 const backendUrl = config.get('eprBackendUrl')
 
+const backendToken = toBackendToken('a-token')
+
 describe('report-backend', () => {
   describe(reportBackend, () => {
     /**
@@ -40,7 +42,7 @@ describe('report-backend', () => {
         backendAnswers(msw, HttpResponse.json({ code }, { status: 409 }))
 
         await expect(
-          reportBackend(toBackendToken('a-token')).patch('/v1/report', {})
+          reportBackend(backendToken).patch('/v1/report', {})
         ).rejects.toStrictEqual(new ReportStaleError(reasons))
       }
     )
@@ -57,7 +59,7 @@ describe('report-backend', () => {
         backendAnswers(msw, HttpResponse.json(body, { status: 409 }))
 
         await expect(
-          reportBackend(toBackendToken('a-token')).patch('/v1/report', {})
+          reportBackend(backendToken).patch('/v1/report', {})
         ).rejects.toMatchObject({
           isBoom: true,
           output: { statusCode: 409, payload: body }
@@ -69,7 +71,7 @@ describe('report-backend', () => {
       backendAnswers(msw, new HttpResponse(null, { status: 500 }))
 
       await expect(
-        reportBackend(toBackendToken('a-token')).patch('/v1/report', {})
+        reportBackend(backendToken).patch('/v1/report', {})
       ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 500 } })
     })
   })

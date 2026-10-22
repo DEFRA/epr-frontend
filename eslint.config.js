@@ -122,6 +122,31 @@ export default [
     }
   },
 
+  // Only a sign-in provider decides which token a session presents
+  {
+    files: ['src/**/*.js'],
+    ignores: [
+      'src/server/auth/plugins/*.js',
+      'src/server/common/test-helpers/**',
+      '**/*.test.js'
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/backend-token.js'],
+              importNames: ['toBackendToken'],
+              message:
+                'Only a sign-in provider mints a backend token - take one from the session instead.'
+            }
+          ]
+        }
+      ]
+    }
+  },
+
   // CommonJS type for .cjs files
   {
     files: ['**/*.cjs'],

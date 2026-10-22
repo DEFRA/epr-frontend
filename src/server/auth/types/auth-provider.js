@@ -33,7 +33,7 @@
  * @typedef {{
  *   tokenRequestParams: Record<string, string>
  *   selectBackendToken: (tokens: ProviderTokens) => BackendToken
- *   verifyBackendToken: (token: string) => Promise<{ profile: UserProfile, expiresAt: string }>
+ *   verifyBackendToken: (token: BackendToken) => Promise<{ profile: UserProfile, expiresAt: string }>
  * }} AuthProvider
  */
 

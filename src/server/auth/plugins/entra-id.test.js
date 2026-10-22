@@ -1,5 +1,6 @@
 import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuration.js'
 import { createEntraIdAuthProvider } from '#server/auth/plugins/entra-id.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { ENTRA_ID_BASE_URL, beforeEach, it } from '#vite/fixtures/server.js'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
@@ -8,6 +9,7 @@ import { describe, expect } from 'vitest'
 
 /**
  * @import { ProviderTokens } from '#server/auth/types/auth-provider.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  */
 
 const oidcConf = {
@@ -30,12 +32,13 @@ const expiresInAnHour = Math.floor(Date.now() / 1000) + 3600
 
 /**
  * @param {Record<string, unknown>} payload
- * @returns {Promise<string>}
+ * @returns {Promise<BackendToken>}
  */
 const signAccessToken = (payload) =>
   new jose.SignJWT({ exp: expiresInAnHour, ...payload })
     .setProtectedHeader({ alg: 'RS256', kid: 'test-key-id' })
     .sign(privateKeyPem)
+    .then(toBackendToken)
 
 const entraClaims = {
   oid: 'entra-user-id',

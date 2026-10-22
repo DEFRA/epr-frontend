@@ -6,6 +6,8 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
 import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 
+const backendToken = toBackendToken('test-id-token')
+
 describe(fetchSummaryLogStatus, () => {
   const backendUrl = config.get('eprBackendUrl')
   const keys = {
@@ -30,7 +32,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: toBackendToken('test-id-token')
+      backendToken
     })
 
     expect(result).toStrictEqual(mockResponse)
@@ -75,7 +77,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: toBackendToken('test-id-token')
+      backendToken
     })
 
     expect(
@@ -97,7 +99,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: toBackendToken('test-id-token')
+      backendToken
     })
 
     expect(result).not.toHaveProperty('unknownField')
@@ -122,7 +124,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: toBackendToken('test-id-token')
+      backendToken
     })
 
     expect(warnSpy).toHaveBeenCalledTimes(1)

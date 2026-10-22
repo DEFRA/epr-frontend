@@ -17,6 +17,8 @@ const organisation = {
   registrations: {}
 }
 
+const backendToken = toBackendToken('test-id-token')
+
 describe(fetchOrganisation, () => {
   test('returns the organisation from the backend', async ({ msw }) => {
     msw.use(
@@ -27,7 +29,7 @@ describe(fetchOrganisation, () => {
 
     const result = await fetchOrganisation(
       organisationNumber('50002'),
-      toBackendToken('test-id-token')
+      backendToken
     )
 
     expect(result).toStrictEqual(organisation)
@@ -42,10 +44,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(
-      organisationNumber('50002'),
-      toBackendToken('test-id-token')
-    )
+    await fetchOrganisation(organisationNumber('50002'), backendToken)
 
     expect(search).toBe('')
   })
@@ -61,13 +60,9 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(
-      organisationNumber('50002'),
-      toBackendToken('test-id-token'),
-      {
-        year: year(2026)
-      }
-    )
+    await fetchOrganisation(organisationNumber('50002'), backendToken, {
+      year: year(2026)
+    })
 
     expect(search).toBe('?year=2026')
   })
@@ -81,10 +76,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(
-      organisationNumber('50002'),
-      toBackendToken('test-id-token')
-    )
+    await fetchOrganisation(organisationNumber('50002'), backendToken)
 
     expect(authorization).toBe('Bearer test-id-token')
   })
@@ -100,10 +92,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(
-      organisationNumber('../admin'),
-      toBackendToken('test-id-token')
-    )
+    await fetchOrganisation(organisationNumber('../admin'), backendToken)
 
     expect(pathname).toBe('/organisations/..%2Fadmin')
   })

@@ -13,7 +13,7 @@ import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
  * Creates a new PRN/PERN via the backend API
  * @param {AccreditationKeys} keys
  * @param {CreatePrnPayload} payload - PRN creation data
- * @param {BackendToken} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken
  * @returns {Promise<PackagingRecyclingNote>}
  */
 const createPrn = async (keys, payload, backendToken) =>

@@ -56,7 +56,7 @@ function getDisplayedRegistrations(registrations, selectedYear) {
  * Fetches the year's waste balances. A failure leaves the page without them.
  * @param {OrganisationNumber} orgNumber
  * @param {Year} selectedYear
- * @param {BackendToken} backendToken - JWT token
+ * @param {BackendToken} backendToken
  * @param {TypedLogger} logger - Request logger
  * @returns {Promise<WasteBalanceMap>}
  */

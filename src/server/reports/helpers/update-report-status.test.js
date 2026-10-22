@@ -11,6 +11,8 @@ import { updateReportStatus } from './update-report-status.js'
  * @import { SubmissionKeys } from './report-paths.js'
  */
 
+const backendToken = toBackendToken('a-token')
+
 describe(updateReportStatus, () => {
   /** @type {SubmissionKeys} */
   const keys = {
@@ -42,7 +44,7 @@ describe(updateReportStatus, () => {
     const result = await updateReportStatus(
       keys,
       { status: 'submitted', version: 1 },
-      toBackendToken('a-token')
+      backendToken
     )
 
     expect(result).toStrictEqual({ id: 'report-1' })
@@ -70,7 +72,7 @@ describe(updateReportStatus, () => {
       updateReportStatus(
         keys,
         { status: 'submitted', version: 1 },
-        toBackendToken('a-token')
+        backendToken
       )
     ).rejects.toStrictEqual(
       new ReportStaleError([STALE_REASON.SUMMARY_LOG_CHANGED])

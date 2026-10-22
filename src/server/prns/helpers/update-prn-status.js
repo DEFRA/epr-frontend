@@ -11,7 +11,7 @@ import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
  * @param {AccreditationKeys} keys
  * @param {string} prnId - The PRN ID
  * @param {UpdatePrnStatusPayload} payload - Status update data
- * @param {BackendToken} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken
  * @returns {Promise<PackagingRecyclingNote>}
  */
 const updatePrnStatus = async (keys, prnId, payload, backendToken) => {

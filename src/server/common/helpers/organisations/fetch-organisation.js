@@ -8,7 +8,7 @@ import { backend, path } from '#server/common/helpers/backend-client.js'
 /**
  * Fetches the organisation by number, as it stood in `year` when one is given
  * @param {OrganisationNumber} organisationNumber
- * @param {BackendToken} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken
  * @param {{ year?: Year }} [options]
  * @returns {Promise<OrganisationView>}
  */

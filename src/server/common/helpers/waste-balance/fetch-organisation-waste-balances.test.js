@@ -11,6 +11,8 @@ import { fetchOrganisationWasteBalances } from './fetch-organisation-waste-balan
 
 const backendUrl = config.get('eprBackendUrl')
 
+const backendToken = toBackendToken('test-id-token')
+
 describe(fetchOrganisationWasteBalances, () => {
   test('returns the year’s balances keyed by accreditation number', async ({
     msw
@@ -26,7 +28,7 @@ describe(fetchOrganisationWasteBalances, () => {
     const result = await fetchOrganisationWasteBalances(
       organisationNumber('50002'),
       year(2026),
-      toBackendToken('test-id-token')
+      backendToken
     )
 
     expect(result).toStrictEqual({
@@ -48,7 +50,7 @@ describe(fetchOrganisationWasteBalances, () => {
     await fetchOrganisationWasteBalances(
       organisationNumber('../admin'),
       year(2026),
-      toBackendToken('test-id-token')
+      backendToken
     )
 
     expect(pathname).toBe('/organisations/..%2Fadmin/waste-balances/2026')

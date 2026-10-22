@@ -16,6 +16,8 @@ const keys = {
 const registered = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/2026`
 const accredited = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/accreditations/2026/summary-log`
 
+const backendToken = toBackendToken('test-id-token')
+
 describe(initiateSummaryLogUpload, () => {
   test.for([
     { kind: 'registered-only', isAccredited: false, url: registered },
@@ -41,7 +43,7 @@ describe(initiateSummaryLogUpload, () => {
         keys,
         accredited: isAccredited,
         redirectUrl: '/redirect/path',
-        backendToken: toBackendToken('test-id-token')
+        backendToken
       })
 
       const request = /** @type {Request} */ (capturedRequest)
@@ -70,7 +72,7 @@ describe(initiateSummaryLogUpload, () => {
       keys,
       accredited: false,
       redirectUrl: '/redirect/path',
-      backendToken: toBackendToken('test-id-token')
+      backendToken
     })
 
     expect(result).toStrictEqual(mockResponse)
@@ -95,7 +97,7 @@ describe(initiateSummaryLogUpload, () => {
         keys,
         accredited: false,
         redirectUrl: '/redirect/path',
-        backendToken: toBackendToken('test-id-token')
+        backendToken
       })
     ).rejects.toMatchObject({
       isBoom: true,

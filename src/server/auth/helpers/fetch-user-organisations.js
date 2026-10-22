@@ -1,9 +1,9 @@
 import { backend } from '#server/common/helpers/backend-client.js'
 
 /**
- * @import { UserSession } from '../types/session.js'
- * @import { UserOrganisations } from '../types/organisations.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { UserOrganisations } from '../types/organisations.js'
+ * @import { UserSession } from '../types/session.js'
  */
 
 /**

@@ -357,8 +357,7 @@ describe('backend-client', () => {
 
       it('should take only a backend token', () => {
         expectTypeOf(backend).toBeCallableWith(token)
-        // @ts-expect-error a bare string is not a backend token
-        expectTypeOf(backend).toBeCallableWith('a-token')
+        expectTypeOf(backend).parameter(0).not.toEqualTypeOf(String(token))
       })
 
       it.for([

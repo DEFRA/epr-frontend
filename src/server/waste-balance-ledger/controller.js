@@ -23,6 +23,15 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 /**
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+ * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ */
+
+/**
  * @typedef {RegistrationKeys & { year?: string }} WasteBalanceLedgerParams
  */
 
@@ -187,13 +196,4 @@ function toRegisteredOnlyPage({ heading, localise, localiseUrl, name, paths }) {
  *   accreditation?: Accreditation,
  *   events: LedgerEvent[]
  * }} LedgerRead
- */
-
-/**
- * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { BackendToken } from '#server/common/helpers/backend-token.js'
- * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
- * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
- * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */

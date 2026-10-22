@@ -10,6 +10,8 @@ import { fetchOrganisationYears } from './fetch-organisation-years.js'
 
 const backendUrl = config.get('eprBackendUrl')
 
+const backendToken = toBackendToken('test-id-token')
+
 describe(fetchOrganisationYears, () => {
   test('returns the years from the backend', async ({ msw }) => {
     msw.use(
@@ -20,7 +22,7 @@ describe(fetchOrganisationYears, () => {
 
     const result = await fetchOrganisationYears(
       organisationNumber('50002'),
-      toBackendToken('test-id-token')
+      backendToken
     )
 
     expect(result).toStrictEqual([2027, 2026])
@@ -37,10 +39,7 @@ describe(fetchOrganisationYears, () => {
       })
     )
 
-    await fetchOrganisationYears(
-      organisationNumber('../admin'),
-      toBackendToken('test-id-token')
-    )
+    await fetchOrganisationYears(organisationNumber('../admin'), backendToken)
 
     expect(pathname).toBe('/organisations/..%2Fadmin/years')
   })

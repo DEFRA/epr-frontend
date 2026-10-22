@@ -8,7 +8,7 @@ import { registrationPath } from '#server/reports/helpers/report-paths.js'
  * Submits summary log to EPR Backend
  * @param {RegistrationKeys} keys
  * @param {string} summaryLogId
- * @param {BackendToken} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken
  * @returns {Promise<{status: string, accreditationNumber: string}>}
  */
 const submitSummaryLog = (keys, summaryLogId, backendToken) =>

@@ -8,7 +8,7 @@ import { year } from '#server/common/helpers/year.js'
 /**
  * Fetches the years an organisation was active in
  * @param {OrganisationNumber} organisationNumber - The organisation number
- * @param {BackendToken} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken
  * @returns {Promise<Year[]>} Years, newest first
  */
 const fetchOrganisationYears = async (organisationNumber, backendToken) => {

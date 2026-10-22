@@ -2,7 +2,8 @@
  * The token a session presents to the backend.
  *
  * Branded so it cannot be swapped with another string, such as an
- * organisation number. A sign-in provider mints it with `toBackendToken`.
+ * organisation number. Lint allows `toBackendToken` only in a sign-in provider
+ * and in tests.
  * @typedef {string & { readonly __brand: 'BackendToken' }} BackendToken
  */
 
