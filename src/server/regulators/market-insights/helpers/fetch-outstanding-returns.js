@@ -1,6 +1,7 @@
 import { backend } from '#server/common/helpers/backend-client.js'
 
 /** @import { OutstandingReturnsData } from './to-outstanding-returns-tables.js' */
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 
 /**
  * The count of outstanding monthly reports for a reporting period, as the
@@ -16,7 +17,7 @@ import { backend } from '#server/common/helpers/backend-client.js'
  * Fetches the outstanding reports count from January through a reporting
  * month. The backend rejects a month that has not ended, so the page can only
  * ask for complete ones.
- * @param {{ year: number, month: number, backendToken: string }} period
+ * @param {{ year: number, month: number, backendToken: BackendToken }} period
  * @returns {Promise<OutstandingReturnsAggregate>}
  */
 export const fetchOutstandingReturns = ({ year, month, backendToken }) =>

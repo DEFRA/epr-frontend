@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
@@ -105,7 +106,9 @@ const accredited = buildRegistrationWithAccreditation()
 const registeredOnly = { ...accredited, accreditation: undefined }
 const { accreditationNumber } = accredited.accreditation
 
-const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
+const mockAuth = buildMockAuth({
+  backendToken: toBackendToken('test-id-token')
+})
 
 const enablesClientSidePolling = () =>
   expect.stringContaining('meta http-equiv="refresh"')

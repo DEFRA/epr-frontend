@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { ReportStaleError, STALE_REASON } from './stale.js'
@@ -9,6 +10,8 @@ import { updateReportStatus } from './update-report-status.js'
 /**
  * @import { SubmissionKeys } from './report-paths.js'
  */
+
+const backendToken = toBackendToken('a-token')
 
 describe(updateReportStatus, () => {
   /** @type {SubmissionKeys} */
@@ -24,12 +27,11 @@ describe(updateReportStatus, () => {
   it('should post the transition to the submission status and resolve to the updated report', async ({
     msw
   }) => {
-    /** @type {{ authorization: string | null, method: string, pathname: string, body: string }[]} */
+    /** @type {{ method: string, pathname: string, body: string }[]} */
     const received = []
     msw.use(
       http.post(/\/reports\//, async ({ request }) => {
         received.push({
-          authorization: request.headers.get('authorization'),
           method: request.method,
           pathname: new URL(request.url).pathname,
           body: await request.text()
@@ -41,13 +43,12 @@ describe(updateReportStatus, () => {
     const result = await updateReportStatus(
       keys,
       { status: 'submitted', version: 1 },
-      'a-token'
+      backendToken
     )
 
     expect(result).toStrictEqual({ id: 'report-1' })
     expect(received).toStrictEqual([
       {
-        authorization: 'Bearer a-token',
         method: 'POST',
         pathname:
           '/organisations/500001/registrations/R25%2F1/accreditations/2026/reports/monthly/3/submissions/1/status',
@@ -66,7 +67,11 @@ describe(updateReportStatus, () => {
     )
 
     await expect(
-      updateReportStatus(keys, { status: 'submitted', version: 1 }, 'a-token')
+      updateReportStatus(
+        keys,
+        { status: 'submitted', version: 1 },
+        backendToken
+      )
     ).rejects.toStrictEqual(
       new ReportStaleError([STALE_REASON.SUMMARY_LOG_CHANGED])
     )

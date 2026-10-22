@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 
@@ -35,7 +36,7 @@ describe(createPrn, () => {
         year: '2026'
       },
       payload,
-      'a-token'
+      toBackendToken('a-token')
     )
 
     expect(result).toMatchObject({ id: 'prn-1', status: 'draft' })

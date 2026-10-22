@@ -6,6 +6,7 @@ import { config } from '#config/config.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { backend, path, strictly } from './backend-client.js'
+import { toBackendToken } from './backend-token.js'
 
 /**
  * @import { Readable } from 'node:stream'
@@ -27,6 +28,7 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 }))
 
 const backendUrl = config.get('eprBackendUrl')
+const token = toBackendToken('a-token')
 
 /**
  * @param {SetupServer} msw
@@ -114,7 +116,7 @@ describe('backend-client', () => {
         async ({ method, call, body, contentType }, { msw }) => {
           const requests = recordRequests(msw, method)
 
-          await call(backend('a-token'))
+          await call(backend(token))
 
           expect(requests).toStrictEqual([
             {
@@ -146,9 +148,9 @@ describe('backend-client', () => {
         async ({ response, expected }, { msw }) => {
           msw.use(http.get(`${backendUrl}/v1/thing`, response))
 
-          await expect(
-            backend('a-token').get('/v1/thing')
-          ).resolves.toStrictEqual(expected)
+          await expect(backend(token).get('/v1/thing')).resolves.toStrictEqual(
+            expected
+          )
         }
       )
 
@@ -169,9 +171,10 @@ describe('backend-client', () => {
         async ({ response, expected }, { msw }) => {
           msw.use(http.get(`${backendUrl}/v1/thing`, response))
 
-          await expect(
-            backend('a-token').get('/v1/thing')
-          ).rejects.toMatchObject({ isBoom: true, output: expected })
+          await expect(backend(token).get('/v1/thing')).rejects.toMatchObject({
+            isBoom: true,
+            output: expected
+          })
         }
       )
 
@@ -185,9 +188,7 @@ describe('backend-client', () => {
             )
           )
 
-          await expect(
-            backend('a-token').get('/v1/thing')
-          ).rejects.toMatchObject({
+          await expect(backend(token).get('/v1/thing')).rejects.toMatchObject({
             output: { statusCode: 502 },
             code: 'external_fetch_failed',
             event: {
@@ -203,20 +204,17 @@ describe('backend-client', () => {
       }) => {
         msw.use(http.get(`${backendUrl}/v1/thing`, () => HttpResponse.error()))
 
-        await expect(backend('a-token').get('/v1/thing')).rejects.toMatchObject(
-          {
-            isBoom: true,
-            output: { statusCode: 500 },
-            code: 'external_fetch_failed',
-            message:
-              'Failed to fetch from url: http://epr-backend.test/v1/thing',
-            event: {
-              action: 'external_fetch',
-              reason: 'type=TypeError code=unknown'
-            },
-            cause: expect.any(TypeError)
-          }
-        )
+        await expect(backend(token).get('/v1/thing')).rejects.toMatchObject({
+          isBoom: true,
+          output: { statusCode: 500 },
+          code: 'external_fetch_failed',
+          message: 'Failed to fetch from url: http://epr-backend.test/v1/thing',
+          event: {
+            action: 'external_fetch',
+            reason: 'type=TypeError code=unknown'
+          },
+          cause: expect.any(TypeError)
+        })
       })
 
       it.for([
@@ -236,9 +234,7 @@ describe('backend-client', () => {
             )
           )
 
-          await expect(
-            backend('a-token').get('/v1/thing')
-          ).rejects.toMatchObject({
+          await expect(backend(token).get('/v1/thing')).rejects.toMatchObject({
             isBoom: true,
             output: { statusCode: 500 },
             code: 'external_fetch_failed',
@@ -269,7 +265,7 @@ describe('backend-client', () => {
           )
         )
 
-        const result = await backend('a-token').get('/v1/thing', {
+        const result = await backend(token).get('/v1/thing', {
           parse: (payload) => ({ parsed: payload })
         })
 
@@ -283,7 +279,7 @@ describe('backend-client', () => {
           )
         )
 
-        const result = await backend('a-token').post(
+        const result = await backend(token).post(
           '/v1/thing',
           { name: 'a thing' },
           { parse: (payload) => ({ parsed: payload }) }
@@ -303,7 +299,7 @@ describe('backend-client', () => {
         )
 
         await expect(
-          backend('a-token').get('/v1/thing', { onError: mapToMapped })
+          backend(token).get('/v1/thing', { onError: mapToMapped })
         ).rejects.toBeInstanceOf(Mapped)
       })
 
@@ -318,7 +314,7 @@ describe('backend-client', () => {
         )
 
         await expect(
-          backend('a-token', { onError: mapToMapped }).delete('/v1/thing')
+          backend(token, { onError: mapToMapped }).delete('/v1/thing')
         ).rejects.toBeInstanceOf(Mapped)
       })
 
@@ -334,7 +330,7 @@ describe('backend-client', () => {
         )
 
         await expect(
-          backend('a-token', { onError: mapToMapped }).get('/v1/thing', {
+          backend(token, { onError: mapToMapped }).get('/v1/thing', {
             onError: () => {
               throw new Other()
             }
@@ -343,7 +339,7 @@ describe('backend-client', () => {
       })
 
       it('should type each call by its parse, its caller, or as void for writes', () => {
-        const api = backend('a-token')
+        const api = backend(token)
 
         /** @returns {Promise<{ id: string }>} */
         const fetchThing = () => api.get('/v1/thing')
@@ -357,6 +353,11 @@ describe('backend-client', () => {
           api.post('/v1/thing', {})
         ).returns.resolves.toBeVoid()
         expectTypeOf(() => api.delete('/v1/thing')).returns.resolves.toBeVoid()
+      })
+
+      it('should take only a backend token', () => {
+        expectTypeOf(backend).toBeCallableWith(token)
+        expectTypeOf(backend).parameter(0).not.toEqualTypeOf(String(token))
       })
 
       it.for([
@@ -392,7 +393,7 @@ describe('backend-client', () => {
             })
           )
 
-          await backend('a-token').get('/v1/thing', { query })
+          await backend(token).get('/v1/thing', { query })
 
           expect(searches).toStrictEqual([search])
         }
@@ -402,7 +403,7 @@ describe('backend-client', () => {
         msw.use(http.get(`${backendUrl}/v1/thing`, () => HttpResponse.json({})))
 
         await expect(
-          backend('a-token').get('/v1/thing', {
+          backend(token).get('/v1/thing', {
             parse: () => {
               throw new Error('unparseable')
             },
@@ -427,7 +428,7 @@ describe('backend-client', () => {
           )
         )
 
-        await expect(backend('a-token').redirect('/v1/file')).resolves.toBe(
+        await expect(backend(token).redirect('/v1/file')).resolves.toBe(
           'https://storage/signed'
         )
       })
@@ -443,7 +444,7 @@ describe('backend-client', () => {
           )
 
           await expect(
-            backend('a-token').redirect('/v1/file')
+            backend(token).redirect('/v1/file')
           ).rejects.toMatchObject({
             output: { statusCode: status },
             code: 'external_fetch_failed',
@@ -466,7 +467,7 @@ describe('backend-client', () => {
           )
 
           await expect(
-            backend('a-token').redirect('/v1/file')
+            backend(token).redirect('/v1/file')
           ).rejects.toMatchObject({
             output: { statusCode: 502 },
             code: 'external_redirect_invalid',
@@ -503,7 +504,7 @@ describe('backend-client', () => {
         )
 
         const { body, contentType, contentDisposition } =
-          await backend('a-token').stream('/v1/export.csv')
+          await backend(token).stream('/v1/export.csv')
 
         expect({
           body: await read(body),
@@ -527,7 +528,7 @@ describe('backend-client', () => {
         )
 
         const { contentType, contentDisposition } =
-          await backend('a-token').stream('/v1/export.csv')
+          await backend(token).stream('/v1/export.csv')
 
         expect({ contentType, contentDisposition }).toStrictEqual({
           contentType: null,
@@ -546,7 +547,7 @@ describe('backend-client', () => {
         )
 
         await expect(
-          backend('a-token').stream('/v1/export.csv')
+          backend(token).stream('/v1/export.csv')
         ).rejects.toMatchObject({
           output: { statusCode: 502 },
           code: 'external_fetch_failed',
@@ -565,7 +566,7 @@ describe('backend-client', () => {
           )
 
           await expect(
-            backend('a-token').stream('/v1/export.csv')
+            backend(token).stream('/v1/export.csv')
           ).rejects.toMatchObject({
             output: { statusCode: 502 },
             code: 'external_fetch_failed',
@@ -587,7 +588,7 @@ describe('backend-client', () => {
           })
         )
 
-        await backend('a-token').stream('/v1/export.csv')
+        await backend(token).stream('/v1/export.csv')
 
         expect(accepted).not.toContain('application/json')
       })
@@ -603,7 +604,7 @@ describe('backend-client', () => {
           )
 
           await expect(
-            backend('a-token').stream('/v1/export.csv')
+            backend(token).stream('/v1/export.csv')
           ).rejects.toMatchObject({
             output: { statusCode: status },
             code: 'external_fetch_failed',
@@ -628,7 +629,7 @@ describe('backend-client', () => {
         )
 
         await expect(
-          backend('a-token', {
+          backend(token, {
             onError: () => {
               throw new Mapped()
             }
@@ -651,7 +652,7 @@ describe('backend-client', () => {
           })
         )
 
-        await backend('a-token')[method]('/v1/file', {
+        await backend(token)[method]('/v1/file', {
           query: { unredacted: 'true', year: undefined }
         })
 
@@ -676,7 +677,7 @@ describe('backend-client', () => {
           })
         )
 
-        await backend('a-token')[method]('/v1/file')
+        await backend(token)[method]('/v1/file')
 
         expect(requests).toStrictEqual([
           { authorization: 'Bearer a-token', traceId: 'mock-trace-id-1' }
@@ -713,7 +714,7 @@ describe('backend-client', () => {
       )
 
       const fetchThing = () =>
-        backend('a-token').get('/v1/thing', { parse: strictly(thingSchema) })
+        backend(token).get('/v1/thing', { parse: strictly(thingSchema) })
 
       await expect(fetchThing()).resolves.toStrictEqual({
         id: 'thing-1',
@@ -733,7 +734,7 @@ describe('backend-client', () => {
       )
 
       await expect(
-        backend('a-token').get('/v1/thing', { parse: strictly(thingSchema) })
+        backend(token).get('/v1/thing', { parse: strictly(thingSchema) })
       ).rejects.toMatchObject({
         isBoom: true,
         output: { statusCode: 502 },
@@ -756,7 +757,7 @@ describe('backend-client', () => {
       )
 
       await expect(
-        backend('a-token').get('/v1/thing', {
+        backend(token).get('/v1/thing', {
           parse: strictly(
             thingSchema.keys({ id: Joi.string().pattern(/^thing-/) })
           )
@@ -777,7 +778,7 @@ describe('backend-client', () => {
       )
 
       await expect(
-        backend('a-token').get('/v1/thing', { parse: strictly(thingSchema) })
+        backend(token).get('/v1/thing', { parse: strictly(thingSchema) })
       ).rejects.toMatchObject({
         output: { statusCode: 502 },
         code: 'backend_response_invalid',

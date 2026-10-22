@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -59,7 +60,7 @@ const registeredOnlyLedgerUrl = `${backendUrl}${registeredOnlyRegistrationPath}/
 const regulator = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-1', email: 'regulator@example.com' },
-  backendToken: 'regulator-backend-token',
+  backendToken: toBackendToken('regulator-backend-token'),
   ...sessionIdentity(IDENTITIES.regulator)
 })
 

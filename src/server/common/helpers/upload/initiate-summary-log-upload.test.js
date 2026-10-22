@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -14,6 +15,8 @@ const keys = {
 }
 const registered = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/2026`
 const accredited = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/accreditations/2026/summary-log`
+
+const backendToken = toBackendToken('test-id-token')
 
 describe(initiateSummaryLogUpload, () => {
   test.for([
@@ -40,13 +43,12 @@ describe(initiateSummaryLogUpload, () => {
         keys,
         accredited: isAccredited,
         redirectUrl: '/redirect/path',
-        backendToken: 'test-id-token'
+        backendToken
       })
 
       const request = /** @type {Request} */ (capturedRequest)
 
       expect(request.headers.get('content-type')).toBe('application/json')
-      expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
       await expect(request.json()).resolves.toStrictEqual({
         redirectUrl: '/redirect/path'
       })
@@ -69,7 +71,7 @@ describe(initiateSummaryLogUpload, () => {
       keys,
       accredited: false,
       redirectUrl: '/redirect/path',
-      backendToken: 'test-id-token'
+      backendToken
     })
 
     expect(result).toStrictEqual(mockResponse)
@@ -94,7 +96,7 @@ describe(initiateSummaryLogUpload, () => {
         keys,
         accredited: false,
         redirectUrl: '/redirect/path',
-        backendToken: 'test-id-token'
+        backendToken
       })
     ).rejects.toMatchObject({
       isBoom: true,

@@ -2,6 +2,10 @@ import { backend, strictly } from '#server/common/helpers/backend-client.js'
 import Joi from 'joi'
 
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ */
+
+/**
  * The backend's answer to "who is this identity, and what may it do?".
  *
  * `role` says who the user is and drives where they land and what the page
@@ -28,7 +32,7 @@ const identitySchema = Joi.object({
  * Asks the backend who the signed-in identity is. The backend holds the only
  * mapping from an identity to a set of scopes, so this app never reads a role
  * claim to answer the question itself.
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<Identity>}
  */
 export const fetchIdentity = (backendToken) =>

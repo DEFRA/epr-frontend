@@ -3,6 +3,7 @@ import { reportApiPath } from './report-paths.js'
 
 /**
  * @import { SubmissionKeys } from './report-paths.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  */
 
 /**
@@ -13,7 +14,7 @@ import { reportApiPath } from './report-paths.js'
  *   submissionDeclaredBy?: string,
  *   version: number
  * }} transition - The target status and report version for optimistic locking
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<unknown>}
  */
 export const updateReportStatus = (keys, transition, backendToken) =>

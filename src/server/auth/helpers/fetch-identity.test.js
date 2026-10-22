@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -9,7 +10,7 @@ import { fetchIdentity } from './fetch-identity.js'
 
 describe('#fetchIdentity', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const mockBackendToken = 'mock-backend-token-12345'
+  const mockBackendToken = toBackendToken('mock-backend-token-12345')
 
   /**
    * @param {{ role?: string | null, scopes?: unknown[] }} body

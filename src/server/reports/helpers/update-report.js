@@ -3,13 +3,14 @@ import { reportApiPath } from './report-paths.js'
 
 /**
  * @import { SubmissionKeys } from './report-paths.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  */
 
 /**
  * Updates a report via the backend PATCH endpoint.
  * @param {SubmissionKeys} keys
  * @param {Record<string, unknown>} fields - Fields to update (e.g. { supportingInformation } or { status })
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<unknown>}
  */
 export const updateReport = (keys, fields, backendToken) =>

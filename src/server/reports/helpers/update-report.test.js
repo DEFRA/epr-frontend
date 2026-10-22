@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { ReportStaleError, STALE_REASON } from './stale.js'
@@ -9,6 +10,8 @@ import { updateReport } from './update-report.js'
 /**
  * @import { SubmissionKeys } from './report-paths.js'
  */
+
+const backendToken = toBackendToken('a-token')
 
 describe(updateReport, () => {
   /** @type {SubmissionKeys} */
@@ -24,12 +27,11 @@ describe(updateReport, () => {
   it('should patch the fields onto the submission the period names and resolve to the updated report', async ({
     msw
   }) => {
-    /** @type {{ authorization: string | null, method: string, pathname: string, body: string }[]} */
+    /** @type {{ method: string, pathname: string, body: string }[]} */
     const received = []
     msw.use(
       http.patch(/\/reports\//, async ({ request }) => {
         received.push({
-          authorization: request.headers.get('authorization'),
           method: request.method,
           pathname: new URL(request.url).pathname,
           body: await request.text()
@@ -41,13 +43,12 @@ describe(updateReport, () => {
     const result = await updateReport(
       keys,
       { supportingInformation: 'notes' },
-      'a-token'
+      backendToken
     )
 
     expect(result).toStrictEqual({ id: 'report-1' })
     expect(received).toStrictEqual([
       {
-        authorization: 'Bearer a-token',
         method: 'PATCH',
         pathname:
           '/organisations/500001/registrations/R25%2F1/accreditations/2026/reports/monthly/3/submissions/1',
@@ -66,7 +67,7 @@ describe(updateReport, () => {
     )
 
     await expect(
-      updateReport(keys, { supportingInformation: 'notes' }, 'a-token')
+      updateReport(keys, { supportingInformation: 'notes' }, backendToken)
     ).rejects.toStrictEqual(
       new ReportStaleError([STALE_REASON.SUMMARY_LOG_CHANGED])
     )

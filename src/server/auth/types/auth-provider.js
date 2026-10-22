@@ -1,4 +1,5 @@
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { UserProfile } from './session.js'
  */
 
@@ -31,8 +32,8 @@
  * a refresh derives the profile and the expiry the same way sign-in does.
  * @typedef {{
  *   tokenRequestParams: Record<string, string>
- *   selectBackendToken: (tokens: ProviderTokens) => string
- *   verifyBackendToken: (token: string) => Promise<{ profile: UserProfile, expiresAt: string }>
+ *   selectBackendToken: (tokens: ProviderTokens) => BackendToken
+ *   verifyBackendToken: (token: BackendToken) => Promise<{ profile: UserProfile, expiresAt: string }>
  * }} AuthProvider
  */
 

@@ -1,4 +1,5 @@
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { BellCredentials } from '../types/auth.js'
  */
 
@@ -40,7 +41,7 @@
  *   linkedOrganisationNumber?: string
  *   expiresAt: string
  *   idToken: string
- *   backendToken: string
+ *   backendToken: BackendToken
  *   refreshToken: string
  *   urls: { token: string, logout: string }
  *   idTokenRefreshInProgress?: boolean

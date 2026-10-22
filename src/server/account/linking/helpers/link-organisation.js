@@ -1,7 +1,11 @@
 import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
- * @param {string} backendToken
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ */
+
+/**
+ * @param {BackendToken} backendToken
  * @param {string} organisationNumber
  * @returns {Promise<void>}
  */

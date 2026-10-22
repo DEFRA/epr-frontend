@@ -5,7 +5,7 @@ import { reportsCalendarApiPath } from './report-paths.js'
 /**
  * Fetches available reporting periods for a registration by its natural keys.
  * @param {RegistrationKeys} keys
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<ReportingPeriodsResponse>}
  */
 export const fetchReportingPeriodsByNumber = (keys, backendToken) =>
@@ -47,4 +47,5 @@ export const fetchReportingPeriodsByNumber = (keys, backendToken) =>
 /**
  * @import { CadenceValue, SubmissionStatusValue } from '../constants.js'
  * @import { RegistrationKeys } from './report-paths.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  */

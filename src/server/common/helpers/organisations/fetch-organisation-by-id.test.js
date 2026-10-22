@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { fetchOrganisationById } from './fetch-organisation-by-id.js'
@@ -24,7 +25,10 @@ describe(fetchOrganisationById, () => {
       })
     )
 
-    const result = await fetchOrganisationById('org/1', 'a-token')
+    const result = await fetchOrganisationById(
+      'org/1',
+      toBackendToken('a-token')
+    )
 
     expect(result).toStrictEqual({
       id: 'org/1',

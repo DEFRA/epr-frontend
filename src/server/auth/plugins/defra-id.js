@@ -1,5 +1,6 @@
 import { asHapiRequest } from '#server/common/hapi-types.js'
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { paths } from '#server/paths.js'
 import bell from '@hapi/bell'
 import {
@@ -36,7 +37,7 @@ const createDefraIdAuthProvider = (verifyToken) => ({
     scope: DEFRA_ID_SCOPES.join(' '),
     serviceId: config.get('defraId.serviceId')
   },
-  selectBackendToken: (tokens) => tokens.id_token,
+  selectBackendToken: (tokens) => toBackendToken(tokens.id_token),
   verifyBackendToken: async (token) => {
     const payload = await verifyToken(token)
 

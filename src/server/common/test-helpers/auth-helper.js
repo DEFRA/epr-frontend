@@ -1,5 +1,6 @@
 import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 
 /**
@@ -43,7 +44,7 @@ export const buildMockAuth = (overrides = {}) => ({
     profile: { id: 'user-123', email: 'test@example.com' },
     expiresAt: '2099-01-01T00:00:00.000Z',
     idToken: 'mock-id-token',
-    backendToken: 'mock-backend-token',
+    backendToken: toBackendToken('mock-backend-token'),
     ...sessionIdentity(IDENTITIES.operator),
     urls: {
       token: 'http://defra-id.auth/token',

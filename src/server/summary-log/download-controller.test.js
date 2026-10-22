@@ -1,17 +1,21 @@
-/** @import { HapiServer } from '#server/common/hapi-types.js'; */
+import { http, HttpResponse } from 'msw'
+
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRedirectFromBackend } from '#server/common/helpers/fetch-redirect-from-backend.js'
 import {
   buildMockAuth,
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
+import { serveDownload } from '#server/common/test-helpers/serve-download.js'
 import { it } from '#vite/fixtures/server.js'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect } from 'vitest'
 
-vi.mock(import('#server/common/helpers/fetch-redirect-from-backend.js'))
+/**
+ * @import { SetupServer } from 'msw/node'
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
 
 const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
 const fileId = 'file-001'
@@ -32,36 +36,60 @@ const regulator = buildMockAuth({
   ...sessionIdentity(IDENTITIES.regulator)
 })
 
+const backendPath = `${registrationPath}/summary-logs/files/${fileId}`
+
 /**
+ * @param {SetupServer} msw
+ * @param {string} location
+ */
+const backendRedirectsTo = (msw, location) => {
+  /** @type {string[]} */
+  const requests = []
+
+  msw.use(
+    http.get(`${config.get('eprBackendUrl')}${backendPath}`, ({ request }) => {
+      requests.push(request.url)
+      return new HttpResponse(null, { status: 302, headers: { location } })
+    })
+  )
+
+  return requests
+}
+
+/**
+ * @param {SetupServer} msw
  * @param {{
  *   contentDisposition?: string | null,
  *   contentType?: string | null,
- *   ok?: boolean,
  *   status?: number
  * }} [file]
  */
-const storageAnswers = ({
-  contentDisposition = disposition,
-  contentType = 'application/vnd.ms-excel',
-  ok = true,
-  status = 200
-} = {}) =>
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue({
-      ok,
-      status,
-      arrayBuffer: async () => new TextEncoder().encode('xlsx-bytes').buffer,
-      headers: {
-        get: (name) =>
-          name === 'content-disposition'
-            ? contentDisposition
-            : name === 'content-type'
-              ? contentType
-              : null
-      }
-    })
-  )
+const storageAnswers = (
+  msw,
+  {
+    contentDisposition = disposition,
+    contentType = 'application/vnd.ms-excel',
+    status = statusCodes.ok
+  } = {}
+) =>
+  serveDownload(msw, storageUrl, {
+    body: 'xlsx-bytes',
+    contentDisposition,
+    contentType,
+    status
+  })
+
+/**
+ * @param {SetupServer} msw
+ * @param {{
+ *   file?: Parameters<typeof storageAnswers>[1],
+ *   location?: string
+ * }} [answers]
+ */
+const theFileIsStored = (msw, { location = signedUrl, file } = {}) => ({
+  backend: backendRedirectsTo(msw, location),
+  storage: storageAnswers(msw, file)
+})
 
 /**
  * @param {HapiServer} server
@@ -75,16 +103,13 @@ describe('the summary log download', () => {
     config.set('featureFlags.regulatorAccess', true)
   })
 
-  beforeEach(() => {
-    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(signedUrl)
-    storageAnswers()
-  })
-
   afterAll(() => {
     config.set('featureFlags.regulatorAccess', false)
   })
 
-  it('serves the file a regulator asked for', async ({ server }) => {
+  it('serves the file a regulator asked for', async ({ server, msw }) => {
+    theFileIsStored(msw)
+
     const response = await visit(server, regulator)
 
     expect(response.statusCode).toBe(statusCodes.ok)
@@ -94,9 +119,10 @@ describe('the summary log download', () => {
   // Storage need not honour the override the backend signed, and the emulator
   // the journey tests run against does not.
   it('names the file as the signed URL says, whatever storage answered', async ({
-    server
+    server,
+    msw
   }) => {
-    storageAnswers({ contentDisposition: null })
+    theFileIsStored(msw, { file: { contentDisposition: null } })
 
     const response = await visit(server, regulator)
 
@@ -104,18 +130,24 @@ describe('the summary log download', () => {
   })
 
   it('falls back to the storage disposition where the URL named none', async ({
-    server
+    server,
+    msw
   }) => {
-    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(storageUrl)
+    theFileIsStored(msw, { location: storageUrl })
 
     const response = await visit(server, regulator)
 
     expect(response.headers['content-disposition']).toBe(disposition)
   })
 
-  it('still serves the file where neither named one', async ({ server }) => {
-    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(storageUrl)
-    storageAnswers({ contentDisposition: null })
+  it('still serves the file where neither named one', async ({
+    server,
+    msw
+  }) => {
+    theFileIsStored(msw, {
+      location: storageUrl,
+      file: { contentDisposition: null }
+    })
 
     const response = await visit(server, regulator)
 
@@ -123,7 +155,9 @@ describe('the summary log download', () => {
     expect(response.headers['content-disposition']).toBeUndefined()
   })
 
-  it('takes the content type from storage', async ({ server }) => {
+  it('takes the content type from storage', async ({ server, msw }) => {
+    theFileIsStored(msw)
+
     const response = await visit(server, regulator)
 
     expect(response.headers['content-type']).toContain(
@@ -132,9 +166,10 @@ describe('the summary log download', () => {
   })
 
   it('falls back to a generic content type where storage named none', async ({
-    server
+    server,
+    msw
   }) => {
-    storageAnswers({ contentType: null })
+    theFileIsStored(msw, { file: { contentType: null } })
 
     const response = await visit(server, regulator)
 
@@ -143,56 +178,59 @@ describe('the summary log download', () => {
     )
   })
 
-  it('asks the backend for the file, carrying the session token', async ({
-    server
-  }) => {
+  it('asks the backend for the file', async ({ server, msw }) => {
+    const { backend } = theFileIsStored(msw)
+
     await visit(server, regulator)
 
-    expect(fetchRedirectFromBackend).toHaveBeenCalledWith(
-      `${registrationPath}/summary-logs/files/${fileId}`,
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: expect.stringContaining('Bearer ')
-        })
-      })
-    )
+    expect(backend).toStrictEqual([
+      `${config.get('eprBackendUrl')}${backendPath}`
+    ])
   })
 
-  it('does not exist for an operator', async ({ server }) => {
+  it('does not exist for an operator', async ({ server, msw }) => {
+    const { backend } = theFileIsStored(msw)
+
     const response = await visit(server, operator)
 
     expect(response.statusCode).toBe(statusCodes.notFound)
-    expect(fetchRedirectFromBackend).not.toHaveBeenCalled()
+    expect(backend).toStrictEqual([])
   })
 
   it('does not exist for a regulator while the surface is off', async ({
-    server
+    server,
+    msw
   }) => {
+    const { backend } = theFileIsStored(msw)
+
     config.set('featureFlags.regulatorAccess', false)
     const response = await visit(server, regulator)
     config.set('featureFlags.regulatorAccess', true)
 
     expect(response.statusCode).toBe(statusCodes.notFound)
+    expect(backend).toStrictEqual([])
   })
 
   // Without this the backend could point the server at anything it liked.
   it('refuses a redirect away from storage, and fetches nothing', async ({
-    server
+    server,
+    msw
   }) => {
-    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(
-      'https://evil.example.com/steal'
-    )
+    const evilUrl = 'https://evil.example.com/steal'
+    backendRedirectsTo(msw, evilUrl)
+    const fetched = serveDownload(msw, evilUrl)
 
     const response = await visit(server, regulator)
 
     expect(response.statusCode).toBe(statusCodes.badGateway)
-    expect(fetch).not.toHaveBeenCalled()
+    expect(fetched).toStrictEqual([])
   })
 
   it('fails rather than serving an empty file where storage refused', async ({
-    server
+    server,
+    msw
   }) => {
-    storageAnswers({ ok: false, status: 403 })
+    theFileIsStored(msw, { file: { status: statusCodes.forbidden } })
 
     const response = await visit(server, regulator)
 

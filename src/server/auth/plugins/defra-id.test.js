@@ -3,6 +3,7 @@ import { it } from '#vite/fixtures/server.js'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import {
   createDefraId,
@@ -459,7 +460,7 @@ describe('#defraId', () => {
       const authProvider = createDefraIdAuthProvider(mockVerifyToken)
 
       await expect(
-        authProvider.verifyBackendToken('an-id-token')
+        authProvider.verifyBackendToken(toBackendToken('an-id-token'))
       ).resolves.toStrictEqual({
         profile: { id: 'user-123', email: 'john.doe@example.com' },
         expiresAt: '2025-01-01T00:00:00.000Z'

@@ -7,7 +7,7 @@ import { year } from '#server/common/helpers/year.js'
  * @param {{
  *   keys: AccreditationKeys,
  *   accreditationNumber: string,
- *   backendToken: string,
+ *   backendToken: BackendToken,
  *   logger: TypedLogger
  * }} params
  * @returns {Promise<WasteBalance | null>}
@@ -27,6 +27,7 @@ export const fetchPrnWasteBalance = ({
   })
 
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'

@@ -7,13 +7,14 @@ import { fetchOrganisation } from './fetch-organisation.js'
 import { registrationIn, registrationNotFound } from './registration-in-view.js'
 
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
 /**
  * The registration from the organisation read model; an unknown organisation is a registration not found.
- * @param {RegistrationKeys & { backendToken: string }} params
+ * @param {RegistrationKeys & { backendToken: BackendToken }} params
  * @returns {Promise<{ organisation: OrganisationView, registration: RegistrationView }>}
  */
 export const fetchRegistration = async ({ backendToken, ...keys }) => {

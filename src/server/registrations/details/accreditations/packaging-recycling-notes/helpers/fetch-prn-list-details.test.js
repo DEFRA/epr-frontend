@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { fetchRequiredAnyAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { buildRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-view-fixtures.js'
@@ -22,7 +23,7 @@ describe(fetchPrnListDetails, () => {
     registrationNumber: 'R26ER5001180041PL',
     year: '2026'
   }
-  const backendToken = 'token'
+  const backendToken = toBackendToken('token')
   const credentials = buildMockAuth({ backendToken }).credentials
 
   const { organisation, registration, accreditation } =
