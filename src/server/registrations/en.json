@@ -108,6 +108,7 @@
       "status": "Status"
     }
   },
+  "heading": "{{ material }} ({{ year }})",
   "manageReports": "Manage reports",
   "manageReportsReadOnly": "View reports",
   "notes": {
@@ -118,7 +119,7 @@
     "manage": "Manage {{noteTypePlural}}",
     "manageReadOnly": "View {{noteTypePlural}}"
   },
-  "pageTitle": "{{ siteName }}: {{ material }}",
+  "pageTitle": "{{ siteName }}: {{ material }} ({{ year }})",
   "reapplyAccreditationLead": "You can now",
   "reapplyAccreditationLink": "apply for {{ year }} accreditation",
   "registration": "Registration",
