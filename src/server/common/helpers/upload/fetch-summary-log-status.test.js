@@ -1,9 +1,12 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
 import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
+
+const backendToken = toBackendToken('test-id-token')
 
 describe(fetchSummaryLogStatus, () => {
   const backendUrl = config.get('eprBackendUrl')
@@ -29,7 +32,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: 'test-id-token'
+      backendToken
     })
 
     expect(result).toStrictEqual(mockResponse)
@@ -74,7 +77,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: 'test-id-token'
+      backendToken
     })
 
     expect(
@@ -96,7 +99,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: 'test-id-token'
+      backendToken
     })
 
     expect(result).not.toHaveProperty('unknownField')
@@ -121,7 +124,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     const result = await fetchSummaryLogStatus(keys, summaryLogId, {
-      backendToken: 'test-id-token'
+      backendToken
     })
 
     expect(warnSpy).toHaveBeenCalledTimes(1)

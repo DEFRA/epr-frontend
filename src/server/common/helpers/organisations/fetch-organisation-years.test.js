@@ -2,12 +2,15 @@ import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { test } from '#vite/fixtures/server.js'
 
 import { fetchOrganisationYears } from './fetch-organisation-years.js'
 
 const backendUrl = config.get('eprBackendUrl')
+
+const backendToken = toBackendToken('test-id-token')
 
 describe(fetchOrganisationYears, () => {
   test('returns the years from the backend', async ({ msw }) => {
@@ -19,7 +22,7 @@ describe(fetchOrganisationYears, () => {
 
     const result = await fetchOrganisationYears(
       organisationNumber('50002'),
-      'test-id-token'
+      backendToken
     )
 
     expect(result).toStrictEqual([2027, 2026])
@@ -36,10 +39,7 @@ describe(fetchOrganisationYears, () => {
       })
     )
 
-    await fetchOrganisationYears(
-      organisationNumber('../admin'),
-      'test-id-token'
-    )
+    await fetchOrganisationYears(organisationNumber('../admin'), backendToken)
 
     expect(pathname).toBe('/organisations/..%2Fadmin/years')
   })

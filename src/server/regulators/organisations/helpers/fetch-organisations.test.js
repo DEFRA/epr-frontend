@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { test } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
@@ -6,7 +7,7 @@ import { describe, expect } from 'vitest'
 import { fetchOrganisations } from './fetch-organisations.js'
 
 const backendUrl = config.get('eprBackendUrl')
-const backendToken = 'test-backend-token'
+const backendToken = toBackendToken('test-backend-token')
 
 /** @import { SetupServer } from 'msw/node' */
 

@@ -4,6 +4,7 @@ import {
   registrationPath
 } from '#server/reports/helpers/report-paths.js'
 
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 /** @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js' */
 
 const UPLOAD_YEAR = 2026
@@ -15,7 +16,7 @@ const UPLOAD_YEAR = 2026
  * @param {RegistrationKeys} options.keys
  * @param {boolean} options.accredited
  * @param {string} options.redirectUrl
- * @param {string} options.backendToken
+ * @param {BackendToken} options.backendToken
  * @returns {Promise<{summaryLogId: string, uploadId: string, uploadUrl: string, statusUrl: string}>}
  */
 const initiateSummaryLogUpload = ({

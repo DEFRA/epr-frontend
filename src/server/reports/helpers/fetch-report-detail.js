@@ -4,6 +4,7 @@ import { ReportStaleError, staleReasons } from './stale.js'
 
 /**
  * @import { SubmissionKeys } from './report-paths.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  */
 
 /**
@@ -12,7 +13,7 @@ import { ReportStaleError, staleReasons } from './stale.js'
  * a consistent error type regardless of whether staleness came from a GET 200
  * (stale field) or a PATCH/POST 409.
  * @param {SubmissionKeys} keys
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<ReportDetailResponse>}
  */
 export async function fetchReportDetail(keys, backendToken) {

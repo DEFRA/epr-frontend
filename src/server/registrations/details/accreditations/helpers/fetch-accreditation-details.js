@@ -9,6 +9,7 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
 
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
@@ -49,7 +50,7 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
 
 /**
  * The accreditation from the organisation read model, with its balance.
- * @param {{ keys: AccreditationKeys, backendToken: string, logger: TypedLogger }} params
+ * @param {{ keys: AccreditationKeys, backendToken: BackendToken, logger: TypedLogger }} params
  * @returns {Promise<Pick<AccreditationDetails, 'organisation' | 'registration' | 'accreditation' | 'wasteBalance'>>}
  */
 const fetchAccreditation = async ({ keys, backendToken, logger }) => {
@@ -72,7 +73,7 @@ const fetchAccreditation = async ({ keys, backendToken, logger }) => {
 
 /**
  * The reporting calendar, or no periods where it could not be read.
- * @param {{ keys: RegistrationKeys, backendToken: string, logger: TypedLogger }} params
+ * @param {{ keys: RegistrationKeys, backendToken: BackendToken, logger: TypedLogger }} params
  * @returns {Promise<ReportingCalendar>}
  */
 const fetchReportingCalendar = async ({ keys, backendToken, logger }) => {
@@ -90,7 +91,7 @@ const fetchReportingCalendar = async ({ keys, backendToken, logger }) => {
 
 /**
  * The accreditation's ledger, or null for a session the backend would refuse.
- * @param {{ keys: AccreditationKeys, backendToken: string, canReadLedger: boolean }} params
+ * @param {{ keys: AccreditationKeys, backendToken: BackendToken, canReadLedger: boolean }} params
  * @returns {Promise<LedgerEvent[] | null>}
  */
 const fetchLedger = ({ keys, backendToken, canReadLedger }) =>
@@ -100,7 +101,7 @@ const fetchLedger = ({ keys, backendToken, canReadLedger }) =>
 
 /**
  * The accreditation's notes, or none where they could not be read.
- * @param {{ keys: AccreditationKeys, backendToken: string, logger: TypedLogger }} params
+ * @param {{ keys: AccreditationKeys, backendToken: BackendToken, logger: TypedLogger }} params
  * @returns {Promise<PackagingRecyclingNote[]>}
  */
 const fetchNotes = async ({ keys, backendToken, logger }) => {

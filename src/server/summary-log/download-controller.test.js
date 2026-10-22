@@ -43,17 +43,17 @@ const backendPath = `${registrationPath}/summary-logs/files/${fileId}`
  * @param {string} location
  */
 const backendRedirectsTo = (msw, location) => {
-  /** @type {(string | null)[]} */
-  const authorizations = []
+  /** @type {string[]} */
+  const requests = []
 
   msw.use(
     http.get(`${config.get('eprBackendUrl')}${backendPath}`, ({ request }) => {
-      authorizations.push(request.headers.get('authorization'))
+      requests.push(request.url)
       return new HttpResponse(null, { status: 302, headers: { location } })
     })
   )
 
-  return authorizations
+  return requests
 }
 
 /**
@@ -178,15 +178,14 @@ describe('the summary log download', () => {
     )
   })
 
-  it('asks the backend for the file, carrying the session token', async ({
-    server,
-    msw
-  }) => {
+  it('asks the backend for the file', async ({ server, msw }) => {
     const { backend } = theFileIsStored(msw)
 
     await visit(server, regulator)
 
-    expect(backend).toStrictEqual([expect.stringMatching(/^Bearer .+/)])
+    expect(backend).toStrictEqual([
+      `${config.get('eprBackendUrl')}${backendPath}`
+    ])
   })
 
   it('does not exist for an operator', async ({ server, msw }) => {

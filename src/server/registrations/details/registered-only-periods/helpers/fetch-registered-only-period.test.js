@@ -1,3 +1,4 @@
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import Boom from '@hapi/boom'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
@@ -22,7 +23,7 @@ vi.mock(
 
 const organisationNumber = '500118'
 const registrationNumber = 'R26ER5001180041PL'
-const backendToken = 'test-token'
+const backendToken = toBackendToken('test-token')
 
 const error = vi.fn()
 const info = vi.fn()

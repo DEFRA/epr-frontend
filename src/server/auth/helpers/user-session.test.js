@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { updateUserSession } from '#server/auth/helpers/user-session.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import {
   assertUserSession,
   sessionIdentity
@@ -37,7 +38,7 @@ const existingSession = /** @type {UserSession} */ ({
   profile: { id: 'user-123', email: 'test@example.com' },
   expiresAt: new Date().toISOString(),
   idToken: 'old-id-token',
-  backendToken: 'old-backend-token',
+  backendToken: toBackendToken('old-backend-token'),
   refreshToken: 'old-refresh-token',
   idTokenRefreshInProgress: true,
   ...sessionIdentity(IDENTITIES.operator),
@@ -76,7 +77,7 @@ const refreshedExpiry = new Date(Date.now() + 3600 * 1000).toISOString()
 const authProviderPresenting = (backendToken = 'new-id-token') =>
   /** @type {AuthProvider} */ ({
     tokenRequestParams: {},
-    selectBackendToken: () => backendToken,
+    selectBackendToken: () => toBackendToken(backendToken),
     verifyBackendToken: vi.fn().mockResolvedValue({
       profile: refreshedProfile,
       expiresAt: refreshedExpiry

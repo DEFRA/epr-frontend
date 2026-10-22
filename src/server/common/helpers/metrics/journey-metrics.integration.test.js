@@ -1,6 +1,7 @@
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 import { describe, expect, vi } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -71,7 +72,9 @@ vi.mock(import('aws-embedded-metrics'), async (importOriginal) => {
   }
 })
 
-const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
+const mockAuth = buildMockAuth({
+  backendToken: toBackendToken('test-id-token')
+})
 
 /**
  * A real browser resends whatever `Set-Cookie` the previous response carried;
@@ -107,7 +110,9 @@ describe('journey metrics emit-once, driven through a real session', () => {
   describe('summary log upload journey (success page re-renders on every poll)', () => {
     const organisationNumber = '500118'
     const registrationNumber = 'R26ER5001180041PL'
-    const operatorAuth = buildMockAuth({ backendToken: 'test-id-token' })
+    const operatorAuth = buildMockAuth({
+      backendToken: toBackendToken('test-id-token')
+    })
     const summaryLogId = '789'
     const uploadUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
     const submitUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}/submit`

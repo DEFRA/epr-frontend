@@ -1,13 +1,14 @@
 import { backend, path } from '#server/common/helpers/backend-client.js'
 import { year } from '#server/common/helpers/year.js'
 
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 /** @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js' */
 /** @import { Year } from '#server/common/helpers/year.js' */
 
 /**
  * Fetches the years an organisation was active in
  * @param {OrganisationNumber} organisationNumber - The organisation number
- * @param {string} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken
  * @returns {Promise<Year[]>} Years, newest first
  */
 const fetchOrganisationYears = async (organisationNumber, backendToken) => {

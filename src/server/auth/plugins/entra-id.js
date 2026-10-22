@@ -1,5 +1,6 @@
 import { asHapiRequest } from '#server/common/hapi-types.js'
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { paths } from '#server/paths.js'
 import bell from '@hapi/bell'
 import * as jose from 'jose'
@@ -103,7 +104,7 @@ const createEntraIdAuthProvider = (oidcConf) => {
         throw new Error('Entra ID returned no access token')
       }
 
-      return tokens.access_token
+      return toBackendToken(tokens.access_token)
     },
     verifyBackendToken: async (token) => {
       const payload = await verifyToken(token)

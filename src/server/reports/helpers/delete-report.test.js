@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { deleteReport } from './delete-report.js'
@@ -29,7 +30,7 @@ describe(deleteReport, () => {
         period: 3,
         submissionNumber: 1
       },
-      'a-token'
+      toBackendToken('a-token')
     )
 
     expect(result).toBeUndefined()

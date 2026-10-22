@@ -6,6 +6,7 @@ import { fetchRegisteredOnlyLedgerEvents } from '#server/common/helpers/waste-ba
 import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
@@ -32,7 +33,7 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
 /**
  * @typedef {RegistrationKeys & {
  *   year: number,
- *   backendToken: string,
+ *   backendToken: BackendToken,
  *   canReadLedger: boolean,
  *   logger: TypedLogger
  * }} RegisteredOnlyPeriodRequest
@@ -49,7 +50,7 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
  * helper, and a swallowed error there would silently empty their table. A
  * calendar this page could not read renders as no periods, so downstream has
  * one empty case to build and to test rather than two.
- * @param {{ keys: RegistrationKeys, backendToken: string, logger: TypedLogger }} params
+ * @param {{ keys: RegistrationKeys, backendToken: BackendToken, logger: TypedLogger }} params
  * @returns {Promise<ReportingCalendar>}
  */
 const fetchCalendar = async ({ keys, backendToken, logger }) => {
@@ -70,7 +71,7 @@ const fetchCalendar = async ({ keys, backendToken, logger }) => {
  * @param {{
  *   keys: RegistrationKeys,
  *   year: number,
- *   backendToken: string,
+ *   backendToken: BackendToken,
  *   canReadLedger: boolean,
  *   logger: TypedLogger
  * }} params

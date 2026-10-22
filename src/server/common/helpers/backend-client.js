@@ -17,6 +17,7 @@ import { getTracingHeaderName } from './request-tracing.js'
 /**
  * @import { ReadableStream as WebReadableStream } from 'node:stream/web'
  * @import { Schema } from 'joi'
+ * @import { BackendToken } from './backend-token.js'
  */
 
 /**
@@ -189,7 +190,7 @@ const rejection = async (url, response) => {
 }
 
 /**
- * @param {string} token
+ * @param {BackendToken} token
  * @param {string} method
  * @param {string} url
  * @param {unknown} [body]
@@ -220,7 +221,7 @@ const sendJson = async (token, method, url, body) => {
 }
 
 /**
- * @param {string} token
+ * @param {BackendToken} token
  * @param {string} url
  * @returns {Promise<string>}
  */
@@ -256,7 +257,7 @@ const sendForRedirect = async (token, url) => {
  * Hapi serialises a web stream as `{}`, so the body is handed over as a Node
  * stream. The double cast bridges a `@types/node` mismatch between the web
  * `ReadableStream` fetch answers with and the one `Readable.fromWeb` takes.
- * @param {string} token
+ * @param {BackendToken} token
  * @param {string} url
  * @returns {Promise<BackendStream>}
  */
@@ -293,7 +294,7 @@ const sendForStream = async (token, url) => {
 
 /**
  * Calls the backend as `token`. A call's `onError` wins over the client's.
- * @param {string} token
+ * @param {BackendToken} token
  * @param {{ onError?: OnError }} [defaults]
  */
 export const backend = (token, defaults = {}) => {

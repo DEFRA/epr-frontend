@@ -3,6 +3,7 @@ import { backend } from '#server/common/helpers/backend-client.js'
 import { PAGE_SIZE } from './pagination.js'
 
 /** @import { SearchedOrganisation } from './to-organisation-row.js' */
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 
 /**
  * A page of organisations as the backend returns it.
@@ -20,7 +21,7 @@ import { PAGE_SIZE } from './pagination.js'
  * regulator has searched. The page and page size always go with the request:
  * the backend answers a request carrying no criteria with every organisation
  * it holds, unpaginated.
- * @param {{ page: number, search?: string, backendToken: string }} query
+ * @param {{ page: number, search?: string, backendToken: BackendToken }} query
  * @returns {Promise<OrganisationsPage>}
  */
 export const fetchOrganisations = ({ page, search, backendToken }) =>

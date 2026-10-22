@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { fetchReportDetail } from './fetch-report-detail.js'
@@ -46,7 +47,7 @@ describe(fetchReportDetail, () => {
         period: 3,
         submissionNumber: 1
       },
-      'a-token'
+      toBackendToken('a-token')
     )
 
   it.for([

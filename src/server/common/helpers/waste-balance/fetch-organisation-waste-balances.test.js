@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { year } from '#server/common/helpers/year.js'
 import { test } from '#vite/fixtures/server.js'
@@ -9,6 +10,8 @@ import { test } from '#vite/fixtures/server.js'
 import { fetchOrganisationWasteBalances } from './fetch-organisation-waste-balances.js'
 
 const backendUrl = config.get('eprBackendUrl')
+
+const backendToken = toBackendToken('test-id-token')
 
 describe(fetchOrganisationWasteBalances, () => {
   test('returns the year’s balances keyed by accreditation number', async ({
@@ -25,7 +28,7 @@ describe(fetchOrganisationWasteBalances, () => {
     const result = await fetchOrganisationWasteBalances(
       organisationNumber('50002'),
       year(2026),
-      'test-id-token'
+      backendToken
     )
 
     expect(result).toStrictEqual({
@@ -47,7 +50,7 @@ describe(fetchOrganisationWasteBalances, () => {
     await fetchOrganisationWasteBalances(
       organisationNumber('../admin'),
       year(2026),
-      'test-id-token'
+      backendToken
     )
 
     expect(pathname).toBe('/organisations/..%2Fadmin/waste-balances/2026')

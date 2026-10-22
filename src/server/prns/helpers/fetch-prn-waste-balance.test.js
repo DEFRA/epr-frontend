@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { fetchPrnWasteBalance } from './fetch-prn-waste-balance.js'
@@ -21,7 +22,7 @@ describe(fetchPrnWasteBalance, () => {
         year: '2026'
       },
       accreditationNumber: 'A26EN0000000001PL',
-      backendToken: 'token',
+      backendToken: toBackendToken('token'),
       logger
     })
 

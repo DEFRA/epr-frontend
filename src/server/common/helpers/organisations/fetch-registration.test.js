@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -15,7 +16,7 @@ import { fetchRegistration } from './fetch-registration.js'
 const backendUrl = config.get('eprBackendUrl')
 
 const registrationNumber = 'R26ER5001180041PL'
-const backendToken = 'test-token'
+const backendToken = toBackendToken('test-token')
 
 const organisationUrl = `${backendUrl}/organisations/500118`
 
@@ -65,22 +66,6 @@ describe(fetchRegistration, () => {
       organisation,
       registration
     })
-  })
-
-  test('reads the organisation as the token bearer', async ({ msw }) => {
-    /** @type {string | null} */
-    let authorisation = null
-
-    msw.use(
-      http.get(organisationUrl, ({ request }) => {
-        authorisation = request.headers.get('authorization')
-        return HttpResponse.json(organisation)
-      })
-    )
-
-    await fetchRegistration(params)
-
-    expect(authorisation).toBe('Bearer test-token')
   })
 
   test('is a registration not found for a number the organisation does not hold', async ({

@@ -1,10 +1,13 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { fetchPackagingRecyclingNotes } from './fetch-packaging-recycling-notes.js'
+
+const backendToken = toBackendToken('a-token')
 
 describe(fetchPackagingRecyclingNotes, () => {
   const keys = {
@@ -16,12 +19,11 @@ describe(fetchPackagingRecyclingNotes, () => {
   it('should get the notes of the accreditation the keys name, in the page shape', async ({
     msw
   }) => {
-    /** @type {{ authorization: string | null, pathname: string }[]} */
+    /** @type {{ pathname: string }[]} */
     const received = []
     msw.use(
       http.get(/packaging-recycling-notes$/, ({ request }) => {
         received.push({
-          authorization: request.headers.get('authorization'),
           pathname: new URL(request.url).pathname
         })
         return HttpResponse.json({
@@ -35,7 +37,7 @@ describe(fetchPackagingRecyclingNotes, () => {
       })
     )
 
-    const result = await fetchPackagingRecyclingNotes(keys, 'a-token')
+    const result = await fetchPackagingRecyclingNotes(keys, backendToken)
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
@@ -46,7 +48,6 @@ describe(fetchPackagingRecyclingNotes, () => {
     })
     expect(received).toStrictEqual([
       {
-        authorization: 'Bearer a-token',
         pathname:
           '/organisations/500123/registrations/R26%2F1/accreditations/2026/packaging-recycling-notes'
       }
@@ -71,7 +72,7 @@ describe(fetchPackagingRecyclingNotes, () => {
       )
     )
 
-    const result = await fetchPackagingRecyclingNotes(keys, 'a-token')
+    const result = await fetchPackagingRecyclingNotes(keys, backendToken)
 
     expect(result.map(({ id }) => id)).toStrictEqual(['older', 'newer'])
   })

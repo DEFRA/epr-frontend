@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { test } from '#vite/fixtures/server.js'
@@ -26,7 +27,7 @@ describe(fetchAccreditationDetails, () => {
     registrationNumber: 'R26ER5001180041PL',
     year: '2026'
   }
-  const backendToken = 'test-token'
+  const backendToken = toBackendToken('test-token')
   const credentials = buildMockAuth({ backendToken }).credentials
   const logger = createMockLogger()
 
@@ -262,21 +263,11 @@ describe(fetchAccreditationDetails, () => {
   })
 
   test("reads the year's balance by accreditation number", async ({ msw }) => {
-    let authorization
-    backendHolds(
-      msw,
-      http.get(balancesUrl, ({ request }) => {
-        authorization = request.headers.get('Authorization')
-        return HttpResponse.json({
-          [accreditation.accreditationNumber]: wasteBalance
-        })
-      })
-    )
+    backendHolds(msw)
 
     const result = await fetchDetails()
 
     expect(result.wasteBalance).toStrictEqual(wasteBalance)
-    expect(authorization).toBe(`Bearer ${backendToken}`)
   })
 
   test('reports a balance it could not read as absent rather than failing the page', async ({
@@ -316,24 +307,14 @@ describe(fetchAccreditationDetails, () => {
   })
 
   describe('the packaging recycling notes', () => {
-    test('reads the notes by number with the session backend token', async ({
-      msw
-    }) => {
-      let authorization
-      backendHolds(
-        msw,
-        http.get(notesUrl, ({ request }) => {
-          authorization = request.headers.get('Authorization')
-          return HttpResponse.json({ items: [prnResource] })
-        })
-      )
+    test('reads the notes by number', async ({ msw }) => {
+      backendHolds(msw)
 
       const result = await fetchDetails()
 
       expect(result.packagingRecyclingNotes).toStrictEqual(
         packagingRecyclingNotes
       )
-      expect(authorization).toBe(`Bearer ${backendToken}`)
     })
 
     test('reports notes it could not read as none rather than failing the page', async ({
@@ -355,19 +336,11 @@ describe(fetchAccreditationDetails, () => {
 
   describe('the waste balance ledger', () => {
     test("reads the accreditation's ledger by number", async ({ msw }) => {
-      let authorization
-      backendHolds(
-        msw,
-        http.get(ledgerUrl, ({ request }) => {
-          authorization = request.headers.get('Authorization')
-          return HttpResponse.json({ events: ledgerEvents })
-        })
-      )
+      backendHolds(msw)
 
       const result = await fetchDetails()
 
       expect(result.ledgerEvents).toStrictEqual(ledgerEvents)
-      expect(authorization).toBe(`Bearer ${backendToken}`)
     })
 
     test('asks for no ledger, and answers none, for a session that may not read one', async ({

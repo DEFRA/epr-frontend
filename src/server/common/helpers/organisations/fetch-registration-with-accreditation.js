@@ -6,6 +6,7 @@ import { isAccreditationActive } from './accreditation-helpers.js'
 import { fetchRegistration } from './fetch-registration.js'
 
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from './organisation-view.js'
  */
@@ -25,7 +26,7 @@ export const ACCREDITATION_YEAR = '2026'
 /**
  * The registration by number, with its live accreditation for {@link ACCREDITATION_YEAR}.
  * @param {RegistrationKeys} keys
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<RegistrationWithAccreditation>}
  */
 export const fetchRegistrationWithAccreditation = async (
@@ -50,7 +51,7 @@ export const fetchRegistrationWithAccreditation = async (
 /**
  * The registration and its live accreditation for the year, by number, or 404.
  * @param {AccreditationKeys} keys
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<Required<RegistrationWithAccreditation>>}
  */
 export const fetchRequiredAccreditation = async (
@@ -74,7 +75,7 @@ export const fetchRequiredAccreditation = async (
  * The registration and its accreditation for the year whatever its status, by
  * number, or 404. A closed accreditation keeps its ledger and its notes.
  * @param {AccreditationKeys} keys
- * @param {string} backendToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<Required<RegistrationWithAccreditation>>}
  */
 export const fetchRequiredAnyAccreditation = async (

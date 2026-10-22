@@ -7,6 +7,18 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
+const testOnlyImports = {
+  group: ['**/test-helpers/**', '\\#vite/**'],
+  message: 'Test helpers and fixtures are for tests only.'
+}
+
+const mintsBackendToken = {
+  group: ['**/backend-token.js'],
+  importNames: ['toBackendToken'],
+  message:
+    'Only a sign-in provider mints a backend token - take one from the session instead.'
+}
+
 export default [
   // ESLint recommended rules
   js.configs.recommended,
@@ -119,6 +131,28 @@ export default [
         },
         node: true
       }
+    }
+  },
+
+  // Production code takes nothing from tests, and only a sign-in provider
+  // decides which token a session presents
+  {
+    files: ['src/**/*.js'],
+    ignores: ['src/**/test-helpers/**', '**/*.test.js'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { patterns: [testOnlyImports, mintsBackendToken] }
+      ]
+    }
+  },
+  {
+    files: [
+      'src/server/auth/plugins/defra-id.js',
+      'src/server/auth/plugins/entra-id.js'
+    ],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [testOnlyImports] }]
     }
   },
 

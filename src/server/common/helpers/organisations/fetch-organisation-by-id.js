@@ -1,11 +1,12 @@
 import { backend, path } from '#server/common/helpers/backend-client.js'
 
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 /** @import { OrganisationById } from '#server/common/helpers/natural-keys/types.js' */
 
 /**
  * Fetches organisation data by ID from EPR Backend
  * @param {string} organisationId - The organisation ID
- * @param {string} backendToken - Bearer token for the backend
+ * @param {BackendToken} backendToken
  * @returns {Promise<OrganisationById>}
  */
 const fetchOrganisationById = (organisationId, backendToken) =>

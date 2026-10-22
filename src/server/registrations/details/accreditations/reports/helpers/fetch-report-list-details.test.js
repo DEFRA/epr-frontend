@@ -1,3 +1,4 @@
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import Boom from '@hapi/boom'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -16,7 +17,7 @@ vi.mock(import('#server/reports/helpers/fetch-reporting-periods.js'))
 describe(fetchReportListDetails, () => {
   const organisationNumber = '500118'
   const registrationNumber = 'R26ER5001180041PL'
-  const backendToken = 'token'
+  const backendToken = toBackendToken('token')
 
   /** @type {Accreditation} */
   const accreditation = {

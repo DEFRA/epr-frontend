@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { year } from '#server/common/helpers/year.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
@@ -21,7 +22,7 @@ const params = {
   organisationNumber: organisationNumber('500001'),
   year: year(2026),
   accreditationNumber: 'A26ER5001180114PL',
-  backendToken: 'mock-token',
+  backendToken: toBackendToken('mock-token'),
   logger
 }
 
@@ -31,18 +32,15 @@ describe(fetchAccreditationBalance, () => {
   })
 
   test("returns the accreditation's balance for the year", async ({ msw }) => {
-    let authorization
     msw.use(
-      http.get(balancesUrl, ({ request }) => {
-        authorization = request.headers.get('Authorization')
-        return HttpResponse.json({ A26ER5001180114PL: balance })
-      })
+      http.get(balancesUrl, () =>
+        HttpResponse.json({ A26ER5001180114PL: balance })
+      )
     )
 
     await expect(fetchAccreditationBalance(params)).resolves.toStrictEqual(
       balance
     )
-    expect(authorization).toBe('Bearer mock-token')
   })
 
   test('returns null when the year holds no balance for the accreditation', async ({

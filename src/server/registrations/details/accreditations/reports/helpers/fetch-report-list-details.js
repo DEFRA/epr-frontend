@@ -3,6 +3,7 @@ import { accreditationIn } from '#server/common/helpers/organisations/registrati
 import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -21,7 +22,7 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
 /**
  * What the reports page shows. A failed read fails the page: the periods are
  * all of its content.
- * @param {AccreditationKeys & { backendToken: string }} params
+ * @param {AccreditationKeys & { backendToken: BackendToken }} params
  * @returns {Promise<ReportListDetails>}
  */
 export const fetchReportListDetails = async ({

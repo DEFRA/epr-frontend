@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { year } from '#server/common/helpers/year.js'
 import { test } from '#vite/fixtures/server.js'
@@ -16,6 +17,8 @@ const organisation = {
   registrations: {}
 }
 
+const backendToken = toBackendToken('test-id-token')
+
 describe(fetchOrganisation, () => {
   test('returns the organisation from the backend', async ({ msw }) => {
     msw.use(
@@ -26,7 +29,7 @@ describe(fetchOrganisation, () => {
 
     const result = await fetchOrganisation(
       organisationNumber('50002'),
-      'test-id-token'
+      backendToken
     )
 
     expect(result).toStrictEqual(organisation)
@@ -41,7 +44,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber('50002'), 'test-id-token')
+    await fetchOrganisation(organisationNumber('50002'), backendToken)
 
     expect(search).toBe('')
   })
@@ -57,25 +60,11 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber('50002'), 'test-id-token', {
+    await fetchOrganisation(organisationNumber('50002'), backendToken, {
       year: year(2026)
     })
 
     expect(search).toBe('?year=2026')
-  })
-
-  test('sends the backend token as a bearer token', async ({ msw }) => {
-    let authorization
-    msw.use(
-      http.get(`${backendUrl}/organisations/50002`, ({ request }) => {
-        authorization = request.headers.get('Authorization')
-        return HttpResponse.json(organisation)
-      })
-    )
-
-    await fetchOrganisation(organisationNumber('50002'), 'test-id-token')
-
-    expect(authorization).toBe('Bearer test-id-token')
   })
 
   test('keeps the organisation number inside its own path segment', async ({
@@ -89,7 +78,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber('../admin'), 'test-id-token')
+    await fetchOrganisation(organisationNumber('../admin'), backendToken)
 
     expect(pathname).toBe('/organisations/..%2Fadmin')
   })

@@ -1,3 +1,4 @@
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -34,7 +35,7 @@ vi.spyOn(metrics.journey, 'start').mockResolvedValue()
 vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const mockAuth = buildMockAuth({
-  backendToken: 'test-id-token',
+  backendToken: toBackendToken('test-id-token'),
   linkedOrganisationId: '123'
 })
 
