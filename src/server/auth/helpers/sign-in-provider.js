@@ -51,12 +51,29 @@ export const forgetSignInProvider = (h) => {
   h.unstate(SIGN_IN_PROVIDER_COOKIE)
 }
 
+const PROVIDER_ID_PATTERN = /^[a-z0-9-]{1,32}$/
+
+/**
+ * The cookie is writable by the browser, so only a value shaped like a
+ * provider id is logged as itself.
+ * @param {unknown} value
+ * @returns {string}
+ */
+const describeProviderCookie = (value) => {
+  if (value === undefined) {
+    return 'absent'
+  }
+  return typeof value === 'string' && PROVIDER_ID_PATTERN.test(value)
+    ? value
+    : 'invalid'
+}
+
 /**
  * The signed-out page for a user who holds no session. The cookie grants
  * nothing, so a forged one buys only the other page. The flag is read because
  * the regulator page is registered only when it is on. Each choice is logged
- * with the provider cookie's value, which names a provider and nothing about
- * the user, and whether the session cookie arrived.
+ * with the provider cookie's value when it is shaped like a provider id, and
+ * whether the session cookie arrived.
  * @param {HapiRequest} request
  * @returns {string}
  */
@@ -65,7 +82,7 @@ export const signedOutPage = (request) => {
   const isRegulator =
     config.get('featureFlags.regulatorAccess') && cookieValue === OIDC_ENTRA_ID
   const page = isRegulator ? paths.regulators.loggedOut : paths.loggedOut
-  const providerCookie = cookieValue ?? 'absent'
+  const providerCookie = describeProviderCookie(cookieValue)
   const sessionCookie = request.state.userSession ? 'present' : 'absent'
   const reason = `signInProvider cookie ${providerCookie}, session cookie ${sessionCookie}`
 

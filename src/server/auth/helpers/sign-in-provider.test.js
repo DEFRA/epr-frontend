@@ -98,4 +98,21 @@ describe(signedOutPage, () => {
       )
     )
   })
+
+  test.each([
+    ['not a string', { nested: 'object' }],
+    ['not shaped like a provider id', 'x'.repeat(33)],
+    ['carries markup', '<script>alert(1)</script>']
+  ])('logs a provider value that is %s as invalid', (_label, value) => {
+    const request = buildRequest({ [SIGN_IN_PROVIDER_COOKIE]: value })
+
+    signedOutPage(mockHapiRequest(request))
+
+    expect(request.logger.info).toHaveBeenCalledWith(
+      expectedLog(
+        paths.loggedOut,
+        'signInProvider cookie invalid, session cookie absent'
+      )
+    )
+  })
 })
