@@ -58,4 +58,22 @@ describe(toPackagingRecyclingNote, () => {
       issuedBy: { name: 'John Smith' }
     })
   })
+
+  it('reads an accepted December PRN whose obligation year follows its accreditation year', () => {
+    const resource = buildPrnResource({
+      status: { current: 'accepted', timeline: [] },
+      isDecemberWaste: true
+    })
+    const { accreditationYear } = resource.issuer.registration.accreditation
+
+    const note = toPackagingRecyclingNote({
+      ...resource,
+      obligationYear: accreditationYear + 1
+    })
+
+    expect(note).toMatchObject({
+      accreditationYear,
+      obligationYear: accreditationYear + 1
+    })
+  })
 })
