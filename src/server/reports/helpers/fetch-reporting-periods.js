@@ -3,13 +3,32 @@ import { backend } from '#server/common/helpers/backend-client.js'
 import { reportsCalendarApiPath } from './report-paths.js'
 
 /**
- * Fetches available reporting periods for a registration by its natural keys.
- * @param {RegistrationKeys} keys
+ * Fetches a registration's reporting calendar for one year by its natural keys.
+ * @param {RegistrationKeys & { year: number }} keys
  * @param {BackendToken} backendToken
- * @returns {Promise<ReportingPeriodsResponse>}
+ * @returns {Promise<YearCalendarResponse>}
  */
-export const fetchReportingPeriodsByNumber = (keys, backendToken) =>
+export const fetchYearCalendar = (keys, backendToken) =>
   backend(backendToken).get(reportsCalendarApiPath(keys))
+
+/**
+ * Fetches a registration's registered-only and accredited periods for one year
+ * as one list, in date order, as a registration that changed type mid-year owes
+ * both.
+ * @param {RegistrationKeys & { year: number }} keys
+ * @param {BackendToken} backendToken
+ * @returns {Promise<ReportingPeriod[]>}
+ */
+export const fetchReportingPeriods = async (keys, backendToken) => {
+  const { registeredOnly, accredited } = await fetchYearCalendar(
+    keys,
+    backendToken
+  )
+  return [
+    ...(registeredOnly?.reportingPeriods ?? []),
+    ...(accredited?.reportingPeriods ?? [])
+  ].sort((a, b) => a.startDate.localeCompare(b.startDate))
+}
 
 /**
  * @typedef {{ name: string }} ReportSubmitter
@@ -27,6 +46,7 @@ export const fetchReportingPeriodsByNumber = (keys, backendToken) =>
 /**
  * @typedef {{
  *   year: number,
+ *   cadence: CadenceValue,
  *   period: number,
  *   submissionNumber: number,
  *   startDate: string,
@@ -38,10 +58,16 @@ export const fetchReportingPeriodsByNumber = (keys, backendToken) =>
  */
 
 /**
+ * Each kind is absent when the registration has no ended period of it in the
+ * year.
  * @typedef {{
- *   cadence: CadenceValue,
- *   reportingPeriods: ReportingPeriod[]
- * }} ReportingPeriodsResponse
+ *   year: number,
+ *   registeredOnly?: { reportingPeriods: ReportingPeriod[] },
+ *   accredited?: {
+ *     accreditationNumber: string,
+ *     reportingPeriods: ReportingPeriod[]
+ *   }
+ * }} YearCalendarResponse
  */
 
 /**

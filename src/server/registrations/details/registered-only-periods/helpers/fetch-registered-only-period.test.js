@@ -3,7 +3,7 @@ import Boom from '@hapi/boom'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchRegisteredOnlyLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
-import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchRegisteredOnlyPeriod } from './fetch-registered-only-period.js'
@@ -47,7 +47,11 @@ const organisation = {
 }
 
 const firstQuarter = /** @type {ReportingPeriod} */ (
-  /** @type {unknown} */ ({ year: 2026, period: 1 })
+  /** @type {unknown} */ ({ year: 2026, cadence: 'quarterly', period: 1 })
+)
+
+const january = /** @type {ReportingPeriod} */ (
+  /** @type {unknown} */ ({ year: 2026, cadence: 'monthly', period: 1 })
 )
 
 const ledgerEvents = /** @type {LedgerEvent[]} */ (
@@ -67,16 +71,20 @@ const params = {
 describe(fetchRegisteredOnlyPeriod, () => {
   beforeEach(() => {
     vi.mocked(fetchOrganisation).mockResolvedValue(organisation)
-    vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
-      cadence: 'quarterly',
-      reportingPeriods: [firstQuarter]
+    vi.mocked(fetchYearCalendar).mockResolvedValue({
+      year: 2026,
+      registeredOnly: { reportingPeriods: [firstQuarter] },
+      accredited: {
+        accreditationNumber: 'A26ER5001180114PL',
+        reportingPeriods: [january]
+      }
     })
     vi.mocked(fetchRegisteredOnlyLedgerEvents).mockResolvedValue(ledgerEvents)
     error.mockClear()
     info.mockClear()
   })
 
-  it('returns the registration from the read model alongside the reporting calendar', async () => {
+  it("returns the registration from the read model alongside the year's registered-only periods", async () => {
     await expect(fetchRegisteredOnlyPeriod(params)).resolves.toStrictEqual({
       organisation,
       registration,
@@ -92,21 +100,28 @@ describe(fetchRegisteredOnlyPeriod, () => {
     expect(fetchOrganisation).toHaveBeenCalledWith('500118', backendToken)
   })
 
-  // The same address the operator's own reports page reads, asked nothing
+  // The calendar the operator's own reports page reads, asked nothing
   // further: what a registration owes is the backend's to decide.
-  it('asks the calendar the same question the operator page asks', async () => {
+  it("asks the calendar for the page's year", async () => {
     await fetchRegisteredOnlyPeriod(params)
 
-    expect(fetchReportingPeriodsByNumber).toHaveBeenCalledWith(
-      keys,
+    expect(fetchYearCalendar).toHaveBeenCalledWith(
+      { ...keys, year: 2026 },
       backendToken
     )
   })
 
+  it('shows no periods for a year with no registered-only periods', async () => {
+    vi.mocked(fetchYearCalendar).mockResolvedValue({ year: 2026 })
+
+    await expect(fetchRegisteredOnlyPeriod(params)).resolves.toMatchObject({
+      cadence: 'quarterly',
+      reportingPeriods: []
+    })
+  })
+
   it('costs the page its table rather than the whole page when the calendar fails', async () => {
-    vi.mocked(fetchReportingPeriodsByNumber).mockRejectedValue(
-      new Error('boom')
-    )
+    vi.mocked(fetchYearCalendar).mockRejectedValue(new Error('boom'))
 
     await expect(fetchRegisteredOnlyPeriod(params)).resolves.toStrictEqual({
       organisation,
@@ -118,9 +133,7 @@ describe(fetchRegisteredOnlyPeriod, () => {
   })
 
   it('says in the log why the table came back empty', async () => {
-    vi.mocked(fetchReportingPeriodsByNumber).mockRejectedValue(
-      new Error('boom')
-    )
+    vi.mocked(fetchYearCalendar).mockRejectedValue(new Error('boom'))
 
     await fetchRegisteredOnlyPeriod(params)
 

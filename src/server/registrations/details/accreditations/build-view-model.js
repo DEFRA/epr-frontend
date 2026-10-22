@@ -294,8 +294,8 @@ const toReportsSummary = ({
   localiseUrl,
   reportingPeriods
 }) => {
-  // The calendar answers one cadence for the registration: quarterly periods
-  // belong to the registered-only page, and no cadence means an unread calendar.
+  // The fetch keeps only the year's accredited periods; no cadence means an
+  // unread calendar.
   const monthlyPeriods = cadence === CADENCE.MONTHLY ? reportingPeriods : []
   const rows = toReportRows({
     cadence: CADENCE.MONTHLY,

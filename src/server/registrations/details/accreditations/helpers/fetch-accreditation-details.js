@@ -5,7 +5,8 @@ import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/
 import { fetchAccreditationLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
 import { year as toYear } from '#server/common/helpers/year.js'
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
-import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { CADENCE } from '#server/reports/constants.js'
+import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
@@ -72,13 +73,17 @@ const fetchAccreditation = async ({ keys, backendToken, logger }) => {
 }
 
 /**
- * The reporting calendar, or no periods where it could not be read.
- * @param {{ keys: RegistrationKeys, backendToken: BackendToken, logger: TypedLogger }} params
+ * The year's accredited periods, or no periods where they could not be read.
+ * @param {{ keys: RegistrationKeys & { year: number }, backendToken: BackendToken, logger: TypedLogger }} params
  * @returns {Promise<ReportingCalendar>}
  */
 const fetchReportingCalendar = async ({ keys, backendToken, logger }) => {
   try {
-    return await fetchReportingPeriodsByNumber(keys, backendToken)
+    const { accredited } = await fetchYearCalendar(keys, backendToken)
+    return {
+      cadence: CADENCE.MONTHLY,
+      reportingPeriods: accredited?.reportingPeriods ?? []
+    }
   } catch (error) {
     logger.error({
       message: `Failed to fetch reporting periods for organisation ${keys.organisationNumber} registration ${keys.registrationNumber}`,
@@ -137,7 +142,8 @@ export const fetchAccreditationDetails = async ({
       fetchReportingCalendar({
         keys: {
           organisationNumber: keys.organisationNumber,
-          registrationNumber: keys.registrationNumber
+          registrationNumber: keys.registrationNumber,
+          year: Number(keys.year)
         },
         backendToken,
         logger

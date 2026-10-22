@@ -161,9 +161,8 @@ export const buildViewModel = ({
     accredited: registrationAccreditedStretches(registration)
   })
 
-  // The calendar answers one cadence for the registration. Quarterly is what a
-  // registered-only operator owes, so anything else belongs to the accreditation
-  // page rather than to this one.
+  // The fetch keeps only the year's registered-only periods; no cadence means
+  // the calendar could not be read.
   const quarterlyPeriods = cadence === CADENCE.QUARTERLY ? reportingPeriods : []
 
   return {
