@@ -40,6 +40,12 @@ const mockAuth = buildMockAuth({
   backendToken: toBackendToken('test-backend-token')
 })
 
+/** @type {RegistrationView['status']} */
+const registeredSince2025 = {
+  current: 'approved',
+  timeline: [{ status: 'approved', at: '2025-01-01T09:00:00.000Z' }]
+}
+
 const regulator = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
@@ -52,7 +58,7 @@ const regulator = buildMockAuth({
  */
 const reprocessor = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
-    status: { current: 'approved', timeline: [] },
+    status: registeredSince2025,
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'reprocessor',
@@ -67,7 +73,7 @@ const reprocessor = (overrides = {}) =>
  */
 const exporter = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
-    status: { current: 'approved', timeline: [] },
+    status: registeredSince2025,
     material: 'paper',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'exporter',
@@ -246,7 +252,7 @@ describe('the organisation home page', () => {
       expect(cell('Material')).toHaveTextContent('Glass remelt')
     })
 
-    it('links a registered-only row to its registration by number', async ({
+    it('links a registered-only row to its page for the year', async ({
       server
     }) => {
       serve({ R26ER1: reprocessor() })
@@ -254,25 +260,33 @@ describe('the organisation home page', () => {
       const { payload } = await visit(server)
 
       expect(load(payload)('tbody a.govuk-link').attr('href')).toBe(
-        `/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1`
+        `/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1/2026`
       )
     })
 
-    it('links an accredited row to its accreditation for the year', async ({
-      server
-    }) => {
-      serve({
-        R26ER1: reprocessor({ accreditations: { 2026: approved2026 } })
-      })
+    it.for(/** @type {const} */ (['approved', 'suspended']))(
+      'links a row whose accreditation is %s to its accreditation for the year',
+      async (current, { server }) => {
+        serve({
+          R26ER1: reprocessor({
+            accreditations: {
+              2026: {
+                accreditationNumber: 'A26ER1',
+                status: { current, timeline: [] }
+              }
+            }
+          })
+        })
 
-      const { payload } = await visit(server)
+        const { payload } = await visit(server)
 
-      expect(load(payload)('tbody a.govuk-link').attr('href')).toBe(
-        `/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1/accreditations/2026`
-      )
-    })
+        expect(load(payload)('tbody a.govuk-link').attr('href')).toBe(
+          `/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1/accreditations/2026`
+        )
+      }
+    )
 
-    it('links a row to the year even once its accreditation is cancelled', async ({
+    it('links a row whose accreditation is cancelled to its registered-only page for the year', async ({
       server
     }) => {
       serve({
@@ -289,11 +303,11 @@ describe('the organisation home page', () => {
       const { payload } = await visit(server)
 
       expect(load(payload)('tbody a.govuk-link').attr('href')).toBe(
-        `/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1/accreditations/2026`
+        `/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1/2026`
       )
     })
 
-    it('links a row by registration alone where its accreditation is for another year', async ({
+    it('links a row accredited only in another year to its registered-only page for the year', async ({
       server
     }) => {
       serve({
@@ -310,21 +324,85 @@ describe('the organisation home page', () => {
       const { payload } = await visit(server)
 
       expect(load(payload)('tbody a.govuk-link').attr('href')).toBe(
+        `/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1/2026`
+      )
+    })
+
+    it.for(
+      /** @type {const} */ ([
+        ['/2025', {}],
+        [
+          '/accreditations/2025',
+          {
+            2025: {
+              accreditationNumber: 'A25ER1',
+              status: { current: 'approved', timeline: [] }
+            }
+          }
+        ]
+      ])
+    )(
+      'links a row to the year being viewed, at "%s"',
+      async ([expected, accreditations], { server }) => {
+        serve({ R26ER1: reprocessor({ accreditations }) })
+
+        const { payload } = await visit(server, `${BARE_PATH}/2025`)
+
+        expect(load(payload)('tbody a.govuk-link').attr('href')).toBe(
+          `/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1${expected}`
+        )
+      }
+    )
+
+    it.for(
+      /** @type {const} */ ([
+        ['/2026', {}],
+        ['/accreditations/2026', { 2026: approved2026 }]
+      ])
+    )(
+      'links an exporting row to the year being viewed, at "%s"',
+      async ([expected, accreditations], { server }) => {
+        serve({ R26EX1: exporter({ accreditations }) })
+
+        const { payload } = await visit(server, `${PATH}/exporting`)
+
+        expect(load(payload)('tbody a.govuk-link').attr('href')).toBe(
+          `/organisations/${ORGANISATION_NUMBER}/registrations/R26EX1${expected}`
+        )
+      }
+    )
+
+    it('links a row not registered in the year by registration alone', async ({
+      server
+    }) => {
+      serve({
+        R26ER1: reprocessor({ status: { current: 'approved', timeline: [] } })
+      })
+
+      const { payload } = await visit(server)
+
+      expect(load(payload)('tbody a.govuk-link').attr('href')).toBe(
         `/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1`
       )
     })
 
-    it('keeps a Welsh reader in Welsh', async ({ server }) => {
-      serve({
-        R26ER1: reprocessor({ accreditations: { 2026: approved2026 } })
-      })
+    it.for(
+      /** @type {const} */ ([
+        ['/2026', {}],
+        ['/accreditations/2026', { 2026: approved2026 }]
+      ])
+    )(
+      'keeps a Welsh reader in Welsh, at "%s"',
+      async ([expected, accreditations], { server }) => {
+        serve({ R26ER1: reprocessor({ accreditations }) })
 
-      const { payload } = await visit(server, `/cy${PATH}`)
+        const { payload } = await visit(server, `/cy${PATH}`)
 
-      expect(load(payload)('tbody a.govuk-link').attr('href')).toBe(
-        `/cy/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1/accreditations/2026`
-      )
-    })
+        expect(load(payload)('tbody a.govuk-link').attr('href')).toBe(
+          `/cy/organisations/${ORGANISATION_NUMBER}/registrations/R26ER1${expected}`
+        )
+      }
+    )
 
     it('groups registrations under the site they are processed at', async ({
       server
