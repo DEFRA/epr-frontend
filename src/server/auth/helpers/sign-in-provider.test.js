@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { paths } from '#server/paths.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { SIGN_IN_PROVIDER_COOKIE, signedOutPage } from './sign-in-provider.js'
 
 const buildRequest = (state = {}) => ({
@@ -32,7 +33,7 @@ describe(signedOutPage, () => {
   test('logs a regulator outcome when the cookie is present', () => {
     const request = buildRequest({ [SIGN_IN_PROVIDER_COOKIE]: OIDC_ENTRA_ID })
 
-    expect(signedOutPage(/** @type {any} */ (request))).toBe(
+    expect(signedOutPage(mockHapiRequest(request))).toBe(
       paths.regulators.loggedOut
     )
     expect(request.logger.info).toHaveBeenCalledWith(
@@ -43,7 +44,7 @@ describe(signedOutPage, () => {
   test('logs an operator outcome when the cookie is absent', () => {
     const request = buildRequest()
 
-    expect(signedOutPage(/** @type {any} */ (request))).toBe(paths.loggedOut)
+    expect(signedOutPage(mockHapiRequest(request))).toBe(paths.loggedOut)
     expect(request.logger.info).toHaveBeenCalledWith(
       expectedLog('operator', 'absent')
     )
@@ -53,7 +54,7 @@ describe(signedOutPage, () => {
     config.set('featureFlags.regulatorAccess', false)
     const request = buildRequest({ [SIGN_IN_PROVIDER_COOKIE]: OIDC_ENTRA_ID })
 
-    expect(signedOutPage(/** @type {any} */ (request))).toBe(paths.loggedOut)
+    expect(signedOutPage(mockHapiRequest(request))).toBe(paths.loggedOut)
     expect(request.logger.info).toHaveBeenCalledWith(
       expectedLog('operator', 'present')
     )
