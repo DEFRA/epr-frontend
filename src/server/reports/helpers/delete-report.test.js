@@ -1,62 +1,45 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { it } from '#vite/fixtures/server.js'
 
 import { deleteReport } from './delete-report.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(deleteReport, () => {
-  const keys = {
-    organisationNumber: '500001',
-    registrationNumber: 'R25SR500030912PA',
-    year: 2026,
-    cadence: /** @type {const} */ ('monthly'),
-    period: 1,
-    submissionNumber: 1
-  }
-  const backendToken = 'test-token'
+  it('should delete the submission the period names', async ({ msw }) => {
+    /** @type {{ method: string, pathname: string, body: string }[]} */
+    const received = []
+    msw.use(
+      http.delete(/\/reports\//, async ({ request }) => {
+        received.push({
+          method: request.method,
+          pathname: new URL(request.url).pathname,
+          body: await request.text()
+        })
+        return new HttpResponse(null, { status: 204 })
+      })
+    )
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+    const result = await deleteReport(
+      {
+        organisationNumber: '500001',
+        registrationNumber: 'R25/1',
+        year: 2026,
+        cadence: 'monthly',
+        period: 3,
+        submissionNumber: 1
+      },
+      'a-token'
+    )
 
-  it('deletes through the accredited natural-key route for a monthly report', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(undefined)
-
-    await deleteReport(keys, backendToken)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1',
+    expect(result).toBeUndefined()
+    expect(received).toStrictEqual([
       {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${backendToken}`
-        }
+        pathname:
+          '/organisations/500001/registrations/R25%2F1/accreditations/2026/reports/monthly/3/submissions/1',
+        body: ''
       }
-    )
-  })
-
-  it('deletes through the registered-only natural-key route for a quarterly report', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(undefined)
-
-    await deleteReport({ ...keys, cadence: 'quarterly' }, backendToken)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
-      expect.any(Object)
-    )
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(deleteReport(keys, backendToken)).rejects.toThrow(
-      'Network error'
-    )
+    ])
   })
 })

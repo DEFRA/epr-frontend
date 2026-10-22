@@ -1,6 +1,6 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { fetchRedirectFromBackend } from '#server/common/helpers/fetch-redirect-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 import {
   badGateway,
   notFound
@@ -90,9 +90,8 @@ export const summaryLogDownloadController = {
       noSuchDownload(`caller does not read as a regulator fileId=${fileId}`)
     }
 
-    const downloadUrl = await fetchRedirectFromBackend(
-      `${toRegistrationPath(keys)}/summary-logs/files/${fileId}`,
-      { method: 'GET', headers: { Authorization: `Bearer ${backendToken}` } }
+    const downloadUrl = await backend(backendToken).redirect(
+      `${toRegistrationPath(keys)}/summary-logs/files/${encodeURIComponent(fileId)}`
     )
 
     if (!isAllowedDownloadUrl(downloadUrl)) {

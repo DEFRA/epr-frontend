@@ -5,7 +5,7 @@ import { controller as overseasSitesController } from './details/overseas-sites/
 import {
   paramsOrNotFound,
   registrationParamsSchema,
-  yearParamsSchema
+  yearSegmentParamsSchema
 } from './details/helpers/params-validation.js'
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
 import {
@@ -58,7 +58,7 @@ const registrationController = {
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 const registeredOnlyYearRoute = {
   options: {
-    validate: paramsOrNotFound(yearParamsSchema, {
+    validate: paramsOrNotFound(yearSegmentParamsSchema, {
       message: 'Registered-only year not found',
       code: errorCodes.registrationNotFound,
       action: 'fetch_registered_only_year',
