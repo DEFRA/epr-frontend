@@ -4,7 +4,6 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
-import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
@@ -32,6 +31,8 @@ import {
 import { capitalize } from 'lodash-es'
 
 /**
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
@@ -86,16 +87,16 @@ const VIEW = 'registrations/index'
 
 /**
  * @typedef {{
- *   organisationNumber: string,
- *   registrationNumber: string,
+ *   organisationNumber: OrganisationNumber,
+ *   registrationNumber: RegistrationNumber,
  *   year: string
  * }} OperatorAccreditationParams
  */
 
 /**
  * @typedef {{
- *   organisationNumber: string,
- *   registrationNumber: string
+ *   organisationNumber: OrganisationNumber,
+ *   registrationNumber: RegistrationNumber
  * }} OperatorRegistrationParams
  */
 
@@ -399,7 +400,6 @@ export const controller = {
     const keys = { organisationNumber: number, registrationNumber, year }
     const credentials = request.auth.credentials
     const { backendToken } = credentials
-    const numberKey = toOrganisationNumber(number)
 
     const [{ registration }, ids] = await Promise.all([
       fetchRegistration({ ...keys, backendToken }),
@@ -409,7 +409,7 @@ export const controller = {
 
     const [wasteBalance, showsDecember] = await Promise.all([
       fetchAccreditationBalance({
-        organisationNumber: numberKey,
+        organisationNumber: number,
         year: toYear(Number(year)),
         accreditationNumber: accreditation.accreditationNumber,
         backendToken,

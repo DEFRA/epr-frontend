@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
@@ -31,7 +32,7 @@ vi.mock(
   import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
 )
 
-const ORGANISATION_NUMBER = '500123'
+const ORGANISATION_NUMBER = toOrganisationNumber('500123')
 const BARE_PATH = `/organisations/${ORGANISATION_NUMBER}`
 const PATH = `${BARE_PATH}/2026`
 
@@ -95,7 +96,7 @@ const organisationOf = (overrides = {}) => ({
 
 /** @type {Accreditation} */
 const approved2026 = {
-  accreditationNumber: 'A26ER1',
+  accreditationNumber: toAccreditationNumber('A26ER1'),
   status: { current: 'approved', timeline: [] }
 }
 
@@ -271,7 +272,7 @@ describe('the organisation home page', () => {
           R26ER1: reprocessor({
             accreditations: {
               2026: {
-                accreditationNumber: 'A26ER1',
+                accreditationNumber: toAccreditationNumber('A26ER1'),
                 status: { current, timeline: [] }
               }
             }
@@ -293,7 +294,7 @@ describe('the organisation home page', () => {
         R26ER1: reprocessor({
           accreditations: {
             2026: {
-              accreditationNumber: 'A26ER1',
+              accreditationNumber: toAccreditationNumber('A26ER1'),
               status: { current: 'cancelled', timeline: [] }
             }
           }
@@ -314,7 +315,7 @@ describe('the organisation home page', () => {
         R26ER1: reprocessor({
           accreditations: {
             2025: {
-              accreditationNumber: 'A25ER1',
+              accreditationNumber: toAccreditationNumber('A25ER1'),
               status: { current: 'approved', timeline: [] }
             }
           }
@@ -335,7 +336,7 @@ describe('the organisation home page', () => {
           '/accreditations/2025',
           {
             2025: {
-              accreditationNumber: 'A25ER1',
+              accreditationNumber: toAccreditationNumber('A25ER1'),
               status: { current: 'approved', timeline: [] }
             }
           }
@@ -459,7 +460,7 @@ describe('the organisation home page', () => {
         R26ER1: reprocessor({
           accreditations: {
             2025: {
-              accreditationNumber: 'A25ER1',
+              accreditationNumber: toAccreditationNumber('A25ER1'),
               status: { current: 'suspended', timeline: [] }
             }
           }
@@ -477,7 +478,7 @@ describe('the organisation home page', () => {
         R26ER1: reprocessor({
           accreditations: {
             2026: {
-              accreditationNumber: 'A26ER1',
+              accreditationNumber: toAccreditationNumber('A26ER1'),
               status: { current: 'suspended', timeline: [] }
             }
           }
@@ -497,7 +498,7 @@ describe('the organisation home page', () => {
           status: { current: 'cancelled', timeline: [] },
           accreditations: {
             2026: {
-              accreditationNumber: 'A26ER1',
+              accreditationNumber: toAccreditationNumber('A26ER1'),
               status: { current: 'cancelled', timeline: [] }
             }
           }

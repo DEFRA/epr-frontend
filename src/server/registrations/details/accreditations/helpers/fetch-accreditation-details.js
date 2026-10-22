@@ -1,4 +1,3 @@
-import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
@@ -61,7 +60,7 @@ const fetchAccreditation = async ({ keys, backendToken, logger }) => {
   const accreditation = accreditationIn(registration, keys.year)
 
   const wasteBalance = await fetchAccreditationBalance({
-    organisationNumber: toOrganisationNumber(keys.organisationNumber),
+    organisationNumber: keys.organisationNumber,
     year: toYear(Number(keys.year)),
     accreditationNumber: accreditation.accreditationNumber,
     backendToken,

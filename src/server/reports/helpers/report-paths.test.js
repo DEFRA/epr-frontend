@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
+
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 
 import { CADENCE } from '../constants.js'
 import {
@@ -7,13 +10,14 @@ import {
   reportApiPath,
   reportPath,
   reportsCalendarApiPath,
+  registrationPath,
   reportsListPath,
   summaryLogUploadPath
 } from './report-paths.js'
 
 const registrationKeys = {
-  organisationNumber: '500001',
-  registrationNumber: 'R25SR500030912PA'
+  organisationNumber: toOrganisationNumber('500001'),
+  registrationNumber: toRegistrationNumber('R25SR500030912PA')
 }
 
 const quarterlyKeys = {
@@ -42,8 +46,8 @@ describe(accreditationPath, () => {
   it('encodes the registration number and year', () => {
     expect(
       accreditationPath({
-        organisationNumber: '500001',
-        registrationNumber: 'R25/SR&1',
+        organisationNumber: toOrganisationNumber('500001'),
+        registrationNumber: toRegistrationNumber('R25/SR&1'),
         year: '20/26'
       })
     ).toBe(
@@ -67,7 +71,10 @@ describe(reportPath, () => {
 
   it('encodes a registration number holding reserved characters', () => {
     expect(
-      reportPath({ ...quarterlyKeys, registrationNumber: 'R25/SR&1' })
+      reportPath({
+        ...quarterlyKeys,
+        registrationNumber: toRegistrationNumber('R25/SR&1')
+      })
     ).toBe(
       '/organisations/500001/registrations/R25%2FSR%261/reports/2026/quarterly/3/submissions/2'
     )
@@ -90,9 +97,9 @@ describe(reportApiPath, () => {
 
 describe(organisationPath, () => {
   it('gives the organisation home page, encoding the number', () => {
-    expect(organisationPath({ organisationNumber: '5/1' })).toBe(
-      '/organisations/5%2F1'
-    )
+    expect(
+      organisationPath({ organisationNumber: toOrganisationNumber('5/1') })
+    ).toBe('/organisations/5%2F1')
   })
 })
 
@@ -100,8 +107,8 @@ describe(summaryLogUploadPath, () => {
   it('gives the upload page by number', () => {
     expect(
       summaryLogUploadPath({
-        organisationNumber: '500118',
-        registrationNumber: 'R26ER5001180041PL'
+        organisationNumber: toOrganisationNumber('500118'),
+        registrationNumber: toRegistrationNumber('R26ER5001180041PL')
       })
     ).toBe(
       '/organisations/500118/registrations/R26ER5001180041PL/summary-logs/upload'
@@ -111,8 +118,8 @@ describe(summaryLogUploadPath, () => {
   it('encodes the numbers', () => {
     expect(
       summaryLogUploadPath({
-        organisationNumber: 'o&1',
-        registrationNumber: 'r/1'
+        organisationNumber: toOrganisationNumber('o&1'),
+        registrationNumber: toRegistrationNumber('r/1')
       })
     ).toBe('/organisations/o%261/registrations/r%2F1/summary-logs/upload')
   })
@@ -128,8 +135,8 @@ describe(reportsListPath, () => {
   it('encodes the organisation and registration numbers', () => {
     expect(
       reportsListPath({
-        organisationNumber: '5/1',
-        registrationNumber: 'R&1'
+        organisationNumber: toOrganisationNumber('5/1'),
+        registrationNumber: toRegistrationNumber('R&1')
       })
     ).toBe('/organisations/5%2F1/registrations/R%261/reports')
   })
@@ -140,5 +147,24 @@ describe(reportsCalendarApiPath, () => {
     expect(reportsCalendarApiPath(registrationKeys)).toBe(
       '/organisations/500001/registrations/R25SR500030912PA/reports/calendar'
     )
+  })
+})
+
+describe(registrationPath, () => {
+  it('should take each number only as its own kind', () => {
+    const { organisationNumber, registrationNumber } = registrationKeys
+
+    expectTypeOf(registrationPath).toBeCallableWith(registrationKeys)
+    expectTypeOf(registrationPath).toBeCallableWith({
+      // @ts-expect-error a registration number is not an organisation number
+      organisationNumber: registrationNumber,
+      // @ts-expect-error an organisation number is not a registration number
+      registrationNumber: organisationNumber
+    })
+    expectTypeOf(registrationPath).toBeCallableWith({
+      organisationNumber,
+      // @ts-expect-error a bare string is not a registration number
+      registrationNumber: 'R25SR500030912PA'
+    })
   })
 })

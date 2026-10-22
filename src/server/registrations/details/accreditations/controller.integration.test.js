@@ -3,6 +3,9 @@ import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -148,7 +151,7 @@ const packagingRecyclingNotes = [
 /** @type {AccreditationDetails} */
 const accreditationDetails = {
   organisation: {
-    organisationNumber: '500118',
+    organisationNumber: toOrganisationNumber('500118'),
     name: 'Kirkby Plastics Ltd',
     displayName: 'Kirkby Plastics Ltd',
     registrations: {}
@@ -163,7 +166,7 @@ const accreditationDetails = {
     })
   ),
   accreditation: {
-    accreditationNumber: 'A26ER5001180114PL',
+    accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
     status: {
       current: 'approved',
       timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
@@ -297,8 +300,8 @@ describe('the accreditation details page', () => {
 
     expect(fetchAccreditationDetails).toHaveBeenCalledWith(
       expect.objectContaining({
-        organisationNumber: '500118',
-        registrationNumber: 'R26ER5001180041PL',
+        organisationNumber: toOrganisationNumber('500118'),
+        registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
         year: '2026'
       })
     )
@@ -394,7 +397,9 @@ describe('the accreditation details page', () => {
     )
 
     expect(fetchAccreditationDetails).toHaveBeenCalledWith(
-      expect.objectContaining({ registrationNumber: 'R26/ER&1' })
+      expect.objectContaining({
+        registrationNumber: toRegistrationNumber('R26/ER&1')
+      })
     )
     expect(
       within(row).getByRole('link', { name: 'Download' }).getAttribute('href')

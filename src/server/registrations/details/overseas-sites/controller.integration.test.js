@@ -3,6 +3,8 @@ import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -33,8 +35,8 @@ const backendUrl = config.get('eprBackendUrl')
 const organisationId = '6507f1f77bcf86cd79943901'
 const registrationId = '6507f1f77bcf86cd79943902'
 
-const organisationNumber = '500123'
-const registrationNumber = 'R26ER5001180041PL'
+const organisationNumber = toOrganisationNumber('500123')
+const registrationNumber = toRegistrationNumber('R26ER5001180041PL')
 
 const path = `/organisations/${organisationNumber}/registrations/${registrationNumber}/overseas-sites`
 
@@ -80,7 +82,7 @@ const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
     organisation: {
       name: 'Kirkby Plastics Ltd',
       displayName: 'Kirkby Plastics Ltd',
-      organisationNumber: '500123',
+      organisationNumber: toOrganisationNumber('500123'),
       registrations: { [registrationNumber]: registration }
     },
     registration

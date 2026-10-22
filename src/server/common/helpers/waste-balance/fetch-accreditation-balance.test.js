@@ -1,10 +1,12 @@
 import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, expectTypeOf, vi } from 'vitest'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { toYear } from '#server/common/helpers/year.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { test } from '#vite/fixtures/server.js'
@@ -21,7 +23,7 @@ const balance = { amount: 20.5, availableAmount: 10.3 }
 const params = {
   organisationNumber: toOrganisationNumber('500001'),
   year: toYear(2026),
-  accreditationNumber: 'A26ER5001180114PL',
+  accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
   backendToken: toBackendToken('mock-token'),
   logger
 }
@@ -29,6 +31,20 @@ const params = {
 describe(fetchAccreditationBalance, () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  test('takes only an accreditation number as the accreditation number', () => {
+    expectTypeOf(fetchAccreditationBalance).toBeCallableWith(params)
+    expectTypeOf(fetchAccreditationBalance).toBeCallableWith({
+      ...params,
+      // @ts-expect-error a registration number is not an accreditation number
+      accreditationNumber: toRegistrationNumber('R26ER5001180114PL')
+    })
+    expectTypeOf(fetchAccreditationBalance).toBeCallableWith({
+      ...params,
+      // @ts-expect-error a bare string is not an accreditation number
+      accreditationNumber: 'A26ER5001180114PL'
+    })
   })
 
   test("returns the accreditation's balance for the year", async ({ msw }) => {

@@ -2,15 +2,22 @@ import { describe, expect, it } from 'vitest'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 
-import { accreditationIn, registrationIn } from './registration-in-view.js'
+import {
+  accreditationIn,
+  registrationEntries,
+  registrationIn
+} from './registration-in-view.js'
 
 /**
  * @import { OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
 const accreditation2025 = /** @type {const} */ ({
-  accreditationNumber: 'A25ER5001180114PL',
+  accreditationNumber: toAccreditationNumber('A25ER5001180114PL'),
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2025-01-01T09:00:00.000Z' }]
@@ -18,7 +25,7 @@ const accreditation2025 = /** @type {const} */ ({
 })
 
 const accreditation2026 = /** @type {const} */ ({
-  accreditationNumber: 'A26ER5001180114PL',
+  accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
@@ -38,19 +45,31 @@ const registration = /** @type {RegistrationView} */ ({
 })
 
 const organisation = /** @type {OrganisationView} */ ({
-  organisationNumber: '500001',
+  organisationNumber: toOrganisationNumber('500001'),
   name: 'Kirkby Plastics',
   displayName: 'Kirkby Plastics',
   registrations: { R25SR500030912PA: registration }
 })
 
+describe(registrationEntries, () => {
+  it('pairs each registration with the number it is keyed by', () => {
+    expect(registrationEntries(organisation.registrations)).toStrictEqual([
+      ['R25SR500030912PA', registration]
+    ])
+  })
+})
+
 describe(registrationIn, () => {
   it('returns the registration with that number', () => {
-    expect(registrationIn(organisation, 'R25SR500030912PA')).toBe(registration)
+    expect(
+      registrationIn(organisation, toRegistrationNumber('R25SR500030912PA'))
+    ).toBe(registration)
   })
 
   it('is a 404 for a number the organisation does not hold', () => {
-    expect(() => registrationIn(organisation, 'R99XX')).toThrow(
+    expect(() =>
+      registrationIn(organisation, toRegistrationNumber('R99XX'))
+    ).toThrow(
       expect.objectContaining({
         output: expect.objectContaining({ statusCode: statusCodes.notFound }),
         code: errorCodes.registrationNotFound
@@ -59,7 +78,9 @@ describe(registrationIn, () => {
   })
 
   it('is a 404 for an inherited key', () => {
-    expect(() => registrationIn(organisation, 'toString')).toThrow(
+    expect(() =>
+      registrationIn(organisation, toRegistrationNumber('toString'))
+    ).toThrow(
       expect.objectContaining({ code: errorCodes.registrationNotFound })
     )
   })

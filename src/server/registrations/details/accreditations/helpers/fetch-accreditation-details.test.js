@@ -3,7 +3,10 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { test } from '#vite/fixtures/server.js'
@@ -23,8 +26,8 @@ const backendUrl = config.get('eprBackendUrl')
 
 describe(fetchAccreditationDetails, () => {
   const keys = {
-    organisationNumber: '500118',
-    registrationNumber: 'R26ER5001180041PL',
+    organisationNumber: toOrganisationNumber('500118'),
+    registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
     year: '2026'
   }
   const backendToken = toBackendToken('test-token')
@@ -39,7 +42,7 @@ describe(fetchAccreditationDetails, () => {
   const notesUrl = `${registrationUrl}/accreditations/2026/packaging-recycling-notes`
 
   const accreditation = {
-    accreditationNumber: 'A26ER5001180114PL',
+    accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
     status: {
       current: 'approved',
       timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
@@ -54,7 +57,7 @@ describe(fetchAccreditationDetails, () => {
     accreditations: { 2026: accreditation }
   }
   const organisation = {
-    organisationNumber: '500118',
+    organisationNumber: toOrganisationNumber('500118'),
     name: 'Acme Recycling Ltd',
     registrations: { [keys.registrationNumber]: registration }
   }
@@ -230,7 +233,7 @@ describe(fetchAccreditationDetails, () => {
     backendHolds(msw)
 
     await expect(
-      fetchDetails({ registrationNumber: 'R99XX' })
+      fetchDetails({ registrationNumber: toRegistrationNumber('R99XX') })
     ).rejects.toMatchObject({
       output: { statusCode: statusCodes.notFound }
     })

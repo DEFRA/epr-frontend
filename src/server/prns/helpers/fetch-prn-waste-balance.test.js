@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { fetchPrnWasteBalance } from './fetch-prn-waste-balance.js'
@@ -17,20 +20,20 @@ describe(fetchPrnWasteBalance, () => {
 
     const result = await fetchPrnWasteBalance({
       keys: {
-        organisationNumber: '500123',
-        registrationNumber: 'R26EN0000000001PL',
+        organisationNumber: toOrganisationNumber('500123'),
+        registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
         year: '2026'
       },
-      accreditationNumber: 'A26EN0000000001PL',
+      accreditationNumber: toAccreditationNumber('A26EN0000000001PL'),
       backendToken: toBackendToken('token'),
       logger
     })
 
     expect(result).toBe(balance)
     expect(fetchAccreditationBalance).toHaveBeenCalledWith({
-      organisationNumber: '500123',
+      organisationNumber: toOrganisationNumber('500123'),
       year: 2026,
-      accreditationNumber: 'A26EN0000000001PL',
+      accreditationNumber: toAccreditationNumber('A26EN0000000001PL'),
       backendToken: 'token',
       logger
     })

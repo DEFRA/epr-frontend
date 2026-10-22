@@ -3,14 +3,16 @@ import Joi from 'joi'
 import { CADENCE } from '../constants.js'
 
 /**
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { CadenceValue } from '../constants.js'
  */
 
 /**
  * Shape produced by `periodParamsSchema` after Joi validation.
  * @typedef {{
- *   organisationNumber: string,
- *   registrationNumber: string,
+ *   organisationNumber: OrganisationNumber,
+ *   registrationNumber: RegistrationNumber,
  *   year: number,
  *   cadence: CadenceValue,
  *   period: number,

@@ -1,7 +1,10 @@
 /** @import { RegistrationView } from './organisation-view.js'; */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import {
   buildAccreditationView,
   buildOrganisationView,
@@ -19,8 +22,8 @@ vi.mock(import('./fetch-registration.js'))
 
 const backendToken = toBackendToken('test-token')
 const registrationKeys = {
-  organisationNumber: '500123',
-  registrationNumber: 'R26EN0000000001PL'
+  organisationNumber: toOrganisationNumber('500123'),
+  registrationNumber: toRegistrationNumber('R26EN0000000001PL')
 }
 
 /** @param {RegistrationView} registration */
@@ -61,7 +64,9 @@ describe(fetchRegistrationWithAccreditation, () => {
     resolveRegistration(
       buildRegistrationView({
         accreditations: {
-          2027: buildAccreditationView({ accreditationNumber: 'A27' })
+          2027: buildAccreditationView({
+            accreditationNumber: toAccreditationNumber('A27')
+          })
         }
       })
     )

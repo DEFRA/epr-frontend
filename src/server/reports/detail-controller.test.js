@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import {
   buildAccreditationView,
@@ -135,7 +136,9 @@ const accreditedReprocessorRegistration = buildRegistrationWithAccreditation({
   registration: {
     ...reprocessorView,
     accreditations: {
-      2026: buildAccreditationView({ accreditationNumber: 'ER992415095748M' })
+      2026: buildAccreditationView({
+        accreditationNumber: toAccreditationNumber('ER992415095748M')
+      })
     }
   }
 })
@@ -361,7 +364,9 @@ const accreditedDetailUrl =
 const accreditedExporterRegistration = buildRegistrationWithAccreditation({
   registration: buildRegistrationView({
     accreditations: {
-      2026: buildAccreditationView({ accreditationNumber: 'EE992415095748M' })
+      2026: buildAccreditationView({
+        accreditationNumber: toAccreditationNumber('EE992415095748M')
+      })
     }
   })
 })

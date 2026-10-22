@@ -1,6 +1,9 @@
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
+ * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  */
 
@@ -262,7 +265,7 @@
 
 /**
  * @typedef {{
- *   accreditationNumber?: string,
+ *   accreditationNumber?: AccreditationNumber,
  *   loads?: RawLoads,
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType
@@ -274,8 +277,8 @@
 /**
  * Route params for summary-log controllers.
  * @typedef {{
- *   organisationNumber: string,
- *   registrationNumber: string,
+ *   organisationNumber: OrganisationNumber,
+ *   registrationNumber: RegistrationNumber,
  *   summaryLogId: string
  * }} SummaryLogParams
  */

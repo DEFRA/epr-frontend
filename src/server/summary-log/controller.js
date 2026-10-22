@@ -1,7 +1,6 @@
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
-import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import {
   ACCREDITATION_YEAR,
   fetchRegistrationWithAccreditation
@@ -20,6 +19,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
 
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
+ * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
@@ -43,7 +43,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  * @typedef {{
  *   status: string,
  *   validation?: ValidationResponse,
- *   accreditationNumber?: string,
+ *   accreditationNumber?: AccreditationNumber,
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType,
  *   organisationPath: string,
@@ -371,7 +371,7 @@ const getWasteBalanceData = async (status, keys, session, logger) => {
   }
 
   const balance = await fetchAccreditationBalance({
-    organisationNumber: toOrganisationNumber(organisation.organisationNumber),
+    organisationNumber: organisation.organisationNumber,
     year: toYear(Number(ACCREDITATION_YEAR)),
     accreditationNumber: accreditation.accreditationNumber,
     backendToken: session.backendToken,

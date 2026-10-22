@@ -2,6 +2,8 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 
@@ -30,8 +32,8 @@ describe(updatePrnStatus, () => {
 
     const result = await updatePrnStatus(
       {
-        organisationNumber: '500123',
-        registrationNumber: 'R26/1',
+        organisationNumber: toOrganisationNumber('500123'),
+        registrationNumber: toRegistrationNumber('R26/1'),
         year: '2026'
       },
       'prn#789',

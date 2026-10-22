@@ -19,7 +19,6 @@ import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisa
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
-import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
 import { toYear } from '#server/common/helpers/year.js'
 import { buildNoteBreadcrumbs } from './helpers/build-note-breadcrumbs.js'
@@ -85,7 +84,7 @@ export const viewPostController = {
       ])
       // A failed read fails the confirmation, so an outage never discards a draft
       const balances = await fetchOrganisationWasteBalances(
-        toOrganisationNumber(keys.organisationNumber),
+        keys.organisationNumber,
         toYear(Number(keys.year)),
         backendToken
       )

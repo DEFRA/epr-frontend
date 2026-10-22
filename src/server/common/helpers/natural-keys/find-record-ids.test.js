@@ -1,6 +1,8 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -19,7 +21,7 @@ const organisation = {
   registrations: [
     {
       id: registrationId,
-      registrationNumber: 'R25SR500030912PA',
+      registrationNumber: toRegistrationNumber('R25SR500030912PA'),
       accreditationId: 'acc-1',
       material: 'glass'
     }
@@ -28,8 +30,8 @@ const organisation = {
 }
 
 const keys = {
-  organisationNumber: '500118',
-  registrationNumber: 'R25SR500030912PA'
+  organisationNumber: toOrganisationNumber('500118'),
+  registrationNumber: toRegistrationNumber('R25SR500030912PA')
 }
 
 const organisationUrl = `${backendUrl}/v1/organisations/${organisationId}`
@@ -73,7 +75,10 @@ describe(findRecordIds, () => {
     msw.use(organisationHeld())
 
     await expect(
-      findRecordIds({ ...keys, organisationNumber: '500999' }, operator)
+      findRecordIds(
+        { ...keys, organisationNumber: toOrganisationNumber('500999') },
+        operator
+      )
     ).rejects.toThrow(unresolved)
   })
 
@@ -81,7 +86,10 @@ describe(findRecordIds, () => {
     msw.use(organisationHeld())
 
     await expect(
-      findRecordIds({ ...keys, registrationNumber: 'R99XX' }, operator)
+      findRecordIds(
+        { ...keys, registrationNumber: toRegistrationNumber('R99XX') },
+        operator
+      )
     ).rejects.toThrow(unresolved)
   })
 

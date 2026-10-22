@@ -6,6 +6,7 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 /**
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { Localise } from '../helpers/types.js'
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
@@ -89,7 +90,7 @@ const toSitesHead = (localise) =>
 /**
  * @param {{
  *   organisation: OrganisationView,
- *   registrationNumber: string,
+ *   registrationNumber: RegistrationNumber,
  *   registration: RegistrationView,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string

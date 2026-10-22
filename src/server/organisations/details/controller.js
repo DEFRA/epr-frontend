@@ -1,4 +1,3 @@
-import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { buildViewModel } from './build-view-model.js'
 
@@ -18,7 +17,7 @@ export const controller = {
     const { backendToken } = request.auth.credentials
 
     const organisation = await fetchOrganisation(
-      toOrganisationNumber(request.params.organisationNumber),
+      request.params.organisationNumber,
       backendToken
     )
 

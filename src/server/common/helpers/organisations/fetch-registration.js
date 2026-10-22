@@ -1,7 +1,6 @@
 import Boom from '@hapi/boom'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 
 import { fetchOrganisation } from './fetch-organisation.js'
 import { registrationIn, registrationNotFound } from './registration-in-view.js'
@@ -19,7 +18,7 @@ import { registrationIn, registrationNotFound } from './registration-in-view.js'
  */
 export const fetchRegistration = async ({ backendToken, ...keys }) => {
   const organisation = await fetchOrganisation(
-    toOrganisationNumber(keys.organisationNumber),
+    keys.organisationNumber,
     backendToken
   ).catch((error) => {
     if (!Boom.isBoom(error, statusCodes.notFound)) {

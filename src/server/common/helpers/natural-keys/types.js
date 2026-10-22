@@ -8,8 +8,8 @@
 
 /**
  * @typedef {{
- *   organisationNumber: string
- *   registrationNumber?: string
+ *   organisationNumber: OrganisationNumber
+ *   registrationNumber?: RegistrationNumber
  *   year?: string
  * }} NaturalKeys
  */
@@ -22,18 +22,21 @@
  *   orgId: number
  *   registrations: {
  *     id: string
- *     registrationNumber?: string
+ *     registrationNumber?: RegistrationNumber
  *     accreditationId?: string
  *     material: AppliedForMaterial
  *   }[]
  *   accreditations: {
  *     id: string
- *     accreditationNumber?: string
+ *     accreditationNumber?: AccreditationNumber
  *     validFrom?: string
  *   }[]
  * }} OrganisationById
  */
 
 /** @import { AppliedForMaterial } from '#domain/organisations/model.js' */
+/** @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js' */
+/** @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js' */
+/** @import { RegistrationNumber } from '#server/common/helpers/registration-number.js' */
 
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import
