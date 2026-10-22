@@ -135,10 +135,10 @@ jobs:
         run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Run journey tests on ${{ steps.journey-branch.outputs.ref }}
-        uses: DEFRA/epr-re-ex-journey-tests/run-journey-tests@PAE-000-overlap-setup
+        uses: DEFRA/epr-re-ex-journey-tests/run-journey-tests@main
         with:
           epr-frontend: ${{github.sha}}
-          branch: PAE-000-overlap-setup
+          branch: ${{ steps.journey-branch.outputs.ref }}
           test-scope: frontend
           december-scope: ${{ matrix.december-scope || 'exclude' }}
           test-suite: ${{ matrix.test-suite }}
