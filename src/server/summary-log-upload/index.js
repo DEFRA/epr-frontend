@@ -1,4 +1,11 @@
-import { summaryLogUploadController } from '#server/summary-log-upload/controller.js'
+import {
+  UPLOAD_SUFFIX,
+  summaryLogUploadController,
+  summaryLogUploadRedirectController
+} from '#server/summary-log-upload/controller.js'
+
+const registrationPath =
+  '/organisations/{organisationNumber}/registrations/{registrationNumber}'
 
 export const summaryLogUpload = {
   plugin: {
@@ -6,9 +13,19 @@ export const summaryLogUpload = {
     register(server) {
       server.route([
         {
-          ...summaryLogUploadController,
+          ...summaryLogUploadRedirectController,
           method: 'GET',
-          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/summary-logs/upload'
+          path: `${registrationPath}${UPLOAD_SUFFIX}`
+        },
+        {
+          ...summaryLogUploadController({ accredited: false }),
+          method: 'GET',
+          path: `${registrationPath}/{year}${UPLOAD_SUFFIX}`
+        },
+        {
+          ...summaryLogUploadController({ accredited: true }),
+          method: 'GET',
+          path: `${registrationPath}/accreditations/{year}${UPLOAD_SUFFIX}`
         }
       ])
     }

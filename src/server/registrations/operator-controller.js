@@ -8,6 +8,7 @@ import { isAccreditationActive } from '#server/common/helpers/organisations/accr
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
   accreditationIn,
+  defaultMaterialsHomepagePath,
   materialsHomepage
 } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
@@ -18,10 +19,9 @@ import {
   toDecemberBalanceBreakdown
 } from '#server/common/helpers/waste-balance/december-balance.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { currentYear, toYear } from '#server/common/helpers/year.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { homePath } from '#server/organisations/home-page.js'
-import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
   accreditationPath,
   registeredOnlyPath,
@@ -203,11 +203,18 @@ const toPrns = (request, { noteType, noteTypePlural }, notesPath) => {
  *   request: HapiRequest,
  *   keys: RegistrationKeys,
  *   registration: RegistrationView,
- *   year: Year
+ *   year: Year,
+ *   homepagePath: string
  * }} params
  * @returns {Omit<RegistrationViewModel, 'accreditation' | 'prns' | 'reapplyAccreditation' | 'wasteBalanceLedgerUrl'>}
  */
-const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
+const buildRegistrationViewModel = ({
+  request,
+  keys,
+  registration,
+  year,
+  homepagePath
+}) => {
   const { t: localise, localiseUrl } = request
   const { isExporter, noteTypePlural } = getNoteTypeDisplayNames(registration)
   const siteName = toSiteName(registration, localise)
@@ -240,9 +247,7 @@ const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
       }
     },
     siteName,
-    uploadSummaryLogUrl: localiseUrl(
-      `${registrationPath(keys)}/summary-logs/upload`
-    ),
+    uploadSummaryLogUrl: localiseUrl(`${homepagePath}/summary-logs/upload`),
     wasteBalance: { availableAmount: null, noteTypePlural, breakdown: null }
   }
 }
@@ -275,7 +280,13 @@ const buildViewModel = ({
   const path = accreditationPath(keys)
 
   return {
-    ...buildRegistrationViewModel({ request, keys, registration, year }),
+    ...buildRegistrationViewModel({
+      request,
+      keys,
+      registration,
+      year,
+      homepagePath: path
+    }),
     accreditation: toAccreditationTag(accreditation),
     prns: toPrns(
       request,
@@ -308,7 +319,13 @@ const buildRegisteredOnlyViewModel = ({
   registration,
   year
 }) => ({
-  ...buildRegistrationViewModel({ request, keys, registration, year }),
+  ...buildRegistrationViewModel({
+    request,
+    keys,
+    registration,
+    year,
+    homepagePath: registeredOnlyPath({ ...keys, year })
+  }),
   accreditation: { exists: false },
   prns: null,
   reapplyAccreditation: null,
@@ -329,15 +346,10 @@ export const registrationController = {
       ...keys,
       backendToken: request.auth.credentials.backendToken
     })
-    const [latestYear] = registeredYears(registration)
-    const homepage = latestYear
-      ? materialsHomepage(keys, registration, toYear(latestYear))
-      : null
-
     return redirectPreservingMethod(
       request,
       h,
-      homepage?.path ?? registeredOnlyPath({ ...keys, year: currentYear() })
+      defaultMaterialsHomepagePath(keys, registration)
     )
   }
 }

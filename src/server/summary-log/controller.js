@@ -2,7 +2,10 @@ import { isRegisteredOnlyProcessingType } from '#domain/summary-logs/meta-fields
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
-import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  ACCREDITATION_YEAR,
+  fetchRegistrationWithAccreditation
+} from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
@@ -385,6 +388,7 @@ const getUploadUrl = async (status, keys, redirectUrl, session) => {
 
   const { uploadUrl } = await initiateSummaryLogUpload({
     keys,
+    year: Number(ACCREDITATION_YEAR),
     accredited: accreditation !== undefined,
     redirectUrl,
     backendToken: session.backendToken
