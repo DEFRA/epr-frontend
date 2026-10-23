@@ -81,7 +81,7 @@ const describeProviderCookie = (value) => {
  * The parsed state is empty both when no cookie was sent and when one was sent
  * that could not be unsealed, so the raw header tells the two apart.
  * @param {HapiRequest} request
- * @returns {string}
+ * @returns {'absent' | 'present' | 'unreadable'}
  */
 const describeSessionCookie = (request) => {
   const sent = String(request.headers.cookie ?? '')
@@ -94,22 +94,34 @@ const describeSessionCookie = (request) => {
 }
 
 /**
- * The signed-out page for a user who holds no session. The cookie grants
- * nothing, so a forged one buys only the other page. The flag is read because
- * the regulator page is registered only when it is on. Each choice is logged
- * with the provider cookie's value when it is shaped like a provider id, and
+ * The signed-out page for a user who holds no session, and what led to it. The
+ * cookie grants nothing, so a forged one buys only the other page. The flag is
+ * read because the regulator page is registered only when it is on. The reason
+ * gives the provider cookie's value when it is shaped like a provider id, and
  * whether the session cookie arrived.
  * @param {HapiRequest} request
- * @returns {string}
+ * @returns {{ page: string, reason: string }}
  */
 export const signedOutPage = (request) => {
   const cookieValue = request.state[SIGN_IN_PROVIDER_COOKIE]
   const isRegulator =
     config.get('featureFlags.regulatorAccess') && cookieValue === OIDC_ENTRA_ID
-  const page = isRegulator ? paths.regulators.loggedOut : paths.loggedOut
   const providerCookie = describeProviderCookie(cookieValue)
   const sessionCookie = describeSessionCookie(request)
-  const reason = `signInProvider cookie ${providerCookie}, session cookie ${sessionCookie}`
+
+  return {
+    page: isRegulator ? paths.regulators.loggedOut : paths.loggedOut,
+    reason: `signInProvider cookie ${providerCookie}, session cookie ${sessionCookie}`
+  }
+}
+
+/**
+ * Sends a user who holds no session to the signed-out page, logging why.
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ */
+export const redirectToSignedOut = (request, h) => {
+  const { page, reason } = signedOutPage(request)
 
   request.logger.info({
     message: 'Signed-out redirect',
@@ -122,5 +134,5 @@ export const signedOutPage = (request) => {
     }
   })
 
-  return page
+  return h.redirect(request.localiseUrl(page))
 }

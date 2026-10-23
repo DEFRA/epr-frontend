@@ -2,7 +2,7 @@ import pino from 'pino'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { config } from '#config/config.js'
-import { signedOutPage } from '#server/auth/helpers/sign-in-provider.js'
+import { redirectToSignedOut } from '#server/auth/helpers/sign-in-provider.js'
 import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { createLogCaptureServer } from '#server/common/test-helpers/log-capture-server.js'
 import { loggerOptions } from './logger-options.js'
@@ -91,7 +91,15 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
     server.route({
       method: 'GET',
       path: '/test',
-      handler: (request) => signedOutPage(mockHapiRequest(request))
+      handler: (request, h) =>
+        redirectToSignedOut(
+          mockHapiRequest(
+            Object.assign(request, {
+              localiseUrl: (/** @type {string} */ url) => url
+            })
+          ),
+          h
+        )
     })
 
     await server.inject('/test')

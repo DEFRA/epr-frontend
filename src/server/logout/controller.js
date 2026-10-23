@@ -1,7 +1,7 @@
 import { getRedirectUrl } from '#server/auth/helpers/get-redirect-url.js'
 import {
   rememberSignInProvider,
-  signedOutPage
+  redirectToSignedOut
 } from '#server/auth/helpers/sign-in-provider.js'
 import { paths } from '#server/paths.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
@@ -27,7 +27,7 @@ const logoutController = {
     const session = request.auth.credentials
 
     if (!session) {
-      return h.redirect(request.localiseUrl(signedOutPage(request)))
+      return redirectToSignedOut(request, h)
     }
 
     await removeUserSession(request)
