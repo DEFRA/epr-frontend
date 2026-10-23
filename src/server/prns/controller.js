@@ -55,6 +55,10 @@ export const controller = {
       backendToken
     )
 
+    if (!accreditation.relevantYearOpen) {
+      return h.redirect(prnsPath(keys))
+    }
+
     const [{ organisations }, wasteBalance, decemberPrnEligibility] =
       await Promise.all([
         request.wasteOrganisationsService.getOrganisations(),

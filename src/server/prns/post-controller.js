@@ -33,6 +33,8 @@ const ERROR_SUMMARY_TITLE_KEY = 'prns:errorSummaryTitle'
 // existing confirm-time check.
 const INSUFFICIENT_BALANCE_CODE = 'INSUFFICIENT_AVAILABLE_BALANCE'
 
+const RELEVANT_YEAR_CLOSED_CODE = 'RELEVANT_YEAR_CLOSED'
+
 const ERROR_KEYS = Object.freeze({
   notesTooLong: 'notesTooLong',
   recipientInvalid: 'recipientInvalid',
@@ -394,6 +396,10 @@ export const postController = {
     } catch (error) {
       if (error.output?.payload?.code === INSUFFICIENT_BALANCE_CODE) {
         return handleInsufficientBalance(request, h, organisations)
+      }
+
+      if (error.output?.payload?.code === RELEVANT_YEAR_CLOSED_CODE) {
+        return h.redirect(prnsPath(keys))
       }
 
       if (error.isBoom) {
