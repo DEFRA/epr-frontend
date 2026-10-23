@@ -51,7 +51,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   uploadUrl?: string,
  *   cancelUrl: string,
  *   wasteBalance?: number,
- *   year?: number
+ *   year?: Year
  * }} RenderContext
  */
 
@@ -201,15 +201,12 @@ const renderSuccessView = (
     year
   }
 ) => {
-  const summaryLogYear = requiredYear(year)
-  const heading = localise('summary-log:successHeading', {
-    year: summaryLogYear
-  })
+  const heading = localise('summary-log:successHeading', { year })
 
   return h.view(SUCCESS_VIEW_NAME, {
     pageTitle: heading,
     heading,
-    organisationPath: `${organisationPath}/${summaryLogYear}`,
+    organisationPath: `${organisationPath}/${year}`,
     registrationPath,
     wasteBalance,
     showFurtherAction: requiresResubmission(loadsByReportingPeriod)
@@ -377,31 +374,18 @@ const needsWasteBalance = (status) =>
   status === summaryLogStatuses.validated
 
 /**
- * Gets waste balance data for a submitted summary log, or for the check page
- * where it drives the projected balance panel.
- * @param {string} status - Current summary log status
+ * The current balance of the summary log's accreditation, or an empty object
+ * for a registered-only operator.
  * @param {RegistrationKeys} keys
- * @param {number | undefined} summaryLogYear
+ * @param {Year} summaryLogYear
  * @param {UserSession} session
  * @param {TypedLogger} logger - Request logger
- * @returns {Promise<{wasteBalance?: number}>} Waste balance, or empty object if not applicable
+ * @returns {Promise<{wasteBalance?: number}>}
  */
-const getWasteBalanceData = async (
-  status,
-  keys,
-  summaryLogYear,
-  session,
-  logger
-) => {
-  if (!needsWasteBalance(status)) {
-    return {}
-  }
-
-  const balanceYear = requiredYear(summaryLogYear)
-
+const getWasteBalanceData = async (keys, summaryLogYear, session, logger) => {
   const { organisation, accreditation } =
     await fetchRegistrationWithAccreditation(
-      { ...keys, year: balanceYear },
+      { ...keys, year: summaryLogYear },
       session.backendToken
     )
 
@@ -411,7 +395,7 @@ const getWasteBalanceData = async (
 
   const balance = await fetchAccreditationBalance({
     organisationNumber: organisation.organisationNumber,
-    year: balanceYear,
+    year: summaryLogYear,
     accreditationNumber: accreditation.accreditationNumber,
     backendToken: session.backendToken,
     logger
@@ -453,13 +437,13 @@ export const summaryLogUploadProgressController = {
       ? await getUploadUrl(status, keys, redirectUrl, session)
       : {}
 
-    const { wasteBalance } = await getWasteBalanceData(
-      status,
-      keys,
-      year,
-      session,
-      request.logger
-    )
+    const summaryLogYear = needsWasteBalance(status)
+      ? requiredYear(year)
+      : undefined
+
+    const { wasteBalance } = summaryLogYear
+      ? await getWasteBalanceData(keys, summaryLogYear, session, request.logger)
+      : {}
 
     return renderViewForStatus({
       h,
@@ -476,7 +460,7 @@ export const summaryLogUploadProgressController = {
       uploadUrl,
       cancelUrl,
       wasteBalance,
-      year
+      year: summaryLogYear
     })
   }
 }
