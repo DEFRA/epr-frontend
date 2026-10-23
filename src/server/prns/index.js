@@ -116,22 +116,16 @@ export const prns = {
           method: 'POST',
           path: `${basePath}/{prnId}/discard`
         },
-        closedWithTheYear(
-          {
-            ...cancelGetController,
-            method: 'GET',
-            path: `${basePath}/{prnId}/cancel`
-          },
-          closedYearSendsTo.note
-        ),
-        closedWithTheYear(
-          {
-            ...cancelPostController,
-            method: 'POST',
-            path: `${basePath}/{prnId}/cancel`
-          },
-          closedYearSendsTo.note
-        ),
+        {
+          ...cancelGetController,
+          method: 'GET',
+          path: `${basePath}/{prnId}/cancel`
+        },
+        {
+          ...cancelPostController,
+          method: 'POST',
+          path: `${basePath}/{prnId}/cancel`
+        },
         {
           ...cancelledController,
           method: 'GET',

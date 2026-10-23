@@ -4,7 +4,7 @@ import { prnsPath } from './prn-resource.js'
 
 /**
  * Once the backend rules an accreditation's year closed, its PRNs and PERNs
- * can be read but not raised, issued or cancelled. The one place the frontend
+ * can be read but not raised or issued. The one place the frontend
  * applies that: write routes declare where a closed year sends the session,
  * and the gate below sends it there before the handler runs.
  */
