@@ -1644,6 +1644,42 @@ describe('#viewController', () => {
         expect(updatePrnStatus).not.toHaveBeenCalled()
       })
 
+      it('should send the session to the list when the backend says the year has closed', async ({
+        server
+      }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+        const cookies = mergeCookies(
+          csrfCookie,
+          ...extractCookieValues(createResponse.headers['set-cookie'])
+        )
+        const Boom = await import('@hapi/boom')
+        const refusal = Boom.default.conflict('The deadline has passed')
+        refusal.output.payload.code = 'RELEVANT_YEAR_CLOSED'
+        vi.mocked(updatePrnStatus).mockRejectedValueOnce(refusal)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(listUrl)
+      })
+
       it('redirects to create when no draft in session', async ({ server }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,
