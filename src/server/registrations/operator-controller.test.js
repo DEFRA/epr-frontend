@@ -464,6 +464,32 @@ describe("the operator's registration page for a year", () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
+  it.for([
+    { name: 'a value that is not a year', segment: 'abcd' },
+    { name: 'a year with a leading zero', segment: `0${thisYear}` },
+    { name: 'a year with a decimal point', segment: `${thisYear}.0` },
+    { name: 'a year with a plus sign', segment: `+${thisYear}` }
+  ])(
+    'is not found for $name, without asking the backend',
+    async ({ segment }, { server, msw }) => {
+      backendHolds(msw)
+      /** @type {string[]} */
+      const backendRequests = []
+      msw.events.on('request:start', ({ request }) => {
+        if (request.url.startsWith(backendUrl)) {
+          backendRequests.push(request.url)
+        }
+      })
+
+      const { statusCode } = await visit(server, {
+        url: `${registrationPath}/accreditations/${segment}`
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(backendRequests).toStrictEqual([])
+    }
+  )
+
   it('fails where the ids for the reapply link could not be looked up', async ({
     server,
     msw

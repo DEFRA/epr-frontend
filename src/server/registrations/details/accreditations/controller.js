@@ -12,7 +12,7 @@ import { fetchAccreditationDetails } from './helpers/fetch-accreditation-details
  * @typedef {{
  *   organisationNumber: string,
  *   registrationNumber: string,
- *   year: string
+ *   year: number
  * }} AccreditationParams
  */
 
@@ -29,7 +29,7 @@ export const controller = {
    */
   async handler(request, h) {
     const { organisationNumber, registrationNumber, year } = request.params
-    const keys = { organisationNumber, registrationNumber, year }
+    const keys = { organisationNumber, registrationNumber, year: String(year) }
 
     const details = await fetchAccreditationDetails({
       ...keys,
