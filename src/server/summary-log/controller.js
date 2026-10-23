@@ -6,7 +6,7 @@ import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organ
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { year } from '#server/common/helpers/year.js'
+import { year as toYear } from '#server/common/helpers/year.js'
 import {
   organisationPath as toOrganisationPath,
   registrationPath as toRegistrationPath
@@ -137,7 +137,8 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
     loadsByReportingPeriod,
     processingType,
     status,
-    validation
+    validation,
+    year
   } = data
 
   return {
@@ -146,7 +147,7 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
     processingType,
     status,
     validation,
-    year: data.year
+    year
   }
 }
 
@@ -161,7 +162,7 @@ const requiredYear = (value) => {
     throw new Error('Expected year for summary log')
   }
 
-  return year(value)
+  return toYear(value)
 }
 
 /**
@@ -437,7 +438,7 @@ export const summaryLogUploadProgressController = {
       processingType,
       status,
       validation,
-      year: summaryLogYear
+      year
     } = await getStatusData(request, keys, summaryLogId, session.backendToken)
 
     const registrationPath = toRegistrationPath(keys)
@@ -455,7 +456,7 @@ export const summaryLogUploadProgressController = {
     const { wasteBalance } = await getWasteBalanceData(
       status,
       keys,
-      summaryLogYear,
+      year,
       session,
       request.logger
     )
@@ -475,7 +476,7 @@ export const summaryLogUploadProgressController = {
       uploadUrl,
       cancelUrl,
       wasteBalance,
-      year: summaryLogYear
+      year
     })
   }
 }
