@@ -285,6 +285,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     const submittedWithClosedAdjustment = () => ({
       status: summaryLogStatuses.submitted,
+      year: 2026,
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
         closedPeriodLoads: closedAdjustmentRows(),
@@ -309,6 +310,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted,
+        year: 2026,
         accreditationNumber: 'ACC-2025-001'
       })
 
@@ -332,24 +334,20 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    it.for([
-      { label: "the summary log's year", year: 2027, expected: '2027' },
-      { label: '2026 for a summary log without a year', expected: '2026' }
-    ])(
-      'status: submitted - should show $label in the heading',
-      async ({ year, expected }, { server }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.submitted,
-          year
-        })
+    it("status: submitted - should show the summary log's year in the heading", async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submitted,
+        year: 2027
+      })
 
-        const main = await getMain(server)
+      const main = await getMain(server)
 
-        expect(
-          getByRole(main, 'heading', { level: 1 }).textContent?.trim()
-        ).toBe(`Summary log uploaded (${expected})`)
-      }
-    )
+      expect(getByRole(main, 'heading', { level: 1 }).textContent?.trim()).toBe(
+        'Summary log uploaded (2027)'
+      )
+    })
 
     it("status: submitted - should link to the home page for the summary log's year", async ({
       server
@@ -385,19 +383,27 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    it('status: submitted - should link to the 2026 home page for a summary log without a year', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitted
-      })
+    it.for([summaryLogStatuses.submitted, summaryLogStatuses.validated])(
+      'status: %s - fails for a summary log without a year',
+      async (status, { server }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status,
+          processingType: 'EXPORTER',
+          loadsByReportingPeriod: {
+            openPeriodLoads: emptyPeriod(),
+            closedPeriodLoads: emptyPeriod()
+          }
+        })
 
-      const main = await getMain(server)
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
 
-      expect(
-        getByRole(main, 'link', { name: 'Return to home' }).getAttribute('href')
-      ).toBe(`/organisations/${organisationNumber}/2026`)
-    })
+        expect(statusCode).toBe(statusCodes.internalServerError)
+      }
+    )
 
     describe('waste balance', () => {
       it("status: submitted - shows the balance of the summary log's accreditation", async ({
@@ -424,11 +430,12 @@ describe('#summaryLogUploadProgressController', () => {
         expect(main.textContent).toContain('2,027.00 tonnes')
       })
 
-      it('status: submitted - reads the 2026 balance for a summary log without a year', async ({
+      it("status: submitted - reads the registration's accreditation for the summary log's year", async ({
         server
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
 
@@ -467,6 +474,7 @@ describe('#summaryLogUploadProgressController', () => {
         async ({ availableAmount, expected }, { server }) => {
           mockFetchSummaryLogStatus.mockResolvedValueOnce({
             status: summaryLogStatuses.submitted,
+            year: 2026,
             accreditationNumber: 'ACC-2025-001'
           })
 
@@ -506,6 +514,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
 
@@ -532,6 +541,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
 
@@ -556,6 +566,7 @@ describe('#summaryLogUploadProgressController', () => {
 
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
 
@@ -586,6 +597,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
 
@@ -630,6 +642,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          year: 2026,
           loadsByReportingPeriod: {
             openPeriodLoads: {
               added: {
@@ -657,6 +670,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          year: 2026,
           loadsByReportingPeriod: {
             openPeriodLoads: emptyPeriod(),
             closedPeriodLoads: closedAdjustmentRows(),
@@ -679,6 +693,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          year: 2026,
           loadsByReportingPeriod: {
             openPeriodLoads: emptyPeriod(),
             closedPeriodLoads: closedAdjustmentRows()
@@ -712,7 +727,8 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       const submittedWithoutClosedAdjustment = () => ({
-        status: summaryLogStatuses.submitted
+        status: summaryLogStatuses.submitted,
+        year: 2026
       })
 
       const getBody = async (server) => {
@@ -780,14 +796,13 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
-    it('status: submitted with freshData from POST - should use freshData and not call backend', async ({
+    it('status: submitting with freshData from POST - should use freshData and not call backend', async ({
       server
     }) => {
       const submitUrl = `${url}/submit`
 
       mockSubmitSummaryLog.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitted,
-        accreditationNumber: 'ACC-2025-002'
+        status: summaryLogStatuses.submitting
       })
 
       const { cookie, crumb } = await getCsrfToken(server, url, {
@@ -822,7 +837,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(fetchSummaryLogStatus).toHaveBeenCalledTimes(initialCallCount)
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Summary log uploaded')
+        expect.stringContaining('Your waste records are being updated')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
@@ -2619,6 +2634,7 @@ describe('summary log check view', () => {
   const givenValidatedCheckPage = () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2666,6 +2682,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2760,6 +2777,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2788,6 +2806,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2828,6 +2847,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2859,6 +2879,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2890,6 +2911,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2922,6 +2944,7 @@ describe('summary log check view', () => {
     // loadsByReportingPeriod guard in renderCheckView).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER'
     })
 
@@ -2945,6 +2968,7 @@ describe('summary log check view', () => {
     // than render the page as though the operator were accredited.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
         closedPeriodLoads: emptyPeriod()
@@ -2967,6 +2991,7 @@ describe('summary log check view', () => {
   it('uses the new page heading, intro and submit copy', async ({ server }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -3004,6 +3029,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -3036,6 +3062,7 @@ describe('summary log check view', () => {
     givenWasteBalance(100)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3099,6 +3126,7 @@ describe('summary log check view', () => {
     givenWasteBalance(100)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3135,6 +3163,7 @@ describe('summary log check view', () => {
     givenWasteBalance(100)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3176,6 +3205,7 @@ describe('summary log check view', () => {
     givenWasteBalance(100)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3204,6 +3234,7 @@ describe('summary log check view', () => {
     // Default mocks: no live accreditation, so no balance can be fetched.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3235,6 +3266,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3298,6 +3330,7 @@ describe('summary log check view', () => {
     // "never count" heading and lists each row id (never the raw code).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3370,6 +3403,7 @@ describe('summary log check view', () => {
     // by-design Reprocessed section (never-counts heading + its row id listed).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3444,6 +3478,7 @@ describe('summary log check view', () => {
     // (its code is dropped), and the never-counts heading does not appear.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3515,6 +3550,7 @@ describe('summary log check view', () => {
     // behind the "never counts" line.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3570,6 +3606,7 @@ describe('summary log check view', () => {
     // the accredited "never count" line does not appear.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'REPROCESSOR_REGISTERED_ONLY',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3622,6 +3659,7 @@ describe('summary log check view', () => {
     // ids under the neutral never-counts heading rather than the raw code.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3683,6 +3721,7 @@ describe('summary log check view', () => {
     // canonical summary-log flow order regardless of the order received.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3736,6 +3775,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3799,6 +3839,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3847,6 +3888,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3895,6 +3937,7 @@ describe('summary log check view', () => {
   it('suppresses any reason on an adjusted added load', async ({ server }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3939,6 +3982,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3984,6 +4028,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4041,6 +4086,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4084,6 +4130,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4115,6 +4162,7 @@ describe('summary log check view', () => {
   }) => {
     const prnIssuedRow = (wasteRecordType) => ({
       status: summaryLogStatuses.validated,
+      year: 2026,
       loadsByReportingPeriod: {
         openPeriodLoads: {
           added: {
@@ -4170,6 +4218,7 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4244,6 +4293,7 @@ describe('summary log check view', () => {
         : { added: ZERO_CHANGE, adjusted: group }
     return {
       status: summaryLogStatuses.validated,
+      year: 2026,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads,
@@ -4297,6 +4347,7 @@ describe('summary log check view', () => {
     exclusionReasons
   ) => ({
     status: summaryLogStatuses.validated,
+    year: 2026,
     processingType,
     loadsByReportingPeriod: {
       openPeriodLoads: {
@@ -4553,6 +4604,7 @@ describe('summary log check view', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        year: 2026,
         processingType: 'EXPORTER',
         loadsByReportingPeriod: periodWithClosedAdjustment()
       })
@@ -4567,6 +4619,7 @@ describe('summary log check view', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        year: 2026,
         processingType: 'EXPORTER',
         loadsByReportingPeriod: {
           openPeriodLoads: {
@@ -4590,6 +4643,7 @@ describe('summary log check view', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        year: 2026,
         processingType: 'EXPORTER',
         loadsByReportingPeriod: {
           openPeriodLoads: emptyPeriod(),
@@ -4617,6 +4671,7 @@ describe('summary log check view', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        year: 2026,
         processingType: 'EXPORTER',
         loadsByReportingPeriod: {
           openPeriodLoads: emptyPeriod(),

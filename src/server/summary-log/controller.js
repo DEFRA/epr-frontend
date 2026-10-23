@@ -2,10 +2,7 @@ import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import {
-  ACCREDITATION_YEAR,
-  fetchRegistrationWithAccreditation
-} from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
@@ -54,7 +51,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   uploadUrl?: string,
  *   cancelUrl: string,
  *   wasteBalance?: number,
- *   year: Year
+ *   year?: number
  * }} RenderContext
  */
 
@@ -114,7 +111,7 @@ const getProgressViewData = (localise, status) => {
  * @param {RegistrationKeys} keys
  * @param {string} summaryLogId - Summary log ID
  * @param {BackendToken} backendToken
- * @returns {Promise<Omit<SummaryLogStatusResponse, 'year'> & { year: Year }>}
+ * @returns {Promise<SummaryLogStatusResponse>}
  */
 const getStatusData = async (request, keys, summaryLogId, backendToken) => {
   /** @type {SummaryLogsSession | null} */
@@ -149,8 +146,22 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
     processingType,
     status,
     validation,
-    year: year(data.year ?? Number(ACCREDITATION_YEAR))
+    year: data.year
   }
+}
+
+/**
+ * The submit response carries no year, but every summary log the backend
+ * serves does, so a missing year where one is read is a contract violation.
+ * @param {number | undefined} value
+ * @returns {Year}
+ */
+const requiredYear = (value) => {
+  if (value === undefined) {
+    throw new Error('Expected year for summary log')
+  }
+
+  return year(value)
 }
 
 /**
@@ -189,12 +200,15 @@ const renderSuccessView = (
     year
   }
 ) => {
-  const heading = localise('summary-log:successHeading', { year })
+  const summaryLogYear = requiredYear(year)
+  const heading = localise('summary-log:successHeading', {
+    year: summaryLogYear
+  })
 
   return h.view(SUCCESS_VIEW_NAME, {
     pageTitle: heading,
     heading,
-    organisationPath: `${organisationPath}/${year}`,
+    organisationPath: `${organisationPath}/${summaryLogYear}`,
     registrationPath,
     wasteBalance,
     showFurtherAction: requiresResubmission(loadsByReportingPeriod)
@@ -366,7 +380,7 @@ const needsWasteBalance = (status) =>
  * where it drives the projected balance panel.
  * @param {string} status - Current summary log status
  * @param {RegistrationKeys} keys
- * @param {Year} balanceYear
+ * @param {number | undefined} summaryLogYear
  * @param {UserSession} session
  * @param {TypedLogger} logger - Request logger
  * @returns {Promise<{wasteBalance?: number}>} Waste balance, or empty object if not applicable
@@ -374,13 +388,15 @@ const needsWasteBalance = (status) =>
 const getWasteBalanceData = async (
   status,
   keys,
-  balanceYear,
+  summaryLogYear,
   session,
   logger
 ) => {
   if (!needsWasteBalance(status)) {
     return {}
   }
+
+  const balanceYear = requiredYear(summaryLogYear)
 
   const { organisation, accreditation } =
     await fetchRegistrationWithAccreditation(
