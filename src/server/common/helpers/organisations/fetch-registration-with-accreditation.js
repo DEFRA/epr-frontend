@@ -24,20 +24,21 @@ export const ACCREDITATION_YEAR = '2026'
  */
 
 /**
- * The registration by number, with its live accreditation for {@link ACCREDITATION_YEAR}.
- * @param {RegistrationKeys} keys
+ * The registration by number, with its live accreditation for the year, or
+ * for {@link ACCREDITATION_YEAR} where the page has no year.
+ * @param {RegistrationKeys & { year?: number | string }} keys
  * @param {BackendToken} backendToken
  * @returns {Promise<RegistrationWithAccreditation>}
  */
 export const fetchRegistrationWithAccreditation = async (
-  keys,
+  { year = ACCREDITATION_YEAR, ...keys },
   backendToken
 ) => {
   const { organisation, registration } = await fetchRegistration({
     ...keys,
     backendToken
   })
-  const accreditation = registration.accreditations[ACCREDITATION_YEAR]
+  const accreditation = ownAccreditation(registration, String(year))
 
   return {
     organisation,

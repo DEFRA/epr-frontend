@@ -207,7 +207,7 @@ export const detailController = {
 
     const { organisation, registration, accreditation } =
       await fetchRegistrationWithAccreditation(
-        { organisationNumber, registrationNumber },
+        { organisationNumber, registrationNumber, year },
         session.backendToken
       )
 

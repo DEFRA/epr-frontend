@@ -53,8 +53,8 @@ const buildActionCell = ({
   registration
 }) => {
   const action = getRowAction(period)
-  // The report pages decide their steps by the registration's current
-  // accreditation, so a period of the other kind can only be read for now.
+  // The report pages decide their steps by the year's accreditation, so a
+  // period of the other kind can only be read for now.
   const isCurrentKind =
     period.cadence === (accreditation ? CADENCE.MONTHLY : CADENCE.QUARTERLY)
 
@@ -225,16 +225,16 @@ export const listController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { organisation, registration, accreditation } =
-      await fetchRegistrationWithAccreditation(
-        { organisationNumber, registrationNumber },
-        session.backendToken
-      )
-    const reportingPeriods = await fetchReportingPeriods(
-      // Current year until PAE-1878 lets operators choose the year.
-      { ...request.params, year: new Date().getUTCFullYear() },
-      session.backendToken
-    )
+    // Current year until PAE-1878 lets operators choose the year.
+    const year = new Date().getUTCFullYear()
+    const [{ organisation, registration, accreditation }, reportingPeriods] =
+      await Promise.all([
+        fetchRegistrationWithAccreditation(
+          { organisationNumber, registrationNumber, year },
+          session.backendToken
+        ),
+        fetchReportingPeriods({ ...request.params, year }, session.backendToken)
+      ])
 
     const material = getMaterialDisplayName(registration.material)
 

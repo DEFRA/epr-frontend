@@ -28,7 +28,7 @@ export const submittedController = {
     const reportsUrl = reportsListPath(request.params)
 
     const { registration } = await fetchRegistrationWithAccreditation(
-      { organisationNumber, registrationNumber },
+      { organisationNumber, registrationNumber, year },
       session.backendToken
     )
     const reportDetail = await fetchReportDetail(

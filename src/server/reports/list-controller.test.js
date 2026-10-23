@@ -1740,7 +1740,9 @@ describe('#listReportsController', () => {
       vi.useRealTimers()
     })
 
-    it('asks for the current year', async ({ server }) => {
+    it("asks for the current year's calendar and accreditation", async ({
+      server
+    }) => {
       vi.useFakeTimers({
         now: new Date('2027-01-05T10:00:00.000Z'),
         toFake: ['Date']
@@ -1753,6 +1755,14 @@ describe('#listReportsController', () => {
       await server.inject({ method: 'GET', url: accreditedUrl, auth: mockAuth })
 
       expect(fetchReportingPeriods).toHaveBeenCalledWith(
+        {
+          organisationNumber: '500001',
+          registrationNumber: 'R25SR500030912PA',
+          year: 2027
+        },
+        'mock-backend-token'
+      )
+      expect(fetchRegistrationWithAccreditation).toHaveBeenCalledWith(
         {
           organisationNumber: '500001',
           registrationNumber: 'R25SR500030912PA',

@@ -110,7 +110,7 @@ export const makeChangesGetController = {
 
     const { registration, accreditation } =
       await fetchRegistrationWithAccreditation(
-        { organisationNumber, registrationNumber },
+        { organisationNumber, registrationNumber, year },
         session.backendToken
       )
     const reportDetail = await fetchReportDetail(
