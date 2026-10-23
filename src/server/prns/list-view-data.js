@@ -64,7 +64,7 @@ export function buildListViewData(
     })
 
   return {
-    ...buildListLabels(localise, { noteType, noteTypePlural }),
+    ...buildListLabels(localise, { noteType, noteTypePlural, year: keys.year }),
     backUrl: request.localiseUrl(accreditationPath(keys)),
     createLink: {
       href: request.localiseUrl(`${prnsPath(keys)}/create`),
@@ -85,10 +85,11 @@ export function buildListViewData(
   }
 }
 
-function buildListLabels(localise, { noteType, noteTypePlural }) {
+function buildListLabels(localise, { noteType, noteTypePlural, year }) {
+  const title = localise('prns:list:pageTitle', { noteTypePlural, year })
   return {
-    pageTitle: localise('prns:list:pageTitle', { noteTypePlural }),
-    heading: localise('prns:list:pageTitle', { noteTypePlural }),
+    pageTitle: title,
+    heading: title,
     selectHeading: localise('prns:list:selectHeading', { noteType }),
     noPrnsCreatedText: localise('prns:list:noPrnsCreated', { noteTypePlural }),
     tabs: {

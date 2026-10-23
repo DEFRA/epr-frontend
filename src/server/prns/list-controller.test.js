@@ -1284,6 +1284,42 @@ describe('#listPrnsController', () => {
       })
     })
 
+    describe('accreditation year', () => {
+      it.for([
+        {
+          description: 'PRNs',
+          fixture: fixtureReprocessor,
+          url: reprocessorListUrl,
+          expected: 'PRNs (2026)'
+        },
+        {
+          description: 'PERNs',
+          fixture: fixtureExporter,
+          url: exporterListUrl.replace('/2026/', '/2027/'),
+          expected: 'PERNs (2027)'
+        }
+      ])(
+        'should show the year in the $description title and heading',
+        async ({ fixture, url, expected }, { server }) => {
+          vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixture)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
+
+          const { body, title } = new JSDOM(result).window.document
+          const main = getByRole(body, 'main')
+
+          expect(title).toContain(expected)
+          expect(
+            getByRole(main, 'heading', { level: 1, name: expected })
+          ).toBeDefined()
+        }
+      )
+    })
+
     describe('dynamic PRN/PERN text', () => {
       describe('for reprocessor (PRN)', () => {
         beforeEach(() => {

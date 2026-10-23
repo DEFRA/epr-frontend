@@ -9,7 +9,7 @@ const createMockRequest = (scope = [SCOPES.organisationLinkedWrite]) => ({
   auth: { credentials: { scope } },
   t: vi.fn((key, params = {}) => {
     const translations = {
-      'prns:list:pageTitle': params.noteTypePlural,
+      'prns:list:pageTitle': `${params.noteTypePlural} (${params.year})`,
       'prns:list:balanceHint': `This is the balance available for creating new ${params.noteTypePlural}`,
       'prns:list:cancelHint': `If you delete or cancel a ${params.noteType}, its tonnage will be added to your available waste balance.`,
       'prns:list:createLink': `Create a ${params.noteType}`,
@@ -175,8 +175,8 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.pageTitle).toBe('PRNs')
-      expect(result.heading).toBe('PRNs')
+      expect(result.pageTitle).toBe('PRNs (2026)')
+      expect(result.heading).toBe('PRNs (2026)')
     })
 
     it('should return correct back URL', () => {
@@ -409,8 +409,8 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.pageTitle).toBe('PERNs')
-      expect(result.heading).toBe('PERNs')
+      expect(result.pageTitle).toBe('PERNs (2026)')
+      expect(result.heading).toBe('PERNs (2026)')
     })
 
     it('should return create link with PERN text', () => {
