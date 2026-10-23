@@ -345,6 +345,22 @@ describe('the accreditation details page', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
+  it.for([
+    { name: 'a value that is not a year', segment: 'abcd' },
+    { name: 'a year with five digits', segment: '02026' },
+    { name: 'a year with a decimal point', segment: '2026.0' },
+    { name: 'a year with a plus sign', segment: '+2026' }
+  ])('does not exist for $name', async ({ segment }, { server }) => {
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: `${registrationPath}/accreditations/${segment}`,
+      auth: regulator
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+    expect(fetchAccreditationDetails).not.toHaveBeenCalled()
+  })
+
   it('fails where the ids could not be looked up', async ({ server }) => {
     vi.mocked(fetchAccreditationDetails).mockRejectedValue(
       Boom.badImplementation()
