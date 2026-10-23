@@ -252,7 +252,7 @@ describe("the operator's registration page for a year", () => {
     const { body } = await visit(server)
 
     expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
-      '/organisations/500118'
+      `/organisations/500118/${year}`
     )
     expect(hrefOf(body, 'Upload your summary log')).toBe(
       `${registrationPath}/summary-logs/upload`
@@ -277,10 +277,23 @@ describe("the operator's registration page for a year", () => {
     const { body } = await visit(server)
 
     expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
-      '/organisations/500118/exporting'
+      `/organisations/500118/${year}/exporting`
     )
     expect(hrefOf(body, 'Create new PERN')).toBe(
       `${accreditationPath}/packaging-recycling-notes/create`
+    )
+  })
+
+  it('keeps a Welsh reader in Welsh on the way back', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
+    const { body } = await visit(server, { url: `/cy${accreditationPath}` })
+
+    expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+      `/cy/organisations/500118/${year}`
     )
   })
 
@@ -523,6 +536,24 @@ describe("the operator's registered-only page for a year", () => {
     expect(title).toContain(lastYear)
   })
 
+  it('sends the operator back to the organisation home for the year in the address, not the latest', async ({
+    server,
+    msw
+  }) => {
+    const lastYear = String(thisYear - 1)
+    backendHolds(msw, {
+      registration: { ...registeredOnly, status: registeredSince(thisYear - 1) }
+    })
+
+    const { body } = await visit(server, {
+      url: `${registrationPath}/${lastYear}`
+    })
+
+    expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+      `/organisations/500118/${lastYear}`
+    )
+  })
+
   it.for(['created', 'rejected', 'cancelled'])(
     'shows the registered-only page for a year whose accreditation is %s',
     async (current, { server, msw }) => {
@@ -574,7 +605,7 @@ describe("the operator's registered-only page for a year", () => {
     })
 
     expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
-      '/organisations/500118'
+      `/organisations/500118/${year}`
     )
     expect(hrefOf(body, 'Upload your summary log')).toBe(
       `${registrationPath}/summary-logs/upload`

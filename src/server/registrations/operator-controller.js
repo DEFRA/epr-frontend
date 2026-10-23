@@ -21,10 +21,10 @@ import {
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import { year as toYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
+import { homePath } from '#server/organisations/home-page.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
   accreditationPath,
-  organisationPath,
   registeredOnlyPath,
   registrationPath,
   reportsListPath
@@ -210,10 +210,14 @@ const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
   const { isExporter, noteTypePlural } = getNoteTypeDisplayNames(registration)
   const siteName = toSiteName(registration, localise)
   const material = getMaterialDisplayName(registration.material)
-  const homePath = organisationPath(keys)
 
   return {
-    backUrl: localiseUrl(isExporter ? `${homePath}/exporting` : homePath),
+    backUrl: localiseUrl(
+      homePath(organisationNumber(keys.organisationNumber), {
+        year: toYear(year),
+        exporting: isExporter
+      })
+    ),
     contactRegulatorUrl: localiseUrl('/contact'),
     hasSiteName: !!siteName,
     heading: localise('registrations:heading', { material, year }),
