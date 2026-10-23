@@ -229,7 +229,7 @@ describe('#reportDataIncompleteController', () => {
     const backLink = dom.window.document.querySelector('.govuk-back-link')
 
     expect(backLink?.getAttribute('href')).toBe(
-      `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
     )
   })
 
@@ -393,7 +393,7 @@ describe('#reportDataIncompleteController', () => {
     })
 
     expect(button.getAttribute('href')).toBe(
-      `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
     )
     expect(button.classList.contains('govuk-button--secondary')).toBe(true)
   })
@@ -431,7 +431,7 @@ describe('#reportDataIncompleteController', () => {
 
     expect(statusCode).toBe(statusCodes.found)
     expect(headers.location).toBe(
-      `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
     )
   })
 

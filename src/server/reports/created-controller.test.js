@@ -75,7 +75,7 @@ const organisationNumber = '500001'
 const registrationNumber = 'R25SR500030912PA'
 const basePeriodPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 const createdUrl = `${basePeriodPath}/created`
-const listUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+const listUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
 
 describe('#createdController', () => {
   beforeEach(() => {
@@ -278,7 +278,9 @@ describe('#createdController', () => {
       expect(link.closest('a').getAttribute('rel')).toBe('noopener noreferrer')
     })
 
-    it('should display Return to home link', async ({ server }) => {
+    it("should link Return to home to the exporter's home page for the report's year", async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: createdUrl,
@@ -290,9 +292,8 @@ describe('#createdController', () => {
       const main = getByRole(body, 'main')
       const returnLink = getByText(main, /Return to home/)
 
-      expect(returnLink).toBeDefined()
       expect(returnLink.getAttribute('href')).toBe(
-        `/organisations/${organisationNumber}`
+        `/organisations/${organisationNumber}/2026/exporting`
       )
     })
 
@@ -330,6 +331,25 @@ describe('#createdController', () => {
     beforeEach(() => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedReprocessorWithSite
+      )
+    })
+
+    it("should link Return to home to the reprocessor's home page for the report's year", async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: createdUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+      const returnLink = getByText(main, /Return to home/)
+
+      expect(returnLink.getAttribute('href')).toBe(
+        `/organisations/${organisationNumber}/2026`
       )
     })
 
