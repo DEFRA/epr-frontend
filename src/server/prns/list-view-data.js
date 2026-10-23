@@ -25,7 +25,8 @@ import { prnsPath } from './helpers/prn-resource.js'
  *   cancelledPrns?: object[],
  *   hasCreatedPrns?: boolean,
  *   wasteBalance?: Partial<WasteBalance> | null,
- *   showsDecember?: boolean
+ *   showsDecember?: boolean,
+ *   yearOpen?: boolean
  * }} options
  */
 export function buildListViewData(
@@ -39,12 +40,13 @@ export function buildListViewData(
     cancelledPrns = [],
     hasCreatedPrns,
     wasteBalance,
-    showsDecember = false
+    showsDecember = false,
+    yearOpen = true
   }
 ) {
   const { t: localise } = request
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
-  const canWrite = hasWriteScope(request.auth.credentials)
+  const canWrite = hasWriteScope(request.auth.credentials) && yearOpen
 
   const buildAwaiting = (prnList) =>
     buildAwaitingTable(request, {
@@ -78,6 +80,7 @@ export function buildListViewData(
       breakdown: showsDecember ? toDecemberBalanceBreakdown(wasteBalance) : null
     },
     hasCreatedPrns,
+    yearOpen,
     table: buildAwaiting(prns),
     cancellationTable: buildAwaiting(cancellationPrns),
     issuedTable: buildDetail(issuedPrns, 'issuedTable'),

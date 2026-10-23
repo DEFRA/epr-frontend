@@ -20,7 +20,12 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole, getByText, queryByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByText
+} from '@testing-library/dom'
 import Boom from '@hapi/boom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
@@ -255,6 +260,49 @@ describe('#listPrnsController', () => {
         const main = getByRole(body, 'main')
 
         expect(queryByText(main, /Create a PRN/i)).toBeNull()
+      })
+
+      describe('once the year has closed', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+            ...fixtureReprocessor,
+            accreditation: buildAccreditationView({ relevantYearOpen: false })
+          })
+        })
+
+        it('should not render the create PRN link', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: reprocessorListUrl,
+            auth: mockAuth
+          })
+
+          const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+          expect(queryByText(main, /Create a PRN/i)).toBeNull()
+        })
+
+        it('should link each awaiting PRN to its read page', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: reprocessorListUrl,
+            auth: mockAuth
+          })
+
+          const main = getByRole(new JSDOM(result).window.document.body, 'main')
+          const awaitingPanel = main.querySelector('#awaiting-action')
+          const links = getAllByRole(awaitingPanel, 'link').map((link) => [
+            link.textContent,
+            link.getAttribute('href')
+          ])
+
+          expect(links).toStrictEqual([
+            ['View', `${reprocessorListUrl}/prn-001/view`],
+            ['View', `${reprocessorListUrl}/prn-002/view`]
+          ])
+        })
       })
 
       it('should render waste balance section', async ({ server }) => {

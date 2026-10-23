@@ -37,7 +37,8 @@ export const listController = {
       registration,
       ...toNoteRows(prns),
       wasteBalance,
-      showsDecember
+      showsDecember,
+      yearOpen: accreditation.relevantYearOpen
     })
 
     return h.view('prns/list', viewData)
