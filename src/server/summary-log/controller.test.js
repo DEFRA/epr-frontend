@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
@@ -286,6 +287,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     const submittedWithClosedAdjustment = () => ({
       status: summaryLogStatuses.submitted,
+      processingType: PROCESSING_TYPES.EXPORTER,
       year: 2026,
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -311,6 +313,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted,
+        processingType: 'EXPORTER',
         year: 2026,
         accreditationNumber: 'ACC-2025-001'
       })
@@ -340,6 +343,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted,
+        processingType: 'EXPORTER',
         year: 2027
       })
 
@@ -355,6 +359,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted,
+        processingType: 'EXPORTER',
         year: 2027
       })
 
@@ -370,6 +375,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted,
+        processingType: 'EXPORTER',
         year: 2027
       })
 
@@ -406,12 +412,59 @@ describe('#summaryLogUploadProgressController', () => {
       }
     )
 
+    it('status: submitted - fails for a summary log without a processing type', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submitted,
+        year: 2026
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    it.for([summaryLogStatuses.submitted, summaryLogStatuses.validated])(
+      'status: %s - reads no balance for a registered-only summary log, even once the registration is accredited',
+      async (status, { server }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status,
+          year: 2026,
+          processingType: 'REPROCESSOR_REGISTERED_ONLY',
+          loadsByReportingPeriod: {
+            openPeriodLoads: emptyPeriod(),
+            closedPeriodLoads: emptyPeriod()
+          }
+        })
+        mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited2026)
+        mockFetchOrganisationWasteBalances.mockResolvedValue(
+          balancesForBothYears()
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(fetchOrganisationWasteBalances).not.toHaveBeenCalled()
+        expect(result).not.toContain('2,026.00')
+      }
+    )
+
     describe('waste balance', () => {
       it("status: submitted - shows the balance of the summary log's accreditation", async ({
         server
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
           year: 2027
         })
         mockFetchRegistrationWithAccreditation.mockImplementation(
@@ -436,6 +489,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
           year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
@@ -477,6 +531,7 @@ describe('#summaryLogUploadProgressController', () => {
         async ({ availableAmount, expected }, { server }) => {
           mockFetchSummaryLogStatus.mockResolvedValueOnce({
             status: summaryLogStatuses.submitted,
+            processingType: 'EXPORTER',
             year: 2026,
             accreditationNumber: 'ACC-2025-001'
           })
@@ -517,6 +572,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
           year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
@@ -544,6 +600,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
           year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
@@ -571,6 +628,7 @@ describe('#summaryLogUploadProgressController', () => {
 
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
           year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
@@ -604,6 +662,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
           year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
@@ -649,6 +708,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
           year: 2026,
           loadsByReportingPeriod: {
             openPeriodLoads: {
@@ -677,6 +737,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
           year: 2026,
           loadsByReportingPeriod: {
             openPeriodLoads: emptyPeriod(),
@@ -700,6 +761,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
           year: 2026,
           loadsByReportingPeriod: {
             openPeriodLoads: emptyPeriod(),
@@ -735,6 +797,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       const submittedWithoutClosedAdjustment = () => ({
         status: summaryLogStatuses.submitted,
+        processingType: PROCESSING_TYPES.EXPORTER,
         year: 2026
       })
 
