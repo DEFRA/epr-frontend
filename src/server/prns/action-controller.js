@@ -23,10 +23,6 @@ export const actionController = {
     const { organisation, registration, accreditation, prn, basePath, prnId } =
       await fetchPrnContext(request)
 
-    if (!accreditation.relevantYearOpen) {
-      return h.redirect(`${basePath}/${prnId}/view`)
-    }
-
     const recipientDisplayName = getIssuedToOrgDisplayName(
       prn.issuedToOrganisation
     )

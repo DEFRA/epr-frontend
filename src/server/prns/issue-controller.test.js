@@ -6,6 +6,7 @@ import {
 } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
+  buildAccreditationView,
   buildRegistrationView,
   buildRegistrationWithAccreditation
 } from '#server/common/test-helpers/organisation-view-fixtures.js'
@@ -16,6 +17,7 @@ import {
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
@@ -165,6 +167,48 @@ describe('#issueController', () => {
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(errorUrl)
     })
+
+    it.for([
+      {
+        description: 'the year has closed',
+        arrange: () => {
+          vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+            buildRegistrationWithAccreditation({
+              accreditation: buildAccreditationView({ relevantYearOpen: false })
+            })
+          )
+        }
+      },
+      {
+        description: 'the backend says the year has closed',
+        arrange: () => {
+          const refusal = Boom.conflict('The deadline has passed')
+          refusal.output.payload.code = 'RELEVANT_YEAR_CLOSED'
+          vi.mocked(updatePrnStatus).mockRejectedValueOnce(refusal)
+        }
+      }
+    ])(
+      'should send the session to the read page without issuing when $description',
+      async ({ arrange }, { server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          viewUrl,
+          { auth: mockAuth }
+        )
+        arrange()
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: issueUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(viewUrl)
+      }
+    )
 
     it('redirects to action page with issue_failed error for non-conflict Boom errors', async ({
       server

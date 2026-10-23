@@ -1,5 +1,6 @@
 import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { showsDecemberBalance } from '#server/common/helpers/waste-balance/december-balance.js'
+import { isYearOpen } from './helpers/closed-year.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
 import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
@@ -38,7 +39,7 @@ export const listController = {
       ...toNoteRows(prns),
       wasteBalance,
       showsDecember,
-      yearOpen: accreditation.relevantYearOpen
+      yearOpen: isYearOpen(accreditation)
     })
 
     return h.view('prns/list', viewData)

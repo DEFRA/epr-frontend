@@ -9,6 +9,10 @@ import {
 } from '#server/common/helpers/logging/cdp-boom.js'
 import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
+import {
+  closedYearSendsTo,
+  isClosedYearRefusal
+} from './helpers/closed-year.js'
 import { createPrn } from './helpers/create-prn.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
@@ -32,8 +36,6 @@ const ERROR_SUMMARY_TITLE_KEY = 'prns:errorSummaryTitle'
 // backend emits this code the branch is inert, so behaviour degrades to the
 // existing confirm-time check.
 const INSUFFICIENT_BALANCE_CODE = 'INSUFFICIENT_AVAILABLE_BALANCE'
-
-const RELEVANT_YEAR_CLOSED_CODE = 'RELEVANT_YEAR_CLOSED'
 
 const ERROR_KEYS = Object.freeze({
   notesTooLong: 'notesTooLong',
@@ -398,8 +400,8 @@ export const postController = {
         return handleInsufficientBalance(request, h, organisations)
       }
 
-      if (error.output?.payload?.code === RELEVANT_YEAR_CLOSED_CODE) {
-        return h.redirect(prnsPath(keys))
+      if (isClosedYearRefusal(error)) {
+        return h.redirect(closedYearSendsTo.list(request.params))
       }
 
       if (error.isBoom) {
