@@ -155,18 +155,31 @@ describe('who a registration renders for', () => {
   )
 
   it.for([
-    { name: 'a regulator', auth: regulator },
-    { name: 'an operator', auth: operator }
+    { name: 'a regulator', auth: regulator, page: 'registration', suffix: '' },
+    { name: 'an operator', auth: operator, page: 'registration', suffix: '' },
+    {
+      name: 'a regulator',
+      auth: regulator,
+      page: 'accreditation',
+      suffix: '/accreditations/2026'
+    },
+    {
+      name: 'an operator',
+      auth: operator,
+      page: 'accreditation',
+      suffix: '/accreditations/2026'
+    }
   ])(
-    'is not found for $name at an organisation number that is not digits',
-    async ({ auth }, { server }) => {
+    'is not found for $name at the $page address with an organisation number that is not digits',
+    async ({ auth, suffix }, { server }) => {
       const { statusCode } = await visit(
         server,
         auth,
-        `/organisations/500118x/registrations/${registrationNumber}`
+        `/organisations/500118x/registrations/${registrationNumber}${suffix}`
       )
 
       expect(statusCode).toBe(statusCodes.notFound)
+      expect(fetchAccreditationDetails).not.toHaveBeenCalled()
     }
   )
 
