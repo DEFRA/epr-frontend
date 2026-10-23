@@ -1,3 +1,4 @@
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
@@ -54,7 +55,8 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   uploadUrl?: string,
  *   cancelUrl: string,
  *   wasteBalance?: number,
- *   year: Year
+ *   year: Year,
+ *   isRegulator: boolean
  * }} RenderContext
  */
 
@@ -186,13 +188,18 @@ const renderSuccessView = (
     registrationPath,
     wasteBalance,
     loadsByReportingPeriod,
-    year
+    year,
+    isRegulator
   }
 ) => {
+  const heading = localise('summary-log:successHeading', { year })
+
   return h.view(SUCCESS_VIEW_NAME, {
-    pageTitle: localise('summary-log:successPageTitle'),
-    heading: localise('summary-log:successHeading', { year }),
-    organisationPath: `${organisationPath}/${year}`,
+    pageTitle: heading,
+    heading,
+    organisationPath: isRegulator
+      ? organisationPath
+      : `${organisationPath}/${year}`,
     registrationPath,
     wasteBalance,
     showFurtherAction: requiresResubmission(loadsByReportingPeriod)
@@ -381,7 +388,10 @@ const getWasteBalanceData = async (
   }
 
   const { organisation, accreditation } =
-    await fetchRegistrationWithAccreditation(keys, session.backendToken)
+    await fetchRegistrationWithAccreditation(
+      { ...keys, year: balanceYear },
+      session.backendToken
+    )
 
   if (!accreditation) {
     return {}
@@ -454,7 +464,8 @@ export const summaryLogUploadProgressController = {
       uploadUrl,
       cancelUrl,
       wasteBalance,
-      year: summaryLogYear
+      year: summaryLogYear,
+      isRegulator: readsAsARegulator(session)
     })
   }
 }
