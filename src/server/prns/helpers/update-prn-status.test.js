@@ -5,6 +5,7 @@ import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 
+import { isClosedYearRefusal } from './closed-year.js'
 import { updatePrnStatus } from './update-prn-status.js'
 
 describe(updatePrnStatus, () => {
@@ -52,5 +53,37 @@ describe(updatePrnStatus, () => {
           '/organisations/500123/registrations/R26%2F1/accreditations/2026/packaging-recycling-notes/prn%23789/status'
       }
     ])
+  })
+
+  it('should reject as a closed-year refusal when the backend says the year has closed', async ({
+    msw
+  }) => {
+    msw.use(
+      http.post(/\/status$/, () =>
+        HttpResponse.json(
+          {
+            statusCode: 409,
+            error: 'Conflict',
+            message:
+              'The deadline for a 2026 relevant year was 31 January 2027.',
+            code: 'RELEVANT_YEAR_CLOSED'
+          },
+          { status: 409 }
+        )
+      )
+    )
+
+    const error = await updatePrnStatus(
+      {
+        organisationNumber: '500123',
+        registrationNumber: 'R26/1',
+        year: '2026'
+      },
+      'prn-789',
+      { status: 'awaiting_acceptance' },
+      toBackendToken('a-token')
+    ).catch((rejected) => rejected)
+
+    expect(isClosedYearRefusal(error)).toBe(true)
   })
 })
