@@ -7,12 +7,13 @@ import { homeController } from './home-controller.js'
 import { yearController } from './year-controller.js'
 
 /**
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */
 
 /**
- * @typedef {{ organisationNumber: string, year?: string }} OrganisationParams
+ * @typedef {{ organisationNumber: OrganisationNumber, year?: string }} OrganisationParams
  */
 
 /**

@@ -1,5 +1,8 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import {
   buildAccreditationView,
   buildRegistrationView,
@@ -35,7 +38,9 @@ const accreditedReprocessorWithSite = buildRegistrationWithAccreditation({
       address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
     },
     accreditations: {
-      2026: buildAccreditationView({ accreditationNumber: 'ER992415095748M' })
+      2026: buildAccreditationView({
+        accreditationNumber: toAccreditationNumber('ER992415095748M')
+      })
     }
   })
 })
@@ -71,8 +76,8 @@ const mockReportDetail = /** @type {ReportDetailResponse} */ (
   })
 )
 
-const organisationNumber = '500001'
-const registrationNumber = 'R25SR500030912PA'
+const organisationNumber = toOrganisationNumber('500001')
+const registrationNumber = toRegistrationNumber('R25SR500030912PA')
 const basePeriodPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 const createdUrl = `${basePeriodPath}/created`
 const listUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`

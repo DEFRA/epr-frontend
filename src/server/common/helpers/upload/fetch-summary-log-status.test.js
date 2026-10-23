@@ -1,6 +1,8 @@
 import { config } from '#config/config.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
@@ -11,8 +13,8 @@ const backendToken = toBackendToken('test-id-token')
 describe(fetchSummaryLogStatus, () => {
   const backendUrl = config.get('eprBackendUrl')
   const keys = {
-    organisationNumber: '500118',
-    registrationNumber: 'R26ER5001180041PL'
+    organisationNumber: toOrganisationNumber('500118'),
+    registrationNumber: toRegistrationNumber('R26ER5001180041PL')
   }
   const summaryLogId = 'log-789'
 

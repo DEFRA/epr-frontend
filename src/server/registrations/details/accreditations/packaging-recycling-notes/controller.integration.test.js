@@ -2,6 +2,9 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -31,8 +34,8 @@ vi.mock(import('./helpers/fetch-prn-list-details.js'))
 
 const organisationId = organisationData.id
 const keys = {
-  organisationNumber: '50002',
-  registrationNumber: 'REG001234',
+  organisationNumber: toOrganisationNumber('50002'),
+  registrationNumber: toRegistrationNumber('REG001234'),
   year: '2026'
 }
 const organisationPath = '/organisations/50002'
@@ -98,13 +101,13 @@ const reprocessor = buildRegistrationView({
 const details = {
   ...buildRegistrationWithAccreditation({
     organisation: {
-      organisationNumber: '50002',
+      organisationNumber: toOrganisationNumber('50002'),
       name: 'Kirkby Plastics Ltd',
       displayName: 'Kirkby Plastics Ltd'
     },
     registration: reprocessor,
     accreditation: buildAccreditationView({
-      accreditationNumber: 'A26ER5001180114PL'
+      accreditationNumber: toAccreditationNumber('A26ER5001180114PL')
     }),
     registrationNumber: keys.registrationNumber
   }),

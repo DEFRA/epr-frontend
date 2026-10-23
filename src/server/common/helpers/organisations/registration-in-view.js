@@ -1,5 +1,6 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
   accreditationPath,
@@ -9,13 +10,14 @@ import {
 import { isAccreditationActive } from './accreditation-helpers.js'
 
 /**
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
 /**
- * @param {{ organisationNumber: string | number, registrationNumber: string }} keys
+ * @param {RegistrationKeys} keys
  */
 export const registrationNotFound = ({
   organisationNumber,
@@ -31,7 +33,7 @@ export const registrationNotFound = ({
 /**
  * The organisation's registration with that number.
  * @param {OrganisationView} organisation
- * @param {string} registrationNumber
+ * @param {RegistrationNumber} registrationNumber
  * @returns {RegistrationView}
  */
 export const registrationIn = (organisation, registrationNumber) => {
@@ -44,6 +46,17 @@ export const registrationIn = (organisation, registrationNumber) => {
 
   return organisation.registrations[registrationNumber]
 }
+
+/**
+ * Each of the registrations, with the number it is keyed by.
+ * @param {OrganisationView['registrations']} registrations
+ * @returns {[RegistrationNumber, RegistrationView][]}
+ */
+export const registrationEntries = (registrations) =>
+  Object.entries(registrations).map(([number, registration]) => [
+    toRegistrationNumber(number),
+    registration
+  ])
 
 /**
  * The registration's accreditation for that year.

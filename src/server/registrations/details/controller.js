@@ -3,12 +3,14 @@ import { fetchRegistration } from '#server/common/helpers/organisations/fetch-re
 import { buildViewModel } from './build-view-model.js'
 
 /**
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */
 
 /**
- * @typedef {{ organisationNumber: string, registrationNumber: string }} RegistrationParams
+ * @typedef {{ organisationNumber: OrganisationNumber, registrationNumber: RegistrationNumber }} RegistrationParams
  */
 
 /**

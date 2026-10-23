@@ -23,6 +23,8 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 /**
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { RegistrationParams } from './details/controller.js'
@@ -182,8 +184,8 @@ const overseasSitesRoute = {
 
 /**
  * @typedef {{
- *   organisationNumber: string,
- *   registrationNumber: string,
+ *   organisationNumber: OrganisationNumber,
+ *   registrationNumber: RegistrationNumber,
  *   year: number
  * }} RegisteredOnlyPeriodParams
  */

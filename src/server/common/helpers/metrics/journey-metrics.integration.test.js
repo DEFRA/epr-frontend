@@ -1,8 +1,11 @@
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 import { describe, expect, vi } from 'vitest'
 
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
@@ -108,8 +111,8 @@ describe('journey metrics emit-once, driven through a real session', () => {
   })
 
   describe('summary log upload journey (success page re-renders on every poll)', () => {
-    const organisationNumber = '500118'
-    const registrationNumber = 'R26ER5001180041PL'
+    const organisationNumber = toOrganisationNumber('500118')
+    const registrationNumber = toRegistrationNumber('R26ER5001180041PL')
     const operatorAuth = buildMockAuth({
       backendToken: toBackendToken('test-id-token')
     })
@@ -128,7 +131,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
       )
       vi.mocked(submitSummaryLog).mockResolvedValue({
         status: 'submitted',
-        accreditationNumber: '493021'
+        accreditationNumber: toAccreditationNumber('493021')
       })
     })
 

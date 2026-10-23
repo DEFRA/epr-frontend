@@ -3,6 +3,7 @@ import { paths } from '#server/paths.js'
 import { toCaption } from './caption.js'
 
 /**
+ * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { Localise } from './types.js'
  */
 
@@ -59,7 +60,7 @@ export const toRegistrationTrail = ({
  *   localiseUrl: (path: string) => string,
  *   organisationName: string,
  *   registrationNumber?: string | null,
- *   accreditationNumber: string,
+ *   accreditationNumber: AccreditationNumber,
  *   paths: RecordPaths & { accreditation: string }
  * }} params
  * @returns {AccreditationChildPage}

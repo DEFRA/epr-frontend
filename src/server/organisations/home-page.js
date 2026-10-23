@@ -12,6 +12,7 @@ import {
 import { getStatusClass } from './helpers/status-helpers.js'
 
 /**
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -46,7 +47,7 @@ export const chooseYearPath = (orgNumber, year) =>
  */
 
 /**
- * @typedef {{ number: string, registration: RegistrationView, accreditation: Accreditation | undefined }} DisplayedRegistration
+ * @typedef {{ number: RegistrationNumber, registration: RegistrationView, accreditation: Accreditation | undefined }} DisplayedRegistration
  */
 
 /**
@@ -110,7 +111,7 @@ function createRow(
   const registrationUrl = request.localiseUrl(
     registrationRowPath(
       registration,
-      { organisationNumber: String(orgNumber), registrationNumber: number },
+      { organisationNumber: orgNumber, registrationNumber: number },
       selectedYear
     )
   )

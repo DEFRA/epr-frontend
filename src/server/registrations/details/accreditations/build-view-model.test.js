@@ -1,4 +1,7 @@
 import { config } from '#config/config.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
@@ -66,8 +69,8 @@ const localise = createMockLocalise({
 const localiseUrl = (path) => path
 
 const keys = {
-  organisationNumber: '500118',
-  registrationNumber: 'R26ER5001180041PL',
+  organisationNumber: toOrganisationNumber('500118'),
+  registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
   year: '2026'
 }
 const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
@@ -75,7 +78,7 @@ const accreditationPath = `${registrationPath}/accreditations/2026`
 
 /** @type {OrganisationView} */
 const organisation = {
-  organisationNumber: '500118',
+  organisationNumber: toOrganisationNumber('500118'),
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
   registrations: {}
@@ -102,7 +105,7 @@ const aRegistration = (overrides) =>
  * @returns {Accreditation}
  */
 const anAccreditation = (overrides) => ({
-  accreditationNumber: 'A26ER5001180114PL',
+  accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]

@@ -1,4 +1,6 @@
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import Boom from '@hapi/boom'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
@@ -21,8 +23,8 @@ vi.mock(
   import('#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js')
 )
 
-const organisationNumber = '500118'
-const registrationNumber = 'R26ER5001180041PL'
+const organisationNumber = toOrganisationNumber('500118')
+const registrationNumber = toRegistrationNumber('R26ER5001180041PL')
 const backendToken = toBackendToken('test-token')
 
 const error = vi.fn()
@@ -40,7 +42,7 @@ const registration = /** @type {RegistrationView} */ (
 
 /** @type {OrganisationView} */
 const organisation = {
-  organisationNumber: '500118',
+  organisationNumber: toOrganisationNumber('500118'),
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
   registrations: { [registrationNumber]: registration }
@@ -159,7 +161,10 @@ describe(fetchRegisteredOnlyPeriod, () => {
 
   it('is not found for a registration number the organisation does not hold', async () => {
     await expect(
-      fetchRegisteredOnlyPeriod({ ...params, registrationNumber: 'R26XX1' })
+      fetchRegisteredOnlyPeriod({
+        ...params,
+        registrationNumber: toRegistrationNumber('R26XX1')
+      })
     ).rejects.toMatchObject({ output: { statusCode: 404 } })
   })
 

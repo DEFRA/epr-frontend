@@ -3,8 +3,8 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { year } from '#server/common/helpers/year.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { test } from '#vite/fixtures/server.js'
 
 import { fetchOrganisation } from './fetch-organisation.js'
@@ -28,7 +28,7 @@ describe(fetchOrganisation, () => {
     )
 
     const result = await fetchOrganisation(
-      organisationNumber('50002'),
+      toOrganisationNumber('50002'),
       backendToken
     )
 
@@ -44,7 +44,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber('50002'), backendToken)
+    await fetchOrganisation(toOrganisationNumber('50002'), backendToken)
 
     expect(search).toBe('')
   })
@@ -60,8 +60,8 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber('50002'), backendToken, {
-      year: year(2026)
+    await fetchOrganisation(toOrganisationNumber('50002'), backendToken, {
+      year: toYear(2026)
     })
 
     expect(search).toBe('?year=2026')
@@ -78,7 +78,7 @@ describe(fetchOrganisation, () => {
       })
     )
 
-    await fetchOrganisation(organisationNumber('../admin'), backendToken)
+    await fetchOrganisation(toOrganisationNumber('../admin'), backendToken)
 
     expect(pathname).toBe('/organisations/..%2Fadmin')
   })

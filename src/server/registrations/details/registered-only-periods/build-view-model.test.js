@@ -1,4 +1,7 @@
 import { config } from '#config/config.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -30,8 +33,8 @@ const localise = createMockLocalise({
   'reports:actionView': 'View'
 })
 
-const organisationNumber = '500118'
-const registrationNumber = 'R26ER5001180041PL'
+const organisationNumber = toOrganisationNumber('500118')
+const registrationNumber = toRegistrationNumber('R26ER5001180041PL')
 const registrationPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
 
 /**
@@ -39,7 +42,7 @@ const registrationPath = `/organisations/${organisationNumber}/registrations/${r
  * @returns {OrganisationView}
  */
 const anOrganisation = (overrides) => ({
-  organisationNumber: '500118',
+  organisationNumber: toOrganisationNumber('500118'),
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
   registrations: {},
@@ -51,7 +54,7 @@ const anOrganisation = (overrides) => ({
  * @returns {Accreditation}
  */
 const anAccreditation = (timeline) => ({
-  accreditationNumber: 'A26ER5001180114PL',
+  accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
   status: {
     current: 'approved',
     timeline: Object.entries(timeline).map(([at, status]) => ({ status, at }))

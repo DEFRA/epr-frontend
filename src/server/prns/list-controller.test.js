@@ -1,4 +1,7 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import {
@@ -40,14 +43,14 @@ const mockAuth = {
 }
 
 const reprocessorKeys = {
-  organisationNumber: '500001',
-  registrationNumber: 'R26ER5000010001GL',
+  organisationNumber: toOrganisationNumber('500001'),
+  registrationNumber: toRegistrationNumber('R26ER5000010001GL'),
   year: '2026'
 }
 
 const fixtureReprocessor = buildRegistrationWithAccreditation({
   organisation: {
-    organisationNumber: '500001',
+    organisationNumber: toOrganisationNumber('500001'),
     name: 'Reprocessor Organisation'
   },
   registration: buildRegistrationView({
@@ -57,18 +60,21 @@ const fixtureReprocessor = buildRegistrationWithAccreditation({
     site: { address: { fullAddress: 'Reprocessing Site' } }
   }),
   accreditation: buildAccreditationView({
-    accreditationNumber: 'A26ER5000010001GL'
+    accreditationNumber: toAccreditationNumber('A26ER5000010001GL')
   }),
   registrationNumber: reprocessorKeys.registrationNumber
 })
 
 const fixtureExporter = buildRegistrationWithAccreditation({
-  organisation: { organisationNumber: '500002', name: 'Exporter Organisation' },
+  organisation: {
+    organisationNumber: toOrganisationNumber('500002'),
+    name: 'Exporter Organisation'
+  },
   registration: buildRegistrationView({ material: 'plastic' }),
   accreditation: buildAccreditationView({
-    accreditationNumber: 'A26EX5000020002PL'
+    accreditationNumber: toAccreditationNumber('A26EX5000020002PL')
   }),
-  registrationNumber: 'R26EX5000020002PL'
+  registrationNumber: toRegistrationNumber('R26EX5000020002PL')
 })
 
 const mockWasteBalance = asWasteBalance({ availableAmount: 150.5 })
@@ -1056,7 +1062,7 @@ describe('#listPrnsController', () => {
         expect(fetchPrnWasteBalance).toHaveBeenCalledWith(
           expect.objectContaining({
             keys: reprocessorKeys,
-            accreditationNumber: 'A26ER5000010001GL',
+            accreditationNumber: toAccreditationNumber('A26ER5000010001GL'),
             backendToken: mockCredentials.backendToken
           })
         )

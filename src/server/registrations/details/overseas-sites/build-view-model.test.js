@@ -1,3 +1,5 @@
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { describe, expect, it } from 'vitest'
 
@@ -13,7 +15,7 @@ const localise = createMockLocalise({
   'registrations:details:overseasSites:heading': 'Overseas reprocessing sites'
 })
 
-const registrationNumber = 'R26ER5001180041PL'
+const registrationNumber = toRegistrationNumber('R26ER5001180041PL')
 
 /** @type {RegistrationView} */
 const aRegistration = {
@@ -46,7 +48,7 @@ const aRegistration = {
 const anOrganisation = (overrides) => ({
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
-  organisationNumber: '500123',
+  organisationNumber: toOrganisationNumber('500123'),
   registrations: { [registrationNumber]: aRegistration },
   ...overrides
 })
