@@ -232,26 +232,26 @@ async function handleDraftView(h, { keys, prnDraft, localise, session }) {
   })
 
   return h.view('prns/view', {
-    pageTitle: localise('prns:create:checkPageTitle', { noteType }),
-    caption: localise('prns:create:caption', { noteType }),
-    heading: localise('prns:create:checkHeading', { noteType }),
-    introText: localise('prns:create:checkIntroText', { noteType }),
+    accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
+    accreditationRows,
     authorisationText: localise('prns:create:checkAuthorisationText', {
       noteType
     }),
-    insetText: localise('prns:create:checkInsetText', { noteType }),
-    prnDetailsHeading: localise('prns:details:heading', { noteType }),
-    prnDetailRows,
-    accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
-    accreditationRows,
+    caption: localise('prns:create:caption', { noteType }),
     createButton: {
       text: localise('prns:create:createButton', { noteType })
     },
-    yearOpen: isYearOpen(accreditation),
     discardLink: {
-      text: localise('prns:create:discardLink'),
-      href: `${prnsPath(keys)}/${prnDraft.id}/discard`
-    }
+      href: `${prnsPath(keys)}/${prnDraft.id}/discard`,
+      text: localise('prns:create:discardLink')
+    },
+    heading: localise('prns:create:checkHeading', { noteType }),
+    insetText: localise('prns:create:checkInsetText', { noteType }),
+    introText: localise('prns:create:checkIntroText', { noteType }),
+    pageTitle: localise('prns:create:checkPageTitle', { noteType }),
+    prnDetailRows,
+    prnDetailsHeading: localise('prns:details:heading', { noteType }),
+    yearOpen: isYearOpen(accreditation)
   })
 }
 
