@@ -59,7 +59,7 @@ import {
 import { reportDataIncompleteGetController } from './report-data-incomplete-controller.js'
 import { ReportStaleError } from './helpers/stale.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-import { reportPath } from './helpers/report-paths.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { CADENCE } from './constants.js'
 
 const registrationBase =
@@ -266,6 +266,30 @@ const monthlyToAccreditedRoute = {
   }
 }
 
+/**
+ * Sends the yearless report list address to the current year's list.
+ * @type {ServerRoute}
+ */
+const currentYearListRoute = {
+  method: 'GET',
+  path: listPath,
+  handler(rawRequest, h) {
+    const request = asHapiRequest(rawRequest)
+    const { organisationNumber, registrationNumber } =
+      /** @type {RegistrationKeys} */ (request.params)
+
+    return redirectPreservingMethod(
+      request,
+      h,
+      reportsListPath({
+        organisationNumber,
+        registrationNumber,
+        year: new Date().getUTCFullYear()
+      })
+    )
+  }
+}
+
 export const reports = {
   plugin: {
     name: 'reports',
@@ -274,8 +298,9 @@ export const reports = {
         {
           ...listController,
           method: 'GET',
-          path: listPath
+          path: `${listPath}/{year}`
         },
+        currentYearListRoute,
         ...submissionRoutes(),
         monthlyToAccreditedRoute
       ])
@@ -310,7 +335,7 @@ export const reports = {
 /**
  * @import { RouteExtObject, ServerRegisterPluginObject, ServerRoute } from '@hapi/hapi'
  * @import { CadenceValue } from './constants.js'
- * @import { SubmissionKeys } from './helpers/report-paths.js'
+ * @import { RegistrationKeys, SubmissionKeys } from './helpers/report-paths.js'
  */
 
 /**

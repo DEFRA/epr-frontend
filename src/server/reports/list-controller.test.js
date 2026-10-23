@@ -323,11 +323,11 @@ const emptyResponse = {
 }
 
 const accreditedUrl =
-  '/organisations/500001/registrations/R25SR500030912PA/reports'
+  '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
 const exporterUrl =
-  '/organisations/500002/registrations/R25SE500030913PA/reports'
+  '/organisations/500002/registrations/R25SE500030913PA/reports/2026'
 const reprocessorUrl =
-  '/organisations/500003/registrations/R25SR500030914PA/reports'
+  '/organisations/500003/registrations/R25SR500030914PA/reports/2026'
 
 /** @param {InstanceType<DOMWindow['HTMLElement']>} body */
 const extractTagData = (body) =>
@@ -381,7 +381,9 @@ describe('#listReportsController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    it('should display page heading', async ({ server }) => {
+    it("should display the page heading with the address's year", async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -391,15 +393,17 @@ describe('#listReportsController', () => {
       const dom = new JSDOM(result)
       const { body } = dom.window.document
 
-      const heading = getByRole(body, 'heading', {
-        name: /Reports/,
-        level: 1
-      })
+      const heading = getByRole(body, 'heading', { level: 1 })
 
-      expect(heading).toBeDefined()
+      expect(heading.textContent?.replaceAll(/\s+/g, ' ').trim()).toBe(
+        'Glass remelt Manage reports (2026)'
+      )
+      expect(dom.window.document.title).toContain('Manage reports (2026)')
     })
 
-    it('should display back link to dashboard', async ({ server }) => {
+    it("should display back link to the year's accredited homepage", async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -413,7 +417,7 @@ describe('#listReportsController', () => {
 
       expect(backLink).not.toBeNull()
       expect(backLink?.getAttribute('href')).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA'
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
       )
     })
 
@@ -1160,6 +1164,22 @@ describe('#listReportsController', () => {
       backendServesCalendar(quarterlyResponse)
     })
 
+    it("should display back link to the year's registered-only homepage", async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+
+      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+        '/organisations/500003/registrations/R25SR500030914PA/2026'
+      )
+    })
+
     it('should display Create draft links for reprocessor periods', async ({
       server
     }) => {
@@ -1736,29 +1756,34 @@ describe('#listReportsController', () => {
   })
 
   describe('the year it reads', () => {
-    afterEach(() => {
-      vi.useRealTimers()
-    })
+    const registrationUrl =
+      '/organisations/500001/registrations/R25SR500030912PA'
 
-    it("asks for the current year's calendar and accreditation", async ({
-      server
-    }) => {
-      vi.useFakeTimers({
-        now: new Date('2027-01-05T10:00:00.000Z'),
-        toFake: ['Date']
-      })
+    beforeEach(() => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       backendServesCalendar(emptyResponse)
+    })
 
-      await server.inject({ method: 'GET', url: accreditedUrl, auth: mockAuth })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it("asks for the address's year's calendar and accreditation", async ({
+      server
+    }) => {
+      await server.inject({
+        method: 'GET',
+        url: `${registrationUrl}/reports/2025`,
+        auth: mockAuth
+      })
 
       expect(fetchReportingPeriods).toHaveBeenCalledWith(
         {
           organisationNumber: '500001',
           registrationNumber: 'R25SR500030912PA',
-          year: 2027
+          year: 2025
         },
         'mock-backend-token'
       )
@@ -1766,10 +1791,108 @@ describe('#listReportsController', () => {
         {
           organisationNumber: '500001',
           registrationNumber: 'R25SR500030912PA',
-          year: 2027
+          year: 2025
         },
         'mock-backend-token'
       )
+    })
+
+    it.for(['1999', '2101', 'latest'])(
+      'answers 404 for the year %s',
+      async (year, { server }) => {
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: `${registrationUrl}/reports/${year}`,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+        expect(fetchReportingPeriods).not.toHaveBeenCalled()
+      }
+    )
+
+    it("sends the yearless address to the current year's list", async ({
+      server
+    }) => {
+      vi.useFakeTimers({
+        now: new Date('2027-01-05T10:00:00.000Z'),
+        toFake: ['Date']
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `${registrationUrl}/reports`,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${registrationUrl}/reports/2027`)
+    })
+
+    it('keeps the language when sending the yearless address on', async ({
+      server
+    }) => {
+      vi.useFakeTimers({
+        now: new Date('2027-01-05T10:00:00.000Z'),
+        toFake: ['Date']
+      })
+
+      const { headers } = await server.inject({
+        method: 'GET',
+        url: `/cy${registrationUrl}/reports`,
+        auth: mockAuth
+      })
+
+      expect(headers.location).toBe(`/cy${registrationUrl}/reports/2027`)
+    })
+  })
+
+  describe('the heading', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      backendServesCalendar(emptyResponse)
+    })
+
+    afterEach(() => {
+      config.set('featureFlags.regulatorAccess', false)
+    })
+
+    /**
+     * @param {ConstructorParameters<typeof JSDOM>[0]} result
+     */
+    const headingOf = (result) =>
+      getByRole(new JSDOM(result).window.document.body, 'heading', {
+        level: 1
+      })
+        .textContent?.replaceAll(/\s+/g, ' ')
+        .trim()
+
+    it('offers a session holding no write scope the reports to view', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: readOnlyAuth
+      })
+
+      expect(headingOf(result)).toBe('Glass remelt View reports (2026)')
+    })
+
+    it('keeps the plain Reports heading for a regulator', async ({
+      server
+    }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: regulatorAuth
+      })
+
+      expect(headingOf(result)).toBe('Glass remelt Reports')
     })
   })
 
