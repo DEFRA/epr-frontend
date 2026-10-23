@@ -73,7 +73,7 @@
     }) }}
 
     {% if createButton %}
-      {% if hasWriteScope %}
+      {% if hasWriteScope and yearOpen %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 

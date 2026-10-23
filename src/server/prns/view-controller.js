@@ -12,7 +12,8 @@ import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   closedYearSendsTo,
-  isClosedYearRefusal
+  isClosedYearRefusal,
+  isYearOpen
 } from './helpers/closed-year.js'
 import {
   buildPrnCoreRows,
@@ -246,6 +247,7 @@ async function handleDraftView(h, { keys, prnDraft, localise, session }) {
     createButton: {
       text: localise('prns:create:createButton', { noteType })
     },
+    yearOpen: isYearOpen(accreditation),
     discardLink: {
       text: localise('prns:create:discardLink'),
       href: `${prnsPath(keys)}/${prnDraft.id}/discard`
