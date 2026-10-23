@@ -137,7 +137,8 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
     loadsByReportingPeriod,
     processingType,
     status,
-    validation
+    validation,
+    year
   } = data
 
   return {
@@ -146,7 +147,7 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
     processingType,
     status,
     validation,
-    year: data.year
+    year
   }
 }
 
@@ -437,7 +438,7 @@ export const summaryLogUploadProgressController = {
       processingType,
       status,
       validation,
-      year: summaryLogYear
+      year
     } = await getStatusData(request, keys, summaryLogId, session.backendToken)
 
     const registrationPath = toRegistrationPath(keys)
@@ -455,7 +456,7 @@ export const summaryLogUploadProgressController = {
     const { wasteBalance } = await getWasteBalanceData(
       status,
       keys,
-      summaryLogYear,
+      year,
       session,
       request.logger
     )
@@ -475,7 +476,7 @@ export const summaryLogUploadProgressController = {
       uploadUrl,
       cancelUrl,
       wasteBalance,
-      year: summaryLogYear
+      year
     })
   }
 }
