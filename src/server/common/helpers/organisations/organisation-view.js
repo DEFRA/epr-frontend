@@ -23,7 +23,7 @@
  * for the accreditation's year, as the backend rules it.
  * @typedef {{
  *   accreditationNumber: string,
- *   relevantYearOpen: boolean,
+ *   relevantYearOpen?: boolean,
  *   status: Status<AccreditationStatus>
  * }} Accreditation
  */
