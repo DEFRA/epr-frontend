@@ -1,4 +1,3 @@
-import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
@@ -55,8 +54,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   uploadUrl?: string,
  *   cancelUrl: string,
  *   wasteBalance?: number,
- *   year: Year,
- *   isRegulator: boolean
+ *   year: Year
  * }} RenderContext
  */
 
@@ -188,8 +186,7 @@ const renderSuccessView = (
     registrationPath,
     wasteBalance,
     loadsByReportingPeriod,
-    year,
-    isRegulator
+    year
   }
 ) => {
   const heading = localise('summary-log:successHeading', { year })
@@ -197,9 +194,7 @@ const renderSuccessView = (
   return h.view(SUCCESS_VIEW_NAME, {
     pageTitle: heading,
     heading,
-    organisationPath: isRegulator
-      ? organisationPath
-      : `${organisationPath}/${year}`,
+    organisationPath: `${organisationPath}/${year}`,
     registrationPath,
     wasteBalance,
     showFurtherAction: requiresResubmission(loadsByReportingPeriod)
@@ -464,8 +459,7 @@ export const summaryLogUploadProgressController = {
       uploadUrl,
       cancelUrl,
       wasteBalance,
-      year: summaryLogYear,
-      isRegulator: readsAsARegulator(session)
+      year: summaryLogYear
     })
   }
 }

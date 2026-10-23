@@ -385,42 +385,6 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    describe('with regulator access', () => {
-      beforeEach(() => {
-        config.set('featureFlags.regulatorAccess', true)
-      })
-
-      afterEach(() => {
-        config.reset('featureFlags.regulatorAccess')
-      })
-
-      it('status: submitted - should link a regulator to the organisation root', async ({
-        server
-      }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.submitted,
-          year: 2027
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: buildMockAuth({
-            provider: OIDC_ENTRA_ID,
-            idToken: 'test-id-token',
-            ...sessionIdentity(IDENTITIES.regulator)
-          })
-        })
-        const main = getByRole(new JSDOM(result).window.document.body, 'main')
-
-        expect(
-          getByRole(main, 'link', { name: 'Return to home' }).getAttribute(
-            'href'
-          )
-        ).toBe(`/organisations/${organisationNumber}`)
-      })
-    })
-
     it('status: submitted - should link to the 2026 home page for a summary log without a year', async ({
       server
     }) => {
