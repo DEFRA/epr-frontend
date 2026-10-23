@@ -255,7 +255,7 @@ describe("the operator's registration page for a year", () => {
       '/organisations/500118'
     )
     expect(hrefOf(body, 'Upload your summary log')).toBe(
-      `${registrationPath}/summary-logs/upload`
+      `${accreditationPath}/summary-logs/upload`
     )
     expect(hrefOf(body, 'Manage reports')).toBe(`${registrationPath}/reports`)
     expect(hrefOf(body, 'Create new PRN')).toBe(
@@ -263,6 +263,19 @@ describe("the operator's registration page for a year", () => {
     )
     expect(hrefOf(body, 'Manage PRNs')).toBe(
       `${accreditationPath}/packaging-recycling-notes`
+    )
+  })
+
+  it('keeps Welsh and the year on the summary log upload link', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
+    const { body } = await visit(server, { url: `/cy${accreditationPath}` })
+
+    expect(hrefOf(body, 'Upload your summary log')).toBe(
+      `/cy${accreditationPath}/summary-logs/upload`
     )
   })
 
@@ -577,7 +590,7 @@ describe("the operator's registered-only page for a year", () => {
       '/organisations/500118'
     )
     expect(hrefOf(body, 'Upload your summary log')).toBe(
-      `${registrationPath}/summary-logs/upload`
+      `${registeredOnlyPath}/summary-logs/upload`
     )
     expect(hrefOf(body, 'Manage reports')).toBe(`${registrationPath}/reports`)
     expect(hrefOf(body, 'View waste balance ledger')).toBe(

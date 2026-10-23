@@ -12,15 +12,15 @@ const keys = {
   organisationNumber: '500118',
   registrationNumber: 'R26ER5001180041PL'
 }
-const registered = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/2026`
-const accredited = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/accreditations/2026/summary-log`
+const registered = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/2027`
+const accredited = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/accreditations/2027/summary-log`
 
 describe(initiateSummaryLogUpload, () => {
   test.for([
     { kind: 'registered-only', isAccredited: false, url: registered },
     { kind: 'accredited', isAccredited: true, url: accredited }
   ])(
-    'starts a $kind upload for 2026 with the redirectUrl',
+    'starts a $kind upload for the year with the redirectUrl',
     async ({ isAccredited, url }, { msw }) => {
       /** @type {Request | undefined} */
       let capturedRequest
@@ -38,6 +38,7 @@ describe(initiateSummaryLogUpload, () => {
 
       await initiateSummaryLogUpload({
         keys,
+        year: 2027,
         accredited: isAccredited,
         redirectUrl: '/redirect/path',
         backendToken: 'test-id-token'
@@ -67,6 +68,7 @@ describe(initiateSummaryLogUpload, () => {
 
     const result = await initiateSummaryLogUpload({
       keys,
+      year: 2027,
       accredited: false,
       redirectUrl: '/redirect/path',
       backendToken: 'test-id-token'
@@ -92,6 +94,7 @@ describe(initiateSummaryLogUpload, () => {
     await expect(
       initiateSummaryLogUpload({
         keys,
+        year: 2027,
         accredited: false,
         redirectUrl: '/redirect/path',
         backendToken: 'test-id-token'

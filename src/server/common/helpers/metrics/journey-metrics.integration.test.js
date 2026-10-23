@@ -109,7 +109,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
     const registrationNumber = 'R26ER5001180041PL'
     const operatorAuth = buildMockAuth({ backendToken: 'test-id-token' })
     const summaryLogId = '789'
-    const uploadUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
+    const uploadUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/2026/summary-logs/upload`
     const submitUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}/submit`
 
     beforeEach(() => {

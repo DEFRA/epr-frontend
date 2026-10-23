@@ -9,6 +9,7 @@ import { isAccreditationActive } from '#server/common/helpers/organisations/accr
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
   accreditationIn,
+  defaultMaterialsHomepagePath,
   materialsHomepage
 } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
@@ -21,7 +22,6 @@ import {
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import { year as toYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
-import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
   accreditationPath,
   organisationPath,
@@ -201,11 +201,18 @@ const toPrns = (request, { noteType, noteTypePlural }, notesPath) => {
  *   request: HapiRequest,
  *   keys: RegistrationKeys,
  *   registration: RegistrationView,
- *   year: number
+ *   year: number,
+ *   homepagePath: string
  * }} params
  * @returns {Omit<RegistrationViewModel, 'accreditation' | 'prns' | 'reapplyAccreditation' | 'wasteBalanceLedgerUrl'>}
  */
-const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
+const buildRegistrationViewModel = ({
+  request,
+  keys,
+  registration,
+  year,
+  homepagePath
+}) => {
   const { t: localise, localiseUrl } = request
   const { isExporter, noteTypePlural } = getNoteTypeDisplayNames(registration)
   const siteName = toSiteName(registration, localise)
@@ -234,9 +241,7 @@ const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
       }
     },
     siteName,
-    uploadSummaryLogUrl: localiseUrl(
-      `${registrationPath(keys)}/summary-logs/upload`
-    ),
+    uploadSummaryLogUrl: localiseUrl(`${homepagePath}/summary-logs/upload`),
     wasteBalance: { availableAmount: null, noteTypePlural, breakdown: null }
   }
 }
@@ -271,7 +276,8 @@ const buildViewModel = ({
       request,
       keys,
       registration,
-      year: Number(keys.year)
+      year: Number(keys.year),
+      homepagePath: path
     }),
     accreditation: toAccreditationTag(accreditation),
     prns: toPrns(
@@ -305,7 +311,13 @@ const buildRegisteredOnlyViewModel = ({
   registration,
   year
 }) => ({
-  ...buildRegistrationViewModel({ request, keys, registration, year }),
+  ...buildRegistrationViewModel({
+    request,
+    keys,
+    registration,
+    year,
+    homepagePath: registeredOnlyPath({ ...keys, year })
+  }),
   accreditation: { exists: false },
   prns: null,
   reapplyAccreditation: null,
@@ -326,16 +338,10 @@ export const registrationController = {
       ...keys,
       backendToken: request.auth.credentials.backendToken
     })
-    const [latestYear] = registeredYears(registration)
-    const homepage = latestYear
-      ? materialsHomepage(keys, registration, toYear(latestYear))
-      : null
-
     return redirectPreservingMethod(
       request,
       h,
-      homepage?.path ??
-        registeredOnlyPath({ ...keys, year: new Date().getUTCFullYear() })
+      defaultMaterialsHomepagePath(keys, registration)
     )
   }
 }

@@ -1,5 +1,6 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { year as toYear } from '#server/common/helpers/year.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
   accreditationPath,
@@ -90,4 +91,23 @@ export const materialsHomepage = (keys, registration, year) => {
   return registeredYears(registration).includes(year)
     ? { kind: 'registeredOnly', path: registeredOnlyPath({ ...keys, year }) }
     : null
+}
+
+/**
+ * The materials homepage for the latest registered year, or the current
+ * year's registered-only address for a registration never registered.
+ * @param {RegistrationKeys} keys
+ * @param {RegistrationView} registration
+ * @returns {string}
+ */
+export const defaultMaterialsHomepagePath = (keys, registration) => {
+  const [latestYear] = registeredYears(registration)
+  const homepage = latestYear
+    ? materialsHomepage(keys, registration, toYear(latestYear))
+    : null
+
+  return (
+    homepage?.path ??
+    registeredOnlyPath({ ...keys, year: new Date().getUTCFullYear() })
+  )
 }

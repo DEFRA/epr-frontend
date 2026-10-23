@@ -329,6 +329,7 @@ const getUploadUrl = async (status, keys, redirectUrl, session) => {
 
   const { uploadUrl } = await initiateSummaryLogUpload({
     keys,
+    year: Number(ACCREDITATION_YEAR),
     accredited: accreditation !== undefined,
     redirectUrl,
     backendToken: session.backendToken
