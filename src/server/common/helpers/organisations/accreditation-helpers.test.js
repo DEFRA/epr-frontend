@@ -15,6 +15,7 @@ describe(isAccreditationActive, () => {
     ({ current, expected }) => {
       const accreditation = {
         accreditationNumber: 'ACC-001',
+        relevantYearOpen: true,
         status: {
           current: /** @type {AccreditationStatus} */ (current),
           timeline: []

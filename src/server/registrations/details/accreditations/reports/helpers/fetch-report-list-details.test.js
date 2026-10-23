@@ -22,6 +22,7 @@ describe(fetchReportListDetails, () => {
   /** @type {Accreditation} */
   const accreditation = {
     accreditationNumber: 'A26ER5001180114PL',
+    relevantYearOpen: true,
     status: {
       current: 'approved',
       timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]

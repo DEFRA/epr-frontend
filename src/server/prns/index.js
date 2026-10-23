@@ -9,6 +9,7 @@ import {
 import { cancelledController } from './cancelled-controller.js'
 import { controller } from './controller.js'
 import { createdController } from './created-controller.js'
+import { closedWithTheYear, closedYearSendsTo } from './helpers/closed-year.js'
 import {
   deleteGetController,
   deletePostController
@@ -53,16 +54,22 @@ export const prns = {
           method: 'GET',
           path: basePath
         },
-        {
-          ...controller,
-          method: 'GET',
-          path: `${basePath}/create`
-        },
-        {
-          ...postController,
-          method: 'POST',
-          path: `${basePath}/create`
-        },
+        closedWithTheYear(
+          {
+            ...controller,
+            method: 'GET',
+            path: `${basePath}/create`
+          },
+          closedYearSendsTo.list
+        ),
+        closedWithTheYear(
+          {
+            ...postController,
+            method: 'POST',
+            path: `${basePath}/create`
+          },
+          closedYearSendsTo.list
+        ),
         {
           ...actionController,
           method: 'GET',
@@ -73,11 +80,14 @@ export const prns = {
           method: 'GET',
           path: `${basePath}/{prnId}/view`
         },
-        {
-          ...viewPostController,
-          method: 'POST',
-          path: `${basePath}/{prnId}/view`
-        },
+        closedWithTheYear(
+          {
+            ...viewPostController,
+            method: 'POST',
+            path: `${basePath}/{prnId}/view`
+          },
+          closedYearSendsTo.note
+        ),
         {
           ...createdController,
           method: 'GET',
@@ -118,11 +128,14 @@ export const prns = {
           method: 'GET',
           path: `${basePath}/{prnId}/cancelled`
         },
-        {
-          ...issueController,
-          method: 'POST',
-          path: `${basePath}/{prnId}/issue`
-        },
+        closedWithTheYear(
+          {
+            ...issueController,
+            method: 'POST',
+            path: `${basePath}/{prnId}/issue`
+          },
+          closedYearSendsTo.note
+        ),
         {
           ...issuedController,
           method: 'GET',

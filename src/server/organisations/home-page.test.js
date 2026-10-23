@@ -96,6 +96,7 @@ const organisationOf = (overrides = {}) => ({
 /** @type {Accreditation} */
 const approved2026 = {
   accreditationNumber: 'A26ER1',
+  relevantYearOpen: true,
   status: { current: 'approved', timeline: [] }
 }
 
@@ -272,6 +273,7 @@ describe('the organisation home page', () => {
             accreditations: {
               2026: {
                 accreditationNumber: 'A26ER1',
+                relevantYearOpen: true,
                 status: { current, timeline: [] }
               }
             }
@@ -294,6 +296,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: 'A26ER1',
+              relevantYearOpen: true,
               status: { current: 'cancelled', timeline: [] }
             }
           }
@@ -315,6 +318,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2025: {
               accreditationNumber: 'A25ER1',
+              relevantYearOpen: true,
               status: { current: 'approved', timeline: [] }
             }
           }
@@ -336,6 +340,7 @@ describe('the organisation home page', () => {
           {
             2025: {
               accreditationNumber: 'A25ER1',
+              relevantYearOpen: true,
               status: { current: 'approved', timeline: [] }
             }
           }
@@ -460,6 +465,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2025: {
               accreditationNumber: 'A25ER1',
+              relevantYearOpen: true,
               status: { current: 'suspended', timeline: [] }
             }
           }
@@ -478,6 +484,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: 'A26ER1',
+              relevantYearOpen: true,
               status: { current: 'suspended', timeline: [] }
             }
           }
@@ -498,6 +505,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: 'A26ER1',
+              relevantYearOpen: true,
               status: { current: 'cancelled', timeline: [] }
             }
           }

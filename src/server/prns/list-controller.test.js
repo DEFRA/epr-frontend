@@ -20,7 +20,12 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole, getByText, queryByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByText
+} from '@testing-library/dom'
 import Boom from '@hapi/boom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
@@ -255,6 +260,49 @@ describe('#listPrnsController', () => {
         const main = getByRole(body, 'main')
 
         expect(queryByText(main, /Create a PRN/i)).toBeNull()
+      })
+
+      describe('once the year has closed', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+            ...fixtureReprocessor,
+            accreditation: buildAccreditationView({ relevantYearOpen: false })
+          })
+        })
+
+        it('should not render the create PRN link', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: reprocessorListUrl,
+            auth: mockAuth
+          })
+
+          const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+          expect(queryByText(main, /Create a PRN/i)).toBeNull()
+        })
+
+        it('should still link each awaiting PRN to its action page', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: reprocessorListUrl,
+            auth: mockAuth
+          })
+
+          const main = getByRole(new JSDOM(result).window.document.body, 'main')
+          const awaitingPanel = main.querySelector('#awaiting-action')
+          const links = getAllByRole(awaitingPanel, 'link').map((link) => [
+            link.textContent,
+            link.getAttribute('href')
+          ])
+
+          expect(links).toStrictEqual([
+            ['Select', `${reprocessorListUrl}/prn-001`],
+            ['Select', `${reprocessorListUrl}/prn-002`]
+          ])
+        })
       })
 
       it('should render waste balance section', async ({ server }) => {
@@ -1282,6 +1330,42 @@ describe('#listPrnsController', () => {
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe('/logged-out')
       })
+    })
+
+    describe('accreditation year', () => {
+      it.for([
+        {
+          description: 'PRNs',
+          fixture: fixtureReprocessor,
+          url: reprocessorListUrl,
+          expected: 'PRNs (2026)'
+        },
+        {
+          description: 'PERNs',
+          fixture: fixtureExporter,
+          url: exporterListUrl.replace('/2026/', '/2027/'),
+          expected: 'PERNs (2027)'
+        }
+      ])(
+        'should show the year in the $description title and heading',
+        async ({ fixture, url, expected }, { server }) => {
+          vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixture)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
+
+          const { body, title } = new JSDOM(result).window.document
+          const main = getByRole(body, 'main')
+
+          expect(title).toContain(expected)
+          expect(
+            getByRole(main, 'heading', { level: 1, name: expected })
+          ).toBeDefined()
+        }
+      )
     })
 
     describe('dynamic PRN/PERN text', () => {
