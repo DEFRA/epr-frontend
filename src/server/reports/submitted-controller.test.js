@@ -60,7 +60,7 @@ const organisationNumber = '500001'
 const registrationNumber = 'R25SR500030912PA'
 const basePeriodPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 const submittedUrl = `${basePeriodPath}/submitted`
-const reportsUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+const reportsUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
 
 describe('#submittedController', () => {
   beforeEach(() => {

@@ -442,7 +442,9 @@ describe('#viewController', () => {
       const backLink = body.querySelector('.govuk-back-link')
 
       expect(backLink).not.toBeNull()
-      expect(backLink?.getAttribute('href')).toBe(`${registrationPath}/reports`)
+      expect(backLink?.getAttribute('href')).toBe(
+        `${registrationPath}/reports/2026`
+      )
     })
 
     describe('for a regulator, who has no report list of their own', () => {

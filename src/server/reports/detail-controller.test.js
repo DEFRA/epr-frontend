@@ -512,7 +512,7 @@ describe('#detailReportsController', () => {
 
       expect(backLink).not.toBeNull()
       expect(backLink?.getAttribute('href')).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA/reports'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
       )
     })
 
@@ -585,7 +585,7 @@ describe('#detailReportsController', () => {
 
       expect(link).not.toBeNull()
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA/reports'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
       )
     })
 
@@ -1809,7 +1809,7 @@ describe('#detailReportsController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA/reports'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
       )
     })
   })
@@ -1968,7 +1968,9 @@ describe('#detailReportsController', () => {
 
       expect(
         getByRole(body, 'link', { name: /Cancel/ }).getAttribute('href')
-      ).toBe('/organisations/500001/registrations/R25SR500030912PA/reports')
+      ).toBe(
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
+      )
     })
   })
 

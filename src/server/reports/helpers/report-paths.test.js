@@ -119,9 +119,9 @@ describe(summaryLogUploadPath, () => {
 })
 
 describe(reportsListPath, () => {
-  it('gives the report list for the registration', () => {
-    expect(reportsListPath(registrationKeys)).toBe(
-      '/organisations/500001/registrations/R25SR500030912PA/reports'
+  it("gives the report list for the registration's year", () => {
+    expect(reportsListPath({ ...registrationKeys, year: 2025 })).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2025'
     )
   })
 
@@ -129,9 +129,10 @@ describe(reportsListPath, () => {
     expect(
       reportsListPath({
         organisationNumber: '5/1',
-        registrationNumber: 'R&1'
+        registrationNumber: 'R&1',
+        year: 2025
       })
-    ).toBe('/organisations/5%2F1/registrations/R%261/reports')
+    ).toBe('/organisations/5%2F1/registrations/R%261/reports/2025')
   })
 })
 

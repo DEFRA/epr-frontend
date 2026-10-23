@@ -233,7 +233,7 @@ const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
     }),
     reports: {
       link: {
-        href: localiseUrl(reportsListPath(keys)),
+        href: localiseUrl(reportsListPath({ ...keys, year })),
         text: localise(keyForSession(request, 'registrations:manageReports'))
       }
     },

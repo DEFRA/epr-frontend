@@ -2,16 +2,16 @@ import Boom from '@hapi/boom'
 
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { organisationNumber as toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
+import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import { year as toYear } from '#server/common/helpers/year.js'
+import { homePath } from '#server/organisations/home-page.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-import {
-  organisationPath,
-  reportPath,
-  reportsListPath
-} from './helpers/report-paths.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { isResubmission } from './helpers/resubmission.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -64,7 +64,10 @@ export const createdController = {
       ? localise('reports:createdStatusValueResubmission')
       : localise('reports:createdStatusValue')
 
-    const homeUrl = organisationPath({ organisationNumber })
+    const homeUrl = homePath(toOrganisationNumber(organisationNumber), {
+      year: toYear(year),
+      exporting: isExporterRegistration(registration)
+    })
     const viewDraftUrl = `${reportPath(request.params)}/view`
 
     return h.view('reports/created', {

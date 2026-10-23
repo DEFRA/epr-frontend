@@ -114,8 +114,8 @@ describe('#deleteController', () => {
     describe('back link', () => {
       const host = 'localhost'
       const refererFor = (path) => `http://${host}${path}`
-      const reportsListPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
-      const periodPrefix = `${reportsListPath}/2026/quarterly/1`
+      const reportsListPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
+      const periodPrefix = `${reportsListPath}/quarterly/1`
 
       it('should fall back to the reports list when no referer header is present', async ({
         server
@@ -315,7 +315,7 @@ describe('#deleteController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
       })
 

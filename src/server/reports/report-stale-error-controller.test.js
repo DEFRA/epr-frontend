@@ -170,7 +170,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(button).toBeDefined()
         expect(button.getAttribute('href')).toBe(
-          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
         expect(button.classList.contains('govuk-button--secondary')).toBe(true)
       })
@@ -186,7 +186,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
       })
 
@@ -362,7 +362,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(button).toBeDefined()
         expect(button.getAttribute('href')).toBe(
-          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
         expect(button.classList.contains('govuk-button--secondary')).toBe(true)
       })
@@ -474,7 +474,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(button).toBeDefined()
         expect(button.getAttribute('href')).toBe(
-          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
         expect(button.classList.contains('govuk-button--secondary')).toBe(true)
       })
@@ -541,7 +541,7 @@ describe('#reportStaleErrorController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
       )
     })
   })

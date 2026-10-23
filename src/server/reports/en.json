@@ -82,6 +82,8 @@
   "makeChangesUpdateWasteDataOnlyTextExporter": "Select the 'Use this report's summary log' button and then tell us how many tonnes of waste you received, but did not export, in {{ periodLabel }}.",
   "makeChangesUpdateWasteDataOnlyTextReprocessor": "Select the 'Use this report's summary log' button and then tell us how many tonnes of waste you recycled and also did not recycle in {{ periodLabel }}.",
   "makeChangesUseSummaryLog": "Use this report's summary log",
+  "manageReportsHeading": "Manage reports ({{ year }})",
+  "manageReportsHeadingReadOnly": "View reports ({{ year }})",
   "materialLabel": "Material",
   "months": {
     "1": "January",
@@ -316,5 +318,6 @@
   "wasteSentOnHeading": "Packaging waste sent on",
   "wasteSentOnIntroAccreditedReprocessor": "This data comes from sections 5 and 6 of your summary log.",
   "wasteSentOnIntroExporter": "This data comes from section 4 of your summary log",
-  "wasteSentOnIntroReprocessor": "This data comes from section 2 of your summary log"
+  "wasteSentOnIntroReprocessor": "This data comes from section 2 of your summary log",
+  "yearPageTitle": "{{ heading }}: {{ material }}"
 }
