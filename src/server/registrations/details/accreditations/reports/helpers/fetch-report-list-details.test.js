@@ -1,7 +1,7 @@
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import Boom from '@hapi/boom'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
-import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchReportListDetails } from './fetch-report-list-details.js'
@@ -53,6 +53,7 @@ describe(fetchReportListDetails, () => {
   const reportingPeriods = [
     {
       year: 2026,
+      cadence: 'monthly',
       period: 8,
       submissionNumber: 1,
       startDate: '2026-08-01',
@@ -75,29 +76,51 @@ describe(fetchReportListDetails, () => {
 
   beforeEach(() => {
     vi.mocked(fetchOrganisation).mockResolvedValue(organisation)
-    vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
-      cadence: 'monthly',
-      reportingPeriods
+    vi.mocked(fetchYearCalendar).mockResolvedValue({
+      year: 2026,
+      registeredOnly: {
+        reportingPeriods: [
+          {
+            ...reportingPeriods[0],
+            cadence: 'quarterly',
+            period: 1,
+            startDate: '2026-01-01',
+            endDate: '2026-03-31',
+            dueDate: '2026-04-20'
+          }
+        ]
+      },
+      accredited: {
+        accreditationNumber: accreditation.accreditationNumber,
+        reportingPeriods
+      }
     })
   })
 
-  it("reads the organisation, the year's accreditation and the calendar", async () => {
+  it("reads the organisation, the year's accreditation and its accredited periods", async () => {
     await expect(fetchDetails()).resolves.toStrictEqual({
       organisation,
       accreditation,
-      cadence: 'monthly',
       reportingPeriods
     })
   })
 
-  it('reads the organisation and the calendar by number', async () => {
+  it("reads the organisation and the page year's calendar by number", async () => {
     await fetchDetails()
 
     expect(fetchOrganisation).toHaveBeenCalledWith('500118', backendToken)
-    expect(fetchReportingPeriodsByNumber).toHaveBeenCalledWith(
-      { organisationNumber, registrationNumber },
+    expect(fetchYearCalendar).toHaveBeenCalledWith(
+      { organisationNumber, registrationNumber, year: 2026 },
       backendToken
     )
+  })
+
+  it('shows no periods for a year with no accredited periods', async () => {
+    vi.mocked(fetchYearCalendar).mockResolvedValue({ year: 2026 })
+
+    await expect(fetchDetails()).resolves.toMatchObject({
+      reportingPeriods: []
+    })
   })
 
   it('is not found for an organisation number the backend does not know', async () => {
@@ -121,9 +144,7 @@ describe(fetchReportListDetails, () => {
   })
 
   it('fails the page where the calendar could not be read', async () => {
-    vi.mocked(fetchReportingPeriodsByNumber).mockRejectedValue(
-      new Error('nope')
-    )
+    vi.mocked(fetchYearCalendar).mockRejectedValue(new Error('nope'))
 
     await expect(fetchDetails()).rejects.toThrow('nope')
   })

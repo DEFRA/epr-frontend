@@ -7,7 +7,6 @@ import { buildViewModel } from './build-view-model.js'
 /**
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { TableRow } from './build-view-model.js'
  */
@@ -98,7 +97,6 @@ const aLedgerEvent = (createdAt = '2026-05-04T09:00:00.000Z') => ({
  * @param {{
  *   organisation?: OrganisationView,
  *   registration?: RegistrationView,
- *   cadence?: CadenceValue | null,
  *   reportingPeriods?: ReportingPeriod[],
  *   ledgerEvents?: LedgerEvent[] | null,
  *   year?: number
@@ -107,7 +105,6 @@ const aLedgerEvent = (createdAt = '2026-05-04T09:00:00.000Z') => ({
 const build = ({
   organisation,
   registration,
-  cadence = 'quarterly',
   reportingPeriods,
   ledgerEvents = null,
   year
@@ -116,7 +113,6 @@ const build = ({
     organisation: organisation ?? anOrganisation(),
     registration: registration ?? aRegistration(),
     keys: { organisationNumber, registrationNumber },
-    cadence,
     reportingPeriods: reportingPeriods ?? [],
     ledgerEvents,
     year: year ?? 2026,
@@ -290,23 +286,6 @@ describe(buildViewModel, () => {
 
       expect(row?.[0]).toStrictEqual({ text: 'Quarter 1, 2026' })
       expect(row?.[1]).toStrictEqual({ text: '20 Apr 2026' })
-    })
-
-    // The calendar answers one cadence for the registration. Monthly periods
-    // are the accreditation page's to show, so they are not repeated here.
-    it('shows nothing where the registration currently owes monthly reports', () => {
-      expect(
-        build({
-          cadence: 'monthly',
-          reportingPeriods: [aQuarter(1), aQuarter(2)]
-        }).reports.rows
-      ).toStrictEqual([])
-    })
-
-    it('shows nothing where the calendar could not be read', () => {
-      expect(
-        build({ cadence: null, reportingPeriods: [aQuarter(1)] }).reports.rows
-      ).toStrictEqual([])
     })
 
     it('leads with the most recent quarter', () => {

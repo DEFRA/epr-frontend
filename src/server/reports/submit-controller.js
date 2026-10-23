@@ -309,7 +309,7 @@ async function buildViewData(request, options = {}) {
 
   const { organisation, registration, accreditation } =
     await fetchRegistrationWithAccreditation(
-      { organisationNumber, registrationNumber },
+      { organisationNumber, registrationNumber, year },
       session.backendToken
     )
   const reportDetail = await fetchReportDetail(

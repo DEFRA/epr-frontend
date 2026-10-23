@@ -5,7 +5,7 @@ import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/
 import { fetchAccreditationLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
 import { year as toYear } from '#server/common/helpers/year.js'
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
-import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
@@ -15,16 +15,12 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
- * @typedef {{
- *   cadence: CadenceValue | null,
- *   reportingPeriods: ReportingPeriod[]
- * }} ReportingCalendar
+ * @typedef {{ reportingPeriods: ReportingPeriod[] }} ReportingCalendar
  */
 
 /**
@@ -34,7 +30,6 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
  *   accreditation: Accreditation,
  *   wasteBalance: WasteBalance | null,
  *   reportingPeriods: ReportingPeriod[],
- *   cadence: CadenceValue | null,
  *   ledgerEvents: LedgerEvent[] | null,
  *   packagingRecyclingNotes: PackagingRecyclingNote[]
  * }} AccreditationDetails
@@ -72,20 +67,21 @@ const fetchAccreditation = async ({ keys, backendToken, logger }) => {
 }
 
 /**
- * The reporting calendar, or no periods where it could not be read.
- * @param {{ keys: RegistrationKeys, backendToken: BackendToken, logger: TypedLogger }} params
+ * The year's accredited periods, or no periods where they could not be read.
+ * @param {{ keys: RegistrationKeys & { year: number }, backendToken: BackendToken, logger: TypedLogger }} params
  * @returns {Promise<ReportingCalendar>}
  */
 const fetchReportingCalendar = async ({ keys, backendToken, logger }) => {
   try {
-    return await fetchReportingPeriodsByNumber(keys, backendToken)
+    const { accredited } = await fetchYearCalendar(keys, backendToken)
+    return { reportingPeriods: accredited?.reportingPeriods ?? [] }
   } catch (error) {
     logger.error({
       message: `Failed to fetch reporting periods for organisation ${keys.organisationNumber} registration ${keys.registrationNumber}`,
       err: error
     })
 
-    return { cadence: null, reportingPeriods: [] }
+    return { reportingPeriods: [] }
   }
 }
 
@@ -137,7 +133,8 @@ export const fetchAccreditationDetails = async ({
       fetchReportingCalendar({
         keys: {
           organisationNumber: keys.organisationNumber,
-          registrationNumber: keys.registrationNumber
+          registrationNumber: keys.registrationNumber,
+          year: Number(keys.year)
         },
         backendToken,
         logger
@@ -149,7 +146,6 @@ export const fetchAccreditationDetails = async ({
   return {
     ...accreditation,
     reportingPeriods: calendar.reportingPeriods,
-    cadence: calendar.cadence,
     ledgerEvents,
     packagingRecyclingNotes
   }

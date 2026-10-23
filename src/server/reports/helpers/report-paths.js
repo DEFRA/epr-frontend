@@ -82,9 +82,9 @@ export const reportPath = ({
 export const reportApiPath = (keys) => reportPath(keys)
 
 /**
- * The backend reporting calendar route for a registration.
- * @param {RegistrationKeys} keys
+ * The backend reporting calendar route for a registration's year.
+ * @param {RegistrationKeys & { year: number }} keys
  * @returns {string}
  */
-export const reportsCalendarApiPath = (keys) =>
-  `${reportsListPath(keys)}/calendar`
+export const reportsCalendarApiPath = ({ year, ...keys }) =>
+  `${reportsListPath(keys)}/${year}/calendar`

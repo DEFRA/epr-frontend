@@ -43,7 +43,7 @@ export const deleteGetController = {
     const { t: localise } = request
 
     const { registration } = await fetchRegistrationWithAccreditation(
-      { organisationNumber, registrationNumber },
+      { organisationNumber, registrationNumber, year },
       session.backendToken
     )
 

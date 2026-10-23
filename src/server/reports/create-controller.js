@@ -18,12 +18,13 @@ export const createController = {
     }
   },
   async handler(request, h) {
-    const { organisationNumber, registrationNumber, cadence } = request.params
+    const { organisationNumber, registrationNumber, year, cadence } =
+      request.params
     const session = request.auth.credentials
 
     const { registration, accreditation } =
       await fetchRegistrationWithAccreditation(
-        { organisationNumber, registrationNumber },
+        { organisationNumber, registrationNumber, year },
         session.backendToken
       )
 

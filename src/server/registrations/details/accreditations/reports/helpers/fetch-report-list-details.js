@@ -1,11 +1,10 @@
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
-import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
@@ -14,7 +13,6 @@ import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-rep
  * @typedef {{
  *   organisation: OrganisationView,
  *   accreditation: Accreditation,
- *   cadence: CadenceValue,
  *   reportingPeriods: ReportingPeriod[]
  * }} ReportListDetails
  */
@@ -30,15 +28,14 @@ export const fetchReportListDetails = async ({
   year,
   ...keys
 }) => {
-  const [{ organisation, registration }, calendar] = await Promise.all([
+  const [{ organisation, registration }, { accredited }] = await Promise.all([
     fetchRegistration({ ...keys, backendToken }),
-    fetchReportingPeriodsByNumber(keys, backendToken)
+    fetchYearCalendar({ ...keys, year: Number(year) }, backendToken)
   ])
 
   return {
     organisation,
     accreditation: accreditationIn(registration, year),
-    cadence: calendar.cadence,
-    reportingPeriods: calendar.reportingPeriods
+    reportingPeriods: accredited?.reportingPeriods ?? []
   }
 }

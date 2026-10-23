@@ -100,8 +100,8 @@ const backendHolds = (msw, held = organisation) =>
     http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
       HttpResponse.json(organisationView)
     ),
-    http.get(`${backendUrl}${byNumbers}/reports/calendar`, () =>
-      HttpResponse.json({ cadence: 'monthly', reportingPeriods: [] })
+    http.get(`${backendUrl}${byNumbers}/reports/:year/calendar`, () =>
+      HttpResponse.json({ year: 2026 })
     ),
     http.get(`${backendUrl}${byNumbers}/ledger/2026`, () =>
       HttpResponse.json({ events: [] })

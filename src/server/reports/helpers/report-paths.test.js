@@ -136,9 +136,9 @@ describe(reportsListPath, () => {
 })
 
 describe(reportsCalendarApiPath, () => {
-  it('gives the backend calendar route for the registration', () => {
-    expect(reportsCalendarApiPath(registrationKeys)).toBe(
-      '/organisations/500001/registrations/R25SR500030912PA/reports/calendar'
+  it("gives the backend calendar route for the registration's year", () => {
+    expect(reportsCalendarApiPath({ ...registrationKeys, year: 2026 })).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/calendar'
     )
   })
 })

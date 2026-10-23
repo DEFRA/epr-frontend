@@ -12,7 +12,6 @@ import { toReportRows, toReportsHead } from '../../helpers/report-rows.js'
 /**
  * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { AccreditationChildPage } from '../../helpers/accreditation-child-page.js'
@@ -33,7 +32,6 @@ const NAMESPACE = 'registrations:details:accreditation:reports'
  *   keys: AccreditationKeys,
  *   organisation: OrganisationView,
  *   accreditation: Accreditation,
- *   cadence: CadenceValue,
  *   reportingPeriods: ReportingPeriod[]
  * }} params
  * @returns {ReportListViewModel}
@@ -43,7 +41,6 @@ export const buildViewModel = ({
   keys,
   organisation,
   accreditation,
-  cadence,
   reportingPeriods
 }) => {
   const { t: localise, localiseUrl } = request
@@ -78,13 +75,7 @@ export const buildViewModel = ({
             period: period.period,
             submissionNumber: period.submissionNumber
           }),
-        // Same rule as the accreditation page: quarterly periods are not its.
-        reportingPeriods:
-          cadence === CADENCE.MONTHLY
-            ? reportingPeriods.filter(
-                (period) => period.year === Number(keys.year)
-              )
-            : []
+        reportingPeriods
       })
     }
   }

@@ -4,11 +4,11 @@ import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
-import { SUBMISSION_STATUS } from './constants.js'
+import { CADENCE, SUBMISSION_STATUS } from './constants.js'
 import { buildActionLinkHtml } from './helpers/build-action-link-html.js'
 import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
 import { buildStatusTagHtml } from './helpers/build-status-tag-html.js'
-import { fetchReportingPeriodsByNumber } from './helpers/fetch-reporting-periods.js'
+import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { formatSubmittedDateTime } from './helpers/format-submitted-date-time.js'
 import {
@@ -32,7 +32,6 @@ import { registrationPath, reportPath } from './helpers/report-paths.js'
  * be made at this call site.
  * @param {{
  *   accreditation: Accreditation | undefined,
- *   cadence: CadenceValue,
  *   canWrite: boolean,
  *   label: string,
  *   localise: TFunction,
@@ -45,7 +44,6 @@ import { registrationPath, reportPath } from './helpers/report-paths.js'
  */
 const buildActionCell = ({
   accreditation,
-  cadence,
   canWrite,
   label,
   localise,
@@ -55,12 +53,21 @@ const buildActionCell = ({
   registration
 }) => {
   const action = getRowAction(period)
+  // The report pages decide their steps by the year's accreditation, so a
+  // period of the other kind can only be read for now.
+  const isCurrentKind =
+    period.cadence === (accreditation ? CADENCE.MONTHLY : CADENCE.QUARTERLY)
 
-  if (!canWrite && !actionReads(action)) {
+  if (!(canWrite && isCurrentKind) && !actionReads(action)) {
     return { text: '', classes: cssClasses.textAlign.right }
   }
 
-  const actionPath = getActionPath(action, registration, accreditation, cadence)
+  const actionPath = getActionPath(
+    action,
+    registration,
+    accreditation,
+    period.cadence
+  )
   const actionLabel = getActionLabel(action, localise)
 
   const url = localiseUrl(`${periodPath}${actionPath}`)
@@ -75,7 +82,6 @@ const buildActionCell = ({
  * Build table rows for the govukTable macro, partitioned by submission status.
  * @param {{
  *   accreditation: Accreditation | undefined,
- *   cadence: CadenceValue,
  *   canWrite: boolean,
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
@@ -87,7 +93,6 @@ const buildActionCell = ({
  */
 function buildRows({
   accreditation,
-  cadence,
   canWrite,
   localise,
   localiseUrl,
@@ -104,12 +109,12 @@ function buildRows({
     const periodPath = reportPath({
       ...keys,
       year: period.year,
-      cadence,
+      cadence: period.cadence,
       period: period.period,
       submissionNumber: period.submissionNumber
     })
 
-    const label = formatPeriodLabelWithComma(period, cadence, localise)
+    const label = formatPeriodLabelWithComma(period, period.cadence, localise)
 
     const status = period.periodStatus
 
@@ -118,7 +123,6 @@ function buildRows({
       period,
       registration,
       accreditation,
-      cadence,
       localise,
       localiseUrl,
       periodPath,
@@ -221,15 +225,16 @@ export const listController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { organisation, registration, accreditation } =
-      await fetchRegistrationWithAccreditation(
-        { organisationNumber, registrationNumber },
-        session.backendToken
-      )
-    const { cadence, reportingPeriods } = await fetchReportingPeriodsByNumber(
-      request.params,
-      session.backendToken
-    )
+    // Current year until PAE-1878 lets operators choose the year.
+    const year = new Date().getUTCFullYear()
+    const [{ organisation, registration, accreditation }, reportingPeriods] =
+      await Promise.all([
+        fetchRegistrationWithAccreditation(
+          { organisationNumber, registrationNumber, year },
+          session.backendToken
+        ),
+        fetchReportingPeriods({ ...request.params, year }, session.backendToken)
+      ])
 
     const material = getMaterialDisplayName(registration.material)
 
@@ -237,7 +242,6 @@ export const listController = {
 
     const { activeRows, submittedRows } = buildRows({
       accreditation,
-      cadence,
       canWrite: hasWriteScope(session),
       localise,
       localiseUrl: (url) => request.localiseUrl(url),
@@ -287,7 +291,6 @@ export const listController = {
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
- * @import { CadenceValue } from './constants.js'
  * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
  * @import { RegistrationKeys } from './helpers/report-paths.js'
  */

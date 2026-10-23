@@ -25,7 +25,6 @@ import { afterAll, beforeAll, describe, expect } from 'vitest'
  * @import { SetupServer } from 'msw/node'
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  */
 
@@ -79,6 +78,7 @@ const anAccreditation = (approvedOn) => ({
 const aSubmittedFirstQuarter = /** @type {ReportingPeriod} */ (
   /** @type {unknown} */ ({
     year: YEAR,
+    cadence: 'quarterly',
     period: 1,
     submissionNumber: 1,
     startDate: `${YEAR}-01-01`,
@@ -143,42 +143,55 @@ const anOrganisation = ({
 })
 
 /**
- * Answers the read model, the calendar and the year's ledger by number.
+ * Answers the read model, the year calendar and the year's ledger by number.
  * @param {SetupServer} msw
  * @param {{
  *   accreditations?: Record<string, Accreditation>,
  *   status?: RegistrationView['status'],
- *   cadence?: CadenceValue,
  *   reportingPeriods?: ReportingPeriod[],
+ *   accreditedPeriods?: ReportingPeriod[],
  *   calendarStatus?: number,
  *   ledgerEvents?: LedgerEvent[],
  *   ledgerStatus?: number
  * }} [overrides]
- * @returns {{ ledgerRequests: () => number }}
+ * @returns {{ ledgerRequests: () => number, calendarYears: () => string[] }}
  */
 const backendHolds = (
   msw,
   {
     accreditations,
     status,
-    cadence = 'quarterly',
     reportingPeriods = [],
+    accreditedPeriods = [],
     calendarStatus = statusCodes.ok,
     ledgerEvents = [aLedgerEvent()],
     ledgerStatus = statusCodes.ok
   } = {}
 ) => {
   let ledgerRequests = 0
+  /** @type {string[]} */
+  const calendarYears = []
 
   msw.use(
     http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
       HttpResponse.json(anOrganisation({ accreditations, status }))
     ),
-    http.get(`${backendUrl}${registrationPath}/reports/calendar`, () =>
-      HttpResponse.json(
-        { cadence, reportingPeriods },
-        { status: calendarStatus }
-      )
+    http.get(
+      `${backendUrl}${registrationPath}/reports/:year/calendar`,
+      ({ params }) => {
+        calendarYears.push(String(params.year))
+        return HttpResponse.json(
+          {
+            year: Number(params.year),
+            registeredOnly: { reportingPeriods },
+            accredited: {
+              accreditationNumber: 'A26ER5001180114PL',
+              reportingPeriods: accreditedPeriods
+            }
+          },
+          { status: calendarStatus }
+        )
+      }
     ),
     http.get(`${backendUrl}${registrationPath}/ledger/${YEAR}`, () => {
       ledgerRequests += 1
@@ -189,7 +202,10 @@ const backendHolds = (
     })
   )
 
-  return { ledgerRequests: () => ledgerRequests }
+  return {
+    ledgerRequests: () => ledgerRequests,
+    calendarYears: () => calendarYears
+  }
 }
 
 /**
@@ -310,6 +326,37 @@ describe('the registered-only period page', () => {
     )
     expect(table?.textContent).toContain('20 Apr 2026')
     expect(table?.textContent).toContain('Submitted')
+  })
+
+  it("reads the calendar for the page's year and lists none of its accredited months", async ({
+    server,
+    msw
+  }) => {
+    const { calendarYears } = backendHolds(msw, {
+      accreditations: { 2026: anAccreditation('2026-07-01') },
+      reportingPeriods: [aSubmittedFirstQuarter],
+      accreditedPeriods: [
+        {
+          ...aSubmittedFirstQuarter,
+          cadence: 'monthly',
+          period: 7,
+          startDate: `${YEAR}-07-01`,
+          endDate: `${YEAR}-07-31`,
+          dueDate: `${YEAR}-08-20`
+        }
+      ]
+    })
+
+    const { body } = await visit(server, regulator)
+    const table = documentOf(body).querySelector(
+      '[data-testid="reports-table"]'
+    )
+
+    expect(calendarYears()).toStrictEqual([String(YEAR)])
+    expect(table?.textContent?.replace(/\s+/g, ' ')).toContain(
+      'Quarter 1, 2026'
+    )
+    expect(table?.textContent).not.toContain('July')
   })
 
   it('opens a submitted quarter at the report it holds, by number', async ({
@@ -478,7 +525,7 @@ describe('the registered-only period page', () => {
       http.get(`${backendUrl}/organisations/500999`, () =>
         HttpResponse.json({}, { status: statusCodes.notFound })
       ),
-      http.get(`${backendUrl}${unknown}/reports/calendar`, () =>
+      http.get(`${backendUrl}${unknown}/reports/:year/calendar`, () =>
         HttpResponse.json({}, { status: statusCodes.notFound })
       ),
       http.get(`${backendUrl}${unknown}/ledger/${YEAR}`, () =>
@@ -503,7 +550,7 @@ describe('the registered-only period page', () => {
     backendHolds(msw)
     const unknown = `/organisations/${organisationNumber}/registrations/R26ER5009990041PL`
     msw.use(
-      http.get(`${backendUrl}${unknown}/reports/calendar`, () =>
+      http.get(`${backendUrl}${unknown}/reports/:year/calendar`, () =>
         HttpResponse.json({}, { status: statusCodes.notFound })
       ),
       http.get(`${backendUrl}${unknown}/ledger/${YEAR}`, () =>
