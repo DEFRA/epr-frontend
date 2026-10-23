@@ -466,7 +466,7 @@ describe("the operator's registration page for a year", () => {
 
   it.for([
     { name: 'a value that is not a year', segment: 'abcd' },
-    { name: 'a year with a leading zero', segment: `0${thisYear}` },
+    { name: 'a year with five digits', segment: `0${thisYear}` },
     { name: 'a year with a decimal point', segment: `${thisYear}.0` },
     { name: 'a year with a plus sign', segment: `+${thisYear}` }
   ])(
@@ -772,7 +772,7 @@ describe("the operator's registered-only page for a year", () => {
       segment: String(thisYear + 1)
     },
     { name: 'a value that is not a year', segment: 'abcd' },
-    { name: 'a year with a leading zero', segment: `0${thisYear}` },
+    { name: 'a year with five digits', segment: `0${thisYear}` },
     { name: 'a year with a decimal point', segment: `${thisYear}.0` },
     { name: 'a year with a plus sign', segment: `+${thisYear}` }
   ])('is not found for $name', async ({ segment }, { server, msw }) => {

@@ -346,7 +346,7 @@ describe('the accreditation details page', () => {
 
   it.for([
     { name: 'a value that is not a year', segment: 'abcd' },
-    { name: 'a year with a leading zero', segment: '02026' },
+    { name: 'a year with five digits', segment: '02026' },
     { name: 'a year with a decimal point', segment: '2026.0' },
     { name: 'a year with a plus sign', segment: '+2026' }
   ])('does not exist for $name', async ({ segment }, { server }) => {
