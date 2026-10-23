@@ -5,6 +5,7 @@ import { fetchRequiredAccreditation } from '#server/common/helpers/organisations
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
+  buildAccreditationView,
   buildRegistrationView,
   buildRegistrationWithAccreditation
 } from '#server/common/test-helpers/organisation-view-fixtures.js'
@@ -90,6 +91,24 @@ describe('#cancelController', () => {
 
   describe('request handling', () => {
     describe('GET /cancel (confirmation page)', () => {
+      it('should send the session to the read page once the year has closed', async ({
+        server
+      }) => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          accreditation: buildAccreditationView({ relevantYearOpen: false })
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: cancelUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(`${basePath}/${prnId}/view`)
+      })
+
       it('displays confirmation heading', async ({ server }) => {
         const { result, statusCode } = await server.inject({
           method: 'GET',

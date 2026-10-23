@@ -19,9 +19,13 @@ export const cancelGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { registration, prn, basePath, prnId } =
+    const { registration, accreditation, prn, basePath, prnId } =
       await fetchPrnContext(request)
     const { t: localise } = request
+
+    if (!accreditation.relevantYearOpen) {
+      return h.redirect(`${basePath}/${prnId}/view`)
+    }
 
     if (prn.status !== 'awaiting_cancellation') {
       return h.redirect(basePath)

@@ -1607,6 +1607,43 @@ describe('#viewController', () => {
         )
       })
 
+      it('should send the session to the list without raising a draft once the year has closed', async ({
+        server
+      }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+        const cookies = mergeCookies(
+          csrfCookie,
+          ...extractCookieValues(createResponse.headers['set-cookie'])
+        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          accreditation: buildAccreditationView({ relevantYearOpen: false })
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(listUrl)
+        expect(updatePrnStatus).not.toHaveBeenCalled()
+      })
+
       it('redirects to create when no draft in session', async ({ server }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,

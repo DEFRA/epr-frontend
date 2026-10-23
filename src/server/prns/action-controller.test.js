@@ -107,6 +107,24 @@ describe('#actionController', () => {
   })
 
   describe('request handling', () => {
+    it('should send the session to the read page once the year has closed', async ({
+      server
+    }) => {
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+        ...fixtureReprocessor,
+        accreditation: buildAccreditationView({ relevantYearOpen: false })
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: actionUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(viewUrl)
+    })
+
     it('displays PRN details on the action page', async ({ server }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
