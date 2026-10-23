@@ -46,7 +46,6 @@ const summaryLogUploadController = ({ accredited }) => ({
 
     const session = request.auth.credentials
 
-    // Answers 404 before an upload is started for a registration not held.
     await fetchRegistration({ ...keys, backendToken: session.backendToken })
 
     try {
