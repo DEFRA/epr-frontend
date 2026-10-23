@@ -3,7 +3,6 @@ import Boom from '@hapi/boom'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { fetchRegisteredOnlyLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
-import { CADENCE } from '#server/reports/constants.js'
 import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
@@ -11,16 +10,12 @@ import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-perio
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
- * @typedef {{
- *   cadence: CadenceValue | null,
- *   reportingPeriods: ReportingPeriod[]
- * }} ReportingCalendar
+ * @typedef {{ reportingPeriods: ReportingPeriod[] }} ReportingCalendar
  */
 
 /**
@@ -60,17 +55,14 @@ const fetchCalendar = async ({ keys, year, backendToken, logger }) => {
       { ...keys, year },
       backendToken
     )
-    return {
-      cadence: CADENCE.QUARTERLY,
-      reportingPeriods: registeredOnly?.reportingPeriods ?? []
-    }
+    return { reportingPeriods: registeredOnly?.reportingPeriods ?? [] }
   } catch (error) {
     logger.error({
       message: `Failed to fetch the reporting calendar for organisation ${keys.organisationNumber} registration ${keys.registrationNumber}`,
       err: error
     })
 
-    return { cadence: null, reportingPeriods: [] }
+    return { reportingPeriods: [] }
   }
 }
 

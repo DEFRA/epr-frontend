@@ -35,7 +35,6 @@ import { accreditedDateRange } from '../helpers/timeline-dates.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Localise } from '../helpers/types.js'
@@ -279,7 +278,6 @@ const toPrns = ({
 /**
  * The three most recent reporting periods, and where to read the rest.
  * @param {{
- *   cadence: CadenceValue | null,
  *   keys: AccreditationKeys,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
@@ -288,15 +286,11 @@ const toPrns = ({
  * @returns {ReportsSummary}
  */
 const toReportsSummary = ({
-  cadence,
   keys,
   localise,
   localiseUrl,
   reportingPeriods
 }) => {
-  // The fetch keeps only the year's accredited periods; no cadence means an
-  // unread calendar.
-  const monthlyPeriods = cadence === CADENCE.MONTHLY ? reportingPeriods : []
   const rows = toReportRows({
     cadence: CADENCE.MONTHLY,
     localise,
@@ -310,7 +304,7 @@ const toReportsSummary = ({
         period: period.period,
         submissionNumber: period.submissionNumber
       }),
-    reportingPeriods: monthlyPeriods
+    reportingPeriods
   }).slice(0, MOST_RECENT)
 
   return {
@@ -380,7 +374,6 @@ const toLedger = ({
  *   accreditation: Accreditation,
  *   wasteBalance: WasteBalance | null,
  *   reportingPeriods: ReportingPeriod[],
- *   cadence: CadenceValue | null,
  *   ledgerEvents: LedgerEvent[] | null,
  *   packagingRecyclingNotes: PackagingRecyclingNote[],
  *   localise: Localise,
@@ -395,7 +388,6 @@ export const buildViewModel = ({
   accreditation,
   wasteBalance,
   reportingPeriods,
-  cadence,
   ledgerEvents,
   packagingRecyclingNotes,
   localise,
@@ -446,7 +438,6 @@ export const buildViewModel = ({
       notes: packagingRecyclingNotes
     }),
     reports: toReportsSummary({
-      cadence,
       keys,
       localise,
       localiseUrl,

@@ -1,12 +1,10 @@
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
-import { CADENCE } from '#server/reports/constants.js'
 import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
 
 /**
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
@@ -15,7 +13,6 @@ import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-perio
  * @typedef {{
  *   organisation: OrganisationView,
  *   accreditation: Accreditation,
- *   cadence: CadenceValue,
  *   reportingPeriods: ReportingPeriod[]
  * }} ReportListDetails
  */
@@ -39,7 +36,6 @@ export const fetchReportListDetails = async ({
   return {
     organisation,
     accreditation: accreditationIn(registration, year),
-    cadence: CADENCE.MONTHLY,
     reportingPeriods: accredited?.reportingPeriods ?? []
   }
 }

@@ -88,7 +88,6 @@ describe(fetchRegisteredOnlyPeriod, () => {
     await expect(fetchRegisteredOnlyPeriod(params)).resolves.toStrictEqual({
       organisation,
       registration,
-      cadence: 'quarterly',
       reportingPeriods: [firstQuarter],
       ledgerEvents
     })
@@ -115,7 +114,6 @@ describe(fetchRegisteredOnlyPeriod, () => {
     vi.mocked(fetchYearCalendar).mockResolvedValue({ year: 2026 })
 
     await expect(fetchRegisteredOnlyPeriod(params)).resolves.toMatchObject({
-      cadence: 'quarterly',
       reportingPeriods: []
     })
   })
@@ -126,7 +124,6 @@ describe(fetchRegisteredOnlyPeriod, () => {
     await expect(fetchRegisteredOnlyPeriod(params)).resolves.toStrictEqual({
       organisation,
       registration,
-      cadence: null,
       reportingPeriods: [],
       ledgerEvents
     })

@@ -100,7 +100,6 @@ describe(fetchReportListDetails, () => {
     await expect(fetchDetails()).resolves.toStrictEqual({
       organisation,
       accreditation,
-      cadence: 'monthly',
       reportingPeriods
     })
   })
@@ -119,7 +118,6 @@ describe(fetchReportListDetails, () => {
     vi.mocked(fetchYearCalendar).mockResolvedValue({ year: 2026 })
 
     await expect(fetchDetails()).resolves.toMatchObject({
-      cadence: 'monthly',
       reportingPeriods: []
     })
   })

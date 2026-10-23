@@ -236,7 +236,6 @@ describe(fetchAccreditationDetails, () => {
       accreditation,
       wasteBalance,
       reportingPeriods,
-      cadence: 'monthly',
       ledgerEvents,
       packagingRecyclingNotes
     })
@@ -316,7 +315,6 @@ describe(fetchAccreditationDetails, () => {
 
     expect(requested).toBe(calendarUrl)
     expect(result.reportingPeriods).toStrictEqual(reportingPeriods)
-    expect(result.cadence).toBe('monthly')
   })
 
   test('shows no periods for a year with no accredited periods', async ({
@@ -330,7 +328,6 @@ describe(fetchAccreditationDetails, () => {
     const result = await fetchDetails()
 
     expect(result.reportingPeriods).toStrictEqual([])
-    expect(result.cadence).toBe('monthly')
   })
 
   test('reports a calendar it could not read as no periods rather than failing the page', async ({
@@ -341,7 +338,6 @@ describe(fetchAccreditationDetails, () => {
     const result = await fetchDetails()
 
     expect(result.reportingPeriods).toStrictEqual([])
-    expect(result.cadence).toBeNull()
     expect(logger.error).toHaveBeenCalledWith({
       message:
         'Failed to fetch reporting periods for organisation 500118 registration R26ER5001180041PL',

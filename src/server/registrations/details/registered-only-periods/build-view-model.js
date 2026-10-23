@@ -22,7 +22,6 @@ import {
 /**
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Localise } from '../helpers/types.js'
@@ -127,7 +126,6 @@ const toBreadcrumbs = ({
  *   organisation: OrganisationView,
  *   registration: RegistrationView,
  *   keys: RegistrationKeys,
- *   cadence: CadenceValue | null,
  *   reportingPeriods: ReportingPeriod[],
  *   ledgerEvents: LedgerEvent[] | null | undefined,
  *   year: number,
@@ -140,7 +138,6 @@ export const buildViewModel = ({
   organisation,
   registration,
   keys,
-  cadence,
   reportingPeriods,
   ledgerEvents,
   year,
@@ -160,10 +157,6 @@ export const buildViewModel = ({
     registered: registeredStretches(registration, year),
     accredited: registrationAccreditedStretches(registration)
   })
-
-  // The fetch keeps only the year's registered-only periods; no cadence means
-  // the calendar could not be read.
-  const quarterlyPeriods = cadence === CADENCE.QUARTERLY ? reportingPeriods : []
 
   return {
     breadcrumbs: toBreadcrumbs({
@@ -207,7 +200,7 @@ export const buildViewModel = ({
             period: period.period,
             submissionNumber: period.submissionNumber
           }),
-        reportingPeriods: quarterlyPeriods
+        reportingPeriods
       })
     }
   }
