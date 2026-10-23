@@ -57,20 +57,15 @@ export const controller = {
     const { organisationNumber, registrationNumber, year } = request.params
     const { backendToken } = request.auth.credentials
 
-    const {
-      organisation,
-      registration,
-      cadence,
-      reportingPeriods,
-      ledgerEvents
-    } = await fetchRegisteredOnlyPeriod({
-      organisationNumber,
-      registrationNumber,
-      year,
-      backendToken,
-      canReadLedger: hasLedgerReadScope(request.auth.credentials),
-      logger: request.logger
-    })
+    const { organisation, registration, reportingPeriods, ledgerEvents } =
+      await fetchRegisteredOnlyPeriod({
+        organisationNumber,
+        registrationNumber,
+        year,
+        backendToken,
+        canReadLedger: hasLedgerReadScope(request.auth.credentials),
+        logger: request.logger
+      })
 
     // A year with no approved registration day is not found, as the backend's ledger answers.
     if (!registeredYears(registration).includes(year)) {
@@ -85,7 +80,6 @@ export const controller = {
         organisation,
         registration,
         keys: { organisationNumber, registrationNumber },
-        cadence,
         reportingPeriods,
         ledgerEvents,
         year,

@@ -1,4 +1,3 @@
-import { CADENCE } from '#server/reports/constants.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { describe, expect, it } from 'vitest'
 
@@ -7,7 +6,6 @@ import { buildViewModel } from './build-view-model.js'
 /**
  * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  */
 
@@ -86,13 +84,11 @@ const aPeriod = (period) =>
 /**
  * @param {{
  *   organisation?: OrganisationView,
- *   cadence?: CadenceValue,
  *   reportingPeriods?: ReportingPeriod[]
  * }} [overrides]
  */
 const build = ({
   organisation = anOrganisation(),
-  cadence = CADENCE.MONTHLY,
   reportingPeriods = []
 } = {}) =>
   buildViewModel({
@@ -100,7 +96,6 @@ const build = ({
     keys,
     organisation,
     accreditation,
-    cadence,
     reportingPeriods
   })
 
@@ -185,24 +180,5 @@ describe('the accreditation reports view model', () => {
       { text: 'May, 2026' },
       { text: 'April, 2026' }
     ])
-  })
-
-  it("lists only the accreditation year's periods where the calendar spans years", () => {
-    const { rows } = build({
-      reportingPeriods: [
-        { ...aPeriod(12), year: 2025 },
-        aPeriod(8),
-        { ...aPeriod(1), year: 2027 }
-      ]
-    }).reports
-
-    expect(rows.map((row) => row[0])).toStrictEqual([{ text: 'August, 2026' }])
-  })
-
-  it('shows no rows where the registration owes quarterly reports', () => {
-    expect(
-      build({ cadence: CADENCE.QUARTERLY, reportingPeriods: [aPeriod(3)] })
-        .reports.rows
-    ).toStrictEqual([])
   })
 })

@@ -22,12 +22,12 @@ import { reportPath, reportsListPath } from './report-paths.js'
  * }>}
  */
 async function fetchGuardedData(isMatchingRegistration, request) {
-  const { organisationNumber, registrationNumber } = request.params
+  const { organisationNumber, registrationNumber, year } = request.params
   const { backendToken } = request.auth.credentials
 
   const { registration, accreditation } =
     await fetchRegistrationWithAccreditation(
-      { organisationNumber, registrationNumber },
+      { organisationNumber, registrationNumber, year },
       backendToken
     )
   const reportDetail = await fetchReportDetail(request.params, backendToken)

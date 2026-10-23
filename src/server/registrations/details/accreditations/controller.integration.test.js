@@ -170,7 +170,6 @@ const accreditationDetails = {
     }
   },
   wasteBalance: { amount: 1234.5, availableAmount: 987.25 },
-  cadence: 'monthly',
   reportingPeriods: [
     /** @type {AccreditationDetails['reportingPeriods'][number]} */ (
       /** @type {unknown} */ ({
@@ -462,7 +461,6 @@ describe('the accreditation details page', () => {
   }) => {
     vi.mocked(fetchAccreditationDetails).mockResolvedValue({
       ...accreditationDetails,
-      cadence: null,
       reportingPeriods: []
     })
 

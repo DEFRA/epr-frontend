@@ -15,8 +15,7 @@ import { fetchAccreditationDetails } from './fetch-accreditation-details.js'
  * @import { SetupServer } from 'msw/node'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { PackagingRecyclingNote, PrnResource } from '#server/prns/helpers/prn-resource.js'
- * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { ReportingCalendar } from './fetch-accreditation-details.js'
+ * @import { ReportingPeriod, YearCalendarResponse } from '#server/reports/helpers/fetch-reporting-periods.js'
  */
 
 const backendUrl = config.get('eprBackendUrl')
@@ -34,7 +33,7 @@ describe(fetchAccreditationDetails, () => {
   const organisationUrl = `${backendUrl}/organisations/500118`
   const registrationUrl = `${organisationUrl}/registrations/R26ER5001180041PL`
   const balancesUrl = `${organisationUrl}/waste-balances/2026`
-  const calendarUrl = `${registrationUrl}/reports/calendar`
+  const calendarUrl = `${registrationUrl}/reports/2026/calendar`
   const ledgerUrl = `${registrationUrl}/accreditations/2026/ledger`
   const notesUrl = `${registrationUrl}/accreditations/2026/packaging-recycling-notes`
 
@@ -63,6 +62,7 @@ describe(fetchAccreditationDetails, () => {
   const reportingPeriods = [
     {
       year: 2026,
+      cadence: 'monthly',
       period: 8,
       submissionNumber: 1,
       startDate: '2026-08-01',
@@ -72,8 +72,26 @@ describe(fetchAccreditationDetails, () => {
       report: null
     }
   ]
-  /** @type {ReportingCalendar} */
-  const calendar = { cadence: 'monthly', reportingPeriods }
+  /** @type {YearCalendarResponse} */
+  const calendar = {
+    year: 2026,
+    registeredOnly: {
+      reportingPeriods: [
+        {
+          ...reportingPeriods[0],
+          cadence: 'quarterly',
+          period: 1,
+          startDate: '2026-01-01',
+          endDate: '2026-03-31',
+          dueDate: '2026-04-20'
+        }
+      ]
+    },
+    accredited: {
+      accreditationNumber: accreditation.accreditationNumber,
+      reportingPeriods
+    }
+  }
   /** @type {LedgerEvent[]} */
   const ledgerEvents = [
     {
@@ -160,7 +178,7 @@ describe(fetchAccreditationDetails, () => {
         })
       ),
       http.get(
-        `${organisationUrl}/registrations/:registrationNumber/reports/calendar`,
+        `${organisationUrl}/registrations/:registrationNumber/reports/:year/calendar`,
         () => HttpResponse.json(calendar)
       ),
       http.get(
@@ -218,7 +236,6 @@ describe(fetchAccreditationDetails, () => {
       accreditation,
       wasteBalance,
       reportingPeriods,
-      cadence: 'monthly',
       ledgerEvents,
       packagingRecyclingNotes
     })
@@ -281,13 +298,36 @@ describe(fetchAccreditationDetails, () => {
     expect(result.accreditation).toStrictEqual(accreditation)
   })
 
-  test('reads the reporting calendar by number', async ({ msw }) => {
-    backendHolds(msw)
+  test("reads the page year's accredited periods by number", async ({
+    msw
+  }) => {
+    /** @type {string | undefined} */
+    let requested
+    backendHolds(
+      msw,
+      http.get(calendarUrl, ({ request }) => {
+        requested = request.url
+        return HttpResponse.json(calendar)
+      })
+    )
 
     const result = await fetchDetails()
 
+    expect(requested).toBe(calendarUrl)
     expect(result.reportingPeriods).toStrictEqual(reportingPeriods)
-    expect(result.cadence).toBe('monthly')
+  })
+
+  test('shows no periods for a year with no accredited periods', async ({
+    msw
+  }) => {
+    backendHolds(
+      msw,
+      http.get(calendarUrl, () => HttpResponse.json({ year: 2026 }))
+    )
+
+    const result = await fetchDetails()
+
+    expect(result.reportingPeriods).toStrictEqual([])
   })
 
   test('reports a calendar it could not read as no periods rather than failing the page', async ({
@@ -298,7 +338,6 @@ describe(fetchAccreditationDetails, () => {
     const result = await fetchDetails()
 
     expect(result.reportingPeriods).toStrictEqual([])
-    expect(result.cadence).toBeNull()
     expect(logger.error).toHaveBeenCalledWith({
       message:
         'Failed to fetch reporting periods for organisation 500118 registration R26ER5001180041PL',
