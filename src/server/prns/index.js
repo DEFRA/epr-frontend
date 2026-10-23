@@ -70,14 +70,11 @@ export const prns = {
           },
           closedYearSendsTo.list
         ),
-        closedWithTheYear(
-          {
-            ...actionController,
-            method: 'GET',
-            path: `${basePath}/{prnId}`
-          },
-          closedYearSendsTo.note
-        ),
+        {
+          ...actionController,
+          method: 'GET',
+          path: `${basePath}/{prnId}`
+        },
         {
           ...viewController,
           method: 'GET',

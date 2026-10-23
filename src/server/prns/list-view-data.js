@@ -46,7 +46,7 @@ export function buildListViewData(
 ) {
   const { t: localise } = request
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
-  const canWrite = hasWriteScope(request.auth.credentials) && yearOpen
+  const canWrite = hasWriteScope(request.auth.credentials)
 
   const buildAwaiting = (prnList) =>
     buildAwaitingTable(request, {

@@ -69,6 +69,12 @@
           {% endif %}
         </div>
       </form>
+    {% elif deleteButton and hasWriteScope %}
+      {{ govukButton({
+        text: deleteButton.text,
+        href: deleteButton.href,
+        classes: "govuk-button--warning"
+      }) }}
     {% endif %}
 
     {% if cancelButton and hasWriteScope %}

@@ -282,7 +282,7 @@ describe('#listPrnsController', () => {
           expect(queryByText(main, /Create a PRN/i)).toBeNull()
         })
 
-        it('should link each awaiting PRN to its read page', async ({
+        it('should still link each awaiting PRN to its action page', async ({
           server
         }) => {
           const { result } = await server.inject({
@@ -299,8 +299,8 @@ describe('#listPrnsController', () => {
           ])
 
           expect(links).toStrictEqual([
-            ['View', `${reprocessorListUrl}/prn-001/view`],
-            ['View', `${reprocessorListUrl}/prn-002/view`]
+            ['Select', `${reprocessorListUrl}/prn-001`],
+            ['Select', `${reprocessorListUrl}/prn-002`]
           ])
         })
       })
