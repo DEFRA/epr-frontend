@@ -11,7 +11,10 @@ import {
   buildMockAuth,
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
-import { buildRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-view-fixtures.js'
+import {
+  buildAccreditationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { extractCookieValues } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
@@ -105,6 +108,23 @@ const mockFetchOrganisationWasteBalances = vi.mocked(
 const accredited = buildRegistrationWithAccreditation()
 const registeredOnly = { ...accredited, accreditation: undefined }
 const { accreditationNumber } = accredited.accreditation
+const accreditationNumber2027 = 'A27EN0000000001PL'
+const accredited2027 = buildRegistrationWithAccreditation({
+  accreditation: buildAccreditationView({
+    accreditationNumber: accreditationNumber2027
+  })
+})
+
+/**
+ * @param {{ year?: number | string }} keys
+ */
+const accreditedByYear = async ({ year }) =>
+  year === 2027 ? accredited2027 : accredited
+
+const balancesForBothYears = () => ({
+  [accreditationNumber]: { amount: 2026, availableAmount: 2026 },
+  [accreditationNumber2027]: { amount: 2027, availableAmount: 2027 }
+})
 
 const mockAuth = buildMockAuth({
   backendToken: toBackendToken('test-id-token')
@@ -346,6 +366,61 @@ describe('#summaryLogUploadProgressController', () => {
       ).toBe(`/organisations/${organisationNumber}/2027`)
     })
 
+    it("status: submitted - should title the page with the summary log's year", async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submitted,
+        year: 2027
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(new JSDOM(result).window.document.title).toMatch(
+        /^Summary log uploaded \(2027\) \|/
+      )
+    })
+
+    describe('with regulator access', () => {
+      beforeEach(() => {
+        config.set('featureFlags.regulatorAccess', true)
+      })
+
+      afterEach(() => {
+        config.reset('featureFlags.regulatorAccess')
+      })
+
+      it('status: submitted - should link a regulator to the organisation root', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          year: 2027
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: buildMockAuth({
+            provider: OIDC_ENTRA_ID,
+            idToken: 'test-id-token',
+            ...sessionIdentity(IDENTITIES.regulator)
+          })
+        })
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(
+          getByRole(main, 'link', { name: 'Return to home' }).getAttribute(
+            'href'
+          )
+        ).toBe(`/organisations/${organisationNumber}`)
+      })
+    })
+
     it('status: submitted - should link to the 2026 home page for a summary log without a year', async ({
       server
     }) => {
@@ -361,29 +436,28 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('waste balance', () => {
-      it("status: submitted - reads the balance for the summary log's year", async ({
+      it("status: submitted - shows the balance of the summary log's accreditation", async ({
         server
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           year: 2027
         })
+        mockFetchRegistrationWithAccreditation.mockImplementation(
+          accreditedByYear
+        )
+        mockFetchOrganisationWasteBalances.mockResolvedValueOnce(
+          balancesForBothYears()
+        )
 
-        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(accredited)
-
-        mockFetchOrganisationWasteBalances.mockResolvedValueOnce({})
-
-        await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
+        const main = await getMain(server)
 
         expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
           accredited.organisation.organisationNumber,
           2027,
           'test-id-token'
         )
+        expect(main.textContent).toContain('2,027.00 tonnes')
       })
 
       it('status: submitted - reads the 2026 balance for a summary log without a year', async ({
@@ -411,7 +485,7 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
         expect(fetchRegistrationWithAccreditation).toHaveBeenCalledWith(
-          { organisationNumber, registrationNumber },
+          { organisationNumber, registrationNumber, year: 2026 },
           'test-id-token'
         )
         expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
@@ -3022,6 +3096,37 @@ describe('summary log check view', () => {
       expect.stringContaining('<strong>110.00</strong>')
     )
     expect(result).toStrictEqual(expect.stringContaining('(from 100.00)'))
+  })
+
+  it("projects from the balance of the summary log's accreditation", async ({
+    server
+  }) => {
+    mockFetchRegistrationWithAccreditation.mockImplementation(accreditedByYear)
+    mockFetchOrganisationWasteBalances.mockResolvedValue(balancesForBothYears())
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      year: 2027,
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 5, tonnageDelta: 10 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
+      accredited.organisation.organisationNumber,
+      2027,
+      'test-id-token'
+    )
+    expect(result).toStrictEqual(expect.stringContaining('(from 2,027.00)'))
   })
 
   it('shows the unchanged projection panel when the net tonnage delta is zero', async ({
