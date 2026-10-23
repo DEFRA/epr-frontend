@@ -86,7 +86,7 @@ export const prns = {
             method: 'POST',
             path: `${basePath}/{prnId}/view`
           },
-          closedYearSendsTo.list
+          closedYearSendsTo.note
         ),
         {
           ...createdController,

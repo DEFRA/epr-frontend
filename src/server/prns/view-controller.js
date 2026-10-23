@@ -114,7 +114,7 @@ export const viewPostController = {
         : confirmDraft(request, h, draftParams))
     } catch (error) {
       if (isClosedYearRefusal(error)) {
-        return h.redirect(closedYearSendsTo.list(request.params))
+        return h.redirect(closedYearSendsTo.note(request.params))
       }
 
       if (error.isBoom) {
