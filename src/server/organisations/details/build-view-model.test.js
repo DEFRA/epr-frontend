@@ -137,6 +137,7 @@ describe(buildViewModel, () => {
           accreditations: {
             2025: {
               accreditationNumber: 'A25ER1',
+              relevantYearOpen: true,
               status: {
                 current: 'cancelled',
                 timeline: [
@@ -147,6 +148,7 @@ describe(buildViewModel, () => {
             },
             2026: {
               accreditationNumber: 'A26ER1',
+              relevantYearOpen: true,
               status: {
                 current: 'suspended',
                 timeline: [

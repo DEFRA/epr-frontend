@@ -68,6 +68,7 @@ const organisation = {
       accreditations: {
         2025: {
           accreditationNumber: 'A25ER5001180114GR',
+          relevantYearOpen: true,
           status: {
             current: 'cancelled',
             timeline: [
@@ -78,6 +79,7 @@ const organisation = {
         },
         2026: {
           accreditationNumber: 'A26ER5001180114GR',
+          relevantYearOpen: true,
           status: {
             current: 'approved',
             timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]

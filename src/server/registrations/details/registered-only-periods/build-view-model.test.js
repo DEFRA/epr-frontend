@@ -53,6 +53,7 @@ const anOrganisation = (overrides) => ({
  */
 const anAccreditation = (timeline) => ({
   accreditationNumber: 'A26ER5001180114PL',
+  relevantYearOpen: true,
   status: {
     current: 'approved',
     timeline: Object.entries(timeline).map(([at, status]) => ({ status, at }))

@@ -27,6 +27,7 @@ const toStatusTimeline = (timeline) =>
  */
 const accreditationWith = (timeline) => ({
   accreditationNumber: 'A26ER5001180114PL',
+  relevantYearOpen: true,
   status: { current: 'approved', timeline }
 })
 
