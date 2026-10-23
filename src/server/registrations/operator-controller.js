@@ -20,10 +20,10 @@ import {
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import { toYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
+import { homePath } from '#server/organisations/home-page.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
   accreditationPath,
-  organisationPath,
   registeredOnlyPath,
   registrationPath,
   reportsListPath
@@ -35,6 +35,7 @@ import { capitalize } from 'lodash-es'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { ReapplyLink } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
  * @import { DecemberBalanceBreakdown } from '#server/common/helpers/waste-balance/december-balance.js'
@@ -89,7 +90,7 @@ const VIEW = 'registrations/index'
  * @typedef {{
  *   organisationNumber: OrganisationNumber,
  *   registrationNumber: RegistrationNumber,
- *   year: string
+ *   year: number
  * }} OperatorAccreditationParams
  */
 
@@ -202,7 +203,7 @@ const toPrns = (request, { noteType, noteTypePlural }, notesPath) => {
  *   request: HapiRequest,
  *   keys: RegistrationKeys,
  *   registration: RegistrationView,
- *   year: number
+ *   year: Year
  * }} params
  * @returns {Omit<RegistrationViewModel, 'accreditation' | 'prns' | 'reapplyAccreditation' | 'wasteBalanceLedgerUrl'>}
  */
@@ -211,10 +212,14 @@ const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
   const { isExporter, noteTypePlural } = getNoteTypeDisplayNames(registration)
   const siteName = toSiteName(registration, localise)
   const material = getMaterialDisplayName(registration.material)
-  const homePath = organisationPath(keys)
 
   return {
-    backUrl: localiseUrl(isExporter ? `${homePath}/exporting` : homePath),
+    backUrl: localiseUrl(
+      homePath(keys.organisationNumber, {
+        year,
+        exporting: isExporter
+      })
+    ),
     contactRegulatorUrl: localiseUrl('/contact'),
     hasSiteName: !!siteName,
     heading: localise('registrations:heading', { material, year }),
@@ -248,6 +253,7 @@ const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
  *   request: HapiRequest,
  *   keys: AccreditationKeys,
  *   registration: RegistrationView,
+ *   year: Year,
  *   accreditation: Accreditation,
  *   wasteBalance: WasteBalance | null,
  *   showsDecember: boolean,
@@ -259,6 +265,7 @@ const buildViewModel = ({
   request,
   keys,
   registration,
+  year,
   accreditation,
   wasteBalance,
   showsDecember,
@@ -268,12 +275,7 @@ const buildViewModel = ({
   const path = accreditationPath(keys)
 
   return {
-    ...buildRegistrationViewModel({
-      request,
-      keys,
-      registration,
-      year: Number(keys.year)
-    }),
+    ...buildRegistrationViewModel({ request, keys, registration, year }),
     accreditation: toAccreditationTag(accreditation),
     prns: toPrns(
       request,
@@ -296,7 +298,7 @@ const buildViewModel = ({
  *   request: HapiRequest,
  *   keys: RegistrationKeys,
  *   registration: RegistrationView,
- *   year: number
+ *   year: Year
  * }} params
  * @returns {RegistrationViewModel}
  */
@@ -348,18 +350,15 @@ export const registeredOnlyYearController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationNumber: number,
-      registrationNumber,
-      year
-    } = request.params
+    const { organisationNumber: number, registrationNumber } = request.params
     const keys = { organisationNumber: number, registrationNumber }
+    const year = toYear(request.params.year)
 
     const { registration } = await fetchRegistration({
       ...keys,
       backendToken: request.auth.credentials.backendToken
     })
-    const homepage = materialsHomepage(keys, registration, toYear(year))
+    const homepage = materialsHomepage(keys, registration, year)
 
     if (homepage === null) {
       throw notFound(
@@ -392,12 +391,13 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
+    const { organisationNumber: number, registrationNumber } = request.params
+    const year = toYear(request.params.year)
+    const keys = {
       organisationNumber: number,
       registrationNumber,
-      year
-    } = request.params
-    const keys = { organisationNumber: number, registrationNumber, year }
+      year: String(year)
+    }
     const credentials = request.auth.credentials
     const { backendToken } = credentials
 
@@ -405,12 +405,12 @@ export const controller = {
       fetchRegistration({ ...keys, backendToken }),
       findRecordIds(keys, credentials)
     ])
-    const accreditation = accreditationIn(registration, year)
+    const accreditation = accreditationIn(registration, keys.year)
 
     const [wasteBalance, showsDecember] = await Promise.all([
       fetchAccreditationBalance({
         organisationNumber: number,
-        year: toYear(Number(year)),
+        year,
         accreditationNumber: accreditation.accreditationNumber,
         backendToken,
         logger: request.logger
@@ -430,7 +430,7 @@ export const controller = {
       registrationId: ids.registrationId,
       material: ids.material,
       registrationStatus: registration.status.current,
-      year: Number(year)
+      year
     })
 
     return h.view(
@@ -439,6 +439,7 @@ export const controller = {
         request,
         keys,
         registration,
+        year,
         accreditation,
         wasteBalance,
         showsDecember,

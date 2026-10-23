@@ -2,7 +2,6 @@ import { config } from '#config/config.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
-import { CADENCE } from '#server/reports/constants.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
@@ -11,7 +10,6 @@ import { buildViewModel } from './build-view-model.js'
 /**
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
- * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod, ReportListItem } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
@@ -60,7 +58,7 @@ const localise = createMockLocalise({
   'reports:actionView': 'View',
   'reports:months.7': 'July',
   'reports:months.8': 'August',
-  'reports:months.12': 'December',
+  'reports:months.6': 'June',
   'reports:quarterlyPeriod': 'Quarter {{number}}, {{year}}',
   'reports:statusOverdue': 'Overdue',
   'reports:statusResubmitted': 'Resubmitted',
@@ -136,8 +134,8 @@ const aPeriod = (overrides) =>
     })
   )
 
-/** @type {{ cadence: CadenceValue | null, reportingPeriods: ReportingPeriod[] }} */
-const noCalendar = { cadence: CADENCE.MONTHLY, reportingPeriods: [] }
+/** @type {ReportingPeriod[]} */
+const noPeriods = []
 
 /** @type {LedgerEvent} */
 const prnIssued = {
@@ -167,7 +165,7 @@ const summaryLogSubmitted = {
  * @param {Partial<Accreditation>} [accreditationOverrides]
  * @param {Partial<RegistrationView>} [registrationOverrides]
  * @param {WasteBalance | null} [wasteBalance]
- * @param {{ cadence: CadenceValue | null, reportingPeriods: ReportingPeriod[] }} [calendar]
+ * @param {ReportingPeriod[]} [reportingPeriods]
  * @param {LedgerEvent[] | null} [ledgerEvents]
  * @param {PackagingRecyclingNote[]} [packagingRecyclingNotes]
  */
@@ -175,7 +173,7 @@ const build = (
   accreditationOverrides,
   registrationOverrides,
   wasteBalance = aWasteBalance,
-  calendar = noCalendar,
+  reportingPeriods = noPeriods,
   ledgerEvents = null,
   packagingRecyclingNotes = []
 ) =>
@@ -185,8 +183,7 @@ const build = (
     registration: aRegistration(registrationOverrides),
     accreditation: anAccreditation(accreditationOverrides),
     wasteBalance,
-    reportingPeriods: calendar.reportingPeriods,
-    cadence: calendar.cadence,
+    reportingPeriods,
     ledgerEvents,
     packagingRecyclingNotes,
     localise,
@@ -219,7 +216,7 @@ const aNote = (note) => ({
  * @param {PackagingRecyclingNote[]} notes
  */
 const prnsOf = (notes) =>
-  build(undefined, undefined, aWasteBalance, noCalendar, null, notes).prns
+  build(undefined, undefined, aWasteBalance, noPeriods, null, notes).prns
 
 /**
  * @param {LedgerEvent[] | null} ledgerEvents
@@ -230,18 +227,16 @@ const ledgerOf = (ledgerEvents, registrationOverrides) =>
     undefined,
     registrationOverrides,
     aWasteBalance,
-    noCalendar,
+    noPeriods,
     ledgerEvents
   ).ledger
 
 /**
  * @param {ReportingPeriod[]} reportingPeriods
- * @param {CadenceValue | null} [cadence]
  * @returns {TableRow[]}
  */
-const reportRows = (reportingPeriods, cadence = CADENCE.MONTHLY) =>
-  build(undefined, undefined, aWasteBalance, { cadence, reportingPeriods })
-    .reports.rows
+const reportRows = (reportingPeriods) =>
+  build(undefined, undefined, aWasteBalance, reportingPeriods).reports.rows
 
 describe('the accreditation details view model', () => {
   it('names the organisation, the registration and the accreditation in the caption', () => {
@@ -258,7 +253,6 @@ describe('the accreditation details view model', () => {
       accreditation: anAccreditation(),
       wasteBalance: aWasteBalance,
       reportingPeriods: [],
-      cadence: CADENCE.MONTHLY,
       ledgerEvents: null,
       packagingRecyclingNotes: [],
       localise,
@@ -337,7 +331,7 @@ describe('the accreditation details view model', () => {
     ]
 
     expect(
-      build(undefined, undefined, aWasteBalance, noCalendar, ledgerEvents)
+      build(undefined, undefined, aWasteBalance, noPeriods, ledgerEvents)
         .summaryRows[3]
     ).toStrictEqual({
       key: 'Latest summary log',
@@ -347,7 +341,7 @@ describe('the accreditation details view model', () => {
 
   it('leaves the latest summary log blank when none has been submitted', () => {
     expect(
-      build(undefined, undefined, aWasteBalance, noCalendar, [prnIssued])
+      build(undefined, undefined, aWasteBalance, noPeriods, [prnIssued])
         .summaryRows[3]
     ).toStrictEqual({ key: 'Latest summary log', value: '' })
   })
@@ -483,22 +477,9 @@ describe('the reports table on the accreditation details view model', () => {
     })
   })
 
-  // An accredited operator reports monthly. A registration currently owing
-  // quarterly reports has a registered-only period, and those quarters are that
-  // page's to show rather than this one's - the calendar answers one cadence,
-  // so showing them here would put the same periods on two pages.
-  it('shows no rows where the registration owes quarterly reports', () => {
-    const rows = reportRows(
-      [aPeriod({ period: 3, report: null, periodStatus: 'overdue' })],
-      CADENCE.QUARTERLY
-    )
-
-    expect(rows).toStrictEqual([])
-  })
-
   it('leads with the most recent period, whatever order the calendar answered in', () => {
     const rows = reportRows([
-      aPeriod({ year: 2025, period: 12 }),
+      aPeriod({ period: 6 }),
       aPeriod({ period: 8 }),
       aPeriod({ period: 7 })
     ])
@@ -506,7 +487,7 @@ describe('the reports table on the accreditation details view model', () => {
     expect(rows.map((row) => row[0])).toStrictEqual([
       { text: 'August, 2026' },
       { text: 'July, 2026' },
-      { text: 'December, 2025' }
+      { text: 'June, 2026' }
     ])
   })
 
@@ -514,51 +495,32 @@ describe('the reports table on the accreditation details view model', () => {
     expect(reportRows([])).toStrictEqual([])
   })
 
-  it('shows no rows for a calendar the page could not read', () => {
-    expect(reportRows([], null)).toStrictEqual([])
-  })
-
   it('shows no more than the three most recent periods, and counts what it shows', () => {
-    const { reports } = build(undefined, undefined, aWasteBalance, {
-      cadence: CADENCE.MONTHLY,
-      reportingPeriods: [
-        aPeriod({ year: 2025, period: 7 }),
-        aPeriod({ period: 7 }),
-        aPeriod({ year: 2025, period: 12 }),
-        aPeriod({ period: 8 }),
-        aPeriod({ year: 2025, period: 8 })
-      ]
-    })
+    const { reports } = build(undefined, undefined, aWasteBalance, [
+      aPeriod({ period: 5 }),
+      aPeriod({ period: 7 }),
+      aPeriod({ period: 6 }),
+      aPeriod({ period: 8 }),
+      aPeriod({ period: 4 })
+    ])
 
     expect(reports.count).toBe(3)
     expect(reports.rows.map((row) => row[0])).toStrictEqual([
       { text: 'August, 2026' },
       { text: 'July, 2026' },
-      { text: 'December, 2025' }
+      { text: 'June, 2026' }
     ])
   })
 
   it('counts what there is where fewer periods are owed', () => {
-    const { reports } = build(undefined, undefined, aWasteBalance, {
-      cadence: CADENCE.MONTHLY,
-      reportingPeriods: [aPeriod({ period: 7 }), aPeriod({ period: 8 })]
-    })
+    const { reports } = build(undefined, undefined, aWasteBalance, [
+      aPeriod({ period: 7 }),
+      aPeriod({ period: 8 })
+    ])
 
     expect(reports.rows).toHaveLength(2)
     expect(reports.count).toBe(2)
   })
-
-  it.each([CADENCE.QUARTERLY, null])(
-    'counts nothing where the cadence is %s',
-    (cadence) => {
-      const { reports } = build(undefined, undefined, aWasteBalance, {
-        cadence,
-        reportingPeriods: [aPeriod({ period: 3 })]
-      })
-
-      expect(reports.count).toBe(0)
-    }
-  )
 
   it("points its full list at the accreditation's reports, in the reader's language", () => {
     const { reports } = buildViewModel({
@@ -568,7 +530,6 @@ describe('the reports table on the accreditation details view model', () => {
       accreditation: anAccreditation(),
       wasteBalance: aWasteBalance,
       reportingPeriods: [],
-      cadence: CADENCE.MONTHLY,
       ledgerEvents: null,
       packagingRecyclingNotes: [],
       localise,
@@ -640,7 +601,6 @@ describe('the waste balance ledger on the accreditation details view model', () 
       accreditation: anAccreditation(),
       wasteBalance: aWasteBalance,
       reportingPeriods: [],
-      cadence: CADENCE.MONTHLY,
       ledgerEvents: [],
       packagingRecyclingNotes: [],
       localise,
@@ -807,7 +767,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
         undefined,
         { wasteProcessingType: 'exporter' },
         aWasteBalance,
-        noCalendar,
+        noPeriods,
         null,
         []
       ).prns

@@ -1,4 +1,4 @@
-import { signedOutPage } from '#server/auth/helpers/sign-in-provider.js'
+import { redirectToSignedOut } from '#server/auth/helpers/sign-in-provider.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHapiRequest } from '#server/common/hapi-types.js'
@@ -55,7 +55,7 @@ export async function catchAll(r, h) {
   if (statusCode === statusCodes.unauthorized) {
     await removeUserSession(request)
 
-    return h.redirect(request.localiseUrl(signedOutPage(request))).takeover()
+    return redirectToSignedOut(request, h).takeover()
   }
 
   // All this knows about a refusal is that a signed in user met one, so the

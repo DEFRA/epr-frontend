@@ -1976,4 +1976,30 @@ describe('#detailReportsController', () => {
       ).toBe('/organisations/500001/registrations/R25SR500030912PA/reports')
     })
   })
+
+  describe('the year it reads', () => {
+    it("asks for the accreditation of the report's year", async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        reprocessorRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(reprocessorReportDetail)
+
+      await server.inject({
+        method: 'GET',
+        url: detailUrl.replace('/2026/', '/2027/'),
+        auth: mockAuth
+      })
+
+      expect(fetchRegistrationWithAccreditation).toHaveBeenCalledWith(
+        {
+          organisationNumber: '500001',
+          registrationNumber: 'R25SR500030912PA',
+          year: 2027
+        },
+        'mock-backend-token'
+      )
+    })
+  })
 })

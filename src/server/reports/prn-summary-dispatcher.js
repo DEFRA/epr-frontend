@@ -15,10 +15,10 @@ import {
  * @returns {Promise<boolean>}
  */
 async function isReprocessor(request) {
-  const { organisationNumber, registrationNumber } = request.params
+  const { organisationNumber, registrationNumber, year } = request.params
 
   const { registration } = await fetchRegistrationWithAccreditation(
-    { organisationNumber, registrationNumber },
+    { organisationNumber, registrationNumber, year },
     request.auth.credentials.backendToken
   )
 

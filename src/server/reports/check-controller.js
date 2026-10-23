@@ -168,7 +168,7 @@ export const checkGetController = {
 
     const { registration, accreditation } =
       await fetchRegistrationWithAccreditation(
-        { organisationNumber, registrationNumber },
+        { organisationNumber, registrationNumber, year },
         session.backendToken
       )
 

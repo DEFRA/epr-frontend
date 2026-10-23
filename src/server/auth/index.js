@@ -6,7 +6,7 @@ import {
 import { controller as organisationController } from '#server/auth/organisation/controller.js'
 import {
   registerSignInProviderCookie,
-  signedOutPage
+  redirectToSignedOut
 } from '#server/auth/helpers/sign-in-provider.js'
 import { paths } from '#server/paths.js'
 
@@ -30,8 +30,7 @@ const auth = {
           path: paths.auth.defraId.callback
         },
         {
-          handler: (request, h) =>
-            h.redirect(request.localiseUrl(signedOutPage(request))),
+          handler: redirectToSignedOut,
           method: 'GET',
           options: { auth: false },
           path: paths.auth.postLogoutRedirect

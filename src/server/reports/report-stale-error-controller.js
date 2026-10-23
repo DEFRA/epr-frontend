@@ -41,7 +41,7 @@ export const reportStaleErrorGetController = {
    */
   async handler(request, h) {
     const { t: localise } = request
-    const { organisationNumber, registrationNumber } = request.params
+    const { organisationNumber, registrationNumber, year } = request.params
     const session = request.auth.credentials
 
     const reportsUrl = request.localiseUrl(reportsListPath(request.params))
@@ -62,7 +62,7 @@ export const reportStaleErrorGetController = {
     const prefix = translationKeyPrefixFor(context.reasons)
 
     const { registration } = await fetchRegistrationWithAccreditation(
-      { organisationNumber, registrationNumber },
+      { organisationNumber, registrationNumber, year },
       session.backendToken
     )
     const { noteType } = getNoteTypeDisplayNames(registration)

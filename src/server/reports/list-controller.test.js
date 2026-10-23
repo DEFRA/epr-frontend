@@ -14,7 +14,7 @@ import {
   buildRegistrationWithAccreditation
 } from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
-import { fetchReportingPeriodsByNumber } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole } from '@testing-library/dom'
@@ -24,12 +24,25 @@ import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
  * @import { DOMWindow } from 'jsdom'
+ * @import { CadenceValue } from '#server/reports/constants.js'
+ * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  */
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-reporting-periods.js'))
+
+/**
+ * Serves one kind's periods, each stamped with its cadence.
+ * @param {{ cadence: CadenceValue, reportingPeriods: Omit<ReportingPeriod, 'cadence'>[] }} response
+ */
+const backendServesCalendar = ({ cadence, reportingPeriods }) =>
+  vi
+    .mocked(fetchReportingPeriods)
+    .mockResolvedValue(
+      reportingPeriods.map((period) => ({ ...period, cadence }))
+    )
 
 const mockCredentials = {
   profile: {
@@ -355,9 +368,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyResponse
-      )
+      backendServesCalendar(monthlyResponse)
     })
 
     it('should return 200', async ({ server }) => {
@@ -533,9 +544,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyWithReportResponse
-      )
+      backendServesCalendar(monthlyWithReportResponse)
     })
 
     it('should display In progress tag', async ({ server }) => {
@@ -623,9 +632,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyWithReadyToSubmitResponse
-      )
+      backendServesCalendar(monthlyWithReadyToSubmitResponse)
     })
 
     it('should display Ready to submit tag', async ({ server }) => {
@@ -691,9 +698,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyWithTwoReadyToSubmitResponse
-      )
+      backendServesCalendar(monthlyWithTwoReadyToSubmitResponse)
     })
 
     it('should display approved person banner with plural count', async ({
@@ -721,9 +726,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyWithSubmittedResponse
-      )
+      backendServesCalendar(monthlyWithSubmittedResponse)
     })
 
     it('should display Submitted tag', async ({ server }) => {
@@ -765,7 +768,7 @@ describe('#listReportsController', () => {
     it('should render empty Date and time + Submitted by when backend has not supplied them yet', async ({
       server
     }) => {
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
+      backendServesCalendar({
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
           {
@@ -814,9 +817,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyMixedStatusResponse
-      )
+      backendServesCalendar(monthlyMixedStatusResponse)
     })
 
     it('should display Action required and Submitted section headings', async ({
@@ -896,9 +897,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyResponse
-      )
+      backendServesCalendar(monthlyResponse)
     })
 
     it('should display both section headings', async ({ server }) => {
@@ -964,9 +963,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyWithSubmittedResponse
-      )
+      backendServesCalendar(monthlyWithSubmittedResponse)
     })
 
     it('should display both section headings', async ({ server }) => {
@@ -1017,9 +1014,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        quarterlyResponse
-      )
+      backendServesCalendar(quarterlyResponse)
     })
 
     it('should return 200', async ({ server }) => {
@@ -1070,7 +1065,7 @@ describe('#listReportsController', () => {
     it('should link Continue to tonnes-not-exported for in-progress report', async ({
       server
     }) => {
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
+      backendServesCalendar({
         cadence: CADENCE.QUARTERLY,
         reportingPeriods: [
           {
@@ -1119,7 +1114,7 @@ describe('#listReportsController', () => {
           }
         })
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
+      backendServesCalendar({
         cadence: CADENCE.QUARTERLY,
         reportingPeriods: [
           {
@@ -1162,9 +1157,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyReprocessor
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        quarterlyResponse
-      )
+      backendServesCalendar(quarterlyResponse)
     })
 
     it('should display Create draft links for reprocessor periods', async ({
@@ -1197,7 +1190,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(emptyResponse)
+      backendServesCalendar(emptyResponse)
     })
 
     it('should display both section headings', async ({ server }) => {
@@ -1328,9 +1321,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyWithResubmissionResponse
-      )
+      backendServesCalendar(monthlyWithResubmissionResponse)
     })
 
     it('renders a Requires resubmission entry with a purple tag and create-draft CTA, keeping the original submitted report', async ({
@@ -1388,7 +1379,7 @@ describe('#listReportsController', () => {
       it('renders the action required row with the expected due date', async ({
         server
       }) => {
-        vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
+        backendServesCalendar({
           cadence: CADENCE.MONTHLY,
           reportingPeriods
         })
@@ -1412,7 +1403,7 @@ describe('#listReportsController', () => {
     it('renders a requires resubmission entry for each affected period', async ({
       server
     }) => {
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
+      backendServesCalendar({
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
           ...resubmissionPeriodPair(1),
@@ -1437,7 +1428,7 @@ describe('#listReportsController', () => {
       server
     }) => {
       const [submitted, skeleton] = resubmissionPeriodPair(1)
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
+      backendServesCalendar({
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
           submitted,
@@ -1477,7 +1468,7 @@ describe('#listReportsController', () => {
       server
     }) => {
       const [submitted, skeleton] = resubmissionPeriodPair(1)
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue({
+      backendServesCalendar({
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
           submitted,
@@ -1548,9 +1539,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        resubmittedResponse
-      )
+      backendServesCalendar(resubmittedResponse)
     })
 
     it('renders the period as Resubmitted with a green tag and a View link in the Submitted table', async ({
@@ -1600,9 +1589,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyMixedStatusResponse
-      )
+      backendServesCalendar(monthlyMixedStatusResponse)
     })
 
     it('offers no action on a period whose action would change the data', async ({
@@ -1675,14 +1662,123 @@ describe('#listReportsController', () => {
     })
   })
 
+  describe('for a year holding registered-only and accredited periods', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue([
+        {
+          ...quarterlyResponse.reportingPeriods[0],
+          cadence: CADENCE.QUARTERLY,
+          periodStatus: SUBMISSION_STATUS.SUBMITTED,
+          report: {
+            id: 'report-q1',
+            status: SUBMISSION_STATUS.SUBMITTED,
+            submittedAt: '2026-04-10T09:00:00.000Z',
+            submittedBy: { name: 'Ada Lovelace' }
+          }
+        },
+        {
+          ...quarterlyResponse.reportingPeriods[0],
+          cadence: CADENCE.QUARTERLY,
+          period: 2,
+          startDate: '2026-04-01',
+          endDate: '2026-06-30',
+          dueDate: '2026-07-20'
+        },
+        {
+          ...monthlyResponse.reportingPeriods[0],
+          cadence: CADENCE.MONTHLY,
+          period: 7,
+          startDate: '2026-07-01',
+          endDate: '2026-07-31',
+          dueDate: '2026-08-20'
+        }
+      ])
+    })
+
+    it('labels each period by its own cadence', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const text = body.querySelector('main')?.textContent?.replace(/\s+/g, ' ')
+
+      expect(text).toContain('Quarter 1, 2026')
+      expect(text).toContain('Quarter 2, 2026')
+      expect(text).toContain('July, 2026')
+    })
+
+    // The report pages decide their steps by the current accreditation.
+    it('offers only reading on a period of the other kind', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const links = Array.from(
+        body.querySelectorAll('.govuk-table a.govuk-link')
+      )
+
+      expect(links.map((link) => link.getAttribute('href'))).toStrictEqual([
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/7/submissions/1',
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1/view'
+      ])
+    })
+  })
+
+  describe('the year it reads', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it("asks for the current year's calendar and accreditation", async ({
+      server
+    }) => {
+      vi.useFakeTimers({
+        now: new Date('2027-01-05T10:00:00.000Z'),
+        toFake: ['Date']
+      })
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      backendServesCalendar(emptyResponse)
+
+      await server.inject({ method: 'GET', url: accreditedUrl, auth: mockAuth })
+
+      expect(fetchReportingPeriods).toHaveBeenCalledWith(
+        {
+          organisationNumber: '500001',
+          registrationNumber: 'R25SR500030912PA',
+          year: 2027
+        },
+        'mock-backend-token'
+      )
+      expect(fetchRegistrationWithAccreditation).toHaveBeenCalledWith(
+        {
+          organisationNumber: '500001',
+          registrationNumber: 'R25SR500030912PA',
+          year: 2027
+        },
+        'mock-backend-token'
+      )
+    })
+  })
+
   describe('the route back', () => {
     beforeEach(() => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      vi.mocked(fetchReportingPeriodsByNumber).mockResolvedValue(
-        monthlyResponse
-      )
+      backendServesCalendar(monthlyResponse)
     })
 
     afterEach(() => {

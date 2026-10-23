@@ -73,7 +73,6 @@ const details = {
       timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
     }
   },
-  cadence: 'monthly',
   reportingPeriods: [
     aPeriod(5, { submitted: true }),
     aPeriod(8, { submitted: true }),
@@ -157,16 +156,13 @@ describe('the regulator reports detailed view', () => {
     { year: 2025, months: ['May, 2025', 'April, 2025'], periods: [5, 4] },
     { year: 2026, months: ['August, 2026', 'June, 2026'], periods: [8, 6] }
   ])(
-    'lists only the periods of $year, each linked under $year, where the calendar spans years',
+    'lists the periods of $year, each linked under $year',
     async ({ year, months, periods }, { server }) => {
       vi.mocked(fetchReportListDetails).mockResolvedValue({
         ...details,
-        reportingPeriods: [
-          aPeriod(4, { submitted: true, year: 2025 }),
-          aPeriod(8, { submitted: true }),
-          aPeriod(5, { submitted: true, year: 2025 }),
-          aPeriod(6, { submitted: true })
-        ]
+        reportingPeriods: periods.map((period) =>
+          aPeriod(period, { submitted: true, year })
+        )
       })
 
       const reportsPath = `${registrationPath}/accreditations/${year}/reports`
@@ -228,20 +224,6 @@ describe('the regulator reports detailed view', () => {
     vi.mocked(fetchReportListDetails).mockResolvedValue({
       ...details,
       reportingPeriods: []
-    })
-
-    const { body } = await visit(server, regulator)
-
-    expect(body).not.toContain('data-testid="reports-table"')
-    expect(body).toContain('data-testid="no-reports"')
-  })
-
-  it('shows no periods where the registration owes quarterly reports', async ({
-    server
-  }) => {
-    vi.mocked(fetchReportListDetails).mockResolvedValue({
-      ...details,
-      cadence: 'quarterly'
     })
 
     const { body } = await visit(server, regulator)

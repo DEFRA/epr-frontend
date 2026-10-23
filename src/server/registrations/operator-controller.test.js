@@ -252,7 +252,7 @@ describe("the operator's registration page for a year", () => {
     const { body } = await visit(server)
 
     expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
-      '/organisations/500118'
+      `/organisations/500118/${year}`
     )
     expect(hrefOf(body, 'Upload your summary log')).toBe(
       `${registrationPath}/summary-logs/upload`
@@ -277,10 +277,23 @@ describe("the operator's registration page for a year", () => {
     const { body } = await visit(server)
 
     expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
-      '/organisations/500118/exporting'
+      `/organisations/500118/${year}/exporting`
     )
     expect(hrefOf(body, 'Create new PERN')).toBe(
       `${accreditationPath}/packaging-recycling-notes/create`
+    )
+  })
+
+  it('keeps a Welsh reader in Welsh on the way back', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
+    const { body } = await visit(server, { url: `/cy${accreditationPath}` })
+
+    expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+      `/cy/organisations/500118/${year}`
     )
   })
 
@@ -451,6 +464,32 @@ describe("the operator's registration page for a year", () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
+  it.for([
+    { name: 'a value that is not a year', segment: 'abcd' },
+    { name: 'a year with five digits', segment: `0${thisYear}` },
+    { name: 'a year with a decimal point', segment: `${thisYear}.0` },
+    { name: 'a year with a plus sign', segment: `+${thisYear}` }
+  ])(
+    'is not found for $name, without asking the backend',
+    async ({ segment }, { server, msw }) => {
+      backendHolds(msw)
+      /** @type {string[]} */
+      const backendRequests = []
+      msw.events.on('request:start', ({ request }) => {
+        if (request.url.startsWith(backendUrl)) {
+          backendRequests.push(request.url)
+        }
+      })
+
+      const { statusCode } = await visit(server, {
+        url: `${registrationPath}/accreditations/${segment}`
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(backendRequests).toStrictEqual([])
+    }
+  )
+
   it('fails where the ids for the reapply link could not be looked up', async ({
     server,
     msw
@@ -523,6 +562,24 @@ describe("the operator's registered-only page for a year", () => {
     expect(title).toContain(lastYear)
   })
 
+  it('sends the operator back to the organisation home for the year in the address, not the latest', async ({
+    server,
+    msw
+  }) => {
+    const lastYear = String(thisYear - 1)
+    backendHolds(msw, {
+      registration: { ...registeredOnly, status: registeredSince(thisYear - 1) }
+    })
+
+    const { body } = await visit(server, {
+      url: `${registrationPath}/${lastYear}`
+    })
+
+    expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+      `/organisations/500118/${lastYear}`
+    )
+  })
+
   it.for(['created', 'rejected', 'cancelled'])(
     'shows the registered-only page for a year whose accreditation is %s',
     async (current, { server, msw }) => {
@@ -574,7 +631,7 @@ describe("the operator's registered-only page for a year", () => {
     })
 
     expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
-      '/organisations/500118'
+      `/organisations/500118/${year}`
     )
     expect(hrefOf(body, 'Upload your summary log')).toBe(
       `${registrationPath}/summary-logs/upload`
@@ -715,7 +772,7 @@ describe("the operator's registered-only page for a year", () => {
       segment: String(thisYear + 1)
     },
     { name: 'a value that is not a year', segment: 'abcd' },
-    { name: 'a year with a leading zero', segment: `0${thisYear}` },
+    { name: 'a year with five digits', segment: `0${thisYear}` },
     { name: 'a year with a decimal point', segment: `${thisYear}.0` },
     { name: 'a year with a plus sign', segment: `+${thisYear}` }
   ])('is not found for $name', async ({ segment }, { server, msw }) => {

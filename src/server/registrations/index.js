@@ -95,6 +95,14 @@ const registeredOnlyYearRoute = {
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const accreditationRoute = {
+  options: {
+    validate: paramsOrNotFound(yearSegmentParamsSchema, {
+      message: 'Accreditation not found',
+      code: errorCodes.accreditationNotFound,
+      action: 'fetch_accreditation',
+      reason: 'the address holds no such organisation number or year'
+    })
+  },
   /**
    * @param {HapiRequest & { params: AccreditationParams }} request
    * @param {ResponseToolkit} h

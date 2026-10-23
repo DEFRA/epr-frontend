@@ -97,6 +97,65 @@ describe(fetchRegistrationWithAccreditation, () => {
 
     expect(accreditation).toBeUndefined()
   })
+
+  it.each([2027, '2027'])(
+    'reads the live accreditation for the year %j',
+    async (year) => {
+      const registration = buildRegistrationView({
+        accreditations: {
+          2026: buildAccreditationView({
+            accreditationNumber: toAccreditationNumber('A26')
+          }),
+          2027: buildAccreditationView({
+            accreditationNumber: toAccreditationNumber('A27')
+          })
+        }
+      })
+      resolveRegistration(registration)
+
+      const { accreditation } = await fetchRegistrationWithAccreditation(
+        { ...registrationKeys, year },
+        backendToken
+      )
+
+      expect(accreditation).toBe(registration.accreditations['2027'])
+      expect(fetchRegistration).toHaveBeenCalledWith({
+        ...registrationKeys,
+        backendToken
+      })
+    }
+  )
+
+  it('leaves out the accreditation for a year that is not live', async () => {
+    resolveRegistration(
+      buildRegistrationView({
+        accreditations: {
+          2026: buildAccreditationView(),
+          2027: buildAccreditationView({
+            status: { current: 'created', timeline: [] }
+          })
+        }
+      })
+    )
+
+    const { accreditation } = await fetchRegistrationWithAccreditation(
+      { ...registrationKeys, year: 2027 },
+      backendToken
+    )
+
+    expect(accreditation).toBeUndefined()
+  })
+
+  it('reads no accreditation for a year that names an inherited property', async () => {
+    resolveRegistration(buildRegistrationView())
+
+    const { accreditation } = await fetchRegistrationWithAccreditation(
+      { ...registrationKeys, year: 'constructor' },
+      backendToken
+    )
+
+    expect(accreditation).toBeUndefined()
+  })
 })
 
 describe(fetchRequiredAccreditation, () => {
