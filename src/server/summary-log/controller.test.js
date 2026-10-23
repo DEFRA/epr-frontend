@@ -105,9 +105,10 @@ const mockFetchOrganisationWasteBalances = vi.mocked(
   fetchOrganisationWasteBalances
 )
 
-const accredited = buildRegistrationWithAccreditation()
-const registeredOnly = { ...accredited, accreditation: undefined }
-const { accreditationNumber } = accredited.accreditation
+const accredited2026 = buildRegistrationWithAccreditation()
+const registeredOnly = { ...accredited2026, accreditation: undefined }
+const { accreditationNumber: accreditationNumber2026 } =
+  accredited2026.accreditation
 const accreditationNumber2027 = 'A27EN0000000001PL'
 const accredited2027 = buildRegistrationWithAccreditation({
   accreditation: buildAccreditationView({
@@ -119,10 +120,10 @@ const accredited2027 = buildRegistrationWithAccreditation({
  * @param {{ year?: number | string }} keys
  */
 const accreditedByYear = async ({ year }) =>
-  year === 2027 ? accredited2027 : accredited
+  year === 2027 ? accredited2027 : accredited2026
 
 const balancesForBothYears = () => ({
-  [accreditationNumber]: { amount: 2026, availableAmount: 2026 },
+  [accreditationNumber2026]: { amount: 2026, availableAmount: 2026 },
   [accreditationNumber2027]: { amount: 2027, availableAmount: 2027 }
 })
 
@@ -423,7 +424,7 @@ describe('#summaryLogUploadProgressController', () => {
         const main = await getMain(server)
 
         expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
-          accredited.organisation.organisationNumber,
+          accredited2026.organisation.organisationNumber,
           2027,
           'test-id-token'
         )
@@ -439,10 +440,12 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(accredited)
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+          accredited2026
+        )
 
         mockFetchOrganisationWasteBalances.mockResolvedValueOnce({
-          [accreditationNumber]: {
+          [accreditationNumber2026]: {
             amount: 1000,
             availableAmount: 1234.56
           }
@@ -460,7 +463,7 @@ describe('#summaryLogUploadProgressController', () => {
           'test-id-token'
         )
         expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
-          accredited.organisation.organisationNumber,
+          accredited2026.organisation.organisationNumber,
           2026,
           'test-id-token'
         )
@@ -479,11 +482,11 @@ describe('#summaryLogUploadProgressController', () => {
           })
 
           mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
-            accredited
+            accredited2026
           )
 
           mockFetchOrganisationWasteBalances.mockResolvedValueOnce({
-            [accreditationNumber]: {
+            [accreditationNumber2026]: {
               amount: 1000,
               availableAmount
             }
@@ -545,7 +548,9 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(accredited)
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+          accredited2026
+        )
 
         mockFetchOrganisationWasteBalances.mockResolvedValueOnce({})
 
@@ -570,7 +575,9 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(accredited)
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+          accredited2026
+        )
 
         mockFetchOrganisationWasteBalances.mockRejectedValueOnce(fetchError)
 
@@ -2445,7 +2452,9 @@ describe('#summaryLogUploadProgressController', () => {
           validation: { failures: [{ errorCode: 'REGISTRATION_MISMATCH' }] }
         })
 
-        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(accredited)
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+          accredited2026
+        )
 
         await server.inject({ method: 'GET', url, auth: mockAuth })
 
@@ -2614,9 +2623,9 @@ describe('summary log check view', () => {
 
   /** Make the current accredited waste balance available to the check page. */
   const givenWasteBalance = (availableAmount) => {
-    mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited)
+    mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited2026)
     mockFetchOrganisationWasteBalances.mockResolvedValue({
-      [accreditationNumber]: { amount: availableAmount, availableAmount }
+      [accreditationNumber2026]: { amount: availableAmount, availableAmount }
     })
   }
 
@@ -3113,7 +3122,7 @@ describe('summary log check view', () => {
     const { result } = await renderMain(server)
 
     expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
-      accredited.organisation.organisationNumber,
+      accredited2026.organisation.organisationNumber,
       2027,
       'test-id-token'
     )
