@@ -25,6 +25,8 @@ describe('#logoutController', () => {
           credentials: null
         },
         state: {},
+        headers: {},
+        logger: { info: vi.fn() },
         localiseUrl: vi.fn((key) => key)
       }
 
@@ -50,6 +52,8 @@ describe('#logoutController', () => {
           credentials: null
         },
         state: { [SIGN_IN_PROVIDER_COOKIE]: OIDC_ENTRA_ID },
+        headers: {},
+        logger: { info: vi.fn() },
         localiseUrl: vi.fn((key) => key)
       }
 

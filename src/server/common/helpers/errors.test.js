@@ -33,7 +33,8 @@ describe(catchAll, () => {
       output: { statusCode },
       redirect: mockRedirect
     },
-    logger: { error: mockErrorLogger },
+    headers: {},
+    logger: { error: mockErrorLogger, info: vi.fn() },
     state: {},
     t: vi.fn((key) => key),
     localiseUrl: vi.fn((key) => key)
