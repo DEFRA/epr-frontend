@@ -57,9 +57,8 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  */
 
 /**
- * A summary log's status as the page reads it: the submit response kept in the
- * session carries the status alone, and the placeholder for one not yet stored
- * no year, so the stored fields are optional here.
+ * Optional fields because this also holds the session's submit response and the
+ * not-yet-stored placeholder, which carry only a status.
  * @typedef {Partial<StoredSummaryLog> & { status: string }} StatusData
  */
 
