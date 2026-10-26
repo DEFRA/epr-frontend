@@ -1,5 +1,6 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
+import { organisationNumberOf } from '#server/common/helpers/organisations/organisation-number-of.js'
 import { paths } from '#server/paths.js'
 import { organisationPath } from '#server/reports/helpers/report-paths.js'
 
@@ -25,7 +26,9 @@ async function getStartNowHref(request) {
 
   if (organisations.linked) {
     return request.localiseUrl(
-      organisationPath({ organisationNumber: organisations.linked.orgId })
+      organisationPath({
+        organisationNumber: organisationNumberOf(organisations.linked)
+      })
     )
   }
 

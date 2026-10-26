@@ -1,3 +1,4 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { describe, expect, it } from 'vitest'
 import { isAccreditationActive } from './accreditation-helpers.js'
 
@@ -14,7 +15,7 @@ describe(isAccreditationActive, () => {
     'returns $expected for $current accreditation',
     ({ current, expected }) => {
       const accreditation = {
-        accreditationNumber: 'ACC-001',
+        accreditationNumber: toAccreditationNumber('ACC-001'),
         status: {
           current: /** @type {AccreditationStatus} */ (current),
           timeline: []

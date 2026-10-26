@@ -1,4 +1,5 @@
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import {
@@ -21,7 +22,7 @@ const ORGANISATION_URL = '/organisations/500123'
 
 const operatorAuth = buildMockAuth({
   linkedOrganisationId: 'org-123',
-  linkedOrganisationNumber: '500123'
+  linkedOrganisationNumber: toOrganisationNumber('500123')
 })
 
 const regulatorAuth = buildMockAuth({
@@ -71,7 +72,7 @@ describe('the chrome around an organisation page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchOrganisation).mockResolvedValue({
-      organisationNumber: '500123',
+      organisationNumber: toOrganisationNumber('500123'),
       name: 'ACME ltd',
       displayName: 'ACME ltd',
       registrations: {}

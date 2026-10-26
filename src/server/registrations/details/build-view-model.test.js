@@ -1,3 +1,6 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -24,14 +27,14 @@ const localise = createMockLocalise({
  */
 
 const keys = {
-  organisationNumber: '500118',
-  registrationNumber: 'R26ER5001180041PL'
+  organisationNumber: toOrganisationNumber('500118'),
+  registrationNumber: toRegistrationNumber('R26ER5001180041PL')
 }
 const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
 
 /** @type {OrganisationView} */
 const organisation = {
-  organisationNumber: '500118',
+  organisationNumber: toOrganisationNumber('500118'),
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
   registrations: {}
@@ -73,7 +76,7 @@ const anExporter = {
  * @returns {Accreditation}
  */
 const anAccreditation = (overrides) => ({
-  accreditationNumber: 'A26ER5001180114PL',
+  accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
@@ -205,7 +208,7 @@ describe(buildViewModel, () => {
           validFrom: '2025-01-01',
           accreditations: {
             2025: anAccreditation({
-              accreditationNumber: 'A25ER5001180114PL',
+              accreditationNumber: toAccreditationNumber('A25ER5001180114PL'),
               status: {
                 current: 'approved',
                 timeline: [

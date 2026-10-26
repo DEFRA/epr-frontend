@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { buildOrganisationView } from '#server/common/test-helpers/organisation-view-fixtures.js'
 
 import { buildNoteBreadcrumbs } from './build-note-breadcrumbs.js'
@@ -23,8 +25,8 @@ const organisation = buildOrganisationView({
 const context = {
   organisation,
   keys: {
-    organisationNumber: '500123',
-    registrationNumber: 'R26EN0000000001PL',
+    organisationNumber: toOrganisationNumber('500123'),
+    registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
     year: '2026'
   },
   noteTypePlural: 'PRNs',

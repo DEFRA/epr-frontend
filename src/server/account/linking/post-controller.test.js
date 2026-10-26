@@ -21,9 +21,7 @@ const mockAuth = buildMockAuth()
 const userOrganisations = {
   current: { id: 'defra-org-123', name: 'My Defra Organisation' },
   linked: null,
-  unlinked: [
-    { id: organisationId, name: 'Test Company Ltd', orgId: '12345678' }
-  ]
+  unlinked: [{ id: organisationId, name: 'Test Company Ltd', orgId: 12345678 }]
 }
 
 // Authorises on the session backendToken, so a 200 also proves the handler forwards

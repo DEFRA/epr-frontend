@@ -18,6 +18,7 @@ import { organisationPath } from '#server/reports/helpers/report-paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
+import { organisationNumberOf } from '#server/common/helpers/organisations/organisation-number-of.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID } from 'node:crypto'
 
@@ -81,10 +82,9 @@ const defraIdCallbackController = {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
 
-      await addUserToOrganisation(
-        organisations.linked.orgId,
-        session.backendToken
-      )
+      const organisationNumber = organisationNumberOf(organisations.linked)
+
+      await addUserToOrganisation(organisationNumber, session.backendToken)
 
       const isInitialUser =
         organisations.linked.linkedBy?.id === session.profile.id
@@ -94,14 +94,12 @@ const defraIdCallbackController = {
 
       // Store linked organisation in session for navigation
       session.linkedOrganisationId = organisations.linked.id
-      session.linkedOrganisationNumber = organisations.linked.orgId
+      session.linkedOrganisationNumber = organisationNumber
       await request.server.app.cache.set(sessionId, session)
 
       const redirectUrl = referrerIfPresentElseDefault(
         request,
-        request.localiseUrl(
-          organisationPath({ organisationNumber: organisations.linked.orgId })
-        )
+        request.localiseUrl(organisationPath({ organisationNumber }))
       )
 
       return h.redirect(redirectUrl)

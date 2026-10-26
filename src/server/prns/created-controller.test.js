@@ -1,3 +1,5 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import {
   buildAccreditationView,
@@ -67,15 +69,19 @@ const fixtureReprocessor = buildRegistrationWithAccreditation({
     reprocessingType: 'input',
     site: { address: { fullAddress: 'Reprocessing Site' } }
   }),
-  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
 const fixtureExporter = buildRegistrationWithAccreditation({
   organisation: { name: 'Exporter Organisation' },
-  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
-const organisationNumber = '500123'
+const organisationNumber = toOrganisationNumber('500123')
 const prnsBase = `/organisations/${organisationNumber}/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes`
 const prnId = 'prn-789'
 const pernId = 'pern-123'

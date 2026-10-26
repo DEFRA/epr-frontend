@@ -1,4 +1,3 @@
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { homePath, renderHome } from './home-page.js'
@@ -21,7 +20,7 @@ export const homeController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const orgNumber = organisationNumber(request.params.organisationNumber)
+    const orgNumber = request.params.organisationNumber
     const { backendToken } = request.auth.credentials
 
     const [latestYear] = await fetchOrganisationYears(orgNumber, backendToken)

@@ -1,3 +1,5 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+
 /**
  * @import { IssuedToOrganisation, PackagingRecyclingNote, PrnResource } from '#server/prns/helpers/prn-resource.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
@@ -69,7 +71,7 @@ export const buildPrnResource = (overrides = {}) => ({
   issuer: {
     registration: {
       accreditation: {
-        accreditationNumber: 'ACC-001',
+        accreditationNumber: toAccreditationNumber('ACC-001'),
         accreditationYear: 2026,
         wasteProcessingType: 'reprocessor',
         material: 'plastic'

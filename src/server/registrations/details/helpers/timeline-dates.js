@@ -3,7 +3,7 @@ import {
   REGISTRATION_STATUS
 } from '#domain/organisations/model.js'
 import {
-  calendarDate,
+  toCalendarDate,
   utcCalendarDate
 } from '#server/common/helpers/calendar-date.js'
 
@@ -34,7 +34,7 @@ import {
  */
 export const dailyTimeline = (timeline) =>
   Object.fromEntries(
-    timeline.map(({ at, status }) => [calendarDate(at), { status }])
+    timeline.map(({ at, status }) => [toCalendarDate(at), { status }])
   )
 
 /**
@@ -51,12 +51,12 @@ const liveRuns = (timeline, liveStatuses) => {
 
   for (const [date, { status }] of Object.entries(dailyTimeline(timeline))) {
     if (liveStatuses.has(status)) {
-      from ??= calendarDate(date)
+      from ??= toCalendarDate(date)
       continue
     }
 
     if (from !== null) {
-      runs.push({ from, to: shiftDay(calendarDate(date), -1) })
+      runs.push({ from, to: shiftDay(toCalendarDate(date), -1) })
       from = null
     }
   }
@@ -121,11 +121,11 @@ const accreditedFrom = (statusTimeline, yearStart) => {
     statusTimeline.find(
       ({ at, status }) =>
         status === ACCREDITATION_STATUS.APPROVED &&
-        calendarDate(at).localeCompare(yearStart) >= 0
+        toCalendarDate(at).localeCompare(yearStart) >= 0
     )
   )
 
-  return calendarDate(approvedAt)
+  return toCalendarDate(approvedAt)
 }
 
 /**
@@ -141,7 +141,7 @@ export const accreditedDateRange = ({ status: { timeline } }, year) => {
     validFrom: accreditedFrom(timeline, firstDayOf(Number(year))),
     validTo:
       status === ACCREDITATION_STATUS.CANCELLED
-        ? calendarDate(at)
+        ? toCalendarDate(at)
         : lastDayOf(Number(year))
   }
 }

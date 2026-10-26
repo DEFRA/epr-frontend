@@ -3,6 +3,7 @@ import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { seesRegulatorView } from '#server/auth/roles.js'
 import { paths } from '#server/paths.js'
+import { organisationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
  * Navigation item
@@ -20,7 +21,11 @@ const home = ({ localiseUrl, t: localise }, session) => {
   }
   return [
     {
-      href: localiseUrl(`/organisations/${session.linkedOrganisationNumber}`),
+      href: localiseUrl(
+        organisationPath({
+          organisationNumber: session.linkedOrganisationNumber
+        })
+      ),
       text: localise('common:navigation:home')
     }
   ]

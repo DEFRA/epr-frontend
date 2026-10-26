@@ -78,7 +78,7 @@ function buildNoteTypeLabels(registration, localise) {
  *   material: string,
  *   periodLabel: string,
  *   registration: RegistrationView,
- *   registrationNumber: string,
+ *   registrationNumber: RegistrationNumber,
  *   reportDetail: ReportDetailResponse
  * }} params
  * @returns {object}
@@ -243,6 +243,7 @@ export const checkPostController = {
 }
 
 /**
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { TFunction } from 'i18next'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'

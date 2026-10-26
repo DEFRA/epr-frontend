@@ -1,3 +1,6 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { describe, expect, it } from 'vitest'
 
 import { toNaturalKeys } from './swap-keys.js'
@@ -11,7 +14,7 @@ const accreditationId = '6507f1f77bcf86cd79943903'
 /** @type {OrganisationById['registrations'][number]} */
 const registration = {
   id: registrationId,
-  registrationNumber: 'R26ER5001180041PL',
+  registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
   accreditationId,
   material: 'plastic'
 }
@@ -19,7 +22,7 @@ const registration = {
 /** @type {OrganisationById['accreditations'][number]} */
 const accreditation = {
   id: accreditationId,
-  accreditationNumber: 'A26ER5001180114PL',
+  accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
   validFrom: '2026-07-01'
 }
 
@@ -42,7 +45,7 @@ describe(toNaturalKeys, () => {
 
   it('names the organisation by its number', () => {
     expect(toNaturalKeys(anOrganisation(), { organisationId })).toStrictEqual({
-      organisationNumber: '500118'
+      organisationNumber: toOrganisationNumber('500118')
     })
   })
 
@@ -50,15 +53,15 @@ describe(toNaturalKeys, () => {
     expect(
       toNaturalKeys(anOrganisation(), { organisationId, registrationId })
     ).toStrictEqual({
-      organisationNumber: '500118',
-      registrationNumber: 'R26ER5001180041PL'
+      organisationNumber: toOrganisationNumber('500118'),
+      registrationNumber: toRegistrationNumber('R26ER5001180041PL')
     })
   })
 
   it('names an accreditation by the UTC year it starts in', () => {
     expect(toNaturalKeys(anOrganisation(), allIds)).toStrictEqual({
-      organisationNumber: '500118',
-      registrationNumber: 'R26ER5001180041PL',
+      organisationNumber: toOrganisationNumber('500118'),
+      registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
       year: '2026'
     })
   })

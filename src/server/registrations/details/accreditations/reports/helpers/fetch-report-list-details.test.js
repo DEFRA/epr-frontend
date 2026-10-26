@@ -1,4 +1,7 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import Boom from '@hapi/boom'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -8,6 +11,7 @@ import { fetchReportListDetails } from './fetch-report-list-details.js'
 
 /**
  * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { ReportListDetails } from './fetch-report-list-details.js'
  */
 
@@ -15,13 +19,13 @@ vi.mock(import('#server/common/helpers/organisations/fetch-organisation.js'))
 vi.mock(import('#server/reports/helpers/fetch-reporting-periods.js'))
 
 describe(fetchReportListDetails, () => {
-  const organisationNumber = '500118'
-  const registrationNumber = 'R26ER5001180041PL'
+  const organisationNumber = toOrganisationNumber('500118')
+  const registrationNumber = toRegistrationNumber('R26ER5001180041PL')
   const backendToken = toBackendToken('token')
 
   /** @type {Accreditation} */
   const accreditation = {
-    accreditationNumber: 'A26ER5001180114PL',
+    accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
     status: {
       current: 'approved',
       timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
@@ -30,7 +34,7 @@ describe(fetchReportListDetails, () => {
 
   /** @type {OrganisationView} */
   const organisation = {
-    organisationNumber: '500118',
+    organisationNumber: toOrganisationNumber('500118'),
     name: 'Kirkby Plastics Ltd',
     displayName: 'Kirkby Plastics Ltd',
     registrations: {
@@ -63,7 +67,7 @@ describe(fetchReportListDetails, () => {
     }
   ]
 
-  /** @param {{ registrationNumber?: string, year?: string }} [overrides] */
+  /** @param {{ registrationNumber?: RegistrationNumber, year?: string }} [overrides] */
   const fetchDetails = (overrides) =>
     fetchReportListDetails({
       organisationNumber,
@@ -132,7 +136,9 @@ describe(fetchReportListDetails, () => {
 
   it('is not found for a registration number the organisation does not hold', async () => {
     await expect(
-      fetchDetails({ registrationNumber: 'R26ER5009990041PL' })
+      fetchDetails({
+        registrationNumber: toRegistrationNumber('R26ER5009990041PL')
+      })
     ).rejects.toMatchObject({ output: { statusCode: 404 } })
   })
 

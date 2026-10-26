@@ -1,16 +1,20 @@
 import { CADENCE } from '../constants.js'
 
-/** @import { CadenceValue } from '../constants.js' */
+/**
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
+ * @import { CadenceValue } from '../constants.js'
+ */
 
 /**
- * @typedef {{ organisationNumber: string, registrationNumber: string }} RegistrationKeys
+ * @typedef {{ organisationNumber: OrganisationNumber, registrationNumber: RegistrationNumber }} RegistrationKeys
  * @typedef {RegistrationKeys & { year: string }} AccreditationKeys
  * @typedef {RegistrationKeys & { year: number, cadence: CadenceValue, period: number, submissionNumber: number }} SubmissionKeys
  */
 
 /**
  * The organisation's natural-key address.
- * @param {{ organisationNumber: string | number }} keys
+ * @param {{ organisationNumber: OrganisationNumber }} keys
  * @returns {string}
  */
 export const organisationPath = ({ organisationNumber }) =>

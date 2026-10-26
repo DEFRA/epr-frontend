@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -12,7 +13,7 @@ describe(linkOrganisation, () => {
   it('should successfully link organisation with correct auth token', async ({
     msw
   }) => {
-    const organisationNumber = 'org-123'
+    const organisationNumber = toOrganisationNumber('org-123')
     const backendToken = toBackendToken('valid-id-token')
 
     msw.use(
@@ -30,7 +31,7 @@ describe(linkOrganisation, () => {
   })
 
   it('should throw error when backend returns 401', async ({ msw }) => {
-    const organisationNumber = 'org-456'
+    const organisationNumber = toOrganisationNumber('org-456')
     const backendToken = toBackendToken('invalid-token')
 
     msw.use(
@@ -53,7 +54,7 @@ describe(linkOrganisation, () => {
   })
 
   it('should throw error when backend returns 404', async ({ msw }) => {
-    const organisationNumber = 'non-existent-org'
+    const organisationNumber = toOrganisationNumber('non-existent-org')
     const backendToken = toBackendToken('valid-token')
 
     msw.use(
@@ -79,7 +80,7 @@ describe(linkOrganisation, () => {
   })
 
   it('should throw error when backend returns 500', async ({ msw }) => {
-    const organisationNumber = 'org-789'
+    const organisationNumber = toOrganisationNumber('org-789')
     const backendToken = toBackendToken('valid-token')
 
     msw.use(

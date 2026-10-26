@@ -2,7 +2,9 @@ import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -27,7 +29,7 @@ const registeredOnlyRegistration = buildRegistrationView({
 })
 
 const organisation = buildOrganisationView({
-  organisationNumber: '50002',
+  organisationNumber: toOrganisationNumber('50002'),
   name: 'ACME ltd',
   displayName: 'ACME ltd',
   registrations: {
@@ -36,7 +38,9 @@ const organisation = buildOrganisationView({
       reprocessingType: 'input',
       site: { address: { fullAddress: '1 Glass Street, Leeds' } },
       accreditations: {
-        2026: buildAccreditationView({ accreditationNumber: 'ACC001234' })
+        2026: buildAccreditationView({
+          accreditationNumber: toAccreditationNumber('ACC001234')
+        })
       }
     }),
     REG006789: registeredOnlyRegistration,
@@ -576,7 +580,7 @@ describe('the waste balance ledger page', () => {
       server
     }) => {
       const cancelled = buildOrganisationView({
-        organisationNumber: '50002',
+        organisationNumber: toOrganisationNumber('50002'),
         registrations: {
           REG001234: buildRegistrationView({
             accreditations: {

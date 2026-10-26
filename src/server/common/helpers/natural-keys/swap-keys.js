@@ -1,10 +1,13 @@
+import { organisationNumberOf } from '#server/common/helpers/organisations/organisation-number-of.js'
+
 /**
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { NaturalKeys, OrganisationById, RecordIds } from './types.js'
  */
 
 /**
  * @param {OrganisationById} organisation
- * @param {string} registrationNumber
+ * @param {RegistrationNumber} registrationNumber
  */
 export const registrationsNumbered = (organisation, registrationNumber) =>
   organisation.registrations.filter(
@@ -38,7 +41,7 @@ export const toNaturalKeys = (
   organisation,
   { registrationId, accreditationId }
 ) => {
-  const organisationNumber = String(organisation.orgId)
+  const organisationNumber = organisationNumberOf(organisation)
 
   if (registrationId === undefined) {
     return { organisationNumber }

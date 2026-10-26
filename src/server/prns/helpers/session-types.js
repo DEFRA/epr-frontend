@@ -1,4 +1,9 @@
 /**
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
+ */
+
+/**
  * Session data for a PRN draft, written by postController and
  * read by discardController, viewController and createdController.
  * @typedef {{
@@ -47,8 +52,8 @@
 /**
  * Route params for the PRN list and create endpoints.
  * @typedef {{
- *   organisationNumber: string,
- *   registrationNumber: string,
+ *   organisationNumber: OrganisationNumber,
+ *   registrationNumber: RegistrationNumber,
  *   year: string
  * }} PrnListParams
  */

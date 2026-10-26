@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { test } from '#vite/fixtures/server.js'
 
 import { fetchOrganisationYears } from './fetch-organisation-years.js'
@@ -21,7 +21,7 @@ describe(fetchOrganisationYears, () => {
     )
 
     const result = await fetchOrganisationYears(
-      organisationNumber('50002'),
+      toOrganisationNumber('50002'),
       backendToken
     )
 
@@ -39,7 +39,7 @@ describe(fetchOrganisationYears, () => {
       })
     )
 
-    await fetchOrganisationYears(organisationNumber('../admin'), backendToken)
+    await fetchOrganisationYears(toOrganisationNumber('../admin'), backendToken)
 
     expect(pathname).toBe('/organisations/..%2Fadmin/years')
   })

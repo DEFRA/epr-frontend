@@ -1,5 +1,7 @@
 import { config } from '#config/config.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -10,8 +12,8 @@ import { initiateSummaryLogUpload } from './initiate-summary-log-upload.js'
 const backendUrl = config.get('eprBackendUrl')
 
 const keys = {
-  organisationNumber: '500118',
-  registrationNumber: 'R26ER5001180041PL'
+  organisationNumber: toOrganisationNumber('500118'),
+  registrationNumber: toRegistrationNumber('R26ER5001180041PL')
 }
 const registered = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/2026`
 const accredited = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/accreditations/2026/summary-log`
