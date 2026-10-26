@@ -207,7 +207,7 @@ const renderSuccessView = (
   return h.view(SUCCESS_VIEW_NAME, {
     pageTitle: heading,
     heading,
-    organisationPath: `${organisationPath}/${year}`,
+    organisationPath,
     registrationPath,
     wasteBalance,
     showFurtherAction: requiresResubmission(loadsByReportingPeriod)
@@ -350,7 +350,11 @@ const renderPassedValidationView = async (
       ? renderCheckView
       : renderSuccessView
 
-  return render(h, localise, { ...context, wasteBalance })
+  return render(h, localise, {
+    ...context,
+    organisationPath: `${context.organisationPath}/${context.year}`,
+    wasteBalance
+  })
 }
 
 /**

@@ -2737,16 +2737,24 @@ describe('summary log check view', () => {
     expect(result).not.toStrictEqual(enablesClientSidePolling())
   })
 
-  it('status: validated - should link back to the organisation home page', async ({
+  it("status: validated - should link to the home page for the summary log's year", async ({
     server
   }) => {
-    givenValidatedCheckPage()
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      year: 2027,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
 
-    const { result } = await renderMain(server)
+    const { main } = await renderMain(server)
 
-    expect(result).toStrictEqual(
-      expect.stringContaining(`href="/organisations/${organisationNumber}"`)
-    )
+    expect(
+      getByRole(main, 'link', { name: 'return to home' }).getAttribute('href')
+    ).toBe(`/organisations/${organisationNumber}/2027`)
   })
 
   it('renders all four populated accredited sections with balance language', async ({
