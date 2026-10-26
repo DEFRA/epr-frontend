@@ -226,7 +226,7 @@
   "submittingHeading": "Your waste records are being updated",
   "submittingMessage": "This may take a few minutes.",
   "successBodyText": "You can upload an updated summary log whenever you need to provide new data.",
-  "successPageTitle": "Summary log uploaded",
+  "successHeading": "Summary log uploaded ({{year}})",
   "supersededHeading": "This summary log has been replaced",
   "supersededMessage": "A newer summary log has been uploaded. This upload is no longer being processed.",
   "tableLabel": {

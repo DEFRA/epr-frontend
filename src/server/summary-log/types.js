@@ -264,6 +264,7 @@
  */
 
 /**
+ * `year` is absent only on the submit response, which carries the status alone.
  * @typedef {{
  *   accreditationNumber?: AccreditationNumber,
  *   loads?: RawLoads,
@@ -271,6 +272,7 @@
  *   processingType?: ProcessingType
  *   status: string,
  *   validation?: ValidationResponse,
+ *   year?: number,
  * }} SummaryLogStatusResponse
  */
 
