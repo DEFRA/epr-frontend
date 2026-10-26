@@ -126,9 +126,11 @@ const storedSummaryLogSchema = Joi.object({
   accreditationId: Joi.string().allow(null).optional()
 })
 
+// Joi runs the conditional's test with the caller's stripUnknown, which would
+// strip a stored log's fields and let it match the placeholder.
 const placeholderSchema = Joi.object({
   status: Joi.string().valid(summaryLogStatuses.preprocessing).required()
-})
+}).prefs({ stripUnknown: false })
 
 export const summaryLogStatusResponseSchema = Joi.alternatives().conditional(
   placeholderSchema,

@@ -63,6 +63,29 @@ describe('summaryLogStatusResponseSchema validation', () => {
 
       expect(error).toBeUndefined()
     })
+
+    it('should keep the fields of a stored preprocessing summary log when stripping unknown keys', () => {
+      const { error, value } = summaryLogStatusResponseSchema.validate(
+        { status: 'preprocessing', year: 2027, material: 'glass' },
+        { stripUnknown: true }
+      )
+
+      expect(error).toBeUndefined()
+      expect(value).toStrictEqual({
+        status: 'preprocessing',
+        year: 2027,
+        material: 'glass'
+      })
+    })
+
+    it('should reject a stored preprocessing summary log without a year when stripping unknown keys', () => {
+      const { error } = summaryLogStatusResponseSchema.validate(
+        { status: 'preprocessing', material: 'glass' },
+        { stripUnknown: true }
+      )
+
+      expect(error?.message).toContain('"year" is required')
+    })
   })
 
   describe('validation.failures location.rowId', () => {
