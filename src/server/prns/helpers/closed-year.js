@@ -33,7 +33,19 @@ export const closedYearSendsTo = {
 }
 
 /**
- * The route with a closed-year gate ahead of its handler.
+ * Where a closed year sends the session, as the route declared it.
+ * @param {HapiRequest & { params: PrnListParams & { prnId?: string } }} request
+ * @returns {string}
+ */
+export const closedYearRedirectFor = (request) =>
+  /** @type {{ closedYearSendsTo: ClosedYearTarget }} */ (
+    request.route.settings.app
+  ).closedYearSendsTo(request.params)
+
+/**
+ * The route with a closed-year gate ahead of its handler. The target is kept
+ * on the route so a handler turning the backend's refusal into a redirect
+ * reads the same one through {@link closedYearRedirectFor}.
  * @template {Partial<HapiServerRoute<HapiRequest>>} R
  * @param {R} route
  * @param {ClosedYearTarget} sendTo
@@ -43,6 +55,7 @@ export const closedWithTheYear = (route, sendTo) => ({
   ...route,
   options: {
     ...route.options,
+    app: { ...route.options?.app, closedYearSendsTo: sendTo },
     pre: [
       ...(route.options?.pre ?? []),
       {
@@ -57,7 +70,7 @@ export const closedWithTheYear = (route, sendTo) => ({
           )
           return isYearOpen(accreditation)
             ? h.continue
-            : h.redirect(sendTo(request.params)).takeover()
+            : h.redirect(closedYearRedirectFor(request)).takeover()
         }
       }
     ]
