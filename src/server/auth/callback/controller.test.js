@@ -65,7 +65,7 @@ describe('#authCallbackController', () => {
         },
         linked: {
           id: 'defra-org-uuid',
-          orgId: '11111111',
+          orgId: 11111111,
           name: 'Test Defra Organisation',
           linkedBy: {
             email: 'user@example.com',
