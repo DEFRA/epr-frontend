@@ -10,7 +10,7 @@ import {
 import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import {
-  closedYearRedirectFor,
+  closedYearSendsTo,
   isClosedYearRefusal
 } from './helpers/closed-year.js'
 import { createPrn } from './helpers/create-prn.js'
@@ -401,7 +401,7 @@ export const postController = {
       }
 
       if (isClosedYearRefusal(error)) {
-        return h.redirect(closedYearRedirectFor(request))
+        return h.redirect(closedYearSendsTo.list(request.params))
       }
 
       if (error.isBoom) {

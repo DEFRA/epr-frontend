@@ -2,7 +2,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import {
-  closedYearRedirectFor,
+  closedYearSendsTo,
   isClosedYearRefusal
 } from './helpers/closed-year.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
@@ -43,7 +43,7 @@ export const issueController = {
       return h.redirect(`${notePath}/issued`)
     } catch (error) {
       if (isClosedYearRefusal(error)) {
-        return h.redirect(closedYearRedirectFor(request))
+        return h.redirect(closedYearSendsTo.note(request.params))
       }
 
       request.logger.error({ message: 'Failed to issue PRN', err: error })

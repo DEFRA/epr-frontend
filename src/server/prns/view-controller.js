@@ -11,7 +11,7 @@ import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligib
 import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
-  closedYearRedirectFor,
+  closedYearSendsTo,
   isClosedYearRefusal,
   isYearOpen
 } from './helpers/closed-year.js'
@@ -113,7 +113,7 @@ export const viewPostController = {
         : confirmDraft(request, h, draftParams))
     } catch (error) {
       if (isClosedYearRefusal(error)) {
-        return h.redirect(closedYearRedirectFor(request))
+        return h.redirect(closedYearSendsTo.note(request.params))
       }
 
       if (error.isBoom) {

@@ -62,14 +62,11 @@ export const prns = {
           },
           closedYearSendsTo.list
         ),
-        closedWithTheYear(
-          {
-            ...postController,
-            method: 'POST',
-            path: `${basePath}/create`
-          },
-          closedYearSendsTo.list
-        ),
+        {
+          ...postController,
+          method: 'POST',
+          path: `${basePath}/create`
+        },
         {
           ...actionController,
           method: 'GET',
@@ -80,14 +77,11 @@ export const prns = {
           method: 'GET',
           path: `${basePath}/{prnId}/view`
         },
-        closedWithTheYear(
-          {
-            ...viewPostController,
-            method: 'POST',
-            path: `${basePath}/{prnId}/view`
-          },
-          closedYearSendsTo.note
-        ),
+        {
+          ...viewPostController,
+          method: 'POST',
+          path: `${basePath}/{prnId}/view`
+        },
         {
           ...createdController,
           method: 'GET',
@@ -128,14 +122,11 @@ export const prns = {
           method: 'GET',
           path: `${basePath}/{prnId}/cancelled`
         },
-        closedWithTheYear(
-          {
-            ...issueController,
-            method: 'POST',
-            path: `${basePath}/{prnId}/issue`
-          },
-          closedYearSendsTo.note
-        ),
+        {
+          ...issueController,
+          method: 'POST',
+          path: `${basePath}/{prnId}/issue`
+        },
         {
           ...issuedController,
           method: 'GET',
