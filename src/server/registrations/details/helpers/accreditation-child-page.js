@@ -60,7 +60,7 @@ export const toRegistrationTrail = ({
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   organisationName: string,
- *   registrationNumber?: RegistrationNumber | null,
+ *   registrationNumber: RegistrationNumber,
  *   accreditationNumber: AccreditationNumber,
  *   paths: RecordPaths & { accreditation: string }
  * }} params
