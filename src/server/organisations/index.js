@@ -1,7 +1,6 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
-import { yearParam } from '#server/common/helpers/route-params.js'
+import { yearAddressed } from '#server/common/helpers/route-params.js'
 import Boom from '@hapi/boom'
-import Joi from 'joi'
 import { chooseYearController } from './choose-year-controller.js'
 import { controller as detailsController } from './details/controller.js'
 import { errorController } from './error-controller.js'
@@ -57,22 +56,6 @@ const operatorOnly = (controller) => ({
 })
 
 /**
- * An address naming a year has no page for a year the service does not
- * answer for.
- */
-const yearAddressOptions = {
-  validate: {
-    params: Joi.object({
-      organisationNumber: Joi.string().required(),
-      year: yearParam.required()
-    }),
-    failAction: () => {
-      throw Boom.notFound()
-    }
-  }
-}
-
-/**
  * Sets up the routes used in the organisations page.
  * These routes are registered in src/server/router.js.
  */
@@ -92,24 +75,21 @@ export const organisations = {
           method: 'GET',
           path: '/organisations/{organisationNumber}/exporting'
         },
-        {
+        yearAddressed({
           ...operatorOnly(yearController),
-          options: yearAddressOptions,
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}'
-        },
-        {
+        }),
+        yearAddressed({
           ...operatorOnly(yearController),
-          options: yearAddressOptions,
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}/exporting'
-        },
-        {
+        }),
+        yearAddressed({
           ...operatorOnly(chooseYearController),
-          options: yearAddressOptions,
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}/choose-year'
-        },
+        }),
         {
           ...errorController,
           method: 'GET',

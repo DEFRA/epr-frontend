@@ -254,6 +254,31 @@ describe('#postCreatePrnController', () => {
       })
     })
 
+    describe('with an address year the service does not answer for', () => {
+      it.for(['abcd', '2026.0', '2023'])(
+        'is not found for %s, even with a payload it would reject',
+        async (year, { server }) => {
+          const { cookie, crumb } = await getCsrfToken(server, url, {
+            auth: mockAuth
+          })
+
+          const { statusCode } = await server.inject({
+            method: 'POST',
+            url: url.replace(
+              '/accreditations/2026/',
+              `/accreditations/${year}/`
+            ),
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { ...validPayload, tonnage: '', crumb }
+          })
+
+          expect(statusCode).toBe(statusCodes.notFound)
+          expect(createPrn).not.toHaveBeenCalled()
+        }
+      )
+    })
+
     describe('with invalid payload', () => {
       it('shows "Enter PRN tonnage as a whole number" when tonnage is empty', async ({
         server

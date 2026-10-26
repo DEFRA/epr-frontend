@@ -1,4 +1,5 @@
 import { SCOPES } from '#server/auth/scopes.js'
+import { yearAddressed } from '#server/common/helpers/route-params.js'
 
 import { controller } from './controller.js'
 
@@ -30,8 +31,10 @@ export const wasteBalanceLedger = {
 
       server.route([
         ledgerRoute(`${registrationPath}/waste-balance-ledger`),
-        ledgerRoute(
-          `${registrationPath}/accreditations/{year}/waste-balance-ledger`
+        yearAddressed(
+          ledgerRoute(
+            `${registrationPath}/accreditations/{year}/waste-balance-ledger`
+          )
         )
       ])
     }
