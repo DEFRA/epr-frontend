@@ -1,4 +1,4 @@
-import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { organisationNumberOf } from '#server/common/helpers/organisations/organisation-number-of.js'
 
 /**
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
@@ -41,7 +41,7 @@ export const toNaturalKeys = (
   organisation,
   { registrationId, accreditationId }
 ) => {
-  const organisationNumber = toOrganisationNumber(String(organisation.orgId))
+  const organisationNumber = organisationNumberOf(organisation)
 
   if (registrationId === undefined) {
     return { organisationNumber }

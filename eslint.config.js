@@ -30,9 +30,11 @@ const brandConstructors = [
   {
     name: 'toOrganisationNumber',
     module: 'organisation-number.js',
-    mintedIn: ['src/server/common/helpers/natural-keys/swap-keys.js'],
+    mintedIn: [
+      'src/server/common/helpers/organisations/organisation-number-of.js'
+    ],
     message:
-      'An organisation number arrives branded from route params or the backend - type it there instead.'
+      'An organisation number arrives branded from route params or the backend - type it there, or read a numeric orgId with organisationNumberOf.'
   },
   {
     name: 'toRegistrationNumber',
