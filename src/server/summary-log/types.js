@@ -286,7 +286,7 @@
  */
 
 /**
- * @typedef {{ status: string }} SummaryLogSubmitResponse
+ * @typedef {{ status: 'submitting' }} SummaryLogSubmitResponse
  */
 
 /**

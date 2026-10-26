@@ -874,9 +874,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       const submitUrl = `${url}/submit`
 
-      mockSubmitSummaryLog.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitting
-      })
+      mockSubmitSummaryLog.mockResolvedValueOnce({ status: 'submitting' })
 
       const { cookie, crumb } = await getCsrfToken(server, url, {
         auth: mockAuth

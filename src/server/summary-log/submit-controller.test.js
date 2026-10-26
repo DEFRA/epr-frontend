@@ -70,11 +70,7 @@ describe('#submitSummaryLogController', () => {
   it('should submit summary log, store response in session, and redirect to GET route', async ({
     server
   }) => {
-    const mockResponse = {
-      status: 'submitted'
-    }
-
-    vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
+    vi.mocked(submitSummaryLog).mockResolvedValueOnce({ status: 'submitting' })
 
     const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
@@ -103,11 +99,7 @@ describe('#submitSummaryLogController', () => {
   it('should set session cookie when storing fresh data', async ({
     server
   }) => {
-    const mockResponse = {
-      status: 'submitted'
-    }
-
-    vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
+    vi.mocked(submitSummaryLog).mockResolvedValueOnce({ status: 'submitting' })
 
     const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
@@ -135,7 +127,7 @@ describe('#submitSummaryLogController', () => {
     server
   }) => {
     vi.mocked(submitSummaryLog).mockResolvedValueOnce({
-      status: 'submitted'
+      status: 'submitting'
     })
 
     const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
@@ -239,11 +231,7 @@ describe('#submitSummaryLogController', () => {
   it('should redirect without calling backend when freshData already exists in session', async ({
     server
   }) => {
-    const mockResponse = {
-      status: 'submitted'
-    }
-
-    vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
+    vi.mocked(submitSummaryLog).mockResolvedValueOnce({ status: 'submitting' })
 
     const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {

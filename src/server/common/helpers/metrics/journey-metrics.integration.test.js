@@ -129,7 +129,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
         })
       )
       vi.mocked(submitSummaryLog).mockResolvedValue({
-        status: 'submitted'
+        status: 'submitting'
       })
     })
 
