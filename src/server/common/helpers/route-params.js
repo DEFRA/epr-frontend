@@ -58,13 +58,13 @@ export const yearAddressed = (route) => {
   const ownFailAction = validate.failAction
 
   /** @type {Lifecycle.Method} */
-  const failAction =
-    typeof ownFailAction === 'function'
-      ? (request, h, error) =>
-          isParamsError(error)
-            ? notFound()
-            : ownFailAction.call(null, request, h, error)
-      : notFound
+  const failAction = function (request, h, error) {
+    if (isParamsError(error) || typeof ownFailAction !== 'function') {
+      return notFound()
+    }
+
+    return ownFailAction.call(this, request, h, error)
+  }
 
   return {
     ...route,
