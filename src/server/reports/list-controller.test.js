@@ -358,6 +358,12 @@ const readTable = (table) => ({
   )
 })
 
+/** @param {InstanceType<DOMWindow>['document']} document */
+const headingOf = (document) =>
+  getByRole(document.body, 'heading', { level: 1 })
+    .textContent?.replaceAll(/\s+/g, ' ')
+    .trim()
+
 describe('#listReportsController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -379,46 +385,6 @@ describe('#listReportsController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it("should display the page heading with the address's year", async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const heading = getByRole(body, 'heading', { level: 1 })
-
-      expect(heading.textContent?.replaceAll(/\s+/g, ' ').trim()).toBe(
-        'Glass remelt Manage reports (2026)'
-      )
-      expect(dom.window.document.title).toContain('Manage reports (2026)')
-    })
-
-    it("should display back link to the year's accredited homepage", async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const backLink = body.querySelector('.govuk-back-link')
-
-      expect(backLink).not.toBeNull()
-      expect(backLink?.getAttribute('href')).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
-      )
     })
 
     it('should render monthly periods in a table', async ({ server }) => {
@@ -1847,57 +1813,52 @@ describe('#listReportsController', () => {
     })
   })
 
-  describe('the heading', () => {
+  describe('for an operator', () => {
     beforeEach(() => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
-      backendServesCalendar(emptyResponse)
+      backendServesCalendar(monthlyResponse)
     })
 
-    afterEach(() => {
-      config.set('featureFlags.regulatorAccess', false)
-    })
+    it.for([
+      { session: 'holding the write scope', auth: mockAuth },
+      { session: 'holding no write scope', auth: readOnlyAuth }
+    ])(
+      "headed with the address's year for a session $session",
+      async ({ auth }, { server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth
+        })
+        const { document } = new JSDOM(result).window
 
-    /**
-     * @param {ConstructorParameters<typeof JSDOM>[0]} result
-     */
-    const headingOf = (result) =>
-      getByRole(new JSDOM(result).window.document.body, 'heading', {
-        level: 1
-      })
-        .textContent?.replaceAll(/\s+/g, ' ')
-        .trim()
+        expect(headingOf(document)).toBe('Glass remelt Manage reports (2026)')
+        expect(document.title).toContain('Manage reports (2026): Glass remelt')
+      }
+    )
 
-    it('offers a session holding no write scope the reports to view', async ({
+    it("goes back to the year's materials homepage, with no trail", async ({
       server
     }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
-        auth: readOnlyAuth
+        auth: mockAuth
       })
+      const { body } = new JSDOM(result).window.document
 
-      expect(headingOf(result)).toBe('Glass remelt View reports (2026)')
-    })
-
-    it('keeps the plain Reports heading for a regulator', async ({
-      server
-    }) => {
-      config.set('featureFlags.regulatorAccess', true)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: regulatorAuth
-      })
-
-      expect(headingOf(result)).toBe('Glass remelt Reports')
+      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
+      )
+      expect(body.querySelector('.govuk-breadcrumbs')).toBeNull()
     })
   })
 
-  describe('the route back', () => {
+  describe('for a regulator', () => {
     beforeEach(() => {
+      config.set('featureFlags.regulatorAccess', true)
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
@@ -1908,21 +1869,24 @@ describe('#listReportsController', () => {
       config.set('featureFlags.regulatorAccess', false)
     })
 
-    it('offers an operator a back link and no trail', async ({ server }) => {
+    it('keeps the plain Reports heading and title, with no year', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
-        auth: mockAuth
+        auth: regulatorAuth
       })
-      const { body } = new JSDOM(result).window.document
+      const { document } = new JSDOM(result).window
 
-      expect(body.querySelector('.govuk-breadcrumbs')).toBeNull()
-      expect(body.querySelector('.govuk-back-link')).not.toBeNull()
+      expect(headingOf(document)).toBe('Glass remelt Reports')
+      expect(document.title).toContain('Reports: Glass remelt')
+      expect(document.title).not.toContain('2026')
     })
 
-    it('walks a regulator back up to all organisations', async ({ server }) => {
-      config.set('featureFlags.regulatorAccess', true)
-
+    it('walks back up to all organisations, with no back link', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -1940,18 +1904,6 @@ describe('#listReportsController', () => {
         'Registration details',
         'Reports'
       ])
-    })
-
-    it('takes the back link away from a regulator', async ({ server }) => {
-      config.set('featureFlags.regulatorAccess', true)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: regulatorAuth
-      })
-      const { body } = new JSDOM(result).window.document
-
       expect(body.querySelector('.govuk-back-link')).toBeNull()
     })
   })

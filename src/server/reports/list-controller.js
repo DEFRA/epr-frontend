@@ -228,7 +228,7 @@ const buildApprovedPersonBanner = (reportingPeriods, localise) => {
 
 /**
  * The page's heading and title. A regulator keeps the plain "Reports"; an
- * operator sees the year, worded for whether they may act on the reports.
+ * operator sees the year.
  * @param {{ session: UserSession, localise: TFunction, material: string, year: number }} options
  * @returns {{ heading: string, pageTitle: string }}
  */
@@ -240,9 +240,7 @@ const buildTitles = ({ session, localise, material, year }) => {
     }
   }
 
-  const heading = hasWriteScope(session)
-    ? localise('reports:manageReportsHeading', { year })
-    : localise('reports:manageReportsHeadingReadOnly', { year })
+  const heading = localise('reports:manageReportsHeading', { year })
 
   return {
     heading,

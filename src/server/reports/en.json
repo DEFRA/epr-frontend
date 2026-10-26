@@ -83,7 +83,6 @@
   "makeChangesUpdateWasteDataOnlyTextReprocessor": "Select the 'Use this report's summary log' button and then tell us how many tonnes of waste you recycled and also did not recycle in {{ periodLabel }}.",
   "makeChangesUseSummaryLog": "Use this report's summary log",
   "manageReportsHeading": "Manage reports ({{ year }})",
-  "manageReportsHeadingReadOnly": "View reports ({{ year }})",
   "materialLabel": "Material",
   "months": {
     "1": "January",
