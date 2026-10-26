@@ -54,12 +54,10 @@ const brandConstructors = [
       'src/server/common/helpers/organisations/accreditation-entries.js',
       'src/server/registrations/details/helpers/timeline-dates.js',
       'src/server/common/helpers/natural-keys/swap-keys.js',
-      'src/server/common/helpers/organisations/fetch-registration-with-accreditation.js',
-      'src/server/common/helpers/upload/initiate-summary-log-upload.js',
-      'src/server/waste-balance-ledger/controller.js'
+      'src/server/summary-log/controller.js'
     ],
     message:
-      'A year arrives branded from route params, the backend or a fixed-year constant - type it there, or use thisYear for the current year.'
+      'A year arrives branded from route params or the backend - type it there, or use thisYear or fixedYear.'
   },
   {
     name: 'toAccreditationNumber',
