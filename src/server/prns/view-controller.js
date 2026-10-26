@@ -88,6 +88,10 @@ export const viewPostController = {
         fetchDecemberPrnEligibility(keys, backendToken)
       ])
 
+      if (!isYearOpen(accreditation)) {
+        return h.redirect(closedYearSendsTo.note(request.params))
+      }
+
       // A failed read fails the confirmation, so an outage never discards a draft
       const balances = await fetchOrganisationWasteBalances(
         keys.organisationNumber,

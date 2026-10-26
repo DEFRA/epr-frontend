@@ -61,7 +61,10 @@ const crumbSource = '/organisations/500123'
 
 const recipientId = organisationsFixture.organisations[0].id
 
-/** @import { SetupServer } from 'msw/node' */
+/**
+ * @import { SetupServer } from 'msw/node'
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
 
 describe('a write the backend refuses because the year has closed', () => {
   const readsOrganisation = vi.fn()
@@ -155,73 +158,118 @@ describe('a write the backend refuses because the year has closed', () => {
   })
 })
 
-describe('confirming a draft the backend refuses because the year has closed', () => {
+describe('confirming a draft', () => {
   const readsOrganisation = vi.fn()
-  const writes = vi.fn()
 
-  it.for([true, false])(
-    'should send the session to the note after asking the backend once, reading the organisation view once, with it saying open: %s',
-    async (relevantYearOpen, { server, msw }) => {
-      msw.use(
-        http.get(`${backendUrl}/organisations/500123`, () => {
-          readsOrganisation()
-          return HttpResponse.json(organisationWhoseYear(relevantYearOpen))
-        }),
-        http.get(`${backendUrl}/organisations/500123/years`, () =>
-          HttpResponse.json({ years: [2026] })
-        ),
-        http.post(/\/packaging-recycling-notes$/, () =>
-          HttpResponse.json(buildPrnResource(), { status: 201 })
-        ),
-        http.get(/\/december-prn-eligibility$/, () =>
-          HttpResponse.json({ mode: 'none', windowOpen: false })
-        ),
-        http.get(`${backendUrl}/organisations/500123/waste-balances/2026`, () =>
-          HttpResponse.json({
-            ACC001234: { amount: 1000, availableAmount: 1000 }
-          })
-        ),
-        http.post(/\/status$/, () => {
-          writes()
-          return HttpResponse.json(closedYearRefusal, { status: 409 })
-        })
-      )
-      const { cookie: crumbCookie, crumb } = await getCsrfToken(
-        server,
-        crumbSource,
-        { auth: mockAuth }
-      )
-      const created = await server.inject({
-        method: 'POST',
-        url: `${listPath}/create`,
-        auth: mockAuth,
-        headers: { cookie: crumbCookie },
-        payload: {
-          tonnage: '100',
-          recipient: recipientId,
-          wasteProcessingType: 'reprocessor',
-          crumb
+  /**
+   * Creates a draft, then confirms it, recording what the backend was asked.
+   * @param {{ server: HapiServer, msw: SetupServer }} fixtures
+   * @param {{
+   *   relevantYearOpen: boolean,
+   *   availableAmount: number,
+   *   statusResponse: () => Response
+   * }} scenario
+   */
+  const confirmDraft = async (
+    { server, msw },
+    { relevantYearOpen, availableAmount, statusResponse }
+  ) => {
+    /** @type {unknown[]} */
+    const statusRequests = []
+    msw.use(
+      http.get(`${backendUrl}/organisations/500123`, () => {
+        readsOrganisation()
+        return HttpResponse.json(organisationWhoseYear(relevantYearOpen))
+      }),
+      http.get(`${backendUrl}/organisations/500123/years`, () =>
+        HttpResponse.json({ years: [2026] })
+      ),
+      http.post(/\/packaging-recycling-notes$/, () =>
+        HttpResponse.json(buildPrnResource(), { status: 201 })
+      ),
+      http.get(/\/december-prn-eligibility$/, () =>
+        HttpResponse.json({ mode: 'none', windowOpen: false })
+      ),
+      http.get(`${backendUrl}/organisations/500123/waste-balances/2026`, () =>
+        HttpResponse.json({ ACC001234: { amount: 1000, availableAmount } })
+      ),
+      http.post(/\/status$/, async ({ request }) => {
+        statusRequests.push(await request.json())
+        return statusResponse()
+      })
+    )
+    const { cookie: crumbCookie, crumb } = await getCsrfToken(
+      server,
+      crumbSource,
+      { auth: mockAuth }
+    )
+    const created = await server.inject({
+      method: 'POST',
+      url: `${listPath}/create`,
+      auth: mockAuth,
+      headers: { cookie: crumbCookie },
+      payload: {
+        tonnage: '100',
+        recipient: recipientId,
+        wasteProcessingType: 'reprocessor',
+        crumb
+      }
+    })
+    const cookie = mergeCookies(
+      crumbCookie,
+      ...extractCookieValues(created.headers['set-cookie'])
+    )
+    readsOrganisation.mockClear()
+
+    const { statusCode, headers } = await server.inject({
+      method: 'POST',
+      url: `${notePath}/view`,
+      auth: mockAuth,
+      headers: { cookie },
+      payload: { crumb }
+    })
+
+    return { statusCode, location: headers.location, statusRequests }
+  }
+
+  it('should send the session to the note after asking the backend once when it refuses as the year closes', async ({
+    server,
+    msw
+  }) => {
+    const { statusCode, location, statusRequests } = await confirmDraft(
+      { server, msw },
+      {
+        relevantYearOpen: true,
+        availableAmount: 1000,
+        statusResponse: () =>
+          HttpResponse.json(closedYearRefusal, { status: 409 })
+      }
+    )
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(location).toBe(`${notePath}/view`)
+    expect(statusRequests).toHaveLength(1)
+    expect(readsOrganisation).toHaveBeenCalledTimes(1)
+  })
+
+  it.for([
+    { description: 'the balance covers it', availableAmount: 1000 },
+    { description: 'the balance has fallen short', availableAmount: 10 }
+  ])(
+    'should send the session to the note without writing once the year has closed and $description',
+    async ({ availableAmount }, { server, msw }) => {
+      const { statusCode, location, statusRequests } = await confirmDraft(
+        { server, msw },
+        {
+          relevantYearOpen: false,
+          availableAmount,
+          statusResponse: () => HttpResponse.json(buildPrnResource())
         }
-      })
-      const cookie = mergeCookies(
-        crumbCookie,
-        ...extractCookieValues(created.headers['set-cookie'])
       )
-      readsOrganisation.mockClear()
-      writes.mockClear()
 
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: `${notePath}/view`,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { crumb }
-      })
-
-      expect(headers.location).toBe(`${notePath}/view`)
       expect(statusCode).toBe(statusCodes.found)
-      expect(writes).toHaveBeenCalledTimes(1)
-      expect(readsOrganisation).toHaveBeenCalledTimes(1)
+      expect(location).toBe(`${notePath}/view`)
+      expect(statusRequests).toStrictEqual([])
     }
   )
 })
