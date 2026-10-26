@@ -423,6 +423,26 @@ describe("the operator's registration page for a year", () => {
     ).not.toBeNull()
   })
 
+  it('uploads the summary log as registered-only once the accreditation is cancelled', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      registration: {
+        ...reprocessor,
+        accreditations: {
+          [year]: accreditationWith('cancelled', ['approved', 'cancelled'])
+        }
+      }
+    })
+
+    const { body } = await visit(server)
+
+    expect(hrefOf(body, 'Upload your summary log')).toBe(
+      `${registeredOnlyPath}/summary-logs/upload`
+    )
+  })
+
   it('links the reapply to the next year with the ids and the applied-for material', async ({
     server,
     msw

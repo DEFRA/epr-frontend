@@ -285,7 +285,9 @@ const buildViewModel = ({
       keys,
       registration,
       year,
-      homepagePath: path
+      homepagePath: isAccreditationActive(accreditation)
+        ? path
+        : registeredOnlyPath({ ...keys, year })
     }),
     accreditation: toAccreditationTag(accreditation),
     prns: toPrns(
