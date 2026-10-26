@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 import Joi from 'joi'
 
-import { YEAR_SEGMENT, toYear } from './year.js'
+import { toYear } from './year.js'
 
 /**
  * @import { Lifecycle, RouteOptionsValidate } from '@hapi/hapi'
@@ -12,15 +12,16 @@ import { YEAR_SEGMENT, toYear } from './year.js'
  * bound the same way - a year one address accepts and another rejects is
  * worse than either bound.
  */
-export const MIN_YEAR = 2024
-export const MAX_YEAR = 2100
+const MIN_YEAR = 2024
+const MAX_YEAR = 2100
+const FOUR_DIGITS = /^\d{4}$/
 
 /**
  * A `{year}` path segment, read as a `Year`: four digits, within the years the
  * service answers for.
  */
 export const yearParam = Joi.string()
-  .pattern(YEAR_SEGMENT)
+  .pattern(FOUR_DIGITS)
   .custom((segment, helpers) => {
     const year = Number(segment)
 
