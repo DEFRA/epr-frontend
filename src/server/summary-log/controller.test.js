@@ -9,6 +9,7 @@ import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summ
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
+import { toYear } from '#server/common/helpers/year.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -4375,7 +4376,7 @@ describe('summary log check view', () => {
         : { added: ZERO_CHANGE, adjusted: group }
     return {
       status: summaryLogStatuses.validated,
-      year: 2026,
+      year: toYear(2026),
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads,
@@ -4429,7 +4430,7 @@ describe('summary log check view', () => {
     exclusionReasons
   ) => ({
     status: summaryLogStatuses.validated,
-    year: 2026,
+    year: toYear(2026),
     processingType,
     loadsByReportingPeriod: {
       openPeriodLoads: {

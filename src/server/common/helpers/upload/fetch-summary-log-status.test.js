@@ -23,6 +23,7 @@ describe(fetchSummaryLogStatus, () => {
   }) => {
     const mockResponse = {
       status: 'validated',
+      year: 2026,
       validation: null
     }
 
@@ -72,6 +73,7 @@ describe(fetchSummaryLogStatus, () => {
         () =>
           HttpResponse.json({
             status: 'validated',
+            year: 2026,
             processingType: 'REPROCESSOR_INPUT',
             loadsByReportingPeriod
           })
@@ -82,10 +84,10 @@ describe(fetchSummaryLogStatus, () => {
       backendToken
     })
 
-    expect(
-      result.loadsByReportingPeriod?.openPeriodLoads.added.nonBalanceAffecting
-        .rows
-    ).toStrictEqual(rows)
+    expect(result).toHaveProperty(
+      'loadsByReportingPeriod.openPeriodLoads.added.nonBalanceAffecting.rows',
+      rows
+    )
   })
 
   it('should strip unknown fields from the response', async ({ msw }) => {
@@ -95,6 +97,7 @@ describe(fetchSummaryLogStatus, () => {
         () =>
           HttpResponse.json({
             status: 'validated',
+            year: 2026,
             unknownField: 'should be stripped'
           })
       )
@@ -120,6 +123,7 @@ describe(fetchSummaryLogStatus, () => {
         () =>
           HttpResponse.json({
             status: 'validated',
+            year: 2026,
             loadsByReportingPeriod: { openPeriodLoads: 'not-an-object' }
           })
       )

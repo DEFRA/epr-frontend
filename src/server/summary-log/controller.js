@@ -28,8 +28,8 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import {
  *   LoadsByReportingPeriod,
+ *   StoredSummaryLog,
  *   SummaryLogParams,
- *   SummaryLogStatusResponse,
  *   SummaryLogsSession,
  *   ValidationResponse
  * } from './types.js'
@@ -54,6 +54,13 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   wasteBalance?: number,
  *   year?: number
  * }} RenderContext
+ */
+
+/**
+ * A summary log's status as the page reads it: the submit response kept in the
+ * session carries the status alone, and the placeholder for one not yet stored
+ * no year, so the stored fields are optional here.
+ * @typedef {Partial<StoredSummaryLog> & { status: string }} StatusData
  */
 
 /**
@@ -112,7 +119,7 @@ const getProgressViewData = (localise, status) => {
  * @param {RegistrationKeys} keys
  * @param {string} summaryLogId - Summary log ID
  * @param {BackendToken} backendToken
- * @returns {Promise<SummaryLogStatusResponse>}
+ * @returns {Promise<StatusData>}
  */
 const getStatusData = async (request, keys, summaryLogId, backendToken) => {
   /** @type {SummaryLogsSession | null} */
@@ -121,6 +128,7 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
   const freshDataMap = summaryLogsSession.freshDataMap
   const freshData = freshDataMap?.[summaryLogId]
 
+  /** @type {StatusData} */
   const data =
     freshData ??
     (await fetchSummaryLogStatus(keys, summaryLogId, { backendToken }))

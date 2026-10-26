@@ -92,7 +92,7 @@ export const loadsByReportingPeriodSchema = Joi.object({
   periodsRequiringResubmission: Joi.array().items(periodRefSchema)
 })
 
-export const summaryLogStatusResponseSchema = Joi.object({
+const storedSummaryLogSchema = Joi.object({
   status: Joi.string()
     .valid(
       summaryLogStatuses.preprocessing,
@@ -122,6 +122,15 @@ export const summaryLogStatusResponseSchema = Joi.object({
   processingType: Joi.string().optional(),
   material: Joi.string().optional(),
   accreditationNumber: Joi.string().optional(),
-  year: Joi.number().integer().optional(),
+  year: Joi.number().integer().required(),
   accreditationId: Joi.string().allow(null).optional()
 })
+
+const placeholderSchema = Joi.object({
+  status: Joi.string().valid(summaryLogStatuses.preprocessing).required()
+})
+
+export const summaryLogStatusResponseSchema = Joi.alternatives().conditional(
+  placeholderSchema,
+  { then: placeholderSchema, otherwise: storedSummaryLogSchema }
+)

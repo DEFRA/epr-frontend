@@ -4,6 +4,7 @@
  * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  */
 
@@ -264,7 +265,6 @@
  */
 
 /**
- * `year` is absent only on the submit response, which carries the status alone.
  * @typedef {{
  *   accreditationNumber?: AccreditationNumber,
  *   loads?: RawLoads,
@@ -272,8 +272,21 @@
  *   processingType?: ProcessingType
  *   status: string,
  *   validation?: ValidationResponse,
- *   year?: number,
- * }} SummaryLogStatusResponse
+ *   year: Year,
+ * }} StoredSummaryLog
+ */
+
+/**
+ * What the backend serves for a summary log it has not stored yet.
+ * @typedef {{ status: 'preprocessing' }} SummaryLogPlaceholder
+ */
+
+/**
+ * @typedef {StoredSummaryLog | SummaryLogPlaceholder} SummaryLogStatusResponse
+ */
+
+/**
+ * @typedef {{ status: string }} SummaryLogSubmitResponse
  */
 
 /**
@@ -291,7 +304,7 @@
  * summaryLogUploadProgressController reads on the next request to bridge
  * backend replication lag.
  * @typedef {{
- *   freshDataMap?: Record<string, SummaryLogStatusResponse>
+ *   freshDataMap?: Record<string, SummaryLogSubmitResponse>
  * }} SummaryLogsSession
  */
 

@@ -37,9 +37,38 @@ describe('loadCategorySchema validation', () => {
 })
 
 describe('summaryLogStatusResponseSchema validation', () => {
+  describe('year', () => {
+    it('should reject a stored summary log without a year', () => {
+      const { error } = summaryLogStatusResponseSchema.validate({
+        status: 'invalid'
+      })
+
+      expect(error?.message).toContain('"year" is required')
+    })
+
+    it('should keep the year of a stored summary log when stripping unknown keys', () => {
+      const { error, value } = summaryLogStatusResponseSchema.validate(
+        { status: 'superseded', year: 2027 },
+        { stripUnknown: true }
+      )
+
+      expect(error).toBeUndefined()
+      expect(value.year).toBe(2027)
+    })
+
+    it('should accept the placeholder for a summary log not yet stored, which has no year', () => {
+      const { error } = summaryLogStatusResponseSchema.validate({
+        status: 'preprocessing'
+      })
+
+      expect(error).toBeUndefined()
+    })
+  })
+
   describe('validation.failures location.rowId', () => {
     const failureWith = (location) => ({
       status: 'invalid',
+      year: 2026,
       validation: {
         failures: [{ errorCode: 'MUST_BE_A_NUMBER', location }],
         counts: { fatal: 0, error: 1, warning: 0, total: 1 }
@@ -118,7 +147,7 @@ describe('summaryLogStatusResponseSchema validation', () => {
 
     it('should accept a realistic payload and preserve it intact when stripping unknown keys', () => {
       const { error, value } = summaryLogStatusResponseSchema.validate(
-        { status: 'validated', loadsByReportingPeriod },
+        { status: 'validated', year: 2026, loadsByReportingPeriod },
         { stripUnknown: true }
       )
 
@@ -134,6 +163,7 @@ describe('summaryLogStatusResponseSchema validation', () => {
       const { error, value } = summaryLogStatusResponseSchema.validate(
         {
           status: 'validated',
+          year: 2026,
           loadsByReportingPeriod: { openPeriodLoads, closedPeriodLoads }
         },
         { stripUnknown: true }
@@ -148,6 +178,7 @@ describe('summaryLogStatusResponseSchema validation', () => {
     it('should reject a payload missing a required bucket', () => {
       const { error } = summaryLogStatusResponseSchema.validate({
         status: 'validated',
+        year: 2026,
         loadsByReportingPeriod: {
           ...loadsByReportingPeriod,
           openPeriodLoads: {
@@ -163,6 +194,7 @@ describe('summaryLogStatusResponseSchema validation', () => {
     it('should reject a balance-affecting bucket missing its tonnageDelta', () => {
       const { error } = summaryLogStatusResponseSchema.validate({
         status: 'validated',
+        year: 2026,
         loadsByReportingPeriod: {
           ...loadsByReportingPeriod,
           openPeriodLoads: {
