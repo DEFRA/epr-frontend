@@ -26,7 +26,8 @@ import {
   accreditationPath,
   registeredOnlyPath,
   registrationPath,
-  reportsListPath
+  reportsListPath,
+  summaryLogUploadPathUnder
 } from '#server/reports/helpers/report-paths.js'
 import { capitalize } from 'lodash-es'
 
@@ -247,7 +248,7 @@ const buildRegistrationViewModel = ({
       }
     },
     siteName,
-    uploadSummaryLogUrl: localiseUrl(`${homepagePath}/summary-logs/upload`),
+    uploadSummaryLogUrl: localiseUrl(summaryLogUploadPathUnder(homepagePath)),
     wasteBalance: { availableAmount: null, noteTypePlural, breakdown: null }
   }
 }

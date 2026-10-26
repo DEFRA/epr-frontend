@@ -13,10 +13,9 @@ import {
 import {
   accreditationPath,
   registeredOnlyPath,
-  registrationPath as toRegistrationPath
+  registrationPath as toRegistrationPath,
+  summaryLogUploadPathUnder
 } from '#server/reports/helpers/report-paths.js'
-
-const UPLOAD_SUFFIX = '/summary-logs/upload'
 
 const yearOrNotFound = paramsOrNotFound(yearSegmentParamsSchema, {
   message: 'Summary log upload not found',
@@ -119,16 +118,14 @@ const summaryLogUploadRedirectController = {
     return redirectPreservingMethod(
       request,
       h,
-      `${defaultMaterialsHomepagePath(keys, registration)}${UPLOAD_SUFFIX}`
+      summaryLogUploadPathUnder(
+        defaultMaterialsHomepagePath(keys, registration)
+      )
     )
   }
 }
 
-export {
-  UPLOAD_SUFFIX,
-  summaryLogUploadController,
-  summaryLogUploadRedirectController
-}
+export { summaryLogUploadController, summaryLogUploadRedirectController }
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'

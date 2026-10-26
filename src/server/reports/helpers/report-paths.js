@@ -44,12 +44,20 @@ export const registeredOnlyPath = ({ year, ...keys }) =>
   `${registrationPath(keys)}/${year}`
 
 /**
+ * The summary log upload page under a materials homepage.
+ * @param {string} homepagePath
+ * @returns {string}
+ */
+export const summaryLogUploadPathUnder = (homepagePath) =>
+  `${homepagePath}/summary-logs/upload`
+
+/**
  * The summary log upload page.
  * @param {RegistrationKeys} keys
  * @returns {string}
  */
 export const summaryLogUploadPath = (keys) =>
-  `${registrationPath(keys)}/summary-logs/upload`
+  summaryLogUploadPathUnder(registrationPath(keys))
 
 /**
  * The report list page for a registration's year.

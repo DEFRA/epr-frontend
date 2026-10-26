@@ -1,5 +1,5 @@
+import { summaryLogUploadPathUnder } from '#server/reports/helpers/report-paths.js'
 import {
-  UPLOAD_SUFFIX,
   summaryLogUploadController,
   summaryLogUploadRedirectController
 } from '#server/summary-log-upload/controller.js'
@@ -15,17 +15,19 @@ export const summaryLogUpload = {
         {
           ...summaryLogUploadRedirectController,
           method: 'GET',
-          path: `${registrationPath}${UPLOAD_SUFFIX}`
+          path: summaryLogUploadPathUnder(registrationPath)
         },
         {
           ...summaryLogUploadController({ accredited: false }),
           method: 'GET',
-          path: `${registrationPath}/{year}${UPLOAD_SUFFIX}`
+          path: summaryLogUploadPathUnder(`${registrationPath}/{year}`)
         },
         {
           ...summaryLogUploadController({ accredited: true }),
           method: 'GET',
-          path: `${registrationPath}/accreditations/{year}${UPLOAD_SUFFIX}`
+          path: summaryLogUploadPathUnder(
+            `${registrationPath}/accreditations/{year}`
+          )
         }
       ])
     }
