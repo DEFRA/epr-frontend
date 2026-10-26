@@ -237,9 +237,9 @@ async function handleDraftView(h, { keys, prnDraft, localise, session }) {
       noteType
     }),
     caption: localise('prns:create:caption', { noteType }),
-    createButton: {
-      text: localise('prns:create:createButton', { noteType })
-    },
+    createButton: isYearOpen(accreditation)
+      ? { text: localise('prns:create:createButton', { noteType }) }
+      : null,
     discardLink: {
       href: `${prnsPath(keys)}/${prnDraft.id}/discard`,
       text: localise('prns:create:discardLink')
@@ -249,8 +249,7 @@ async function handleDraftView(h, { keys, prnDraft, localise, session }) {
     introText: localise('prns:create:checkIntroText', { noteType }),
     pageTitle: localise('prns:create:checkPageTitle', { noteType }),
     prnDetailRows,
-    prnDetailsHeading: localise('prns:details:heading', { noteType }),
-    yearOpen: isYearOpen(accreditation)
+    prnDetailsHeading: localise('prns:details:heading', { noteType })
   })
 }
 

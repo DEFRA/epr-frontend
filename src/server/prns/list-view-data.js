@@ -26,7 +26,7 @@ import { prnsPath } from './helpers/prn-resource.js'
  *   hasCreatedPrns?: boolean,
  *   wasteBalance?: Partial<WasteBalance> | null,
  *   showsDecember?: boolean,
- *   yearOpen?: boolean
+ *   yearOpen: boolean
  * }} options
  */
 export function buildListViewData(
@@ -41,7 +41,7 @@ export function buildListViewData(
     hasCreatedPrns,
     wasteBalance,
     showsDecember = false,
-    yearOpen = true
+    yearOpen
   }
 ) {
   const { t: localise } = request
@@ -68,10 +68,12 @@ export function buildListViewData(
   return {
     ...buildListLabels(localise, { noteType, noteTypePlural, year: keys.year }),
     backUrl: request.localiseUrl(accreditationPath(keys)),
-    createLink: {
-      href: request.localiseUrl(`${prnsPath(keys)}/create`),
-      text: localise('prns:list:createLink', { noteType })
-    },
+    createLink: yearOpen
+      ? {
+          href: request.localiseUrl(`${prnsPath(keys)}/create`),
+          text: localise('prns:list:createLink', { noteType })
+        }
+      : null,
     wasteBalance: {
       amount: wasteBalance?.availableAmount ?? 0,
       label: localise('prns:list:availableWasteBalance'),
@@ -80,7 +82,6 @@ export function buildListViewData(
       breakdown: showsDecember ? toDecemberBalanceBreakdown(wasteBalance) : null
     },
     hasCreatedPrns,
-    yearOpen,
     table: buildAwaiting(prns),
     cancellationTable: buildAwaiting(cancellationPrns),
     issuedTable: buildDetail(issuedPrns, 'issuedTable'),

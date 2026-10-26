@@ -72,8 +72,7 @@
       rows: accreditationRows
     }) }}
 
-    {% if createButton %}
-      {% if hasWriteScope and yearOpen %}
+    {% if createButton and hasWriteScope %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
@@ -82,13 +81,12 @@
           preventDoubleClick: true
         }) }}
       </form>
-      {% endif %}
+    {% endif %}
 
-      {% if discardLink and hasWriteScope %}
-        <p class="govuk-body">
-          <a href="{{ discardLink.href }}" class="govuk-link">{{ discardLink.text }}</a>
-        </p>
-      {% endif %}
+    {% if discardLink and hasWriteScope %}
+      <p class="govuk-body">
+        <a href="{{ discardLink.href }}" class="govuk-link">{{ discardLink.text }}</a>
+      </p>
     {% endif %}
 
     {% if returnLink %}

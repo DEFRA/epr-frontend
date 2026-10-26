@@ -1,4 +1,5 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { isYearOpen } from '#server/prns/helpers/closed-year.js'
 import { toNoteRows } from '#server/prns/helpers/note-rows.js'
 import { buildListViewData } from '#server/prns/list-view-data.js'
 import {
@@ -50,7 +51,8 @@ export const buildViewModel = ({
   const list = buildListViewData(request, {
     keys,
     registration,
-    ...toNoteRows(packagingRecyclingNotes)
+    ...toNoteRows(packagingRecyclingNotes),
+    yearOpen: isYearOpen(accreditation)
   })
 
   return {
