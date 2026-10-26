@@ -1,3 +1,6 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+
 /**
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
@@ -8,7 +11,7 @@
  * @returns {Accreditation}
  */
 export const buildAccreditationView = (overrides = {}) => ({
-  accreditationNumber: 'A26EN0000000001PL',
+  accreditationNumber: toAccreditationNumber('A26EN0000000001PL'),
   relevantYearOpen: true,
   status: {
     current: 'approved',
@@ -42,7 +45,7 @@ export const buildRegistrationView = (overrides = {}) =>
  * @returns {OrganisationView}
  */
 export const buildOrganisationView = (overrides = {}) => ({
-  organisationNumber: '500123',
+  organisationNumber: toOrganisationNumber('500123'),
   name: 'Test Organisation Ltd',
   displayName: 'Test Organisation Ltd',
   registrations: { R26EN0000000001PL: buildRegistrationView() },

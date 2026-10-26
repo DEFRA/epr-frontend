@@ -1,3 +1,4 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -47,12 +48,16 @@ const fixtureReprocessor = buildRegistrationWithAccreditation({
       }
     }
   }),
-  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
 const fixtureExporter = buildRegistrationWithAccreditation({
   organisation: { name: 'Exporter Organisation' },
-  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
 const prnId = 'prn-789'

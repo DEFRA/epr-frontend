@@ -1,5 +1,8 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import {
   buildAccreditationView,
@@ -45,19 +48,26 @@ const fixtureReprocessor = buildRegistrationWithAccreditation({
     material: 'glass_re_melt',
     site: { address: { fullAddress: 'Reprocessing Site' } }
   }),
-  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
 const fixtureExporter = buildRegistrationWithAccreditation({
-  organisation: { organisationNumber: '500456', name: 'Exporter Organisation' },
+  organisation: {
+    organisationNumber: toOrganisationNumber('500456'),
+    name: 'Exporter Organisation'
+  },
   registration: buildRegistrationView({ material: 'plastic' }), // PERN
-  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-002' }),
-  registrationNumber: 'E26EN0000000002PL'
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-002')
+  }),
+  registrationNumber: toRegistrationNumber('E26EN0000000002PL')
 })
 
 const reprocessorKeys = {
-  organisationNumber: '500123',
-  registrationNumber: 'R26EN0000000001PL',
+  organisationNumber: toOrganisationNumber('500123'),
+  registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
   year: '2026'
 }
 const reprocessorPrnsPath =
@@ -360,7 +370,7 @@ describe('#createPrnController', () => {
         expect(fetchPrnWasteBalance).toHaveBeenCalledWith(
           expect.objectContaining({
             keys: reprocessorKeys,
-            accreditationNumber: 'ACC-001',
+            accreditationNumber: toAccreditationNumber('ACC-001'),
             backendToken: 'mock-backend-token'
           })
         )

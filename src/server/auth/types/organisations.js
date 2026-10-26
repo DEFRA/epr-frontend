@@ -9,7 +9,7 @@
  * @typedef {{
  *   id: string
  *   name: string
- *   orgId: string
+ *   orgId: number
  *   referenceNumber: string
  * }} EprOrganisationSummary
  */

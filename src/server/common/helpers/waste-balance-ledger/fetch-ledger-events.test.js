@@ -1,5 +1,7 @@
 import { config } from '#config/config.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { test } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
@@ -21,8 +23,8 @@ const ledgerOf = (events) => ({
 })
 
 const keys = {
-  organisationNumber: '500001',
-  registrationNumber: 'R25/SR1',
+  organisationNumber: toOrganisationNumber('500001'),
+  registrationNumber: toRegistrationNumber('R25/SR1'),
   year: '2026'
 }
 const naturalRegistrationPath = `${backendUrl}/organisations/500001/registrations/R25%2FSR1`

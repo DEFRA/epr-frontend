@@ -2,6 +2,8 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { createReport } from './create-report.js'
@@ -25,8 +27,8 @@ describe(createReport, () => {
 
     const result = await createReport(
       {
-        organisationNumber: '500001',
-        registrationNumber: 'R25/1',
+        organisationNumber: toOrganisationNumber('500001'),
+        registrationNumber: toRegistrationNumber('R25/1'),
         year: 2026,
         cadence: 'monthly',
         period: 3,

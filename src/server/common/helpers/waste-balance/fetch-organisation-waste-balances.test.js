@@ -3,8 +3,8 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
-import { year } from '#server/common/helpers/year.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { test } from '#vite/fixtures/server.js'
 
 import { fetchOrganisationWasteBalances } from './fetch-organisation-waste-balances.js'
@@ -26,8 +26,8 @@ describe(fetchOrganisationWasteBalances, () => {
     )
 
     const result = await fetchOrganisationWasteBalances(
-      organisationNumber('50002'),
-      year(2026),
+      toOrganisationNumber('50002'),
+      toYear(2026),
       backendToken
     )
 
@@ -48,8 +48,8 @@ describe(fetchOrganisationWasteBalances, () => {
     )
 
     await fetchOrganisationWasteBalances(
-      organisationNumber('../admin'),
-      year(2026),
+      toOrganisationNumber('../admin'),
+      toYear(2026),
       backendToken
     )
 

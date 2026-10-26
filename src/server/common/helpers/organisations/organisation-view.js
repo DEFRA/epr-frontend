@@ -6,6 +6,9 @@
  *   RegulatorValue,
  *   ReprocessingType
  * } from '#domain/organisations/model.js'
+ * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  */
 
 /**
@@ -22,7 +25,7 @@
  * `relevantYearOpen` is whether PRNs and PERNs can still be raised and issued
  * for the accreditation's year, as the backend rules it.
  * @typedef {{
- *   accreditationNumber: string,
+ *   accreditationNumber: AccreditationNumber,
  *   relevantYearOpen?: boolean,
  *   status: Status<AccreditationStatus>
  * }} Accreditation
@@ -80,7 +83,7 @@
  * The organisation as `GET /organisations/{organisationNumber}` serves it.
  * Registrations are keyed by registration number, accreditations by year.
  * @typedef {{
- *   organisationNumber: string,
+ *   organisationNumber: OrganisationNumber,
  *   name: string,
  *   displayName: string,
  *   registrations: Record<string, RegistrationView>

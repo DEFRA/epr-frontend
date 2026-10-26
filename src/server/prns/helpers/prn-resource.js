@@ -1,6 +1,7 @@
 import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
+ * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
@@ -25,7 +26,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  *   issuer: {
  *     registration: {
  *       accreditation: {
- *         accreditationNumber: string,
+ *         accreditationNumber: AccreditationNumber,
  *         accreditationYear: number,
  *         wasteProcessingType: string,
  *         material: string

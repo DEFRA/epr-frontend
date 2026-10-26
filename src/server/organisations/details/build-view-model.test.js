@@ -1,3 +1,5 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { describe, expect, it } from 'vitest'
 
@@ -12,7 +14,7 @@ const localise = createMockLocalise({
 
 const localiseUrl = (/** @type {string} */ path) => `/en${path}`
 
-const organisationNumber = '500123'
+const organisationNumber = toOrganisationNumber('500123')
 
 /**
  * @param {Partial<RegistrationView>} [overrides]
@@ -136,7 +138,7 @@ describe(buildViewModel, () => {
         R26ER1: aReprocessor({
           accreditations: {
             2025: {
-              accreditationNumber: 'A25ER1',
+              accreditationNumber: toAccreditationNumber('A25ER1'),
               relevantYearOpen: true,
               status: {
                 current: 'cancelled',
@@ -147,7 +149,7 @@ describe(buildViewModel, () => {
               }
             },
             2026: {
-              accreditationNumber: 'A26ER1',
+              accreditationNumber: toAccreditationNumber('A26ER1'),
               relevantYearOpen: true,
               status: {
                 current: 'suspended',

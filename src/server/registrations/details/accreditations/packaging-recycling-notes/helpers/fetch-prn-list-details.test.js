@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchRequiredAnyAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { buildRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
@@ -19,8 +21,8 @@ vi.mock(import('#server/prns/helpers/fetch-packaging-recycling-notes.js'))
 
 describe(fetchPrnListDetails, () => {
   const keys = {
-    organisationNumber: '500118',
-    registrationNumber: 'R26ER5001180041PL',
+    organisationNumber: toOrganisationNumber('500118'),
+    registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
     year: '2026'
   }
   const backendToken = toBackendToken('token')

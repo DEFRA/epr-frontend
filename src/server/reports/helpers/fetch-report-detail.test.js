@@ -3,6 +3,8 @@ import { describe, expect } from 'vitest'
 
 import { config } from '#config/config.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { fetchReportDetail } from './fetch-report-detail.js'
@@ -40,8 +42,8 @@ describe(fetchReportDetail, () => {
   const fetchDetail = () =>
     fetchReportDetail(
       {
-        organisationNumber: '500001',
-        registrationNumber: 'R25SR500030912PA',
+        organisationNumber: toOrganisationNumber('500001'),
+        registrationNumber: toRegistrationNumber('R25SR500030912PA'),
         year: 2026,
         cadence: 'monthly',
         period: 3,

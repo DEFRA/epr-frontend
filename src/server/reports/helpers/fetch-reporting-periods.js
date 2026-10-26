@@ -64,7 +64,7 @@ export const fetchReportingPeriods = async (keys, backendToken) => {
  *   year: number,
  *   registeredOnly?: { reportingPeriods: ReportingPeriod[] },
  *   accredited?: {
- *     accreditationNumber: string,
+ *     accreditationNumber: AccreditationNumber,
  *     reportingPeriods: ReportingPeriod[]
  *   }
  * }} YearCalendarResponse
@@ -73,5 +73,6 @@ export const fetchReportingPeriods = async (keys, backendToken) => {
 /**
  * @import { CadenceValue, SubmissionStatusValue } from '../constants.js'
  * @import { RegistrationKeys } from './report-paths.js'
+ * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  */

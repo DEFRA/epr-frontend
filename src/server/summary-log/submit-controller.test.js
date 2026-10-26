@@ -1,4 +1,7 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -40,8 +43,8 @@ const mockAuth = buildMockAuth({
 })
 
 describe('#submitSummaryLogController', () => {
-  const organisationNumber = '500118'
-  const registrationNumber = 'R26ER5001180041PL'
+  const organisationNumber = toOrganisationNumber('500118')
+  const registrationNumber = toRegistrationNumber('R26ER5001180041PL')
   const summaryLogId = '789'
   const url = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}/submit`
 
@@ -70,7 +73,7 @@ describe('#submitSummaryLogController', () => {
   }) => {
     const mockResponse = {
       status: 'submitted',
-      accreditationNumber: '493021'
+      accreditationNumber: toAccreditationNumber('493021')
     }
 
     vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
@@ -104,7 +107,7 @@ describe('#submitSummaryLogController', () => {
   }) => {
     const mockResponse = {
       status: 'submitted',
-      accreditationNumber: '493021'
+      accreditationNumber: toAccreditationNumber('493021')
     }
 
     vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
@@ -136,7 +139,7 @@ describe('#submitSummaryLogController', () => {
   }) => {
     vi.mocked(submitSummaryLog).mockResolvedValueOnce({
       status: 'submitted',
-      accreditationNumber: '493021'
+      accreditationNumber: toAccreditationNumber('493021')
     })
 
     const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
@@ -242,7 +245,7 @@ describe('#submitSummaryLogController', () => {
   }) => {
     const mockResponse = {
       status: 'submitted',
-      accreditationNumber: '493021'
+      accreditationNumber: toAccreditationNumber('493021')
     }
 
     vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)

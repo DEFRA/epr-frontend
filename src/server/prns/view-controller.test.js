@@ -1,6 +1,9 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import {
   buildAccreditationView,
   buildRegistrationView,
@@ -85,16 +88,20 @@ const fixtureReprocessor = buildRegistrationWithAccreditation({
     reprocessingType: 'input',
     site: { address: { fullAddress: 'Reprocessing Site' } }
   }),
-  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
 const fixtureExporter = buildRegistrationWithAccreditation({
   organisation: { name: 'Exporter Organisation' },
-  accreditation: buildAccreditationView({ accreditationNumber: 'ACC-001' })
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
-const organisationNumber = '500123'
-const registrationNumber = 'R26EN0000000001PL'
+const organisationNumber = toOrganisationNumber('500123')
+const registrationNumber = toRegistrationNumber('R26EN0000000001PL')
 const year = '2026'
 const keys = { organisationNumber, registrationNumber, year }
 const prnId = 'prn-789'

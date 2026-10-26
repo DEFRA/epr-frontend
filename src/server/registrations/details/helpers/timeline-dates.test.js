@@ -1,3 +1,4 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { describe, expect, it } from 'vitest'
 
 import { registeredOnlyStretches } from './registered-only.js'
@@ -26,7 +27,7 @@ const toStatusTimeline = (timeline) =>
  * @returns {Accreditation}
  */
 const accreditationWith = (timeline) => ({
-  accreditationNumber: 'A26ER5001180114PL',
+  accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
   relevantYearOpen: true,
   status: { current: 'approved', timeline }
 })

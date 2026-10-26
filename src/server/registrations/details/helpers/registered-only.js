@@ -1,5 +1,5 @@
 import {
-  calendarDate,
+  toCalendarDate,
   utcCalendarDate
 } from '#server/common/helpers/calendar-date.js'
 
@@ -20,7 +20,7 @@ import {
  *
  * The brand is what makes that safe. A raw stored value may be a bare date or a
  * full ISO datetime, and the datetime sorts after the bare date for the same
- * day — so every one is normalised through `calendarDate` before it reaches a
+ * day — so every one is normalised through `toCalendarDate` before it reaches a
  * comparison, and the type stops one that was not.
  * @param {CalendarDate} day
  * @param {CalendarDate} other
@@ -60,14 +60,14 @@ export const yearOf = (day) => new Date(day).getUTCFullYear()
  * @param {number} year
  * @returns {CalendarDate}
  */
-export const firstDayOf = (year) => calendarDate(`${year}-01-01`)
+export const firstDayOf = (year) => toCalendarDate(`${year}-01-01`)
 
 /**
  * The last day of a year, as a calendar date.
  * @param {number} year
  * @returns {CalendarDate}
  */
-export const lastDayOf = (year) => calendarDate(`${year}-12-31`)
+export const lastDayOf = (year) => toCalendarDate(`${year}-12-31`)
 
 /**
  * @param {CalendarDate} day

@@ -4,7 +4,6 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { findRecordIds } from '#server/common/helpers/natural-keys/find-record-ids.js'
-import { organisationNumber } from '#server/common/helpers/organisation-number.js'
 import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import {
@@ -19,7 +18,7 @@ import {
   toDecemberBalanceBreakdown
 } from '#server/common/helpers/waste-balance/december-balance.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { year as toYear } from '#server/common/helpers/year.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { homePath } from '#server/organisations/home-page.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
@@ -32,6 +31,8 @@ import {
 import { capitalize } from 'lodash-es'
 
 /**
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Year } from '#server/common/helpers/year.js'
@@ -87,16 +88,16 @@ const VIEW = 'registrations/index'
 
 /**
  * @typedef {{
- *   organisationNumber: string,
- *   registrationNumber: string,
+ *   organisationNumber: OrganisationNumber,
+ *   registrationNumber: RegistrationNumber,
  *   year: number
  * }} OperatorAccreditationParams
  */
 
 /**
  * @typedef {{
- *   organisationNumber: string,
- *   registrationNumber: string
+ *   organisationNumber: OrganisationNumber,
+ *   registrationNumber: RegistrationNumber
  * }} OperatorRegistrationParams
  */
 
@@ -214,7 +215,7 @@ const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
 
   return {
     backUrl: localiseUrl(
-      homePath(organisationNumber(keys.organisationNumber), {
+      homePath(keys.organisationNumber, {
         year,
         exporting: isExporter
       })
@@ -399,7 +400,6 @@ export const controller = {
     }
     const credentials = request.auth.credentials
     const { backendToken } = credentials
-    const numberKey = organisationNumber(number)
 
     const [{ registration }, ids] = await Promise.all([
       fetchRegistration({ ...keys, backendToken }),
@@ -409,7 +409,7 @@ export const controller = {
 
     const [wasteBalance, showsDecember] = await Promise.all([
       fetchAccreditationBalance({
-        organisationNumber: numberKey,
+        organisationNumber: number,
         year,
         accreditationNumber: accreditation.accreditationNumber,
         backendToken,

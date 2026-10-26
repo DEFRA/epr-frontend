@@ -2,6 +2,8 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -15,7 +17,7 @@ import { fetchRegistration } from './fetch-registration.js'
 
 const backendUrl = config.get('eprBackendUrl')
 
-const registrationNumber = 'R26ER5001180041PL'
+const registrationNumber = toRegistrationNumber('R26ER5001180041PL')
 const backendToken = toBackendToken('test-token')
 
 const organisationUrl = `${backendUrl}/organisations/500118`
@@ -35,14 +37,14 @@ const registration = {
 
 /** @type {OrganisationView} */
 const organisation = {
-  organisationNumber: '500118',
+  organisationNumber: toOrganisationNumber('500118'),
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
   registrations: { [registrationNumber]: registration }
 }
 
 const params = {
-  organisationNumber: '500118',
+  organisationNumber: toOrganisationNumber('500118'),
   registrationNumber,
   backendToken
 }
@@ -74,7 +76,10 @@ describe(fetchRegistration, () => {
     msw.use(http.get(organisationUrl, () => HttpResponse.json(organisation)))
 
     await expect(
-      fetchRegistration({ ...params, registrationNumber: 'toString' })
+      fetchRegistration({
+        ...params,
+        registrationNumber: toRegistrationNumber('toString')
+      })
     ).rejects.toMatchObject({
       ...notFoundForThisRegistration,
       event: {

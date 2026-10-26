@@ -1,4 +1,5 @@
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { registrationEntries } from '#server/common/helpers/organisations/registration-in-view.js'
 import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
@@ -8,6 +9,8 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 /**
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { StatusTag } from '#server/organisations/helpers/status-helpers.js'
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  */
@@ -52,9 +55,9 @@ const toAccreditationTags = (accreditations) =>
 
 /**
  * @param {{
- *   number: string,
+ *   number: RegistrationNumber,
  *   registration: RegistrationView,
- *   organisationNumber: string,
+ *   organisationNumber: OrganisationNumber,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {RegistrationRow}
@@ -94,8 +97,8 @@ const addToSite = (tables, { name, row }) => {
 
 /**
  * @param {{
- *   registrations: Array<[string, RegistrationView]>,
- *   organisationNumber: string,
+ *   registrations: Array<[RegistrationNumber, RegistrationView]>,
+ *   organisationNumber: OrganisationNumber,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {SiteTable[]}
@@ -158,7 +161,7 @@ export const buildViewModel = ({
   const heading = localise('organisations:details:heading')
   const { organisationNumber } = organisation
   const homePath = organisationPath({ organisationNumber })
-  const registrations = Object.entries(organisation.registrations)
+  const registrations = registrationEntries(organisation.registrations)
 
   const tablesOf = (
     /** @type {RegistrationView['wasteProcessingType']} */ wasteProcessingType

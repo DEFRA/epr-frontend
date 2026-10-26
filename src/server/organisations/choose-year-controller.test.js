@@ -4,7 +4,7 @@ import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
-import { year } from '#server/common/helpers/year.js'
+import { toYear } from '#server/common/helpers/year.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -43,8 +43,8 @@ describe('choosing a different year', () => {
   beforeEach(() => {
     config.set('featureFlags.navigateAcrossYears', true)
     vi.mocked(fetchOrganisationYears).mockResolvedValue([
-      year(2026),
-      year(2025)
+      toYear(2026),
+      toYear(2025)
     ])
   })
 

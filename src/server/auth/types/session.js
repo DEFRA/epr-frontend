@@ -1,5 +1,6 @@
 /**
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { BellCredentials } from '../types/auth.js'
  */
 
@@ -38,7 +39,7 @@
  * @typedef {Omit<BellCredentials, 'expiresIn' | 'token'> & {
  *   profile: UserProfile
  *   linkedOrganisationId?: string
- *   linkedOrganisationNumber?: string
+ *   linkedOrganisationNumber?: OrganisationNumber
  *   expiresAt: string
  *   idToken: string
  *   backendToken: BackendToken

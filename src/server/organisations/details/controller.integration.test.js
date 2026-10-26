@@ -4,6 +4,8 @@
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -23,7 +25,7 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 const backendUrl = config.get('eprBackendUrl')
-const organisationNumber = '500118'
+const organisationNumber = toOrganisationNumber('500118')
 const path = `/organisations/${organisationNumber}`
 
 const operator = buildMockAuth()
@@ -67,7 +69,7 @@ const organisation = {
       },
       accreditations: {
         2025: {
-          accreditationNumber: 'A25ER5001180114GR',
+          accreditationNumber: toAccreditationNumber('A25ER5001180114GR'),
           relevantYearOpen: true,
           status: {
             current: 'cancelled',
@@ -78,7 +80,7 @@ const organisation = {
           }
         },
         2026: {
-          accreditationNumber: 'A26ER5001180114GR',
+          accreditationNumber: toAccreditationNumber('A26ER5001180114GR'),
           relevantYearOpen: true,
           status: {
             current: 'approved',

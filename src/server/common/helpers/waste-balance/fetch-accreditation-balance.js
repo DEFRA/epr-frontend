@@ -1,6 +1,7 @@
 import { fetchOrganisationWasteBalances } from './fetch-organisation-waste-balances.js'
 
 /**
+ * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -13,7 +14,7 @@ import { fetchOrganisationWasteBalances } from './fetch-organisation-waste-balan
  * @param {{
  *   organisationNumber: OrganisationNumber,
  *   year: Year,
- *   accreditationNumber: string,
+ *   accreditationNumber: AccreditationNumber,
  *   backendToken: BackendToken,
  *   logger: TypedLogger
  * }} params

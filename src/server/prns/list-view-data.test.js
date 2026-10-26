@@ -1,3 +1,5 @@
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { describe, expect, it, vi } from 'vitest'
 import { SCOPES } from '#server/auth/scopes.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
@@ -154,14 +156,14 @@ const exporterRegistration = {
 const mockWasteBalance = { availableAmount: 150.5 }
 
 const reprocessorKeys = {
-  organisationNumber: '500001',
-  registrationNumber: 'R26ER1',
+  organisationNumber: toOrganisationNumber('500001'),
+  registrationNumber: toRegistrationNumber('R26ER1'),
   year: '2026'
 }
 
 const exporterKeys = {
-  organisationNumber: '500002',
-  registrationNumber: 'R26EX2',
+  organisationNumber: toOrganisationNumber('500002'),
+  registrationNumber: toRegistrationNumber('R26EX2'),
   year: '2026'
 }
 

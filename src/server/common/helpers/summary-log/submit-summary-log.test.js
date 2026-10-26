@@ -1,7 +1,10 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { it } from '#vite/fixtures/server.js'
 
 import { submitSummaryLog } from './submit-summary-log.js'
@@ -19,20 +22,23 @@ describe(submitSummaryLog, () => {
         })
         return HttpResponse.json({
           status: 'submitted',
-          accreditationNumber: '493021'
+          accreditationNumber: toAccreditationNumber('493021')
         })
       })
     )
 
     const result = await submitSummaryLog(
-      { organisationNumber: '500118', registrationNumber: 'R26/1' },
+      {
+        organisationNumber: toOrganisationNumber('500118'),
+        registrationNumber: toRegistrationNumber('R26/1')
+      },
       'log#3',
       toBackendToken('a-token')
     )
 
     expect(result).toStrictEqual({
       status: 'submitted',
-      accreditationNumber: '493021'
+      accreditationNumber: toAccreditationNumber('493021')
     })
     expect(received).toStrictEqual([
       {
