@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -34,7 +35,7 @@ describe(updatePrnStatus, () => {
       {
         organisationNumber: toOrganisationNumber('500123'),
         registrationNumber: toRegistrationNumber('R26/1'),
-        year: '2026'
+        year: toYear(2026)
       },
       'prn#789',
       { status: 'awaiting_acceptance' },

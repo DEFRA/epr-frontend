@@ -1,6 +1,7 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { toYear } from '#server/common/helpers/year.js'
 
 import { isAccreditationActive } from './accreditation-helpers.js'
 import { fetchRegistration } from './fetch-registration.js'
@@ -8,12 +9,13 @@ import { fetchRegistration } from './fetch-registration.js'
 /**
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
 // Fixed until pages without a year in their URL become year-configured.
-export const ACCREDITATION_YEAR = '2026'
+export const ACCREDITATION_YEAR = toYear(2026)
 
 /**
  * `accreditation` is present only when live (approved or suspended).
@@ -27,7 +29,7 @@ export const ACCREDITATION_YEAR = '2026'
 /**
  * The registration by number, with its live accreditation for the year, or
  * for {@link ACCREDITATION_YEAR} where the page has no year.
- * @param {RegistrationKeys & { year?: number | string }} keys
+ * @param {RegistrationKeys & { year?: Year }} keys
  * @param {BackendToken} backendToken
  * @returns {Promise<RegistrationWithAccreditation>}
  */
@@ -39,7 +41,7 @@ export const fetchRegistrationWithAccreditation = async (
     ...keys,
     backendToken
   })
-  const accreditation = ownAccreditation(registration, String(year))
+  const accreditation = ownAccreditation(registration, year)
 
   return {
     organisation,
@@ -100,7 +102,7 @@ export const fetchRequiredAnyAccreditation = async (
 /**
  * The year's accreditation, ignoring inherited keys such as `constructor`.
  * @param {RegistrationView} registration
- * @param {string} year
+ * @param {Year} year
  * @returns {Accreditation | undefined}
  */
 const ownAccreditation = (registration, year) =>
@@ -110,7 +112,7 @@ const ownAccreditation = (registration, year) =>
 
 /**
  * @param {RegistrationNumber} registrationNumber
- * @param {string} year
+ * @param {Year} year
  */
 const notAccredited = (registrationNumber, year) =>
   notFound('Not accredited for this year', errorCodes.notAccredited, {

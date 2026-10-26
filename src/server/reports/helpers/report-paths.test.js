@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -22,7 +23,7 @@ const registrationKeys = {
 
 const quarterlyKeys = {
   ...registrationKeys,
-  year: 2026,
+  year: toYear(2026),
   cadence: CADENCE.QUARTERLY,
   period: 3,
   submissionNumber: 2
@@ -30,7 +31,7 @@ const quarterlyKeys = {
 
 const monthlyKeys = {
   ...registrationKeys,
-  year: 2026,
+  year: toYear(2026),
   cadence: CADENCE.MONTHLY,
   period: 8,
   submissionNumber: 1
@@ -38,20 +39,20 @@ const monthlyKeys = {
 
 describe(accreditationPath, () => {
   it("gives the accreditation under its registration's year", () => {
-    expect(accreditationPath({ ...registrationKeys, year: '2026' })).toBe(
+    expect(accreditationPath({ ...registrationKeys, year: toYear(2026) })).toBe(
       '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
     )
   })
 
-  it('encodes the registration number and year', () => {
+  it('encodes the registration number', () => {
     expect(
       accreditationPath({
         organisationNumber: toOrganisationNumber('500001'),
         registrationNumber: toRegistrationNumber('R25/SR&1'),
-        year: '20/26'
+        year: toYear(2026)
       })
     ).toBe(
-      '/organisations/500001/registrations/R25%2FSR%261/accreditations/20%2F26'
+      '/organisations/500001/registrations/R25%2FSR%261/accreditations/2026'
     )
   })
 })
@@ -144,7 +145,9 @@ describe(reportsListPath, () => {
 
 describe(reportsCalendarApiPath, () => {
   it("gives the backend calendar route for the registration's year", () => {
-    expect(reportsCalendarApiPath({ ...registrationKeys, year: 2026 })).toBe(
+    expect(
+      reportsCalendarApiPath({ ...registrationKeys, year: toYear(2026) })
+    ).toBe(
       '/organisations/500001/registrations/R25SR500030912PA/reports/2026/calendar'
     )
   })

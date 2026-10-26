@@ -2,6 +2,7 @@ import { capitalize } from 'lodash-es'
 
 import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { accreditationEntries } from '#server/common/helpers/organisations/accreditation-entries.js'
 import { siteLineOf } from '#server/common/helpers/organisations/site-name.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
@@ -130,8 +131,8 @@ const toSummaryRows = (params) => {
  * @returns {AccreditedPeriod[]}
  */
 const toAccreditedPeriods = ({ keys, registration, localise, localiseUrl }) =>
-  Object.entries(registration.accreditations)
-    .sort(([year], [other]) => other.localeCompare(year))
+  accreditationEntries(registration.accreditations)
+    .sort(([year], [other]) => other - year)
     .map(([year, accreditation]) => ({
       number: accreditation.accreditationNumber,
       dateRange: toDateRange(

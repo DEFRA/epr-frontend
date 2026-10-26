@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { describe, expect, it, vi } from 'vitest'
 
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -22,7 +23,7 @@ describe(fetchPrnWasteBalance, () => {
       keys: {
         organisationNumber: toOrganisationNumber('500123'),
         registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
-        year: '2026'
+        year: toYear(2026)
       },
       accreditationNumber: toAccreditationNumber('A26EN0000000001PL'),
       backendToken: toBackendToken('token'),

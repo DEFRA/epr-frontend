@@ -36,7 +36,7 @@ const toAccreditationKeys = ({
   organisationNumber,
   registrationNumber,
   year
-}) => ({ organisationNumber, registrationNumber, year: String(year) })
+}) => ({ organisationNumber, registrationNumber, year })
 
 /**
  * Fetches PRN with registration data for GET handlers.

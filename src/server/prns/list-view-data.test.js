@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { describe, expect, it, vi } from 'vitest'
@@ -158,13 +159,13 @@ const mockWasteBalance = { availableAmount: 150.5 }
 const reprocessorKeys = {
   organisationNumber: toOrganisationNumber('500001'),
   registrationNumber: toRegistrationNumber('R26ER1'),
-  year: '2026'
+  year: toYear(2026)
 }
 
 const exporterKeys = {
   organisationNumber: toOrganisationNumber('500002'),
   registrationNumber: toRegistrationNumber('R26EX2'),
-  year: '2026'
+  year: toYear(2026)
 }
 
 describe('#buildListViewData', () => {

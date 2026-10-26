@@ -19,6 +19,7 @@ import {
   REPORT_ACTION
 } from './helpers/report-action.js'
 import { registrationPath, reportPath } from './helpers/report-paths.js'
+import { thisYear } from '#server/common/helpers/year.js'
 
 /**
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
@@ -226,7 +227,7 @@ export const listController = {
     const { t: localise } = request
 
     // Current year until PAE-1878 lets operators choose the year.
-    const year = new Date().getUTCFullYear()
+    const year = thisYear()
     const [{ organisation, registration, accreditation }, reportingPeriods] =
       await Promise.all([
         fetchRegistrationWithAccreditation(

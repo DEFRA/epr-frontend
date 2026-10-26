@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { describe, expect, it } from 'vitest'
 
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -27,7 +28,7 @@ const context = {
   keys: {
     organisationNumber: toOrganisationNumber('500123'),
     registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
-    year: '2026'
+    year: toYear(2026)
   },
   noteTypePlural: 'PRNs',
   prn: { id: 'prn-1', prnNumber: 'EX123456' },

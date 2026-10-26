@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -60,7 +61,7 @@ const fixtureExporter = buildRegistrationWithAccreditation({
 const keys = {
   organisationNumber: toOrganisationNumber('500123'),
   registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
-  year: '2026'
+  year: toYear(2026)
 }
 const prnsBase =
   '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'

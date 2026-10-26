@@ -2,7 +2,6 @@ import { fetchRegistration } from '#server/common/helpers/organisations/fetch-re
 import { accreditationIn } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import { fetchAccreditationLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
-import { toYear } from '#server/common/helpers/year.js'
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
 import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
 
@@ -56,7 +55,7 @@ const fetchAccreditation = async ({ keys, backendToken, logger }) => {
 
   const wasteBalance = await fetchAccreditationBalance({
     organisationNumber: keys.organisationNumber,
-    year: toYear(Number(keys.year)),
+    year: keys.year,
     accreditationNumber: accreditation.accreditationNumber,
     backendToken,
     logger
@@ -67,7 +66,7 @@ const fetchAccreditation = async ({ keys, backendToken, logger }) => {
 
 /**
  * The year's accredited periods, or no periods where they could not be read.
- * @param {{ keys: RegistrationKeys & { year: number }, backendToken: BackendToken, logger: TypedLogger }} params
+ * @param {{ keys: AccreditationKeys, backendToken: BackendToken, logger: TypedLogger }} params
  * @returns {Promise<ReportingCalendar>}
  */
 const fetchReportingCalendar = async ({ keys, backendToken, logger }) => {
@@ -133,7 +132,7 @@ export const fetchAccreditationDetails = async ({
         keys: {
           organisationNumber: keys.organisationNumber,
           registrationNumber: keys.registrationNumber,
-          year: Number(keys.year)
+          year: keys.year
         },
         backendToken,
         logger

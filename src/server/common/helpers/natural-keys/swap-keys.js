@@ -1,6 +1,8 @@
 import { organisationNumberOf } from '#server/common/helpers/organisations/organisation-number-of.js'
+import { toYear } from '#server/common/helpers/year.js'
 
 /**
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { NaturalKeys, OrganisationById, RecordIds } from './types.js'
  */
@@ -18,7 +20,7 @@ export const registrationsNumbered = (organisation, registrationNumber) =>
  * The year a numbered accreditation is for: the UTC year it starts in.
  * @param {OrganisationById} organisation
  * @param {string} accreditationId
- * @returns {string | null}
+ * @returns {Year | null}
  */
 const accreditationYear = (organisation, accreditationId) => {
   const accreditation = organisation.accreditations.find(
@@ -29,7 +31,7 @@ const accreditationYear = (organisation, accreditationId) => {
     return null
   }
 
-  return String(new Date(accreditation.validFrom).getUTCFullYear())
+  return toYear(new Date(accreditation.validFrom).getUTCFullYear())
 }
 
 /**

@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -71,7 +72,7 @@ vi.mock(
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js'),
   () => ({
-    ACCREDITATION_YEAR: /** @type {const} */ ('2026'),
+    ACCREDITATION_YEAR: toYear(2026),
     fetchRegistrationWithAccreditation: vi.fn()
   })
 )
@@ -269,7 +270,7 @@ describe('#summaryLogUploadProgressController', () => {
         openPeriodLoads: emptyPeriod(),
         closedPeriodLoads: closedAdjustmentRows(),
         periodsRequiringResubmission: [
-          { year: 2025, cadence: CADENCE.MONTHLY, period: 1 }
+          { year: toYear(2025), cadence: CADENCE.MONTHLY, period: 1 }
         ]
       }
     })
@@ -4418,7 +4419,7 @@ describe('summary log check view', () => {
       openPeriodLoads: emptyPeriod(),
       closedPeriodLoads: closedAdjustmentRows(),
       periodsRequiringResubmission: [
-        { year: 2025, cadence: CADENCE.MONTHLY, period: 1 }
+        { year: toYear(2025), cadence: CADENCE.MONTHLY, period: 1 }
       ]
     })
 

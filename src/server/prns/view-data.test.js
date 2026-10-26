@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { describe, expect, it, vi } from 'vitest'
@@ -61,13 +62,13 @@ const exporterRegistration = buildRegistrationView({
 const reprocessorKeys = {
   organisationNumber: toOrganisationNumber('500123'),
   registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
-  year: '2026'
+  year: toYear(2026)
 }
 
 const exporterKeys = {
   organisationNumber: toOrganisationNumber('500456'),
   registrationNumber: toRegistrationNumber('E26EN0000000002PL'),
-  year: '2026'
+  year: toYear(2026)
 }
 
 describe('#buildCreatePrnViewData', () => {

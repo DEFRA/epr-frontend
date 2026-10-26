@@ -8,7 +8,6 @@ import {
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { toYear } from '#server/common/helpers/year.js'
 import {
   organisationPath as toOrganisationPath,
   registrationPath as toRegistrationPath
@@ -372,7 +371,7 @@ const getWasteBalanceData = async (status, keys, session, logger) => {
 
   const balance = await fetchAccreditationBalance({
     organisationNumber: organisation.organisationNumber,
-    year: toYear(Number(ACCREDITATION_YEAR)),
+    year: ACCREDITATION_YEAR,
     accreditationNumber: accreditation.accreditationNumber,
     backendToken: session.backendToken,
     logger

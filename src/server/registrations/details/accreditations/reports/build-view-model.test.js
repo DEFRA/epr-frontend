@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
@@ -42,7 +43,7 @@ const request = /** @type {HapiRequest} */ (
 const keys = {
   organisationNumber: toOrganisationNumber('500118'),
   registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
-  year: '2026'
+  year: toYear(2026)
 }
 const registrationPath = `/organisations/500118/registrations/R26ER5001180041PL`
 const accreditationPath = `${registrationPath}/accreditations/2026`
@@ -75,7 +76,7 @@ const accreditation = {
 const aPeriod = (period) =>
   /** @type {ReportingPeriod} */ (
     /** @type {unknown} */ ({
-      year: 2026,
+      year: toYear(2026),
       period,
       submissionNumber: 1,
       dueDate: '2026-09-20',

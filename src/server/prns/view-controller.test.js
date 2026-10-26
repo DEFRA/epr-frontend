@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -102,7 +103,7 @@ const fixtureExporter = buildRegistrationWithAccreditation({
 
 const organisationNumber = toOrganisationNumber('500123')
 const registrationNumber = toRegistrationNumber('R26EN0000000001PL')
-const year = '2026'
+const year = toYear(2026)
 const keys = { organisationNumber, registrationNumber, year }
 const prnId = 'prn-789'
 const pernId = 'pern-123'

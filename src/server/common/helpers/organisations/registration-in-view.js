@@ -61,7 +61,7 @@ export const registrationEntries = (registrations) =>
 /**
  * The registration's accreditation for that year.
  * @param {RegistrationView} registration
- * @param {string} year
+ * @param {Year} year
  * @returns {Accreditation}
  */
 export const accreditationIn = (registration, year) => {
@@ -96,7 +96,7 @@ export const materialsHomepage = (keys, registration, year) => {
   if (isAccreditationActive(accreditation)) {
     return {
       kind: 'accredited',
-      path: accreditationPath({ ...keys, year: String(year) })
+      path: accreditationPath({ ...keys, year })
     }
   }
 

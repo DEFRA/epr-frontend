@@ -21,6 +21,7 @@ import {
   organisationPath,
   registrationPath
 } from '#server/reports/helpers/report-paths.js'
+import { toYear } from '#server/common/helpers/year.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -37,7 +38,7 @@ import {
  */
 
 // Fixed until the registered-only ledger page is year-configured.
-const REGISTERED_ONLY_LEDGER_YEAR = '2026'
+const REGISTERED_ONLY_LEDGER_YEAR = toYear(2026)
 
 /**
  * One waste balance ledger, read as business events.
@@ -55,7 +56,7 @@ export const controller = {
 
     const { organisation, registration, accreditation, events } = year
       ? await readAccreditedLedger(
-          { ...registrationKeys, year: String(year) },
+          { ...registrationKeys, year },
           session.backendToken
         )
       : await readRegisteredOnlyLedger(registrationKeys, request)
@@ -66,7 +67,7 @@ export const controller = {
     const name = organisation.displayName
     const ledgerRegistrationPath = registrationPath(registrationKeys)
     const ledgerAccreditationPath = year
-      ? accreditationPath({ ...registrationKeys, year: String(year) })
+      ? accreditationPath({ ...registrationKeys, year })
       : undefined
     const recordPaths = {
       organisation: organisationPath(registrationKeys),

@@ -1,4 +1,5 @@
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
@@ -301,7 +302,7 @@ describe('the accreditation details page', () => {
       expect.objectContaining({
         organisationNumber: toOrganisationNumber('500118'),
         registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
-        year: '2026'
+        year: toYear(2026)
       })
     )
   })

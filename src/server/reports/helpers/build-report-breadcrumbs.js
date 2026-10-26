@@ -8,6 +8,7 @@ import {
 } from './report-paths.js'
 
 /**
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { TFunction } from 'i18next'
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from '../constants.js'
@@ -27,7 +28,7 @@ import {
  * @param {{
  *   registrationUrl: string,
  *   accreditationUrl: string | undefined,
- *   year: number | string | undefined,
+ *   year: Year | undefined,
  *   cadence: CadenceValue | undefined,
  *   localise: TFunction,
  *   localiseUrl: (path: string) => string
@@ -78,7 +79,7 @@ const periodCrumb = ({
  *   registration: RegistrationView,
  *   keys: RegistrationKeys,
  *   pageName: string,
- *   year?: number | string,
+ *   year?: Year,
  *   cadence?: CadenceValue,
  *   localise: TFunction,
  *   localiseUrl: (path: string) => string
@@ -96,10 +97,8 @@ export const buildReportBreadcrumbs = ({
   localiseUrl
 }) => {
   const registrationUrl = registrationPath(keys)
-  const listedOnAccreditation = Object.hasOwn(
-    registration.accreditations,
-    String(year)
-  )
+  const listedOnAccreditation =
+    year !== undefined && Object.hasOwn(registration.accreditations, year)
 
   return [
     {
@@ -117,7 +116,7 @@ export const buildReportBreadcrumbs = ({
     ...periodCrumb({
       registrationUrl,
       accreditationUrl: listedOnAccreditation
-        ? accreditationPath({ ...keys, year: String(year) })
+        ? accreditationPath({ ...keys, year })
         : undefined,
       year,
       cadence,

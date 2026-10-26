@@ -15,3 +15,9 @@
  * @returns {Year}
  */
 export const toYear = (value) => /** @type {Year} */ (value)
+
+/**
+ * The year it is now, in UTC.
+ * @returns {Year}
+ */
+export const thisYear = () => toYear(new Date().getUTCFullYear())
