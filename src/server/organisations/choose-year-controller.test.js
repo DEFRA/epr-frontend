@@ -87,7 +87,7 @@ describe('choosing a different year', () => {
       const { statusCode } = await choose(
         server,
         '',
-        '/organisations/500123/1999/choose-year'
+        '/organisations/500123/2024/choose-year'
       )
 
       expect(statusCode).toBe(statusCodes.notFound)
@@ -106,17 +106,19 @@ describe('choosing a different year', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it('is not found for an address year that is not four digits', async ({
-      server
-    }) => {
-      const { statusCode } = await choose(
-        server,
-        '',
-        '/organisations/500123/abc/choose-year'
-      )
+    it.for(['abc', '2026.0', '2023', '2101'])(
+      'is not found for the address year %s, without asking the backend',
+      async (segment, { server }) => {
+        const { statusCode } = await choose(
+          server,
+          '',
+          `/organisations/500123/${segment}/choose-year`
+        )
 
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
+        expect(statusCode).toBe(statusCodes.notFound)
+        expect(fetchOrganisationYears).not.toHaveBeenCalled()
+      }
+    )
 
     it('is not found while the flag is off', async ({ server }) => {
       config.set('featureFlags.navigateAcrossYears', false)

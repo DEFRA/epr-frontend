@@ -1,5 +1,7 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { yearParam } from '#server/common/helpers/route-params.js'
 import Boom from '@hapi/boom'
+import Joi from 'joi'
 import { chooseYearController } from './choose-year-controller.js'
 import { controller as detailsController } from './details/controller.js'
 import { errorController } from './error-controller.js'
@@ -8,12 +10,14 @@ import { yearController } from './year-controller.js'
 
 /**
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */
 
 /**
- * @typedef {{ organisationNumber: OrganisationNumber, year?: string }} OrganisationParams
+ * @typedef {{ organisationNumber: OrganisationNumber }} OrganisationParams
+ * @typedef {OrganisationParams & { year: Year }} OrganisationYearParams
  */
 
 /**
@@ -53,6 +57,22 @@ const operatorOnly = (controller) => ({
 })
 
 /**
+ * An address naming a year has no page for a year the service does not
+ * answer for.
+ */
+const yearAddressOptions = {
+  validate: {
+    params: Joi.object({
+      organisationNumber: Joi.string().required(),
+      year: yearParam.required()
+    }),
+    failAction: () => {
+      throw Boom.notFound()
+    }
+  }
+}
+
+/**
  * Sets up the routes used in the organisations page.
  * These routes are registered in src/server/router.js.
  */
@@ -74,16 +94,19 @@ export const organisations = {
         },
         {
           ...operatorOnly(yearController),
+          options: yearAddressOptions,
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}'
         },
         {
           ...operatorOnly(yearController),
+          options: yearAddressOptions,
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}/exporting'
         },
         {
           ...operatorOnly(chooseYearController),
+          options: yearAddressOptions,
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}/choose-year'
         },
