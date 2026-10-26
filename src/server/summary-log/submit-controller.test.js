@@ -1,4 +1,3 @@
-import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
@@ -72,8 +71,7 @@ describe('#submitSummaryLogController', () => {
     server
   }) => {
     const mockResponse = {
-      status: 'submitted',
-      accreditationNumber: toAccreditationNumber('493021')
+      status: 'submitted'
     }
 
     vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
@@ -106,8 +104,7 @@ describe('#submitSummaryLogController', () => {
     server
   }) => {
     const mockResponse = {
-      status: 'submitted',
-      accreditationNumber: toAccreditationNumber('493021')
+      status: 'submitted'
     }
 
     vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
@@ -138,8 +135,7 @@ describe('#submitSummaryLogController', () => {
     server
   }) => {
     vi.mocked(submitSummaryLog).mockResolvedValueOnce({
-      status: 'submitted',
-      accreditationNumber: toAccreditationNumber('493021')
+      status: 'submitted'
     })
 
     const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
@@ -244,8 +240,7 @@ describe('#submitSummaryLogController', () => {
     server
   }) => {
     const mockResponse = {
-      status: 'submitted',
-      accreditationNumber: toAccreditationNumber('493021')
+      status: 'submitted'
     }
 
     vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
