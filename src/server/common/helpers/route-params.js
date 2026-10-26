@@ -39,6 +39,22 @@ const isParamsError = (error) =>
     error
   ).output.payload.validation?.source === 'params'
 
+/**
+ * Hapi's route validation, with a `failAction` typed for this app's requests
+ * rather than hapi's own.
+ * @typedef {Omit<RouteOptionsValidate, 'failAction'> & { failAction?: unknown }} YearAddressedValidate
+ */
+
+/**
+ * @typedef {{
+ *   path: string,
+ *   options?: {
+ *     validate?: YearAddressedValidate,
+ *     [key: string]: unknown
+ *   }
+ * }} YearAddressedRoute
+ */
+
 const OTHER_SOURCES = /** @type {const} */ ([
   'query',
   'payload',
@@ -54,14 +70,12 @@ const OTHER_SOURCES = /** @type {const} */ ([
  * A route that validates its own params, or validates anything else without a
  * `failAction` function, is refused: the year would replace the one, and its
  * 404 would swallow the failures of the other.
- * @template {{ path: string, options?: object }} Route
+ * @template {YearAddressedRoute} Route
  * @param {Route} route
  * @returns {Route}
  */
 export const yearAddressed = (route) => {
-  const { validate = {} } = /** @type {{ validate?: RouteOptionsValidate }} */ (
-    route.options ?? {}
-  )
+  const { validate = {} } = route.options ?? {}
   const ownFailAction = validate.failAction
 
   if (validate.params) {
