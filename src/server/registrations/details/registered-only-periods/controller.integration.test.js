@@ -503,16 +503,14 @@ describe('the registered-only period page', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
-  it('does not exist for a year outside the range the service answers for', async ({
-    server
-  }) => {
-    const { statusCode } = await visit(server, regulator, 1999)
-
-    expect(statusCode).toBe(statusCodes.notFound)
-  })
-
-  it('does not exist for a year that is not a number', async ({ server }) => {
-    const { statusCode } = await visit(server, regulator, 'last-year')
+  it.for([
+    { name: 'a year outside the range the service answers for', year: 1999 },
+    { name: 'a year that is not a number', year: 'last-year' },
+    { name: 'a year with five digits', year: '02026' },
+    { name: 'a year with a decimal point', year: '2026.0' },
+    { name: 'a year with a plus sign', year: '+2026' }
+  ])('does not exist for $name', async ({ year }, { server }) => {
+    const { statusCode } = await visit(server, regulator, year)
 
     expect(statusCode).toBe(statusCodes.notFound)
   })

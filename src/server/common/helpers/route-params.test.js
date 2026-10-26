@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { yearParam } from './route-params.js'
 
 describe('route params', () => {
-  describe(yearParam, () => {
+  describe('a {year} segment', () => {
     it.each(['2024', '2026', '2100'])(
       'should read the year segment %s as a year',
       (segment) => {

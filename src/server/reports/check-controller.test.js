@@ -1937,17 +1937,20 @@ describe('#checkController', () => {
       expect(statusCode).toBe(statusCodes.badRequest)
     })
 
-    it('should return 400 for invalid year', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2023/quarterly/1/submissions/1/check-your-answers`
+    it.for(['2023', '02026', '2026.0', '+2026'])(
+      'should return 400 for the year %s',
+      async (year, { server }) => {
+        const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/${year}/quarterly/1/submissions/1/check-your-answers`
 
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: invalidUrl,
-        auth: mockAuth
-      })
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: invalidUrl,
+          auth: mockAuth
+        })
 
-      expect(statusCode).toBe(statusCodes.badRequest)
-    })
+        expect(statusCode).toBe(statusCodes.badRequest)
+      }
+    )
 
     it('should return 400 for invalid period', async ({ server }) => {
       const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/13/submissions/1/check-your-answers`
