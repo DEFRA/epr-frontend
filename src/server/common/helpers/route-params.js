@@ -30,10 +30,6 @@ export const yearParam = Joi.string()
       : helpers.error('any.invalid')
   })
 
-const notFound = () => {
-  throw Boom.notFound()
-}
-
 /**
  * Hapi tags each validation failure with the part of the request it is in.
  * @param {unknown} error
@@ -60,7 +56,7 @@ export const yearAddressed = (route) => {
   /** @type {Lifecycle.Method} */
   const failAction = function (request, h, error) {
     if (isParamsError(error) || typeof ownFailAction !== 'function') {
-      return notFound()
+      throw Boom.notFound()
     }
 
     return ownFailAction.call(this, request, h, error)
