@@ -7,6 +7,7 @@ import { fetchRegistration } from './fetch-registration.js'
 
 /**
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from './organisation-view.js'
  */
@@ -108,7 +109,7 @@ const ownAccreditation = (registration, year) =>
     : undefined
 
 /**
- * @param {string} registrationNumber
+ * @param {RegistrationNumber} registrationNumber
  * @param {string} year
  */
 const notAccredited = (registrationNumber, year) =>

@@ -1,3 +1,4 @@
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
@@ -77,7 +78,7 @@ describe(fetchRegisteredOnlyPeriod, () => {
       year: 2026,
       registeredOnly: { reportingPeriods: [firstQuarter] },
       accredited: {
-        accreditationNumber: 'A26ER5001180114PL',
+        accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
         reportingPeriods: [january]
       }
     })
