@@ -4,6 +4,7 @@ import { toCaption } from './caption.js'
 
 /**
  * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { Localise } from './types.js'
  */
 
@@ -59,7 +60,7 @@ export const toRegistrationTrail = ({
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   organisationName: string,
- *   registrationNumber?: string | null,
+ *   registrationNumber?: RegistrationNumber | null,
  *   accreditationNumber: AccreditationNumber,
  *   paths: RecordPaths & { accreditation: string }
  * }} params
