@@ -65,7 +65,7 @@ describe(buildLinkingViewData, () => {
         {
           id: 'org-1',
           name: 'First Company',
-          orgId: 'FC111111',
+          orgId: 111111,
           referenceNumber: 'org-1'
         }
       ]
@@ -73,9 +73,9 @@ describe(buildLinkingViewData, () => {
 
     expect(result.unlinked).toStrictEqual([
       {
-        displayName: 'First Company (ID: FC111111)',
+        displayName: 'First Company (ID: 111111)',
         name: 'First Company',
-        organisationNumber: 'FC111111',
+        organisationNumber: '111111',
         referenceNumber: 'org-1'
       }
     ])

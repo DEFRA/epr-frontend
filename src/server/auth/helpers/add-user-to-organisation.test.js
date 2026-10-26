@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -9,7 +10,7 @@ import { addUserToOrganisation } from './add-user-to-organisation.js'
 describe('#addUserToOrganisation', () => {
   const backendUrl = config.get('eprBackendUrl')
   const mockBackendToken = toBackendToken('mock-backend-token-12345')
-  const organisationNumber = '11111111'
+  const organisationNumber = toOrganisationNumber('11111111')
   const userEndpoint = `${backendUrl}/organisations/${organisationNumber}/user`
 
   beforeEach(({ msw }) => {

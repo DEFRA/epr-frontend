@@ -14,7 +14,7 @@ import { CADENCE } from '../constants.js'
 
 /**
  * The organisation's natural-key address.
- * @param {{ organisationNumber: string | number }} keys
+ * @param {{ organisationNumber: OrganisationNumber }} keys
  * @returns {string}
  */
 export const organisationPath = ({ organisationNumber }) =>

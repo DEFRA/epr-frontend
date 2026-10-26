@@ -4,6 +4,7 @@ import { asHtml } from '#server/common/test-helpers/dom.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
@@ -28,7 +29,7 @@ describe('the no-permission page', () => {
       id: 'defra-user-2',
       email: 'operator@example.com'
     },
-    linkedOrganisationNumber: '500123'
+    linkedOrganisationNumber: toOrganisationNumber('500123')
   })
 
   beforeAll(() => {

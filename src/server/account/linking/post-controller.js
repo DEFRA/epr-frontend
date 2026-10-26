@@ -1,4 +1,5 @@
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
+import { organisationNumberOf } from '#server/common/helpers/organisations/organisation-number-of.js'
 import { organisationPath } from '#server/reports/helpers/report-paths.js'
 import Joi from 'joi'
 import { linkOrganisation } from './helpers/link-organisation.js'
@@ -53,19 +54,21 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationNumber } = request.payload
+    const { organisationNumber: selected } = request.payload
 
     const session = request.auth.credentials
 
     const organisations = request.pre.userOrganisations
 
     const organisation = organisations.unlinked.find(
-      (o) => String(o.orgId) === organisationNumber
+      (o) => organisationNumberOf(o) === selected
     )
 
     if (!organisation) {
       return viewNoSelectionError(request, h, organisations)
     }
+
+    const organisationNumber = organisationNumberOf(organisation)
 
     await linkOrganisation(session.backendToken, organisationNumber)
 
@@ -73,7 +76,7 @@ export const controller = {
     const sessionId = request.state?.userSession?.sessionId
     if (sessionId) {
       session.linkedOrganisationId = organisation.id
-      session.linkedOrganisationNumber = organisation.orgId
+      session.linkedOrganisationNumber = organisationNumber
       await request.server.app.cache.set(sessionId, session)
     }
 

@@ -22,7 +22,7 @@ const ORGANISATION_URL = '/organisations/500123'
 
 const operatorAuth = buildMockAuth({
   linkedOrganisationId: 'org-123',
-  linkedOrganisationNumber: '500123'
+  linkedOrganisationNumber: toOrganisationNumber('500123')
 })
 
 const regulatorAuth = buildMockAuth({
