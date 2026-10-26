@@ -21,10 +21,13 @@ describe(fetchSummaryLogStatus, () => {
   it('should return the summary log status when the backend responds successfully', async ({
     msw
   }) => {
+    const warnSpy = vi
+      .spyOn(createLogger(), 'warn')
+      .mockImplementation(() => {})
+
     const mockResponse = {
       status: 'validated',
-      year: 2026,
-      validation: null
+      year: 2026
     }
 
     msw.use(
@@ -39,6 +42,9 @@ describe(fetchSummaryLogStatus, () => {
     })
 
     expect(result).toStrictEqual(mockResponse)
+    expect(warnSpy).not.toHaveBeenCalled()
+
+    warnSpy.mockRestore()
   })
 
   it('should preserve loadsByReportingPeriod row detail in the response', async ({
