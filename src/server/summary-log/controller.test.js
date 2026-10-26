@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
@@ -110,7 +111,7 @@ const accredited2026 = buildRegistrationWithAccreditation()
 const registeredOnly = { ...accredited2026, accreditation: undefined }
 const { accreditationNumber: accreditationNumber2026 } =
   accredited2026.accreditation
-const accreditationNumber2027 = 'A27EN0000000001PL'
+const accreditationNumber2027 = toAccreditationNumber('A27EN0000000001PL')
 const accredited2027 = buildRegistrationWithAccreditation({
   accreditation: buildAccreditationView({
     accreditationNumber: accreditationNumber2027
