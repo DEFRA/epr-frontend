@@ -46,7 +46,10 @@ export const buildViewModel = ({
 }) => {
   const { t: localise, localiseUrl } = request
   const { noteTypePlural } = getNoteTypeDisplayNames(registration)
-  const heading = localise(`${KEY}:listHeading`, { noteTypePlural })
+  const heading = localise(`${KEY}:listHeading`, {
+    noteTypePlural,
+    year: keys.year
+  })
 
   const list = buildListViewData(request, {
     keys,
