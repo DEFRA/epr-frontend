@@ -16,7 +16,8 @@ const localise = createMockLocalise({
   'registrations:details:accreditation:breadcrumb': 'Accreditation details',
   'registrations:details:accreditation:reports:actions': 'Actions',
   'registrations:details:accreditation:reports:dueDate': 'Due date',
-  'registrations:details:accreditation:reports:heading': 'Reports',
+  'registrations:details:accreditation:reports:yearHeading':
+    'Reports ({{year}})',
   'registrations:details:accreditation:reports:period': 'Period',
   'registrations:details:accreditation:reports:status': 'Status',
   'registrations:details:accreditation:reports:submissionDate':
@@ -103,8 +104,8 @@ const build = ({
   })
 
 describe('the accreditation reports view model', () => {
-  it('names the page Reports', () => {
-    expect(build().heading).toBe('Reports')
+  it("names the page Reports with the address's year", () => {
+    expect(build().heading).toBe('Reports (2026)')
   })
 
   it('names the organisation, the registration and the accreditation in the caption', () => {
@@ -122,7 +123,7 @@ describe('the accreditation reports view model', () => {
   })
 
   it('titles the page by the accreditation number', () => {
-    expect(build().pageTitle).toBe('A26ER5001180114PL: Reports')
+    expect(build().pageTitle).toBe('A26ER5001180114PL: Reports (2026)')
   })
 
   it('walks back through the accreditation by number, ending on this page unlinked', () => {
@@ -131,7 +132,7 @@ describe('the accreditation reports view model', () => {
       { text: 'Kirkby Plastics Ltd', href: '/organisations/500118' },
       { text: 'Registration details', href: registrationPath },
       { text: 'Accreditation details', href: accreditationPath },
-      { text: 'Reports' }
+      { text: 'Reports (2026)' }
     ])
   })
 
@@ -143,7 +144,7 @@ describe('the accreditation reports view model', () => {
       text: 'Accreditation details',
       href: accreditationPath
     })
-    expect(model.breadcrumbs.at(-1)).toStrictEqual({ text: 'Reports' })
+    expect(model.breadcrumbs.at(-1)).toStrictEqual({ text: 'Reports (2026)' })
   })
 
   it('links a submitted month to its report under the accreditation', () => {

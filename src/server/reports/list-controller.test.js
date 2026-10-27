@@ -1911,7 +1911,7 @@ describe('#listReportsController', () => {
       config.set('featureFlags.regulatorAccess', false)
     })
 
-    it('keeps the plain Reports heading and title, with no year', async ({
+    it("heads and titles the page Reports with the address's year", async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -1921,9 +1921,8 @@ describe('#listReportsController', () => {
       })
       const { document } = new JSDOM(result).window
 
-      expect(headingOf(document)).toBe('Glass remelt Reports')
-      expect(document.title).toContain('Reports: Glass remelt')
-      expect(document.title).not.toContain('2026')
+      expect(headingOf(document)).toBe('Glass remelt Reports (2026)')
+      expect(document.title).toContain('Reports (2026): Glass remelt')
     })
 
     it('walks back up to all organisations, with no back link', async ({
@@ -1944,7 +1943,7 @@ describe('#listReportsController', () => {
         'All organisations',
         'Acme Recycling Ltd',
         'Registration details',
-        'Reports'
+        'Reports (2026)'
       ])
       expect(body.querySelector('.govuk-back-link')).toBeNull()
     })

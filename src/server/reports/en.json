@@ -67,7 +67,7 @@
   "freeSave": "Save and come back later",
   "freeTonnageLabel": "Total tonnage of {{noteTypePlural}} issued for free",
   "freeTonnageNote": "(These are not included in the average price per tonne calculation)",
-  "heading": "Reports",
+  "heading": "Reports ({{ year }})",
   "lastUploadedAt": "Your most recent summary log was uploaded at {{ time }} on {{ date }}.",
   "makeChangesCancel": "Cancel",
   "makeChangesHeading": "If you continue, you'll need to resubmit this report",
@@ -83,6 +83,7 @@
   "makeChangesUpdateWasteDataOnlyTextReprocessor": "Select the 'Use this report's summary log' button and then tell us how many tonnes of waste you recycled and also did not recycle in {{ periodLabel }}.",
   "makeChangesUseSummaryLog": "Use this report's summary log",
   "manageReportsHeading": "Manage reports ({{ year }})",
+  "manageReportsPageTitle": "Manage reports ({{ year }}): {{ material }}",
   "materialLabel": "Material",
   "months": {
     "1": "January",
@@ -114,7 +115,7 @@
   "osrIdColumn": "Overseas reprocessor ID",
   "overseasSitesHeading": "Overseas reprocessing sites",
   "overviewIntro": "The following is an overview of your summary log data for this reporting period. Only data that will appear in your report is shown.",
-  "pageTitle": "Reports: {{ material }}",
+  "pageTitle": "Reports ({{ year }}): {{ material }}",
   "periodColumn": "Period",
   "phoneColumn": "Phone",
   "prnCancelledBodyLine1": "An issued {{ noteType }} has been cancelled (or is awaiting cancellation) since you began creating this draft report. This affects your reported tonnage.",
@@ -317,6 +318,5 @@
   "wasteSentOnHeading": "Packaging waste sent on",
   "wasteSentOnIntroAccreditedReprocessor": "This data comes from sections 5 and 6 of your summary log.",
   "wasteSentOnIntroExporter": "This data comes from section 4 of your summary log",
-  "wasteSentOnIntroReprocessor": "This data comes from section 2 of your summary log",
-  "yearPageTitle": "{{ heading }}: {{ material }}"
+  "wasteSentOnIntroReprocessor": "This data comes from section 2 of your summary log"
 }
