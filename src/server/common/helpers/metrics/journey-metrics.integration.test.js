@@ -1,7 +1,6 @@
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 import { describe, expect, vi } from 'vitest'
 
-import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
@@ -130,8 +129,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
         })
       )
       vi.mocked(submitSummaryLog).mockResolvedValue({
-        status: 'submitted',
-        accreditationNumber: toAccreditationNumber('493021')
+        status: 'submitting'
       })
     })
 
