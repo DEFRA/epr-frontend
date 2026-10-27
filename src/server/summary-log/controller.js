@@ -7,7 +7,6 @@ import { materialsHomepage } from '#server/common/helpers/organisations/registra
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { fixedYear } from '#server/common/helpers/year.js'
 import {
   organisationPath as toOrganisationPath,
   registrationPath as toRegistrationPath,
@@ -388,32 +387,38 @@ const renderPassedValidationView = async (
 }
 
 /**
- * Gets a pre-signed upload URL for re-uploading a summary log.
- * @param {string} status - Current summary log status
+ * Where a failed summary log's back link and Cancel go, and the re-upload it
+ * starts: both follow the materials homepage for the summary log's year.
  * @param {RegistrationKeys} keys
+ * @param {Year} year - The summary log's year
  * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
  * @param {UserSession} session
- * @returns {Promise<{uploadUrl?: string}>} Upload URL, or empty object if not needed
+ * @returns {Promise<{cancelUrl: string, uploadUrl?: string}>}
  */
-const getUploadUrl = async (status, keys, redirectUrl, session) => {
-  if (!REUPLOAD_STATES.has(status)) {
-    return {}
-  }
-
-  const { accreditation } = await fetchRegistrationWithAccreditation(
-    keys,
+const getReuploadLinks = async (keys, year, redirectUrl, session) => {
+  const { registration } = await fetchRegistrationWithAccreditation(
+    { ...keys, year },
     session.backendToken
   )
+  const homepage = materialsHomepage(keys, registration, year)
+  const cancelUrl = homepage?.path ?? toRegistrationPath(keys)
+
+  // Asking for an upload URL creates a summary log, so this GET writes. A
+  // session holding no write scope reads the page without one; the re-upload
+  // form is hidden.
+  if (!hasWriteScope(session)) {
+    return { cancelUrl }
+  }
 
   const { uploadUrl } = await initiateSummaryLogUpload({
     keys,
-    year: fixedYear,
-    accredited: accreditation !== undefined,
+    year,
+    accredited: homepage?.kind === 'accredited',
     redirectUrl,
     backendToken: session.backendToken
   })
 
-  return { uploadUrl }
+  return { cancelUrl, uploadUrl }
 }
 
 /**
@@ -470,14 +475,10 @@ export const summaryLogUploadProgressController = {
     const registrationPath = toRegistrationPath(keys)
     const pollUrl = `${registrationPath}/summary-logs/${summaryLogId}`
     const redirectUrl = `${registrationPath}/summary-logs/{summaryLogId}`
-    const cancelUrl = registrationPath
 
-    // Asking for an upload URL creates a summary log, so this GET writes. A
-    // session holding no write scope reads the page without one; the re-upload
-    // form is hidden.
-    const { uploadUrl } = hasWriteScope(session)
-      ? await getUploadUrl(status, keys, redirectUrl, session)
-      : {}
+    const { uploadUrl, cancelUrl } = REUPLOAD_STATES.has(status)
+      ? await getReuploadLinks(keys, requiredYear(year), redirectUrl, session)
+      : { cancelUrl: registrationPath }
 
     /** @type {RenderContext} */
     const context = {
