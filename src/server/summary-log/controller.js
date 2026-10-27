@@ -234,11 +234,11 @@ const renderSuccessView = (
 const renderSupersededView = (
   h,
   localise,
-  { organisationPath, registrationPath }
+  { organisationPath, registrationPath, year }
 ) => {
   return h.view(SUPERSEDED_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),
-    organisationPath,
+    organisationPath: `${organisationPath}/${requiredYear(year)}`,
     registrationPath
   })
 }

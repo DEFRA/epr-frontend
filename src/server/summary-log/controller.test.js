@@ -2648,11 +2648,12 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('status: superseded', () => {
-      it('should show superseded page with link to organisation', async ({
+      it("should show superseded page with link to the organisation's home for the summary log's year", async ({
         server
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.superseded
+          status: summaryLogStatuses.superseded,
+          year: 2027
         })
 
         const { result, statusCode } = await server.inject({
@@ -2666,13 +2667,18 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).toContain(
           'A newer summary log has been uploaded. This upload is no longer being processed.'
         )
-        expect(result).toContain(`href="/organisations/${organisationNumber}"`)
-        expect(result).toContain('Return to home')
+        const { body } = new JSDOM(result).window.document
+        expect(
+          getByRole(body, 'link', { name: 'Return to home' }).getAttribute(
+            'href'
+          )
+        ).toBe(`/organisations/${organisationNumber}/2027`)
       })
 
       it('should not enable client-side polling', async ({ server }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.superseded
+          status: summaryLogStatuses.superseded,
+          year: 2026
         })
 
         const { result } = await server.inject({
@@ -2688,7 +2694,8 @@ describe('#summaryLogUploadProgressController', () => {
         const initialCallCount = mockInitiateSummaryLogUpload.mock.calls.length
 
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.superseded
+          status: summaryLogStatuses.superseded,
+          year: 2026
         })
 
         await server.inject({
@@ -2705,7 +2712,8 @@ describe('#summaryLogUploadProgressController', () => {
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.superseded
+        status: summaryLogStatuses.superseded,
+        year: 2026
       })
 
       const { result } = await server.inject({
