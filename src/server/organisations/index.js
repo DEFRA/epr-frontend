@@ -1,4 +1,5 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { yearAddressed } from '#server/common/helpers/route-params.js'
 import Boom from '@hapi/boom'
 import { chooseYearController } from './choose-year-controller.js'
 import { controller as detailsController } from './details/controller.js'
@@ -8,12 +9,14 @@ import { yearController } from './year-controller.js'
 
 /**
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */
 
 /**
- * @typedef {{ organisationNumber: OrganisationNumber, year?: string }} OrganisationParams
+ * @typedef {{ organisationNumber: OrganisationNumber }} OrganisationParams
+ * @typedef {OrganisationParams & { year: Year }} OrganisationYearParams
  */
 
 /**
@@ -72,21 +75,21 @@ export const organisations = {
           method: 'GET',
           path: '/organisations/{organisationNumber}/exporting'
         },
-        {
+        yearAddressed({
           ...operatorOnly(yearController),
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}'
-        },
-        {
+        }),
+        yearAddressed({
           ...operatorOnly(yearController),
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}/exporting'
-        },
-        {
+        }),
+        yearAddressed({
           ...operatorOnly(chooseYearController),
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}/choose-year'
-        },
+        }),
         {
           ...errorController,
           method: 'GET',

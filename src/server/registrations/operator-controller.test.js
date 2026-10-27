@@ -472,7 +472,8 @@ describe("the operator's registration page for a year", () => {
     { name: 'a value that is not a year', segment: 'abcd' },
     { name: 'a year with five digits', segment: `0${thisYear}` },
     { name: 'a year with a decimal point', segment: `${thisYear}.0` },
-    { name: 'a year with a plus sign', segment: `+${thisYear}` }
+    { name: 'a year with a plus sign', segment: `+${thisYear}` },
+    { name: 'a year before the service answers for', segment: '2023' }
   ])(
     'is not found for $name, without asking the backend',
     async ({ segment }, { server, msw }) => {

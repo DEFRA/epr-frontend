@@ -5,7 +5,7 @@ import { controller as overseasSitesController } from './details/overseas-sites/
 import {
   paramsOrNotFound,
   registrationParamsSchema,
-  yearSegmentParamsSchema
+  yearParamsSchema
 } from './details/helpers/params-validation.js'
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
 import {
@@ -60,7 +60,7 @@ const registrationController = {
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 const registeredOnlyYearRoute = {
   options: {
-    validate: paramsOrNotFound(yearSegmentParamsSchema, {
+    validate: paramsOrNotFound(yearParamsSchema, {
       message: 'Registered-only year not found',
       code: errorCodes.registrationNotFound,
       action: 'fetch_registered_only_year',
@@ -96,7 +96,7 @@ const registeredOnlyYearRoute = {
  */
 const accreditationRoute = {
   options: {
-    validate: paramsOrNotFound(yearSegmentParamsSchema, {
+    validate: paramsOrNotFound(yearParamsSchema, {
       message: 'Accreditation not found',
       code: errorCodes.accreditationNotFound,
       action: 'fetch_accreditation',

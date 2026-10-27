@@ -1,4 +1,5 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { yearAddressed } from '#server/common/helpers/route-params.js'
 import { controller as regulatorListController } from '#server/registrations/details/accreditations/packaging-recycling-notes/controller.js'
 
 import { actionController } from './action-controller.js'
@@ -48,7 +49,7 @@ export const prns = {
   plugin: {
     name: 'prns',
     register(server) {
-      server.route([
+      const routes = [
         {
           ...listRoute,
           method: 'GET',
@@ -132,7 +133,9 @@ export const prns = {
           method: 'GET',
           path: `${basePath}/{prnId}/issued`
         }
-      ])
+      ]
+
+      server.route(routes.map(yearAddressed))
     }
   }
 }

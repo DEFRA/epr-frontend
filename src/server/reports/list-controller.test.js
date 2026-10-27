@@ -1767,19 +1767,16 @@ describe('#listReportsController', () => {
       )
     })
 
-    it.for(['1999', '2101', 'latest'])(
-      'answers 404 for the year %s',
-      async (year, { server }) => {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: `${registrationUrl}/reports/${year}`,
-          auth: mockAuth
-        })
+    it('answers 404 for a segment that is not a year', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${registrationUrl}/reports/latest`,
+        auth: mockAuth
+      })
 
-        expect(statusCode).toBe(statusCodes.notFound)
-        expect(fetchReportingPeriods).not.toHaveBeenCalled()
-      }
-    )
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(fetchReportingPeriods).not.toHaveBeenCalled()
+    })
 
     describe('at the yearless address', () => {
       /**

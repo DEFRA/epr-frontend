@@ -26,13 +26,14 @@ import {
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
- * @typedef {RegistrationKeys & { year?: string }} WasteBalanceLedgerParams
+ * @typedef {RegistrationKeys & { year?: Year }} WasteBalanceLedgerParams
  */
 
 // Fixed until the registered-only ledger page is year-configured.
@@ -54,7 +55,7 @@ export const controller = {
 
     const { organisation, registration, accreditation, events } = year
       ? await readAccreditedLedger(
-          { ...registrationKeys, year },
+          { ...registrationKeys, year: String(year) },
           session.backendToken
         )
       : await readRegisteredOnlyLedger(registrationKeys, request)
@@ -65,7 +66,7 @@ export const controller = {
     const name = organisation.displayName
     const ledgerRegistrationPath = registrationPath(registrationKeys)
     const ledgerAccreditationPath = year
-      ? accreditationPath({ ...registrationKeys, year })
+      ? accreditationPath({ ...registrationKeys, year: String(year) })
       : undefined
     const recordPaths = {
       organisation: organisationPath(registrationKeys),
