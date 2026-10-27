@@ -1,7 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
-import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
@@ -20,10 +19,7 @@ describe(submitSummaryLog, () => {
         received.push({
           pathname: new URL(request.url).pathname
         })
-        return HttpResponse.json({
-          status: 'submitted',
-          accreditationNumber: toAccreditationNumber('493021')
-        })
+        return HttpResponse.json({ status: 'submitting' })
       })
     )
 
@@ -36,10 +32,7 @@ describe(submitSummaryLog, () => {
       toBackendToken('a-token')
     )
 
-    expect(result).toStrictEqual({
-      status: 'submitted',
-      accreditationNumber: toAccreditationNumber('493021')
-    })
+    expect(result).toStrictEqual({ status: 'submitting' })
     expect(received).toStrictEqual([
       {
         pathname:

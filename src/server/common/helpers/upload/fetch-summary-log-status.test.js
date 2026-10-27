@@ -21,9 +21,13 @@ describe(fetchSummaryLogStatus, () => {
   it('should return the summary log status when the backend responds successfully', async ({
     msw
   }) => {
+    const warnSpy = vi
+      .spyOn(createLogger(), 'warn')
+      .mockImplementation(() => {})
+
     const mockResponse = {
       status: 'validated',
-      validation: null
+      year: 2026
     }
 
     msw.use(
@@ -38,6 +42,9 @@ describe(fetchSummaryLogStatus, () => {
     })
 
     expect(result).toStrictEqual(mockResponse)
+    expect(warnSpy).not.toHaveBeenCalled()
+
+    warnSpy.mockRestore()
   })
 
   it('should preserve loadsByReportingPeriod row detail in the response', async ({
@@ -72,6 +79,7 @@ describe(fetchSummaryLogStatus, () => {
         () =>
           HttpResponse.json({
             status: 'validated',
+            year: 2026,
             processingType: 'REPROCESSOR_INPUT',
             loadsByReportingPeriod
           })
@@ -82,10 +90,10 @@ describe(fetchSummaryLogStatus, () => {
       backendToken
     })
 
-    expect(
-      result.loadsByReportingPeriod?.openPeriodLoads.added.nonBalanceAffecting
-        .rows
-    ).toStrictEqual(rows)
+    expect(result).toHaveProperty(
+      'loadsByReportingPeriod.openPeriodLoads.added.nonBalanceAffecting.rows',
+      rows
+    )
   })
 
   it('should strip unknown fields from the response', async ({ msw }) => {
@@ -95,6 +103,7 @@ describe(fetchSummaryLogStatus, () => {
         () =>
           HttpResponse.json({
             status: 'validated',
+            year: 2026,
             unknownField: 'should be stripped'
           })
       )
@@ -120,6 +129,7 @@ describe(fetchSummaryLogStatus, () => {
         () =>
           HttpResponse.json({
             status: 'validated',
+            year: 2026,
             loadsByReportingPeriod: { openPeriodLoads: 'not-an-object' }
           })
       )
