@@ -167,7 +167,7 @@
       <p class="govuk-body">
         <strong>{{ localise('summary-log:check.insetWrongLead') }}</strong>
         {{ localise('summary-log:check.insetEditAnd') }}
-        <a href="{{ registrationPath }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:check.insetChooseFileLink') }}</a>
+        <a href="{{ uploadPath }}" class="govuk-link">{{ localise('summary-log:check.insetChooseFileLink') }}</a>
         {{ localise('summary-log:check.insetBeforeHome') }}
         <a href="{{ organisationPath }}" class="govuk-link">{{ localise('summary-log:check.insetHomeLink') }}</a>).
       </p>
@@ -238,7 +238,7 @@
         }) }}
         {{ govukButton({
           text: localise('summary-log:check.goBackButton'),
-          href: registrationPath + '/summary-logs/upload',
+          href: uploadPath,
           classes: 'govuk-button--secondary'
         }) }}
       </div>

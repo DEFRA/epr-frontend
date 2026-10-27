@@ -345,6 +345,7 @@ const buildPeriodViewModel = (period, ctx) => {
  *   organisationPath: string,
  *   registrationPath: string,
  *   summaryLogId: string,
+ *   uploadPath: string,
  *   wasteBalance?: number,
  *   year: Year
  * }} context - View context
@@ -359,6 +360,7 @@ export const renderCheckView = (
     organisationPath,
     registrationPath,
     summaryLogId,
+    uploadPath,
     wasteBalance,
     year
   }
@@ -382,6 +384,7 @@ export const renderCheckView = (
     organisationPath,
     registrationPath,
     summaryLogId,
+    uploadPath,
     isAccredited,
     maxRowsPerBucket: MAX_ROWS_PER_BUCKET,
     periodSections: { open, closed },

@@ -16,6 +16,7 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import {
   buildAccreditationView,
+  buildRegistrationView,
   buildRegistrationWithAccreditation
 } from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
@@ -112,10 +113,17 @@ const registeredOnly = { ...accredited2026, accreditation: undefined }
 const { accreditationNumber: accreditationNumber2026 } =
   accredited2026.accreditation
 const accreditationNumber2027 = toAccreditationNumber('A27EN0000000001PL')
+const accreditation2027 = buildAccreditationView({
+  accreditationNumber: accreditationNumber2027
+})
 const accredited2027 = buildRegistrationWithAccreditation({
-  accreditation: buildAccreditationView({
-    accreditationNumber: accreditationNumber2027
-  })
+  registration: buildRegistrationView({
+    accreditations: {
+      2026: buildAccreditationView(),
+      2027: accreditation2027
+    }
+  }),
+  accreditation: accreditation2027
 })
 
 /**
@@ -3112,12 +3120,13 @@ describe('summary log check view', () => {
   })
   /* eslint-enable vitest/max-expects */
 
-  it('renders a submit form and a back link to the upload page', async ({
+  it("renders a submit form and links to the accredited upload page for the summary log's year", async ({
     server
   }) => {
+    mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited2027)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
-      year: 2026,
+      year: 2027,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -3136,12 +3145,53 @@ describe('summary log check view', () => {
       expect.stringContaining('govuk-section-break--visible')
     )
 
-    const backLink = getByRole(main, 'button', {
-      name: 'Go back to previous page'
-    })
-    expect(backLink.getAttribute('href')).toBe(
-      '/organisations/500118/registrations/R26ER5001180041PL/summary-logs/upload'
+    const uploadPage =
+      '/organisations/500118/registrations/R26ER5001180041PL/accreditations/2027/summary-logs/upload'
+    expect(
+      getByRole(main, 'button', {
+        name: 'Go back to previous page'
+      }).getAttribute('href')
+    ).toBe(uploadPage)
+    expect(
+      getByRole(main, 'link', { name: 'choose the file again' }).getAttribute(
+        'href'
+      )
+    ).toBe(uploadPage)
+  })
+
+  it("links a registered-only operator to the registered-only upload page for the summary log's year", async ({
+    server
+  }) => {
+    mockFetchRegistrationWithAccreditation.mockResolvedValue(
+      buildRegistrationWithAccreditation({
+        registration: buildRegistrationView({ accreditations: {} }),
+        accreditation: undefined
+      })
     )
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      year: 2026,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const uploadPage =
+      '/organisations/500118/registrations/R26ER5001180041PL/2026/summary-logs/upload'
+    expect(
+      getByRole(main, 'button', {
+        name: 'Go back to previous page'
+      }).getAttribute('href')
+    ).toBe(uploadPage)
+    expect(
+      getByRole(main, 'link', { name: 'choose the file again' }).getAttribute(
+        'href'
+      )
+    ).toBe(uploadPage)
   })
 
   it('shows the projected waste balance panel for an accredited operator with a non-zero delta', async ({
