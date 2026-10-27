@@ -227,7 +227,7 @@ const buildApprovedPersonBanner = (reportingPeriods, localise) => {
 /**
  * The page's heading and title, each naming the year. A regulator reads
  * "Reports"; an operator "Manage reports".
- * @param {{ session: UserSession, localise: TFunction, material: string, year: number }} options
+ * @param {{ session: UserSession, localise: TFunction, material: string, year: Year }} options
  * @returns {{ heading: string, pageTitle: string }}
  */
 const buildTitles = ({ session, localise, material, year }) =>
@@ -263,10 +263,10 @@ export const listController = {
     const [{ organisation, registration, accreditation }, reportingPeriods] =
       await Promise.all([
         fetchRegistrationWithAccreditation(
-          { ...keys, year },
+          request.params,
           session.backendToken
         ),
-        fetchReportingPeriods({ ...keys, year }, session.backendToken)
+        fetchReportingPeriods(request.params, session.backendToken)
       ])
 
     const material = getMaterialDisplayName(registration.material)
@@ -329,6 +329,7 @@ export const listController = {
  * @import { UserSession } from '#server/auth/types/session.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
  * @import { RegistrationKeys, RegistrationYearKeys } from './helpers/report-paths.js'
  */
