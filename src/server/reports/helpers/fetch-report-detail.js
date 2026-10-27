@@ -5,6 +5,7 @@ import { ReportStaleError, staleReasons } from './stale.js'
 /**
  * @import { SubmissionKeys } from './report-paths.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  */
 
 /**
@@ -73,7 +74,7 @@ export async function fetchReportDetail(keys, backendToken) {
  * The natural-key report resource; `status` is `not_started` for a preview.
  * @typedef {{
  *   cadence: string,
- *   year: number,
+ *   year: Year,
  *   period: number,
  *   submissionNumber: number,
  *   startDate: string,

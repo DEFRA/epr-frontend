@@ -53,8 +53,7 @@ const brandConstructors = [
       'src/server/common/helpers/organisations/fetch-organisation-years.js',
       'src/server/common/helpers/organisations/accreditation-entries.js',
       'src/server/registrations/details/helpers/timeline-dates.js',
-      'src/server/common/helpers/natural-keys/swap-keys.js',
-      'src/server/summary-log/controller.js'
+      'src/server/common/helpers/natural-keys/swap-keys.js'
     ],
     message:
       'A year arrives branded from route params or the backend - type it there, or use currentYear or fixedYear.'
