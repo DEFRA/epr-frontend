@@ -29,7 +29,7 @@ const closedPeriodRestated = {
 const organisationNumber = '500001'
 const registrationNumber = 'R25SR500030912PA'
 const registrationUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
-const reportsUrl = `${registrationUrl}/reports`
+const reportsUrl = `${registrationUrl}/reports/2026`
 const accreditedReportsUrl = `${registrationUrl}/accreditations/2026/reports`
 const periodPath = `${accreditedReportsUrl}/monthly/2/submissions/2`
 const explainerUrl = `${periodPath}/resubmission-explainer`
@@ -85,7 +85,7 @@ describe('#resubmissionExplainerController', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: `${reportsUrl}/2026/quarterly/1/submissions/2/resubmission-explainer`,
+        url: `${reportsUrl}/quarterly/1/submissions/2/resubmission-explainer`,
         auth: mockAuth
       })
 

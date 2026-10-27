@@ -376,7 +376,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
       })
 
@@ -397,7 +397,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
       })
 

@@ -54,11 +54,12 @@ export const summaryLogUploadPath = (keys) =>
   `${registrationPath(keys)}/summary-logs/upload`
 
 /**
- * The report list page for a registration.
- * @param {RegistrationKeys} keys
+ * The report list page for a registration's year.
+ * @param {RegistrationYearKeys} keys
  * @returns {string}
  */
-export const reportsListPath = (keys) => `${registrationPath(keys)}/reports`
+export const reportsListPath = ({ year, ...keys }) =>
+  `${registrationPath(keys)}/reports/${year}`
 
 /**
  * One submission's page address; a page appends its own suffix.
@@ -75,7 +76,7 @@ export const reportPath = ({
   const reports =
     cadence === CADENCE.MONTHLY
       ? `${accreditationPath({ ...keys, year })}/reports`
-      : `${reportsListPath(keys)}/${year}`
+      : reportsListPath({ ...keys, year })
 
   return `${reports}/${cadence}/${period}/submissions/${submissionNumber}`
 }
@@ -92,5 +93,5 @@ export const reportApiPath = (keys) => reportPath(keys)
  * @param {RegistrationYearKeys} keys
  * @returns {string}
  */
-export const reportsCalendarApiPath = ({ year, ...keys }) =>
-  `${reportsListPath(keys)}/${year}/calendar`
+export const reportsCalendarApiPath = (keys) =>
+  `${reportsListPath(keys)}/calendar`

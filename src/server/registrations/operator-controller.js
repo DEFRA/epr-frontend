@@ -18,7 +18,7 @@ import {
   toDecemberBalanceBreakdown
 } from '#server/common/helpers/waste-balance/december-balance.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { thisYear } from '#server/common/helpers/year.js'
+import { currentYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { homePath } from '#server/organisations/home-page.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
@@ -235,7 +235,7 @@ const buildRegistrationViewModel = ({ request, keys, registration, year }) => {
     }),
     reports: {
       link: {
-        href: localiseUrl(reportsListPath(keys)),
+        href: localiseUrl(reportsListPath({ ...keys, year })),
         text: localise(keyForSession(request, 'registrations:manageReports'))
       }
     },
@@ -337,7 +337,7 @@ export const registrationController = {
     return redirectPreservingMethod(
       request,
       h,
-      homepage?.path ?? registeredOnlyPath({ ...keys, year: thisYear() })
+      homepage?.path ?? registeredOnlyPath({ ...keys, year: currentYear() })
     )
   }
 }

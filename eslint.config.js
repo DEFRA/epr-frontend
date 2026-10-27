@@ -57,7 +57,7 @@ const brandConstructors = [
       'src/server/summary-log/controller.js'
     ],
     message:
-      'A year arrives branded from route params or the backend - type it there, or use thisYear or fixedYear.'
+      'A year arrives branded from route params or the backend - type it there, or use currentYear or fixedYear.'
   },
   {
     name: 'toAccreditationNumber',

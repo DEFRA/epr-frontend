@@ -1,9 +1,15 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { materialsHomepage } from '#server/common/helpers/organisations/registration-in-view.js'
+import {
+  paramsOrNotFound,
+  yearParamsSchema
+} from '#server/registrations/details/helpers/params-validation.js'
 import { CADENCE, SUBMISSION_STATUS } from './constants.js'
 import { buildActionLinkHtml } from './helpers/build-action-link-html.js'
 import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
@@ -19,7 +25,6 @@ import {
   REPORT_ACTION
 } from './helpers/report-action.js'
 import { registrationPath, reportPath } from './helpers/report-paths.js'
-import { thisYear } from '#server/common/helpers/year.js'
 
 /**
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
@@ -219,22 +224,51 @@ const buildApprovedPersonBanner = (reportingPeriods, localise) => {
   return count > 0 ? localise('reports:approvedPersonBanner', { count }) : null
 }
 
-/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: RegistrationKeys }>>} */
+/**
+ * The page's heading and title. A regulator keeps the plain "Reports"; an
+ * operator sees the year.
+ * @param {{ session: UserSession, localise: TFunction, material: string, year: number }} options
+ * @returns {{ heading: string, pageTitle: string }}
+ */
+const buildTitles = ({ session, localise, material, year }) => {
+  if (readsAsARegulator(session)) {
+    return {
+      heading: localise('reports:heading'),
+      pageTitle: localise('reports:pageTitle', { material })
+    }
+  }
+
+  const heading = localise('reports:manageReportsHeading', { year })
+
+  return {
+    heading,
+    pageTitle: localise('reports:yearPageTitle', { heading, material })
+  }
+}
+
+/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: RegistrationYearKeys }>>} */
 export const listController = {
+  options: {
+    validate: paramsOrNotFound(yearParamsSchema, {
+      message: 'Reports not found',
+      code: errorCodes.registrationNotFound,
+      action: 'fetch_reports',
+      reason: 'the address holds no such year'
+    })
+  },
   async handler(request, h) {
-    const { organisationNumber, registrationNumber } = request.params
+    const { organisationNumber, registrationNumber, year } = request.params
+    const keys = { organisationNumber, registrationNumber }
     const session = request.auth.credentials
     const { t: localise } = request
 
-    // Current year until PAE-1878 lets operators choose the year.
-    const year = thisYear()
     const [{ organisation, registration, accreditation }, reportingPeriods] =
       await Promise.all([
         fetchRegistrationWithAccreditation(
-          { organisationNumber, registrationNumber, year },
+          { ...keys, year },
           session.backendToken
         ),
-        fetchReportingPeriods({ ...request.params, year }, session.backendToken)
+        fetchReportingPeriods({ ...keys, year }, session.backendToken)
       ])
 
     const material = getMaterialDisplayName(registration.material)
@@ -246,7 +280,7 @@ export const listController = {
       canWrite: hasWriteScope(session),
       localise,
       localiseUrl: (url) => request.localiseUrl(url),
-      keys: request.params,
+      keys,
       registration,
       reportingPeriods
     })
@@ -263,20 +297,22 @@ export const listController = {
         emptyMessage: localise('reports:actionRequiredEmpty')
       },
       approvedPersonBanner,
-      backUrl: request.localiseUrl(registrationPath(request.params)),
+      backUrl: request.localiseUrl(
+        materialsHomepage(keys, registration, year)?.path ??
+          registrationPath(keys)
+      ),
       breadcrumbs: readsAsARegulator(session)
         ? buildReportBreadcrumbs({
             organisation,
             registration,
-            keys: request.params,
+            keys,
             pageName: localise('reports:heading'),
             localise,
             localiseUrl: (url) => request.localiseUrl(url)
           })
         : [],
-      heading: localise('reports:heading'),
+      ...buildTitles({ session, localise, material, year }),
       material,
-      pageTitle: localise('reports:pageTitle', { material }),
       submitted: {
         head: submittedHeader,
         rows: submittedRows,
@@ -290,8 +326,9 @@ export const listController = {
 
 /**
  * @import { TFunction } from 'i18next'
+ * @import { UserSession } from '#server/auth/types/session.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
- * @import { RegistrationKeys } from './helpers/report-paths.js'
+ * @import { RegistrationKeys, RegistrationYearKeys } from './helpers/report-paths.js'
  */

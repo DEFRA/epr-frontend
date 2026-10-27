@@ -1,4 +1,3 @@
-import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
@@ -10,6 +9,7 @@ import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summ
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
+import { toYear } from '#server/common/helpers/year.js'
 import {
   buildMockAuth,
   sessionIdentity
@@ -683,12 +683,13 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('closed-period adjustments "Further action needed" section', () => {
-      it('shows the section and a "Go to reports" link when a closed period changed', async ({
+      it('shows the section and a "Go to reports" link to the summary log\'s year when a closed period changed', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce(
-          submittedWithClosedAdjustment()
-        )
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          ...submittedWithClosedAdjustment(),
+          year: 2025
+        })
 
         const main = await getMain(server)
         const reportsButton = queryByRole(main, 'button', {
@@ -700,7 +701,7 @@ describe('#summaryLogUploadProgressController', () => {
         ).not.toBeNull()
         expect(reportsButton).not.toBeNull()
         expect(reportsButton?.getAttribute('href')).toBe(
-          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2025`
         )
       })
 
@@ -872,9 +873,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       const submitUrl = `${url}/submit`
 
-      mockSubmitSummaryLog.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitting
-      })
+      mockSubmitSummaryLog.mockResolvedValueOnce({ status: 'submitting' })
 
       const { cookie, crumb } = await getCsrfToken(server, url, {
         auth: mockAuth
@@ -4374,7 +4373,7 @@ describe('summary log check view', () => {
         : { added: ZERO_CHANGE, adjusted: group }
     return {
       status: summaryLogStatuses.validated,
-      year: 2026,
+      year: toYear(2026),
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads,
@@ -4428,7 +4427,7 @@ describe('summary log check view', () => {
     exclusionReasons
   ) => ({
     status: summaryLogStatuses.validated,
-    year: 2026,
+    year: toYear(2026),
     processingType,
     loadsByReportingPeriod: {
       openPeriodLoads: {
