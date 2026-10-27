@@ -21,6 +21,7 @@ import {
   organisationPath,
   registrationPath
 } from '#server/reports/helpers/report-paths.js'
+import { fixedYear } from '#server/common/helpers/year.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -35,9 +36,6 @@ import {
 /**
  * @typedef {RegistrationKeys & { year?: Year }} WasteBalanceLedgerParams
  */
-
-// Fixed until the registered-only ledger page is year-configured.
-const REGISTERED_ONLY_LEDGER_YEAR = '2026'
 
 /**
  * One waste balance ledger, read as business events.
@@ -55,7 +53,7 @@ export const controller = {
 
     const { organisation, registration, accreditation, events } = year
       ? await readAccreditedLedger(
-          { ...registrationKeys, year: String(year) },
+          { ...registrationKeys, year },
           session.backendToken
         )
       : await readRegisteredOnlyLedger(registrationKeys, request)
@@ -66,7 +64,7 @@ export const controller = {
     const name = organisation.displayName
     const ledgerRegistrationPath = registrationPath(registrationKeys)
     const ledgerAccreditationPath = year
-      ? accreditationPath({ ...registrationKeys, year: String(year) })
+      ? accreditationPath({ ...registrationKeys, year })
       : undefined
     const recordPaths = {
       organisation: organisationPath(registrationKeys),
@@ -142,7 +140,7 @@ async function readRegisteredOnlyLedger(keys, request) {
 
   try {
     const events = await fetchRegisteredOnlyLedgerEvents(
-      { ...keys, year: REGISTERED_ONLY_LEDGER_YEAR },
+      { ...keys, year: fixedYear },
       session.backendToken
     )
 
@@ -156,7 +154,7 @@ async function readRegisteredOnlyLedger(keys, request) {
       message: 'No registered-only ledger for the year, showing it empty',
       event: {
         action: 'fetch_registered_only_ledger',
-        reason: `organisationNumber=${keys.organisationNumber} registrationNumber=${keys.registrationNumber} year=${REGISTERED_ONLY_LEDGER_YEAR}`
+        reason: `organisationNumber=${keys.organisationNumber} registrationNumber=${keys.registrationNumber} year=${fixedYear}`
       }
     })
 

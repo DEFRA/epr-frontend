@@ -10,7 +10,7 @@
  * @typedef {{
  *   organisationNumber: OrganisationNumber
  *   registrationNumber?: RegistrationNumber
- *   year?: string
+ *   year?: Year
  * }} NaturalKeys
  */
 
@@ -38,5 +38,6 @@
 /** @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js' */
 /** @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js' */
 /** @import { RegistrationNumber } from '#server/common/helpers/registration-number.js' */
+/** @import { Year } from '#server/common/helpers/year.js' */
 
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import

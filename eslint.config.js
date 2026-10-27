@@ -46,6 +46,19 @@ const brandConstructors = [
       'A registration number arrives branded from route params or the backend - type it there instead.'
   },
   {
+    name: 'toYear',
+    module: 'year.js',
+    mintedIn: [
+      'src/server/common/helpers/route-params.js',
+      'src/server/common/helpers/organisations/fetch-organisation-years.js',
+      'src/server/common/helpers/organisations/accreditation-entries.js',
+      'src/server/registrations/details/helpers/timeline-dates.js',
+      'src/server/common/helpers/natural-keys/swap-keys.js'
+    ],
+    message:
+      'A year arrives branded from route params or the backend - type it there, or use currentYear or fixedYear.'
+  },
+  {
     name: 'toAccreditationNumber',
     module: 'accreditation-number.js',
     mintedIn: [],

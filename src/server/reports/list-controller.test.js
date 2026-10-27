@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
@@ -120,7 +121,7 @@ const monthlyResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -130,7 +131,7 @@ const monthlyResponse = {
       report: null
     },
     {
-      year: 2026,
+      year: toYear(2026),
       period: 2,
       submissionNumber: 1,
       startDate: '2026-02-01',
@@ -140,7 +141,7 @@ const monthlyResponse = {
       report: null
     },
     {
-      year: 2026,
+      year: toYear(2026),
       period: 3,
       submissionNumber: 1,
       startDate: '2026-03-01',
@@ -156,7 +157,7 @@ const quarterlyResponse = {
   cadence: CADENCE.QUARTERLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -172,7 +173,7 @@ const monthlyWithReportResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -193,7 +194,7 @@ const monthlyWithReadyToSubmitResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -214,7 +215,7 @@ const monthlyWithTwoReadyToSubmitResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -229,7 +230,7 @@ const monthlyWithTwoReadyToSubmitResponse = {
       }
     },
     {
-      year: 2026,
+      year: toYear(2026),
       period: 2,
       submissionNumber: 1,
       startDate: '2026-02-01',
@@ -250,7 +251,7 @@ const monthlyWithSubmittedResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -275,7 +276,7 @@ const monthlyMixedStatusResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -294,7 +295,7 @@ const monthlyMixedStatusResponse = {
       }
     },
     {
-      year: 2026,
+      year: toYear(2026),
       period: 2,
       submissionNumber: 1,
       startDate: '2026-02-01',
@@ -309,7 +310,7 @@ const monthlyMixedStatusResponse = {
       }
     },
     {
-      year: 2026,
+      year: toYear(2026),
       period: 3,
       submissionNumber: 1,
       startDate: '2026-03-01',
@@ -746,7 +747,7 @@ describe('#listReportsController', () => {
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
           {
-            year: 2026,
+            year: toYear(2026),
             period: 1,
             submissionNumber: 1,
             startDate: '2026-01-01',
@@ -1043,7 +1044,7 @@ describe('#listReportsController', () => {
         cadence: CADENCE.QUARTERLY,
         reportingPeriods: [
           {
-            year: 2026,
+            year: toYear(2026),
             period: 1,
             submissionNumber: 1,
             startDate: '2026-01-01',
@@ -1092,7 +1093,7 @@ describe('#listReportsController', () => {
         cadence: CADENCE.QUARTERLY,
         reportingPeriods: [
           {
-            year: 2026,
+            year: toYear(2026),
             period: 1,
             submissionNumber: 1,
             startDate: '2026-01-01',
@@ -1272,7 +1273,7 @@ describe('#listReportsController', () => {
     // submission-grained pair the backend emits for a restated closed period).
     const resubmissionPeriodPair = (period) => [
       {
-        year: 2026,
+        year: toYear(2026),
         period,
         submissionNumber: 1,
         startDate: `2026-0${period}-01`,
@@ -1291,7 +1292,7 @@ describe('#listReportsController', () => {
         }
       },
       {
-        year: 2026,
+        year: toYear(2026),
         period,
         submissionNumber: 2,
         startDate: `2026-0${period}-01`,
@@ -1504,7 +1505,7 @@ describe('#listReportsController', () => {
       cadence: CADENCE.MONTHLY,
       reportingPeriods: [
         {
-          year: 2026,
+          year: toYear(2026),
           period: 1,
           submissionNumber: 2,
           startDate: '2026-01-01',
@@ -1753,7 +1754,7 @@ describe('#listReportsController', () => {
         {
           organisationNumber: '500001',
           registrationNumber: 'R25SR500030912PA',
-          year: 2025
+          year: toYear(2025)
         },
         'mock-backend-token'
       )
@@ -1761,7 +1762,7 @@ describe('#listReportsController', () => {
         {
           organisationNumber: '500001',
           registrationNumber: 'R25SR500030912PA',
-          year: 2025
+          year: toYear(2025)
         },
         'mock-backend-token'
       )

@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -15,7 +16,10 @@ describe(fetchYearCalendar, () => {
   it("should read the calendar of the registration's year the keys name", async ({
     msw
   }) => {
-    const calendar = { year: 2025, registeredOnly: { reportingPeriods: [] } }
+    const calendar = {
+      year: toYear(2025),
+      registeredOnly: { reportingPeriods: [] }
+    }
     /** @type {string[]} */
     const pathnames = []
     msw.use(
@@ -29,7 +33,7 @@ describe(fetchYearCalendar, () => {
       {
         organisationNumber: toOrganisationNumber('500001'),
         registrationNumber: toRegistrationNumber('R25/1'),
-        year: 2025
+        year: toYear(2025)
       },
       toBackendToken('a-token')
     )
@@ -48,7 +52,7 @@ describe(fetchReportingPeriods, () => {
   const keys = {
     organisationNumber: toOrganisationNumber('500001'),
     registrationNumber: toRegistrationNumber('R1'),
-    year: 2026
+    year: toYear(2026)
   }
 
   it('lists registered-only and accredited periods together in date order', async ({
@@ -57,7 +61,7 @@ describe(fetchReportingPeriods, () => {
     msw.use(
       http.get(/\/calendar$/, () =>
         HttpResponse.json({
-          year: 2026,
+          year: toYear(2026),
           registeredOnly: { reportingPeriods: [quarter] },
           accredited: {
             accreditationNumber: 'A1',
@@ -73,7 +77,9 @@ describe(fetchReportingPeriods, () => {
   })
 
   it('lists none for a year with no ended period', async ({ msw }) => {
-    msw.use(http.get(/\/calendar$/, () => HttpResponse.json({ year: 2026 })))
+    msw.use(
+      http.get(/\/calendar$/, () => HttpResponse.json({ year: toYear(2026) }))
+    )
 
     await expect(
       fetchReportingPeriods(keys, toBackendToken('a-token'))

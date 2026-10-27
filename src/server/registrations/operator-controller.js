@@ -18,7 +18,7 @@ import {
   toDecemberBalanceBreakdown
 } from '#server/common/helpers/waste-balance/december-balance.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { currentYear, toYear } from '#server/common/helpers/year.js'
+import { currentYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { homePath } from '#server/organisations/home-page.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
@@ -90,7 +90,7 @@ const VIEW = 'registrations/index'
  * @typedef {{
  *   organisationNumber: OrganisationNumber,
  *   registrationNumber: RegistrationNumber,
- *   year: number
+ *   year: Year
  * }} OperatorAccreditationParams
  */
 
@@ -102,7 +102,7 @@ const VIEW = 'registrations/index'
  */
 
 /**
- * @typedef {OperatorRegistrationParams & { year: number }} OperatorRegisteredOnlyParams
+ * @typedef {OperatorRegistrationParams & { year: Year }} OperatorRegisteredOnlyParams
  */
 
 /**
@@ -331,7 +331,7 @@ export const registrationController = {
     })
     const [latestYear] = registeredYears(registration)
     const homepage = latestYear
-      ? materialsHomepage(keys, registration, toYear(latestYear))
+      ? materialsHomepage(keys, registration, latestYear)
       : null
 
     return redirectPreservingMethod(
@@ -349,9 +349,12 @@ export const registeredOnlyYearController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationNumber: number, registrationNumber } = request.params
+    const {
+      organisationNumber: number,
+      registrationNumber,
+      year
+    } = request.params
     const keys = { organisationNumber: number, registrationNumber }
-    const year = toYear(request.params.year)
 
     const { registration } = await fetchRegistration({
       ...keys,
@@ -390,13 +393,12 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationNumber: number, registrationNumber } = request.params
-    const year = toYear(request.params.year)
-    const keys = {
+    const {
       organisationNumber: number,
       registrationNumber,
-      year: String(year)
-    }
+      year
+    } = request.params
+    const keys = { organisationNumber: number, registrationNumber, year }
     const credentials = request.auth.credentials
     const { backendToken } = credentials
 

@@ -107,7 +107,7 @@ function buildSectionIntros(
 }
 
 /**
- * @param {RegistrationKeys & { year: number }} keys
+ * @param {RegistrationYearKeys} keys
  * @param {string} uploadPath
  * @param {RegistrationView} registration
  * @param {Accreditation | undefined} accreditation
@@ -269,5 +269,5 @@ export const detailController = {
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
- * @import { RegistrationKeys } from './helpers/report-paths.js'
+ * @import { RegistrationYearKeys } from './helpers/report-paths.js'
  */

@@ -16,5 +16,15 @@
  */
 export const toYear = (value) => /** @type {Year} */ (value)
 
-/** @returns {Year} */
+/**
+ * The year it is now, in UTC.
+ * @returns {Year}
+ */
 export const currentYear = () => toYear(new Date().getUTCFullYear())
+
+const FIXED_YEAR = 2026
+
+/**
+ * The year a page uses until it has a year of its own in its URL.
+ */
+export const fixedYear = toYear(FIXED_YEAR)

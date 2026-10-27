@@ -1,5 +1,4 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { toYear } from '#server/common/helpers/year.js'
 import { homePath } from '#server/organisations/home-page.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
 import { prnsPath } from './helpers/prn-resource.js'
@@ -35,7 +34,7 @@ export const createdController = {
 
     const createUrl = `${listUrl}/create`
     const homeUrl = homePath(keys.organisationNumber, {
-      year: toYear(Number(keys.year)),
+      year: keys.year,
       exporting: isExporter
     })
 

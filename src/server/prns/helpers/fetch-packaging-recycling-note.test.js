@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -12,7 +13,7 @@ import { fetchPackagingRecyclingNote } from './fetch-packaging-recycling-note.js
 const keys = {
   organisationNumber: toOrganisationNumber('500123'),
   registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
-  year: '2026'
+  year: toYear(2026)
 }
 
 describe(fetchPackagingRecyclingNote, () => {

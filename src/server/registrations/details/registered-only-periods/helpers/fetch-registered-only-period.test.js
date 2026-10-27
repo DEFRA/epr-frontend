@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -50,11 +51,15 @@ const organisation = {
 }
 
 const firstQuarter = /** @type {ReportingPeriod} */ (
-  /** @type {unknown} */ ({ year: 2026, cadence: 'quarterly', period: 1 })
+  /** @type {unknown} */ ({
+    year: toYear(2026),
+    cadence: 'quarterly',
+    period: 1
+  })
 )
 
 const january = /** @type {ReportingPeriod} */ (
-  /** @type {unknown} */ ({ year: 2026, cadence: 'monthly', period: 1 })
+  /** @type {unknown} */ ({ year: toYear(2026), cadence: 'monthly', period: 1 })
 )
 
 const ledgerEvents = /** @type {LedgerEvent[]} */ (
@@ -65,7 +70,7 @@ const keys = { organisationNumber, registrationNumber }
 
 const params = {
   ...keys,
-  year: 2026,
+  year: toYear(2026),
   backendToken,
   canReadLedger: true,
   logger
@@ -75,7 +80,7 @@ describe(fetchRegisteredOnlyPeriod, () => {
   beforeEach(() => {
     vi.mocked(fetchOrganisation).mockResolvedValue(organisation)
     vi.mocked(fetchYearCalendar).mockResolvedValue({
-      year: 2026,
+      year: toYear(2026),
       registeredOnly: { reportingPeriods: [firstQuarter] },
       accredited: {
         accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
@@ -108,13 +113,13 @@ describe(fetchRegisteredOnlyPeriod, () => {
     await fetchRegisteredOnlyPeriod(params)
 
     expect(fetchYearCalendar).toHaveBeenCalledWith(
-      { ...keys, year: 2026 },
+      { ...keys, year: toYear(2026) },
       backendToken
     )
   })
 
   it('shows no periods for a year with no registered-only periods', async () => {
-    vi.mocked(fetchYearCalendar).mockResolvedValue({ year: 2026 })
+    vi.mocked(fetchYearCalendar).mockResolvedValue({ year: toYear(2026) })
 
     await expect(fetchRegisteredOnlyPeriod(params)).resolves.toMatchObject({
       reportingPeriods: []
@@ -174,7 +179,7 @@ describe(fetchRegisteredOnlyPeriod, () => {
       await fetchRegisteredOnlyPeriod(params)
 
       expect(fetchRegisteredOnlyLedgerEvents).toHaveBeenCalledWith(
-        { ...keys, year: '2026' },
+        { ...keys, year: toYear(2026) },
         backendToken
       )
     })

@@ -3,14 +3,13 @@ import {
   accreditationPath,
   registrationPath
 } from '#server/reports/helpers/report-paths.js'
+import { fixedYear } from '#server/common/helpers/year.js'
 
 /** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 /** @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js' */
 
-const UPLOAD_YEAR = 2026
-
 /**
- * Starts a summary log upload for 2026, at the accredited or registered-only
+ * Starts a summary log upload for the fixed year, at the accredited or registered-only
  * address.
  * @param {object} options
  * @param {RegistrationKeys} options.keys
@@ -27,8 +26,8 @@ const initiateSummaryLogUpload = ({
 }) =>
   backend(backendToken).post(
     accredited
-      ? `${accreditationPath({ ...keys, year: String(UPLOAD_YEAR) })}/summary-log`
-      : `${registrationPath(keys)}/summary-logs/${UPLOAD_YEAR}`,
+      ? `${accreditationPath({ ...keys, year: fixedYear })}/summary-log`
+      : `${registrationPath(keys)}/summary-logs/${fixedYear}`,
     { redirectUrl }
   )
 

@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -68,7 +69,7 @@ const reprocessorRegistration = buildRegistrationWithAccreditation({
 /** @type {ReportDetailResponse} */
 const exporterReportDetail = {
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   submissionNumber: 1,
   startDate: '2026-01-01',
@@ -140,7 +141,7 @@ const exporterReportDetail = {
 /** @type {ReportDetailResponse} */
 const reprocessorReportDetail = {
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   submissionNumber: 1,
   startDate: '2026-01-01',

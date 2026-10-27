@@ -30,7 +30,7 @@ export const fetchReportListDetails = async ({
 }) => {
   const [{ organisation, registration }, { accredited }] = await Promise.all([
     fetchRegistration({ ...keys, backendToken }),
-    fetchYearCalendar({ ...keys, year: Number(year) }, backendToken)
+    fetchYearCalendar({ ...keys, year }, backendToken)
   ])
 
   return {

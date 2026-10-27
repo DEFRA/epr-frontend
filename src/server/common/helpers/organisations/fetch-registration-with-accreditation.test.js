@@ -1,4 +1,5 @@
 /** @import { RegistrationView } from './organisation-view.js'; */
+import { toYear } from '#server/common/helpers/year.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -98,33 +99,30 @@ describe(fetchRegistrationWithAccreditation, () => {
     expect(accreditation).toBeUndefined()
   })
 
-  it.each([2027, '2027'])(
-    'reads the live accreditation for the year %j',
-    async (year) => {
-      const registration = buildRegistrationView({
-        accreditations: {
-          2026: buildAccreditationView({
-            accreditationNumber: toAccreditationNumber('A26')
-          }),
-          2027: buildAccreditationView({
-            accreditationNumber: toAccreditationNumber('A27')
-          })
-        }
-      })
-      resolveRegistration(registration)
+  it('reads the live accreditation for the year', async () => {
+    const registration = buildRegistrationView({
+      accreditations: {
+        2026: buildAccreditationView({
+          accreditationNumber: toAccreditationNumber('A26')
+        }),
+        2027: buildAccreditationView({
+          accreditationNumber: toAccreditationNumber('A27')
+        })
+      }
+    })
+    resolveRegistration(registration)
 
-      const { accreditation } = await fetchRegistrationWithAccreditation(
-        { ...registrationKeys, year },
-        backendToken
-      )
+    const { accreditation } = await fetchRegistrationWithAccreditation(
+      { ...registrationKeys, year: toYear(2027) },
+      backendToken
+    )
 
-      expect(accreditation).toBe(registration.accreditations['2027'])
-      expect(fetchRegistration).toHaveBeenCalledWith({
-        ...registrationKeys,
-        backendToken
-      })
-    }
-  )
+    expect(accreditation).toBe(registration.accreditations['2027'])
+    expect(fetchRegistration).toHaveBeenCalledWith({
+      ...registrationKeys,
+      backendToken
+    })
+  })
 
   it('leaves out the accreditation for a year that is not live', async () => {
     resolveRegistration(
@@ -139,18 +137,7 @@ describe(fetchRegistrationWithAccreditation, () => {
     )
 
     const { accreditation } = await fetchRegistrationWithAccreditation(
-      { ...registrationKeys, year: 2027 },
-      backendToken
-    )
-
-    expect(accreditation).toBeUndefined()
-  })
-
-  it('reads no accreditation for a year that names an inherited property', async () => {
-    resolveRegistration(buildRegistrationView())
-
-    const { accreditation } = await fetchRegistrationWithAccreditation(
-      { ...registrationKeys, year: 'constructor' },
+      { ...registrationKeys, year: toYear(2027) },
       backendToken
     )
 
@@ -159,7 +146,7 @@ describe(fetchRegistrationWithAccreditation, () => {
 })
 
 describe(fetchRequiredAccreditation, () => {
-  const keys = { ...registrationKeys, year: '2026' }
+  const keys = { ...registrationKeys, year: toYear(2026) }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -197,7 +184,7 @@ describe(fetchRequiredAccreditation, () => {
     )
 
     await expect(
-      fetchRequiredAccreditation({ ...keys, year: '2027' }, backendToken)
+      fetchRequiredAccreditation({ ...keys, year: toYear(2027) }, backendToken)
     ).rejects.toMatchObject({
       output: { statusCode: 404 },
       code: 'not_accredited',
@@ -212,18 +199,7 @@ describe(fetchRequiredAccreditation, () => {
     resolveRegistration(buildRegistrationView())
 
     await expect(
-      fetchRequiredAccreditation({ ...keys, year: '2025' }, backendToken)
-    ).rejects.toMatchObject({
-      output: { statusCode: 404 },
-      code: 'not_accredited'
-    })
-  })
-
-  it('throws 404 for a year that names an inherited property', async () => {
-    resolveRegistration(buildRegistrationView())
-
-    await expect(
-      fetchRequiredAccreditation({ ...keys, year: 'constructor' }, backendToken)
+      fetchRequiredAccreditation({ ...keys, year: toYear(2025) }, backendToken)
     ).rejects.toMatchObject({
       output: { statusCode: 404 },
       code: 'not_accredited'
@@ -232,7 +208,7 @@ describe(fetchRequiredAccreditation, () => {
 })
 
 describe(fetchRequiredAnyAccreditation, () => {
-  const keys = { ...registrationKeys, year: '2026' }
+  const keys = { ...registrationKeys, year: toYear(2026) }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -265,7 +241,10 @@ describe(fetchRequiredAnyAccreditation, () => {
     resolveRegistration(buildRegistrationView())
 
     await expect(
-      fetchRequiredAnyAccreditation({ ...keys, year: '2025' }, backendToken)
+      fetchRequiredAnyAccreditation(
+        { ...keys, year: toYear(2025) },
+        backendToken
+      )
     ).rejects.toMatchObject({
       output: { statusCode: 404 },
       code: 'not_accredited',
@@ -273,20 +252,6 @@ describe(fetchRequiredAnyAccreditation, () => {
         action: 'check_accreditation',
         reason: 'registrationNumber=R26EN0000000001PL year=2025'
       }
-    })
-  })
-
-  it('throws 404 for a year that names an inherited property', async () => {
-    resolveRegistration(buildRegistrationView())
-
-    await expect(
-      fetchRequiredAnyAccreditation(
-        { ...keys, year: 'constructor' },
-        backendToken
-      )
-    ).rejects.toMatchObject({
-      output: { statusCode: 404 },
-      code: 'not_accredited'
     })
   })
 })

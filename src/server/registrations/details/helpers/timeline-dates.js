@@ -6,6 +6,8 @@ import {
   toCalendarDate,
   utcCalendarDate
 } from '#server/common/helpers/calendar-date.js'
+import { accreditationEntries } from '#server/common/helpers/organisations/accreditation-entries.js'
+import { toYear } from '#server/common/helpers/year.js'
 
 import {
   earlier,
@@ -19,6 +21,7 @@ import {
 /**
  * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
  * @import { Accreditation, RegistrationView, StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { Stretch } from './registered-only.js'
  */
 
@@ -90,13 +93,13 @@ const REGISTERED_STATUSES = new Set([REGISTRATION_STATUS.APPROVED])
 /**
  * The runs of approved or suspended days within the accreditation's year.
  * @param {Accreditation} accreditation
- * @param {string} year
+ * @param {Year} year
  * @returns {Stretch[]}
  */
 export const accreditedStretches = ({ status }, year) =>
   clip(liveRuns(status.timeline, ACCREDITED_STATUSES), {
-    from: firstDayOf(Number(year)),
-    to: lastDayOf(Number(year))
+    from: firstDayOf(year),
+    to: lastDayOf(year)
   })
 
 /**
@@ -131,18 +134,18 @@ const accreditedFrom = (statusTimeline, yearStart) => {
 /**
  * The period an accreditation is shown as covering within its year.
  * @param {Accreditation} accreditation
- * @param {string} year
+ * @param {Year} year
  * @returns {{ validFrom: string, validTo: string }}
  */
 export const accreditedDateRange = ({ status: { timeline } }, year) => {
   const { at, status } = /** @type {StatusTimeline[number]} */ (timeline.at(-1))
 
   return {
-    validFrom: accreditedFrom(timeline, firstDayOf(Number(year))),
+    validFrom: accreditedFrom(timeline, firstDayOf(year)),
     validTo:
       status === ACCREDITATION_STATUS.CANCELLED
         ? toCalendarDate(at)
-        : lastDayOf(Number(year))
+        : lastDayOf(year)
   }
 }
 
@@ -161,7 +164,7 @@ const registeredRunsToDate = ({ status }, today) =>
  * The years holding at least one approved day up to today, most recent first.
  * @param {RegistrationView} registration
  * @param {Date} [now]
- * @returns {number[]}
+ * @returns {Year[]}
  */
 export const registeredYears = (registration, now = new Date()) => {
   const years = registeredRunsToDate(
@@ -174,7 +177,7 @@ export const registeredYears = (registration, now = new Date()) => {
     )
   )
 
-  return [...new Set(years)].sort((one, other) => other - one)
+  return [...new Set(years)].sort((one, other) => other - one).map(toYear)
 }
 
 /**
@@ -196,6 +199,6 @@ export const registeredStretches = (registration, year, now = new Date()) =>
  * @returns {Stretch[]}
  */
 export const registrationAccreditedStretches = ({ accreditations }) =>
-  Object.entries(accreditations).flatMap(([year, accreditation]) =>
+  accreditationEntries(accreditations).flatMap(([year, accreditation]) =>
     accreditedStretches(accreditation, year)
   )

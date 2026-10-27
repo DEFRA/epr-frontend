@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -29,7 +30,7 @@ describe(createReport, () => {
       {
         organisationNumber: toOrganisationNumber('500001'),
         registrationNumber: toRegistrationNumber('R25/1'),
-        year: 2026,
+        year: toYear(2026),
         cadence: 'monthly',
         period: 3,
         submissionNumber: 1

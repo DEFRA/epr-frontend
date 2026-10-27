@@ -234,7 +234,7 @@
  * lists only the closed periods whose reported figures changed (empty when
  * none) and drives the resubmission messaging; closedPeriodLoads still carries
  * the display data (counts, tonnages, row detail).
- * @typedef {{ year: number, cadence: CadenceValue, period: number }} PeriodRef
+ * @typedef {{ year: Year, cadence: CadenceValue, period: number }} PeriodRef
  * @typedef {{
  *   openPeriodLoads: PeriodStatus,
  *   closedPeriodLoads: PeriodStatus,
