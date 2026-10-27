@@ -97,7 +97,7 @@ export const fetchRequiredAnyAccreditation = async (
 }
 
 /**
- * The year's accreditation, ignoring inherited keys such as `constructor`.
+ * The year's accreditation, ignoring inherited keys.
  * @param {RegistrationView} registration
  * @param {Year} year
  * @returns {Accreditation | undefined}

@@ -4,7 +4,7 @@ import { reportsCalendarApiPath } from './report-paths.js'
 
 /**
  * Fetches a registration's reporting calendar for one year by its natural keys.
- * @param {AccreditationKeys} keys
+ * @param {RegistrationYearKeys} keys
  * @param {BackendToken} backendToken
  * @returns {Promise<YearCalendarResponse>}
  */
@@ -15,7 +15,7 @@ export const fetchYearCalendar = (keys, backendToken) =>
  * Fetches a registration's registered-only and accredited periods for one year
  * as one list, in date order, as a registration that changed type mid-year owes
  * both.
- * @param {AccreditationKeys} keys
+ * @param {RegistrationYearKeys} keys
  * @param {BackendToken} backendToken
  * @returns {Promise<ReportingPeriod[]>}
  */
@@ -72,7 +72,7 @@ export const fetchReportingPeriods = async (keys, backendToken) => {
 
 /**
  * @import { CadenceValue, SubmissionStatusValue } from '../constants.js'
- * @import { AccreditationKeys } from './report-paths.js'
+ * @import { RegistrationYearKeys } from './report-paths.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'

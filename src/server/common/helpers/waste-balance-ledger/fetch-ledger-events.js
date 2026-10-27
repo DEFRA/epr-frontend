@@ -5,7 +5,7 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 /** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
-/** @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js' */
+/** @import { AccreditationKeys, RegistrationYearKeys } from '#server/reports/helpers/report-paths.js' */
 
 /**
  * What every entry of a waste balance ledger states, whichever thing it
@@ -83,7 +83,7 @@ export const fetchAccreditationLedgerEvents = async (keys, backendToken) =>
 
 /**
  * Reads the registered-only ledger events in a year by natural key.
- * @param {AccreditationKeys} keys
+ * @param {RegistrationYearKeys} keys
  * @param {BackendToken} backendToken
  * @returns {Promise<LedgerEvent[]>}
  */

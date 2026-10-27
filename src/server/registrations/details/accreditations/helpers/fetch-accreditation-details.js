@@ -14,7 +14,7 @@ import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-perio
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { AccreditationKeys, RegistrationYearKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
@@ -66,7 +66,7 @@ const fetchAccreditation = async ({ keys, backendToken, logger }) => {
 
 /**
  * The year's accredited periods, or no periods where they could not be read.
- * @param {{ keys: AccreditationKeys, backendToken: BackendToken, logger: TypedLogger }} params
+ * @param {{ keys: RegistrationYearKeys, backendToken: BackendToken, logger: TypedLogger }} params
  * @returns {Promise<ReportingCalendar>}
  */
 const fetchReportingCalendar = async ({ keys, backendToken, logger }) => {

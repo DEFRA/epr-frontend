@@ -9,8 +9,9 @@ import { CADENCE } from '../constants.js'
 
 /**
  * @typedef {{ organisationNumber: OrganisationNumber, registrationNumber: RegistrationNumber }} RegistrationKeys
- * @typedef {RegistrationKeys & { year: Year }} AccreditationKeys
- * @typedef {RegistrationKeys & { year: Year, cadence: CadenceValue, period: number, submissionNumber: number }} SubmissionKeys
+ * @typedef {RegistrationKeys & { year: Year }} RegistrationYearKeys
+ * @typedef {RegistrationYearKeys} AccreditationKeys
+ * @typedef {RegistrationYearKeys & { cadence: CadenceValue, period: number, submissionNumber: number }} SubmissionKeys
  */
 
 /**
@@ -35,10 +36,10 @@ export const registrationPath = ({ registrationNumber, ...keys }) =>
  * @returns {string}
  */
 export const accreditationPath = ({ year, ...keys }) =>
-  `${registrationPath(keys)}/accreditations/${encodeURIComponent(year)}`
+  `${registrationPath(keys)}/accreditations/${year}`
 
 /**
- * @param {AccreditationKeys} keys
+ * @param {RegistrationYearKeys} keys
  * @returns {string}
  */
 export const registeredOnlyPath = ({ year, ...keys }) =>
@@ -88,7 +89,7 @@ export const reportApiPath = (keys) => reportPath(keys)
 
 /**
  * The backend reporting calendar route for a registration's year.
- * @param {AccreditationKeys} keys
+ * @param {RegistrationYearKeys} keys
  * @returns {string}
  */
 export const reportsCalendarApiPath = ({ year, ...keys }) =>
