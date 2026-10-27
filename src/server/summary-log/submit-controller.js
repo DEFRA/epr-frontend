@@ -60,6 +60,13 @@ export const submitSummaryLogController = {
       if (err.output?.statusCode === statusCodes.conflict) {
         const summaryLog = await fetchSummaryLogStatus(keys, summaryLogId, {
           backendToken: session.backendToken
+        }).catch((statusErr) => {
+          request.logger.warn({
+            message:
+              'Failed to fetch summary log status for the upload conflict page; linking home without a year',
+            err: statusErr
+          })
+          return { status: 'unknown' }
         })
 
         return h.view(UPLOAD_CONFLICT_VIEW, {

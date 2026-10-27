@@ -219,7 +219,7 @@ describe('#submitSummaryLogController', () => {
     )
   })
 
-  it('links the conflict view to the organisation home without a year for a summary log not yet stored', async ({
+  it("still renders the conflict view, linking home without a year, when the summary log's status cannot be read", async ({
     server
   }) => {
     vi.mocked(submitSummaryLog).mockRejectedValueOnce(
@@ -230,11 +230,11 @@ describe('#submitSummaryLogController', () => {
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
       auth: mockAuth
     })
-    vi.mocked(fetchSummaryLogStatus).mockResolvedValueOnce({
-      status: 'preprocessing'
-    })
+    vi.mocked(fetchSummaryLogStatus).mockRejectedValueOnce(
+      Boom.badGateway('Backend unavailable')
+    )
 
-    const { result } = await server.inject({
+    const { result, statusCode } = await server.inject({
       method: 'POST',
       url,
       auth: mockAuth,
@@ -242,6 +242,10 @@ describe('#submitSummaryLogController', () => {
       payload: { crumb }
     })
 
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toStrictEqual(
+      expect.stringContaining('Your waste records cannot be updated')
+    )
     expect(homePageHref(result)).toBe(`/organisations/${organisationNumber}`)
   })
 
