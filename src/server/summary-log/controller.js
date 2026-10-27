@@ -209,6 +209,7 @@ const renderSuccessView = (
     heading,
     organisationPath,
     registrationPath,
+    reportsUrl: `${registrationPath}/reports/${year}`,
     wasteBalance,
     showFurtherAction: requiresResubmission(loadsByReportingPeriod)
   })

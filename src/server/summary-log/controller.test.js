@@ -683,12 +683,13 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('closed-period adjustments "Further action needed" section', () => {
-      it('shows the section and a "Go to reports" link when a closed period changed', async ({
+      it('shows the section and a "Go to reports" link to the summary log\'s year when a closed period changed', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce(
-          submittedWithClosedAdjustment()
-        )
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          ...submittedWithClosedAdjustment(),
+          year: 2025
+        })
 
         const main = await getMain(server)
         const reportsButton = queryByRole(main, 'button', {
@@ -700,7 +701,7 @@ describe('#summaryLogUploadProgressController', () => {
         ).not.toBeNull()
         expect(reportsButton).not.toBeNull()
         expect(reportsButton?.getAttribute('href')).toBe(
-          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2025`
         )
       })
 

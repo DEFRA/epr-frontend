@@ -107,7 +107,7 @@ function buildSectionIntros(
 }
 
 /**
- * @param {RegistrationKeys} keys
+ * @param {RegistrationKeys & { year: number }} keys
  * @param {string} uploadPath
  * @param {RegistrationView} registration
  * @param {Accreditation | undefined} accreditation
