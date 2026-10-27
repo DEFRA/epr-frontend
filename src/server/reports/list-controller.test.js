@@ -7,6 +7,7 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import {
   asRegistrationWithAccreditation,
@@ -24,6 +25,8 @@ import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
  * @import { DOMWindow } from 'jsdom'
+ * @import { RegistrationStatus } from '#domain/organisations/model.js'
+ * @import { StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  */
@@ -31,6 +34,7 @@ import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
+vi.mock(import('#server/common/helpers/organisations/fetch-registration.js'))
 vi.mock(import('#server/reports/helpers/fetch-reporting-periods.js'))
 
 /**
@@ -1777,39 +1781,80 @@ describe('#listReportsController', () => {
       }
     )
 
-    it("sends the yearless address to the current year's list", async ({
-      server
-    }) => {
-      vi.useFakeTimers({
-        now: new Date('2027-01-05T10:00:00.000Z'),
-        toFake: ['Date']
+    describe('at the yearless address', () => {
+      /**
+       * @param {RegistrationStatus} current
+       * @param {StatusTimeline} timeline
+       */
+      const backendServesRegistrationWith = (current, timeline) =>
+        vi.mocked(fetchRegistration).mockResolvedValue({
+          organisation: accreditedRegistration.organisation,
+          registration: buildRegistrationView({
+            status: { current, timeline }
+          })
+        })
+
+      beforeEach(() => {
+        vi.useFakeTimers({
+          now: new Date('2027-01-05T10:00:00.000Z'),
+          toFake: ['Date']
+        })
       })
 
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: `${registrationUrl}/reports`,
-        auth: mockAuth
+      it('sends the address to the latest year the registration was approved in', async ({
+        server
+      }) => {
+        backendServesRegistrationWith('cancelled', [
+          { status: 'approved', at: '2024-01-01T00:00:00.000Z' },
+          { status: 'cancelled', at: '2025-06-30T00:00:00.000Z' }
+        ])
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: `${registrationUrl}/reports`,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(`${registrationUrl}/reports/2025`)
+        expect(fetchRegistration).toHaveBeenCalledWith({
+          organisationNumber: '500001',
+          registrationNumber: 'R25SR500030912PA',
+          backendToken: 'mock-backend-token'
+        })
       })
 
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(`${registrationUrl}/reports/2027`)
-    })
+      it("sends the address to the current year's list for a registration never approved", async ({
+        server
+      }) => {
+        backendServesRegistrationWith('created', [
+          { status: 'created', at: '2026-03-01T00:00:00.000Z' }
+        ])
 
-    it('keeps the language when sending the yearless address on', async ({
-      server
-    }) => {
-      vi.useFakeTimers({
-        now: new Date('2027-01-05T10:00:00.000Z'),
-        toFake: ['Date']
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: `${registrationUrl}/reports`,
+          auth: mockAuth
+        })
+
+        expect(headers.location).toBe(`${registrationUrl}/reports/2027`)
       })
 
-      const { headers } = await server.inject({
-        method: 'GET',
-        url: `/cy${registrationUrl}/reports`,
-        auth: mockAuth
-      })
+      it('keeps the language when sending the address on', async ({
+        server
+      }) => {
+        backendServesRegistrationWith('approved', [
+          { status: 'approved', at: '2026-01-01T00:00:00.000Z' }
+        ])
 
-      expect(headers.location).toBe(`/cy${registrationUrl}/reports/2027`)
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: `/cy${registrationUrl}/reports`,
+          auth: mockAuth
+        })
+
+        expect(headers.location).toBe(`/cy${registrationUrl}/reports/2027`)
+      })
     })
   })
 

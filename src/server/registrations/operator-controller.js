@@ -18,7 +18,7 @@ import {
   toDecemberBalanceBreakdown
 } from '#server/common/helpers/waste-balance/december-balance.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { toYear } from '#server/common/helpers/year.js'
+import { currentYear, toYear } from '#server/common/helpers/year.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { homePath } from '#server/organisations/home-page.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
@@ -337,8 +337,7 @@ export const registrationController = {
     return redirectPreservingMethod(
       request,
       h,
-      homepage?.path ??
-        registeredOnlyPath({ ...keys, year: new Date().getUTCFullYear() })
+      homepage?.path ?? registeredOnlyPath({ ...keys, year: currentYear() })
     )
   }
 }
