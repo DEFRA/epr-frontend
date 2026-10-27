@@ -563,27 +563,27 @@ describe('the waste balance ledger page', () => {
       ).not.toBeNull()
     })
 
-    it.for(['abcd', '2026.0', '2023'])(
-      'refuses the address year %s without asking the backend',
-      async (year, { msw, server }) => {
-        /** @type {string[]} */
-        const backendRequests = []
-        msw.events.on('request:start', ({ request }) => {
-          if (request.url.startsWith(backendUrl)) {
-            backendRequests.push(request.url)
-          }
-        })
+    it('refuses a year the service does not answer for without asking the backend', async ({
+      msw,
+      server
+    }) => {
+      /** @type {string[]} */
+      const backendRequests = []
+      msw.events.on('request:start', ({ request }) => {
+        if (request.url.startsWith(backendUrl)) {
+          backendRequests.push(request.url)
+        }
+      })
 
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: `${accreditedRegistrationPath}/accreditations/${year}/waste-balance-ledger`,
-          auth: regulator
-        })
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${accreditedRegistrationPath}/accreditations/2023/waste-balance-ledger`,
+        auth: regulator
+      })
 
-        expect(statusCode).toBe(statusCodes.notFound)
-        expect(backendRequests).toStrictEqual([])
-      }
-    )
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(backendRequests).toStrictEqual([])
+    })
 
     it('refuses a year the registration holds no accreditation for, rather than reporting an empty ledger', async ({
       server

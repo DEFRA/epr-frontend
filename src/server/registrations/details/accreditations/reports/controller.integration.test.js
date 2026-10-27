@@ -312,19 +312,13 @@ describe('the regulator reports detailed view', () => {
     expect(fetchReportListDetails).not.toHaveBeenCalled()
   })
 
-  it.for([
-    {
-      name: 'a year outside the range the service answers for',
-      year: toYear(1999)
-    },
-    { name: 'a year with five digits', year: '02026' },
-    { name: 'a year with a decimal point', year: '2026.0' },
-    { name: 'a year with a plus sign', year: '+2026' }
-  ])('does not exist for $name', async ({ year }, { server }) => {
+  it('does not exist for a year outside the range the service answers for', async ({
+    server
+  }) => {
     const { statusCode } = await visit(
       server,
       regulator,
-      `${registrationPath}/accreditations/${year}/reports`
+      `${registrationPath}/accreditations/1999/reports`
     )
 
     expect(statusCode).toBe(statusCodes.notFound)

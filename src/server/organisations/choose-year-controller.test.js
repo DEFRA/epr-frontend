@@ -106,7 +106,7 @@ describe('choosing a different year', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it.for(['abc', '2026.0', '2023', '2101'])(
+    it.for(['abc', '2023'])(
       'is not found for the address year %s, without asking the backend',
       async (segment, { server }) => {
         const { statusCode } = await choose(

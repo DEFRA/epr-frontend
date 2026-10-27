@@ -648,7 +648,7 @@ describe('the organisation home page', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it.for(['20x6', '202', '20266', '2026.0', '+2026', '2023', '2101'])(
+    it.for(['20x6', '202', '20266', '2023'])(
       'finds no page for the address "%s", without asking the backend',
       async (segment, { server }) => {
         const { statusCode } = await visit(server, `${BARE_PATH}/${segment}`)

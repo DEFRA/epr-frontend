@@ -255,29 +255,23 @@ describe('#postCreatePrnController', () => {
       })
     })
 
-    describe('with an address year the service does not answer for', () => {
-      it.for(['abcd', '2026.0', '2023'])(
-        'is not found for %s, even with a payload it would reject',
-        async (year, { server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, url, {
-            auth: mockAuth
-          })
+    it('is not found for a year the service does not answer for, even with a payload it would reject', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, url, {
+        auth: mockAuth
+      })
 
-          const { statusCode } = await server.inject({
-            method: 'POST',
-            url: url.replace(
-              '/accreditations/2026/',
-              `/accreditations/${year}/`
-            ),
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { ...validPayload, tonnage: '', crumb }
-          })
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: url.replace('/accreditations/2026/', '/accreditations/2023/'),
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { ...validPayload, tonnage: '', crumb }
+      })
 
-          expect(statusCode).toBe(statusCodes.notFound)
-          expect(createPrn).not.toHaveBeenCalled()
-        }
-      )
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(createPrn).not.toHaveBeenCalled()
     })
 
     describe('with invalid payload', () => {

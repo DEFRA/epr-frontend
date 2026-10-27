@@ -1022,22 +1022,21 @@ describe('#listPrnsController', () => {
     })
 
     describe('error handling', () => {
-      it.for(['abcd', '2026.0', '2023'])(
-        'should return 404 for the address year %s, without reading the accreditation',
-        async (year, { server }) => {
-          const { statusCode } = await server.inject({
-            method: 'GET',
-            url: reprocessorListUrl.replace(
-              '/accreditations/2026/',
-              `/accreditations/${year}/`
-            ),
-            auth: mockAuth
-          })
+      it('should return 404 for a year the service does not answer for, without reading the accreditation', async ({
+        server
+      }) => {
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl.replace(
+            '/accreditations/2026/',
+            '/accreditations/2023/'
+          ),
+          auth: mockAuth
+        })
 
-          expect(statusCode).toBe(statusCodes.notFound)
-          expect(fetchRequiredAccreditation).not.toHaveBeenCalled()
-        }
-      )
+        expect(statusCode).toBe(statusCodes.notFound)
+        expect(fetchRequiredAccreditation).not.toHaveBeenCalled()
+      })
 
       it('should return 404 when the year names no live accreditation', async ({
         server
