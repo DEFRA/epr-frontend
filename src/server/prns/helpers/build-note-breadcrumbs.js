@@ -60,7 +60,8 @@ export const buildNoteBreadcrumbs = ({
   },
   {
     text: localise('registrations:details:accreditation:prns:listHeading', {
-      noteTypePlural
+      noteTypePlural,
+      year: keys.year
     }),
     href: localiseUrl(prnsPath(keys))
   },
