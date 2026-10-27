@@ -12,6 +12,7 @@ import { requiresResubmission } from './closed-period-changes.js'
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import {
  *   BalanceAffectingBucket,
  *   BalanceAffectingViewModel,
@@ -344,7 +345,8 @@ const buildPeriodViewModel = (period, ctx) => {
  *   organisationPath: string,
  *   registrationPath: string,
  *   summaryLogId: string,
- *   wasteBalance?: number
+ *   wasteBalance?: number,
+ *   year: Year
  * }} context - View context
  * @returns {ResponseObject} Hapi view response
  */
@@ -357,7 +359,8 @@ export const renderCheckView = (
     organisationPath,
     registrationPath,
     summaryLogId,
-    wasteBalance
+    wasteBalance,
+    year
   }
 ) => {
   if (loadsByReportingPeriod === undefined) {
@@ -375,6 +378,7 @@ export const renderCheckView = (
 
   return h.view(CHECK_VIEW_NAME, {
     pageTitle: localise('summary-log:checkPageTitle'),
+    heading: localise('summary-log:check.pageHeading', { year }),
     organisationPath,
     registrationPath,
     summaryLogId,

@@ -29,7 +29,7 @@
   },
   "check": {
     "pageCaption": "Summary log",
-    "pageHeading": "Upload your summary log",
+    "pageHeading": "Upload your summary log ({{year}})",
     "submitButton": "Upload summary log",
     "insetSaveWarning": "Your data will not be saved until you upload it.",
     "insetWrongLead": "If something looks wrong,",

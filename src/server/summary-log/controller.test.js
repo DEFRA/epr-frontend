@@ -3076,7 +3076,7 @@ describe('summary log check view', () => {
   it('uses the new page heading, intro and submit copy', async ({ server }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
-      year: 2026,
+      year: 2027,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -3087,7 +3087,10 @@ describe('summary log check view', () => {
     const { main, result } = await renderMain(server)
 
     expect(
-      getByRole(main, 'heading', { level: 1, name: /Upload your summary log/ })
+      getByRole(main, 'heading', {
+        level: 1,
+        name: 'Summary log Upload your summary log (2027)'
+      })
     ).toBeDefined()
     expect(
       getByRole(main, 'button', { name: 'Upload summary log' })
