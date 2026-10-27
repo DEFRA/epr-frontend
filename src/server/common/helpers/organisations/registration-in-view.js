@@ -1,7 +1,7 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
-import { toYear } from '#server/common/helpers/year.js'
+import { currentYear, toYear } from '#server/common/helpers/year.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
   accreditationPath,
@@ -119,8 +119,5 @@ export const defaultMaterialsHomepagePath = (keys, registration) => {
     ? materialsHomepage(keys, registration, toYear(latestYear))
     : null
 
-  return (
-    homepage?.path ??
-    registeredOnlyPath({ ...keys, year: new Date().getUTCFullYear() })
-  )
+  return homepage?.path ?? registeredOnlyPath({ ...keys, year: currentYear() })
 }
