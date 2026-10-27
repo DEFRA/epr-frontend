@@ -2,6 +2,7 @@ import { isRegisteredOnlyProcessingType } from '#domain/summary-logs/meta-fields
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { materialsHomepage } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
@@ -387,8 +388,6 @@ const renderPassedValidationView = async (
 }
 
 /**
- * Where a failed summary log's back link and Cancel go, and the re-upload it
- * starts: both follow the materials homepage for the summary log's year.
  * @param {RegistrationKeys} keys
  * @param {Year} year - The summary log's year
  * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
@@ -396,10 +395,10 @@ const renderPassedValidationView = async (
  * @returns {Promise<{cancelUrl: string, uploadUrl?: string}>}
  */
 const getReuploadLinks = async (keys, year, redirectUrl, session) => {
-  const { registration } = await fetchRegistrationWithAccreditation(
-    { ...keys, year },
-    session.backendToken
-  )
+  const { registration } = await fetchRegistration({
+    ...keys,
+    backendToken: session.backendToken
+  })
   const homepage = materialsHomepage(keys, registration, year)
   const cancelUrl = homepage?.path ?? toRegistrationPath(keys)
 

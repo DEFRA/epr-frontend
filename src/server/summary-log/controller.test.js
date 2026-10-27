@@ -4,6 +4,7 @@ import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
@@ -82,6 +83,8 @@ vi.mock(
   })
 )
 
+vi.mock(import('#server/common/helpers/organisations/fetch-registration.js'))
+
 vi.mock(
   import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'),
   () => ({
@@ -101,6 +104,7 @@ const mockSubmitSummaryLog = vi.mocked(submitSummaryLog, {
   partial: true,
   deep: true
 })
+const mockFetchRegistration = vi.mocked(fetchRegistration)
 const mockFetchRegistrationWithAccreditation = vi.mocked(
   fetchRegistrationWithAccreditation
 )
@@ -169,6 +173,7 @@ describe('#summaryLogUploadProgressController', () => {
     mockFetchRegistrationWithAccreditation
       .mockReset()
       .mockResolvedValue(registeredOnly)
+    mockFetchRegistration.mockReset().mockResolvedValue(registeredOnly)
     mockFetchOrganisationWasteBalances.mockReset()
   })
 
@@ -1623,7 +1628,7 @@ describe('#summaryLogUploadProgressController', () => {
     ])(
       "status: %s - links back and Cancel to the materials homepage for the summary log's year",
       async (status, { server }) => {
-        mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited2027)
+        mockFetchRegistration.mockResolvedValue(accredited2027)
         mockFetchSummaryLogStatus.mockResolvedValueOnce({ status, year: 2027 })
 
         const { result } = await server.inject({
@@ -1648,7 +1653,7 @@ describe('#summaryLogUploadProgressController', () => {
     it("re-uploads to the registered-only materials homepage when the accreditation for the summary log's year is not live", async ({
       server
     }) => {
-      mockFetchRegistrationWithAccreditation.mockResolvedValue(
+      mockFetchRegistration.mockResolvedValue(
         buildRegistrationWithAccreditation({
           registration: buildRegistrationView({
             accreditations: {
@@ -2631,9 +2636,7 @@ describe('#summaryLogUploadProgressController', () => {
           validation: { failures: [{ errorCode: 'REGISTRATION_MISMATCH' }] }
         })
 
-        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
-          accredited2027
-        )
+        mockFetchRegistration.mockResolvedValueOnce(accredited2027)
 
         await server.inject({ method: 'GET', url, auth: mockAuth })
 
