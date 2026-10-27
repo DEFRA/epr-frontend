@@ -121,7 +121,6 @@
     }
   },
   "checkIntro": "Your summary log data has been checked and is now ready for you to upload.",
-  "checkPageTitle": "Summary log",
   "closedPeriodAdjustments": {
     "importantTitle": "Important",
     "importantBody": "If you upload this summary log, you'll need to create a new report for any relevant period and an approved person from your business will need to resubmit it to your regulator.",

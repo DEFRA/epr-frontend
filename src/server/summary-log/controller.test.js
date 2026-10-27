@@ -2882,6 +2882,26 @@ describe('summary log check view', () => {
     ).toBe(`/organisations/${organisationNumber}/2027`)
   })
 
+  it("status: validated - should title the page with the summary log's year", async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      year: 2027,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(new JSDOM(result).window.document.title).toMatch(
+      /^Upload your summary log \(2027\) \|/
+    )
+  })
+
   it('renders all four populated accredited sections with balance language', async ({
     server
   }) => {
