@@ -74,7 +74,7 @@ describe(buildNoteBreadcrumbs, () => {
     })
 
     expect(crumbs[4].text).toBe(
-      'registrations:details:accreditation:prns:listHeading {"noteTypePlural":"PRNs","year":"2026"}'
+      'registrations:details:accreditation:prns:listHeading {"noteTypePlural":"PRNs","year":2026}'
     )
   })
 
