@@ -9,6 +9,10 @@ import {
 } from '#server/common/helpers/logging/cdp-boom.js'
 import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
+import {
+  closedYearSendsTo,
+  isClosedYearRefusal
+} from './helpers/closed-year.js'
 import { createPrn } from './helpers/create-prn.js'
 import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
@@ -394,6 +398,10 @@ export const postController = {
     } catch (error) {
       if (error.output?.payload?.code === INSUFFICIENT_BALANCE_CODE) {
         return handleInsufficientBalance(request, h, organisations)
+      }
+
+      if (isClosedYearRefusal(error)) {
+        return h.redirect(closedYearSendsTo.list(request.params))
       }
 
       if (error.isBoom) {

@@ -5,6 +5,7 @@ import { fetchRequiredAccreditation } from '#server/common/helpers/organisations
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
+  buildAccreditationView,
   buildRegistrationView,
   buildRegistrationWithAccreditation
 } from '#server/common/test-helpers/organisation-view-fixtures.js'
@@ -90,6 +91,23 @@ describe('#cancelController', () => {
 
   describe('request handling', () => {
     describe('GET /cancel (confirmation page)', () => {
+      it('should still offer confirming a requested cancellation once the year has closed', async ({
+        server
+      }) => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          accreditation: buildAccreditationView({ prns: { open: false } })
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: cancelUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
       it('displays confirmation heading', async ({ server }) => {
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -258,6 +276,30 @@ describe('#cancelController', () => {
           { status: 'cancelled' },
           mockCredentials.backendToken
         )
+      })
+
+      it('should still cancel a requested cancellation once the year has closed', async ({
+        server
+      }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          cancelUrl,
+          { auth: mockAuth }
+        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          accreditation: buildAccreditationView({ prns: { open: false } })
+        })
+
+        const { headers } = await server.inject({
+          method: 'POST',
+          url: cancelUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
+
+        expect(headers.location).toBe(`${basePath}/${prnId}/cancelled`)
       })
 
       it('redirects to list when PRN is not in awaiting_cancellation status', async ({

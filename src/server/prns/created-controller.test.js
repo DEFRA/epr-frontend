@@ -42,7 +42,10 @@ const { fetchDecemberPrnEligibility } =
 const { fetchOrganisationWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
 
-/** @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js' */
+/**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
+ */
 
 /**
  * The accreditation's balance, as the create and confirm steps each read it.
@@ -363,27 +366,54 @@ describe('#createdController', () => {
         )
       })
 
-      it('displays return to home link', async ({ server }) => {
-        const { cookies } = await createPrnAndConfirm(server)
+      it.for([
+        {
+          description: 'a PRN',
+          arrange: async (/** @type {HapiServer} */ server) => ({
+            ...(await createPrnAndConfirm(server)),
+            url: createdUrl
+          }),
+          home: `/organisations/${organisationNumber}/2026`
+        },
+        {
+          description: 'a PERN',
+          arrange: async (/** @type {HapiServer} */ server) => {
+            vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+              fixtureExporter
+            )
+            vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
+            vi.mocked(updatePrnStatus).mockResolvedValue(mockPernStatusUpdated)
+            return {
+              ...(await createPrnAndConfirm(
+                server,
+                { ...validPayload, wasteProcessingType: 'exporter' },
+                `${prnsBase}/${pernId}/view`
+              )),
+              url: pernCreatedUrl
+            }
+          },
+          home: `/organisations/${organisationNumber}/2026/exporting`
+        }
+      ])(
+        'should return home to the note year for $description',
+        async ({ arrange, home }, { server }) => {
+          const { cookies, url } = await arrange(server)
 
-        const { result } = await server.inject({
-          method: 'GET',
-          url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
-        })
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth,
+            headers: { cookie: cookies }
+          })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        const returnLink = getByText(main, /Return to home/i)
-
-        expect(returnLink).toBeDefined()
-        expect(returnLink.getAttribute('href')).toBe(
-          `/organisations/${organisationNumber}`
-        )
-      })
+          const main = getByRole(new JSDOM(result).window.document.body, 'main')
+          expect(
+            getByRole(main, 'link', { name: /Return to home/i }).getAttribute(
+              'href'
+            )
+          ).toBe(home)
+        }
+      )
 
       it('displays PERN text for exporter wasteProcessingType', async ({
         server

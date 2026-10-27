@@ -61,6 +61,22 @@ describe(buildNoteBreadcrumbs, () => {
     ])
   })
 
+  it('names the notes list by its note type and year, as the list heads itself', () => {
+    const crumbs = buildNoteBreadcrumbs({
+      ...context,
+      localise: /** @type {TFunction} */ (
+        /** @type {unknown} */ (
+          (/** @type {string} */ key, /** @type {object} */ params) =>
+            `${key} ${JSON.stringify(params)}`
+        )
+      )
+    })
+
+    expect(crumbs[4].text).toBe(
+      'registrations:details:accreditation:prns:listHeading {"noteTypePlural":"PRNs","year":"2026"}'
+    )
+  })
+
   it('falls back to the note id where it carries no number yet', () => {
     const crumbs = buildNoteBreadcrumbs({
       ...context,
