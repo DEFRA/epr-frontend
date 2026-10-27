@@ -5,8 +5,11 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
+import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asHtml, documentOf } from '#server/common/test-helpers/dom.js'
 import {
   buildOrganisationView,
   buildRegistrationView
@@ -14,6 +17,7 @@ import {
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
+import { getByRole } from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
 
@@ -40,6 +44,12 @@ const mockAuth = buildMockAuth({
   backendToken: toBackendToken('test-id-token'),
   linkedOrganisationId: '123'
 })
+
+/** @param {unknown} result */
+const homePageHref = (result) =>
+  getByRole(documentOf(asHtml(result)), 'link', {
+    name: 'home page'
+  }).getAttribute('href')
 
 describe('#submitSummaryLogController', () => {
   const organisationNumber = toOrganisationNumber('500118')
@@ -184,6 +194,10 @@ describe('#submitSummaryLogController', () => {
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
       auth: mockAuth
     })
+    vi.mocked(fetchSummaryLogStatus).mockResolvedValueOnce({
+      status: 'superseded',
+      year: toYear(2027)
+    })
 
     const { result, statusCode } = await server.inject({
       method: 'POST',
@@ -200,9 +214,35 @@ describe('#submitSummaryLogController', () => {
     expect(result).toStrictEqual(
       expect.stringContaining('someone else from your organisation')
     )
-    expect(result).toStrictEqual(
-      expect.stringContaining(`href="/organisations/${organisationNumber}"`)
+    expect(homePageHref(result)).toBe(
+      `/organisations/${organisationNumber}/2027`
     )
+  })
+
+  it('links the conflict view to the organisation home without a year for a summary log not yet stored', async ({
+    server
+  }) => {
+    vi.mocked(submitSummaryLog).mockRejectedValueOnce(
+      Boom.conflict('Summary log must be validated before submission')
+    )
+
+    const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl, {
+      auth: mockAuth
+    })
+    vi.mocked(fetchSummaryLogStatus).mockResolvedValueOnce({
+      status: 'preprocessing'
+    })
+
+    const { result } = await server.inject({
+      method: 'POST',
+      url,
+      auth: mockAuth,
+      headers: { cookie },
+      payload: { crumb }
+    })
+
+    expect(homePageHref(result)).toBe(`/organisations/${organisationNumber}`)
   })
 
   it('should allow non-conflict backend errors to bubble up', async ({

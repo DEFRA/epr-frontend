@@ -1,4 +1,5 @@
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
+import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
@@ -57,9 +58,16 @@ export const submitSummaryLogController = {
       return h.redirect(redirectUrl)
     } catch (err) {
       if (err.output?.statusCode === statusCodes.conflict) {
+        const summaryLog = await fetchSummaryLogStatus(keys, summaryLogId, {
+          backendToken: session.backendToken
+        })
+
         return h.view(UPLOAD_CONFLICT_VIEW, {
           pageTitle: localise(PAGE_TITLE_KEY),
-          organisationPath: organisationPath(keys)
+          organisationPath:
+            'year' in summaryLog
+              ? `${organisationPath(keys)}/${summaryLog.year}`
+              : organisationPath(keys)
         })
       }
 
