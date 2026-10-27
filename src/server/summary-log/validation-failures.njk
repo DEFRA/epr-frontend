@@ -78,13 +78,15 @@
           <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
         {% endif %}
 
-        {{ summaryLogUpload({
-          uploadUrl: uploadUrl,
-          fileUploadLabel: fileUploadLabel,
-          buttonText: buttonText,
-          cancelUrl: cancelUrl,
-          cancelButtonText: cancelButtonText
-        }) }}
+        {% if uploadUrl %}
+          {{ summaryLogUpload({
+            uploadUrl: uploadUrl,
+            fileUploadLabel: fileUploadLabel,
+            buttonText: buttonText,
+            cancelUrl: cancelUrl,
+            cancelButtonText: cancelButtonText
+          }) }}
+        {% endif %}
       </div>
     </div>
   </div>

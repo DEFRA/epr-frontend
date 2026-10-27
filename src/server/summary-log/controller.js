@@ -405,14 +405,14 @@ const getReuploadLinks = async (keys, year, redirectUrl, session) => {
   // Asking for an upload URL creates a summary log, so this GET writes. A
   // session holding no write scope reads the page without one; the re-upload
   // form is hidden.
-  if (!hasWriteScope(session)) {
+  if (homepage === null || !hasWriteScope(session)) {
     return { cancelUrl }
   }
 
   const { uploadUrl } = await initiateSummaryLogUpload({
     keys,
     year,
-    accredited: homepage?.kind === 'accredited',
+    accredited: homepage.kind === 'accredited',
     redirectUrl,
     backendToken: session.backendToken
   })

@@ -1501,6 +1501,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: rejected - should initiate upload with pre-signed URL', async ({
       server
     }) => {
+      mockFetchRegistration.mockResolvedValue(accredited2027)
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected,
         year: 2027,
@@ -1519,7 +1520,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         keys: { organisationNumber, registrationNumber },
         year: 2027,
-        accredited: false,
+        accredited: true,
         redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
@@ -1699,6 +1700,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid - should initiate upload with pre-signed URL', async ({
       server
     }) => {
+      mockFetchRegistration.mockResolvedValue(accredited2027)
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         year: 2027,
@@ -1717,7 +1719,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         keys: { organisationNumber, registrationNumber },
         year: 2027,
-        accredited: false,
+        accredited: true,
         redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
@@ -2564,6 +2566,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validation_failed - should initiate upload for re-upload', async ({
       server
     }) => {
+      mockFetchRegistration.mockResolvedValue(accredited2027)
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validationFailed,
         year: 2027
@@ -2578,7 +2581,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         keys: { organisationNumber, registrationNumber },
         year: 2027,
-        accredited: false,
+        accredited: true,
         redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
@@ -2606,6 +2609,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: submission_failed - should initiate upload for re-upload', async ({
       server
     }) => {
+      mockFetchRegistration.mockResolvedValue(accredited2027)
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submissionFailed,
         year: 2027
@@ -2620,34 +2624,36 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         keys: { organisationNumber, registrationNumber },
         year: 2027,
-        accredited: false,
+        accredited: true,
         redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
       })
     })
 
-    describe('re-upload kind', () => {
-      it('re-uploads as accredited when the registration has a live accreditation', async ({
-        server
-      }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2027,
-          validation: { failures: [{ errorCode: 'REGISTRATION_MISMATCH' }] }
-        })
-
-        mockFetchRegistration.mockResolvedValueOnce(accredited2027)
-
-        await server.inject({ method: 'GET', url, auth: mockAuth })
-
-        expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-          keys: { organisationNumber, registrationNumber },
-          year: 2027,
-          accredited: true,
-          redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
-          backendToken: 'test-id-token'
-        })
+    it("links back to the registration and offers no re-upload when the summary log's year has no materials homepage", async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        year: 2025,
+        validation: { failures: [{ errorCode: 'REGISTRATION_MISMATCH' }] }
       })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(
+        getByRole(body, 'link', { name: 'Back' }).getAttribute('href')
+      ).toBe(
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+      )
+      expect(body.querySelector('form')).toBeNull()
+      expect(initiateSummaryLogUpload).not.toHaveBeenCalled()
     })
 
     describe('status: superseded', () => {
@@ -3312,6 +3318,36 @@ describe('summary log check view', () => {
 
     const uploadPage =
       '/organisations/500118/registrations/R26ER5001180041PL/2026/summary-logs/upload'
+    expect(
+      getByRole(main, 'button', {
+        name: 'Go back to previous page'
+      }).getAttribute('href')
+    ).toBe(uploadPage)
+    expect(
+      getByRole(main, 'link', { name: 'choose the file again' }).getAttribute(
+        'href'
+      )
+    ).toBe(uploadPage)
+  })
+
+  it("links to the registration's upload address when the summary log's year has no materials homepage", async ({
+    server
+  }) => {
+    mockFetchRegistrationWithAccreditation.mockResolvedValue(registeredOnly)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      year: 2025,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const uploadPage =
+      '/organisations/500118/registrations/R26ER5001180041PL/summary-logs/upload'
     expect(
       getByRole(main, 'button', {
         name: 'Go back to previous page'
