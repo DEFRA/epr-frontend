@@ -1,4 +1,5 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { isYearOpen } from '#server/prns/helpers/closed-year.js'
 import { toNoteRows } from '#server/prns/helpers/note-rows.js'
 import { buildListViewData } from '#server/prns/list-view-data.js'
 import {
@@ -45,12 +46,16 @@ export const buildViewModel = ({
 }) => {
   const { t: localise, localiseUrl } = request
   const { noteTypePlural } = getNoteTypeDisplayNames(registration)
-  const heading = localise(`${KEY}:listHeading`, { noteTypePlural })
+  const heading = localise(`${KEY}:listHeading`, {
+    noteTypePlural,
+    year: keys.year
+  })
 
   const list = buildListViewData(request, {
     keys,
     registration,
-    ...toNoteRows(packagingRecyclingNotes)
+    ...toNoteRows(packagingRecyclingNotes),
+    yearOpen: isYearOpen(accreditation)
   })
 
   return {

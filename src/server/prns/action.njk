@@ -5,6 +5,14 @@
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
+{% macro deleteWarningButton(deleteButton) %}
+  {{ govukButton({
+    text: deleteButton.text,
+    href: deleteButton.href,
+    classes: "govuk-button--warning"
+  }) }}
+{% endmacro %}
+
 {% block beforeContent %}
   {% if backUrl %}
     {{ govukBackLink({
@@ -61,14 +69,12 @@
           }) }}
 
           {% if deleteButton %}
-            {{ govukButton({
-              text: deleteButton.text,
-              href: deleteButton.href,
-              classes: "govuk-button--warning"
-            }) }}
+            {{ deleteWarningButton(deleteButton) }}
           {% endif %}
         </div>
       </form>
+    {% elif deleteButton and hasWriteScope %}
+      {{ deleteWarningButton(deleteButton) }}
     {% endif %}
 
     {% if cancelButton and hasWriteScope %}

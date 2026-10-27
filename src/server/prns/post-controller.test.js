@@ -608,6 +608,34 @@ describe('#postCreatePrnController', () => {
       })
     })
 
+    it('should send the session back to the list when the backend says the year has closed', async ({
+      server
+    }) => {
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+      const boom = Boom.conflict(
+        'The deadline for a 2026 relevant year was 31 January 2027.'
+      )
+      boom.output.payload.code = 'RELEVANT_YEAR_CLOSED'
+      vi.mocked(createPrn).mockRejectedValue(boom)
+
+      const { cookie, crumb } = await getCsrfToken(server, url, {
+        auth: mockAuth
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { ...validPayload, crumb }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(prnsBase)
+    })
+
     describe('consume backend insufficient-balance verdict', () => {
       const insufficientBalanceMessage =
         'The tonnage you entered exceeds your available waste balance'
