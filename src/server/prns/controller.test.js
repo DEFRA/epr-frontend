@@ -91,7 +91,7 @@ describe('#createPrnController', () => {
     }) => {
       vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
         ...fixtureReprocessor,
-        accreditation: buildAccreditationView({ relevantYearOpen: false })
+        accreditation: buildAccreditationView({ prns: { open: false } })
       })
 
       const { statusCode, headers } = await server.inject({
@@ -109,7 +109,7 @@ describe('#createPrnController', () => {
     }) => {
       vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
         ...fixtureReprocessor,
-        accreditation: buildAccreditationView({ relevantYearOpen: undefined })
+        accreditation: buildAccreditationView({ prns: undefined })
       })
 
       const { statusCode } = await server.inject({

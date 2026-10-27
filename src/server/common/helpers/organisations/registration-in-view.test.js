@@ -18,7 +18,7 @@ import {
 
 const accreditation2025 = /** @type {const} */ ({
   accreditationNumber: toAccreditationNumber('A25ER5001180114PL'),
-  relevantYearOpen: true,
+  prns: { open: true },
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2025-01-01T09:00:00.000Z' }]
@@ -27,7 +27,7 @@ const accreditation2025 = /** @type {const} */ ({
 
 const accreditation2026 = /** @type {const} */ ({
   accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
-  relevantYearOpen: true,
+  prns: { open: true },
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]

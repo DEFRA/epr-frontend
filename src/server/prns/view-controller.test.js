@@ -1299,7 +1299,7 @@ describe('#viewController', () => {
         )
         vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
           ...fixtureReprocessor,
-          accreditation: buildAccreditationView({ relevantYearOpen: false })
+          accreditation: buildAccreditationView({ prns: { open: false } })
         })
 
         const { result } = await server.inject({

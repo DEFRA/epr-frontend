@@ -12,7 +12,7 @@ import { toOrganisationNumber } from '#server/common/helpers/organisation-number
  */
 export const buildAccreditationView = (overrides = {}) => ({
   accreditationNumber: toAccreditationNumber('A26EN0000000001PL'),
-  relevantYearOpen: true,
+  prns: { open: true },
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]

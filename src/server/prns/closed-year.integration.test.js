@@ -39,8 +39,8 @@ const closedYearRefusal = {
   code: 'RELEVANT_YEAR_CLOSED'
 }
 
-/** @param {boolean} relevantYearOpen */
-const organisationWhoseYear = (relevantYearOpen) =>
+/** @param {boolean} prnsOpen */
+const organisationWhoseYear = (prnsOpen) =>
   buildOrganisationView({
     organisationNumber: toOrganisationNumber('500123'),
     registrations: {
@@ -50,7 +50,7 @@ const organisationWhoseYear = (relevantYearOpen) =>
         accreditations: {
           2026: buildAccreditationView({
             accreditationNumber: toAccreditationNumber('ACC001234'),
-            relevantYearOpen
+            prns: { open: prnsOpen }
           })
         }
       })
@@ -72,14 +72,14 @@ describe('a write the backend refuses because the year has closed', () => {
 
   /**
    * @param {SetupServer} msw
-   * @param {boolean} relevantYearOpen
+   * @param {boolean} prnsOpen
    * @param {RegExp} writeUrl
    */
-  const givenBackend = (msw, relevantYearOpen, writeUrl) => {
+  const givenBackend = (msw, prnsOpen, writeUrl) => {
     msw.use(
       http.get(`${backendUrl}/organisations/500123`, () => {
         readsOrganisation()
-        return HttpResponse.json(organisationWhoseYear(relevantYearOpen))
+        return HttpResponse.json(organisationWhoseYear(prnsOpen))
       }),
       http.get(`${backendUrl}/organisations/500123/years`, () =>
         HttpResponse.json({ years: [2026] })
@@ -113,8 +113,8 @@ describe('a write the backend refuses because the year has closed', () => {
   ])('$description', ({ url, writeUrl, payload, sentTo }) => {
     it.for([true, false])(
       'should send the session on after asking the backend once, with the organisation view saying open: %s',
-      async (relevantYearOpen, { server, msw }) => {
-        givenBackend(msw, relevantYearOpen, writeUrl)
+      async (prnsOpen, { server, msw }) => {
+        givenBackend(msw, prnsOpen, writeUrl)
         const { cookie, crumb } = await getCsrfToken(server, crumbSource, {
           auth: mockAuth
         })
@@ -165,21 +165,21 @@ describe('confirming a draft', () => {
    * Creates a draft, then confirms it, recording what the backend was asked.
    * @param {{ server: HapiServer, msw: SetupServer }} fixtures
    * @param {{
-   *   relevantYearOpen: boolean,
+   *   prnsOpen: boolean,
    *   availableAmount: number,
    *   statusResponse: () => Response
    * }} scenario
    */
   const confirmDraft = async (
     { server, msw },
-    { relevantYearOpen, availableAmount, statusResponse }
+    { prnsOpen, availableAmount, statusResponse }
   ) => {
     /** @type {unknown[]} */
     const statusRequests = []
     msw.use(
       http.get(`${backendUrl}/organisations/500123`, () => {
         readsOrganisation()
-        return HttpResponse.json(organisationWhoseYear(relevantYearOpen))
+        return HttpResponse.json(organisationWhoseYear(prnsOpen))
       }),
       http.get(`${backendUrl}/organisations/500123/years`, () =>
         HttpResponse.json({ years: [2026] })
@@ -239,7 +239,7 @@ describe('confirming a draft', () => {
     const { statusCode, location, statusRequests } = await confirmDraft(
       { server, msw },
       {
-        relevantYearOpen: true,
+        prnsOpen: true,
         availableAmount: 1000,
         statusResponse: () =>
           HttpResponse.json(closedYearRefusal, { status: 409 })
@@ -261,7 +261,7 @@ describe('confirming a draft', () => {
       const { statusCode, location, statusRequests } = await confirmDraft(
         { server, msw },
         {
-          relevantYearOpen: false,
+          prnsOpen: false,
           availableAmount,
           statusResponse: () => HttpResponse.json(buildPrnResource())
         }

@@ -96,7 +96,7 @@ describe('#cancelController', () => {
       }) => {
         vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
           ...fixtureReprocessor,
-          accreditation: buildAccreditationView({ relevantYearOpen: false })
+          accreditation: buildAccreditationView({ prns: { open: false } })
         })
 
         const { statusCode } = await server.inject({
@@ -288,7 +288,7 @@ describe('#cancelController', () => {
         )
         vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
           ...fixtureReprocessor,
-          accreditation: buildAccreditationView({ relevantYearOpen: false })
+          accreditation: buildAccreditationView({ prns: { open: false } })
         })
 
         const { headers } = await server.inject({

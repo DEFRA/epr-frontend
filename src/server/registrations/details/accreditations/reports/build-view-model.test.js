@@ -62,7 +62,7 @@ const anOrganisation = (overrides) => ({
 /** @type {Accreditation} */
 const accreditation = {
   accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
-  relevantYearOpen: true,
+  prns: { open: true },
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]

@@ -97,7 +97,7 @@ const organisationOf = (overrides = {}) => ({
 /** @type {Accreditation} */
 const approved2026 = {
   accreditationNumber: toAccreditationNumber('A26ER1'),
-  relevantYearOpen: true,
+  prns: { open: true },
   status: { current: 'approved', timeline: [] }
 }
 
@@ -274,7 +274,7 @@ describe('the organisation home page', () => {
             accreditations: {
               2026: {
                 accreditationNumber: toAccreditationNumber('A26ER1'),
-                relevantYearOpen: true,
+                prns: { open: true },
                 status: { current, timeline: [] }
               }
             }
@@ -297,7 +297,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: toAccreditationNumber('A26ER1'),
-              relevantYearOpen: true,
+              prns: { open: true },
               status: { current: 'cancelled', timeline: [] }
             }
           }
@@ -319,7 +319,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2025: {
               accreditationNumber: toAccreditationNumber('A25ER1'),
-              relevantYearOpen: true,
+              prns: { open: true },
               status: { current: 'approved', timeline: [] }
             }
           }
@@ -341,7 +341,7 @@ describe('the organisation home page', () => {
           {
             2025: {
               accreditationNumber: toAccreditationNumber('A25ER1'),
-              relevantYearOpen: true,
+              prns: { open: true },
               status: { current: 'approved', timeline: [] }
             }
           }
@@ -466,7 +466,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2025: {
               accreditationNumber: toAccreditationNumber('A25ER1'),
-              relevantYearOpen: true,
+              prns: { open: true },
               status: { current: 'suspended', timeline: [] }
             }
           }
@@ -485,7 +485,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: toAccreditationNumber('A26ER1'),
-              relevantYearOpen: true,
+              prns: { open: true },
               status: { current: 'suspended', timeline: [] }
             }
           }
@@ -506,7 +506,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: toAccreditationNumber('A26ER1'),
-              relevantYearOpen: true,
+              prns: { open: true },
               status: { current: 'cancelled', timeline: [] }
             }
           }
