@@ -225,26 +225,24 @@ const buildApprovedPersonBanner = (reportingPeriods, localise) => {
 }
 
 /**
- * The page's heading and title. A regulator keeps the plain "Reports"; an
- * operator sees the year.
+ * The page's heading and title, each naming the year. A regulator reads
+ * "Reports"; an operator "Manage reports".
  * @param {{ session: UserSession, localise: TFunction, material: string, year: number }} options
  * @returns {{ heading: string, pageTitle: string }}
  */
-const buildTitles = ({ session, localise, material, year }) => {
-  if (readsAsARegulator(session)) {
-    return {
-      heading: localise('reports:heading'),
-      pageTitle: localise('reports:pageTitle', { material })
-    }
-  }
-
-  const heading = localise('reports:manageReportsHeading', { year })
-
-  return {
-    heading,
-    pageTitle: localise('reports:yearPageTitle', { heading, material })
-  }
-}
+const buildTitles = ({ session, localise, material, year }) =>
+  readsAsARegulator(session)
+    ? {
+        heading: localise('reports:heading', { year }),
+        pageTitle: localise('reports:pageTitle', { year, material })
+      }
+    : {
+        heading: localise('reports:manageReportsHeading', { year }),
+        pageTitle: localise('reports:manageReportsPageTitle', {
+          year,
+          material
+        })
+      }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: RegistrationYearKeys }>>} */
 export const listController = {
@@ -290,6 +288,8 @@ export const listController = {
       localise
     )
 
+    const titles = buildTitles({ session, localise, material, year })
+
     const viewData = {
       active: {
         head: activeHeader,
@@ -306,12 +306,12 @@ export const listController = {
             organisation,
             registration,
             keys,
-            pageName: localise('reports:heading'),
+            pageName: titles.heading,
             localise,
             localiseUrl: (url) => request.localiseUrl(url)
           })
         : [],
-      ...buildTitles({ session, localise, material, year }),
+      ...titles,
       material,
       submitted: {
         head: submittedHeader,

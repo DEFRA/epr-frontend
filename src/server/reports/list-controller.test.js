@@ -1768,19 +1768,16 @@ describe('#listReportsController', () => {
       )
     })
 
-    it.for(['1999', '2101', 'latest'])(
-      'answers 404 for the year %s',
-      async (year, { server }) => {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: `${registrationUrl}/reports/${year}`,
-          auth: mockAuth
-        })
+    it('answers 404 for a segment that is not a year', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${registrationUrl}/reports/latest`,
+        auth: mockAuth
+      })
 
-        expect(statusCode).toBe(statusCodes.notFound)
-        expect(fetchReportingPeriods).not.toHaveBeenCalled()
-      }
-    )
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(fetchReportingPeriods).not.toHaveBeenCalled()
+    })
 
     describe('at the yearless address', () => {
       /**
@@ -1915,7 +1912,7 @@ describe('#listReportsController', () => {
       config.set('featureFlags.regulatorAccess', false)
     })
 
-    it('keeps the plain Reports heading and title, with no year', async ({
+    it("heads and titles the page Reports with the address's year", async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -1925,9 +1922,8 @@ describe('#listReportsController', () => {
       })
       const { document } = new JSDOM(result).window
 
-      expect(headingOf(document)).toBe('Glass remelt Reports')
-      expect(document.title).toContain('Reports: Glass remelt')
-      expect(document.title).not.toContain('2026')
+      expect(headingOf(document)).toBe('Glass remelt Reports (2026)')
+      expect(document.title).toContain('Reports (2026): Glass remelt')
     })
 
     it('walks back up to all organisations, with no back link', async ({
@@ -1948,7 +1944,7 @@ describe('#listReportsController', () => {
         'All organisations',
         'Acme Recycling Ltd',
         'Registration details',
-        'Reports'
+        'Reports (2026)'
       ])
       expect(body.querySelector('.govuk-back-link')).toBeNull()
     })
