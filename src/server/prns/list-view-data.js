@@ -25,7 +25,8 @@ import { prnsPath } from './helpers/prn-resource.js'
  *   cancelledPrns?: object[],
  *   hasCreatedPrns?: boolean,
  *   wasteBalance?: Partial<WasteBalance> | null,
- *   showsDecember?: boolean
+ *   showsDecember?: boolean,
+ *   yearOpen: boolean
  * }} options
  */
 export function buildListViewData(
@@ -39,7 +40,8 @@ export function buildListViewData(
     cancelledPrns = [],
     hasCreatedPrns,
     wasteBalance,
-    showsDecember = false
+    showsDecember = false,
+    yearOpen
   }
 ) {
   const { t: localise } = request
@@ -64,12 +66,14 @@ export function buildListViewData(
     })
 
   return {
-    ...buildListLabels(localise, { noteType, noteTypePlural }),
+    ...buildListLabels(localise, { noteType, noteTypePlural, year: keys.year }),
     backUrl: request.localiseUrl(accreditationPath(keys)),
-    createLink: {
-      href: request.localiseUrl(`${prnsPath(keys)}/create`),
-      text: localise('prns:list:createLink', { noteType })
-    },
+    createLink: yearOpen
+      ? {
+          href: request.localiseUrl(`${prnsPath(keys)}/create`),
+          text: localise('prns:list:createLink', { noteType })
+        }
+      : null,
     wasteBalance: {
       amount: wasteBalance?.availableAmount ?? 0,
       label: localise('prns:list:availableWasteBalance'),
@@ -85,10 +89,11 @@ export function buildListViewData(
   }
 }
 
-function buildListLabels(localise, { noteType, noteTypePlural }) {
+function buildListLabels(localise, { noteType, noteTypePlural, year }) {
+  const title = localise('prns:list:pageTitle', { noteTypePlural, year })
   return {
-    pageTitle: localise('prns:list:pageTitle', { noteTypePlural }),
-    heading: localise('prns:list:pageTitle', { noteTypePlural }),
+    pageTitle: title,
+    heading: title,
     selectHeading: localise('prns:list:selectHeading', { noteType }),
     noPrnsCreatedText: localise('prns:list:noPrnsCreated', { noteTypePlural }),
     tabs: {

@@ -257,6 +257,14 @@ describe('the regulator PRNs detailed view', () => {
     })
   })
 
+  it('heads the notes with the year they belong to', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(
+      getByRole(documentOf(body), 'heading', { level: 1 }).textContent
+    ).toContain('PRNs (2026)')
+  })
+
   it("names an exporter's notes PERNs", async ({ server }) => {
     vi.mocked(fetchPrnListDetails).mockResolvedValue({
       ...details,
@@ -284,7 +292,7 @@ describe('the regulator PRNs detailed view', () => {
       'Kirkby Plastics Ltd',
       'Registration details',
       'Accreditation details',
-      'PRNs'
+      'PRNs (2026)'
     ])
     expect(
       crumbs.map((crumb) => crumb.querySelector('a')?.getAttribute('href'))

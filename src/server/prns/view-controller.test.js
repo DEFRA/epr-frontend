@@ -1279,6 +1279,45 @@ describe('#viewController', () => {
         expect(queryByText(main, /Discard and start again/i)).toBeNull()
       })
 
+      it('should offer only discarding the draft once the year has closed', async ({
+        server
+      }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+        const cookies = mergeCookies(
+          csrfCookie,
+          ...extractCookieValues(postResponse.headers['set-cookie'])
+        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          accreditation: buildAccreditationView({ prns: { open: false } })
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(queryByRole(main, 'button', { name: 'Create PRN' })).toBeNull()
+        expect(
+          getByRole(main, 'link', { name: /Discard and start again/i })
+        ).toBeDefined()
+      })
+
       it('displays discard link below create button on check page', async ({
         server
       }) => {
