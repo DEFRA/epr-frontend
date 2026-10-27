@@ -44,7 +44,7 @@ export const buildViewModel = ({
   reportingPeriods
 }) => {
   const { t: localise, localiseUrl } = request
-  const heading = localise(`${NAMESPACE}:heading`)
+  const heading = localise(`${NAMESPACE}:yearHeading`, { year: keys.year })
 
   return {
     ...toAccreditationChildPage({

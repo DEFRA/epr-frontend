@@ -30,6 +30,7 @@
         "period": "Period",
         "status": "Status",
         "submissionDate": "Submission date",
+        "yearHeading": "Reports ({{year}})",
         "viewAll": "View all",
         "viewAllHidden": "reports"
       },
