@@ -229,7 +229,7 @@ const accreditedExporterReportDetail = {
 const organisationNumber = '500001'
 const registrationNumber = 'R25SR500030912PA'
 const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/submit`
-const reportsUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+const reportsUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
 const submittedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/submitted`
 
 /** Inject a GET request and return the parsed DOM body. */
@@ -1178,7 +1178,7 @@ describe('#submitController', () => {
           label: 'exporter quarterly',
           registration: exporterRegistration,
           report: exporterReportDetail,
-          periodPath: `${reportsUrl}/2026/quarterly/1/submissions/1`
+          periodPath: `${reportsUrl}/quarterly/1/submissions/1`
         },
         {
           label: 'reprocessor monthly',

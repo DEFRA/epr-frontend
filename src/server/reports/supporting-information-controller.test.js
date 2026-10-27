@@ -542,7 +542,7 @@ describe('#supportingInformationController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
       })
 
