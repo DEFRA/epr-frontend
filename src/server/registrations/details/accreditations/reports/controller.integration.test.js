@@ -115,7 +115,7 @@ describe('the regulator reports detailed view', () => {
     config.set('featureFlags.regulatorAccess', false)
   })
 
-  it('heads the page Reports, naming the organisation, the registration and the accreditation', async ({
+  it("heads the page Reports with the address's year, naming the organisation, the registration and the accreditation", async ({
     server
   }) => {
     const { statusCode, body } = await visit(server, regulator)
@@ -129,7 +129,7 @@ describe('the regulator reports detailed view', () => {
         year: '2026'
       })
     )
-    expect(heading.textContent).toContain('Reports')
+    expect(heading.textContent).toContain('Reports (2026)')
     expect(
       heading.querySelector('[class^="govuk-caption-"]')?.textContent
     ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL - A26ER5001180114PL')
@@ -245,7 +245,7 @@ describe('the regulator reports detailed view', () => {
       'Kirkby Plastics Ltd',
       'Registration details',
       'Accreditation details',
-      'Reports'
+      'Reports (2026)'
     ])
     expect(
       crumbs
@@ -270,7 +270,7 @@ describe('the regulator reports detailed view', () => {
     expect(crumbs.at(-2)?.querySelector('a')?.getAttribute('href')).toBe(
       accreditationPath
     )
-    expect(crumbs.at(-1)?.textContent?.trim()).toBe('Reports')
+    expect(crumbs.at(-1)?.textContent?.trim()).toBe('Reports (2026)')
     expect(crumbs.at(-1)?.querySelector('a')).toBeNull()
     expect(getByTestId(document, 'reports-detailed-view')).toBeDefined()
   })
@@ -279,7 +279,7 @@ describe('the regulator reports detailed view', () => {
     const { body } = await visit(server, regulator)
 
     expect(documentOf(body).ownerDocument.title).toContain(
-      'A26ER5001180114PL: Reports'
+      'A26ER5001180114PL: Reports (2026)'
     )
   })
 
