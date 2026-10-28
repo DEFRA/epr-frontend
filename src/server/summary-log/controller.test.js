@@ -1,5 +1,8 @@
 import { config } from '#config/config.js'
-import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
+import {
+  isRegisteredOnlyProcessingType,
+  PROCESSING_TYPES
+} from '#domain/summary-logs/meta-fields.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -44,7 +47,7 @@ import { summaryLogStatuses } from '../common/constants/statuses.js'
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
- * @import { LoadRow, PeriodStatusByChange, SummaryLogStatusResponse } from './types.js'
+ * @import { LedgerAccreditation, LoadRow, PeriodStatusByChange, SummaryLogStatusResponse } from './types.js'
  */
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
@@ -144,6 +147,10 @@ const accreditedLedger = /** @type {const} */ ({
   accreditationNumber: accreditationNumber2027
 })
 const registeredOnlyLedger = /** @type {const} */ ({ kind: 'registeredOnly' })
+// Off-contract on purpose: the status read keeps a value failing its schema.
+const unknownLedger = /** @type {LedgerAccreditation} */ (
+  /** @type {unknown} */ ({ kind: 'other' })
+)
 
 const mockAuth = buildMockAuth({
   backendToken: toBackendToken('test-id-token')
@@ -412,7 +419,7 @@ describe('#summaryLogUploadProgressController', () => {
       async (status, { server }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status,
-          ledgerAccreditation: registeredOnlyLedger,
+          ledgerAccreditation: accreditedLedger,
           processingType: 'EXPORTER',
           loadsByReportingPeriod: {
             openPeriodLoads: emptyPeriod(),
@@ -448,7 +455,7 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     it.for([summaryLogStatuses.submitted, summaryLogStatuses.validated])(
-      'status: %s - reads no balance for a registered-only summary log, even once the registration is accredited',
+      'status: %s - reads neither the registration nor a balance for a registered-only summary log, even once the registration is accredited',
       async (status, { server }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status,
@@ -472,6 +479,7 @@ describe('#summaryLogUploadProgressController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
+        expect(fetchRegistrationWithAccreditation).not.toHaveBeenCalled()
         expect(fetchOrganisationWasteBalances).not.toHaveBeenCalled()
         expect(result).not.toContain('2,026.00')
       }
@@ -2666,15 +2674,24 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
-    it.for([
-      summaryLogStatuses.invalid,
-      summaryLogStatuses.rejected,
-      summaryLogStatuses.validationFailed,
-      summaryLogStatuses.submissionFailed
-    ])(
-      'status: %s - fails for a summary log without a ledger accreditation, starting no upload',
-      async (status, { server }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({ status, year: 2026 })
+    it.for(
+      [
+        summaryLogStatuses.invalid,
+        summaryLogStatuses.rejected,
+        summaryLogStatuses.validationFailed,
+        summaryLogStatuses.submissionFailed
+      ].flatMap((status) => [
+        { status, ledger: 'no', ledgerAccreditation: undefined },
+        { status, ledger: 'an unknown', ledgerAccreditation: unknownLedger }
+      ])
+    )(
+      'status: $status - fails for a summary log with $ledger ledger accreditation, starting no upload',
+      async ({ status, ledgerAccreditation }, { server }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status,
+          year: 2026,
+          ledgerAccreditation
+        })
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -2872,7 +2889,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2909,7 +2926,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2027,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2930,7 +2947,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2027,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2951,7 +2968,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3047,7 +3064,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3119,7 +3136,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3152,7 +3169,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -3185,7 +3202,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -3219,7 +3236,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER'
     })
 
@@ -3268,7 +3285,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2027,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -3375,27 +3392,32 @@ describe('summary log check view', () => {
     ).toBe(uploadPage)
   })
 
-  it('fails for a summary log without a ledger accreditation', async ({
-    server
-  }) => {
-    mockFetchSummaryLogStatus.mockResolvedValueOnce({
-      status: summaryLogStatuses.validated,
-      year: 2026,
-      processingType: 'EXPORTER_REGISTERED_ONLY',
-      loadsByReportingPeriod: {
-        openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
-      }
-    })
+  it.for([
+    { ledger: 'no', ledgerAccreditation: undefined },
+    { ledger: 'an unknown', ledgerAccreditation: unknownLedger }
+  ])(
+    'fails for a summary log with $ledger ledger accreditation',
+    async ({ ledgerAccreditation }, { server }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        year: 2026,
+        ledgerAccreditation,
+        processingType: 'EXPORTER_REGISTERED_ONLY',
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
 
-    const { statusCode } = await server.inject({
-      method: 'GET',
-      url,
-      auth: mockAuth
-    })
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
 
-    expect(statusCode).toBe(statusCodes.internalServerError)
-  })
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    }
+  )
 
   it('links a registered-only summary log to the registered-only upload page, even once the registration is accredited for its year', async ({
     server
@@ -3435,7 +3457,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3471,7 +3493,7 @@ describe('summary log check view', () => {
       status: summaryLogStatuses.validated,
       processingType: 'EXPORTER',
       year: 2027,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       loadsByReportingPeriod: {
         openPeriodLoads: {
           added: {
@@ -3501,7 +3523,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3539,7 +3561,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3612,7 +3634,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3645,7 +3667,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3710,7 +3732,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3784,7 +3806,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3860,7 +3882,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3933,7 +3955,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4044,7 +4066,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4107,7 +4129,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4162,7 +4184,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4227,7 +4249,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4277,7 +4299,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4327,7 +4349,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4373,7 +4395,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4479,7 +4501,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4524,7 +4546,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4557,7 +4579,7 @@ describe('summary log check view', () => {
     const prnIssuedRow = (wasteRecordType) => ({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       loadsByReportingPeriod: {
         openPeriodLoads: {
           added: {
@@ -4614,7 +4636,7 @@ describe('summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       year: 2026,
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -4690,7 +4712,7 @@ describe('summary log check view', () => {
     return {
       status: summaryLogStatuses.validated,
       year: toYear(2026),
-      ledgerAccreditation: registeredOnlyLedger,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads,
@@ -4745,7 +4767,9 @@ describe('summary log check view', () => {
   ) => ({
     status: summaryLogStatuses.validated,
     year: toYear(2026),
-    ledgerAccreditation: registeredOnlyLedger,
+    ledgerAccreditation: isRegisteredOnlyProcessingType(processingType)
+      ? registeredOnlyLedger
+      : accreditedLedger,
     processingType,
     loadsByReportingPeriod: {
       openPeriodLoads: {
@@ -5003,7 +5027,7 @@ describe('summary log check view', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
+        ledgerAccreditation: accreditedLedger,
         processingType: 'EXPORTER',
         loadsByReportingPeriod: periodWithClosedAdjustment()
       })
@@ -5019,7 +5043,7 @@ describe('summary log check view', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
+        ledgerAccreditation: accreditedLedger,
         processingType: 'EXPORTER',
         loadsByReportingPeriod: {
           openPeriodLoads: {
@@ -5044,7 +5068,7 @@ describe('summary log check view', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
+        ledgerAccreditation: accreditedLedger,
         processingType: 'EXPORTER',
         loadsByReportingPeriod: {
           openPeriodLoads: emptyPeriod(),
@@ -5073,7 +5097,7 @@ describe('summary log check view', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
+        ledgerAccreditation: accreditedLedger,
         processingType: 'EXPORTER',
         loadsByReportingPeriod: {
           openPeriodLoads: emptyPeriod(),

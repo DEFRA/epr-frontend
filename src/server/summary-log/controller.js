@@ -179,18 +179,20 @@ const requiredYear = (value) => {
   return value
 }
 
+const LEDGER_KINDS = new Set(['accredited', 'registeredOnly'])
+
 /**
- * Logs stored before the backend stamped their ledger answer without one; we
- * refuse to guess it from the registration's current status.
+ * Logs stored before the backend stamped their ledger answer without one, and
+ * the status read keeps a value failing its schema; we refuse to guess either.
  * @param {LedgerAccreditation | undefined} value
  * @returns {LedgerAccreditation}
  */
 const requiredLedgerAccreditation = (value) => {
-  if (value === undefined) {
-    throw new Error('Expected ledgerAccreditation for summary log')
+  if (!LEDGER_KINDS.has(value?.kind ?? '')) {
+    throw new Error('Expected a known ledgerAccreditation for summary log')
   }
 
-  return value
+  return /** @type {LedgerAccreditation} */ (value)
 }
 
 /**
@@ -367,18 +369,15 @@ const renderPassedValidationView = async (
 ) => {
   const context = toValidatedContext(renderContext)
 
-  const registrationWithAccreditation =
-    await fetchRegistrationWithAccreditation(
-      { ...keys, year: context.year },
-      session.backendToken
-    )
-
   const { wasteBalance } = isRegisteredOnlyProcessingType(
     context.processingType
   )
     ? {}
     : await getWasteBalanceData(
-        registrationWithAccreditation,
+        await fetchRegistrationWithAccreditation(
+          { ...keys, year: context.year },
+          session.backendToken
+        ),
         context.year,
         session,
         logger
