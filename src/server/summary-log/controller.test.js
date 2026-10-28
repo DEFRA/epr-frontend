@@ -152,6 +152,12 @@ const unknownLedger = /** @type {LedgerAccreditation} */ (
   /** @type {unknown} */ ({ kind: 'other' })
 )
 
+const failedStatus = (fields) => ({
+  year: 2026,
+  ledgerAccreditation: registeredOnlyLedger,
+  ...fields
+})
+
 const mockAuth = buildMockAuth({
   backendToken: toBackendToken('test-id-token')
 })
@@ -941,14 +947,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: rejected with validation failure code - should show validation failures page', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.rejected,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.rejected,
+          validation: {
+            failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -987,12 +993,12 @@ describe('#summaryLogUploadProgressController', () => {
       it('should render a per-cell detail row instead of a collapsed category message', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: { failures: [locatedFailure] }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: { failures: [locatedFailure] }
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -1018,51 +1024,51 @@ describe('#summaryLogUploadProgressController', () => {
       it('should render all records in one flat table with a Section column, sorting ROW_ID within each section', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: {
-            failures: [
-              {
-                errorCode: 'MUST_BE_A_NUMBER',
-                actual: 'x',
-                location: {
-                  sheet: 'Reprocessing',
-                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                  row: 10,
-                  rowId: '1003',
-                  column: 'D',
-                  header: 'NET_WEIGHT'
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  errorCode: 'MUST_BE_A_NUMBER',
+                  actual: 'x',
+                  location: {
+                    sheet: 'Reprocessing',
+                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                    row: 10,
+                    rowId: '1003',
+                    column: 'D',
+                    header: 'NET_WEIGHT'
+                  }
+                },
+                {
+                  errorCode: 'MUST_BE_A_NUMBER',
+                  actual: 'y',
+                  location: {
+                    sheet: 'Reprocessing',
+                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                    row: 8,
+                    rowId: '1001',
+                    column: 'D',
+                    header: 'NET_WEIGHT'
+                  }
+                },
+                {
+                  errorCode: 'MUST_BE_A_VALID_DATE',
+                  actual: 'z',
+                  location: {
+                    sheet: 'Reprocessing',
+                    table: 'SENT_ON_LOADS_FOR_REPROCESSING',
+                    row: 8,
+                    rowId: '1001',
+                    column: 'H',
+                    header: 'DATE_OF_EXPORT'
+                  }
                 }
-              },
-              {
-                errorCode: 'MUST_BE_A_NUMBER',
-                actual: 'y',
-                location: {
-                  sheet: 'Reprocessing',
-                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                  row: 8,
-                  rowId: '1001',
-                  column: 'D',
-                  header: 'NET_WEIGHT'
-                }
-              },
-              {
-                errorCode: 'MUST_BE_A_VALID_DATE',
-                actual: 'z',
-                location: {
-                  sheet: 'Reprocessing',
-                  table: 'SENT_ON_LOADS_FOR_REPROCESSING',
-                  row: 8,
-                  rowId: '1001',
-                  column: 'H',
-                  header: 'DATE_OF_EXPORT'
-                }
-              }
-            ]
-          }
-        })
+              ]
+            }
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -1105,18 +1111,18 @@ describe('#summaryLogUploadProgressController', () => {
           }
         })
 
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: {
-            failures: [
-              located('1001', 'D'),
-              located('1002', 'E'),
-              located('1003', 'F')
-            ]
-          }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                located('1001', 'D'),
+                located('1002', 'E'),
+                located('1003', 'F')
+              ]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1143,15 +1149,15 @@ describe('#summaryLogUploadProgressController', () => {
           }
         }))
 
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: {
-            failures,
-            counts: { fatal: 150, error: 0, warning: 0, total: 150 }
-          }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures,
+              counts: { fatal: 150, error: 0, warning: 0, total: 150 }
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1170,12 +1176,12 @@ describe('#summaryLogUploadProgressController', () => {
       it('should not show a cap notice below the 50 limit', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: { failures: [locatedFailure] }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: { failures: [locatedFailure] }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1189,26 +1195,26 @@ describe('#summaryLogUploadProgressController', () => {
       it('should show "(empty)" when the failing cell has no value', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: {
-            failures: [
-              {
-                errorCode: 'FIELD_REQUIRED',
-                location: {
-                  sheet: 'Reprocessing',
-                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                  row: 8,
-                  rowId: '1001',
-                  column: 'C',
-                  header: 'EWC_CODE'
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  errorCode: 'FIELD_REQUIRED',
+                  location: {
+                    sheet: 'Reprocessing',
+                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                    row: 8,
+                    rowId: '1001',
+                    column: 'C',
+                    header: 'EWC_CODE'
+                  }
                 }
-              }
-            ]
-          }
-        })
+              ]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1225,14 +1231,14 @@ describe('#summaryLogUploadProgressController', () => {
       it('should render located errors as a table while keeping meta-level category messages', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: {
-            failures: [locatedFailure, { errorCode: 'REGISTRATION_MISMATCH' }]
-          }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [locatedFailure, { errorCode: 'REGISTRATION_MISMATCH' }]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1298,27 +1304,27 @@ describe('#summaryLogUploadProgressController', () => {
       ])(
         'maps errorCode %s to its per-cell problem',
         async ([errorCode, header, expectedProblem], { server }) => {
-          mockFetchSummaryLogStatus.mockResolvedValueOnce({
-            status: summaryLogStatuses.invalid,
-            year: 2026,
-            ledgerAccreditation: registeredOnlyLedger,
-            validation: {
-              failures: [
-                {
-                  errorCode,
-                  actual: 'x',
-                  location: {
-                    sheet: 'Received',
-                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                    row: 4,
-                    rowId: '1001',
-                    column: 'D',
-                    header
+          mockFetchSummaryLogStatus.mockResolvedValueOnce(
+            failedStatus({
+              status: summaryLogStatuses.invalid,
+              validation: {
+                failures: [
+                  {
+                    errorCode,
+                    actual: 'x',
+                    location: {
+                      sheet: 'Received',
+                      table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                      row: 4,
+                      rowId: '1001',
+                      column: 'D',
+                      header
+                    }
                   }
-                }
-              ]
-            }
-          })
+                ]
+              }
+            })
+          )
 
           const { result } = await server.inject({
             method: 'GET',
@@ -1337,27 +1343,27 @@ describe('#summaryLogUploadProgressController', () => {
       it('should show a human-readable column label, not the raw header code', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: {
-            failures: [
-              {
-                errorCode: 'MUST_BE_VALID_EWC_CODE',
-                actual: '99',
-                location: {
-                  sheet: 'Received',
-                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                  row: 9,
-                  rowId: '1002',
-                  column: 'F',
-                  header: 'EWC_CODE'
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  errorCode: 'MUST_BE_VALID_EWC_CODE',
+                  actual: '99',
+                  location: {
+                    sheet: 'Received',
+                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                    row: 9,
+                    rowId: '1002',
+                    column: 'F',
+                    header: 'EWC_CODE'
+                  }
                 }
-              }
-            ]
-          }
-        })
+              ]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1374,27 +1380,27 @@ describe('#summaryLogUploadProgressController', () => {
       it('should fall back to the worksheet name as the Section when the table has no distinct label', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: {
-            failures: [
-              {
-                errorCode: 'MUST_BE_A_NUMBER',
-                actual: 'x',
-                location: {
-                  sheet: 'Reprocessing',
-                  table: 'UNMAPPED_TABLE',
-                  row: 8,
-                  rowId: '1001',
-                  column: 'D',
-                  header: 'NET_WEIGHT'
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  errorCode: 'MUST_BE_A_NUMBER',
+                  actual: 'x',
+                  location: {
+                    sheet: 'Reprocessing',
+                    table: 'UNMAPPED_TABLE',
+                    row: 8,
+                    rowId: '1001',
+                    column: 'D',
+                    header: 'NET_WEIGHT'
+                  }
                 }
-              }
-            ]
-          }
-        })
+              ]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1424,18 +1430,18 @@ describe('#summaryLogUploadProgressController', () => {
           }
         })
 
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: {
-            failures: [
-              failingCell('K', 'GROSS_WEIGHT'),
-              failingCell('L', 'TARE_WEIGHT'),
-              failingCell('M', 'PALLET_WEIGHT')
-            ]
-          }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                failingCell('K', 'GROSS_WEIGHT'),
+                failingCell('L', 'TARE_WEIGHT'),
+                failingCell('M', 'PALLET_WEIGHT')
+              ]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1501,12 +1507,12 @@ describe('#summaryLogUploadProgressController', () => {
     ])(
       'status: $status with $errorCode - should render its tailored failure copy, not the technical-error fallback',
       async ({ errorCode, status, copy }, { server }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: { failures: [{ errorCode }] }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status,
+            validation: { failures: [{ errorCode }] }
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -1553,14 +1559,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: rejected - should not initiate an upload for a regulator', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.rejected,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.rejected,
+          validation: {
+            failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1580,11 +1586,9 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: rejected without validation - should show validation failures page with technical error', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.rejected,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({ status: summaryLogStatuses.rejected })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1602,14 +1606,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with validation failures - should show validation failures page with correct content', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1629,14 +1633,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with validation failures - should show re-upload form and cancel button', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
+          }
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -1743,20 +1747,20 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with SEQUENTIAL_ROW_REMOVED alongside another failure - should render both the composite block and the other failure message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Received' }
-            },
-            { errorCode: 'HEADER_REQUIRED' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'SEQUENTIAL_ROW_REMOVED',
+                location: { sheet: 'Received' }
+              },
+              { errorCode: 'HEADER_REQUIRED' }
+            ]
+          }
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -1822,12 +1826,12 @@ describe('#summaryLogUploadProgressController', () => {
     ])(
       'status: invalid with SEQUENTIAL_ROW_REMOVED ($label) - should list affected sheets as bullets with preamble and closing',
       async ({ failures, expectedBullets }, { server }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          year: 2026,
-          ledgerAccreditation: registeredOnlyLedger,
-          validation: { failures }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: { failures }
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -1864,14 +1868,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with unknown failure code - should show technical error message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'SOME_UNKNOWN_CODE' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'SOME_UNKNOWN_CODE' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1889,18 +1893,18 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with data entry failures - should show single deduplicated message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            { errorCode: 'VALUE_OUT_OF_RANGE' },
-            { errorCode: 'INVALID_TYPE' },
-            { errorCode: 'VALUE_OUT_OF_RANGE' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              { errorCode: 'VALUE_OUT_OF_RANGE' },
+              { errorCode: 'INVALID_TYPE' },
+              { errorCode: 'VALUE_OUT_OF_RANGE' }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1925,18 +1929,18 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with mixed failures - should show data entry message and other failures', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            { errorCode: 'VALUE_OUT_OF_RANGE' },
-            { errorCode: 'REGISTRATION_MISMATCH' },
-            { errorCode: 'INVALID_TYPE' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              { errorCode: 'VALUE_OUT_OF_RANGE' },
+              { errorCode: 'REGISTRATION_MISMATCH' },
+              { errorCode: 'INVALID_TYPE' }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1956,14 +1960,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with material failure - should show material invalid message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'MATERIAL_MISMATCH' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'MATERIAL_MISMATCH' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1980,14 +1984,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with accreditation failure - should show accreditation invalid message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'ACCREDITATION_MISMATCH' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'ACCREDITATION_MISMATCH' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2004,14 +2008,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with processing type failure - should show template incorrect message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'PROCESSING_TYPE_MISMATCH' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'PROCESSING_TYPE_MISMATCH' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2028,14 +2032,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with SPREADSHEET_MALFORMED_MARKERS failure - should show malformed template message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'SPREADSHEET_MALFORMED_MARKERS' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'SPREADSHEET_MALFORMED_MARKERS' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2052,14 +2056,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with SPREADSHEET_INVALID_ERROR failure - should show malformed template message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'SPREADSHEET_INVALID_ERROR' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'SPREADSHEET_INVALID_ERROR' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2076,17 +2080,17 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with multiple spreadsheet failures - should show single deduplicated message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            { errorCode: 'SPREADSHEET_MALFORMED_MARKERS' },
-            { errorCode: 'SPREADSHEET_INVALID_ERROR' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              { errorCode: 'SPREADSHEET_MALFORMED_MARKERS' },
+              { errorCode: 'SPREADSHEET_INVALID_ERROR' }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2113,14 +2117,14 @@ describe('#summaryLogUploadProgressController', () => {
       'VALIDATION_SYSTEM_ERROR',
       'UNKNOWN'
     ])('%s - should show technical error message', async (code, { server }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: code }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: code }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2137,18 +2141,18 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with multiple technical errors - should show single deduplicated message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            { errorCode: 'FILE_UPLOAD_FAILED' },
-            { errorCode: 'FILE_DOWNLOAD_FAILED' },
-            { errorCode: 'VALIDATION_SYSTEM_ERROR' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              { errorCode: 'FILE_UPLOAD_FAILED' },
+              { errorCode: 'FILE_DOWNLOAD_FAILED' },
+              { errorCode: 'VALIDATION_SYSTEM_ERROR' }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2170,19 +2174,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with NET_WEIGHT_CALCULATION_MISMATCH errorCode - should show calculated field mismatch message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
-              location: { header: 'NET_WEIGHT' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
+                location: { header: 'NET_WEIGHT' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2199,19 +2203,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with weight numeric errorCode - should show weight format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_A_NUMBER',
-              location: { header: 'GROSS_WEIGHT' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                location: { header: 'GROSS_WEIGHT' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2228,19 +2232,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with date errorCode on date header - should show date format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_A_VALID_DATE',
-              location: { header: 'DATE_LOAD_LEFT_SITE' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_VALID_DATE',
+                location: { header: 'DATE_LOAD_LEFT_SITE' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2257,19 +2261,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with yes/no errorCode on yes/no header - should show yes/no format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_YES_OR_NO',
-              location: { header: 'BAILING_WIRE_PROTOCOL' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_YES_OR_NO',
+                location: { header: 'BAILING_WIRE_PROTOCOL' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2286,21 +2290,21 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with dropdown errorCode on dropdown header - should show dropdown format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
-              location: {
-                header: 'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION'
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
+                location: {
+                  header: 'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION'
+                }
               }
-            }
-          ]
-        }
-      })
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2317,19 +2321,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS errorCode on free-text header - should show free-text message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS',
-              location: { header: 'CONTAINER_NUMBER' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS',
+                location: { header: 'CONTAINER_NUMBER' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2346,19 +2350,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with ID errorCode on ID header - should show ID format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_3_DIGIT_ID',
-              location: { header: 'OSR_ID' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_3_DIGIT_ID',
+                location: { header: 'OSR_ID' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2375,19 +2379,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with percentage errorCode on percentage header - should show percentage format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_AT_LEAST_ZERO',
-              location: { header: 'RECYCLABLE_PROPORTION_PERCENTAGE' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_AT_LEAST_ZERO',
+                location: { header: 'RECYCLABLE_PROPORTION_PERCENTAGE' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2404,19 +2408,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with known errorCode but unrecognised header - should show safety net fallback', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_A_VALID_DATE',
-              location: { header: 'SOME_DATE_FIELD' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_VALID_DATE',
+                location: { header: 'SOME_DATE_FIELD' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2433,19 +2437,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with completely unrecognised errorCode - should show technical error as fallback', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
-              location: { header: 'WHATEVER' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
+                location: { header: 'WHATEVER' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2462,23 +2466,23 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with unknown errorCode alongside real failures - should strip technical error', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_A_NUMBER',
-              location: { header: 'GROSS_WEIGHT' }
-            },
-            {
-              errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
-              location: { header: 'WHATEVER' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                location: { header: 'GROSS_WEIGHT' }
+              },
+              {
+                errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
+                location: { header: 'WHATEVER' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2498,24 +2502,24 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with mixed errorCode failures - should show correct deduplicated messages', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [
-            {
-              errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
-              location: { header: 'NET_WEIGHT' }
-            },
-            {
-              errorCode: 'MUST_BE_A_NUMBER',
-              location: { header: 'GROSS_WEIGHT' }
-            },
-            { errorCode: 'REGISTRATION_MISMATCH' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
+                location: { header: 'NET_WEIGHT' }
+              },
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                location: { header: 'GROSS_WEIGHT' }
+              },
+              { errorCode: 'REGISTRATION_MISMATCH' }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2538,14 +2542,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with empty validation failures - should show technical error message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: []
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: []
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2564,11 +2568,9 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid without validation object - should show technical error message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({ status: summaryLogStatuses.invalid })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2586,14 +2588,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validation_failed - should show validation failures page with re-upload option', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validationFailed,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger,
-        validation: {
-          failures: [{ errorCode: 'PROCESSING_FAILED' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.validationFailed,
+          validation: {
+            failures: [{ errorCode: 'PROCESSING_FAILED' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2633,11 +2635,9 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: submission_failed - should show validation failures page with re-upload option', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submissionFailed,
-        year: 2026,
-        ledgerAccreditation: registeredOnlyLedger
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({ status: summaryLogStatuses.submissionFailed })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
