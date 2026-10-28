@@ -117,6 +117,16 @@ const registeredOnlyReprocessor = buildRegistrationWithAccreditation({
   })
 })
 
+const registeredOnlyFrom2025 = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
+    status: {
+      current: 'approved',
+      timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
+    },
+    accreditations: {}
+  })
+})
+
 const monthlyResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
@@ -1744,6 +1754,10 @@ describe('#listReportsController', () => {
     it("asks for the address's year's calendar and accreditation", async ({
       server
     }) => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        registeredOnlyFrom2025
+      )
+
       await server.inject({
         method: 'GET',
         url: `${registrationUrl}/reports/2025`,
@@ -1777,6 +1791,38 @@ describe('#listReportsController', () => {
 
       expect(statusCode).toBe(statusCodes.notFound)
       expect(fetchReportingPeriods).not.toHaveBeenCalled()
+    })
+
+    it('answers 404 for a year the registration was never approved in', async ({
+      server
+    }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${registrationUrl}/reports/2025`,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('lists a past year the registration was approved in', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        registeredOnlyFrom2025
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `${registrationUrl}/reports/2025`,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+        `${registrationUrl}/2025`
+      )
     })
 
     describe('at the yearless address', () => {
