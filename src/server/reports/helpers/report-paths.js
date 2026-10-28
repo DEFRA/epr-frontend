@@ -3,13 +3,15 @@ import { CADENCE } from '../constants.js'
 /**
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { CadenceValue } from '../constants.js'
  */
 
 /**
  * @typedef {{ organisationNumber: OrganisationNumber, registrationNumber: RegistrationNumber }} RegistrationKeys
- * @typedef {RegistrationKeys & { year: string }} AccreditationKeys
- * @typedef {RegistrationKeys & { year: number, cadence: CadenceValue, period: number, submissionNumber: number }} SubmissionKeys
+ * @typedef {RegistrationKeys & { year: Year }} RegistrationYearKeys
+ * @typedef {RegistrationYearKeys} AccreditationKeys
+ * @typedef {RegistrationYearKeys & { cadence: CadenceValue, period: number, submissionNumber: number }} SubmissionKeys
  */
 
 /**
@@ -34,10 +36,10 @@ export const registrationPath = ({ registrationNumber, ...keys }) =>
  * @returns {string}
  */
 export const accreditationPath = ({ year, ...keys }) =>
-  `${registrationPath(keys)}/accreditations/${encodeURIComponent(year)}`
+  `${registrationPath(keys)}/accreditations/${year}`
 
 /**
- * @param {RegistrationKeys & { year: number }} keys
+ * @param {RegistrationYearKeys} keys
  * @returns {string}
  */
 export const registeredOnlyPath = ({ year, ...keys }) =>
@@ -52,11 +54,12 @@ export const summaryLogUploadPath = (keys) =>
   `${registrationPath(keys)}/summary-logs/upload`
 
 /**
- * The report list page for a registration.
- * @param {RegistrationKeys} keys
+ * The report list page for a registration's year.
+ * @param {RegistrationYearKeys} keys
  * @returns {string}
  */
-export const reportsListPath = (keys) => `${registrationPath(keys)}/reports`
+export const reportsListPath = ({ year, ...keys }) =>
+  `${registrationPath(keys)}/reports/${year}`
 
 /**
  * One submission's page address; a page appends its own suffix.
@@ -72,8 +75,8 @@ export const reportPath = ({
 }) => {
   const reports =
     cadence === CADENCE.MONTHLY
-      ? `${accreditationPath({ ...keys, year: String(year) })}/reports`
-      : `${reportsListPath(keys)}/${year}`
+      ? `${accreditationPath({ ...keys, year })}/reports`
+      : reportsListPath({ ...keys, year })
 
   return `${reports}/${cadence}/${period}/submissions/${submissionNumber}`
 }
@@ -87,8 +90,8 @@ export const reportApiPath = (keys) => reportPath(keys)
 
 /**
  * The backend reporting calendar route for a registration's year.
- * @param {RegistrationKeys & { year: number }} keys
+ * @param {RegistrationYearKeys} keys
  * @returns {string}
  */
-export const reportsCalendarApiPath = ({ year, ...keys }) =>
-  `${reportsListPath(keys)}/${year}/calendar`
+export const reportsCalendarApiPath = (keys) =>
+  `${reportsListPath(keys)}/calendar`

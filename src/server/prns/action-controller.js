@@ -8,6 +8,7 @@ import {
 } from './helpers/build-prn-detail-rows.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
+import { isYearOpen } from './helpers/closed-year.js'
 import { fetchPrnContext } from './helpers/fetch-prn-context.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
@@ -113,7 +114,8 @@ function buildActionViewData({
       noteType,
       request,
       basePath,
-      prnId
+      prnId,
+      yearOpen: isYearOpen(accreditation)
     }),
     returnLink: {
       href: request.localiseUrl(basePath),
@@ -135,18 +137,20 @@ function buildActionButtons({
   noteType,
   request,
   basePath,
-  prnId
+  prnId,
+  yearOpen
 }) {
   const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
   const isAwaitingCancellation = prn.status === 'awaiting_cancellation'
 
   return {
-    issueButton: isAwaitingAuthorisation
-      ? {
-          text: localise('prns:action:issueButton', { noteType }),
-          action: request.localiseUrl(`${basePath}/${prnId}/issue`)
-        }
-      : null,
+    issueButton:
+      isAwaitingAuthorisation && yearOpen
+        ? {
+            text: localise('prns:action:issueButton', { noteType }),
+            action: request.localiseUrl(`${basePath}/${prnId}/issue`)
+          }
+        : null,
     deleteButton: isAwaitingAuthorisation
       ? {
           text: localise('prns:action:deleteLink', { noteType }),

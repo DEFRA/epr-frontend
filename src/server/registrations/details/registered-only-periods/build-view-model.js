@@ -24,6 +24,7 @@ import {
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { Localise } from '../helpers/types.js'
  */
 
@@ -88,7 +89,7 @@ const toLedger = ({
  *   keys: RegistrationKeys,
  *   name: string,
  *   registrationAddress: string,
- *   year: number,
+ *   year: Year,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
@@ -128,7 +129,7 @@ const toBreadcrumbs = ({
  *   keys: RegistrationKeys,
  *   reportingPeriods: ReportingPeriod[],
  *   ledgerEvents: LedgerEvent[] | null | undefined,
- *   year: number,
+ *   year: Year,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params

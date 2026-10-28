@@ -1,4 +1,5 @@
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -68,6 +69,7 @@ const details = {
   },
   accreditation: {
     accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
+    prns: { open: true },
     status: {
       current: 'approved',
       timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
@@ -115,7 +117,7 @@ describe('the regulator reports detailed view', () => {
     config.set('featureFlags.regulatorAccess', false)
   })
 
-  it('heads the page Reports, naming the organisation, the registration and the accreditation', async ({
+  it("heads the page Reports with the address's year, naming the organisation, the registration and the accreditation", async ({
     server
   }) => {
     const { statusCode, body } = await visit(server, regulator)
@@ -126,10 +128,10 @@ describe('the regulator reports detailed view', () => {
       expect.objectContaining({
         organisationNumber: toOrganisationNumber('500118'),
         registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
-        year: '2026'
+        year: toYear(2026)
       })
     )
-    expect(heading.textContent).toContain('Reports')
+    expect(heading.textContent).toContain('Reports (2026)')
     expect(
       heading.querySelector('[class^="govuk-caption-"]')?.textContent
     ).toBe('Kirkby Plastics Ltd - R26ER5001180041PL - A26ER5001180114PL')
@@ -245,7 +247,7 @@ describe('the regulator reports detailed view', () => {
       'Kirkby Plastics Ltd',
       'Registration details',
       'Accreditation details',
-      'Reports'
+      'Reports (2026)'
     ])
     expect(
       crumbs
@@ -270,7 +272,7 @@ describe('the regulator reports detailed view', () => {
     expect(crumbs.at(-2)?.querySelector('a')?.getAttribute('href')).toBe(
       accreditationPath
     )
-    expect(crumbs.at(-1)?.textContent?.trim()).toBe('Reports')
+    expect(crumbs.at(-1)?.textContent?.trim()).toBe('Reports (2026)')
     expect(crumbs.at(-1)?.querySelector('a')).toBeNull()
     expect(getByTestId(document, 'reports-detailed-view')).toBeDefined()
   })
@@ -279,7 +281,7 @@ describe('the regulator reports detailed view', () => {
     const { body } = await visit(server, regulator)
 
     expect(documentOf(body).ownerDocument.title).toContain(
-      'A26ER5001180114PL: Reports'
+      'A26ER5001180114PL: Reports (2026)'
     )
   })
 

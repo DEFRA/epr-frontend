@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { describe, expect, it } from 'vitest'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -18,6 +19,7 @@ import {
 
 const accreditation2025 = /** @type {const} */ ({
   accreditationNumber: toAccreditationNumber('A25ER5001180114PL'),
+  prns: { open: true },
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2025-01-01T09:00:00.000Z' }]
@@ -26,6 +28,7 @@ const accreditation2025 = /** @type {const} */ ({
 
 const accreditation2026 = /** @type {const} */ ({
   accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
+  prns: { open: true },
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
@@ -88,21 +91,15 @@ describe(registrationIn, () => {
 
 describe(accreditationIn, () => {
   it('returns the accreditation for that year', () => {
-    expect(accreditationIn(registration, '2025')).toBe(accreditation2025)
+    expect(accreditationIn(registration, toYear(2025))).toBe(accreditation2025)
   })
 
   it('is a 404 for a year the registration holds no accreditation for', () => {
-    expect(() => accreditationIn(registration, '2024')).toThrow(
+    expect(() => accreditationIn(registration, toYear(2024))).toThrow(
       expect.objectContaining({
         output: expect.objectContaining({ statusCode: statusCodes.notFound }),
         code: errorCodes.accreditationNotFound
       })
-    )
-  })
-
-  it('is a 404 for an inherited key', () => {
-    expect(() => accreditationIn(registration, 'constructor')).toThrow(
-      expect.objectContaining({ code: errorCodes.accreditationNotFound })
     )
   })
 })

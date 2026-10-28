@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -71,7 +72,7 @@ const localiseUrl = (path) => path
 const keys = {
   organisationNumber: toOrganisationNumber('500118'),
   registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
-  year: '2026'
+  year: toYear(2026)
 }
 const registrationPath = '/organisations/500118/registrations/R26ER5001180041PL'
 const accreditationPath = `${registrationPath}/accreditations/2026`
@@ -106,6 +107,7 @@ const aRegistration = (overrides) =>
  */
 const anAccreditation = (overrides) => ({
   accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
+  prns: { open: true },
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
@@ -122,7 +124,7 @@ const aWasteBalance = { amount: 1234.5, availableAmount: 987.25 }
 const aPeriod = (overrides) =>
   /** @type {ReportingPeriod} */ (
     /** @type {unknown} */ ({
-      year: 2026,
+      year: toYear(2026),
       period: 8,
       submissionNumber: 1,
       startDate: '2026-08-01',

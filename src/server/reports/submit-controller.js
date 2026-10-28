@@ -39,6 +39,7 @@ import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
 /** @import { ValidationError } from 'joi' */
 
 /**
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { CadenceValue } from './constants.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
@@ -146,7 +147,7 @@ function buildActivityViewData(
  *   reportsUrl: string,
  *   deleteUrl: string,
  *   localise: Localise,
- *   year: number,
+ *   year: Year,
  *   cadence: CadenceValue,
  *   period: number,
  *   submissionNumber: number,

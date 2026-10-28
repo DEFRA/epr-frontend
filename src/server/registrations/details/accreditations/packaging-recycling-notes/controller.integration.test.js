@@ -1,4 +1,5 @@
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -36,7 +37,7 @@ const organisationId = organisationData.id
 const keys = {
   organisationNumber: toOrganisationNumber('50002'),
   registrationNumber: toRegistrationNumber('REG001234'),
-  year: '2026'
+  year: toYear(2026)
 }
 const organisationPath = '/organisations/50002'
 const registrationPath = `${organisationPath}/registrations/REG001234`
@@ -256,6 +257,14 @@ describe('the regulator PRNs detailed view', () => {
     })
   })
 
+  it('heads the notes with the year they belong to', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(
+      getByRole(documentOf(body), 'heading', { level: 1 }).textContent
+    ).toContain('PRNs (2026)')
+  })
+
   it("names an exporter's notes PERNs", async ({ server }) => {
     vi.mocked(fetchPrnListDetails).mockResolvedValue({
       ...details,
@@ -283,7 +292,7 @@ describe('the regulator PRNs detailed view', () => {
       'Kirkby Plastics Ltd',
       'Registration details',
       'Accreditation details',
-      'PRNs'
+      'PRNs (2026)'
     ])
     expect(
       crumbs.map((crumb) => crumb.querySelector('a')?.getAttribute('href'))

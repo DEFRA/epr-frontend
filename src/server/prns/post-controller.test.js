@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -60,7 +61,7 @@ const fixtureExporter = buildRegistrationWithAccreditation({
 const keys = {
   organisationNumber: toOrganisationNumber('500123'),
   registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
-  year: '2026'
+  year: toYear(2026)
 }
 const prnsBase =
   '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'
@@ -252,6 +253,25 @@ describe('#postCreatePrnController', () => {
           'Select a valid packaging producer or compliance scheme'
         )
       })
+    })
+
+    it('is not found for a year the service does not answer for, even with a payload it would reject', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, url, {
+        auth: mockAuth
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: url.replace('/accreditations/2026/', '/accreditations/2023/'),
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { ...validPayload, tonnage: '', crumb }
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(createPrn).not.toHaveBeenCalled()
     })
 
     describe('with invalid payload', () => {
@@ -606,6 +626,34 @@ describe('#postCreatePrnController', () => {
           '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026'
         )
       })
+    })
+
+    it('should send the session back to the list when the backend says the year has closed', async ({
+      server
+    }) => {
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+      const boom = Boom.conflict(
+        'The deadline for a 2026 relevant year was 31 January 2027.'
+      )
+      boom.output.payload.code = 'RELEVANT_YEAR_CLOSED'
+      vi.mocked(createPrn).mockRejectedValue(boom)
+
+      const { cookie, crumb } = await getCsrfToken(server, url, {
+        auth: mockAuth
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { ...validPayload, crumb }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(prnsBase)
     })
 
     describe('consume backend insufficient-balance verdict', () => {

@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -102,7 +103,7 @@ const fixtureExporter = buildRegistrationWithAccreditation({
 
 const organisationNumber = toOrganisationNumber('500123')
 const registrationNumber = toRegistrationNumber('R26EN0000000001PL')
-const year = '2026'
+const year = toYear(2026)
 const keys = { organisationNumber, registrationNumber, year }
 const prnId = 'prn-789'
 const pernId = 'pern-123'
@@ -1276,6 +1277,45 @@ describe('#viewController', () => {
         const main = getByRole(body, 'main')
 
         expect(queryByText(main, /Discard and start again/i)).toBeNull()
+      })
+
+      it('should offer only discarding the draft once the year has closed', async ({
+        server
+      }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+        const cookies = mergeCookies(
+          csrfCookie,
+          ...extractCookieValues(postResponse.headers['set-cookie'])
+        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          accreditation: buildAccreditationView({ prns: { open: false } })
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(queryByRole(main, 'button', { name: 'Create PRN' })).toBeNull()
+        expect(
+          getByRole(main, 'link', { name: /Discard and start again/i })
+        ).toBeDefined()
       })
 
       it('displays discard link below create button on check page', async ({

@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -62,7 +63,7 @@ const reprocessorReportDetail = {
   submissionNumber: 1,
   canRequestResubmission: false,
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
@@ -112,7 +113,7 @@ const emptyReportDetail = {
   submissionNumber: 1,
   canRequestResubmission: false,
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
@@ -149,7 +150,7 @@ const accreditedReprocessorReportDetail = {
   submissionNumber: 1,
   canRequestResubmission: false,
   cadence: 'monthly',
-  year: 2026,
+  year: toYear(2026),
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
@@ -203,7 +204,7 @@ const exporterReportDetail = {
   submissionNumber: 1,
   canRequestResubmission: false,
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
@@ -278,7 +279,7 @@ const exporterWithUnapprovedReportDetail = {
   submissionNumber: 1,
   canRequestResubmission: false,
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
@@ -325,7 +326,7 @@ const emptyExporterReportDetail = {
   submissionNumber: 1,
   canRequestResubmission: false,
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
@@ -377,7 +378,7 @@ const accreditedExporterReportDetail = {
   submissionNumber: 1,
   canRequestResubmission: false,
   cadence: 'monthly',
-  year: 2026,
+  year: toYear(2026),
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
@@ -517,7 +518,7 @@ describe('#detailReportsController', () => {
 
       expect(backLink).not.toBeNull()
       expect(backLink?.getAttribute('href')).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA/reports'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
       )
     })
 
@@ -590,7 +591,7 @@ describe('#detailReportsController', () => {
 
       expect(link).not.toBeNull()
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA/reports'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
       )
     })
 
@@ -1814,7 +1815,7 @@ describe('#detailReportsController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA/reports'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
       )
     })
   })
@@ -1973,7 +1974,9 @@ describe('#detailReportsController', () => {
 
       expect(
         getByRole(body, 'link', { name: /Cancel/ }).getAttribute('href')
-      ).toBe('/organisations/500001/registrations/R25SR500030912PA/reports')
+      ).toBe(
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
+      )
     })
   })
 

@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -324,7 +325,7 @@ describe('#viewController', () => {
   describe('for a submitted report', () => {
     const reportDetail = /** @type {ReportDetailResponse} */ ({
       cadence: 'monthly',
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       startDate: '2026-01-01',
       endDate: '2026-01-31',
@@ -442,7 +443,9 @@ describe('#viewController', () => {
       const backLink = body.querySelector('.govuk-back-link')
 
       expect(backLink).not.toBeNull()
-      expect(backLink?.getAttribute('href')).toBe(`${registrationPath}/reports`)
+      expect(backLink?.getAttribute('href')).toBe(
+        `${registrationPath}/reports/2026`
+      )
     })
 
     describe('for a regulator, who has no report list of their own', () => {

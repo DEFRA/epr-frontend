@@ -112,6 +112,57 @@ describe('#actionController', () => {
   })
 
   describe('request handling', () => {
+    describe('once the year has closed', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          accreditation: buildAccreditationView({ prns: { open: false } })
+        })
+      })
+
+      it('should offer deleting but not issuing a note awaiting authorisation', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: actionUrl,
+          auth: mockAuth
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(queryByRole(main, 'button', { name: /Issue PRN/i })).toBeNull()
+        expect(getByRole(main, 'button', { name: /Delete PRN/i })).toBeDefined()
+      })
+
+      it('should not start the issue journey', async ({ server }) => {
+        await server.inject({ method: 'GET', url: actionUrl, auth: mockAuth })
+
+        expect(metrics.journey.start).not.toHaveBeenCalled()
+      })
+
+      it('should still offer confirming a requested cancellation', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnAwaitingAuth,
+            status: 'awaiting_cancellation'
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: actionUrl,
+          auth: mockAuth
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(getByRole(main, 'button', { name: /Cancel PRN/i })).toBeDefined()
+      })
+    })
+
     it('displays PRN details on the action page', async ({ server }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',

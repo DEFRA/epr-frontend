@@ -2,7 +2,10 @@ import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { asHapiRequest } from '#server/common/hapi-types.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
+import { currentYear } from '#server/common/helpers/year.js'
+import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 
 import { checkGetController, checkPostController } from './check-controller.js'
 import { createController } from './create-controller.js'
@@ -59,7 +62,7 @@ import {
 import { reportDataIncompleteGetController } from './report-data-incomplete-controller.js'
 import { ReportStaleError } from './helpers/stale.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-import { reportPath } from './helpers/report-paths.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { CADENCE } from './constants.js'
 
 const registrationBase =
@@ -266,6 +269,32 @@ const monthlyToAccreditedRoute = {
   }
 }
 
+/**
+ * Sends the yearless report list address to the latest year the registration
+ * was approved in, as the organisation home does, or the current year if none.
+ * @type {ServerRoute}
+ */
+const latestYearListRoute = {
+  method: 'GET',
+  path: listPath,
+  async handler(rawRequest, h) {
+    const request = asHapiRequest(rawRequest)
+    const keys = /** @type {RegistrationKeys} */ (request.params)
+
+    const { registration } = await fetchRegistration({
+      ...keys,
+      backendToken: request.auth.credentials.backendToken
+    })
+    const [latestYear] = registeredYears(registration)
+
+    return redirectPreservingMethod(
+      request,
+      h,
+      reportsListPath({ ...keys, year: latestYear ?? currentYear() })
+    )
+  }
+}
+
 export const reports = {
   plugin: {
     name: 'reports',
@@ -274,8 +303,9 @@ export const reports = {
         {
           ...listController,
           method: 'GET',
-          path: listPath
+          path: `${listPath}/{year}`
         },
+        latestYearListRoute,
         ...submissionRoutes(),
         monthlyToAccreditedRoute
       ])
@@ -310,7 +340,7 @@ export const reports = {
 /**
  * @import { RouteExtObject, ServerRegisterPluginObject, ServerRoute } from '@hapi/hapi'
  * @import { CadenceValue } from './constants.js'
- * @import { SubmissionKeys } from './helpers/report-paths.js'
+ * @import { RegistrationKeys, SubmissionKeys } from './helpers/report-paths.js'
  */
 
 /**

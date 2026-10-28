@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { describe, expect, it } from 'vitest'
 
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -77,7 +78,7 @@ describe(buildReportBreadcrumbs, () => {
     const crumbs = buildReportBreadcrumbs({
       ...context,
       cadence: CADENCE.MONTHLY,
-      year: 2026,
+      year: toYear(2026),
       pageName: 'Report for January 2026'
     })
 
@@ -91,7 +92,7 @@ describe(buildReportBreadcrumbs, () => {
     const crumbs = buildReportBreadcrumbs({
       ...context,
       cadence: CADENCE.QUARTERLY,
-      year: 2026,
+      year: toYear(2026),
       pageName: 'Report for Q1 2026'
     })
 
@@ -106,7 +107,7 @@ describe(buildReportBreadcrumbs, () => {
       ...context,
       registration: buildRegistrationView({ accreditations: {} }),
       cadence: CADENCE.MONTHLY,
-      year: 2026,
+      year: toYear(2026),
       pageName: 'Report for January 2026'
     })
 

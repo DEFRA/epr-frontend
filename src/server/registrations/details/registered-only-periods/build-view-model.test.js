@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -10,6 +11,7 @@ import { buildViewModel } from './build-view-model.js'
 /**
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { TableRow } from './build-view-model.js'
  */
@@ -55,6 +57,7 @@ const anOrganisation = (overrides) => ({
  */
 const anAccreditation = (timeline) => ({
   accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
+  prns: { open: true },
   status: {
     current: 'approved',
     timeline: Object.entries(timeline).map(([at, status]) => ({ status, at }))
@@ -101,7 +104,7 @@ const aLedgerEvent = (createdAt = '2026-05-04T09:00:00.000Z') => ({
  *   registration?: RegistrationView,
  *   reportingPeriods?: ReportingPeriod[],
  *   ledgerEvents?: LedgerEvent[] | null,
- *   year?: number
+ *   year?: Year
  * }} [overrides]
  */
 const build = ({
@@ -117,7 +120,7 @@ const build = ({
     keys: { organisationNumber, registrationNumber },
     reportingPeriods: reportingPeriods ?? [],
     ledgerEvents,
-    year: year ?? 2026,
+    year: year ?? toYear(2026),
     localise,
     localiseUrl: (path) => path
   })

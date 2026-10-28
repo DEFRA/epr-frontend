@@ -1,5 +1,5 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { organisationPath } from '#server/reports/helpers/report-paths.js'
+import { homePath } from '#server/organisations/home-page.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
 import { prnsPath } from './helpers/prn-resource.js'
 
@@ -29,10 +29,14 @@ export const createdController = {
     // Clear the session data
     request.yar.clear('prnCreated')
 
-    const { noteType, noteTypePlural } = getNoteTypeDisplayNames(prnCreated)
+    const { isExporter, noteType, noteTypePlural } =
+      getNoteTypeDisplayNames(prnCreated)
 
     const createUrl = `${listUrl}/create`
-    const homeUrl = organisationPath(keys)
+    const homeUrl = homePath(keys.organisationNumber, {
+      year: keys.year,
+      exporting: isExporter
+    })
 
     const headingKey = prnCreated.isDecemberWaste
       ? 'prns:create:successHeadingDecemberWaste'

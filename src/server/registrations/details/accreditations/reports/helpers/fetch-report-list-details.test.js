@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -10,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchReportListDetails } from './fetch-report-list-details.js'
 
 /**
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { Accreditation, OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { ReportListDetails } from './fetch-report-list-details.js'
@@ -26,6 +28,7 @@ describe(fetchReportListDetails, () => {
   /** @type {Accreditation} */
   const accreditation = {
     accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
+    prns: { open: true },
     status: {
       current: 'approved',
       timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
@@ -55,7 +58,7 @@ describe(fetchReportListDetails, () => {
   /** @type {ReportListDetails['reportingPeriods']} */
   const reportingPeriods = [
     {
-      year: 2026,
+      year: toYear(2026),
       cadence: 'monthly',
       period: 8,
       submissionNumber: 1,
@@ -67,12 +70,12 @@ describe(fetchReportListDetails, () => {
     }
   ]
 
-  /** @param {{ registrationNumber?: RegistrationNumber, year?: string }} [overrides] */
+  /** @param {{ registrationNumber?: RegistrationNumber, year?: Year }} [overrides] */
   const fetchDetails = (overrides) =>
     fetchReportListDetails({
       organisationNumber,
       registrationNumber,
-      year: '2026',
+      year: toYear(2026),
       backendToken,
       ...overrides
     })
@@ -80,7 +83,7 @@ describe(fetchReportListDetails, () => {
   beforeEach(() => {
     vi.mocked(fetchOrganisation).mockResolvedValue(organisation)
     vi.mocked(fetchYearCalendar).mockResolvedValue({
-      year: 2026,
+      year: toYear(2026),
       registeredOnly: {
         reportingPeriods: [
           {
@@ -119,7 +122,7 @@ describe(fetchReportListDetails, () => {
   })
 
   it('shows no periods for a year with no accredited periods', async () => {
-    vi.mocked(fetchYearCalendar).mockResolvedValue({ year: 2026 })
+    vi.mocked(fetchYearCalendar).mockResolvedValue({ year: toYear(2026) })
 
     await expect(fetchDetails()).resolves.toMatchObject({
       reportingPeriods: []
@@ -143,7 +146,7 @@ describe(fetchReportListDetails, () => {
   })
 
   it('is not found for a year the registration holds no accreditation for', async () => {
-    await expect(fetchDetails({ year: '2025' })).rejects.toMatchObject({
+    await expect(fetchDetails({ year: toYear(2025) })).rejects.toMatchObject({
       output: { statusCode: 404 }
     })
   })

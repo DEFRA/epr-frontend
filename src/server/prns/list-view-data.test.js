@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { describe, expect, it, vi } from 'vitest'
@@ -11,7 +12,7 @@ const createMockRequest = (scope = [SCOPES.organisationLinkedWrite]) => ({
   auth: { credentials: { scope } },
   t: vi.fn((key, params = {}) => {
     const translations = {
-      'prns:list:pageTitle': params.noteTypePlural,
+      'prns:list:pageTitle': `${params.noteTypePlural} (${params.year})`,
       'prns:list:balanceHint': `This is the balance available for creating new ${params.noteTypePlural}`,
       'prns:list:cancelHint': `If you delete or cancel a ${params.noteType}, its tonnage will be added to your available waste balance.`,
       'prns:list:createLink': `Create a ${params.noteType}`,
@@ -158,31 +159,33 @@ const mockWasteBalance = { availableAmount: 150.5 }
 const reprocessorKeys = {
   organisationNumber: toOrganisationNumber('500001'),
   registrationNumber: toRegistrationNumber('R26ER1'),
-  year: '2026'
+  year: toYear(2026)
 }
 
 const exporterKeys = {
   organisationNumber: toOrganisationNumber('500002'),
   registrationNumber: toRegistrationNumber('R26EX2'),
-  year: '2026'
+  year: toYear(2026)
 }
 
 describe('#buildListViewData', () => {
   describe('for reprocessor (PRN)', () => {
     it('should return page title with PRN text', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.pageTitle).toBe('PRNs')
-      expect(result.heading).toBe('PRNs')
+      expect(result.pageTitle).toBe('PRNs (2026)')
+      expect(result.heading).toBe('PRNs (2026)')
     })
 
     it('should return correct back URL', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -196,20 +199,34 @@ describe('#buildListViewData', () => {
 
     it('should return correct create link', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.createLink.href).toBe(
+      expect(result.createLink?.href).toBe(
         '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/create'
       )
-      expect(result.createLink.text).toBe('Create a PRN')
+      expect(result.createLink?.text).toBe('Create a PRN')
+    })
+
+    it('should offer no create link once the year has closed', () => {
+      const result = buildListViewData(createMockRequest(), {
+        yearOpen: false,
+        keys: reprocessorKeys,
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.createLink).toBeNull()
     })
 
     it('should return waste balance data', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -225,6 +242,7 @@ describe('#buildListViewData', () => {
 
     it('should return select heading and awaiting authorisation heading', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -239,6 +257,7 @@ describe('#buildListViewData', () => {
 
     it('should return tab labels', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -251,6 +270,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancel hint with delete wording', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -264,6 +284,7 @@ describe('#buildListViewData', () => {
 
     it('should return no issued text for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -275,6 +296,7 @@ describe('#buildListViewData', () => {
 
     it('should return table rows in govukTable format with total row', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -294,6 +316,7 @@ describe('#buildListViewData', () => {
 
     it('should return total row with sum of tonnage', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -315,6 +338,7 @@ describe('#buildListViewData', () => {
       ]
 
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: prnsWithMissingTonnage,
@@ -327,6 +351,7 @@ describe('#buildListViewData', () => {
 
     it('should return status as govukTag HTML', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -339,6 +364,7 @@ describe('#buildListViewData', () => {
 
     it('should return select link pointing to action page', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -356,6 +382,7 @@ describe('#buildListViewData', () => {
       const result = buildListViewData(
         createMockRequest([...IDENTITIES.operatorWithoutWrite.scopes]),
         {
+          yearOpen: true,
           keys: reprocessorKeys,
           registration: reprocessorRegistration,
           prns: stubPrns,
@@ -373,6 +400,7 @@ describe('#buildListViewData', () => {
       const result = buildListViewData(
         createMockRequest([...IDENTITIES.operatorWithoutWrite.scopes]),
         {
+          yearOpen: true,
           keys: reprocessorKeys,
           registration: reprocessorRegistration,
           prns: stubPrns,
@@ -386,6 +414,7 @@ describe('#buildListViewData', () => {
 
     it('should return table headings', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -405,29 +434,32 @@ describe('#buildListViewData', () => {
   describe('for exporter (PERN)', () => {
     it('should return page title with PERN text', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.pageTitle).toBe('PERNs')
-      expect(result.heading).toBe('PERNs')
+      expect(result.pageTitle).toBe('PERNs (2026)')
+      expect(result.heading).toBe('PERNs (2026)')
     })
 
     it('should return create link with PERN text', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.createLink.text).toBe('Create a PERN')
+      expect(result.createLink?.text).toBe('Create a PERN')
     })
 
     it('should return select heading and awaiting authorisation heading with PERN text', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
@@ -442,6 +474,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancel hint with PERN text and delete wording', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
@@ -455,6 +488,7 @@ describe('#buildListViewData', () => {
 
     it('should return no issued text for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
@@ -468,6 +502,7 @@ describe('#buildListViewData', () => {
   describe('hasCreatedPrns flag', () => {
     it('should pass through hasCreatedPrns as true when PRNs exist', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -480,6 +515,7 @@ describe('#buildListViewData', () => {
 
     it('should pass through hasCreatedPrns as false when no PRNs exist', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: [],
@@ -492,6 +528,7 @@ describe('#buildListViewData', () => {
 
     it('should return type-specific noPrnsCreatedText for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: [],
@@ -504,6 +541,7 @@ describe('#buildListViewData', () => {
 
     it('should return type-specific noPrnsCreatedText for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: exporterKeys,
         registration: exporterRegistration,
         prns: [],
@@ -518,6 +556,7 @@ describe('#buildListViewData', () => {
   describe('issued table', () => {
     it('should return issued table rows with PRN number, recipient and date issued', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -542,6 +581,7 @@ describe('#buildListViewData', () => {
 
     it('should return issued table status as govuk-tag', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -559,6 +599,7 @@ describe('#buildListViewData', () => {
 
     it('should return issued table headings for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -581,6 +622,7 @@ describe('#buildListViewData', () => {
 
     it('should return issued table headings for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: exporterRegistration,
         prns: stubPrns,
@@ -603,6 +645,7 @@ describe('#buildListViewData', () => {
 
     it('should return view links for each issued PRN with target="_blank"', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -621,6 +664,7 @@ describe('#buildListViewData', () => {
 
     it('should return empty issued table rows when no issued PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -635,6 +679,7 @@ describe('#buildListViewData', () => {
 
     it('should return issued heading for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -649,6 +694,7 @@ describe('#buildListViewData', () => {
 
     it('should return issued heading for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
@@ -665,6 +711,7 @@ describe('#buildListViewData', () => {
   describe('cancellation table', () => {
     it('should return awaiting cancellation heading for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -680,6 +727,7 @@ describe('#buildListViewData', () => {
 
     it('should return awaiting cancellation heading for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
@@ -695,6 +743,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancellation table with correct headings', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -716,6 +765,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancellation table rows with status tags', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -745,6 +795,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancellation table with total row', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -763,6 +814,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancellation table with select links', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -779,6 +831,7 @@ describe('#buildListViewData', () => {
 
     it('should return empty cancellation table when no cancellation PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -792,6 +845,7 @@ describe('#buildListViewData', () => {
 
     it('should default to empty cancellation table when cancellationPrns not provided', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -806,6 +860,7 @@ describe('#buildListViewData', () => {
   describe('cancelled table', () => {
     it('should return cancelled table rows with PRN number, recipient and date issued', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -832,6 +887,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled table status as govuk-tag with red colour', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -846,6 +902,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled table headings for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -867,6 +924,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled table headings for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: exporterRegistration,
         prns: stubPrns,
@@ -880,6 +938,7 @@ describe('#buildListViewData', () => {
 
     it('should return view links for each cancelled PRN with target="_blank"', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -897,6 +956,7 @@ describe('#buildListViewData', () => {
 
     it('should return empty cancelled table rows when no cancelled PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -910,6 +970,7 @@ describe('#buildListViewData', () => {
 
     it('should default to empty cancelled table when cancelledPrns not provided', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -922,6 +983,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled heading for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -935,6 +997,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled heading for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
@@ -948,6 +1011,7 @@ describe('#buildListViewData', () => {
 
     it('should return no cancelled text for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -959,6 +1023,7 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled tab label', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -972,6 +1037,7 @@ describe('#buildListViewData', () => {
   describe('edge cases', () => {
     it('should handle null waste balance', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
@@ -984,6 +1050,7 @@ describe('#buildListViewData', () => {
 
     it('should handle empty PRN list', () => {
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: [],
@@ -1007,6 +1074,7 @@ describe('#buildListViewData', () => {
       ]
 
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: prnAwaitingAcceptance,
@@ -1029,6 +1097,7 @@ describe('#buildListViewData', () => {
       ]
 
       const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
         keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: prnWithUnknownStatus,
@@ -1068,6 +1137,7 @@ describe('#buildListViewData', () => {
       'lets an operator tell a December Waste note apart from a general one at a glance in the %s',
       (_name, tableKey, listArgs) => {
         const result = buildListViewData(createMockRequest(), {
+          yearOpen: true,
           keys: reprocessorKeys,
           registration: reprocessorRegistration,
           wasteBalance: mockWasteBalance,

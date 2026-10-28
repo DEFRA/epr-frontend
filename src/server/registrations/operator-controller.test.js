@@ -257,7 +257,9 @@ describe("the operator's registration page for a year", () => {
     expect(hrefOf(body, 'Upload your summary log')).toBe(
       `${registrationPath}/summary-logs/upload`
     )
-    expect(hrefOf(body, 'Manage reports')).toBe(`${registrationPath}/reports`)
+    expect(hrefOf(body, 'Manage reports')).toBe(
+      `${registrationPath}/reports/${year}`
+    )
     expect(hrefOf(body, 'Create new PRN')).toBe(
       `${accreditationPath}/packaging-recycling-notes/create`
     )
@@ -328,7 +330,9 @@ describe("the operator's registration page for a year", () => {
     expect(hrefOf(body, 'View PRNs')).toBe(
       `${accreditationPath}/packaging-recycling-notes`
     )
-    expect(hrefOf(body, 'View reports')).toBe(`${registrationPath}/reports`)
+    expect(hrefOf(body, 'View reports')).toBe(
+      `${registrationPath}/reports/${year}`
+    )
     expect(queryByRole(body, 'link', { name: 'Create new PRN' })).toBeNull()
   })
 
@@ -468,7 +472,8 @@ describe("the operator's registration page for a year", () => {
     { name: 'a value that is not a year', segment: 'abcd' },
     { name: 'a year with five digits', segment: `0${thisYear}` },
     { name: 'a year with a decimal point', segment: `${thisYear}.0` },
-    { name: 'a year with a plus sign', segment: `+${thisYear}` }
+    { name: 'a year with a plus sign', segment: `+${thisYear}` },
+    { name: 'a year before the service answers for', segment: '2023' }
   ])(
     'is not found for $name, without asking the backend',
     async ({ segment }, { server, msw }) => {
@@ -636,7 +641,9 @@ describe("the operator's registered-only page for a year", () => {
     expect(hrefOf(body, 'Upload your summary log')).toBe(
       `${registrationPath}/summary-logs/upload`
     )
-    expect(hrefOf(body, 'Manage reports')).toBe(`${registrationPath}/reports`)
+    expect(hrefOf(body, 'Manage reports')).toBe(
+      `${registrationPath}/reports/${year}`
+    )
     expect(hrefOf(body, 'View waste balance ledger')).toBe(
       `${registrationPath}/waste-balance-ledger`
     )

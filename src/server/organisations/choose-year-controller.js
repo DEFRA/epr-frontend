@@ -1,6 +1,5 @@
 import { config } from '#config/config.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
-import { toYear } from '#server/common/helpers/year.js'
 import Boom from '@hapi/boom'
 import { homePath } from './home-page.js'
 import { buildYearChoices } from './year-choices.js'
@@ -8,26 +7,13 @@ import { buildYearChoices } from './year-choices.js'
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { Year } from '#server/common/helpers/year.js'
- * @import { OrganisationParams } from './index.js'
+ * @import { OrganisationYearParams } from './index.js'
  */
-
-/**
- * @param {string} segment
- * @returns {Year}
- */
-const yearOf = (segment) => {
-  if (!/^\d{4}$/.test(segment)) {
-    throw Boom.notFound()
-  }
-
-  return toYear(Number(segment))
-}
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const chooseYearController = {
   /**
-   * @param {HapiRequest & { params: OrganisationParams, query: { year?: string, continue?: string } }} request
+   * @param {HapiRequest & { params: OrganisationYearParams, query: { year?: string, continue?: string } }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
@@ -38,7 +24,7 @@ export const chooseYearController = {
     const { t: localise } = request
     const { year: chosen, continue: pressedContinue } = request.query
     const orgNumber = request.params.organisationNumber
-    const addressYear = yearOf(String(request.params.year))
+    const addressYear = request.params.year
     const years = await fetchOrganisationYears(
       orgNumber,
       request.auth.credentials.backendToken

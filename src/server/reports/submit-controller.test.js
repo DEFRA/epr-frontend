@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import {
@@ -64,7 +65,7 @@ const reprocessorRegistration = buildRegistration(reprocessor)
 /** @type {ReportDetailResponse} */
 const exporterReportDetail = {
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   submissionNumber: 1,
   startDate: '2026-01-01',
@@ -145,7 +146,7 @@ const accreditedReprocessorRegistration = buildRegistration(reprocessor, true)
 /** @type {ReportDetailResponse} */
 const reprocessorReportDetail = {
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   submissionNumber: 1,
   startDate: '2026-01-01',
@@ -229,7 +230,7 @@ const accreditedExporterReportDetail = {
 const organisationNumber = '500001'
 const registrationNumber = 'R25SR500030912PA'
 const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/submit`
-const reportsUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports`
+const reportsUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
 const submittedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/submitted`
 
 /** Inject a GET request and return the parsed DOM body. */
@@ -1178,7 +1179,7 @@ describe('#submitController', () => {
           label: 'exporter quarterly',
           registration: exporterRegistration,
           report: exporterReportDetail,
-          periodPath: `${reportsUrl}/2026/quarterly/1/submissions/1`
+          periodPath: `${reportsUrl}/quarterly/1/submissions/1`
         },
         {
           label: 'reprocessor monthly',

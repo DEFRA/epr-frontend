@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -25,7 +26,7 @@ const ledgerOf = (events) => ({
 const keys = {
   organisationNumber: toOrganisationNumber('500001'),
   registrationNumber: toRegistrationNumber('R25/SR1'),
-  year: '2026'
+  year: toYear(2026)
 }
 const naturalRegistrationPath = `${backendUrl}/organisations/500001/registrations/R25%2FSR1`
 

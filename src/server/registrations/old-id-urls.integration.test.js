@@ -68,6 +68,7 @@ const organisationView = {
       accreditations: {
         2026: {
           accreditationNumber: 'A26ER5001180114PL',
+          prns: { open: true },
           status: {
             current: 'approved',
             timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]

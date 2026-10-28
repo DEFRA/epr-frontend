@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { describe, expect, it } from 'vitest'
 
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -27,7 +28,7 @@ const context = {
   keys: {
     organisationNumber: toOrganisationNumber('500123'),
     registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
-    year: '2026'
+    year: toYear(2026)
   },
   noteTypePlural: 'PRNs',
   prn: { id: 'prn-1', prnNumber: 'EX123456' },
@@ -59,6 +60,22 @@ describe(buildNoteBreadcrumbs, () => {
       },
       { text: 'EX123456' }
     ])
+  })
+
+  it('names the notes list by its note type and year, as the list heads itself', () => {
+    const crumbs = buildNoteBreadcrumbs({
+      ...context,
+      localise: /** @type {TFunction} */ (
+        /** @type {unknown} */ (
+          (/** @type {string} */ key, /** @type {object} */ params) =>
+            `${key} ${JSON.stringify(params)}`
+        )
+      )
+    })
+
+    expect(crumbs[4].text).toBe(
+      'registrations:details:accreditation:prns:listHeading {"noteTypePlural":"PRNs","year":2026}'
+    )
   })
 
   it('falls back to the note id where it carries no number yet', () => {

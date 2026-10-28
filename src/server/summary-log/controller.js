@@ -6,7 +6,6 @@ import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organ
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { toYear } from '#server/common/helpers/year.js'
 import {
   organisationPath as toOrganisationPath,
   registrationPath as toRegistrationPath
@@ -28,8 +27,8 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import {
  *   LoadsByReportingPeriod,
+ *   StoredSummaryLog,
  *   SummaryLogParams,
- *   SummaryLogStatusResponse,
  *   SummaryLogsSession,
  *   ValidationResponse
  * } from './types.js'
@@ -52,8 +51,14 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   uploadUrl?: string,
  *   cancelUrl: string,
  *   wasteBalance?: number,
- *   year?: number
+ *   year?: Year
  * }} RenderContext
+ */
+
+/**
+ * Optional fields because this also holds the session's submit response and the
+ * not-yet-stored placeholder, which carry only a status.
+ * @typedef {Partial<StoredSummaryLog> & { status: string }} StatusData
  */
 
 /**
@@ -112,7 +117,7 @@ const getProgressViewData = (localise, status) => {
  * @param {RegistrationKeys} keys
  * @param {string} summaryLogId - Summary log ID
  * @param {BackendToken} backendToken
- * @returns {Promise<SummaryLogStatusResponse>}
+ * @returns {Promise<StatusData>}
  */
 const getStatusData = async (request, keys, summaryLogId, backendToken) => {
   /** @type {SummaryLogsSession | null} */
@@ -121,6 +126,7 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
   const freshDataMap = summaryLogsSession.freshDataMap
   const freshData = freshDataMap?.[summaryLogId]
 
+  /** @type {StatusData} */
   const data =
     freshData ??
     (await fetchSummaryLogStatus(keys, summaryLogId, { backendToken }))
@@ -155,7 +161,7 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
 /**
  * The submit response carries no year, but every summary log the backend
  * serves does, so a missing year where one is read is a contract violation.
- * @param {number | undefined} value
+ * @param {Year | undefined} value
  * @returns {Year}
  */
 const requiredYear = (value) => {
@@ -163,7 +169,7 @@ const requiredYear = (value) => {
     throw new Error('Expected year for summary log')
   }
 
-  return toYear(value)
+  return value
 }
 
 /**
@@ -209,6 +215,7 @@ const renderSuccessView = (
     heading,
     organisationPath,
     registrationPath,
+    reportsUrl: `${registrationPath}/reports/${year}`,
     wasteBalance,
     showFurtherAction: requiresResubmission(loadsByReportingPeriod)
   })

@@ -1,6 +1,7 @@
 /**
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  */
 
 /**
@@ -54,7 +55,7 @@
  * @typedef {{
  *   organisationNumber: OrganisationNumber,
  *   registrationNumber: RegistrationNumber,
- *   year: string
+ *   year: Year
  * }} PrnListParams
  */
 

@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
@@ -7,6 +8,7 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import {
   asRegistrationWithAccreditation,
@@ -24,6 +26,8 @@ import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
  * @import { DOMWindow } from 'jsdom'
+ * @import { RegistrationStatus } from '#domain/organisations/model.js'
+ * @import { StatusTimeline } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from '#server/reports/constants.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  */
@@ -31,6 +35,7 @@ import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
+vi.mock(import('#server/common/helpers/organisations/fetch-registration.js'))
 vi.mock(import('#server/reports/helpers/fetch-reporting-periods.js'))
 
 /**
@@ -112,11 +117,21 @@ const registeredOnlyReprocessor = buildRegistrationWithAccreditation({
   })
 })
 
+const registeredOnlyFrom2025 = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
+    status: {
+      current: 'approved',
+      timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
+    },
+    accreditations: {}
+  })
+})
+
 const monthlyResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -126,7 +141,7 @@ const monthlyResponse = {
       report: null
     },
     {
-      year: 2026,
+      year: toYear(2026),
       period: 2,
       submissionNumber: 1,
       startDate: '2026-02-01',
@@ -136,7 +151,7 @@ const monthlyResponse = {
       report: null
     },
     {
-      year: 2026,
+      year: toYear(2026),
       period: 3,
       submissionNumber: 1,
       startDate: '2026-03-01',
@@ -152,7 +167,7 @@ const quarterlyResponse = {
   cadence: CADENCE.QUARTERLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -168,7 +183,7 @@ const monthlyWithReportResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -189,7 +204,7 @@ const monthlyWithReadyToSubmitResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -210,7 +225,7 @@ const monthlyWithTwoReadyToSubmitResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -225,7 +240,7 @@ const monthlyWithTwoReadyToSubmitResponse = {
       }
     },
     {
-      year: 2026,
+      year: toYear(2026),
       period: 2,
       submissionNumber: 1,
       startDate: '2026-02-01',
@@ -246,7 +261,7 @@ const monthlyWithSubmittedResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -271,7 +286,7 @@ const monthlyMixedStatusResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       submissionNumber: 1,
       startDate: '2026-01-01',
@@ -290,7 +305,7 @@ const monthlyMixedStatusResponse = {
       }
     },
     {
-      year: 2026,
+      year: toYear(2026),
       period: 2,
       submissionNumber: 1,
       startDate: '2026-02-01',
@@ -305,7 +320,7 @@ const monthlyMixedStatusResponse = {
       }
     },
     {
-      year: 2026,
+      year: toYear(2026),
       period: 3,
       submissionNumber: 1,
       startDate: '2026-03-01',
@@ -323,11 +338,11 @@ const emptyResponse = {
 }
 
 const accreditedUrl =
-  '/organisations/500001/registrations/R25SR500030912PA/reports'
+  '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
 const exporterUrl =
-  '/organisations/500002/registrations/R25SE500030913PA/reports'
+  '/organisations/500002/registrations/R25SE500030913PA/reports/2026'
 const reprocessorUrl =
-  '/organisations/500003/registrations/R25SR500030914PA/reports'
+  '/organisations/500003/registrations/R25SR500030914PA/reports/2026'
 
 /** @param {InstanceType<DOMWindow['HTMLElement']>} body */
 const extractTagData = (body) =>
@@ -358,6 +373,12 @@ const readTable = (table) => ({
   )
 })
 
+/** @param {InstanceType<DOMWindow>['document']} document */
+const headingOf = (document) =>
+  getByRole(document.body, 'heading', { level: 1 })
+    .textContent?.replaceAll(/\s+/g, ' ')
+    .trim()
+
 describe('#listReportsController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -379,42 +400,6 @@ describe('#listReportsController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('should display page heading', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const heading = getByRole(body, 'heading', {
-        name: /Reports/,
-        level: 1
-      })
-
-      expect(heading).toBeDefined()
-    })
-
-    it('should display back link to dashboard', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const backLink = body.querySelector('.govuk-back-link')
-
-      expect(backLink).not.toBeNull()
-      expect(backLink?.getAttribute('href')).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA'
-      )
     })
 
     it('should render monthly periods in a table', async ({ server }) => {
@@ -772,7 +757,7 @@ describe('#listReportsController', () => {
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
           {
-            year: 2026,
+            year: toYear(2026),
             period: 1,
             submissionNumber: 1,
             startDate: '2026-01-01',
@@ -1069,7 +1054,7 @@ describe('#listReportsController', () => {
         cadence: CADENCE.QUARTERLY,
         reportingPeriods: [
           {
-            year: 2026,
+            year: toYear(2026),
             period: 1,
             submissionNumber: 1,
             startDate: '2026-01-01',
@@ -1118,7 +1103,7 @@ describe('#listReportsController', () => {
         cadence: CADENCE.QUARTERLY,
         reportingPeriods: [
           {
-            year: 2026,
+            year: toYear(2026),
             period: 1,
             submissionNumber: 1,
             startDate: '2026-01-01',
@@ -1158,6 +1143,22 @@ describe('#listReportsController', () => {
         registeredOnlyReprocessor
       )
       backendServesCalendar(quarterlyResponse)
+    })
+
+    it("should display back link to the year's registered-only homepage", async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+
+      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+        '/organisations/500003/registrations/R25SR500030914PA/2026'
+      )
     })
 
     it('should display Create draft links for reprocessor periods', async ({
@@ -1282,7 +1283,7 @@ describe('#listReportsController', () => {
     // submission-grained pair the backend emits for a restated closed period).
     const resubmissionPeriodPair = (period) => [
       {
-        year: 2026,
+        year: toYear(2026),
         period,
         submissionNumber: 1,
         startDate: `2026-0${period}-01`,
@@ -1301,7 +1302,7 @@ describe('#listReportsController', () => {
         }
       },
       {
-        year: 2026,
+        year: toYear(2026),
         period,
         submissionNumber: 2,
         startDate: `2026-0${period}-01`,
@@ -1514,7 +1515,7 @@ describe('#listReportsController', () => {
       cadence: CADENCE.MONTHLY,
       reportingPeriods: [
         {
-          year: 2026,
+          year: toYear(2026),
           period: 1,
           submissionNumber: 2,
           startDate: '2026-01-01',
@@ -1736,29 +1737,38 @@ describe('#listReportsController', () => {
   })
 
   describe('the year it reads', () => {
-    afterEach(() => {
-      vi.useRealTimers()
-    })
+    const registrationUrl =
+      '/organisations/500001/registrations/R25SR500030912PA'
 
-    it("asks for the current year's calendar and accreditation", async ({
-      server
-    }) => {
-      vi.useFakeTimers({
-        now: new Date('2027-01-05T10:00:00.000Z'),
-        toFake: ['Date']
-      })
+    beforeEach(() => {
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
       backendServesCalendar(emptyResponse)
+    })
 
-      await server.inject({ method: 'GET', url: accreditedUrl, auth: mockAuth })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it("asks for the address's year's calendar and accreditation", async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        registeredOnlyFrom2025
+      )
+
+      await server.inject({
+        method: 'GET',
+        url: `${registrationUrl}/reports/2025`,
+        auth: mockAuth
+      })
 
       expect(fetchReportingPeriods).toHaveBeenCalledWith(
         {
           organisationNumber: '500001',
           registrationNumber: 'R25SR500030912PA',
-          year: 2027
+          year: toYear(2025)
         },
         'mock-backend-token'
       )
@@ -1766,15 +1776,178 @@ describe('#listReportsController', () => {
         {
           organisationNumber: '500001',
           registrationNumber: 'R25SR500030912PA',
-          year: 2027
+          year: toYear(2025)
         },
         'mock-backend-token'
       )
     })
+
+    it('answers 404 for a segment that is not a year', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${registrationUrl}/reports/latest`,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(fetchReportingPeriods).not.toHaveBeenCalled()
+    })
+
+    it('answers 404 for a year the registration was never approved in', async ({
+      server
+    }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${registrationUrl}/reports/2025`,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('lists a past year the registration was approved in', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        registeredOnlyFrom2025
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `${registrationUrl}/reports/2025`,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+        `${registrationUrl}/2025`
+      )
+    })
+
+    describe('at the yearless address', () => {
+      /**
+       * @param {RegistrationStatus} current
+       * @param {StatusTimeline} timeline
+       */
+      const backendServesRegistrationWith = (current, timeline) =>
+        vi.mocked(fetchRegistration).mockResolvedValue({
+          organisation: accreditedRegistration.organisation,
+          registration: buildRegistrationView({
+            status: { current, timeline }
+          })
+        })
+
+      beforeEach(() => {
+        vi.useFakeTimers({
+          now: new Date('2027-01-05T10:00:00.000Z'),
+          toFake: ['Date']
+        })
+      })
+
+      it('sends the address to the latest year the registration was approved in', async ({
+        server
+      }) => {
+        backendServesRegistrationWith('cancelled', [
+          { status: 'approved', at: '2024-01-01T00:00:00.000Z' },
+          { status: 'cancelled', at: '2025-06-30T00:00:00.000Z' }
+        ])
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: `${registrationUrl}/reports`,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(`${registrationUrl}/reports/2025`)
+        expect(fetchRegistration).toHaveBeenCalledWith({
+          organisationNumber: '500001',
+          registrationNumber: 'R25SR500030912PA',
+          backendToken: 'mock-backend-token'
+        })
+      })
+
+      it("sends the address to the current year's list for a registration never approved", async ({
+        server
+      }) => {
+        backendServesRegistrationWith('created', [
+          { status: 'created', at: '2026-03-01T00:00:00.000Z' }
+        ])
+
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: `${registrationUrl}/reports`,
+          auth: mockAuth
+        })
+
+        expect(headers.location).toBe(`${registrationUrl}/reports/2027`)
+      })
+
+      it('keeps the language when sending the address on', async ({
+        server
+      }) => {
+        backendServesRegistrationWith('approved', [
+          { status: 'approved', at: '2026-01-01T00:00:00.000Z' }
+        ])
+
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: `/cy${registrationUrl}/reports`,
+          auth: mockAuth
+        })
+
+        expect(headers.location).toBe(`/cy${registrationUrl}/reports/2027`)
+      })
+    })
   })
 
-  describe('the route back', () => {
+  describe('for an operator', () => {
     beforeEach(() => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      backendServesCalendar(monthlyResponse)
+    })
+
+    it.for([
+      { session: 'holding the write scope', auth: mockAuth },
+      { session: 'holding no write scope', auth: readOnlyAuth }
+    ])(
+      "headed with the address's year for a session $session",
+      async ({ auth }, { server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth
+        })
+        const { document } = new JSDOM(result).window
+
+        expect(headingOf(document)).toBe('Glass remelt Manage reports (2026)')
+        expect(document.title).toContain('Manage reports (2026): Glass remelt')
+      }
+    )
+
+    it("goes back to the year's materials homepage, with no trail", async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
+      )
+      expect(body.querySelector('.govuk-breadcrumbs')).toBeNull()
+    })
+  })
+
+  describe('for a regulator', () => {
+    beforeEach(() => {
+      config.set('featureFlags.regulatorAccess', true)
       vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedRegistration
       )
@@ -1785,21 +1958,23 @@ describe('#listReportsController', () => {
       config.set('featureFlags.regulatorAccess', false)
     })
 
-    it('offers an operator a back link and no trail', async ({ server }) => {
+    it("heads and titles the page Reports with the address's year", async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
-        auth: mockAuth
+        auth: regulatorAuth
       })
-      const { body } = new JSDOM(result).window.document
+      const { document } = new JSDOM(result).window
 
-      expect(body.querySelector('.govuk-breadcrumbs')).toBeNull()
-      expect(body.querySelector('.govuk-back-link')).not.toBeNull()
+      expect(headingOf(document)).toBe('Glass remelt Reports (2026)')
+      expect(document.title).toContain('Reports (2026): Glass remelt')
     })
 
-    it('walks a regulator back up to all organisations', async ({ server }) => {
-      config.set('featureFlags.regulatorAccess', true)
-
+    it('walks back up to all organisations, with no back link', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -1815,20 +1990,8 @@ describe('#listReportsController', () => {
         'All organisations',
         'Acme Recycling Ltd',
         'Registration details',
-        'Reports'
+        'Reports (2026)'
       ])
-    })
-
-    it('takes the back link away from a regulator', async ({ server }) => {
-      config.set('featureFlags.regulatorAccess', true)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: regulatorAuth
-      })
-      const { body } = new JSDOM(result).window.document
-
       expect(body.querySelector('.govuk-back-link')).toBeNull()
     })
   })

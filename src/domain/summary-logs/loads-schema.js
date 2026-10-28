@@ -92,7 +92,7 @@ export const loadsByReportingPeriodSchema = Joi.object({
   periodsRequiringResubmission: Joi.array().items(periodRefSchema)
 })
 
-export const summaryLogStatusResponseSchema = Joi.object({
+const storedSummaryLogSchema = Joi.object({
   status: Joi.string()
     .valid(
       summaryLogStatuses.preprocessing,
@@ -122,6 +122,17 @@ export const summaryLogStatusResponseSchema = Joi.object({
   processingType: Joi.string().optional(),
   material: Joi.string().optional(),
   accreditationNumber: Joi.string().optional(),
-  year: Joi.number().integer().optional(),
+  year: Joi.number().integer().required(),
   accreditationId: Joi.string().allow(null).optional()
 })
+
+// Joi runs the conditional's test with the caller's stripUnknown, which would
+// strip a stored log's fields and let it match the placeholder.
+const placeholderSchema = Joi.object({
+  status: Joi.string().valid(summaryLogStatuses.preprocessing).required()
+}).prefs({ stripUnknown: false })
+
+export const summaryLogStatusResponseSchema = Joi.alternatives().conditional(
+  placeholderSchema,
+  { then: placeholderSchema, otherwise: storedSummaryLogSchema }
+)

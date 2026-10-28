@@ -1,4 +1,5 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { yearAddressed } from '#server/common/helpers/route-params.js'
 import { controller as regulatorListController } from '#server/registrations/details/accreditations/packaging-recycling-notes/controller.js'
 
 import { actionController } from './action-controller.js'
@@ -9,6 +10,7 @@ import {
 import { cancelledController } from './cancelled-controller.js'
 import { controller } from './controller.js'
 import { createdController } from './created-controller.js'
+import { closedWithTheYear, closedYearSendsTo } from './helpers/closed-year.js'
 import {
   deleteGetController,
   deletePostController
@@ -47,17 +49,20 @@ export const prns = {
   plugin: {
     name: 'prns',
     register(server) {
-      server.route([
+      const routes = [
         {
           ...listRoute,
           method: 'GET',
           path: basePath
         },
-        {
-          ...controller,
-          method: 'GET',
-          path: `${basePath}/create`
-        },
+        closedWithTheYear(
+          {
+            ...controller,
+            method: 'GET',
+            path: `${basePath}/create`
+          },
+          closedYearSendsTo.list
+        ),
         {
           ...postController,
           method: 'POST',
@@ -128,7 +133,9 @@ export const prns = {
           method: 'GET',
           path: `${basePath}/{prnId}/issued`
         }
-      ])
+      ]
+
+      server.route(routes.map(yearAddressed))
     }
   }
 }

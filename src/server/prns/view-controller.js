@@ -11,6 +11,11 @@ import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligib
 import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
+  closedYearSendsTo,
+  isClosedYearRefusal,
+  isYearOpen
+} from './helpers/closed-year.js'
+import {
   buildPrnCoreRows,
   buildPrnIssuerRows,
   buildStatusRow
@@ -20,7 +25,6 @@ import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
-import { toYear } from '#server/common/helpers/year.js'
 import { buildNoteBreadcrumbs } from './helpers/build-note-breadcrumbs.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
@@ -82,10 +86,15 @@ export const viewPostController = {
         fetchRequiredAccreditation(keys, backendToken),
         fetchDecemberPrnEligibility(keys, backendToken)
       ])
+
+      if (!isYearOpen(accreditation)) {
+        return h.redirect(closedYearSendsTo.note(request.params))
+      }
+
       // A failed read fails the confirmation, so an outage never discards a draft
       const balances = await fetchOrganisationWasteBalances(
         keys.organisationNumber,
-        toYear(Number(keys.year)),
+        keys.year,
         backendToken
       )
       const balance = balances[accreditation.accreditationNumber] ?? {
@@ -106,6 +115,10 @@ export const viewPostController = {
           })
         : confirmDraft(request, h, draftParams))
     } catch (error) {
+      if (isClosedYearRefusal(error)) {
+        return h.redirect(closedYearSendsTo.note(request.params))
+      }
+
       if (error.isBoom) {
         throw error
       }
@@ -221,25 +234,25 @@ async function handleDraftView(h, { keys, prnDraft, localise, session }) {
   })
 
   return h.view('prns/view', {
-    pageTitle: localise('prns:create:checkPageTitle', { noteType }),
-    caption: localise('prns:create:caption', { noteType }),
-    heading: localise('prns:create:checkHeading', { noteType }),
-    introText: localise('prns:create:checkIntroText', { noteType }),
+    accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
+    accreditationRows,
     authorisationText: localise('prns:create:checkAuthorisationText', {
       noteType
     }),
-    insetText: localise('prns:create:checkInsetText', { noteType }),
-    prnDetailsHeading: localise('prns:details:heading', { noteType }),
-    prnDetailRows,
-    accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
-    accreditationRows,
-    createButton: {
-      text: localise('prns:create:createButton', { noteType })
-    },
+    caption: localise('prns:create:caption', { noteType }),
+    createButton: isYearOpen(accreditation)
+      ? { text: localise('prns:create:createButton', { noteType }) }
+      : null,
     discardLink: {
-      text: localise('prns:create:discardLink'),
-      href: `${prnsPath(keys)}/${prnDraft.id}/discard`
-    }
+      href: `${prnsPath(keys)}/${prnDraft.id}/discard`,
+      text: localise('prns:create:discardLink')
+    },
+    heading: localise('prns:create:checkHeading', { noteType }),
+    insetText: localise('prns:create:checkInsetText', { noteType }),
+    introText: localise('prns:create:checkIntroText', { noteType }),
+    pageTitle: localise('prns:create:checkPageTitle', { noteType }),
+    prnDetailRows,
+    prnDetailsHeading: localise('prns:details:heading', { noteType })
   })
 }
 

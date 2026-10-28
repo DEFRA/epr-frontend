@@ -97,6 +97,7 @@ const organisationOf = (overrides = {}) => ({
 /** @type {Accreditation} */
 const approved2026 = {
   accreditationNumber: toAccreditationNumber('A26ER1'),
+  prns: { open: true },
   status: { current: 'approved', timeline: [] }
 }
 
@@ -273,6 +274,7 @@ describe('the organisation home page', () => {
             accreditations: {
               2026: {
                 accreditationNumber: toAccreditationNumber('A26ER1'),
+                prns: { open: true },
                 status: { current, timeline: [] }
               }
             }
@@ -295,6 +297,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: toAccreditationNumber('A26ER1'),
+              prns: { open: true },
               status: { current: 'cancelled', timeline: [] }
             }
           }
@@ -316,6 +319,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2025: {
               accreditationNumber: toAccreditationNumber('A25ER1'),
+              prns: { open: true },
               status: { current: 'approved', timeline: [] }
             }
           }
@@ -337,6 +341,7 @@ describe('the organisation home page', () => {
           {
             2025: {
               accreditationNumber: toAccreditationNumber('A25ER1'),
+              prns: { open: true },
               status: { current: 'approved', timeline: [] }
             }
           }
@@ -461,6 +466,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2025: {
               accreditationNumber: toAccreditationNumber('A25ER1'),
+              prns: { open: true },
               status: { current: 'suspended', timeline: [] }
             }
           }
@@ -479,6 +485,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: toAccreditationNumber('A26ER1'),
+              prns: { open: true },
               status: { current: 'suspended', timeline: [] }
             }
           }
@@ -499,6 +506,7 @@ describe('the organisation home page', () => {
           accreditations: {
             2026: {
               accreditationNumber: toAccreditationNumber('A26ER1'),
+              prns: { open: true },
               status: { current: 'cancelled', timeline: [] }
             }
           }
@@ -648,12 +656,13 @@ describe('the organisation home page', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it.for(['20x6', '202', '20266'])(
-      'finds no page for the address "%s", which is not a year',
+    it.for(['20x6', '202', '20266', '2023'])(
+      'finds no page for the address "%s", without asking the backend',
       async (segment, { server }) => {
         const { statusCode } = await visit(server, `${BARE_PATH}/${segment}`)
 
         expect(statusCode).toBe(statusCodes.notFound)
+        expect(fetchOrganisationYears).not.toHaveBeenCalled()
       }
     )
 

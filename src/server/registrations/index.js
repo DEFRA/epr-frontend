@@ -5,7 +5,7 @@ import { controller as overseasSitesController } from './details/overseas-sites/
 import {
   paramsOrNotFound,
   registrationParamsSchema,
-  yearSegmentParamsSchema
+  yearParamsSchema
 } from './details/helpers/params-validation.js'
 import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
 import {
@@ -25,6 +25,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 /**
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { RegistrationParams } from './details/controller.js'
@@ -60,7 +61,7 @@ const registrationController = {
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 const registeredOnlyYearRoute = {
   options: {
-    validate: paramsOrNotFound(yearSegmentParamsSchema, {
+    validate: paramsOrNotFound(yearParamsSchema, {
       message: 'Registered-only year not found',
       code: errorCodes.registrationNotFound,
       action: 'fetch_registered_only_year',
@@ -96,7 +97,7 @@ const registeredOnlyYearRoute = {
  */
 const accreditationRoute = {
   options: {
-    validate: paramsOrNotFound(yearSegmentParamsSchema, {
+    validate: paramsOrNotFound(yearParamsSchema, {
       message: 'Accreditation not found',
       code: errorCodes.accreditationNotFound,
       action: 'fetch_accreditation',
@@ -186,7 +187,7 @@ const overseasSitesRoute = {
  * @typedef {{
  *   organisationNumber: OrganisationNumber,
  *   registrationNumber: RegistrationNumber,
- *   year: number
+ *   year: Year
  * }} RegisteredOnlyPeriodParams
  */
 

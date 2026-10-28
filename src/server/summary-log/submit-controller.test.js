@@ -1,4 +1,3 @@
-import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
@@ -71,12 +70,7 @@ describe('#submitSummaryLogController', () => {
   it('should submit summary log, store response in session, and redirect to GET route', async ({
     server
   }) => {
-    const mockResponse = {
-      status: 'submitted',
-      accreditationNumber: toAccreditationNumber('493021')
-    }
-
-    vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
+    vi.mocked(submitSummaryLog).mockResolvedValueOnce({ status: 'submitting' })
 
     const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
@@ -105,12 +99,7 @@ describe('#submitSummaryLogController', () => {
   it('should set session cookie when storing fresh data', async ({
     server
   }) => {
-    const mockResponse = {
-      status: 'submitted',
-      accreditationNumber: toAccreditationNumber('493021')
-    }
-
-    vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
+    vi.mocked(submitSummaryLog).mockResolvedValueOnce({ status: 'submitting' })
 
     const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
@@ -138,8 +127,7 @@ describe('#submitSummaryLogController', () => {
     server
   }) => {
     vi.mocked(submitSummaryLog).mockResolvedValueOnce({
-      status: 'submitted',
-      accreditationNumber: toAccreditationNumber('493021')
+      status: 'submitting'
     })
 
     const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
@@ -243,12 +231,7 @@ describe('#submitSummaryLogController', () => {
   it('should redirect without calling backend when freshData already exists in session', async ({
     server
   }) => {
-    const mockResponse = {
-      status: 'submitted',
-      accreditationNumber: toAccreditationNumber('493021')
-    }
-
-    vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
+    vi.mocked(submitSummaryLog).mockResolvedValueOnce({ status: 'submitting' })
 
     const getUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
