@@ -6,9 +6,9 @@ import {
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { it } from '#vite/fixtures/server.js'
+import { beforeAll, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { afterAll, describe, expect, vi } from 'vitest'
 
 /**
  * @import { SetupServer } from 'msw/node'
@@ -113,12 +113,13 @@ const visit = (server, url, { method = 'GET', auth = operator } = {}) =>
   server.inject({ method, url, auth: /** @type {never} */ (auth) })
 
 describe('redirecting an old page URL to its natural keys', () => {
+  beforeAll(({ server }) => registerPages(server))
+
   it.for(
     /** @type {const} */ (['organisation', 'registration', 'accreditation'])
   )(
     'sends ids for the %s to its natural keys',
     async (depth, { server, msw }) => {
-      registerPages(server)
       backendHolds(msw)
 
       const response = await visit(server, `${byIds[depth]}/moved-page`)
@@ -143,8 +144,6 @@ describe('redirecting an old page URL to its natural keys', () => {
       '/organisations/org-123/registrations/reg-001/accreditations/acc-001/moved-page'
     ]
   ])('serves %s as it is', async ([, url], { server }) => {
-    registerPages(server)
-
     const response = await visit(server, url)
 
     expect(response.statusCode).toBe(statusCodes.ok)
@@ -154,7 +153,6 @@ describe('redirecting an old page URL to its natural keys', () => {
   describe('counting old page URLs', () => {
     it('counts ids, even when they find nothing', async ({ server, msw }) => {
       const oldRequested = vi.spyOn(metrics.pageUrl, 'oldRequested')
-      registerPages(server)
       msw.use(
         http.get(
           `${backendUrl}/v1/organisations/${organisationId}`,
@@ -169,7 +167,6 @@ describe('redirecting an old page URL to its natural keys', () => {
 
     it('does not count natural keys', async ({ server }) => {
       const oldRequested = vi.spyOn(metrics.pageUrl, 'oldRequested')
-      registerPages(server)
 
       await visit(server, `${byNaturalKeys.organisation}/moved-page`)
 
@@ -186,7 +183,6 @@ describe('redirecting an old page URL to its natural keys', () => {
   })
 
   it('keeps the query string', async ({ server, msw }) => {
-    registerPages(server)
     backendHolds(msw)
 
     const response = await visit(
@@ -200,7 +196,6 @@ describe('redirecting an old page URL to its natural keys', () => {
   })
 
   it('keeps Welsh, and the query string with it', async ({ server, msw }) => {
-    registerPages(server)
     backendHolds(msw)
 
     const response = await visit(
@@ -214,7 +209,6 @@ describe('redirecting an old page URL to its natural keys', () => {
   })
 
   it('sends a HEAD on with a 302', async ({ server, msw }) => {
-    registerPages(server)
     backendHolds(msw)
 
     const response = await visit(server, `${byIds.organisation}/moved-page`, {
@@ -228,7 +222,6 @@ describe('redirecting an old page URL to its natural keys', () => {
     server,
     msw
   }) => {
-    registerPages(server)
     backendHolds(msw)
 
     const response = await visit(server, `${byIds.organisation}/moved-page`, {
@@ -246,7 +239,6 @@ describe('redirecting an old page URL to its natural keys', () => {
       server,
       msw
     }) => {
-      registerPages(server)
       msw.use(
         http.get(
           `${backendUrl}/v1/organisations/${organisationId}`,
@@ -263,7 +255,6 @@ describe('redirecting an old page URL to its natural keys', () => {
       server,
       msw
     }) => {
-      registerPages(server)
       backendHolds(msw, {
         ...organisation,
         registrations: [{ ...registration, registrationNumber: undefined }]
@@ -278,7 +269,6 @@ describe('redirecting an old page URL to its natural keys', () => {
       server,
       msw
     }) => {
-      registerPages(server)
       backendHolds(msw, {
         ...organisation,
         registrations: [{ ...registration, accreditationId: undefined }]
@@ -300,7 +290,6 @@ describe('redirecting an old page URL to its natural keys', () => {
     })
 
     it('sends ids to their natural keys', async ({ server, msw }) => {
-      registerPages(server)
       backendHolds(msw)
 
       const response = await visit(

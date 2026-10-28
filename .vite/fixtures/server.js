@@ -22,6 +22,13 @@ import organisationsFixture from '#fixtures/waste-organisations/organisations.js
 
 /**
  * @typedef {{
+ *   server: SetupServer,
+ *   unhandled: { frames: number }
+ * }} MswListener
+ */
+
+/**
+ * @typedef {{
  *   msw: SetupServer,
  *   server: HapiServer & { loggerMocks: LoggerMocks }
  * }} ServerFixtures
@@ -134,7 +141,7 @@ const attachLoggerMocks = (server) => {
 
 const it = /** @type {TestAPI<ServerFixtures>} */ (
   test.extend({
-    msw: [
+    mswListener: [
       // eslint-disable-next-line no-empty-pattern
       async ({}, use) => {
         const server = setupServer(
@@ -142,19 +149,30 @@ const it = /** @type {TestAPI<ServerFixtures>} */ (
           ...createOidcHandlers('http://defra-id.auth'),
           ...createOidcHandlers(ENTRA_ID_BASE_URL)
         )
-        let unhandledFrames = 0
+        const unhandled = { frames: 0 }
         server.listen({
           onUnhandledFrame: ({ defaults }) => {
-            unhandledFrames++
+            unhandled.frames++
             defaults.error()
           }
         })
 
+        await use({ server, unhandled })
+
+        server.close()
+      },
+      { scope: 'file' }
+    ],
+    msw: [
+      async ({ mswListener }, use) => {
+        const { server, unhandled } = /** @type {MswListener} */ (mswListener)
+        const unhandledBefore = unhandled.frames
+
         await use(server)
 
         server.resetHandlers()
-        server.close()
 
+        const unhandledFrames = unhandled.frames - unhandledBefore
         if (unhandledFrames > 0) {
           throw new Error(
             `${unhandledFrames} request(s) had no msw handler, see the [MSW] errors above`
@@ -164,8 +182,9 @@ const it = /** @type {TestAPI<ServerFixtures>} */ (
       { auto: true }
     ],
     server: [
-      // eslint-disable-next-line no-empty-pattern
-      async ({}, use) => {
+      // Depends on the listener so msw is up before the server fetches its
+      // OIDC discovery documents during initialise.
+      async ({ mswListener: _mswListener }, use) => {
         const { createServer } = await import('#server/index.js')
         const server = await createServer({
           wasteOrganisations: /** @type {WasteOrganisation[]} */ (
@@ -181,11 +200,12 @@ const it = /** @type {TestAPI<ServerFixtures>} */ (
 
         await server.stop()
       },
-      { scope: 'test' }
+      { scope: 'file' }
     ]
   })
 )
 
+const beforeAll = it.beforeAll.bind(it)
 const beforeEach = it.beforeEach
 
-export { ENTRA_ID_BASE_URL, beforeEach, it, it as test }
+export { ENTRA_ID_BASE_URL, beforeAll, beforeEach, it, it as test }

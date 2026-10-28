@@ -1,4 +1,3 @@
-/** @import { HapiServer } from '#server/common/hapi-types.js'; */
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import Boom from '@hapi/boom'
 import { JSDOM } from 'jsdom'
@@ -8,7 +7,7 @@ import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { it } from '#vite/fixtures/server.js'
+import { beforeAll, it } from '#vite/fixtures/server.js'
 
 describe('#catchAll - server errors', () => {
   it('renders the generic error page and logs for an unhandled 5xx', async ({
@@ -55,24 +54,21 @@ describe('#catchAll - a refused request', () => {
    * A route that refuses, standing in for any route the backend or a guard
    * refuses for this session. CSRF is off so that a refused POST can only be
    * the handler's refusal, never the crumb's.
-   * @param {HapiServer} server
-   * @param {'GET' | 'POST'} method
    */
-  const routeThatRefuses = (server, method) =>
+  beforeAll(({ server }) => {
     server.route({
-      method,
+      method: ['GET', 'POST'],
       path: '/refused',
       options: { plugins: { crumb: false } },
       handler: () => {
         throw Boom.forbidden('Access denied')
       }
     })
+  })
 
   it('answers a refused GET with 403, not a redirect to a page that answers 200', async ({
     server
   }) => {
-    routeThatRefuses(server, 'GET')
-
     const response = await server.inject({
       method: 'GET',
       url: '/refused',
@@ -85,8 +81,6 @@ describe('#catchAll - a refused request', () => {
   it('answers a refused POST with 403 in place, holding the same status as a refused GET', async ({
     server
   }) => {
-    routeThatRefuses(server, 'POST')
-
     const response = await server.inject({
       method: 'POST',
       url: '/refused',
@@ -101,8 +95,6 @@ describe('#catchAll - a refused request', () => {
   it('states that permission is absent for a session signed in with Entra ID', async ({
     server
   }) => {
-    routeThatRefuses(server, 'GET')
-
     const response = await server.inject({
       method: 'GET',
       url: '/refused',
@@ -118,8 +110,6 @@ describe('#catchAll - a refused request', () => {
   it('states that permission is absent for a session signed in with Defra ID', async ({
     server
   }) => {
-    routeThatRefuses(server, 'GET')
-
     const response = await server.inject({
       method: 'GET',
       url: '/refused',
