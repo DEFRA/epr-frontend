@@ -3,7 +3,7 @@ import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
-import { streamHomepagePath } from '#server/common/helpers/organisations/registration-in-view.js'
+import { materialsHomepagePath } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
@@ -393,7 +393,7 @@ const renderPassedValidationView = async (
     return renderSuccessView(h, localise, pageContext)
   }
 
-  const homepagePath = streamHomepagePath(keys, {
+  const homepagePath = materialsHomepagePath(keys, {
     year: context.year,
     kind: requiredLedgerAccreditation(context.ledgerAccreditation).kind
   })
@@ -406,13 +406,13 @@ const renderPassedValidationView = async (
 
 /**
  * @param {RegistrationKeys} keys
- * @param {{ year: Year, kind: LedgerAccreditation['kind'] }} stream - The summary log's year and ledger
+ * @param {{ year: Year, kind: LedgerAccreditation['kind'] }} homepage - The summary log's year and ledger
  * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
  * @param {UserSession} session
  * @returns {Promise<{cancelUrl: string, uploadUrl?: string}>}
  */
-const getReuploadLinks = async (keys, stream, redirectUrl, session) => {
-  const cancelUrl = streamHomepagePath(keys, stream)
+const getReuploadLinks = async (keys, homepage, redirectUrl, session) => {
+  const cancelUrl = materialsHomepagePath(keys, homepage)
 
   // Asking for an upload URL creates a summary log, so this GET writes. A
   // session holding no write scope reads the page without one; the re-upload
@@ -423,8 +423,8 @@ const getReuploadLinks = async (keys, stream, redirectUrl, session) => {
 
   const { uploadUrl } = await initiateSummaryLogUpload({
     keys,
-    year: stream.year,
-    accredited: stream.kind === 'accredited',
+    year: homepage.year,
+    accredited: homepage.kind === 'accredited',
     redirectUrl,
     backendToken: session.backendToken
   })

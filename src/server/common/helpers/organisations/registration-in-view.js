@@ -84,12 +84,11 @@ export const accreditationIn = (registration, year) => {
  */
 
 /**
- * The materials homepage for a year's accredited or registered-only stream.
  * @param {RegistrationKeys} keys
- * @param {{ year: Year, kind: MaterialsHomepage['kind'] }} stream
+ * @param {{ year: Year, kind: MaterialsHomepage['kind'] }} homepage
  * @returns {string}
  */
-export const streamHomepagePath = (keys, { year, kind }) =>
+export const materialsHomepagePath = (keys, { year, kind }) =>
   kind === 'accredited'
     ? accreditationPath({ ...keys, year })
     : registeredOnlyPath({ ...keys, year })
@@ -102,7 +101,7 @@ export const streamHomepagePath = (keys, { year, kind }) =>
  */
 const homepageFor = (keys, year, kind) => ({
   kind,
-  path: streamHomepagePath(keys, { year, kind })
+  path: materialsHomepagePath(keys, { year, kind })
 })
 
 /**
