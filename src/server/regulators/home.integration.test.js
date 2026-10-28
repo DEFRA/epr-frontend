@@ -36,19 +36,19 @@ const regulatorAuth = buildMockAuth({
 })
 
 const acme = {
-  id: '6507f1f77bcf86cd79943901',
-  orgId: 50002,
-  companyDetails: { name: 'ACME ltd' },
-  status: 'approved',
-  submittedToRegulator: 'ea'
+  organisationNumber: '50002',
+  name: 'ACME ltd',
+  registrations: {},
+  status: { current: 'approved' },
+  submittedToRegulator: { code: 'ea' }
 }
 
 const brightWaste = {
-  id: '6507f1f77bcf86cd79943902',
-  orgId: 50003,
-  companyDetails: { name: 'Bright Waste plc' },
-  status: 'active',
-  submittedToRegulator: 'nrw'
+  organisationNumber: '50003',
+  name: 'Bright Waste plc',
+  registrations: {},
+  status: { current: 'active' },
+  submittedToRegulator: { code: 'nrw' }
 }
 
 /**
@@ -74,7 +74,7 @@ const backendReturns = (msw, { items, page = 1, totalPages = 1 }) => {
   let requested
 
   msw.use(
-    http.get(`${backendUrl}/v1/organisations`, ({ request }) => {
+    http.get(`${backendUrl}/organisations`, ({ request }) => {
       requested = new URL(request.url)
 
       return HttpResponse.json({
@@ -231,8 +231,16 @@ describe('/regulators/home - GET integration', () => {
       items: [
         acme,
         brightWaste,
-        { ...acme, id: 'org-3', orgId: 50004, status: 'created' },
-        { ...acme, id: 'org-4', orgId: 50005, status: 'rejected' }
+        {
+          ...acme,
+          organisationNumber: '50004',
+          status: { current: 'created' }
+        },
+        {
+          ...acme,
+          organisationNumber: '50005',
+          status: { current: 'rejected' }
+        }
       ]
     })
 
@@ -252,7 +260,9 @@ describe('/regulators/home - GET integration', () => {
     server,
     msw
   }) => {
-    backendReturns(msw, { items: [{ ...acme, status: 'dissolved' }] })
+    backendReturns(msw, {
+      items: [{ ...acme, status: { current: 'dissolved' } }]
+    })
 
     const { body } = await visit(server, '/regulators/home')
 

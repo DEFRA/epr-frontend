@@ -1,18 +1,17 @@
-import { organisationNumberOf } from '#server/common/helpers/organisations/organisation-number-of.js'
 import { organisationPath } from '#server/reports/helpers/report-paths.js'
 
 import { toStatusTag } from './to-status-tag.js'
 
+/** @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js' */
 /** @import { StatusTag } from './to-status-tag.js' */
 
 /**
  * An organisation as one item of the backend's organisations page.
  * @typedef {{
- *   id: string,
- *   orgId: number,
- *   companyDetails: { name: string },
- *   status: string,
- *   submittedToRegulator?: string
+ *   organisationNumber: OrganisationNumber,
+ *   name: string,
+ *   status: { current: string },
+ *   submittedToRegulator: { code: string }
  * }} SearchedOrganisation
  *
  * One row of the results table.
@@ -44,15 +43,13 @@ import { toStatusTag } from './to-status-tag.js'
  * @returns {OrganisationRow}
  */
 export const toOrganisationRow = (
-  { orgId, companyDetails, status, submittedToRegulator },
+  { organisationNumber, name, status, submittedToRegulator },
   localiseUrl,
   localise
 ) => ({
-  name: companyDetails.name,
-  organisationId: String(orgId),
-  regulator: submittedToRegulator?.toUpperCase() ?? '',
-  status: toStatusTag(status, localise),
-  href: localiseUrl(
-    organisationPath({ organisationNumber: organisationNumberOf({ orgId }) })
-  )
+  name,
+  organisationId: organisationNumber,
+  regulator: submittedToRegulator.code.toUpperCase(),
+  status: toStatusTag(status.current, localise),
+  href: localiseUrl(organisationPath({ organisationNumber }))
 })

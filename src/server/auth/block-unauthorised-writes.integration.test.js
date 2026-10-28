@@ -55,7 +55,7 @@ describe('write guard', () => {
 
   beforeEach(({ msw }) => {
     msw.use(
-      http.get(`${backendUrl}/v1/organisations`, () =>
+      http.get(`${backendUrl}/organisations`, () =>
         HttpResponse.json({
           items: [],
           page: 1,
