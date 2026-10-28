@@ -84,6 +84,28 @@ export const accreditationIn = (registration, year) => {
  */
 
 /**
+ * The materials homepage for a year's accredited or registered-only stream.
+ * @param {RegistrationKeys} keys
+ * @param {{ year: Year, kind: MaterialsHomepage['kind'] }} stream
+ * @returns {string}
+ */
+export const streamHomepagePath = (keys, { year, kind }) =>
+  kind === 'accredited'
+    ? accreditationPath({ ...keys, year })
+    : registeredOnlyPath({ ...keys, year })
+
+/**
+ * @param {RegistrationKeys} keys
+ * @param {Year} year
+ * @param {MaterialsHomepage['kind']} kind
+ * @returns {MaterialsHomepage}
+ */
+const homepageFor = (keys, year, kind) => ({
+  kind,
+  path: streamHomepagePath(keys, { year, kind })
+})
+
+/**
  * @param {RegistrationKeys} keys
  * @param {RegistrationView} registration
  * @param {Year} year
@@ -95,14 +117,11 @@ export const materialsHomepage = (keys, registration, year) => {
     : undefined
 
   if (isAccreditationActive(accreditation)) {
-    return {
-      kind: 'accredited',
-      path: accreditationPath({ ...keys, year })
-    }
+    return homepageFor(keys, year, 'accredited')
   }
 
   return registeredYears(registration).includes(year)
-    ? { kind: 'registeredOnly', path: registeredOnlyPath({ ...keys, year }) }
+    ? homepageFor(keys, year, 'registeredOnly')
     : null
 }
 
