@@ -123,7 +123,16 @@ const storedSummaryLogSchema = Joi.object({
   material: Joi.string().optional(),
   accreditationNumber: Joi.string().optional(),
   year: Joi.number().integer().required(),
-  accreditationId: Joi.string().allow(null).optional()
+  accreditationId: Joi.string().allow(null).optional(),
+  ledgerAccreditation: Joi.alternatives()
+    .try(
+      Joi.object({
+        kind: Joi.string().valid('accredited').required(),
+        accreditationNumber: Joi.string().required()
+      }),
+      Joi.object({ kind: Joi.string().valid('registeredOnly').required() })
+    )
+    .optional()
 })
 
 // Joi runs the conditional's test with the caller's stripUnknown, which would

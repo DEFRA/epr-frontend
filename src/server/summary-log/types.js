@@ -265,8 +265,15 @@
  */
 
 /**
+ * The ledger a summary log was uploaded to, fixed for its whole life. Absent
+ * for logs stored before the backend stamped it.
+ * @typedef {{ kind: 'accredited', accreditationNumber: string } | { kind: 'registeredOnly' }} LedgerAccreditation
+ */
+
+/**
  * @typedef {{
  *   accreditationNumber?: AccreditationNumber,
+ *   ledgerAccreditation?: LedgerAccreditation,
  *   loads?: RawLoads,
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType

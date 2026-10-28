@@ -2,15 +2,14 @@ import { isRegisteredOnlyProcessingType } from '#domain/summary-logs/meta-fields
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
-import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
-import { materialsHomepage } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
 import {
   organisationPath as toOrganisationPath,
   registrationPath as toRegistrationPath,
+  streamHomepagePath,
   summaryLogUploadPathUnder
 } from '#server/reports/helpers/report-paths.js'
 import { requiresResubmission } from './closed-period-changes.js'
@@ -30,6 +29,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import {
+ *   LedgerAccreditation,
  *   LoadsByReportingPeriod,
  *   StoredSummaryLog,
  *   SummaryLogParams,
@@ -46,6 +46,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   status: string,
  *   validation?: ValidationResponse,
  *   accreditationNumber?: AccreditationNumber,
+ *   ledgerAccreditation?: LedgerAccreditation,
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType,
  *   organisationPath: string,
@@ -145,6 +146,7 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
 
   const {
     accreditationNumber,
+    ledgerAccreditation,
     loadsByReportingPeriod,
     processingType,
     status,
@@ -154,6 +156,7 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
 
   return {
     accreditationNumber,
+    ledgerAccreditation,
     loadsByReportingPeriod,
     processingType,
     status,
@@ -171,6 +174,20 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
 const requiredYear = (value) => {
   if (value === undefined) {
     throw new Error('Expected year for summary log')
+  }
+
+  return value
+}
+
+/**
+ * Logs stored before the backend stamped their ledger answer without one; we
+ * refuse to guess it from the registration's current status.
+ * @param {LedgerAccreditation | undefined} value
+ * @returns {LedgerAccreditation}
+ */
+const requiredLedgerAccreditation = (value) => {
+  if (value === undefined) {
+    throw new Error('Expected ledgerAccreditation for summary log')
   }
 
   return value
@@ -367,52 +384,48 @@ const renderPassedValidationView = async (
         logger
       )
 
-  const homepagePath =
-    materialsHomepage(
-      keys,
-      registrationWithAccreditation.registration,
-      context.year
-    )?.path ?? context.registrationPath
-
-  const render =
-    context.status === summaryLogStatuses.validated
-      ? renderCheckView
-      : renderSuccessView
-
-  return render(h, localise, {
+  const pageContext = {
     ...context,
     organisationPath: `${context.organisationPath}/${context.year}`,
-    uploadPath: summaryLogUploadPathUnder(homepagePath),
     wasteBalance
+  }
+
+  if (context.status !== summaryLogStatuses.validated) {
+    return renderSuccessView(h, localise, pageContext)
+  }
+
+  const homepagePath = streamHomepagePath(keys, {
+    year: context.year,
+    kind: requiredLedgerAccreditation(context.ledgerAccreditation).kind
+  })
+
+  return renderCheckView(h, localise, {
+    ...pageContext,
+    uploadPath: summaryLogUploadPathUnder(homepagePath)
   })
 }
 
 /**
  * @param {RegistrationKeys} keys
- * @param {Year} year - The summary log's year
+ * @param {{ year: Year, kind: LedgerAccreditation['kind'] }} stream - The summary log's year and ledger
  * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
  * @param {UserSession} session
  * @returns {Promise<{cancelUrl: string, uploadUrl?: string}>}
  */
-const getReuploadLinks = async (keys, year, redirectUrl, session) => {
-  const { registration } = await fetchRegistration({
-    ...keys,
-    backendToken: session.backendToken
-  })
-  const homepage = materialsHomepage(keys, registration, year)
-  const cancelUrl = homepage?.path ?? toRegistrationPath(keys)
+const getReuploadLinks = async (keys, stream, redirectUrl, session) => {
+  const cancelUrl = streamHomepagePath(keys, stream)
 
   // Asking for an upload URL creates a summary log, so this GET writes. A
   // session holding no write scope reads the page without one; the re-upload
   // form is hidden.
-  if (homepage === null || !hasWriteScope(session)) {
+  if (!hasWriteScope(session)) {
     return { cancelUrl }
   }
 
   const { uploadUrl } = await initiateSummaryLogUpload({
     keys,
-    year,
-    accredited: homepage.kind === 'accredited',
+    year: stream.year,
+    accredited: stream.kind === 'accredited',
     redirectUrl,
     backendToken: session.backendToken
   })
@@ -464,6 +477,7 @@ export const summaryLogUploadProgressController = {
 
     const {
       accreditationNumber,
+      ledgerAccreditation,
       loadsByReportingPeriod,
       processingType,
       status,
@@ -476,7 +490,15 @@ export const summaryLogUploadProgressController = {
     const redirectUrl = `${registrationPath}/summary-logs/{summaryLogId}`
 
     const { uploadUrl, cancelUrl } = REUPLOAD_STATES.has(status)
-      ? await getReuploadLinks(keys, requiredYear(year), redirectUrl, session)
+      ? await getReuploadLinks(
+          keys,
+          {
+            year: requiredYear(year),
+            kind: requiredLedgerAccreditation(ledgerAccreditation).kind
+          },
+          redirectUrl,
+          session
+        )
       : { cancelUrl: registrationPath }
 
     /** @type {RenderContext} */
@@ -484,6 +506,7 @@ export const summaryLogUploadProgressController = {
       status,
       validation,
       accreditationNumber,
+      ledgerAccreditation,
       loadsByReportingPeriod,
       processingType,
       organisationPath: toOrganisationPath(keys),
