@@ -24,10 +24,9 @@
 /**
  * `prns.open` is whether PRNs and PERNs can still be raised and issued for the
  * accreditation's year, as the backend rules it.
- * @todo make `prns` required once every backend serves it, with `isYearOpen`
  * @typedef {{
  *   accreditationNumber: AccreditationNumber,
- *   prns?: { open: boolean },
+ *   prns: { open: boolean },
  *   status: Status<AccreditationStatus>
  * }} Accreditation
  */

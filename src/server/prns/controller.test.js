@@ -105,23 +105,6 @@ describe('#createPrnController', () => {
       expect(headers.location).toBe(reprocessorPrnsPath)
     })
 
-    it('should treat the year as open when the backend does not say', async ({
-      server
-    }) => {
-      vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
-        ...fixtureReprocessor,
-        accreditation: buildAccreditationView({ prns: undefined })
-      })
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
     describe('page rendering', () => {
       beforeEach(() => {
         vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
