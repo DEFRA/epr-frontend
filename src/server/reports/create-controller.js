@@ -4,7 +4,11 @@ import { createReport } from './helpers/create-report.js'
 import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { reportAttempt } from './helpers/report-attempt.js'
-import { reportPath, summaryLogUploadPath } from './helpers/report-paths.js'
+import {
+  reportPath,
+  streamKindForCadence,
+  summaryLogUploadPath
+} from './helpers/report-paths.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { isReportDataIncompleteError } from './helpers/report-data-incomplete.js'
@@ -40,7 +44,10 @@ export const createController = {
       if (isReportDataIncompleteError(boomError)) {
         request.yar.set('reportDataIncompleteContext', {
           periodPath: basePath,
-          uploadPath: summaryLogUploadPath(request.params),
+          uploadPath: summaryLogUploadPath({
+            ...request.params,
+            kind: streamKindForCadence(cadence)
+          }),
           payload: boomError.output.payload
         })
         return h.redirect(

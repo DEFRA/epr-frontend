@@ -2,6 +2,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
+  buildAccreditationView,
   buildRegistrationView,
   buildRegistrationWithAccreditation
 } from '#server/common/test-helpers/organisation-view-fixtures.js'
@@ -30,9 +31,16 @@ const organisationNumber = '500001'
 const registrationNumber = 'R25SR500030912PA'
 const periodUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 const baseUrl = `${periodUrl}/report-data-incomplete`
+const monthlyPeriodUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/2/submissions/1`
 
 const exporterRegistration = buildRegistrationWithAccreditation({
   registration: buildRegistrationView({ accreditations: {} })
+})
+
+const accreditedRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
+    accreditations: { 2026: buildAccreditationView() }
+  })
 })
 
 const reportDetail = {
@@ -62,9 +70,10 @@ const reportDetail = {
  * redirects here. Returns the cookie carrying that session for the GET.
  * @param {HapiServer} server
  * @param {{ total: number, issues: object[] }} payload
+ * @param {string} [url]
  * @returns {Promise<string>}
  */
-async function triggerIncompleteRedirect(server, payload) {
+async function triggerIncompleteRedirect(server, payload, url = periodUrl) {
   vi.mocked(createReport).mockRejectedValue({
     isBoom: true,
     output: {
@@ -73,12 +82,12 @@ async function triggerIncompleteRedirect(server, payload) {
     }
   })
 
-  const { cookie, crumb } = await getCsrfToken(server, periodUrl, {
+  const { cookie, crumb } = await getCsrfToken(server, url, {
     auth: mockAuth
   })
   const { headers } = await server.inject({
     method: 'POST',
-    url: periodUrl,
+    url,
     auth: mockAuth,
     headers: { cookie },
     payload: { crumb }
@@ -251,7 +260,7 @@ describe('#reportDataIncompleteController', () => {
     })
 
     expect(link.getAttribute('href')).toBe(
-      `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/2026/summary-logs/upload`
     )
   })
 
@@ -416,7 +425,36 @@ describe('#reportDataIncompleteController', () => {
     })
 
     expect(button.getAttribute('href')).toBe(
-      `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/2026/summary-logs/upload`
+    )
+  })
+
+  it("links a monthly report's upload to the accredited upload page for its year", async ({
+    server
+  }) => {
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+      accreditedRegistration
+    )
+    const cookie = await triggerIncompleteRedirect(
+      server,
+      twoIssues,
+      monthlyPeriodUrl
+    )
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `${monthlyPeriodUrl}/report-data-incomplete`,
+      auth: mockAuth,
+      headers: { cookie }
+    })
+
+    const dom = new JSDOM(result)
+    const button = getByRole(dom.window.document.body, 'button', {
+      name: /Upload a new summary log/
+    })
+
+    expect(button.getAttribute('href')).toBe(
+      `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/summary-logs/upload`
     )
   })
 

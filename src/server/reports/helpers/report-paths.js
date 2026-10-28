@@ -4,11 +4,14 @@ import { CADENCE } from '../constants.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { CadenceValue } from '../constants.js'
+ * @import { MaterialsHomepage } from '#server/common/helpers/organisations/registration-in-view.js'
  */
 
 /**
  * @typedef {{ organisationNumber: OrganisationNumber, registrationNumber: RegistrationNumber }} RegistrationKeys
  * @typedef {RegistrationKeys & { year: string }} AccreditationKeys
+ * @typedef {MaterialsHomepage['kind']} StreamKind
+ * @typedef {RegistrationKeys & { year: number, kind: StreamKind }} StreamKeys
  * @typedef {RegistrationKeys & { year: number, cadence: CadenceValue, period: number, submissionNumber: number }} SubmissionKeys
  */
 
@@ -52,12 +55,30 @@ export const summaryLogUploadPathUnder = (homepagePath) =>
   `${homepagePath}/summary-logs/upload`
 
 /**
- * The summary log upload page.
- * @param {RegistrationKeys} keys
+ * The materials homepage of one stream: an accreditation or a registered-only
+ * year.
+ * @param {StreamKeys} keys
+ * @returns {string}
+ */
+export const streamHomepagePath = ({ kind, year, ...keys }) =>
+  kind === 'accredited'
+    ? accreditationPath({ ...keys, year: String(year) })
+    : registeredOnlyPath({ ...keys, year })
+
+/**
+ * @param {CadenceValue} cadence
+ * @returns {StreamKind}
+ */
+export const streamKindForCadence = (cadence) =>
+  cadence === CADENCE.MONTHLY ? 'accredited' : 'registeredOnly'
+
+/**
+ * The summary log upload page for one stream.
+ * @param {StreamKeys} keys
  * @returns {string}
  */
 export const summaryLogUploadPath = (keys) =>
-  summaryLogUploadPathUnder(registrationPath(keys))
+  summaryLogUploadPathUnder(streamHomepagePath(keys))
 
 /**
  * The report list page for a registration's year.

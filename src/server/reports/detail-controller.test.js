@@ -567,7 +567,7 @@ describe('#detailReportsController', () => {
       expect(link).not.toBeNull()
       expect(link?.textContent).toContain('Upload new summary log')
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA/summary-logs/upload'
+        '/organisations/500001/registrations/R25SR500030912PA/2026/summary-logs/upload'
       )
     })
 
@@ -982,6 +982,23 @@ describe('#detailReportsController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    it("should link upload new summary log to the accreditation's year", async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedDetailUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const link = body.querySelector('a[href*="summary-logs/upload"]')
+
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/summary-logs/upload'
+      )
     })
 
     it('should display monthly period heading', async ({ server }) => {

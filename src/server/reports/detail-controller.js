@@ -24,7 +24,8 @@ import { periodParamsSchema } from './helpers/period-params-schema.js'
 import {
   summaryLogUploadPath,
   reportPath,
-  reportsListPath
+  reportsListPath,
+  streamKindForCadence
 } from './helpers/report-paths.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 import { SUBMISSION_STATUS } from './constants.js'
@@ -223,7 +224,10 @@ export const detailController = {
     }
 
     const basePath = reportPath(request.params)
-    const uploadPath = summaryLogUploadPath(request.params)
+    const uploadPath = summaryLogUploadPath({
+      ...request.params,
+      kind: streamKindForCadence(cadence)
+    })
 
     if (reportDetail.incompleteSummaryLogRows) {
       request.yar.set('reportDataIncompleteContext', {

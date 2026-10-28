@@ -7,7 +7,11 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-import { reportPath, summaryLogUploadPath } from './helpers/report-paths.js'
+import {
+  reportPath,
+  streamKindForCadence,
+  summaryLogUploadPath
+} from './helpers/report-paths.js'
 import { requestResubmission } from './helpers/request-resubmission.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
@@ -146,7 +150,12 @@ export const makeChangesGetController = {
       periodLabel,
       ...dataUpdateCopy,
       backUrl: request.localiseUrl(viewPath),
-      uploadUrl: request.localiseUrl(summaryLogUploadPath(request.params))
+      uploadUrl: request.localiseUrl(
+        summaryLogUploadPath({
+          ...request.params,
+          kind: streamKindForCadence(cadence)
+        })
+      )
     })
   }
 }

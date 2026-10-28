@@ -12,6 +12,8 @@ import {
   reportsCalendarApiPath,
   registrationPath,
   reportsListPath,
+  streamHomepagePath,
+  streamKindForCadence,
   summaryLogUploadPath
 } from './report-paths.js'
 
@@ -103,15 +105,64 @@ describe(organisationPath, () => {
   })
 })
 
+describe(streamHomepagePath, () => {
+  it("gives an accredited stream its accreditation's year", () => {
+    expect(
+      streamHomepagePath({
+        ...registrationKeys,
+        year: 2027,
+        kind: 'accredited'
+      })
+    ).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2027'
+    )
+  })
+
+  it('gives a registered-only stream its registration year', () => {
+    expect(
+      streamHomepagePath({
+        ...registrationKeys,
+        year: 2027,
+        kind: 'registeredOnly'
+      })
+    ).toBe('/organisations/500001/registrations/R25SR500030912PA/2027')
+  })
+})
+
+describe(streamKindForCadence, () => {
+  it('puts monthly reports in the accredited stream', () => {
+    expect(streamKindForCadence(CADENCE.MONTHLY)).toBe('accredited')
+  })
+
+  it('puts quarterly reports in the registered-only stream', () => {
+    expect(streamKindForCadence(CADENCE.QUARTERLY)).toBe('registeredOnly')
+  })
+})
+
 describe(summaryLogUploadPath, () => {
-  it('gives the upload page by number', () => {
+  it("gives the accredited upload page for the accreditation's year", () => {
     expect(
       summaryLogUploadPath({
         organisationNumber: toOrganisationNumber('500118'),
-        registrationNumber: toRegistrationNumber('R26ER5001180041PL')
+        registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
+        year: 2027,
+        kind: 'accredited'
       })
     ).toBe(
-      '/organisations/500118/registrations/R26ER5001180041PL/summary-logs/upload'
+      '/organisations/500118/registrations/R26ER5001180041PL/accreditations/2027/summary-logs/upload'
+    )
+  })
+
+  it('gives the registered-only upload page for the year', () => {
+    expect(
+      summaryLogUploadPath({
+        organisationNumber: toOrganisationNumber('500118'),
+        registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
+        year: 2027,
+        kind: 'registeredOnly'
+      })
+    ).toBe(
+      '/organisations/500118/registrations/R26ER5001180041PL/2027/summary-logs/upload'
     )
   })
 
@@ -119,9 +170,11 @@ describe(summaryLogUploadPath, () => {
     expect(
       summaryLogUploadPath({
         organisationNumber: toOrganisationNumber('o&1'),
-        registrationNumber: toRegistrationNumber('r/1')
+        registrationNumber: toRegistrationNumber('r/1'),
+        year: 2026,
+        kind: 'registeredOnly'
       })
-    ).toBe('/organisations/o%261/registrations/r%2F1/summary-logs/upload')
+    ).toBe('/organisations/o%261/registrations/r%2F1/2026/summary-logs/upload')
   })
 })
 

@@ -93,6 +93,7 @@ const noteTypeSectionScenarios = [
 const organisationNumber = '500001'
 const registrationNumber = 'R25SR500030912PA'
 const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/make-changes`
+const monthlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/2/submissions/1/make-changes`
 const viewPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/view`
 const nextSubmissionPeriodPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/2`
 
@@ -170,7 +171,7 @@ describe('#makeChangesController', () => {
       expect(getByRole(body, 'link', { name: 'Cancel' })).toBeDefined()
     })
 
-    it('should link the upload button to the summary log upload page', async ({
+    it("should link the upload button to the registered-only upload page for the report's year", async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -185,7 +186,30 @@ describe('#makeChangesController', () => {
       })
 
       expect(uploadLink.getAttribute('href')).toBe(
-        `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/2026/summary-logs/upload`
+      )
+    })
+
+    it("should link the upload button to the accredited upload page for a monthly report's year", async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        accreditedReprocessor
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: monthlyUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const uploadLink = getByRole(dom.window.document.body, 'button', {
+        name: 'Upload new summary log'
+      })
+
+      expect(uploadLink.getAttribute('href')).toBe(
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/summary-logs/upload`
       )
     })
 
