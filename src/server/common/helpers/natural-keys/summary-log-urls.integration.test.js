@@ -16,6 +16,11 @@ const organisationId = '6507f1f77bcf86cd79943901'
 const registrationId = '6507f1f77bcf86cd79943902'
 const accreditationId = '6507f1f77bcf86cd79943903'
 const registrationNumber = 'R26ER5001180041PL'
+const thisYear = new Date().getUTCFullYear()
+const approvedThisYear = {
+  current: 'approved',
+  timeline: [{ status: 'approved', at: `${thisYear}-01-01T00:00:00.000Z` }]
+}
 
 const organisation = {
   id: organisationId,
@@ -46,15 +51,15 @@ const organisationView = {
   name: 'Acme Recycling Ltd',
   registrations: {
     [registrationNumber]: {
-      status: { current: 'approved', timeline: {} },
+      status: approvedThisYear,
       validFrom: '2026-01-01',
       material: 'plastic',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'exporter',
       accreditations: {
-        2026: {
+        [thisYear]: {
           accreditationNumber: 'A26ER5001180114PL',
-          status: { current: 'approved', timeline: {} }
+          status: approvedThisYear
         }
       }
     }
@@ -77,13 +82,15 @@ const backendHolds = (msw) =>
     http.get(`${backendUrl}/organisations/500118`, () =>
       HttpResponse.json(organisationView)
     ),
-    http.post(`${backendUrl}${byNumbers}/accreditations/2026/summary-log`, () =>
-      HttpResponse.json({
-        summaryLogId: 'sl-1',
-        uploadId: 'up-1',
-        uploadUrl: 'http://cdp/upload',
-        statusUrl: 'http://cdp/status'
-      })
+    http.post(
+      `${backendUrl}${byNumbers}/accreditations/${thisYear}/summary-log`,
+      () =>
+        HttpResponse.json({
+          summaryLogId: 'sl-1',
+          uploadId: 'up-1',
+          uploadUrl: 'http://cdp/upload',
+          statusUrl: 'http://cdp/status'
+        })
     )
   )
 
@@ -99,14 +106,22 @@ describe('old summary-log page URLs', () => {
       url: `${byIds}/summary-logs/upload`,
       auth: operator
     })
-    const page = await server.inject({
+    const yearRedirect = await server.inject({
       method: 'GET',
       url: /** @type {string} */ (redirect.headers.location),
+      auth: operator
+    })
+    const page = await server.inject({
+      method: 'GET',
+      url: /** @type {string} */ (yearRedirect.headers.location),
       auth: operator
     })
 
     expect(redirect.statusCode).toBe(statusCodes.found)
     expect(redirect.headers.location).toBe(`${byNumbers}/summary-logs/upload`)
+    expect(yearRedirect.headers.location).toBe(
+      `${byNumbers}/accreditations/${thisYear}/summary-logs/upload`
+    )
     expect(page.statusCode).toBe(statusCodes.ok)
     expect(page.result).toContain('http://cdp/upload')
   })
