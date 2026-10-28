@@ -104,7 +104,7 @@ describe(fetchRegisteredOnlyPeriod, () => {
   it('reads the organisation by its number', async () => {
     await fetchRegisteredOnlyPeriod(params)
 
-    expect(fetchOrganisation).toHaveBeenCalledWith('500118', backendToken)
+    expect(fetchOrganisation).toHaveBeenCalledWith('500118', backendToken, {})
   })
 
   // The calendar the operator's own reports page reads, asked nothing

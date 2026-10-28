@@ -4,6 +4,7 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -69,6 +70,35 @@ describe(fetchRegistration, () => {
       registration
     })
   })
+
+  test.for([
+    {
+      description: 'as it stood in the year when given one',
+      year: toYear(2025),
+      expected: '2025'
+    },
+    {
+      description: 'as it stands today without a year',
+      year: undefined,
+      expected: null
+    }
+  ])(
+    'reads the organisation $description',
+    async ({ year, expected }, { msw }) => {
+      /** @type {(string | null)[]} */
+      const askedFor = []
+      msw.use(
+        http.get(organisationUrl, ({ request }) => {
+          askedFor.push(new URL(request.url).searchParams.get('year'))
+          return HttpResponse.json(organisation)
+        })
+      )
+
+      await fetchRegistration(params, { year })
+
+      expect(askedFor).toStrictEqual([expected])
+    }
+  )
 
   test('is a registration not found for a number the organisation does not hold', async ({
     msw

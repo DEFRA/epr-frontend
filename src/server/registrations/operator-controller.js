@@ -370,10 +370,10 @@ export const registeredOnlyYearController = {
     } = request.params
     const keys = { organisationNumber: number, registrationNumber }
 
-    const { registration } = await fetchRegistration({
-      ...keys,
-      backendToken: request.auth.credentials.backendToken
-    })
+    const { registration } = await fetchRegistration(
+      { ...keys, backendToken: request.auth.credentials.backendToken },
+      { year }
+    )
     const homepage = materialsHomepage(keys, registration, year)
 
     if (homepage === null) {
@@ -417,7 +417,7 @@ export const controller = {
     const { backendToken } = credentials
 
     const [{ registration }, ids] = await Promise.all([
-      fetchRegistration({ ...keys, backendToken }),
+      fetchRegistration({ ...keys, backendToken }, { year }),
       findRecordIds(keys, credentials)
     ])
     const accreditation = accreditationIn(registration, keys.year)
