@@ -21,22 +21,21 @@ import {
   organisationPath,
   registrationPath
 } from '#server/reports/helpers/report-paths.js'
+import { fixedYear } from '#server/common/helpers/year.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
- * @typedef {RegistrationKeys & { year?: string }} WasteBalanceLedgerParams
+ * @typedef {RegistrationKeys & { year?: Year }} WasteBalanceLedgerParams
  */
-
-// Fixed until the registered-only ledger page is year-configured.
-const REGISTERED_ONLY_LEDGER_YEAR = '2026'
 
 /**
  * One waste balance ledger, read as business events.
@@ -141,7 +140,7 @@ async function readRegisteredOnlyLedger(keys, request) {
 
   try {
     const events = await fetchRegisteredOnlyLedgerEvents(
-      { ...keys, year: REGISTERED_ONLY_LEDGER_YEAR },
+      { ...keys, year: fixedYear },
       session.backendToken
     )
 
@@ -155,7 +154,7 @@ async function readRegisteredOnlyLedger(keys, request) {
       message: 'No registered-only ledger for the year, showing it empty',
       event: {
         action: 'fetch_registered_only_ledger',
-        reason: `organisationNumber=${keys.organisationNumber} registrationNumber=${keys.registrationNumber} year=${REGISTERED_ONLY_LEDGER_YEAR}`
+        reason: `organisationNumber=${keys.organisationNumber} registrationNumber=${keys.registrationNumber} year=${fixedYear}`
       }
     })
 

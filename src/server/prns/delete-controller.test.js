@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import {
   buildRegistrationView,
@@ -49,7 +50,7 @@ const fixtureExporter = buildRegistrationWithAccreditation({
 
 const organisationNumber = '500123'
 const registrationNumber = 'R26EN0000000001PL'
-const year = '2026'
+const year = toYear(2026)
 const prnId = 'prn-789'
 const basePath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes`
 const listUrl = basePath

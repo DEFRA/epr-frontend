@@ -11,6 +11,7 @@ import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-perio
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
@@ -28,7 +29,7 @@ import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-perio
 
 /**
  * @typedef {RegistrationKeys & {
- *   year: number,
+ *   year: Year,
  *   backendToken: BackendToken,
  *   canReadLedger: boolean,
  *   logger: TypedLogger
@@ -46,7 +47,7 @@ import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-perio
  * and a swallowed error there would silently empty their table. A calendar this
  * page could not read renders as no periods, so downstream has one empty case
  * to build and to test rather than two.
- * @param {{ keys: RegistrationKeys, year: number, backendToken: BackendToken, logger: TypedLogger }} params
+ * @param {{ keys: RegistrationKeys, year: Year, backendToken: BackendToken, logger: TypedLogger }} params
  * @returns {Promise<ReportingCalendar>}
  */
 const fetchCalendar = async ({ keys, year, backendToken, logger }) => {
@@ -70,7 +71,7 @@ const fetchCalendar = async ({ keys, year, backendToken, logger }) => {
  * The year's registered-only ledger: null without the read scope, empty when the backend has none.
  * @param {{
  *   keys: RegistrationKeys,
- *   year: number,
+ *   year: Year,
  *   backendToken: BackendToken,
  *   canReadLedger: boolean,
  *   logger: TypedLogger
@@ -90,7 +91,7 @@ const fetchLedger = async ({
 
   try {
     return await fetchRegisteredOnlyLedgerEvents(
-      { ...keys, year: String(year) },
+      { ...keys, year },
       backendToken
     )
   } catch (error) {

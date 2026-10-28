@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { describe, expect, it } from 'vitest'
 
@@ -129,7 +130,7 @@ describe(accreditedStretches, () => {
           '2026-05-01T09:00:00.000Z': 'approved',
           '2026-05-01T15:00:00.000Z': 'cancelled'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-04-30' }])
   })
@@ -143,7 +144,7 @@ describe(accreditedStretches, () => {
           '2026-05-01T09:00:00.000Z': 'cancelled',
           '2026-05-01T15:00:00.000Z': 'approved'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([
       { from: '2026-02-01', to: '2026-02-28' },
@@ -155,7 +156,7 @@ describe(accreditedStretches, () => {
     expect(
       accreditedStretches(
         anAccreditation({ '2026-03-01T09:00:00.000Z': 'approved' }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([{ from: '2026-03-01', to: '2026-12-31' }])
   })
@@ -164,13 +165,13 @@ describe(accreditedStretches, () => {
     expect(
       accreditedStretches(
         anAccreditation({ '2025-12-15T09:00:00.000Z': 'approved' }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([{ from: '2026-01-01', to: '2026-12-31' }])
   })
 
   it('drops a stretch that ended before the year began', () => {
-    expect(accreditedStretches(cancelledLastYear, '2026')).toStrictEqual([
+    expect(accreditedStretches(cancelledLastYear, toYear(2026))).toStrictEqual([
       { from: '2026-02-01', to: '2026-12-31' }
     ])
   })
@@ -182,13 +183,13 @@ describe(accreditedStretches, () => {
           '2026-02-01T09:00:00.000Z': 'approved',
           '2026-09-30T09:00:00.000Z': 'cancelled'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-09-29' }])
   })
 
   it('leaves a cancelled gap between two stretches', () => {
-    expect(accreditedStretches(reinstated, '2026')).toStrictEqual([
+    expect(accreditedStretches(reinstated, toYear(2026))).toStrictEqual([
       { from: '2026-01-01', to: '2026-03-09' },
       { from: '2026-03-30', to: '2026-12-31' }
     ])
@@ -202,7 +203,7 @@ describe(accreditedStretches, () => {
           '2026-03-01T09:00:00.000Z': 'suspended',
           '2026-04-01T09:00:00.000Z': 'approved'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-12-31' }])
   })
@@ -215,15 +216,15 @@ describe(accreditedStretches, () => {
           '2026-01-19T00:00:00.001Z': 'approved',
           '2026-01-19T17:06:55.419Z': 'suspended'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([{ from: '2026-01-19', to: '2026-12-31' }])
   })
 
   it('starts a stretch on a day created and approved at the same time', () => {
-    expect(accreditedStretches(createdAndApprovedAtOnce, '2026')).toStrictEqual(
-      [{ from: '2026-01-01', to: '2026-12-31' }]
-    )
+    expect(
+      accreditedStretches(createdAndApprovedAtOnce, toYear(2026))
+    ).toStrictEqual([{ from: '2026-01-01', to: '2026-12-31' }])
   })
 
   it('does not count the days before the first approval', () => {
@@ -233,7 +234,7 @@ describe(accreditedStretches, () => {
           '2026-01-10T09:00:00.000Z': 'created',
           '2026-02-01T09:00:00.000Z': 'approved'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-12-31' }])
   })
@@ -246,7 +247,7 @@ describe(accreditedStretches, () => {
           '2026-05-01T09:00:00.000Z': 'created',
           '2026-07-01T09:00:00.000Z': 'approved'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([
       { from: '2026-02-01', to: '2026-04-30' },
@@ -261,7 +262,7 @@ describe(accreditedStretches, () => {
           '2026-02-01T09:00:00.000Z': 'approved',
           '2026-05-01T09:00:00.000Z': 'rejected'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-04-30' }])
   })
@@ -273,7 +274,7 @@ describe(accreditedStretches, () => {
           '2026-02-01T09:00:00.000Z': 'approved',
           '2027-03-01T09:00:00.000Z': 'cancelled'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-12-31' }])
   })
@@ -282,7 +283,7 @@ describe(accreditedStretches, () => {
     expect(
       accreditedStretches(
         anAccreditation({ '2027-02-01T09:00:00.000Z': 'approved' }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([])
   })
@@ -295,7 +296,7 @@ describe(accreditedStretches, () => {
           '2026-01-20T09:00:00.000Z': 'cancelled',
           '2026-02-01T09:00:00.000Z': 'approved'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual([{ from: '2026-02-01', to: '2026-12-31' }])
   })
@@ -310,20 +311,20 @@ describe(accreditedDateRange, () => {
           '2026-09-30T09:00:00.000Z': 'suspended',
           '2026-09-30T15:00:00.000Z': 'cancelled'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual({ validFrom: '2026-02-01', validTo: '2026-09-30' })
   })
 
   it('runs from the first stretch to 31 December', () => {
-    expect(accreditedDateRange(reinstated, '2026')).toStrictEqual({
+    expect(accreditedDateRange(reinstated, toYear(2026))).toStrictEqual({
       validFrom: '2026-01-01',
       validTo: '2026-12-31'
     })
   })
 
   it('starts on the first approval in the year when an earlier stretch ended the year before', () => {
-    expect(accreditedDateRange(cancelledLastYear, '2026')).toStrictEqual({
+    expect(accreditedDateRange(cancelledLastYear, toYear(2026))).toStrictEqual({
       validFrom: '2026-02-01',
       validTo: '2026-12-31'
     })
@@ -336,7 +337,7 @@ describe(accreditedDateRange, () => {
           '2026-02-01T09:00:00.000Z': 'approved',
           '2026-09-30T09:00:00.000Z': 'cancelled'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual({ validFrom: '2026-02-01', validTo: '2026-09-30' })
   })
@@ -349,18 +350,18 @@ describe(accreditedDateRange, () => {
           '2026-01-19T10:00:00.000Z': 'approved',
           '2026-01-19T11:00:00.000Z': 'suspended'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual({ validFrom: '2026-01-19', validTo: '2026-12-31' })
   })
 
   it('runs the whole year when created and approved at the same time', () => {
-    expect(accreditedDateRange(createdAndApprovedAtOnce, '2026')).toStrictEqual(
-      {
-        validFrom: '2026-01-01',
-        validTo: '2026-12-31'
-      }
-    )
+    expect(
+      accreditedDateRange(createdAndApprovedAtOnce, toYear(2026))
+    ).toStrictEqual({
+      validFrom: '2026-01-01',
+      validTo: '2026-12-31'
+    })
   })
 
   it('starts and ends on the day it was approved and cancelled', () => {
@@ -370,7 +371,7 @@ describe(accreditedDateRange, () => {
           '2026-03-04T09:00:00.000Z': 'approved',
           '2026-03-04T15:00:00.000Z': 'cancelled'
         }),
-        '2026'
+        toYear(2026)
       )
     ).toStrictEqual({ validFrom: '2026-03-04', validTo: '2026-03-04' })
   })

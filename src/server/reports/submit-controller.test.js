@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import {
@@ -64,7 +65,7 @@ const reprocessorRegistration = buildRegistration(reprocessor)
 /** @type {ReportDetailResponse} */
 const exporterReportDetail = {
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   submissionNumber: 1,
   startDate: '2026-01-01',
@@ -145,7 +146,7 @@ const accreditedReprocessorRegistration = buildRegistration(reprocessor, true)
 /** @type {ReportDetailResponse} */
 const reprocessorReportDetail = {
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   submissionNumber: 1,
   startDate: '2026-01-01',

@@ -8,7 +8,7 @@ import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import {
   paramsOrNotFound,
-  yearSegmentParamsSchema
+  yearParamsSchema
 } from '#server/registrations/details/helpers/params-validation.js'
 import {
   accreditationPath,
@@ -17,7 +17,7 @@ import {
   summaryLogUploadPathUnder
 } from '#server/reports/helpers/report-paths.js'
 
-const yearOrNotFound = paramsOrNotFound(yearSegmentParamsSchema, {
+const yearOrNotFound = paramsOrNotFound(yearParamsSchema, {
   message: 'Summary log upload not found',
   code: errorCodes.registrationNotFound,
   action: 'start_summary_log_upload',
@@ -32,7 +32,7 @@ const yearOrNotFound = paramsOrNotFound(yearSegmentParamsSchema, {
 const summaryLogUploadController = ({ accredited }) => ({
   options: { validate: yearOrNotFound },
   /**
-   * @param {HapiRequest & { params: RegistrationKeys & { year: number } }} request
+   * @param {HapiRequest & { params: RegistrationYearKeys }} request
    * @param {ResponseToolkit} h
    */
   handler: async (request, h) => {
@@ -40,7 +40,7 @@ const summaryLogUploadController = ({ accredited }) => ({
     const { year, ...keys } = request.params
     const { organisationNumber, registrationNumber } = keys
     const homepagePath = accredited
-      ? accreditationPath({ ...keys, year: String(year) })
+      ? accreditationPath({ ...keys, year })
       : registeredOnlyPath({ ...keys, year })
 
     const session = request.auth.credentials
@@ -130,5 +130,5 @@ export { summaryLogUploadController, summaryLogUploadRedirectController }
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { RegistrationKeys, RegistrationYearKeys } from '#server/reports/helpers/report-paths.js'
  */

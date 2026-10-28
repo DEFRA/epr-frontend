@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import {
@@ -44,7 +45,7 @@ const mockAuth = {
 
 const organisationNumber = '500123'
 const registrationNumber = 'R26EN0000000001PL'
-const year = '2026'
+const year = toYear(2026)
 const prnId = 'prn-789'
 const issueUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issue`
 const actionUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}`

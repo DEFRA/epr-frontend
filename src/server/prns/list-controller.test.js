@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
@@ -50,7 +51,7 @@ const mockAuth = {
 const reprocessorKeys = {
   organisationNumber: toOrganisationNumber('500001'),
   registrationNumber: toRegistrationNumber('R26ER5000010001GL'),
-  year: '2026'
+  year: toYear(2026)
 }
 
 const fixtureReprocessor = buildRegistrationWithAccreditation({
@@ -1069,6 +1070,22 @@ describe('#listPrnsController', () => {
     })
 
     describe('error handling', () => {
+      it('should return 404 for a year the service does not answer for, without reading the accreditation', async ({
+        server
+      }) => {
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl.replace(
+            '/accreditations/2026/',
+            '/accreditations/2023/'
+          ),
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+        expect(fetchRequiredAccreditation).not.toHaveBeenCalled()
+      })
+
       it('should return 404 when the year names no live accreditation', async ({
         server
       }) => {

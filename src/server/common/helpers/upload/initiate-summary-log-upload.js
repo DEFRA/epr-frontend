@@ -5,6 +5,7 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 /** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
+/** @import { Year } from '#server/common/helpers/year.js' */
 /** @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js' */
 
 /**
@@ -12,7 +13,7 @@ import {
  * registered-only address.
  * @param {object} options
  * @param {RegistrationKeys} options.keys
- * @param {number} options.year
+ * @param {Year} options.year
  * @param {boolean} options.accredited
  * @param {string} options.redirectUrl
  * @param {BackendToken} options.backendToken
@@ -27,7 +28,7 @@ const initiateSummaryLogUpload = ({
 }) =>
   backend(backendToken).post(
     accredited
-      ? `${accreditationPath({ ...keys, year: String(year) })}/summary-log`
+      ? `${accreditationPath({ ...keys, year })}/summary-log`
       : `${registrationPath(keys)}/summary-logs/${year}`,
     { redirectUrl }
   )

@@ -656,12 +656,13 @@ describe('the organisation home page', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it.for(['20x6', '202', '20266'])(
-      'finds no page for the address "%s", which is not a year',
+    it.for(['20x6', '202', '20266', '2023'])(
+      'finds no page for the address "%s", without asking the backend',
       async (segment, { server }) => {
         const { statusCode } = await visit(server, `${BARE_PATH}/${segment}`)
 
         expect(statusCode).toBe(statusCodes.notFound)
+        expect(fetchOrganisationYears).not.toHaveBeenCalled()
       }
     )
 

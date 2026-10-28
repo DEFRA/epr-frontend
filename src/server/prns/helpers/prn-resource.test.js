@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
@@ -10,7 +11,7 @@ describe(prnsPath, () => {
       prnsPath({
         organisationNumber: toOrganisationNumber('500123'),
         registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
-        year: '2026'
+        year: toYear(2026)
       })
     ).toBe(
       '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'

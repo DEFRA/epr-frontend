@@ -17,11 +17,9 @@ const RELEVANT_YEAR_CLOSED_CODE = 'RELEVANT_YEAR_CLOSED'
 
 /**
  * Whether PRNs and PERNs can still be written for the accreditation's year.
- * Open when a backend not yet serving the ruling says nothing.
- * @todo drop the fallback once every backend serves `prns`
  * @param {Accreditation} accreditation
  */
-export const isYearOpen = (accreditation) => accreditation.prns?.open ?? true
+export const isYearOpen = (accreditation) => accreditation.prns.open
 
 /** @typedef {(params: PrnListParams & { prnId?: string }) => string} ClosedYearTarget */
 

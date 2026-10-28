@@ -10,6 +10,7 @@ import {
 /**
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */
@@ -18,7 +19,7 @@ import {
  * @typedef {{
  *   organisationNumber: OrganisationNumber,
  *   registrationNumber: RegistrationNumber,
- *   year: number
+ *   year: Year
  * }} AccreditationParams
  */
 
@@ -41,7 +42,7 @@ export const controller = {
    */
   async handler(request, h) {
     const { organisationNumber, registrationNumber, year } = request.params
-    const keys = { organisationNumber, registrationNumber, year: String(year) }
+    const keys = { organisationNumber, registrationNumber, year }
     const { backendToken } = request.auth.credentials
 
     const details = await fetchReportListDetails({ ...keys, backendToken })

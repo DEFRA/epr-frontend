@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
@@ -62,7 +63,7 @@ describe(toNaturalKeys, () => {
     expect(toNaturalKeys(anOrganisation(), allIds)).toStrictEqual({
       organisationNumber: toOrganisationNumber('500118'),
       registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
-      year: '2026'
+      year: toYear(2026)
     })
   })
 

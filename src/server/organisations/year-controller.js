@@ -3,7 +3,6 @@ import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-or
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { registrationEntries } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
-import { YEAR_SEGMENT, toYear } from '#server/common/helpers/year.js'
 import Boom from '@hapi/boom'
 import { renderHome } from './home-page.js'
 
@@ -18,20 +17,8 @@ import { renderHome } from './home-page.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
  * @import { DisplayedRegistration } from './home-page.js'
- * @import { OrganisationParams } from './index.js'
+ * @import { OrganisationYearParams } from './index.js'
  */
-
-/**
- * @param {string} segment
- * @returns {Year}
- */
-const yearOf = (segment) => {
-  if (!YEAR_SEGMENT.test(segment)) {
-    throw Boom.notFound()
-  }
-
-  return toYear(Number(segment))
-}
 
 /**
  * Each registration with the year's accreditation, if it is live
@@ -84,13 +71,13 @@ async function getWasteBalanceMap(
  */
 export const yearController = {
   /**
-   * @param {HapiRequest & { params: OrganisationParams }} request
+   * @param {HapiRequest & { params: OrganisationYearParams }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
     const orgNumber = request.params.organisationNumber
     const { backendToken } = request.auth.credentials
-    const year = yearOf(String(request.params.year))
+    const year = request.params.year
 
     const years = await fetchOrganisationYears(orgNumber, backendToken)
 

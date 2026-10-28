@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, vi } from 'vitest'
@@ -27,7 +28,7 @@ describe(fetchAccreditationDetails, () => {
   const keys = {
     organisationNumber: toOrganisationNumber('500118'),
     registrationNumber: toRegistrationNumber('R26ER5001180041PL'),
-    year: '2026'
+    year: toYear(2026)
   }
   const backendToken = toBackendToken('test-token')
   const credentials = buildMockAuth({ backendToken }).credentials
@@ -64,7 +65,7 @@ describe(fetchAccreditationDetails, () => {
   /** @type {ReportingPeriod[]} */
   const reportingPeriods = [
     {
-      year: 2026,
+      year: toYear(2026),
       cadence: 'monthly',
       period: 8,
       submissionNumber: 1,
@@ -77,7 +78,7 @@ describe(fetchAccreditationDetails, () => {
   ]
   /** @type {YearCalendarResponse} */
   const calendar = {
-    year: 2026,
+    year: toYear(2026),
     registeredOnly: {
       reportingPeriods: [
         {
@@ -261,7 +262,7 @@ describe(fetchAccreditationDetails, () => {
   }) => {
     backendHolds(msw)
 
-    await expect(fetchDetails({ year: '2025' })).rejects.toMatchObject({
+    await expect(fetchDetails({ year: toYear(2025) })).rejects.toMatchObject({
       output: { statusCode: statusCodes.notFound }
     })
   })
@@ -325,7 +326,7 @@ describe(fetchAccreditationDetails, () => {
   }) => {
     backendHolds(
       msw,
-      http.get(calendarUrl, () => HttpResponse.json({ year: 2026 }))
+      http.get(calendarUrl, () => HttpResponse.json({ year: toYear(2026) }))
     )
 
     const result = await fetchDetails()

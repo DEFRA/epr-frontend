@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -43,7 +44,7 @@ describe(initiateSummaryLogUpload, () => {
 
       await initiateSummaryLogUpload({
         keys,
-        year: 2027,
+        year: toYear(2027),
         accredited: isAccredited,
         redirectUrl: '/redirect/path',
         backendToken
@@ -72,7 +73,7 @@ describe(initiateSummaryLogUpload, () => {
 
     const result = await initiateSummaryLogUpload({
       keys,
-      year: 2027,
+      year: toYear(2027),
       accredited: false,
       redirectUrl: '/redirect/path',
       backendToken
@@ -98,7 +99,7 @@ describe(initiateSummaryLogUpload, () => {
     await expect(
       initiateSummaryLogUpload({
         keys,
-        year: 2027,
+        year: toYear(2027),
         accredited: false,
         redirectUrl: '/redirect/path',
         backendToken

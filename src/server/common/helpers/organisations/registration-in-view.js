@@ -1,7 +1,7 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
-import { currentYear, toYear } from '#server/common/helpers/year.js'
+import { currentYear } from '#server/common/helpers/year.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
   accreditationPath,
@@ -62,7 +62,7 @@ export const registrationEntries = (registrations) =>
 /**
  * The registration's accreditation for that year.
  * @param {RegistrationView} registration
- * @param {string} year
+ * @param {Year} year
  * @returns {Accreditation}
  */
 export const accreditationIn = (registration, year) => {
@@ -97,7 +97,7 @@ export const materialsHomepage = (keys, registration, year) => {
   if (isAccreditationActive(accreditation)) {
     return {
       kind: 'accredited',
-      path: accreditationPath({ ...keys, year: String(year) })
+      path: accreditationPath({ ...keys, year })
     }
   }
 
@@ -116,7 +116,7 @@ export const materialsHomepage = (keys, registration, year) => {
 export const defaultMaterialsHomepagePath = (keys, registration) => {
   const [latestYear] = registeredYears(registration)
   const homepage = latestYear
-    ? materialsHomepage(keys, registration, toYear(latestYear))
+    ? materialsHomepage(keys, registration, latestYear)
     : null
 
   return homepage?.path ?? registeredOnlyPath({ ...keys, year: currentYear() })

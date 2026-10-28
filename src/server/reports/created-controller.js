@@ -4,7 +4,6 @@ import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organ
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
-import { toYear } from '#server/common/helpers/year.js'
 import { homePath } from '#server/organisations/home-page.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
@@ -64,7 +63,7 @@ export const createdController = {
       : localise('reports:createdStatusValue')
 
     const homeUrl = homePath(organisationNumber, {
-      year: toYear(year),
+      year,
       exporting: isExporterRegistration(registration)
     })
     const viewDraftUrl = `${reportPath(request.params)}/view`

@@ -563,6 +563,28 @@ describe('the waste balance ledger page', () => {
       ).not.toBeNull()
     })
 
+    it('refuses a year the service does not answer for without asking the backend', async ({
+      msw,
+      server
+    }) => {
+      /** @type {string[]} */
+      const backendRequests = []
+      msw.events.on('request:start', ({ request }) => {
+        if (request.url.startsWith(backendUrl)) {
+          backendRequests.push(request.url)
+        }
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${accreditedRegistrationPath}/accreditations/2023/waste-balance-ledger`,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(backendRequests).toStrictEqual([])
+    })
+
     it('refuses a year the registration holds no accreditation for, rather than reporting an empty ledger', async ({
       server
     }) => {

@@ -2,14 +2,11 @@ import { isRegisteredOnlyProcessingType } from '#domain/summary-logs/meta-fields
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
-import {
-  ACCREDITATION_YEAR,
-  fetchRegistrationWithAccreditation
-} from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
-import { toYear } from '#server/common/helpers/year.js'
+import { fixedYear } from '#server/common/helpers/year.js'
 import {
   organisationPath as toOrganisationPath,
   registrationPath as toRegistrationPath
@@ -55,7 +52,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   uploadUrl?: string,
  *   cancelUrl: string,
  *   wasteBalance?: number,
- *   year?: number
+ *   year?: Year
  * }} RenderContext
  */
 
@@ -165,7 +162,7 @@ const getStatusData = async (request, keys, summaryLogId, backendToken) => {
 /**
  * The submit response carries no year, but every summary log the backend
  * serves does, so a missing year where one is read is a contract violation.
- * @param {number | undefined} value
+ * @param {Year | undefined} value
  * @returns {Year}
  */
 const requiredYear = (value) => {
@@ -173,7 +170,7 @@ const requiredYear = (value) => {
     throw new Error('Expected year for summary log')
   }
 
-  return toYear(value)
+  return value
 }
 
 /**
@@ -388,7 +385,7 @@ const getUploadUrl = async (status, keys, redirectUrl, session) => {
 
   const { uploadUrl } = await initiateSummaryLogUpload({
     keys,
-    year: Number(ACCREDITATION_YEAR),
+    year: fixedYear,
     accredited: accreditation !== undefined,
     redirectUrl,
     backendToken: session.backendToken
