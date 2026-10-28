@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { buildAccreditationView } from '#server/common/test-helpers/organisation-view-fixtures.js'
 
 import { accreditationEntries } from './accreditation-entries.js'
 
@@ -8,9 +9,8 @@ import { accreditationEntries } from './accreditation-entries.js'
  * @param {string} accreditationNumber
  */
 const accreditationNumbered = (accreditationNumber) =>
-  /** @type {const} */ ({
-    accreditationNumber: toAccreditationNumber(accreditationNumber),
-    status: { current: 'approved', timeline: [] }
+  buildAccreditationView({
+    accreditationNumber: toAccreditationNumber(accreditationNumber)
   })
 
 describe(accreditationEntries, () => {
