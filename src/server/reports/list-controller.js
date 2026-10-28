@@ -3,6 +3,7 @@ import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { materialsHomepage } from '#server/common/helpers/organisations/registration-in-view.js'
@@ -24,7 +25,7 @@ import {
   getRowAction,
   REPORT_ACTION
 } from './helpers/report-action.js'
-import { registrationPath, reportPath } from './helpers/report-paths.js'
+import { reportPath } from './helpers/report-paths.js'
 
 /**
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
@@ -269,6 +270,14 @@ export const listController = {
         fetchReportingPeriods(request.params, session.backendToken)
       ])
 
+    const homepage = materialsHomepage(keys, registration, year)
+
+    if (homepage === null) {
+      throw notFound('Reports not found', errorCodes.registrationNotFound, {
+        event: { action: 'fetch_reports', reason: `year=${year}` }
+      })
+    }
+
     const material = getMaterialDisplayName(registration.material)
 
     const { activeHeader, submittedHeader } = buildHeaders(localise)
@@ -297,10 +306,7 @@ export const listController = {
         emptyMessage: localise('reports:actionRequiredEmpty')
       },
       approvedPersonBanner,
-      backUrl: request.localiseUrl(
-        materialsHomepage(keys, registration, year)?.path ??
-          registrationPath(keys)
-      ),
+      backUrl: request.localiseUrl(homepage.path),
       breadcrumbs: readsAsARegulator(session)
         ? buildReportBreadcrumbs({
             organisation,
