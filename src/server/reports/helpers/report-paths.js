@@ -48,12 +48,12 @@ export const registeredOnlyPath = ({ year, ...keys }) =>
 /**
  * The materials homepage for a year's accredited or registered-only stream.
  * @param {RegistrationKeys} keys
- * @param {{ year: number, kind: 'accredited' | 'registeredOnly' }} stream
+ * @param {{ year: Year, kind: 'accredited' | 'registeredOnly' }} stream
  * @returns {string}
  */
 export const streamHomepagePath = (keys, { year, kind }) =>
   kind === 'accredited'
-    ? accreditationPath({ ...keys, year: String(year) })
+    ? accreditationPath({ ...keys, year })
     : registeredOnlyPath({ ...keys, year })
 
 /**
