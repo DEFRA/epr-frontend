@@ -1,4 +1,5 @@
 /**
+ * @import { LEDGER_KINDS } from '#domain/summary-logs/loads-schema.js'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
  * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -267,7 +268,7 @@
 /**
  * The ledger a summary log was uploaded to, fixed for its whole life. Absent
  * for logs stored before the backend stamped it.
- * @typedef {{ kind: 'accredited', accreditationNumber: string } | { kind: 'registeredOnly' }} LedgerAccreditation
+ * @typedef {{ kind: typeof LEDGER_KINDS.ACCREDITED, accreditationNumber: string } | { kind: typeof LEDGER_KINDS.REGISTERED_ONLY }} LedgerAccreditation
  */
 
 /**

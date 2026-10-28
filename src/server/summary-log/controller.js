@@ -1,3 +1,4 @@
+import { LEDGER_KINDS } from '#domain/summary-logs/loads-schema.js'
 import { isRegisteredOnlyProcessingType } from '#domain/summary-logs/meta-fields.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
@@ -27,6 +28,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  */
 
 /**
+ * @import { LedgerKind } from '#domain/summary-logs/loads-schema.js'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import {
  *   LedgerAccreditation,
@@ -179,20 +181,21 @@ const requiredYear = (value) => {
   return value
 }
 
-const LEDGER_KINDS = new Set(['accredited', 'registeredOnly'])
+/** @type {ReadonlySet<unknown>} */
+const ledgerKinds = new Set(Object.values(LEDGER_KINDS))
 
 /**
  * Logs stored before the backend stamped their ledger answer without one, and
  * the status read keeps a value failing its schema; we refuse to guess either.
  * @param {LedgerAccreditation | undefined} value
- * @returns {LedgerAccreditation}
+ * @returns {LedgerKind}
  */
-const requiredLedgerAccreditation = (value) => {
-  if (!LEDGER_KINDS.has(value?.kind ?? '')) {
+const requiredLedgerKind = (value) => {
+  if (!ledgerKinds.has(value?.kind)) {
     throw new Error('Expected a known ledgerAccreditation for summary log')
   }
 
-  return /** @type {LedgerAccreditation} */ (value)
+  return /** @type {LedgerKind} */ (value?.kind)
 }
 
 /**
@@ -395,7 +398,7 @@ const renderPassedValidationView = async (
 
   const homepagePath = materialsHomepagePath(keys, {
     year: context.year,
-    kind: requiredLedgerAccreditation(context.ledgerAccreditation).kind
+    kind: requiredLedgerKind(context.ledgerAccreditation)
   })
 
   return renderCheckView(h, localise, {
@@ -406,7 +409,7 @@ const renderPassedValidationView = async (
 
 /**
  * @param {RegistrationKeys} keys
- * @param {{ year: Year, kind: LedgerAccreditation['kind'] }} homepage - The summary log's year and ledger
+ * @param {{ year: Year, kind: LedgerKind }} homepage - The summary log's year and ledger
  * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
  * @param {UserSession} session
  * @returns {Promise<{cancelUrl: string, uploadUrl?: string}>}
@@ -424,7 +427,7 @@ const getReuploadLinks = async (keys, homepage, redirectUrl, session) => {
   const { uploadUrl } = await initiateSummaryLogUpload({
     keys,
     year: homepage.year,
-    accredited: homepage.kind === 'accredited',
+    accredited: homepage.kind === LEDGER_KINDS.ACCREDITED,
     redirectUrl,
     backendToken: session.backendToken
   })
@@ -493,7 +496,7 @@ export const summaryLogUploadProgressController = {
           keys,
           {
             year: requiredYear(year),
-            kind: requiredLedgerAccreditation(ledgerAccreditation).kind
+            kind: requiredLedgerKind(ledgerAccreditation)
           },
           redirectUrl,
           session

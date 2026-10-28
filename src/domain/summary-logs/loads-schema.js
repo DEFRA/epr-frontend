@@ -6,6 +6,13 @@ import { CADENCE } from '#server/reports/constants.js'
 
 const nonNegativeInteger = Joi.number().integer().min(0).required()
 
+export const LEDGER_KINDS = Object.freeze({
+  ACCREDITED: 'accredited',
+  REGISTERED_ONLY: 'registeredOnly'
+})
+
+/** @typedef {typeof LEDGER_KINDS[keyof typeof LEDGER_KINDS]} LedgerKind */
+
 export const rowIdSchema = Joi.string().pattern(/^\d+$/, 'numeric')
 
 export const loadCategorySchema = Joi.object({
@@ -127,10 +134,12 @@ const storedSummaryLogSchema = Joi.object({
   ledgerAccreditation: Joi.alternatives()
     .try(
       Joi.object({
-        kind: Joi.string().valid('accredited').required(),
+        kind: Joi.string().valid(LEDGER_KINDS.ACCREDITED).required(),
         accreditationNumber: Joi.string().required()
       }),
-      Joi.object({ kind: Joi.string().valid('registeredOnly').required() })
+      Joi.object({
+        kind: Joi.string().valid(LEDGER_KINDS.REGISTERED_ONLY).required()
+      })
     )
     .optional()
 })
