@@ -6,6 +6,7 @@ import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organ
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
+import { fixedYear } from '#server/common/helpers/year.js'
 import {
   organisationPath as toOrganisationPath,
   registrationPath as toRegistrationPath
@@ -384,6 +385,7 @@ const getUploadUrl = async (status, keys, redirectUrl, session) => {
 
   const { uploadUrl } = await initiateSummaryLogUpload({
     keys,
+    year: fixedYear,
     accredited: accreditation !== undefined,
     redirectUrl,
     backendToken: session.backendToken

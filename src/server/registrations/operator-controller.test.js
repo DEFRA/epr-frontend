@@ -255,7 +255,7 @@ describe("the operator's registration page for a year", () => {
       `/organisations/500118/${year}`
     )
     expect(hrefOf(body, 'Upload your summary log')).toBe(
-      `${registrationPath}/summary-logs/upload`
+      `${accreditationPath}/summary-logs/upload`
     )
     expect(hrefOf(body, 'Manage reports')).toBe(
       `${registrationPath}/reports/${year}`
@@ -265,6 +265,19 @@ describe("the operator's registration page for a year", () => {
     )
     expect(hrefOf(body, 'Manage PRNs')).toBe(
       `${accreditationPath}/packaging-recycling-notes`
+    )
+  })
+
+  it('keeps Welsh and the year on the summary log upload link', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
+    const { body } = await visit(server, { url: `/cy${accreditationPath}` })
+
+    expect(hrefOf(body, 'Upload your summary log')).toBe(
+      `/cy${accreditationPath}/summary-logs/upload`
     )
   })
 
@@ -408,6 +421,26 @@ describe("the operator's registration page for a year", () => {
         name: `apply for ${thisYear + 1} accreditation`
       })
     ).not.toBeNull()
+  })
+
+  it('uploads the summary log as registered-only once the accreditation is cancelled', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      registration: {
+        ...reprocessor,
+        accreditations: {
+          [year]: accreditationWith('cancelled', ['approved', 'cancelled'])
+        }
+      }
+    })
+
+    const { body } = await visit(server)
+
+    expect(hrefOf(body, 'Upload your summary log')).toBe(
+      `${registeredOnlyPath}/summary-logs/upload`
+    )
   })
 
   it('links the reapply to the next year with the ids and the applied-for material', async ({
@@ -639,7 +672,7 @@ describe("the operator's registered-only page for a year", () => {
       `/organisations/500118/${year}`
     )
     expect(hrefOf(body, 'Upload your summary log')).toBe(
-      `${registrationPath}/summary-logs/upload`
+      `${registeredOnlyPath}/summary-logs/upload`
     )
     expect(hrefOf(body, 'Manage reports')).toBe(
       `${registrationPath}/reports/${year}`

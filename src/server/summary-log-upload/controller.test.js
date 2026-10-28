@@ -6,13 +6,14 @@ import {
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import {
   buildAccreditationView,
-  buildRegistrationWithAccreditation
+  buildOrganisationView,
+  buildRegistrationView
 } from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -21,10 +22,12 @@ import * as cheerio from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
+/** @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
+
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js'),
+  import('#server/common/helpers/organisations/fetch-registration.js'),
   () => ({
-    fetchRegistrationWithAccreditation: vi.fn()
+    fetchRegistration: vi.fn()
   })
 )
 
@@ -39,13 +42,27 @@ vi.mock(
   })
 )
 
-const mockFetchRegistrationWithAccreditation = vi.mocked(
-  fetchRegistrationWithAccreditation
-)
+const mockFetchRegistration = vi.mocked(fetchRegistration)
 
-const registeredOnly = {
-  ...buildRegistrationWithAccreditation(),
-  accreditation: undefined
+const thisYear = new Date().getUTCFullYear()
+
+/**
+ * @param {Partial<RegistrationView>} [overrides]
+ */
+const holdsRegistration = (overrides = {}) => {
+  const registration = buildRegistrationView({
+    status: {
+      current: 'approved',
+      timeline: [{ status: 'approved', at: `${thisYear}-01-01T00:00:00.000Z` }]
+    },
+    accreditations: {},
+    ...overrides
+  })
+
+  mockFetchRegistration.mockResolvedValue({
+    organisation: buildOrganisationView(),
+    registration
+  })
 }
 
 vi.spyOn(metrics.journey, 'start').mockResolvedValue()
@@ -55,41 +72,175 @@ const mockAuth = buildMockAuth({
   backendToken: toBackendToken('test-id-token')
 })
 
+const regulatorAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  idToken: 'test-id-token',
+  ...sessionIdentity(IDENTITIES.regulator)
+})
+
 describe('#summaryLogUploadController', () => {
   const organisationNumber = '500118'
   const registrationNumber = 'R26ER5001180041PL'
   const registrationPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
-  const url = `${registrationPath}/summary-logs/upload`
+  const registeredOnlyHomepage = `${registrationPath}/2027`
+  const accreditedHomepage = `${registrationPath}/accreditations/2027`
+  const url = `${registeredOnlyHomepage}/summary-logs/upload`
+
+  const kinds = [
+    {
+      kind: 'registered-only',
+      homepage: registeredOnlyHomepage,
+      accredited: false
+    },
+    { kind: 'accredited', homepage: accreditedHomepage, accredited: true }
+  ]
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFetchRegistrationWithAccreditation.mockResolvedValue(registeredOnly)
+    holdsRegistration()
   })
 
   it('should provide expected response', async ({ server }) => {
-    const { result, statusCode } = await server.inject({
+    const { statusCode } = await server.inject({
       method: 'GET',
       url,
       auth: mockAuth
     })
 
-    expect(result).toStrictEqual(
-      expect.stringContaining('Summary log: upload |')
-    )
     expect(statusCode).toBe(statusCodes.ok)
   })
 
-  it('should render back link to registration dashboard', async ({
-    server
-  }) => {
-    const { result } = await server.inject({
-      method: 'GET',
-      url,
-      auth: mockAuth
+  it.for(kinds)(
+    'shows the year in the $kind page title',
+    async ({ homepage }, { server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `${homepage}/summary-logs/upload`,
+        auth: mockAuth
+      })
+
+      expect(result).toContain('Summary log: upload (2027) |')
+    }
+  )
+
+  it.for(kinds)(
+    'shows the year in the $kind heading',
+    async ({ homepage }, { server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `${homepage}/summary-logs/upload`,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+
+      expect(
+        getByRole(getByRole(body, 'main'), 'heading', { level: 1 }).textContent
+      ).toContain('Upload your summary log (2027)')
+    }
+  )
+
+  it.for(kinds)(
+    'links the $kind page back to the materials homepage for the year',
+    async ({ homepage }, { server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `${homepage}/summary-logs/upload`,
+        auth: mockAuth
+      })
+
+      const $ = cheerio.load(
+        /** @type {string} */ (/** @type {unknown} */ (result))
+      )
+
+      expect($('.govuk-back-link').attr('href')).toBe(homepage)
+    }
+  )
+
+  it.for(kinds)(
+    'starts a $kind upload for the year',
+    async ({ homepage, accredited }, { server }) => {
+      await server.inject({
+        method: 'GET',
+        url: `${homepage}/summary-logs/upload`,
+        auth: mockAuth
+      })
+
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+        keys: { organisationNumber, registrationNumber },
+        year: 2027,
+        accredited,
+        redirectUrl: `${registrationPath}/summary-logs/{summaryLogId}`,
+        backendToken: 'test-id-token'
+      })
+    }
+  )
+
+  it.for([
+    `${registrationPath}/twenty/summary-logs/upload`,
+    `${registrationPath}/accreditations/twenty/summary-logs/upload`
+  ])(
+    'answers not found for a year that is not a year: %s',
+    async (notAYear, { server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: notAYear,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(initiateSummaryLogUpload).not.toHaveBeenCalled()
+    }
+  )
+
+  describe('without a year in the address', () => {
+    const yearless = `${registrationPath}/summary-logs/upload`
+
+    it('sends a registered-only operator to the upload page for the latest registered year', async ({
+      server
+    }) => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: yearless,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(
+        `${registrationPath}/${thisYear}/summary-logs/upload`
+      )
+      expect(initiateSummaryLogUpload).not.toHaveBeenCalled()
     })
 
-    expect(result).toContain('govuk-back-link')
-    expect(result).toContain(`href="${registrationPath}"`)
+    it('sends an accredited operator to the accredited upload page for the latest registered year', async ({
+      server
+    }) => {
+      holdsRegistration({
+        accreditations: { [thisYear]: buildAccreditationView() }
+      })
+
+      const { headers } = await server.inject({
+        method: 'GET',
+        url: yearless,
+        auth: mockAuth
+      })
+
+      expect(headers.location).toBe(
+        `${registrationPath}/accreditations/${thisYear}/summary-logs/upload`
+      )
+    })
+
+    it('keeps Welsh and the query string', async ({ server }) => {
+      const { headers } = await server.inject({
+        method: 'GET',
+        url: `/cy${yearless}?from=report`,
+        auth: mockAuth
+      })
+
+      expect(headers.location).toBe(
+        `/cy${registrationPath}/${thisYear}/summary-logs/upload?from=report`
+      )
+    })
   })
 
   it('should render the upload form for an operator', async ({ server }) => {
@@ -112,11 +263,7 @@ describe('#summaryLogUploadController', () => {
     const { result } = await server.inject({
       method: 'GET',
       url,
-      auth: buildMockAuth({
-        provider: OIDC_ENTRA_ID,
-        idToken: 'test-id-token',
-        ...sessionIdentity(IDENTITIES.regulator)
-      })
+      auth: regulatorAuth
     })
 
     const $ = cheerio.load(
@@ -132,11 +279,7 @@ describe('#summaryLogUploadController', () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url,
-      auth: buildMockAuth({
-        provider: OIDC_ENTRA_ID,
-        idToken: 'test-id-token',
-        ...sessionIdentity(IDENTITIES.regulator)
-      })
+      auth: regulatorAuth
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -164,15 +307,7 @@ describe('#summaryLogUploadController', () => {
   it('should not record a journey start for a regulator opening the page', async ({
     server
   }) => {
-    await server.inject({
-      method: 'GET',
-      url,
-      auth: buildMockAuth({
-        provider: OIDC_ENTRA_ID,
-        idToken: 'test-id-token',
-        ...sessionIdentity(IDENTITIES.regulator)
-      })
-    })
+    await server.inject({ method: 'GET', url, auth: regulatorAuth })
 
     expect(metrics.journey.start).not.toHaveBeenCalled()
   })
@@ -212,37 +347,12 @@ describe('#summaryLogUploadController', () => {
   it('looks the registration up by its numbers', async ({ server }) => {
     await server.inject({ method: 'GET', url, auth: mockAuth })
 
-    expect(mockFetchRegistrationWithAccreditation).toHaveBeenCalledWith(
-      { organisationNumber, registrationNumber },
-      'test-id-token'
-    )
+    expect(mockFetchRegistration).toHaveBeenCalledWith({
+      organisationNumber,
+      registrationNumber,
+      backendToken: 'test-id-token'
+    })
   })
-
-  it.for([
-    { kind: 'registered-only', accreditation: undefined, accredited: false },
-    {
-      kind: 'accredited',
-      accreditation: buildAccreditationView(),
-      accredited: true
-    }
-  ])(
-    'starts a $kind upload',
-    async ({ accreditation, accredited }, { server }) => {
-      mockFetchRegistrationWithAccreditation.mockResolvedValue({
-        ...registeredOnly,
-        accreditation
-      })
-
-      await server.inject({ method: 'GET', url, auth: mockAuth })
-
-      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-        keys: { organisationNumber, registrationNumber },
-        accredited,
-        redirectUrl: `${registrationPath}/summary-logs/{summaryLogId}`,
-        backendToken: 'test-id-token'
-      })
-    }
-  )
 
   describe('page content', () => {
     const introText =
@@ -404,16 +514,18 @@ describe('#summaryLogUploadController', () => {
   })
 
   describe('registration validation', () => {
+    const unknownRegistration = `/organisations/${organisationNumber}/registrations/R26ER9999999999PL/2027/summary-logs/upload`
+
     it('should return 404 when registration not found for organisation', async ({
       server
     }) => {
-      mockFetchRegistrationWithAccreditation.mockRejectedValueOnce(
+      mockFetchRegistration.mockRejectedValueOnce(
         Boom.notFound('Registration not found')
       )
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationNumber}/registrations/R26ER9999999999PL/summary-logs/upload`,
+        url: unknownRegistration,
         auth: mockAuth
       })
 
@@ -423,13 +535,13 @@ describe('#summaryLogUploadController', () => {
     it('should not call initiateSummaryLogUpload when registration not found', async ({
       server
     }) => {
-      mockFetchRegistrationWithAccreditation.mockRejectedValueOnce(
+      mockFetchRegistration.mockRejectedValueOnce(
         Boom.notFound('Registration not found')
       )
 
       await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationNumber}/registrations/R26ER9999999999PL/summary-logs/upload`,
+        url: unknownRegistration,
         auth: mockAuth
       })
 

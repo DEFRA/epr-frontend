@@ -1489,6 +1489,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain(`action="${mockUploadUrl}"`)
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         keys: { organisationNumber, registrationNumber },
+        year: 2026,
         accredited: false,
         redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
@@ -1630,6 +1631,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain(`action="${mockUploadUrl}"`)
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         keys: { organisationNumber, registrationNumber },
+        year: 2026,
         accredited: false,
         redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
@@ -2461,6 +2463,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         keys: { organisationNumber, registrationNumber },
+        year: 2026,
         accredited: false,
         redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
@@ -2500,6 +2503,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         keys: { organisationNumber, registrationNumber },
+        year: 2026,
         accredited: false,
         redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
         backendToken: 'test-id-token'
@@ -2523,6 +2527,7 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
           keys: { organisationNumber, registrationNumber },
+          year: 2026,
           accredited: true,
           redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
           backendToken: 'test-id-token'
