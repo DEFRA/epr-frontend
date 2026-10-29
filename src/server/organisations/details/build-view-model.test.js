@@ -60,6 +60,8 @@ const build = ({
       organisationNumber,
       name: 'Kirkby Plastics Ltd',
       displayName: 'Kirkby Plastics Ltd',
+      status: { current: 'active' },
+      submittedToRegulator: { code: 'ea' },
       registrations
     },
     activeTab,

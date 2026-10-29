@@ -75,6 +75,8 @@ describe('the chrome around an organisation page', () => {
       organisationNumber: toOrganisationNumber('500123'),
       name: 'ACME ltd',
       displayName: 'ACME ltd',
+      status: { current: 'active' },
+      submittedToRegulator: { code: 'ea' },
       registrations: {}
     })
     vi.mocked(fetchOrganisationYears).mockResolvedValue([])

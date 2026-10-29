@@ -47,6 +47,8 @@ const organisation = {
   organisationNumber: toOrganisationNumber('500118'),
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
+  status: { current: 'active' },
+  submittedToRegulator: { code: 'ea' },
   registrations: { [registrationNumber]: registration }
 }
 

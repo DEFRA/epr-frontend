@@ -86,7 +86,9 @@
  *   organisationNumber: OrganisationNumber,
  *   name: string,
  *   displayName: string,
- *   registrations: Record<string, RegistrationView>
+ *   registrations: Record<string, RegistrationView>,
+ *   status: { current: string },
+ *   submittedToRegulator: { code: string }
  * }} OrganisationView
  */
 

@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { buildOrganisationView } from '#server/common/test-helpers/organisation-view-fixtures.js'
+
 import { toOrganisationRow } from './to-organisation-row.js'
 
-const acme = {
-  id: '6507f1f77bcf86cd79943901',
-  orgId: 50002,
-  companyDetails: { name: 'ACME ltd' },
-  status: 'active',
-  submittedToRegulator: 'ea'
-}
+const acme = buildOrganisationView({
+  organisationNumber: toOrganisationNumber('50002'),
+  name: 'ACME ltd',
+  status: { current: 'active' },
+  submittedToRegulator: { code: 'ea' }
+})
 
 // The two localisers share a signature, so a caller could pass them the wrong
 // way round and the type checker would not notice. Each one marks its output
@@ -42,20 +44,10 @@ describe(toOrganisationRow, () => {
   it('names the regulator the way a regulator writes it', () => {
     expect(
       toOrganisationRow(
-        { ...acme, submittedToRegulator: 'nrw' },
+        { ...acme, submittedToRegulator: { code: 'nrw' } },
         inEnglish,
         asKey
       ).regulator
     ).toBe('NRW')
-  })
-
-  it('leaves the regulator blank when the organisation names none', () => {
-    expect(
-      toOrganisationRow(
-        { ...acme, submittedToRegulator: undefined },
-        inEnglish,
-        asKey
-      ).regulator
-    ).toBe('')
   })
 })

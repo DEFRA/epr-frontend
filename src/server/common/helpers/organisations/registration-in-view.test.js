@@ -51,6 +51,8 @@ const organisation = /** @type {OrganisationView} */ ({
   organisationNumber: toOrganisationNumber('500001'),
   name: 'Kirkby Plastics',
   displayName: 'Kirkby Plastics',
+  status: { current: 'active' },
+  submittedToRegulator: { code: 'ea' },
   registrations: { R25SR500030912PA: registration }
 })
 
