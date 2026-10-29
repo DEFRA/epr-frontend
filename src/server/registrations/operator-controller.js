@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
 import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
@@ -389,7 +390,7 @@ export const registeredOnlyYearController = {
       )
     }
 
-    if (homepage.kind === 'accredited') {
+    if (homepage.kind === LEDGER_KINDS.ACCREDITED) {
       return redirectPreservingMethod(request, h, homepage.path)
     }
 

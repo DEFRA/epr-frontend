@@ -1,3 +1,4 @@
+import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
@@ -11,9 +12,10 @@ import {
 import { isAccreditationActive } from './accreditation-helpers.js'
 
 /**
+ * @import { LedgerKind } from '#domain/ledger-kinds.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { Year } from '#server/common/helpers/year.js'
- * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
@@ -80,23 +82,27 @@ export const accreditationIn = (registration, year) => {
 }
 
 /**
- * @typedef {{ kind: 'accredited' | 'registeredOnly', path: string }} MaterialsHomepage
+ * @typedef {{ kind: LedgerKind, path: string }} MaterialsHomepage
  */
+
+/** @type {Record<LedgerKind, (keys: AccreditationKeys) => string>} */
+const homepagePaths = {
+  [LEDGER_KINDS.ACCREDITED]: accreditationPath,
+  [LEDGER_KINDS.REGISTERED_ONLY]: registeredOnlyPath
+}
 
 /**
  * @param {RegistrationKeys} keys
- * @param {{ year: Year, kind: MaterialsHomepage['kind'] }} homepage
+ * @param {{ year: Year, kind: LedgerKind }} homepage
  * @returns {string}
  */
 export const materialsHomepagePath = (keys, { year, kind }) =>
-  kind === 'accredited'
-    ? accreditationPath({ ...keys, year })
-    : registeredOnlyPath({ ...keys, year })
+  homepagePaths[kind]({ ...keys, year })
 
 /**
  * @param {RegistrationKeys} keys
  * @param {Year} year
- * @param {MaterialsHomepage['kind']} kind
+ * @param {LedgerKind} kind
  * @returns {MaterialsHomepage}
  */
 const homepageFor = (keys, year, kind) => ({
@@ -116,11 +122,11 @@ export const materialsHomepage = (keys, registration, year) => {
     : undefined
 
   if (isAccreditationActive(accreditation)) {
-    return homepageFor(keys, year, 'accredited')
+    return homepageFor(keys, year, LEDGER_KINDS.ACCREDITED)
   }
 
   return registeredYears(registration).includes(year)
-    ? homepageFor(keys, year, 'registeredOnly')
+    ? homepageFor(keys, year, LEDGER_KINDS.REGISTERED_ONLY)
     : null
 }
 

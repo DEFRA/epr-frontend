@@ -1,5 +1,5 @@
 /**
- * @import { LEDGER_KINDS } from '#domain/summary-logs/loads-schema.js'
+ * @import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
  * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'

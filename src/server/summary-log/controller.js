@@ -1,4 +1,4 @@
-import { LEDGER_KINDS } from '#domain/summary-logs/loads-schema.js'
+import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
 import { isRegisteredOnlyProcessingType } from '#domain/summary-logs/meta-fields.js'
 import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
@@ -28,7 +28,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  */
 
 /**
- * @import { LedgerKind } from '#domain/summary-logs/loads-schema.js'
+ * @import { LedgerKind } from '#domain/ledger-kinds.js'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import {
  *   LedgerAccreditation,

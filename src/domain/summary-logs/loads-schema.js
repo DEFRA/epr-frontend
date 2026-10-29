@@ -1,17 +1,11 @@
 import Joi from 'joi'
 
+import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { CADENCE } from '#server/reports/constants.js'
 
 const nonNegativeInteger = Joi.number().integer().min(0).required()
-
-export const LEDGER_KINDS = Object.freeze({
-  ACCREDITED: 'accredited',
-  REGISTERED_ONLY: 'registeredOnly'
-})
-
-/** @typedef {typeof LEDGER_KINDS[keyof typeof LEDGER_KINDS]} LedgerKind */
 
 export const rowIdSchema = Joi.string().pattern(/^\d+$/, 'numeric')
 
