@@ -49,6 +49,8 @@ const anOrganisation = (overrides) => ({
   name: 'Kirkby Plastics Ltd',
   displayName: 'Kirkby Plastics Ltd',
   organisationNumber: toOrganisationNumber('500123'),
+  status: { current: 'active' },
+  submittedToRegulator: { code: 'ea' },
   registrations: { [registrationNumber]: aRegistration },
   ...overrides
 })

@@ -90,6 +90,8 @@ const organisationOf = (overrides = {}) => ({
   organisationNumber: ORGANISATION_NUMBER,
   name: 'ACME ltd',
   displayName: 'ACME trading',
+  status: { current: 'active' },
+  submittedToRegulator: { code: 'ea' },
   registrations: {},
   ...overrides
 })

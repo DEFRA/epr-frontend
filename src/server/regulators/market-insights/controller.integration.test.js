@@ -20,16 +20,14 @@ const marketInsightsUrl = `${backendUrl}/v1/market-insights/*`
  * The regulator home page fetches its own list, and these tests are about the
  * link it offers rather than what that list holds.
  */
-const anEmptyPageOfOrganisations = http.get(
-  `${backendUrl}/v1/organisations`,
-  () =>
-    HttpResponse.json({
-      items: [],
-      page: 1,
-      pageSize: 50,
-      totalItems: 0,
-      totalPages: 0
-    })
+const anEmptyPageOfOrganisations = http.get(`${backendUrl}/organisations`, () =>
+  HttpResponse.json({
+    items: [],
+    page: 1,
+    pageSize: 50,
+    totalItems: 0,
+    totalPages: 0
+  })
 )
 
 // The sets of figures the page offers, in the order the workbook's tabs run,

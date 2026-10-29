@@ -22,7 +22,7 @@ const captureRequest = (msw) => {
   let captured
 
   msw.use(
-    http.get(`${backendUrl}/v1/organisations`, ({ request }) => {
+    http.get(`${backendUrl}/organisations`, ({ request }) => {
       captured = new URL(request.url)
       return HttpResponse.json({
         items: [],
@@ -48,7 +48,7 @@ describe(fetchOrganisations, () => {
     }
 
     msw.use(
-      http.get(`${backendUrl}/v1/organisations`, () => HttpResponse.json(page))
+      http.get(`${backendUrl}/organisations`, () => HttpResponse.json(page))
     )
 
     await expect(

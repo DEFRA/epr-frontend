@@ -2,13 +2,13 @@ import { backend } from '#server/common/helpers/backend-client.js'
 
 import { PAGE_SIZE } from './pagination.js'
 
-/** @import { SearchedOrganisation } from './to-organisation-row.js' */
+/** @import { OrganisationView } from '#server/common/helpers/organisations/organisation-view.js' */
 /** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 
 /**
  * A page of organisations as the backend returns it.
  * @typedef {{
- *   items: SearchedOrganisation[],
+ *   items: OrganisationView[],
  *   page: number,
  *   pageSize: number,
  *   totalItems: number,
@@ -25,6 +25,6 @@ import { PAGE_SIZE } from './pagination.js'
  * @returns {Promise<OrganisationsPage>}
  */
 export const fetchOrganisations = ({ page, search, backendToken }) =>
-  backend(backendToken).get('/v1/organisations', {
+  backend(backendToken).get('/organisations', {
     query: { page, pageSize: PAGE_SIZE, search }
   })
