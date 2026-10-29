@@ -174,8 +174,8 @@ describe('the regulator reports detailed view', () => {
       const [, ...rows] = getAllByRole(reportsTable(body), 'row')
 
       expect(
-        getByRole(documentOf(body), 'heading', { level: 1 }).textContent
-      ).toContain(`Reports (${year})`)
+        getByRole(documentOf(body), 'heading', { level: 1 })
+      ).toHaveTextContent(`Reports (${year})`)
       expect(
         rows.map((row) =>
           within(row).getByRole('rowheader').textContent?.trim()
