@@ -116,7 +116,7 @@ describe(fetchReportListDetails, () => {
   it("reads the organisation and the page year's calendar by number", async () => {
     await fetchDetails()
 
-    expect(fetchOrganisation).toHaveBeenCalledWith('500118', backendToken)
+    expect(fetchOrganisation).toHaveBeenCalledWith('500118', backendToken, {})
     expect(fetchYearCalendar).toHaveBeenCalledWith(
       { organisationNumber, registrationNumber, year: 2026 },
       backendToken

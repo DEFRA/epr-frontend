@@ -147,6 +147,44 @@ const backendHolds = (
   )
 
 /**
+ * The backend serves the registration as it stood in the year when asked for
+ * the year, and as it stands today otherwise.
+ * @param {SetupServer} msw
+ * @param {{ today: Record<string, unknown>, inYear: Record<string, unknown> }} registrations
+ */
+const backendServesByYear = (msw, { today, inYear }) =>
+  msw.use(
+    http.get(`${backendUrl}/organisations/500118`, ({ request }) =>
+      HttpResponse.json(
+        organisationView(
+          new URL(request.url).searchParams.get('year') === year
+            ? inYear
+            : today
+        )
+      )
+    )
+  )
+
+const cancelledSince = (/** @type {number} */ fromYear) => ({
+  current: 'cancelled',
+  timeline: [
+    { status: 'approved', at: `${fromYear}-01-01T09:00:00.000Z` },
+    { status: 'cancelled', at: `${fromYear}-02-01T09:00:00.000Z` }
+  ]
+})
+
+/**
+ * The text of the status tag beside a label such as `Registration`.
+ * @param {InstanceType<DOMWindow['HTMLElement']>} body
+ * @param {string} label
+ */
+const tagBeside = (body, label) =>
+  getByText(body, `${label}:`)
+    .closest('p')
+    ?.querySelector('.govuk-tag')
+    ?.textContent?.trim()
+
+/**
  * @param {HapiServer} server
  * @param {{ url?: string, auth?: ReturnType<typeof buildMockAuth> }} [options]
  */
@@ -228,6 +266,30 @@ describe("the operator's registration page for a year", () => {
     expect(queryByTestId(body, 'waste-balance-amount')?.textContent).toContain(
       '1,234.50'
     )
+  })
+
+  it('shows the registration and accreditation as they stood in the year', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+    backendServesByYear(msw, {
+      today: {
+        ...reprocessor,
+        status: cancelledSince(thisYear),
+        accreditations: {
+          [year]: accreditationWith('cancelled', ['approved', 'cancelled'])
+        }
+      },
+      inYear: reprocessor
+    })
+
+    const { body } = await visit(server)
+
+    expect([
+      tagBeside(body, 'Registration'),
+      tagBeside(body, 'Accreditation')
+    ]).toStrictEqual(['Approved', 'Approved'])
   })
 
   it('names an unknown site where the address has no first line', async ({
@@ -616,6 +678,26 @@ describe("the operator's registered-only page for a year", () => {
     expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
       `/organisations/500118/${lastYear}`
     )
+  })
+
+  it('sends the operator to the accredited page for a year the accreditation was live in', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+    backendServesByYear(msw, {
+      today: {
+        ...reprocessor,
+        accreditations: {
+          [year]: accreditationWith('cancelled', ['approved', 'cancelled'])
+        }
+      },
+      inYear: reprocessor
+    })
+
+    const { location } = await visit(server, { url: registeredOnlyPath })
+
+    expect(location).toBe(accreditationPath)
   })
 
   it.for(['created', 'rejected', 'cancelled'])(
