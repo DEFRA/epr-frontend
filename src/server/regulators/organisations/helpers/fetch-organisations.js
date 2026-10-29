@@ -2,13 +2,13 @@ import { backend } from '#server/common/helpers/backend-client.js'
 
 import { PAGE_SIZE } from './pagination.js'
 
-/** @import { SearchedOrganisation } from './to-organisation-row.js' */
+/** @import { OrganisationView } from '#server/common/helpers/organisations/organisation-view.js' */
 /** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
 
 /**
  * A page of organisations as the backend returns it.
  * @typedef {{
- *   items: SearchedOrganisation[],
+ *   items: OrganisationView[],
  *   page: number,
  *   pageSize: number,
  *   totalItems: number,

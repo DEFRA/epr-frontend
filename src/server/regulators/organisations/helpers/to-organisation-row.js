@@ -2,18 +2,10 @@ import { organisationPath } from '#server/reports/helpers/report-paths.js'
 
 import { toStatusTag } from './to-status-tag.js'
 
-/** @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js' */
+/** @import { OrganisationView } from '#server/common/helpers/organisations/organisation-view.js' */
 /** @import { StatusTag } from './to-status-tag.js' */
 
 /**
- * An organisation as one item of the backend's organisations page.
- * @typedef {{
- *   organisationNumber: OrganisationNumber,
- *   name: string,
- *   status: { current: string },
- *   submittedToRegulator: { code: string }
- * }} SearchedOrganisation
- *
  * One row of the results table.
  * @typedef {{
  *   name: string,
@@ -37,7 +29,7 @@ import { toStatusTag } from './to-status-tag.js'
  *
  * The caller supplies the localiser, so following the link keeps the language
  * the regulator is reading in rather than handing them the English route.
- * @param {SearchedOrganisation} organisation
+ * @param {OrganisationView} organisation
  * @param {(path: string) => string} localiseUrl
  * @param {(key: string) => string} localise
  * @returns {OrganisationRow}
