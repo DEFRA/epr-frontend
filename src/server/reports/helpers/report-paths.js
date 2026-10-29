@@ -54,12 +54,18 @@ export const summaryLogUploadPathUnder = (homepagePath) =>
   `${homepagePath}/summary-logs/upload`
 
 /**
- * The summary log upload page.
- * @param {RegistrationKeys} keys
+ * The summary log upload page for a report's year and ledger. Chosen by
+ * cadence, not accreditation status: a registration accredited mid-year still
+ * has quarterly registered-only reports for its earlier months.
+ * @param {RegistrationYearKeys & { cadence: CadenceValue }} keys
  * @returns {string}
  */
-export const summaryLogUploadPath = (keys) =>
-  summaryLogUploadPathUnder(registrationPath(keys))
+export const summaryLogUploadPath = ({ cadence, ...keys }) =>
+  summaryLogUploadPathUnder(
+    cadence === CADENCE.MONTHLY
+      ? accreditationPath(keys)
+      : registeredOnlyPath(keys)
+  )
 
 /**
  * The report list page for a registration's year.

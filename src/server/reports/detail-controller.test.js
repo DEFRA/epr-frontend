@@ -553,10 +553,12 @@ describe('#detailReportsController', () => {
       )
     })
 
-    it('should display upload new summary log button', async ({ server }) => {
+    it("should link upload new summary log to the registered-only upload page for the report's year", async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: detailUrl,
+        url: '/organisations/500001/registrations/R25SR500030912PA/reports/2025/quarterly/1/submissions/1',
         auth: mockAuth
       })
 
@@ -568,7 +570,7 @@ describe('#detailReportsController', () => {
       expect(link).not.toBeNull()
       expect(link?.textContent).toContain('Upload new summary log')
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA/summary-logs/upload'
+        '/organisations/500001/registrations/R25SR500030912PA/2025/summary-logs/upload'
       )
     })
 
@@ -1534,6 +1536,26 @@ describe('#detailReportsController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    it("should link upload new summary log to the accredited upload page for the report's year", async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/500001/registrations/R25SR500030912PA/accreditations/2025/reports/monthly/2/submissions/1',
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+
+      expect(
+        getByRole(body, 'button', {
+          name: 'Upload new summary log'
+        }).getAttribute('href')
+      ).toBe(
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2025/summary-logs/upload'
+      )
     })
 
     it('should display monthly period heading', async ({ server }) => {
