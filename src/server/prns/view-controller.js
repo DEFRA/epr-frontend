@@ -37,6 +37,12 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
  * @typedef {{ keys: AccreditationKeys, prnId: string, prnDraft: PrnDraftSession }} DraftParams
  */
 
+/** @type {Record<'PRN' | 'PERN', string>} */
+const COMPLIANCE_YEAR_TEXT_KEY = {
+  PRN: 'prns:view:complianceYearTextPrn',
+  PERN: 'prns:view:complianceYearTextPern'
+}
+
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
   /**
@@ -283,7 +289,7 @@ async function handleExistingView(
     prn.issuedToOrganisation
   )
 
-  const { isExporter, noteType, noteTypeFull, noteTypePlural } =
+  const { noteType, noteTypeFull, noteTypePlural } =
     getNoteTypeDisplayNames(registration)
 
   const isRegulator = readsAsARegulator(session)
@@ -332,7 +338,6 @@ async function handleExistingView(
     prn,
     noteType,
     noteTypeFull,
-    isExporter,
     isNotDraft,
     prnDetailRows,
     accreditationRows,
@@ -350,9 +355,8 @@ async function handleExistingView(
  * Builds the view data object for an existing PRN
  * @param {{
  *   prn: PackagingRecyclingNote,
- *   noteType: string,
+ *   noteType: 'PRN' | 'PERN',
  *   noteTypeFull: string,
- *   isExporter: boolean,
  *   isNotDraft: boolean,
  *   prnDetailRows: Array<object>,
  *   accreditationRows: Array<object>,
@@ -368,7 +372,6 @@ function buildExistingPrnViewData({
   prn,
   noteType,
   noteTypeFull,
-  isExporter,
   isNotDraft,
   prnDetailRows,
   accreditationRows,
@@ -384,9 +387,7 @@ function buildExistingPrnViewData({
     showRegulatorLogos: isNotDraft,
     complianceYear: isNotDraft
       ? {
-          textKey: isExporter
-            ? 'prns:view:complianceYearTextPern'
-            : 'prns:view:complianceYearTextPrn',
+          textKey: COMPLIANCE_YEAR_TEXT_KEY[noteType],
           accreditationYear: prn.accreditationYear,
           obligationYear: prn.obligationYear
         }
