@@ -96,6 +96,39 @@ describe(fetchSummaryLogStatus, () => {
     )
   })
 
+  it.for([
+    { kind: 'accredited', accreditationNumber: 'A26ER5001180114PL' },
+    { kind: 'registeredOnly' }
+  ])(
+    'should keep the $kind ledger accreditation the summary log was uploaded to',
+    async (ledgerAccreditation, { msw }) => {
+      const warnSpy = vi
+        .spyOn(createLogger(), 'warn')
+        .mockImplementation(() => {})
+
+      msw.use(
+        http.get(
+          `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
+          () =>
+            HttpResponse.json({
+              status: 'validated',
+              year: 2026,
+              ledgerAccreditation
+            })
+        )
+      )
+
+      const result = await fetchSummaryLogStatus(keys, summaryLogId, {
+        backendToken
+      })
+
+      expect(result).toHaveProperty('ledgerAccreditation', ledgerAccreditation)
+      expect(warnSpy).not.toHaveBeenCalled()
+
+      warnSpy.mockRestore()
+    }
+  )
+
   it('should strip unknown fields from the response', async ({ msw }) => {
     msw.use(
       http.get(

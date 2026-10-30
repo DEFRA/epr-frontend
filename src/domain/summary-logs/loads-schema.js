@@ -1,5 +1,6 @@
 import Joi from 'joi'
 
+import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { CADENCE } from '#server/reports/constants.js'
@@ -123,7 +124,18 @@ const storedSummaryLogSchema = Joi.object({
   material: Joi.string().optional(),
   accreditationNumber: Joi.string().optional(),
   year: Joi.number().integer().required(),
-  accreditationId: Joi.string().allow(null).optional()
+  accreditationId: Joi.string().allow(null).optional(),
+  ledgerAccreditation: Joi.alternatives()
+    .try(
+      Joi.object({
+        kind: Joi.string().valid(LEDGER_KINDS.ACCREDITED).required(),
+        accreditationNumber: Joi.string().required()
+      }),
+      Joi.object({
+        kind: Joi.string().valid(LEDGER_KINDS.REGISTERED_ONLY).required()
+      })
+    )
+    .optional()
 })
 
 // Joi runs the conditional's test with the caller's stripUnknown, which would
