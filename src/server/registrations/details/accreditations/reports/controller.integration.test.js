@@ -160,7 +160,7 @@ describe('the regulator reports detailed view', () => {
     { year: 2025, months: ['May, 2025', 'April, 2025'], periods: [5, 4] },
     { year: 2026, months: ['August, 2026', 'June, 2026'], periods: [8, 6] }
   ])(
-    'lists the periods of $year, each linked under $year',
+    'heads the page with $year and lists its periods, each linked under $year',
     async ({ year, months, periods }, { server }) => {
       vi.mocked(fetchReportListDetails).mockResolvedValue({
         ...details,
@@ -173,6 +173,9 @@ describe('the regulator reports detailed view', () => {
       const { body } = await visit(server, regulator, reportsPath)
       const [, ...rows] = getAllByRole(reportsTable(body), 'row')
 
+      expect(
+        getByRole(documentOf(body), 'heading', { level: 1 })
+      ).toHaveTextContent(`Reports (${year})`)
       expect(
         rows.map((row) =>
           within(row).getByRole('rowheader').textContent?.trim()
