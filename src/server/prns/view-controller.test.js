@@ -723,7 +723,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Reprocessing site/i)).toBeDefined()
+        expect(getByText(main, 'Reprocessing site')).toBeDefined()
         expect(
           getByText(main, /123 Reprocessing Lane, Manchester, M1 1AA/i)
         ).toBeDefined()
@@ -1090,7 +1090,32 @@ describe('#viewController', () => {
 
         const complianceText = main.querySelector('.govuk-body')
         expect(complianceText.innerHTML).toBe(
-          'This PRN relates to waste accepted for reprocessing in <strong>2026</strong> and can count towards <strong>2026</strong> obligations.'
+          'This PRN relates to waste received at a reprocessing site subject to the accreditation in <strong>2026</strong> and can count towards <strong>2026</strong> obligations.'
+        )
+      })
+
+      it('should display PERN compliance year text referencing the overseas reprocessing site', async ({
+        server
+      }) => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPernFromBackend,
+            accreditationYear: 2026,
+            obligationYear: 2027
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(main.querySelector('.govuk-body').innerHTML).toBe(
+          'This PERN relates to waste received at an overseas reprocessing site subject to the accreditation in <strong>2026</strong> and can count towards <strong>2027</strong> obligations.'
         )
       })
 
@@ -1115,7 +1140,7 @@ describe('#viewController', () => {
         const main = getByRole(new JSDOM(result).window.document.body, 'main')
 
         expect(main.querySelector('.govuk-body').innerHTML).toBe(
-          'This PRN relates to waste accepted for reprocessing in <strong>2026</strong> and can count towards <strong>2027</strong> obligations.'
+          'This PRN relates to waste received at a reprocessing site subject to the accreditation in <strong>2026</strong> and can count towards <strong>2027</strong> obligations.'
         )
       })
 

@@ -283,7 +283,7 @@ async function handleExistingView(
     prn.issuedToOrganisation
   )
 
-  const { noteType, noteTypeFull, noteTypePlural, wasteAction } =
+  const { isExporter, noteType, noteTypeFull, noteTypePlural } =
     getNoteTypeDisplayNames(registration)
 
   const isRegulator = readsAsARegulator(session)
@@ -332,7 +332,7 @@ async function handleExistingView(
     prn,
     noteType,
     noteTypeFull,
-    wasteAction,
+    isExporter,
     isNotDraft,
     prnDetailRows,
     accreditationRows,
@@ -352,7 +352,7 @@ async function handleExistingView(
  *   prn: PackagingRecyclingNote,
  *   noteType: string,
  *   noteTypeFull: string,
- *   wasteAction: string,
+ *   isExporter: boolean,
  *   isNotDraft: boolean,
  *   prnDetailRows: Array<object>,
  *   accreditationRows: Array<object>,
@@ -368,7 +368,7 @@ function buildExistingPrnViewData({
   prn,
   noteType,
   noteTypeFull,
-  wasteAction,
+  isExporter,
   isNotDraft,
   prnDetailRows,
   accreditationRows,
@@ -384,8 +384,9 @@ function buildExistingPrnViewData({
     showRegulatorLogos: isNotDraft,
     complianceYear: isNotDraft
       ? {
-          noteType,
-          wasteAction,
+          textKey: isExporter
+            ? 'prns:view:complianceYearTextPern'
+            : 'prns:view:complianceYearTextPrn',
           accreditationYear: prn.accreditationYear,
           obligationYear: prn.obligationYear
         }

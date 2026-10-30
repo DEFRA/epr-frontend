@@ -54,9 +54,7 @@
     <h2 class="govuk-heading-m">{{ prnDetailsHeading }}</h2>
 
     {% if complianceYear %}
-      <p class="govuk-body">{{ localise("prns:view:complianceYearText", {
-        noteType: complianceYear.noteType,
-        wasteAction: complianceYear.wasteAction,
+      <p class="govuk-body">{{ localise(complianceYear.textKey, {
         accreditationYear: "<strong>" ~ complianceYear.accreditationYear ~ "</strong>",
         obligationYear: "<strong>" ~ complianceYear.obligationYear ~ "</strong>"
       }) | safe }}</p>
