@@ -3,7 +3,6 @@ import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organ
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
-  asRegistrationWithAccreditation,
   buildAccreditationView,
   buildRegistrationView,
   buildRegistrationWithAccreditation
@@ -169,86 +168,6 @@ describe('#makeChangesController', () => {
       expect(getByText(body, "Use this report's summary log")).toBeDefined()
       expect(getByText(body, 'Upload new summary log')).toBeDefined()
       expect(getByRole(body, 'link', { name: 'Cancel' })).toBeDefined()
-    })
-
-    describe('upload button', () => {
-      const registrationUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
-
-      /**
-       * @param {HapiServer} server
-       * @param {string} reportUrl
-       */
-      const uploadHref = async (server, reportUrl) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: `${reportUrl}/make-changes`,
-          auth: mockAuth
-        })
-
-        return getByRole(new JSDOM(result).window.document.body, 'button', {
-          name: 'Upload new summary log'
-        }).getAttribute('href')
-      }
-
-      it("should link a quarterly report to the registered-only upload page for the report's year", async ({
-        server
-      }) => {
-        await expect(
-          uploadHref(
-            server,
-            `${registrationUrl}/reports/2025/quarterly/1/submissions/1`
-          )
-        ).resolves.toBe(`${registrationUrl}/2025/summary-logs/upload`)
-      })
-
-      it("should link a monthly report to the accredited upload page for the report's year", async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
-          accreditedExporter
-        )
-
-        await expect(
-          uploadHref(
-            server,
-            `${registrationUrl}/accreditations/2025/reports/monthly/3/submissions/1`
-          )
-        ).resolves.toBe(
-          `${registrationUrl}/accreditations/2025/summary-logs/upload`
-        )
-      })
-
-      it('should link a monthly report to the accredited upload page even when its accreditation is cancelled', async ({
-        server
-      }) => {
-        const registration = buildRegistrationView({
-          accreditations: {
-            2025: buildAccreditationView({
-              status: {
-                current: 'cancelled',
-                timeline: [
-                  { status: 'cancelled', at: '2025-06-01T00:00:00.000Z' }
-                ]
-              }
-            })
-          }
-        })
-        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
-          asRegistrationWithAccreditation({
-            ...buildRegistrationWithAccreditation({ registration }),
-            accreditation: undefined
-          })
-        )
-
-        await expect(
-          uploadHref(
-            server,
-            `${registrationUrl}/accreditations/2025/reports/monthly/3/submissions/1`
-          )
-        ).resolves.toBe(
-          `${registrationUrl}/accreditations/2025/summary-logs/upload`
-        )
-      })
     })
 
     describe('note-type section', () => {
@@ -455,6 +374,5 @@ describe('#makeChangesController', () => {
 })
 
 /**
- * @import { HapiServer } from '#server/common/hapi-types.js'
  * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'
  */

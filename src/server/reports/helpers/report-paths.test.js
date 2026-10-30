@@ -12,8 +12,7 @@ import {
   reportPath,
   reportsCalendarApiPath,
   registrationPath,
-  reportsListPath,
-  summaryLogUploadPath
+  reportsListPath
 } from './report-paths.js'
 
 const registrationKeys = {
@@ -101,20 +100,6 @@ describe(organisationPath, () => {
     expect(
       organisationPath({ organisationNumber: toOrganisationNumber('5/1') })
     ).toBe('/organisations/5%2F1')
-  })
-})
-
-describe(summaryLogUploadPath, () => {
-  it('gives a quarterly report the registered-only upload page for its year', () => {
-    expect(summaryLogUploadPath(quarterlyKeys)).toBe(
-      '/organisations/500001/registrations/R25SR500030912PA/2026/summary-logs/upload'
-    )
-  })
-
-  it('gives a monthly report the accredited upload page for its year', () => {
-    expect(summaryLogUploadPath(monthlyKeys)).toBe(
-      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/summary-logs/upload'
-    )
   })
 })
 
