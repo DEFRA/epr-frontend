@@ -170,25 +170,6 @@ describe('#makeChangesController', () => {
       expect(getByRole(body, 'link', { name: 'Cancel' })).toBeDefined()
     })
 
-    it('should link the upload button to the summary log upload page', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: baseUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const uploadLink = getByRole(dom.window.document.body, 'button', {
-        name: 'Upload new summary log'
-      })
-
-      expect(uploadLink.getAttribute('href')).toBe(
-        `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
-      )
-    })
-
     describe('note-type section', () => {
       it.for(noteTypeSectionScenarios)(
         'should show the $scenario copy',

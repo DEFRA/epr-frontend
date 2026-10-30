@@ -54,14 +54,6 @@ export const summaryLogUploadPathUnder = (homepagePath) =>
   `${homepagePath}/summary-logs/upload`
 
 /**
- * The summary log upload page.
- * @param {RegistrationKeys} keys
- * @returns {string}
- */
-export const summaryLogUploadPath = (keys) =>
-  summaryLogUploadPathUnder(registrationPath(keys))
-
-/**
  * The report list page for a registration's year.
  * @param {RegistrationYearKeys} keys
  * @returns {string}
@@ -70,24 +62,37 @@ export const reportsListPath = ({ year, ...keys }) =>
   `${registrationPath(keys)}/reports/${year}`
 
 /**
+ * @typedef {(keys: RegistrationYearKeys) => string} YearPath
+ * @type {Record<CadenceValue, { homepage: YearPath, reports: YearPath }>}
+ */
+const ledgerPaths = {
+  [CADENCE.MONTHLY]: {
+    homepage: accreditationPath,
+    reports: (keys) => `${accreditationPath(keys)}/reports`
+  },
+  [CADENCE.QUARTERLY]: {
+    homepage: registeredOnlyPath,
+    reports: reportsListPath
+  }
+}
+
+/**
+ * The summary log upload page for a report's year and ledger. Chosen by
+ * cadence, not accreditation status: a registration accredited mid-year still
+ * has quarterly registered-only reports for its earlier months.
+ * @param {RegistrationYearKeys & { cadence: CadenceValue }} keys
+ * @returns {string}
+ */
+export const summaryLogUploadPath = ({ cadence, ...keys }) =>
+  summaryLogUploadPathUnder(ledgerPaths[cadence].homepage(keys))
+
+/**
  * One submission's page address; a page appends its own suffix.
  * @param {SubmissionKeys} keys
  * @returns {string}
  */
-export const reportPath = ({
-  year,
-  cadence,
-  period,
-  submissionNumber,
-  ...keys
-}) => {
-  const reports =
-    cadence === CADENCE.MONTHLY
-      ? `${accreditationPath({ ...keys, year })}/reports`
-      : reportsListPath({ ...keys, year })
-
-  return `${reports}/${cadence}/${period}/submissions/${submissionNumber}`
-}
+export const reportPath = ({ cadence, period, submissionNumber, ...keys }) =>
+  `${ledgerPaths[cadence].reports(keys)}/${cadence}/${period}/submissions/${submissionNumber}`
 
 /**
  * The backend natural-key route for one submission.

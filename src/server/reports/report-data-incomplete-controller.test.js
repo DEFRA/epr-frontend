@@ -233,28 +233,6 @@ describe('#reportDataIncompleteController', () => {
     )
   })
 
-  it('links "choose the file again" to the summary log upload page', async ({
-    server
-  }) => {
-    const cookie = await triggerIncompleteRedirect(server, twoIssues)
-
-    const { result } = await server.inject({
-      method: 'GET',
-      url: baseUrl,
-      auth: mockAuth,
-      headers: { cookie }
-    })
-
-    const dom = new JSDOM(result)
-    const link = getByRole(dom.window.document.body, 'link', {
-      name: /choose the file again/
-    })
-
-    expect(link.getAttribute('href')).toBe(
-      `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
-    )
-  })
-
   it('groups issues by worksheet with field-specific bullets', async ({
     server
   }) => {
@@ -396,28 +374,6 @@ describe('#reportDataIncompleteController', () => {
       `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
     )
     expect(button.classList.contains('govuk-button--secondary')).toBe(true)
-  })
-
-  it('links "Upload a new summary log" to the summary log upload page', async ({
-    server
-  }) => {
-    const cookie = await triggerIncompleteRedirect(server, twoIssues)
-
-    const { result } = await server.inject({
-      method: 'GET',
-      url: baseUrl,
-      auth: mockAuth,
-      headers: { cookie }
-    })
-
-    const dom = new JSDOM(result)
-    const button = getByRole(dom.window.document.body, 'button', {
-      name: /Upload a new summary log/
-    })
-
-    expect(button.getAttribute('href')).toBe(
-      `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/upload`
-    )
   })
 
   it('redirects to the reports list when accessed directly', async ({

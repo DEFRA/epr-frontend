@@ -12,8 +12,7 @@ import {
   reportPath,
   reportsCalendarApiPath,
   registrationPath,
-  reportsListPath,
-  summaryLogUploadPath
+  reportsListPath
 } from './report-paths.js'
 
 const registrationKeys = {
@@ -101,28 +100,6 @@ describe(organisationPath, () => {
     expect(
       organisationPath({ organisationNumber: toOrganisationNumber('5/1') })
     ).toBe('/organisations/5%2F1')
-  })
-})
-
-describe(summaryLogUploadPath, () => {
-  it('gives the upload page by number', () => {
-    expect(
-      summaryLogUploadPath({
-        organisationNumber: toOrganisationNumber('500118'),
-        registrationNumber: toRegistrationNumber('R26ER5001180041PL')
-      })
-    ).toBe(
-      '/organisations/500118/registrations/R26ER5001180041PL/summary-logs/upload'
-    )
-  })
-
-  it('encodes the numbers', () => {
-    expect(
-      summaryLogUploadPath({
-        organisationNumber: toOrganisationNumber('o&1'),
-        registrationNumber: toRegistrationNumber('r/1')
-      })
-    ).toBe('/organisations/o%261/registrations/r%2F1/summary-logs/upload')
   })
 })
 

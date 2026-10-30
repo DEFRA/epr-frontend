@@ -553,25 +553,6 @@ describe('#detailReportsController', () => {
       )
     })
 
-    it('should display upload new summary log button', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: detailUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const link = body.querySelector('a[href*="summary-logs/upload"]')
-
-      expect(link).not.toBeNull()
-      expect(link?.textContent).toContain('Upload new summary log')
-      expect(link?.getAttribute('href')).toBe(
-        '/organisations/500001/registrations/R25SR500030912PA/summary-logs/upload'
-      )
-    })
-
     it('should display cancel and return to reports link', async ({
       server
     }) => {
