@@ -44,6 +44,9 @@ const organisation = {
     {
       id: accreditationId,
       accreditationNumber: 'A26ER5001180114PL',
+      regAccStatusByDate: {
+        2026: { '2026-07-01': { status: 'registeredOnly' } }
+      },
       validFrom: '2026-07-01',
       status: 'approved'
     }
@@ -58,6 +61,9 @@ const organisationView = {
       status: {
         current: 'approved',
         timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
+      },
+      regAccStatusByDate: {
+        2026: { '2026-01-01': { status: 'registeredOnly' } }
       },
       validFrom: '2026-01-01',
       material: 'plastic',
