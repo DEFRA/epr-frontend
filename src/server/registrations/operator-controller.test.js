@@ -45,6 +45,20 @@ const registeredSince = (fromYear) => ({
 })
 
 /**
+ * @param {number} fromYear
+ */
+const regAccStatusSince = (fromYear) =>
+  Object.fromEntries(
+    Array.from(
+      { length: Math.max(thisYear - fromYear + 1, 0) },
+      (_, offset) => [
+        fromYear + offset,
+        { [`${fromYear + offset}-01-01`]: { status: 'registeredOnly' } }
+      ]
+    )
+  )
+
+/**
  * @param {string} current
  * @param {ReadonlyArray<string>} statuses
  * @param {number} [forYear]
@@ -63,6 +77,7 @@ const accreditationWith = (current, statuses, forYear = thisYear) => ({
 /** @type {Record<string, unknown>} */
 const reprocessor = {
   status: registeredSince(thisYear),
+  regAccStatusByDate: regAccStatusSince(thisYear),
   validFrom: `${year}-01-01`,
   material: 'glass_re_melt',
   submittedToRegulator: { code: 'ea' },
@@ -587,7 +602,11 @@ describe("the operator's registered-only page for a year", () => {
   }) => {
     const lastYear = String(thisYear - 1)
     backendHolds(msw, {
-      registration: { ...registeredOnly, status: registeredSince(thisYear - 1) }
+      registration: {
+        ...registeredOnly,
+        status: registeredSince(thisYear - 1),
+        regAccStatusByDate: regAccStatusSince(thisYear - 1)
+      }
     })
 
     const { body, title } = await visit(server, {
@@ -606,7 +625,11 @@ describe("the operator's registered-only page for a year", () => {
   }) => {
     const lastYear = String(thisYear - 1)
     backendHolds(msw, {
-      registration: { ...registeredOnly, status: registeredSince(thisYear - 1) }
+      registration: {
+        ...registeredOnly,
+        status: registeredSince(thisYear - 1),
+        regAccStatusByDate: regAccStatusSince(thisYear - 1)
+      }
     })
 
     const { body } = await visit(server, {
@@ -866,6 +889,7 @@ describe("the operator's registration page with no year", () => {
       registration: {
         ...reprocessor,
         status: registeredSince(thisYear - 1),
+        regAccStatusByDate: regAccStatusSince(thisYear - 1),
         accreditations: {
           [thisYear - 1]: accreditationWith(
             'approved',
@@ -895,6 +919,7 @@ describe("the operator's registration page with no year", () => {
       registration: {
         ...reprocessor,
         status: registeredSince(thisYear - 1),
+        regAccStatusByDate: regAccStatusSince(thisYear - 1),
         accreditations: {
           [thisYear - 1]: accreditationWith(
             'approved',
@@ -988,7 +1013,11 @@ describe("the operator's registration page with no year", () => {
     msw
   }) => {
     backendHolds(msw, {
-      registration: { ...registeredOnly, status: registeredSince(thisYear + 1) }
+      registration: {
+        ...registeredOnly,
+        status: registeredSince(thisYear + 1),
+        regAccStatusByDate: regAccStatusSince(thisYear + 1)
+      }
     })
 
     const response = await server.inject({

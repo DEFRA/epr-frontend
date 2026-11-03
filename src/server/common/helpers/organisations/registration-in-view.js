@@ -3,7 +3,7 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { currentYear } from '#server/common/helpers/year.js'
-import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
+import { registeredYears } from '#server/registrations/details/helpers/reg-acc-status.js'
 import {
   accreditationPath,
   registeredOnlyPath
