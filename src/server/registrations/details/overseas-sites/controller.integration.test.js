@@ -70,6 +70,9 @@ const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
   /** @type {RegistrationView} */
   const registration = {
     status: { current: 'approved', timeline: [] },
+    regAccStatusByDate: {
+      2026: { '2026-01-01': { status: 'registeredOnly' } }
+    },
     validFrom: '2026-01-01',
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
