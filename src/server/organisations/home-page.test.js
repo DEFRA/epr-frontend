@@ -701,7 +701,7 @@ describe('the organisation home page', () => {
 
       const { payload } = await visit(server)
 
-      expect(load(payload)('span.govuk-heading-m').text()).toBe(
+      expect(load(payload)('h2.govuk-heading-m').text()).toBe(
         'This is 2026 data'
       )
     })
@@ -734,7 +734,7 @@ describe('the organisation home page', () => {
 
       const { payload } = await visit(server)
 
-      expect(load(payload)('span.govuk-heading-m').text()).toBe(
+      expect(load(payload)('h2.govuk-heading-m').text()).toBe(
         'This is 2026 data'
       )
       expect(payload).not.toContain('Choose a different year')
