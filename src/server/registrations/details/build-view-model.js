@@ -17,7 +17,7 @@ import { toDateRange } from './helpers/date-range.js'
 import {
   accreditedDateRange,
   registeredYears
-} from './helpers/timeline-dates.js'
+} from './helpers/reg-acc-status.js'
 
 /**
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
@@ -135,10 +135,7 @@ const toAccreditedPeriods = ({ keys, registration, localise, localiseUrl }) =>
     .sort(([year], [other]) => other - year)
     .map(([year, accreditation]) => ({
       number: accreditation.accreditationNumber,
-      dateRange: toDateRange(
-        accreditedDateRange(accreditation, year),
-        localise
-      ),
+      dateRange: toDateRange(accreditedDateRange(registration, year), localise),
       status: toStatusTag(accreditation.status.current),
       href: localiseUrl(accreditationPath({ ...keys, year }))
     }))

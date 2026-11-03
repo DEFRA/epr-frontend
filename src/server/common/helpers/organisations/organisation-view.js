@@ -22,6 +22,12 @@
  */
 
 /**
+ * By year, the date each status starts. A status holds until the next date, or
+ * the end of the year.
+ * @typedef {Record<string, Record<string, { status: 'registeredOnly' | 'accredited' | 'cancelled' }>>} RegAccStatusByDate
+ */
+
+/**
  * `prns.open` is whether PRNs and PERNs can still be raised and issued for the
  * accreditation's year, as the backend rules it.
  * @typedef {{
@@ -53,6 +59,7 @@
 /**
  * @typedef {{
  *   status: Status<RegistrationStatus>,
+ *   regAccStatusByDate: RegAccStatusByDate,
  *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },

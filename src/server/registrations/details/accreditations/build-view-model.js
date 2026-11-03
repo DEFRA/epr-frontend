@@ -27,7 +27,7 @@ import { toRegistrationTrail } from '../helpers/accreditation-child-page.js'
 import { toCaption } from '../helpers/caption.js'
 import { toDateRange } from '../helpers/date-range.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
-import { accreditedDateRange } from '../helpers/timeline-dates.js'
+import { accreditedDateRange } from '../helpers/reg-acc-status.js'
 
 /**
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
@@ -425,10 +425,7 @@ export const buildViewModel = ({
       registration,
       registrationPath: paths.registration
     }),
-    period: toDateRange(
-      accreditedDateRange(accreditation, keys.year),
-      localise
-    ),
+    period: toDateRange(accreditedDateRange(registration, keys.year), localise),
     pageTitle: `${accreditation.accreditationNumber}: ${pageName}`,
     prns: toPrns({
       accreditationPath: paths.accreditation,

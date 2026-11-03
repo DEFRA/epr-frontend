@@ -162,6 +162,12 @@ const accreditationDetails = {
   registration: /** @type {AccreditationDetails['registration']} */ (
     /** @type {unknown} */ ({
       status: { current: 'approved', timeline: [] },
+      regAccStatusByDate: {
+        2026: {
+          '2026-01-01': { status: 'registeredOnly' },
+          '2026-07-01': { status: 'accredited' }
+        }
+      },
       validFrom: '2026-01-01',
       material: 'plastic',
       wasteProcessingType: 'reprocessor',
