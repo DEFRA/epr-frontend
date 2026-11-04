@@ -2,6 +2,7 @@
  * @import {
  *   AccreditationStatus,
  *   Material,
+ *   RegAccStatus,
  *   RegistrationStatus,
  *   RegulatorValue,
  *   ReprocessingType
@@ -24,7 +25,7 @@
 /**
  * By year, the date each status starts. A status holds until the next date, or
  * the end of the year.
- * @typedef {Record<string, Record<string, { status: 'registeredOnly' | 'accredited' | 'cancelled' }>>} RegAccStatusByDate
+ * @typedef {Record<string, Record<string, { status: RegAccStatus }>>} RegAccStatusByDate
  */
 
 /**

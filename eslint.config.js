@@ -52,7 +52,6 @@ const brandConstructors = [
       'src/server/common/helpers/route-params.js',
       'src/server/common/helpers/organisations/fetch-organisation-years.js',
       'src/server/common/helpers/organisations/accreditation-entries.js',
-      'src/server/registrations/details/helpers/reg-acc-status.js',
       'src/server/common/helpers/natural-keys/swap-keys.js'
     ],
     message:

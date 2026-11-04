@@ -1,12 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { REG_ACC_STATUS } from '#domain/organisations/model.js'
 import { toYear } from '#server/common/helpers/year.js'
 
-import {
-  accreditedDateRange,
-  hasRegisteredOnlyTime,
-  registeredYears
-} from './reg-acc-status.js'
+import { accreditedDateRange, registeredYears } from './reg-acc-status.js'
 
 /** @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
 
@@ -19,28 +16,35 @@ const served = (regAccStatusByDate) =>
     /** @type {unknown} */ ({ regAccStatusByDate })
   )
 
-const registeredOnly = /** @type {const} */ ({ status: 'registeredOnly' })
-const accredited = /** @type {const} */ ({ status: 'accredited' })
-const cancelled = /** @type {const} */ ({ status: 'cancelled' })
+const registeredOnly = { status: REG_ACC_STATUS.REGISTERED_ONLY }
+const accredited = { status: REG_ACC_STATUS.ACCREDITED }
+const cancelled = { status: REG_ACC_STATUS.CANCELLED }
 
 const YEAR = toYear(2026)
 const NOW = new Date('2026-06-15T10:00:00.000Z')
 
 describe(registeredYears, () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: NOW })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('names the years holding an approved day, most recent first', () => {
     expect(
       registeredYears(
         served({
           2025: { '2025-02-01': registeredOnly },
           2026: { '2026-01-01': accredited }
-        }),
-        NOW
+        })
       )
     ).toStrictEqual([2026, 2025])
   })
 
   it('names no year for a registration never approved', () => {
-    expect(registeredYears(served({}), NOW)).toStrictEqual([])
+    expect(registeredYears(served({}))).toStrictEqual([])
   })
 
   it('leaves out a year spent wholly cancelled', () => {
@@ -49,8 +53,7 @@ describe(registeredYears, () => {
         served({
           2025: { '2025-01-01': registeredOnly },
           2026: { '2026-01-01': cancelled }
-        }),
-        NOW
+        })
       )
     ).toStrictEqual([2025])
   })
@@ -61,18 +64,40 @@ describe(registeredYears, () => {
         served({
           2026: { '2026-01-01': registeredOnly },
           2027: { '2027-01-01': accredited }
-        }),
-        NOW
+        })
       )
     ).toStrictEqual([2026])
   })
 
   it('counts today and leaves out tomorrow', () => {
     expect(
-      registeredYears(served({ 2026: { '2026-06-15': accredited } }), NOW)
+      registeredYears(served({ 2026: { '2026-06-15': accredited } }))
     ).toStrictEqual([2026])
     expect(
-      registeredYears(served({ 2026: { '2026-06-16': accredited } }), NOW)
+      registeredYears(served({ 2026: { '2026-06-16': accredited } }))
+    ).toStrictEqual([])
+  })
+
+  it('names only the years holding a day in the statuses asked for', () => {
+    expect(
+      registeredYears(
+        served({
+          2025: { '2025-01-01': accredited },
+          2026: { '2026-06-15': registeredOnly }
+        }),
+        [REG_ACC_STATUS.REGISTERED_ONLY]
+      )
+    ).toStrictEqual([2026])
+  })
+
+  it('leaves out a year whose day in the status asked for is still to come', () => {
+    expect(
+      registeredYears(
+        served({
+          2026: { '2026-01-01': accredited, '2026-06-16': registeredOnly }
+        }),
+        [REG_ACC_STATUS.REGISTERED_ONLY]
+      )
     ).toStrictEqual([])
   })
 })
@@ -130,41 +155,5 @@ describe(accreditedDateRange, () => {
       validFrom: null,
       validTo: null
     })
-  })
-})
-
-describe(hasRegisteredOnlyTime, () => {
-  it('holds time for a registered-only day up to today', () => {
-    expect(
-      hasRegisteredOnlyTime(
-        served({ 2026: { '2026-06-15': registeredOnly } }),
-        YEAR,
-        NOW
-      )
-    ).toBe(true)
-  })
-
-  it('holds none for a registered-only day still to come', () => {
-    expect(
-      hasRegisteredOnlyTime(
-        served({ 2026: { '2026-06-16': registeredOnly } }),
-        YEAR,
-        NOW
-      )
-    ).toBe(false)
-  })
-
-  it('holds none for a year wholly accredited', () => {
-    expect(
-      hasRegisteredOnlyTime(
-        served({ 2026: { '2026-01-01': accredited } }),
-        YEAR,
-        NOW
-      )
-    ).toBe(false)
-  })
-
-  it('holds none for a year not served', () => {
-    expect(hasRegisteredOnlyTime(served({}), YEAR, NOW)).toBe(false)
   })
 })
