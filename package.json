@@ -137,7 +137,7 @@
     "prettier": "3.9.10",
     "prettier-plugin-sort-json": "4.2.0",
     "sass-embedded": "1.106.1",
-    "sass-loader": "17.0.1",
+    "sass-loader": "17.1.0",
     "source-map-loader": "5.0.0",
     "stylelint": "17.16.0",
     "stylelint-config-gds": "3.0.0",
