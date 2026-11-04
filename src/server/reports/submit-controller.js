@@ -114,7 +114,7 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
 })
 
 /**
- * @param {{ recyclingActivity: object, exportActivity: object | undefined, wasteSent: object }} activity
+ * @param {Pick<ReportDetailResponse, 'recyclingActivity' | 'exportActivity' | 'wasteSent'>} activity
  * @param {{ isExporter: boolean, isAccreditedExporter: boolean }} flags
  * @param {string} fallbackText
  * @returns {{ wasteReceived: object, wasteExported: object | null, wasteSentOn: object, recyclingActivity: { tonnageRecycled: string, tonnageNotRecycled: string } }}

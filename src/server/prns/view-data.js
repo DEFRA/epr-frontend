@@ -14,7 +14,6 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  * @param {Array<{value: string, text: string}>} options.recipients
  * @param {WasteBalance | null} [options.wasteBalance]
  * @param {DecemberWasteControl} options.decemberWasteControl
- * @returns {object}
  */
 export function buildCreatePrnViewData(
   request,

@@ -219,7 +219,7 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
 /**
  * Renders the success page after successful submission
  * @param {ResponseToolkit} h - Hapi response toolkit
- * @param {(key: string, params?: object) => string} localise - i18n localisation function
+ * @param {(key: string, params?: Record<string, unknown>) => string} localise - i18n localisation function
  * @param {ValidatedRenderContext} context - View context
  * @returns {ResponseObject} Hapi view response
  */
@@ -269,7 +269,7 @@ const renderSupersededView = (
 /**
  * Renders the validation failures page for invalid summary logs
  * @param {ResponseToolkit} h - Hapi response toolkit
- * @param {(key: string, params?: object) => string} localise - i18n localisation function
+ * @param {(key: string, params?: Record<string, unknown>) => string} localise - i18n localisation function
  * @param {RenderContext} context - View context
  * @returns {ResponseObject} Hapi view response
  */
@@ -318,7 +318,7 @@ const renderProgressView = (h, localise, { status, pollUrl }) => {
  * View resolver mapping - maps backend statuses to their render functions
  * @type {Record<string, (
  *   h: ResponseToolkit,
- *   localise: (key: string, params?: object) => string,
+ *   localise: (key: string, params?: Record<string, unknown>) => string,
  *   context: RenderContext
  * ) => ResponseObject>}
  */
@@ -359,7 +359,7 @@ const PASSED_VALIDATION_STATES = new Set([
 /**
  * Renders the check page or the success page.
  * @param {ResponseToolkit} h
- * @param {(key: string, params?: object) => string} localise
+ * @param {(key: string, params?: Record<string, unknown>) => string} localise
  * @param {RenderContext} renderContext
  * @param {{ keys: RegistrationKeys, session: UserSession, logger: TypedLogger }} reader
  * @returns {Promise<ResponseObject>}

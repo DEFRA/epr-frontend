@@ -47,6 +47,7 @@ const isParamsError = (error) =>
 
 /**
  * @typedef {{
+ *   method?: string | string[],
  *   path: string,
  *   options?: {
  *     validate?: YearAddressedValidate,

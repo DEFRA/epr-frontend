@@ -30,7 +30,7 @@ import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
 /**
- * @param {object|undefined} exportActivity
+ * @param {ReportDetailResponse['exportActivity']} exportActivity
  * @param {boolean} isExporter
  * @param {boolean} isAccreditedExporter
  * @param {string} fallbackText
@@ -111,8 +111,8 @@ function buildSectionIntros(
  * @param {string} uploadPath
  * @param {RegistrationView} registration
  * @param {Accreditation | undefined} accreditation
- * @param {object} reportDetail
- * @param {(key: string, params?: object) => string} localise
+ * @param {ReportDetailResponse} reportDetail
+ * @param {(key: string, params?: Record<string, unknown>) => string} localise
  * @param {(path: string) => string} localiseUrl
  */
 function buildViewData(
@@ -268,6 +268,7 @@ export const detailController = {
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { RegistrationYearKeys } from './helpers/report-paths.js'
  */

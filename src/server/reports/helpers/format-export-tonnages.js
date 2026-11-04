@@ -1,10 +1,12 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 
+/** @import { ReportDetailResponse } from './fetch-report-detail.js' */
+
 /**
  * Extracts and formats the exporter tonnage breakdown fields from export activity.
  * Shared by check-your-answers and submit controllers. A missing value formats
  * as zero.
- * @param {object} exportActivity
+ * @param {NonNullable<ReportDetailResponse['exportActivity']>} exportActivity
  * @returns {{ tonnageReceivedNotExported: string, tonnageRefused: string, tonnageStopped: string, tonnageRefusedOrStopped: string, tonnageRepatriated: string }}
  */
 export function formatExportTonnages(exportActivity) {

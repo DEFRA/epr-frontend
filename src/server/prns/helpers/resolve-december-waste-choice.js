@@ -21,7 +21,7 @@ import {
  * ambiguous - so this only adds the window-timing gate and, for `pool`, the
  * balance figures.
  * @param {DecemberPrnEligibility} eligibility
- * @param {(key: string, params?: object) => string} localise
+ * @param {(key: string, params?: Record<string, unknown>) => string} localise
  * @param {string} noteTypePlural - 'PRNs' or 'PERNs', for the pool-mode inset text
  * @param {WasteBalance | null} [wasteBalance]
  * @returns {DecemberWasteControl}

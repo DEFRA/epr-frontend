@@ -100,7 +100,7 @@ describe('#buildCreatePrnViewData', () => {
       })
 
       expect(result.decemberWaste).not.toBeNull()
-      expect(result.decemberWaste.items).toStrictEqual([
+      expect(result.decemberWaste?.items).toStrictEqual([
         { value: 'false', text: 'No' },
         { value: 'true', text: 'Yes' }
       ])
@@ -127,7 +127,7 @@ describe('#buildCreatePrnViewData', () => {
         }
       })
 
-      expect(result.decemberWaste.items).toStrictEqual([
+      expect(result.decemberWaste?.items).toStrictEqual([
         { value: 'true', text: 'December waste balance (50.00 tonnes)' },
         { value: 'false', text: 'Non-December waste balance (10.00 tonnes)' }
       ])

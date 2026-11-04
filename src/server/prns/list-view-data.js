@@ -12,7 +12,7 @@ import { prnsPath } from './helpers/prn-resource.js'
 
 /**
  * @param {{
- *   t: (key: string, params?: object) => string,
+ *   t: (key: string, params?: Record<string, unknown>) => string,
  *   localiseUrl: (url: string) => string,
  *   auth: { credentials?: { scope?: string[] } | null }
  * }} request
@@ -139,7 +139,7 @@ function buildListLabels(localise, { noteType, noteTypePlural, year }) {
  *     status: string,
  *     isDecemberWaste: boolean
  *   }>,
- *   localise: (key: string, params?: object) => string,
+ *   localise: (key: string, params?: Record<string, unknown>) => string,
  *   canWrite: boolean
  * }} options
  */

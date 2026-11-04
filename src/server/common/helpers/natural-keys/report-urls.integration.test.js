@@ -11,6 +11,7 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 /**
+ * @import { ServerInjectOptions } from '@hapi/hapi'
  * @import { SetupServer } from 'msw/node'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  */
@@ -133,7 +134,7 @@ const backendHolds = (msw) =>
  * Follows redirects, recording each hop's status and location.
  * @param {HapiServer} server
  * @param {string} url
- * @param {{ method?: string, auth?: object, headers?: object, payload?: object }} [options]
+ * @param {Pick<ServerInjectOptions, 'method' | 'auth' | 'headers' | 'payload'>} [options]
  */
 const follow = async (server, url, { method = 'GET', ...options } = {}) => {
   const hops = []

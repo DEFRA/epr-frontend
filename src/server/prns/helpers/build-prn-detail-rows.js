@@ -2,10 +2,18 @@ import { tonnageToWords } from './tonnage-to-words.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 
 /**
+ * @import { PackagingRecyclingNote } from './prn-resource.js'
+ */
+
+/**
+ * @typedef {{ key: { text: string }, value: { text?: string, html?: string } }} SummaryRow
+ */
+
+/**
  * Builds the status row for PRN details
  * @param {(key: string) => string} localise
  * @param {{text: string, class: string}} statusConfig
- * @returns {object}
+ * @returns {SummaryRow}
  */
 export function buildStatusRow(localise, statusConfig) {
   return {
@@ -18,10 +26,10 @@ export function buildStatusRow(localise, statusConfig) {
 
 /**
  * Builds the core PRN rows (buyer, tonnage, process, december waste)
- * @param {object} prn
+ * @param {PackagingRecyclingNote & { tonnageInWords?: string }} prn
  * @param {(key: string) => string} localise
  * @param {string} recipientDisplayName
- * @returns {Array}
+ * @returns {SummaryRow[]}
  */
 export function buildPrnCoreRows(prn, localise, recipientDisplayName) {
   const decemberWasteText = prn.isDecemberWaste
@@ -55,11 +63,11 @@ export function buildPrnCoreRows(prn, localise, recipientDisplayName) {
 
 /**
  * Builds the issuer/issued-by rows for PRN details
- * @param {object} prn
+ * @param {PackagingRecyclingNote} prn
  * @param {(key: string) => string} localise
  * @param {object} [options]
  * @param {string} [options.issuerName] - Organisation name for the issuer row
- * @returns {Array}
+ * @returns {SummaryRow[]}
  */
 export function buildPrnIssuerRows(prn, localise, { issuerName = '' } = {}) {
   const issuedDate = prn.issuedAt ? formatDate(prn.issuedAt) : ''

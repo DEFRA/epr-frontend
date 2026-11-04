@@ -195,6 +195,7 @@ function buildActionPrnDetailRows({
   recipientDisplayName,
   organisation
 }) {
+  /** @type {SummaryRow[]} */
   const rows = [
     {
       key: { text: localise('prns:details:numberLabel', { noteType }) },
@@ -222,5 +223,6 @@ function buildActionPrnDetailRows({
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
+ * @import { SummaryRow } from './helpers/build-prn-detail-rows.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'
  */

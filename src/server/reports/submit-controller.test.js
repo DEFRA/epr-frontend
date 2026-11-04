@@ -1186,7 +1186,7 @@ describe('#submitController', () => {
           registration: reprocessorRegistration,
           report: {
             ...reprocessorReportDetail,
-            cadence: 'monthly',
+            cadence: /** @type {const} */ ('monthly'),
             period: 3
           },
           periodPath: `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/3/submissions/1`

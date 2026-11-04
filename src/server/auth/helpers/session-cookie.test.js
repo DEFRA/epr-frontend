@@ -18,6 +18,7 @@ import { http, HttpResponse } from 'msw'
 import { afterEach, describe, expect, vi } from 'vitest'
 
 /**
+ * @import { UserSession } from '#server/auth/types/session.js'
  * @import { VerifyToken } from '#server/auth/types/verify-token.js'
  */
 
@@ -77,11 +78,11 @@ describe('#sessionCookie - integration', () => {
      * Helper function to create expired session data for refresh tests
      * @param {string} userId - User identifier
      * @param {string} expiresAt - ISO date string for token expiry
-     * @returns {{sessionId: string, sessionData: object}} Session ID and data
+     * @returns {{sessionId: string, sessionData: UserSession}} Session ID and data
      */
     const createExpiredRefreshSessionData = (userId, expiresAt) => ({
       sessionId: `test-session-${userId}`,
-      sessionData: {
+      sessionData: asUserSession({
         provider: OIDC_DEFRA_ID,
         profile: {
           id: userId,
@@ -95,7 +96,7 @@ describe('#sessionCookie - integration', () => {
           token: 'http://defra-id.auth/token',
           logout: 'http://defra-id.auth/logout'
         }
-      }
+      })
     })
 
     beforeEach(({ server }) => {
@@ -138,10 +139,6 @@ describe('#sessionCookie - integration', () => {
         'user-123',
         expiredAt
       )
-
-      sessionData.profile.enrolmentCount = 1
-      sessionData.profile.relationships = ['rel-123']
-      sessionData.profile.roles = ['role1']
 
       await server.app.cache.set(sessionId, sessionData)
 
@@ -501,10 +498,6 @@ describe('#sessionCookie - integration', () => {
         'user-awaited',
         expiresAt
       )
-
-      sessionData.profile.enrolmentCount = 1
-      sessionData.profile.relationships = ['rel-123']
-      sessionData.profile.roles = ['role1']
 
       await server.app.cache.set(sessionId, sessionData)
 

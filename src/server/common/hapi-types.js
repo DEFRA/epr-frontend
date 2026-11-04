@@ -117,7 +117,7 @@
  * @typedef {{
  *   method?: string | string[],
  *   path?: string,
- *   options?: object,
+ *   options?: { pre?: unknown[], validate?: object, [key: string]: unknown },
  *   handler?: (request: TReq, h: ResponseToolkit) => unknown,
  *   pre?: { method: (request: TReq) => unknown, assign: string }[]
  * }} HapiServerRoute

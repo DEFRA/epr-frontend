@@ -71,7 +71,7 @@ const incompletePreview = {
  * issue payload.
  * @param {HapiServer} server
  * @param {{ use: (...handlers: object[]) => void }} msw
- * @returns {Promise<{ landed: object, sessionCookie: string }>}
+ * @returns {Promise<{ landed: ServerInjectResponse, sessionCookie: string }>}
  */
 async function createDraftAgainstIncompleteBackend(server, msw) {
   msw.use(
@@ -140,5 +140,6 @@ describe('report-data-incomplete (end to end via real backend client)', () => {
 })
 
 /**
+ * @import { ServerInjectResponse } from '@hapi/hapi'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  */

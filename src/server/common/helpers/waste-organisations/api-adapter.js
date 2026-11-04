@@ -100,7 +100,11 @@ export function createApiWasteOrganisationsService(logger) {
       })
 
       return {
-        organisations: extractRegistrationTypes(response.organisations, logger)
+        organisations: extractRegistrationTypes(
+          /** @type {{ organisations: RawWasteOrganisation[] }} */ (response)
+            .organisations,
+          logger
+        )
       }
     }
   }

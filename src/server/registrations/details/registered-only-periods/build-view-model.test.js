@@ -13,7 +13,7 @@ import { buildViewModel } from './build-view-model.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
- * @import { TableRow } from './build-view-model.js'
+ * @import { TableRow } from '../helpers/report-rows.js'
  */
 
 const localise = createMockLocalise({

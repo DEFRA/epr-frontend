@@ -90,5 +90,5 @@ export const buildReportDataIncompleteView = (payload, localise) => {
 
 /**
  * @import { Boom } from '@hapi/boom'
- * @typedef {(key: string, opts?: object) => string} LocaliseFn
+ * @typedef {(key: string, opts?: Record<string, unknown>) => string} LocaliseFn
  */

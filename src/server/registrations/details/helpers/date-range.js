@@ -1,7 +1,8 @@
 import { formatDate } from '#server/common/helpers/format-date.js'
 
 /**
- * @import { DateRange, Localise } from './types.js'
+ * @import { DateRange } from '#server/common/helpers/organisations/registration-resource.js'
+ * @import { Localise } from './types.js'
  */
 
 /**

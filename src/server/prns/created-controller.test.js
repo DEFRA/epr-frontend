@@ -141,7 +141,7 @@ const mockPernStatusUpdated = asUpdatePrnStatusResponse({
 
 /**
  * Helper to go through full PRN creation flow and return session cookies
- * @param {object} server
+ * @param {HapiServer} server
  * @param {object} payload
  * @param {string} viewUrlOverride - Optional URL override for view page
  * @returns {Promise<{cookies: string}>}

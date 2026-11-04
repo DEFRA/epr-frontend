@@ -29,8 +29,6 @@ import {
  */
 
 /**
- * @typedef {TableRow} TableRow
- * @typedef {ReportsTable} ReportsTable
  * @typedef {{ rows: TableRow[] }} LedgerTable
  * @typedef {{ text: string, href?: string }} Crumb
  * @typedef {{

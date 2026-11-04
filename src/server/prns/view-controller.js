@@ -476,6 +476,7 @@ function buildExistingPrnDetailRows({
   recipientDisplayName,
   organisation
 }) {
+  /** @type {SummaryRow[]} */
   const rows = [
     {
       key: { text: localise('prns:details:numberLabel', { noteType }) },
@@ -505,5 +506,6 @@ function buildExistingPrnDetailRows({
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
+ * @import { SummaryRow } from './helpers/build-prn-detail-rows.js'
  * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'
  */

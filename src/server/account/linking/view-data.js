@@ -12,7 +12,6 @@
  * @param {HapiRequest} request
  * @param {UserOrganisations} organisations
  * @param {{ errors?: Record<string, FieldError> }} [options]
- * @returns {object}
  */
 export function buildLinkingViewData(request, organisations, options = {}) {
   const unlinked = organisations.unlinked
@@ -48,22 +47,19 @@ export function buildLinkingViewData(request, organisations, options = {}) {
     }
   }
 
-  const viewData = {
+  return {
     pageTitle: request.t('account:linking:pageTitle'),
     unlinked,
     organisationName: organisations.current.name,
-    troubleshooting
+    troubleshooting,
+    ...(options.errors && {
+      errors: options.errors,
+      errorSummary: Object.entries(options.errors).map(
+        ([fieldName, error]) => ({
+          text: error.text,
+          href: `#${fieldName}`
+        })
+      )
+    })
   }
-
-  if (options.errors) {
-    viewData.errors = options.errors
-    viewData.errorSummary = Object.entries(options.errors).map(
-      ([fieldName, error]) => ({
-        text: error.text,
-        href: `#${fieldName}`
-      })
-    )
-  }
-
-  return viewData
 }
