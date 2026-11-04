@@ -17,7 +17,7 @@ import {
   accreditationEntries,
   accreditedDateRange,
   registeredYears
-} from './helpers/reg-acc-status.js'
+} from '#server/common/helpers/organisations/registration-years.js'
 
 /**
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'

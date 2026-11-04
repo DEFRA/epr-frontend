@@ -5,7 +5,7 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 import { fetchRegisteredOnlyPeriod } from './helpers/fetch-registered-only-period.js'
-import { registeredYears } from '../helpers/reg-acc-status.js'
+import { registeredYears } from '#server/common/helpers/organisations/registration-years.js'
 import {
   paramsOrNotFound,
   yearParamsSchema
