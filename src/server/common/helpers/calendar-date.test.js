@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { toCalendarDate, utcCalendarDate } from './calendar-date.js'
+import { dayBefore, toCalendarDate, utcCalendarDate } from './calendar-date.js'
 
 describe(toCalendarDate, () => {
   it('keeps a bare date as it is', () => {
@@ -35,5 +35,16 @@ describe(utcCalendarDate, () => {
     expect(utcCalendarDate(new Date('2026-06-16T00:30:00.000+01:00'))).toBe(
       '2026-06-15'
     )
+  })
+})
+
+describe(dayBefore, () => {
+  it('names the previous day', () => {
+    expect(dayBefore(toCalendarDate('2026-06-15'))).toBe('2026-06-14')
+  })
+
+  it('crosses into the previous month and year', () => {
+    expect(dayBefore(toCalendarDate('2026-03-01'))).toBe('2026-02-28')
+    expect(dayBefore(toCalendarDate('2026-01-01'))).toBe('2025-12-31')
   })
 })

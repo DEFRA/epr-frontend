@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { buildAccreditationView } from '#server/common/test-helpers/organisation-view-fixtures.js'
 
-import { accreditationEntries } from './accreditation-entries.js'
+import { accreditationEntries, yearEntries } from './accreditation-entries.js'
 
 /**
  * @param {string} accreditationNumber
@@ -12,6 +12,15 @@ const accreditationNumbered = (accreditationNumber) =>
   buildAccreditationView({
     accreditationNumber: toAccreditationNumber(accreditationNumber)
   })
+
+describe(yearEntries, () => {
+  it('pairs each value with the year it is keyed by, as a number', () => {
+    expect(yearEntries({ 2025: 'first', 2026: 'second' })).toStrictEqual([
+      [2025, 'first'],
+      [2026, 'second']
+    ])
+  })
+})
 
 describe(accreditationEntries, () => {
   it('pairs each accreditation with the year it is keyed by, as a number', () => {

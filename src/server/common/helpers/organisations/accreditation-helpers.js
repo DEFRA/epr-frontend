@@ -1,6 +1,15 @@
-/** @import { Accreditation } from './organisation-view.js' */
+import { ACCREDITATION_STATUS } from '#domain/organisations/model.js'
 
-const ACTIVE_ACCREDITATION_STATUSES = new Set(['approved', 'suspended'])
+/**
+ * @import { AccreditationStatus } from '#domain/organisations/model.js'
+ * @import { Accreditation } from './organisation-view.js'
+ */
+
+/** @type {ReadonlySet<AccreditationStatus>} */
+const ACTIVE_ACCREDITATION_STATUSES = new Set([
+  ACCREDITATION_STATUS.APPROVED,
+  ACCREDITATION_STATUS.SUSPENDED
+])
 
 /**
  * Returns true when the accreditation in the organisation view is live.

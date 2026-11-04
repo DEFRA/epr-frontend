@@ -1,5 +1,6 @@
 /** @import { ReportsTable } from '../helpers/report-rows.js'; */
 /** @import { TableRow } from '../helpers/report-rows.js'; */
+import { REG_ACC_STATUS } from '#domain/organisations/model.js'
 import { offersWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
@@ -12,7 +13,7 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 import { toCaption } from '../helpers/caption.js'
-import { hasRegisteredOnlyTime } from '../helpers/reg-acc-status.js'
+import { registeredYears } from '../helpers/reg-acc-status.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
 
 /**
@@ -160,7 +161,9 @@ export const buildViewModel = ({
       localiseUrl
     }),
     caption: toCaption([name, keys.registrationNumber]),
-    hasData: hasRegisteredOnlyTime(registration, year),
+    hasData: registeredYears(registration, [
+      REG_ACC_STATUS.REGISTERED_ONLY
+    ]).includes(year),
     heading,
     ledger: toLedger({
       ledgerEvents,

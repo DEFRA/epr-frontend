@@ -1,52 +1,53 @@
+import { REG_ACC_STATUS } from '#domain/organisations/model.js'
 import {
+  dayBefore,
   toCalendarDate,
   utcCalendarDate
 } from '#server/common/helpers/calendar-date.js'
-import { toYear } from '#server/common/helpers/year.js'
+import { yearEntries } from '#server/common/helpers/organisations/accreditation-entries.js'
 
 /**
- * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
+ * @import { RegAccStatus } from '#domain/organisations/model.js'
  * @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { DateRange } from './types.js'
  */
 
-/**
- * @param {CalendarDate} date
- * @returns {CalendarDate}
- */
-const dayBefore = (date) => {
-  const shifted = new Date(date)
-  shifted.setUTCDate(shifted.getUTCDate() - 1)
-  return utcCalendarDate(shifted)
-}
+/** @type {readonly RegAccStatus[]} */
+const REGISTERED_STATUSES = [
+  REG_ACC_STATUS.REGISTERED_ONLY,
+  REG_ACC_STATUS.ACCREDITED
+]
 
 /**
- * @param {string} date
- * @param {CalendarDate} today
- * @returns {boolean}
- */
-const hasStarted = (date, today) => date.localeCompare(today) <= 0
-
-/**
- * The years holding at least one approved day up to today, most recent first.
+ * The years holding at least one day in the given statuses up to today, most
+ * recent first. By default, every year with a day on which it was approved.
  * @param {RegistrationView} registration
- * @param {Date} [now]
+ * @param {readonly RegAccStatus[]} [statuses]
  * @returns {Year[]}
  */
-export const registeredYears = ({ regAccStatusByDate }, now = new Date()) => {
-  const today = utcCalendarDate(now)
+export const registeredYears = (
+  { regAccStatusByDate },
+  statuses = REGISTERED_STATUSES
+) => {
+  const today = utcCalendarDate(new Date())
 
-  return Object.entries(regAccStatusByDate)
+  return yearEntries(regAccStatusByDate)
     .filter(([, byDate]) =>
       Object.entries(byDate).some(
         ([date, { status }]) =>
-          status !== 'cancelled' && hasStarted(date, today)
+          statuses.includes(status) && date.localeCompare(today) <= 0
       )
     )
-    .map(([year]) => toYear(Number(year)))
+    .map(([year]) => year)
     .sort((one, other) => other - one)
 }
+
+/**
+ * @param {[string, { status: RegAccStatus }]} entry
+ * @returns {boolean}
+ */
+const isAccredited = ([, { status }]) => status === REG_ACC_STATUS.ACCREDITED
 
 /**
  * The period an accreditation is shown as covering within its year, from its
@@ -57,14 +58,13 @@ export const registeredYears = ({ regAccStatusByDate }, now = new Date()) => {
  */
 export const accreditedDateRange = ({ regAccStatusByDate }, year) => {
   const dates = Object.entries(regAccStatusByDate[year] ?? {})
-  const first = dates.findIndex(([, { status }]) => status === 'accredited')
+  const first = dates.findIndex(isAccredited)
 
   if (first === -1) {
     return { validFrom: null, validTo: null }
   }
 
-  const last = dates.findLastIndex(([, { status }]) => status === 'accredited')
-  const next = dates[last + 1]
+  const next = dates[dates.findLastIndex(isAccredited) + 1]
 
   return {
     validFrom: dates[first][0],
@@ -73,20 +73,3 @@ export const accreditedDateRange = ({ regAccStatusByDate }, year) => {
       : toCalendarDate(`${year}-12-31`)
   }
 }
-
-/**
- * Whether the year holds any registered-only day up to today.
- * @param {RegistrationView} registration
- * @param {Year} year
- * @param {Date} [now]
- * @returns {boolean}
- */
-export const hasRegisteredOnlyTime = (
-  { regAccStatusByDate },
-  year,
-  now = new Date()
-) =>
-  Object.entries(regAccStatusByDate[year] ?? {}).some(
-    ([date, { status }]) =>
-      status === 'registeredOnly' && hasStarted(date, utcCalendarDate(now))
-  )
