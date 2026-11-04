@@ -63,6 +63,12 @@ updates:
     ignore:
       # Pinned to v3 — v4 breaks Bell/Wreck proxy support (see setup-proxy.js)
       - dependency-name: global-agent
+      # Held on v6 for typescript-eslint, which needs the JS API that TS 7.0
+      # dropped. The compiler runs from the typescript-7 alias instead — see
+      # typescript-7-alias.test.js, which fails once the hold can be lifted.
+      - dependency-name: typescript
+        versions:
+          - '>=7'
 
     allow:
       # Include direct package.json updates
