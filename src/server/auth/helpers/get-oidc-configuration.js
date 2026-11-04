@@ -2,6 +2,7 @@ import Wreck from '@hapi/wreck'
 
 /**
  * @typedef {object} OidcConfig
+ * @property {string} issuer - the identity provider a token must name in `iss`
  * @property {string} authorization_endpoint
  * @property {string} token_endpoint
  * @property {string} end_session_endpoint

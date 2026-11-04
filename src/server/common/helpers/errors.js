@@ -1,8 +1,8 @@
+import { redirectToSignedOut } from '#server/auth/helpers/sign-in-provider.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHapiRequest } from '#server/common/hapi-types.js'
 import { genericErrorViewModel } from '#server/error/generic-error.js'
-import { paths } from '#server/paths.js'
 
 const statusCodeErrors = {
   [statusCodes.notFound]: {
@@ -55,7 +55,19 @@ export async function catchAll(r, h) {
   if (statusCode === statusCodes.unauthorized) {
     await removeUserSession(request)
 
-    return h.redirect(request.localiseUrl(paths.loggedOut)).takeover()
+    return redirectToSignedOut(request, h).takeover()
+  }
+
+  // All this knows about a refusal is that a signed in user met one, so the
+  // page it renders states no cause. Every route that i18n ignores also sets
+  // `auth: false`, so a request that reaches here always carries `request.t`.
+  if (statusCode === statusCodes.forbidden && request.auth?.isAuthenticated) {
+    return h
+      .view('error/no-permission', {
+        pageTitle: request.t('error:noPermission:pageTitle')
+      })
+      .code(statusCode)
+      .takeover()
   }
 
   if (statusCode >= statusCodes.internalServerError) {

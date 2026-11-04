@@ -1,15 +1,36 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
+import { prnsPath } from './helpers/prn-resource.js'
+import { resolveDecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
+import { resolveInsufficientBalanceMessageKey } from './helpers/insufficient-balance-error.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
- * Build error data for insufficient balance redirect
+ * Build error data for insufficient balance redirect. `pool` is `'december'`
+ * when the discarded draft over-spent its December pool - see
+ * discardDraftOverBalance in view-controller.js, the only writer of the
+ * `pool` query param.
  * @param {(key: string) => string} localise
+ * @param {string} decemberWasteControlMode
+ * @param {string} [pool]
  * @returns {{errors: object, errorSummary: {title: string, list: Array}}}
  */
-function buildInsufficientBalanceError(localise) {
-  const message = localise('prns:insufficientBalanceError')
+function buildInsufficientBalanceError(
+  localise,
+  decemberWasteControlMode,
+  pool
+) {
+  const messageKey = resolveInsufficientBalanceMessageKey(
+    decemberWasteControlMode,
+    pool === 'december'
+  )
+  const message = localise(messageKey)
   return {
     errors: {},
     errorSummary: {
@@ -26,40 +47,55 @@ export const controller = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
-    const session = request.auth.credentials
+    const keys = toAccreditationKeys(request.params)
+    const { backendToken } = request.auth.credentials
 
-    const { registration } = await getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      idToken: session.idToken,
-      accreditationId
-    })
+    const { registration, accreditation } = await fetchRequiredAccreditation(
+      keys,
+      backendToken
+    )
 
-    const [{ organisations }, wasteBalance] = await Promise.all([
-      request.wasteOrganisationsService.getOrganisations(),
-      getWasteBalance(
-        organisationId,
-        accreditationId,
-        session.idToken,
-        request.logger
-      )
-    ])
+    const [{ organisations }, wasteBalance, decemberPrnEligibility] =
+      await Promise.all([
+        request.wasteOrganisationsService.getOrganisations(),
+        fetchPrnWasteBalance({
+          keys,
+          accreditationNumber: accreditation.accreditationNumber,
+          backendToken,
+          logger: request.logger
+        }),
+        fetchDecemberPrnEligibility(keys, backendToken)
+      ])
+
+    const { noteTypePlural } = getNoteTypeDisplayNames(registration)
+    const decemberWasteControl = resolveDecemberWasteControl(
+      decemberPrnEligibility,
+      request.t,
+      noteTypePlural,
+      wasteBalance
+    )
 
     const viewData = buildCreatePrnViewData(request, {
-      organisationId,
+      keys,
       recipients: mapToSelectOptions(organisations),
       registration,
-      registrationId,
-      wasteBalance
+      wasteBalance,
+      decemberWasteControl
     })
 
+    await metrics.journey.start(request, JOURNEY.createPrn, prnsPath(keys))
+
     // Check for insufficient balance error from redirect
+
     const { t: localise } = request
     const errorParam = request.query.error
 
     if (errorParam === 'insufficient_balance') {
-      const { errors, errorSummary } = buildInsufficientBalanceError(localise)
+      const { errors, errorSummary } = buildInsufficientBalanceError(
+        localise,
+        decemberWasteControl.mode,
+        /** @type {string | undefined} */ (request.query.pool)
+      )
       return h.view('prns/create', { ...viewData, errors, errorSummary })
     }
 

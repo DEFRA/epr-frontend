@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -11,7 +12,7 @@ import { fetchUserOrganisations } from './fetch-user-organisations.js'
 
 describe('#fetchUserOrganisations', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const mockIdToken = 'mock-id-token-12345'
+  const mockBackendToken = toBackendToken('mock-backend-token-12345')
 
   const mockOrganisationsResponse = {
     organisations: {
@@ -48,20 +49,20 @@ describe('#fetchUserOrganisations', () => {
       bearerAuthHandler(
         'get',
         `${backendUrl}/v1/me/organisations`,
-        mockIdToken,
+        mockBackendToken,
         () => HttpResponse.json(mockOrganisationsResponse)
       )
     )
   })
 
   it('should fetch user organisations successfully with valid token', async () => {
-    const result = await fetchUserOrganisations(mockIdToken)
+    const result = await fetchUserOrganisations(mockBackendToken)
 
     expect(result).toStrictEqual(mockOrganisationsResponse.organisations)
   })
 
   it('should handle organisations with linked organisation', async () => {
-    const result = await fetchUserOrganisations(mockIdToken)
+    const result = await fetchUserOrganisations(mockBackendToken)
 
     expect(result.current).toStrictEqual({
       id: 'defra-org-123',
@@ -103,7 +104,7 @@ describe('#fetchUserOrganisations', () => {
       })
     )
 
-    const result = await fetchUserOrganisations(mockIdToken)
+    const result = await fetchUserOrganisations(mockBackendToken)
 
     expect(result.linked).toBeNull()
     expect(result.unlinked).toHaveLength(1)
@@ -133,21 +134,21 @@ describe('#fetchUserOrganisations', () => {
       })
     )
 
-    const result = await fetchUserOrganisations(mockIdToken)
+    const result = await fetchUserOrganisations(mockBackendToken)
 
     expect(result.unlinked).toStrictEqual([])
     expect(result.linked).not.toBeNull()
   })
 
   it('should throw error when backend returns 401', async () => {
-    await expect(fetchUserOrganisations('invalid-token')).rejects.toMatchObject(
-      {
-        isBoom: true,
-        output: {
-          statusCode: 401
-        }
+    await expect(
+      fetchUserOrganisations(toBackendToken('invalid-token'))
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: {
+        statusCode: 401
       }
-    )
+    })
   })
 
   it('should throw error when backend returns 500', async ({ msw }) => {
@@ -160,7 +161,9 @@ describe('#fetchUserOrganisations', () => {
       })
     )
 
-    await expect(fetchUserOrganisations(mockIdToken)).rejects.toMatchObject({
+    await expect(
+      fetchUserOrganisations(mockBackendToken)
+    ).rejects.toMatchObject({
       isBoom: true,
       output: {
         statusCode: 500
@@ -175,7 +178,9 @@ describe('#fetchUserOrganisations', () => {
       })
     )
 
-    await expect(fetchUserOrganisations(mockIdToken)).rejects.toMatchObject({
+    await expect(
+      fetchUserOrganisations(mockBackendToken)
+    ).rejects.toMatchObject({
       isBoom: true,
       output: {
         statusCode: 500

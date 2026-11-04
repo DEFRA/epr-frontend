@@ -1,59 +1,50 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 
+const backendToken = toBackendToken('test-id-token')
+
 describe(fetchSummaryLogStatus, () => {
-  const backendUrl = 'http://fake-epr-backend'
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
+  const backendUrl = config.get('eprBackendUrl')
+  const keys = {
+    organisationNumber: toOrganisationNumber('500118'),
+    registrationNumber: toRegistrationNumber('R26ER5001180041PL')
+  }
   const summaryLogId = 'log-789'
-
-  beforeAll(() => {
-    config.set('eprBackendUrl', backendUrl)
-  })
-
-  afterAll(() => {
-    config.reset('eprBackendUrl')
-  })
 
   it('should return the summary log status when the backend responds successfully', async ({
     msw
   }) => {
+    const warnSpy = vi
+      .spyOn(createLogger(), 'warn')
+      .mockImplementation(() => {})
+
     const mockResponse = {
       status: 'validated',
-      validation: null
+      year: 2026
     }
 
-    /** @type {Request | undefined} */
-    let capturedRequest
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
-        ({ request }) => {
-          capturedRequest = request
-          return HttpResponse.json(mockResponse)
-        }
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
+        () => HttpResponse.json(mockResponse)
       )
     )
 
-    const result = await fetchSummaryLogStatus(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      { idToken: 'test-id-token' }
-    )
+    const result = await fetchSummaryLogStatus(keys, summaryLogId, {
+      backendToken
+    })
 
-    expect(capturedRequest).toBeDefined()
-    expect(capturedRequest?.headers.get('content-type')).toBe(
-      'application/json'
-    )
-    expect(capturedRequest?.headers.get('authorization')).toBe(
-      'Bearer test-id-token'
-    )
     expect(result).toStrictEqual(mockResponse)
+    expect(warnSpy).not.toHaveBeenCalled()
+
+    warnSpy.mockRestore()
   })
 
   it('should preserve loadsByReportingPeriod row detail in the response', async ({
@@ -84,47 +75,76 @@ describe(fetchSummaryLogStatus, () => {
 
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
         () =>
           HttpResponse.json({
             status: 'validated',
+            year: 2026,
             processingType: 'REPROCESSOR_INPUT',
             loadsByReportingPeriod
           })
       )
     )
 
-    const result = await fetchSummaryLogStatus(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      { idToken: 'test-id-token' }
-    )
+    const result = await fetchSummaryLogStatus(keys, summaryLogId, {
+      backendToken
+    })
 
-    expect(
-      result.loadsByReportingPeriod?.openPeriodLoads.added.nonBalanceAffecting
-        .rows
-    ).toStrictEqual(rows)
+    expect(result).toHaveProperty(
+      'loadsByReportingPeriod.openPeriodLoads.added.nonBalanceAffecting.rows',
+      rows
+    )
   })
+
+  it.for([
+    { kind: 'accredited', accreditationNumber: 'A26ER5001180114PL' },
+    { kind: 'registeredOnly' }
+  ])(
+    'should keep the $kind ledger accreditation the summary log was uploaded to',
+    async (ledgerAccreditation, { msw }) => {
+      const warnSpy = vi
+        .spyOn(createLogger(), 'warn')
+        .mockImplementation(() => {})
+
+      msw.use(
+        http.get(
+          `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
+          () =>
+            HttpResponse.json({
+              status: 'validated',
+              year: 2026,
+              ledgerAccreditation
+            })
+        )
+      )
+
+      const result = await fetchSummaryLogStatus(keys, summaryLogId, {
+        backendToken
+      })
+
+      expect(result).toHaveProperty('ledgerAccreditation', ledgerAccreditation)
+      expect(warnSpy).not.toHaveBeenCalled()
+
+      warnSpy.mockRestore()
+    }
+  )
 
   it('should strip unknown fields from the response', async ({ msw }) => {
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
         () =>
           HttpResponse.json({
             status: 'validated',
+            year: 2026,
             unknownField: 'should be stripped'
           })
       )
     )
 
-    const result = await fetchSummaryLogStatus(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      { idToken: 'test-id-token' }
-    )
+    const result = await fetchSummaryLogStatus(keys, summaryLogId, {
+      backendToken
+    })
 
     expect(result).not.toHaveProperty('unknownField')
   })
@@ -138,69 +158,23 @@ describe(fetchSummaryLogStatus, () => {
 
     msw.use(
       http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/log-789`,
         () =>
           HttpResponse.json({
             status: 'validated',
+            year: 2026,
             loadsByReportingPeriod: { openPeriodLoads: 'not-an-object' }
           })
       )
     )
 
-    const result = await fetchSummaryLogStatus(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      { idToken: 'test-id-token' }
-    )
+    const result = await fetchSummaryLogStatus(keys, summaryLogId, {
+      backendToken
+    })
 
     expect(warnSpy).toHaveBeenCalledTimes(1)
     expect(result.status).toBe('validated')
 
     warnSpy.mockRestore()
-  })
-
-  it('should throw a Boom notFound error when the backend returns 404', async ({
-    msw
-  }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
-        () => new HttpResponse(null, { status: 404, statusText: 'Not Found' })
-      )
-    )
-
-    await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-        idToken: 'test-id-token'
-      })
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 404 }
-    })
-  })
-
-  it('should throw a Boom error when the backend returns a non-404 error status', async ({
-    msw
-  }) => {
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
-        () =>
-          new HttpResponse(null, {
-            status: 500,
-            statusText: 'Internal Server Error'
-          })
-      )
-    )
-
-    await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-        idToken: 'test-id-token'
-      })
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 500 }
-    })
   })
 })

@@ -5,10 +5,11 @@ import {
   classifierTail
 } from '#server/common/helpers/logging/cdp-boom.js'
 import {
-  buildPrnBasePath,
   fetchPrnContext,
   fetchPrnForUpdate
 } from './helpers/fetch-prn-context.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -21,13 +22,14 @@ export const deleteGetController = {
     const { registration, prn, basePath, prnId } =
       await fetchPrnContext(request)
     const { t: localise } = request
-    const redirectBasePath = buildPrnBasePath(request.params)
 
     if (prn.status !== 'awaiting_authorisation') {
-      return h.redirect(redirectBasePath)
+      return h.redirect(basePath)
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
+
+    await metrics.journey.start(request, JOURNEY.deletePrn, prnId)
 
     return h.view('prns/delete', {
       pageTitle: localise('prns:delete:pageTitle', { noteType }),
@@ -46,31 +48,19 @@ export const deletePostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      prn,
-      idToken
-    } = await fetchPrnForUpdate(request)
-    const redirectBasePath = buildPrnBasePath(request.params)
+    const { keys, prnId, prn, basePath, backendToken } =
+      await fetchPrnForUpdate(request)
 
     if (prn.status !== 'awaiting_authorisation') {
-      return h.redirect(redirectBasePath)
+      return h.redirect(basePath)
     }
 
     try {
-      await updatePrnStatus(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        { status: 'deleted' },
-        idToken
-      )
+      await updatePrnStatus(keys, prnId, { status: 'deleted' }, backendToken)
 
-      return h.redirect(redirectBasePath)
+      await metrics.journey.end(request, JOURNEY.deletePrn, prnId)
+
+      return h.redirect(basePath)
     } catch (error) {
       if (error.isBoom) {
         throw error

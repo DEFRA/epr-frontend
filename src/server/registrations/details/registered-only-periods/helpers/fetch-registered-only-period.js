@@ -1,0 +1,133 @@
+import Boom from '@hapi/boom'
+
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
+import { fetchRegisteredOnlyLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
+
+/**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+ * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
+ * @import { Year } from '#server/common/helpers/year.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ */
+
+/**
+ * @typedef {{ reportingPeriods: ReportingPeriod[] }} ReportingCalendar
+ */
+
+/**
+ * @typedef {ReportingCalendar & {
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
+ *   ledgerEvents: LedgerEvent[] | null
+ * }} RegisteredOnlyPeriodDetails
+ */
+
+/**
+ * @typedef {RegistrationKeys & {
+ *   year: Year,
+ *   backendToken: BackendToken,
+ *   canReadLedger: boolean,
+ *   logger: TypedLogger
+ * }} RegisteredOnlyPeriodRequest
+ */
+
+/**
+ * The year's registered-only periods, from the calendar the operator's own
+ * reports page reads. Deliberately asked nothing further: what a registration
+ * owes is the backend's to decide, and one endpoint answering both audiences is
+ * what keeps a regulator seeing what the operator sees.
+ *
+ * `fetchYearCalendar` raises rather than answering a failure, and the catch
+ * belongs here rather than in it: the operator's own page shares that helper,
+ * and a swallowed error there would silently empty their table. A calendar this
+ * page could not read renders as no periods, so downstream has one empty case
+ * to build and to test rather than two.
+ * @param {{ keys: RegistrationKeys, year: Year, backendToken: BackendToken, logger: TypedLogger }} params
+ * @returns {Promise<ReportingCalendar>}
+ */
+const fetchCalendar = async ({ keys, year, backendToken, logger }) => {
+  try {
+    const { registeredOnly } = await fetchYearCalendar(
+      { ...keys, year },
+      backendToken
+    )
+    return { reportingPeriods: registeredOnly?.reportingPeriods ?? [] }
+  } catch (error) {
+    logger.error({
+      message: `Failed to fetch the reporting calendar for organisation ${keys.organisationNumber} registration ${keys.registrationNumber}`,
+      err: error
+    })
+
+    return { reportingPeriods: [] }
+  }
+}
+
+/**
+ * The year's registered-only ledger: null without the read scope, empty when the backend has none.
+ * @param {{
+ *   keys: RegistrationKeys,
+ *   year: Year,
+ *   backendToken: BackendToken,
+ *   canReadLedger: boolean,
+ *   logger: TypedLogger
+ * }} params
+ * @returns {Promise<LedgerEvent[] | null>}
+ */
+const fetchLedger = async ({
+  keys,
+  year,
+  backendToken,
+  canReadLedger,
+  logger
+}) => {
+  if (!canReadLedger) {
+    return null
+  }
+
+  try {
+    return await fetchRegisteredOnlyLedgerEvents(
+      { ...keys, year },
+      backendToken
+    )
+  } catch (error) {
+    if (!Boom.isBoom(error, statusCodes.notFound)) {
+      throw error
+    }
+
+    logger.info({
+      message: 'No registered-only ledger for the year, showing it empty',
+      event: {
+        action: 'fetch_registered_only_ledger',
+        reason: `organisationNumber=${keys.organisationNumber} registrationNumber=${keys.registrationNumber} year=${year}`
+      }
+    })
+
+    return []
+  }
+}
+
+/**
+ * The registration, calendar and ledger together; a 404 ledger reads as empty (a product decision), any other ledger failure fails the page.
+ * @param {RegisteredOnlyPeriodRequest} params
+ * @returns {Promise<RegisteredOnlyPeriodDetails>}
+ */
+export const fetchRegisteredOnlyPeriod = async ({
+  year,
+  backendToken,
+  canReadLedger,
+  logger,
+  ...keys
+}) => {
+  const [details, calendar, ledgerEvents] = await Promise.all([
+    fetchRegistration({ ...keys, backendToken }),
+    fetchCalendar({ keys, year, backendToken, logger }),
+    fetchLedger({ keys, year, backendToken, canReadLedger, logger })
+  ])
+
+  return { ...details, ...calendar, ledgerEvents }
+}

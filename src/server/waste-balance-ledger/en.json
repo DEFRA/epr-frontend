@@ -1,0 +1,29 @@
+{
+  "actionDownload": "Download XLSX",
+  "actionDownloadCsv": "Download CSV",
+  "actionView": "View",
+  "events": {
+    "prn-accepted": "{{ noteType }} accepted",
+    "prn-cancelled-after-issue": "{{ noteType }} cancelled after issue",
+    "prn-created": "{{ noteType }} created",
+    "prn-creation-cancelled": "{{ noteType }} cancelled before issue",
+    "prn-issued": "{{ noteType }} issued",
+    "prn-rejected": "{{ noteType }} rejected",
+    "summary-log-submitted": "Summary log submitted"
+  },
+  "heading": "Waste balance ledger",
+  "noEvents": "Nothing has changed this waste balance yet.",
+  "pageTitle": "Waste balance ledger",
+  "registeredOnlyCaption": "Registered-only",
+  "registeredOnlyHeading": "Ledger",
+  "systemActor": "System",
+  "table": {
+    "actions": "Actions",
+    "available": "Waste balance available (tonnes)",
+    "date": "Date",
+    "event": "Event",
+    "noMovement": "N/A",
+    "tonnage": "Tonnage",
+    "who": "Who"
+  }
+}

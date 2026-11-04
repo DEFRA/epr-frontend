@@ -1,0 +1,27 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-m govuk-!-margin-bottom-4">{{ caption }}</span>
+          {{ heading }}
+        </h1>
+
+        {% if sites.rows | length > 0 %}
+          {{ govukTable({
+            attributes: { "data-testid": "overseas-sites-table" },
+            firstCellIsHeader: true,
+            head: sites.head,
+            rows: sites.rows
+          }) }}
+        {% else %}
+          <p class="govuk-body" data-testid="no-sites">{{ localise('registrations:details:overseasSites:none') }}</p>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

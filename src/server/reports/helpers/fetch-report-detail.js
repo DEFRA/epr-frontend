@@ -1,8 +1,11 @@
-import { fetchReportBackend } from './fetch-report-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import { reportApiPath } from './report-paths.js'
 import { ReportStaleError, staleReasons } from './stale.js'
 
 /**
- * @import { CadenceValue } from '../constants.js'
+ * @import { SubmissionKeys } from './report-paths.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  */
 
 /**
@@ -10,31 +13,13 @@ import { ReportStaleError, staleReasons } from './stale.js'
  * Throws {@link ReportStaleError} if the report is stale so callers get
  * a consistent error type regardless of whether staleness came from a GET 200
  * (stale field) or a PATCH/POST 409.
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
- * @param {string} cadence
- * @param {number} period
- * @param {number} submissionNumber
- * @param {string} idToken
+ * @param {SubmissionKeys} keys
+ * @param {BackendToken} backendToken
  * @returns {Promise<ReportDetailResponse>}
  */
-export async function fetchReportDetail(
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period,
-  submissionNumber,
-  idToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
-
+export async function fetchReportDetail(keys, backendToken) {
   /** @type {ReportDetailResponse} */
-  const report = await fetchReportBackend(path, {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${idToken}` }
-  })
+  const report = await backend(backendToken).get(reportApiPath(keys))
 
   const reasons = staleReasons(report.stale)
   if (reasons.length > 0) {
@@ -82,33 +67,42 @@ export async function fetchReportDetail(
  */
 
 /**
+ * @typedef {{ name?: string, position: string }} ReportPerson
+ */
+
+/**
+ * The natural-key report resource; `status` is `not_started` for a preview.
  * @typedef {{
- *   operatorCategory: string,
- *   cadence: CadenceValue,
- *   year: number,
+ *   cadence: string,
+ *   year: Year,
  *   period: number,
+ *   submissionNumber: number,
  *   startDate: string,
  *   endDate: string,
- *   dueDate: string,
- *   source: { summaryLogId: string | null, lastUploadedAt: string | null },
- *   details: {
- *     material: string,
- *     site?: { address: { line1: string, town: string, postcode: string } }
- *   },
- *   id?: string,
+ *   dueDate?: string,
+ *   source?: { summaryLogId: string, lastUploadedAt: string | null },
+ *   status: string,
+ *   createdAt?: string,
+ *   createdBy?: ReportPerson,
+ *   submittedAt?: string,
+ *   submittedBy?: ReportPerson,
  *   version?: number,
- *   status?: {
- *     currentStatus: string,
- *     currentStatusAt: string,
- *     created: { at: string, by: { id: string, name: string, position: string } },
- *     ready?: { at: string, by: { id: string, name: string, position: string } },
- *     submitted?: { at: string, by: { id: string, name: string, position: string } }
- *   },
  *   stale?: {
- *     summaryLogChanged?: { uploadedAt: string, summaryLogId: string },
- *     prnCancelled?: { occurredAt: string, prnId: string }
+ *     summaryLogChanged?: { uploadedAt: string },
+ *     prnCancelled?: { occurredAt: string }
  *   },
- *   canRequestResubmission?: boolean,
+ *   canRequestResubmission: boolean,
+ *   incompleteSummaryLogRows?: {
+ *     total: number,
+ *     issues: { sheet: string, rowId: string, field: string }[]
+ *   },
+ *   resubmissionRequired?: {
+ *     operatorRequested?: {
+ *       requestedAt: string,
+ *       requestedBy: ReportPerson
+ *     },
+ *     closedPeriodRestated?: { uploadedAt: string }
+ *   },
  *   supportingInformation?: string,
  *   prn?: {
  *     issuedTonnage: number,
@@ -116,39 +110,27 @@ export async function fetchReportDetail(
  *     totalRevenue: number | null,
  *     averagePricePerTonne: number | null
  *   },
- *   recyclingActivity: RecyclingActivity,
- *   exportActivity?: ExportActivity,
- *   wasteSent: WasteSent
+ *   recyclingActivity: {
+ *     suppliers: SupplierEntry[],
+ *     totalTonnageReceived: number,
+ *     tonnageRecycled: number | null,
+ *     tonnageNotRecycled: number | null
+ *   },
+ *   exportActivity?: {
+ *     overseasSites: OverseasSiteEntry[],
+ *     unapprovedOverseasSites: UnapprovedOverseasSiteEntry[],
+ *     totalTonnageExported: number,
+ *     tonnageReceivedNotExported: number|null,
+ *     totalTonnageRefusedOrStopped: number | null,
+ *     tonnageRefusedAtDestination: number | null,
+ *     tonnageStoppedDuringExport: number | null,
+ *     tonnageRepatriated: number | null
+ *   },
+ *   wasteSent: {
+ *     tonnageSentToReprocessor: number,
+ *     tonnageSentToExporter: number,
+ *     tonnageSentToAnotherSite: number,
+ *     finalDestinations: FinalDestinationEntry[]
+ *   }
  * }} ReportDetailResponse
- */
-
-/**
- * @typedef {{
- *   suppliers: SupplierEntry[],
- *   totalTonnageReceived: number,
- *   tonnageRecycled: number | null,
- *   tonnageNotRecycled: number | null
- * }} RecyclingActivity
- */
-
-/**
- * @typedef {{
- *   overseasSites: OverseasSiteEntry[],
- *   unapprovedOverseasSites: UnapprovedOverseasSiteEntry[],
- *   totalTonnageExported: number,
- *   tonnageReceivedNotExported: number | null,
- *   totalTonnageRefusedOrStopped: number | null,
- *   tonnageRefusedAtDestination: number | null,
- *   tonnageStoppedDuringExport: number | null,
- *   tonnageRepatriated: number | null
- * }} ExportActivity
- */
-
-/**
- * @typedef {{
- *   tonnageSentToReprocessor: number,
- *   tonnageSentToExporter: number,
- *   tonnageSentToAnotherSite: number,
- *   finalDestinations: FinalDestinationEntry[]
- * }} WasteSent
  */

@@ -1,0 +1,448 @@
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
+import { it } from '#vite/fixtures/server.js'
+import { http, HttpResponse } from 'msw'
+import { afterAll, beforeAll, describe, expect } from 'vitest'
+
+/**
+ * @import { SetupServer } from 'msw/node'
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
+
+const backendUrl = config.get('eprBackendUrl')
+
+const organisationId = '6507f1f77bcf86cd79943901'
+const registrationId = '6507f1f77bcf86cd79943902'
+const accreditationId = '6507f1f77bcf86cd79943903'
+const organisationNumber = '500118'
+const registrationNumber = 'R26ER5001180041PL'
+
+const byIds = `/organisations/${organisationId}/registrations/${registrationId}`
+const byNumbers = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+
+const organisation = {
+  id: organisationId,
+  orgId: 500118,
+  companyDetails: { name: 'Acme Recycling Ltd' },
+  registrations: [
+    {
+      id: registrationId,
+      registrationNumber,
+      accreditationId,
+      material: 'plastic',
+      wasteProcessingType: 'reprocessor'
+    }
+  ],
+  accreditations: [
+    {
+      id: accreditationId,
+      accreditationNumber: 'A26ER5001180114PL',
+      validFrom: '2026-07-01',
+      status: 'approved'
+    }
+  ]
+}
+
+const organisationView = {
+  organisationNumber: '500118',
+  name: 'Acme Recycling Ltd',
+  registrations: {
+    [registrationNumber]: {
+      status: {
+        current: 'approved',
+        timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
+      },
+      validFrom: '2026-01-01',
+      material: 'plastic',
+      submittedToRegulator: { code: 'ea' },
+      wasteProcessingType: 'reprocessor',
+      reprocessingType: 'input',
+      site: { address: { fullAddress: 'North Road, Leeds' } },
+      accreditations: {
+        2026: {
+          accreditationNumber: 'A26ER5001180114PL',
+          prns: { open: true },
+          status: {
+            current: 'approved',
+            timeline: [{ status: 'approved', at: '2026-07-01T09:00:00.000Z' }]
+          }
+        }
+      }
+    }
+  }
+}
+
+const operator = buildMockAuth({ linkedOrganisationId: organisationId })
+
+const regulator = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
+  ...sessionIdentity(IDENTITIES.regulator)
+})
+
+/**
+ * Answers the id lookup the redirect makes, and the natural-key reads the
+ * pages make.
+ * @param {SetupServer} msw
+ * @param {object} [held]
+ */
+const backendHolds = (msw, held = organisation) =>
+  msw.use(
+    http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+      HttpResponse.json(held)
+    ),
+    http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
+      HttpResponse.json(organisationView)
+    ),
+    http.get(`${backendUrl}${byNumbers}/reports/:year/calendar`, () =>
+      HttpResponse.json({ year: 2026 })
+    ),
+    http.get(`${backendUrl}${byNumbers}/ledger/2026`, () =>
+      HttpResponse.json({ events: [] })
+    ),
+    http.get(`${backendUrl}${byNumbers}/accreditations/2026/ledger`, () =>
+      HttpResponse.json({ events: [] })
+    ),
+    http.get(`${backendUrl}${byNumbers}/waste-records/export.csv`, () =>
+      HttpResponse.text('Row Id\n', {
+        headers: { 'content-type': 'text/csv; charset=utf-8' }
+      })
+    ),
+    http.get(
+      `${backendUrl}/organisations/${organisationNumber}/waste-balances/2026`,
+      () => HttpResponse.json({})
+    ),
+    http.get(
+      `${backendUrl}${byNumbers}/accreditations/2026/packaging-recycling-notes`,
+      () => HttpResponse.json({ items: [] })
+    ),
+    http.get(
+      `${backendUrl}${byNumbers}/accreditations/2026/packaging-recycling-notes/december-prn-eligibility`,
+      () => HttpResponse.json({ mode: 'pool', windowOpen: false })
+    )
+  )
+
+/**
+ * @param {HapiServer} server
+ * @param {string} url
+ * @param {ReturnType<typeof buildMockAuth>} auth
+ */
+const visit = (server, url, auth) => server.inject({ method: 'GET', url, auth })
+
+describe('old registration and accreditation page URLs', () => {
+  beforeAll(() => {
+    config.set('featureFlags.regulatorAccess', true)
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.regulatorAccess', false)
+  })
+
+  describe('the registered-only period page', () => {
+    const oldUrl = `${byIds}/registered-only-periods/2026`
+    const newUrl = `${byNumbers}/registered-only-periods/2026`
+
+    it('sends a regulator from the id URL to the number URL', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, oldUrl, regulator)
+      const page = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        regulator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(newUrl)
+      expect(page.statusCode).toBe(statusCodes.ok)
+    })
+
+    it('sends an operator from the id URL to the number URL, which is not found for them', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, oldUrl, operator)
+      const page = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        operator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(newUrl)
+      expect(page.statusCode).toBe(statusCodes.notFound)
+    })
+  })
+
+  describe('the accreditation reports page', () => {
+    const oldUrl = `${byIds}/accreditations/${accreditationId}/reports`
+    const newUrl = `${byNumbers}/accreditations/2026/reports`
+
+    it('sends a regulator from the id URL to the number URL', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, oldUrl, regulator)
+      const page = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        regulator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(newUrl)
+      expect(page.statusCode).toBe(statusCodes.ok)
+    })
+
+    it('sends an operator from the id URL to the number URL, which is not found for them', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, oldUrl, operator)
+      const page = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        operator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(newUrl)
+      expect(page.statusCode).toBe(statusCodes.notFound)
+    })
+  })
+
+  describe('the registration page', () => {
+    it('sends a regulator from the id URL to the number URL', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, byIds, regulator)
+      const page = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        regulator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(byNumbers)
+      expect(page.statusCode).toBe(statusCodes.ok)
+    })
+
+    it('sends an accredited operator from the id URL to the number URL, then on to the latest year, in Welsh', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, `/cy${byIds}`, operator)
+      const onward = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        operator
+      )
+      const page = await visit(
+        server,
+        /** @type {string} */ (onward.headers.location),
+        operator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(`/cy${byNumbers}`)
+      expect(onward.statusCode).toBe(statusCodes.found)
+      expect(onward.headers.location).toBe(
+        `/cy${byNumbers}/accreditations/2026`
+      )
+      expect(page.statusCode).toBe(statusCodes.ok)
+    })
+  })
+
+  describe('the waste records CSV download', () => {
+    beforeAll(() => {
+      config.set('featureFlags.wasteRecordsDownload', true)
+    })
+
+    afterAll(() => {
+      config.set('featureFlags.wasteRecordsDownload', false)
+    })
+
+    it('sends a regulator from the id URL to the number URL', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(
+        server,
+        `${byIds}/waste-records/download.csv`,
+        regulator
+      )
+      const download = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        regulator
+      )
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(
+        `${byNumbers}/waste-records/download.csv`
+      )
+      expect(download.statusCode).toBe(statusCodes.ok)
+    })
+  })
+
+  describe('the PRN list', () => {
+    const oldUrl = `${byIds}/accreditations/${accreditationId}/packaging-recycling-notes`
+    const newUrl = `${byNumbers}/accreditations/2026/packaging-recycling-notes`
+
+    it.for([
+      { name: 'a regulator', auth: regulator },
+      { name: 'an operator', auth: operator }
+    ])(
+      'sends $name from the id URL to the number URL',
+      async ({ auth }, { server, msw }) => {
+        backendHolds(msw)
+
+        const redirect = await visit(server, oldUrl, auth)
+        const page = await visit(
+          server,
+          /** @type {string} */ (redirect.headers.location),
+          auth
+        )
+
+        expect(redirect.statusCode).toBe(statusCodes.found)
+        expect(redirect.headers.location).toBe(newUrl)
+        expect(page.statusCode).toBe(statusCodes.ok)
+      }
+    )
+  })
+
+  describe('a PRN step', () => {
+    const oldUrl = `${byIds}/accreditations/${accreditationId}/packaging-recycling-notes/prn-1/view`
+    const newUrl = `${byNumbers}/accreditations/2026/packaging-recycling-notes/prn-1/view`
+
+    it('sends a GET from the id URL to the number URL, keeping the note id', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+
+      const redirect = await visit(server, oldUrl, operator)
+
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(newUrl)
+    })
+
+    it('sends a POST on with a 307, keeping the note id and the form', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
+      const { cookie, crumb } = await getCsrfToken(server, oldUrl, {
+        auth: operator
+      })
+
+      const redirect = await server.inject({
+        method: 'POST',
+        url: oldUrl,
+        auth: operator,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(redirect.statusCode).toBe(statusCodes.temporaryRedirect)
+      expect(redirect.headers.location).toBe(newUrl)
+    })
+  })
+
+  describe('the waste balance ledger', () => {
+    it.for([
+      {
+        name: 'registered-only',
+        oldUrl: `${byIds}/waste-balance-ledger`,
+        newUrl: `${byNumbers}/waste-balance-ledger`
+      },
+      {
+        name: 'accredited',
+        oldUrl: `${byIds}/accreditations/${accreditationId}/waste-balance-ledger`,
+        newUrl: `${byNumbers}/accreditations/2026/waste-balance-ledger`
+      }
+    ])(
+      'sends a regulator from the $name id URL to the number URL',
+      async ({ oldUrl, newUrl }, { server, msw }) => {
+        backendHolds(msw)
+
+        const redirect = await visit(server, oldUrl, regulator)
+        const page = await visit(
+          server,
+          /** @type {string} */ (redirect.headers.location),
+          regulator
+        )
+
+        expect(redirect.statusCode).toBe(statusCodes.found)
+        expect(redirect.headers.location).toBe(newUrl)
+        expect(page.statusCode).toBe(statusCodes.ok)
+      }
+    )
+  })
+
+  describe('the accreditation page', () => {
+    const oldUrl = `${byIds}/accreditations/${accreditationId}`
+    const newUrl = `${byNumbers}/accreditations/2026`
+
+    it.for([
+      { name: 'a regulator', auth: regulator },
+      { name: 'an operator', auth: operator }
+    ])(
+      'sends $name from the id URL to the number URL, with the year from validFrom',
+      async ({ auth }, { server, msw }) => {
+        backendHolds(msw)
+
+        const redirect = await visit(server, oldUrl, auth)
+        const page = await visit(
+          server,
+          /** @type {string} */ (redirect.headers.location),
+          auth
+        )
+
+        expect(redirect.statusCode).toBe(statusCodes.found)
+        expect(redirect.headers.location).toBe(newUrl)
+        expect(page.statusCode).toBe(statusCodes.ok)
+      }
+    )
+
+    it.for([
+      { name: 'a regulator', auth: regulator },
+      { name: 'an operator', auth: operator }
+    ])(
+      "is not found for $name at a created accreditation's id URL",
+      async ({ auth }, { server, msw }) => {
+        backendHolds(msw, {
+          ...organisation,
+          accreditations: [{ id: accreditationId, status: 'created' }]
+        })
+
+        const { statusCode } = await visit(server, oldUrl, auth)
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      }
+    )
+  })
+})

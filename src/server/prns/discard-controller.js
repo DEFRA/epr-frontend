@@ -1,10 +1,14 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
   badImplementation,
   classifierTail
 } from '#server/common/helpers/logging/cdp-boom.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { prnsPath } from './helpers/prn-resource.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -14,30 +18,27 @@ export const discardGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
+    const keys = toAccreditationKeys(request.params)
+    const { prnId } = request.params
     const { t: localise } = request
-    const session = request.auth.credentials
 
     /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
 
     if (prnDraft?.id !== prnId) {
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
-      )
+      return h.redirect(`${prnsPath(keys)}/create`)
     }
 
-    const { registration } = await getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      idToken: session.idToken,
-      accreditationId
-    })
+    const { registration } = await fetchRequiredAccreditation(
+      keys,
+      request.auth.credentials.backendToken
+    )
 
     const { noteType } = getNoteTypeDisplayNames(registration)
 
-    const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
+    const viewUrl = `${prnsPath(keys)}/${prnId}/view`
+
+    await metrics.journey.start(request, JOURNEY.discardPrn, prnId)
 
     return h.view('prns/discard', {
       pageTitle: localise('prns:discard:pageTitle', { noteType }),
@@ -56,11 +57,11 @@ export const discardPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
+    const keys = toAccreditationKeys(request.params)
+    const { prnId } = request.params
     const session = request.auth.credentials
 
-    const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+    const createUrl = `${prnsPath(keys)}/create`
 
     /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
@@ -71,15 +72,15 @@ export const discardPostController = {
 
     try {
       await updatePrnStatus(
-        organisationId,
-        registrationId,
-        accreditationId,
+        keys,
         prnId,
         { status: 'discarded' },
-        session.idToken
+        session.backendToken
       )
 
       request.yar.clear('prnDraft')
+
+      await metrics.journey.end(request, JOURNEY.discardPrn, prnId)
 
       return h.redirect(createUrl)
     } catch (error) {

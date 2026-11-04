@@ -5,11 +5,13 @@ export const statusCodes = {
   ok: 200,
   noContent: 204,
   found: 302,
+  temporaryRedirect: 307,
   badRequest: 400,
   unauthorized: 401,
   forbidden: 403,
   notFound: 404,
   conflict: 409,
   imATeapot: 418,
-  internalServerError: 500
+  internalServerError: 500,
+  badGateway: 502
 }

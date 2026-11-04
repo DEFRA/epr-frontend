@@ -1,11 +1,13 @@
-import { buildUserProfile, getTokenExpiresAt } from './build-session.js'
+import { holdsNoRole } from '#server/auth/roles.js'
 import { dropUserSession } from './drop-user-session.js'
+import { hashUserId } from './hash-user-id.js'
+import { fetchIdentity } from './fetch-identity.js'
 
 /**
  * @import { RefreshedTokens } from './refreshed-tokens-schema.js'
  * @import { HapiRequest, SessionCookieState } from '#server/common/hapi-types.js'
+ * @import { AuthProvider } from '../types/auth-provider.js'
  * @import { UserSession } from '../types/session.js'
- * @import { VerifyToken } from '../types/verify-token.js'
  */
 
 /**
@@ -37,22 +39,49 @@ async function markSessionAsIdTokenRefreshInProgress(request, userSession) {
 
 /**
  * Update user session with refreshed tokens
- * @param {VerifyToken} verifyToken - Token verification function
+ *
+ * The identity is asked for again on every refresh, so a permission the
+ * backend changes reaches a signed-in user within the refresh cadence rather
+ * than at the end of their session.
+ *
+ * The session's profile and expiry come from the token it presents to the
+ * backend, which is the token its provider verifies at sign-in.
+ *
+ * An identity the backend now grants no role ends the session instead of
+ * updating it, the way sign-in refuses one. The user signs in again rather
+ * than carrying a session that every scope guard refuses page by page. Every
+ * provider refreshes through here, so the rule holds for all of them.
+ * @param {AuthProvider} authProvider - The auth provider that issued the session
  * @param {HapiRequest} request - Hapi request object
  * @param {UserSession} existingSession - Current user session
  * @param {RefreshedTokens} refreshedTokens - Refreshed tokens from OIDC provider
- * @returns {Promise<UserSession>}
+ * @returns {Promise<UserSession | null>} The refreshed session, or null when the session ended
  */
 async function updateUserSession(
-  verifyToken,
+  authProvider,
   request,
   existingSession,
   refreshedTokens
 ) {
-  const payload = await verifyToken(refreshedTokens.id_token)
+  const backendToken = authProvider.selectBackendToken(refreshedTokens)
+  const { profile, expiresAt } =
+    await authProvider.verifyBackendToken(backendToken)
+  const identity = await fetchIdentity(backendToken)
 
-  const profile = buildUserProfile(payload)
-  const expiresAt = getTokenExpiresAt(payload)
+  if (holdsNoRole(identity)) {
+    request.logger.info({
+      message: 'Backend grants the user no role, so their session was ended',
+      event: {
+        action: 'sessionEnded',
+        kind: 'event',
+        reference: hashUserId(profile.id)
+      }
+    })
+
+    await removeUserSession(request)
+
+    return null
+  }
 
   /** @type {UserSession} */
   const session = {
@@ -60,6 +89,9 @@ async function updateUserSession(
     profile,
     expiresAt,
     idToken: refreshedTokens.id_token,
+    backendToken,
+    role: identity.role,
+    scope: identity.scopes,
     refreshToken: refreshedTokens.refresh_token,
     idTokenRefreshInProgress: false
   }

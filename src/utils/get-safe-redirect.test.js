@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { getSafeRedirect } from './get-safe-redirect.js'
+import { getSafeRedirect, isSafeRedirect } from './get-safe-redirect.js'
 
 describe(getSafeRedirect, () => {
   it.each([
@@ -98,5 +98,25 @@ describe(getSafeRedirect, () => {
 
     expect(getSafeRedirect('/dashboard')).toBe('/')
     vi.unstubAllGlobals()
+  })
+})
+
+describe(isSafeRedirect, () => {
+  it.each(['/', '/dashboard', '/cy/search?q=test'])(
+    'should accept "%s"',
+    (redirect) => {
+      expect(isSafeRedirect(redirect)).toBe(true)
+    }
+  )
+
+  it.each([
+    undefined,
+    '',
+    'https://evil.com',
+    '//evil.com/x',
+    '/\\evil.com',
+    ' /dashboard '
+  ])('should refuse %j', (redirect) => {
+    expect(isSafeRedirect(redirect)).toBe(false)
   })
 })

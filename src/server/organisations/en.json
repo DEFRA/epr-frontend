@@ -1,4 +1,31 @@
 {
+  "chooseYear": {
+    "heading": "Choose a different year",
+    "hint": "Choose a different year and then you can select a material for that period.",
+    "continue": "Continue",
+    "errorSummaryTitle": "There is a problem",
+    "error": "Select a year"
+  },
+  "chooseYearLink": "Choose a different year",
+  "details": {
+    "allOrganisations": "All organisations",
+    "heading": "Organisation homepage",
+    "table": {
+      "accreditation": "Accreditation",
+      "actions": "Actions",
+      "material": "Material",
+      "none": "This organisation holds no registrations.",
+      "notApplicable": "Not applicable",
+      "number": "Registration number",
+      "registrationStatus": "Registration status",
+      "regulator": "Regulator",
+      "view": "View"
+    },
+    "tabs": {
+      "exporter": "Exporter",
+      "reprocessor": "Reprocessor"
+    }
+  },
   "pageTitle": "Home: {{name}}",
   "table": {
     "titleReprocessor": "Select site and material",
@@ -7,7 +34,6 @@
     "notAccredited": "Not accredited",
     "notApplicable": "Not applicable",
     "site": {
-      "unknown": "Unknown site",
       "headings": {
         "materials": "Material",
         "registrationStatuses": "Registration",
@@ -23,5 +49,6 @@
     "reprocessor": "Reprocessing",
     "exporter": "Exporting"
   },
-  "titleCaption": "Home"
+  "titleCaption": "Home",
+  "yearData": "This is {{year}} data"
 }

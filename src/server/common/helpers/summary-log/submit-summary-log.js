@@ -1,27 +1,20 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import { registrationPath } from '#server/reports/helpers/report-paths.js'
+
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
+/** @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js' */
+/** @import { SummaryLogSubmitResponse } from '#server/summary-log/types.js' */
 
 /**
  * Submits summary log to EPR Backend
- * @param {string} organisationId
- * @param {string} registrationId
+ * @param {RegistrationKeys} keys
  * @param {string} summaryLogId
- * @param {string} idToken - JWT ID token for authorization
- * @returns {Promise<{status: string, accreditationNumber: string}>}
+ * @param {BackendToken} backendToken
+ * @returns {Promise<SummaryLogSubmitResponse>}
  */
-async function submitSummaryLog(
-  organisationId,
-  registrationId,
-  summaryLogId,
-  idToken
-) {
-  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
-
-  return fetchJsonFromBackend(path, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${idToken}`
-    }
-  })
-}
+const submitSummaryLog = (keys, summaryLogId, backendToken) =>
+  backend(backendToken).post(
+    `${registrationPath(keys)}/summary-logs/${encodeURIComponent(summaryLogId)}/submit`
+  )
 
 export { submitSummaryLog }

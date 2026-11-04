@@ -1,9 +1,14 @@
 import Joi from 'joi'
 
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { sameSiteReferrer } from '#server/common/helpers/same-site-referrer.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportAttempt } from './helpers/report-attempt.js'
+import { reportsListPath } from './helpers/report-paths.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { deleteReport } from './helpers/delete-report.js'
 
 const payloadSchema = Joi.object({
@@ -11,35 +16,13 @@ const payloadSchema = Joi.object({
 })
 
 /**
- * @param {HapiRequest} request
+ * @param {HapiRequest & { params: PeriodParams }} request
  */
 function resolveBackUrl(request) {
-  const { organisationId, registrationId } = request.params
-  const fallback = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/reports`
+  return (
+    sameSiteReferrer(request) ??
+    request.localiseUrl(reportsListPath(request.params))
   )
-
-  const { referrer } = request.info
-  if (!referrer) {
-    return fallback
-  }
-
-  let refererUrl
-  try {
-    refererUrl = new URL(referrer)
-  } catch {
-    return fallback
-  }
-
-  if (refererUrl.host !== request.info.host) {
-    return fallback
-  }
-
-  if (refererUrl.pathname === request.path) {
-    return fallback
-  }
-
-  return refererUrl.pathname + refererUrl.search
 }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -54,18 +37,17 @@ export const deleteGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
+    const { organisationNumber, registrationNumber, year, cadence, period } =
       request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { registration } = await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
+    const { registration } = await fetchRegistrationWithAccreditation(
+      { organisationNumber, registrationNumber, year },
+      session.backendToken
     )
 
-    const material = getDisplayMaterial(registration)
+    const material = getMaterialDisplayName(registration.material)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
     const viewData = {
@@ -76,6 +58,12 @@ export const deleteGetController = {
       confirmButtonText: localise('reports:deleteConfirmButton'),
       backUrl: resolveBackUrl(request)
     }
+
+    await metrics.journey.start(
+      request,
+      JOURNEY.deleteReport,
+      reportAttempt(request.params)
+    )
 
     return h.view('reports/confirm-delete', viewData)
   }
@@ -94,31 +82,17 @@ export const deletePostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
     const session = request.auth.credentials
 
-    await deleteReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      session.idToken
+    await deleteReport(request.params, session.backendToken)
+
+    await metrics.journey.end(
+      request,
+      JOURNEY.deleteReport,
+      reportAttempt(request.params)
     )
 
-    return h.redirect(
-      request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
-      )
-    )
+    return h.redirect(request.localiseUrl(reportsListPath(request.params)))
   }
 }
 

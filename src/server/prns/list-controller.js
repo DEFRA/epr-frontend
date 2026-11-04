@@ -1,31 +1,11 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
-import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { showsDecemberBalance } from '#server/common/helpers/waste-balance/december-balance.js'
+import { isYearOpen } from './helpers/closed-year.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
+import { toNoteRows } from './helpers/note-rows.js'
 import { buildListViewData } from './list-view-data.js'
-
-const filterPrnsByStatus = (prns, status) =>
-  prns
-    .filter((prn) => prn.status === status)
-    .map((prn) => ({
-      id: prn.id,
-      recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
-      createdAt: prn.createdAt,
-      tonnage: prn.tonnage,
-      status: prn.status
-    }))
-
-const filterPrnsByStatuses = (prns, statuses) =>
-  prns
-    .filter((prn) => statuses.includes(prn.status))
-    .map((prn) => ({
-      id: prn.id,
-      prnNumber: prn.prnNumber,
-      recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
-      issuedAt: prn.issuedAt,
-      tonnage: prn.tonnage,
-      status: prn.status
-    }))
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const listController = {
@@ -34,49 +14,32 @@ export const listController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
-    const session = request.auth.credentials
+    const keys = toAccreditationKeys(request.params)
+    const { backendToken } = request.auth.credentials
 
-    const { registration } = await getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      idToken: session.idToken,
-      accreditationId
-    })
+    const { registration, accreditation } = await fetchRequiredAccreditation(
+      keys,
+      backendToken
+    )
 
-    const [wasteBalance, prns] = await Promise.all([
-      registration.accreditationId
-        ? getWasteBalance(
-            organisationId,
-            registration.accreditationId,
-            session.idToken,
-            request.logger
-          )
-        : null,
-      fetchPackagingRecyclingNotes(
-        organisationId,
-        registrationId,
-        accreditationId,
-        session.idToken
-      )
+    const [wasteBalance, prns, showsDecember] = await Promise.all([
+      fetchPrnWasteBalance({
+        keys,
+        accreditationNumber: accreditation.accreditationNumber,
+        backendToken,
+        logger: request.logger
+      }),
+      fetchPackagingRecyclingNotes(keys, backendToken),
+      showsDecemberBalance({ keys, backendToken, logger: request.logger })
     ])
 
-    const hasCreatedPrns = prns.some((prn) => prn.status !== 'draft')
-
     const viewData = buildListViewData(request, {
-      organisationId,
-      registrationId,
-      accreditationId,
+      keys,
       registration,
-      prns: filterPrnsByStatus(prns, 'awaiting_authorisation'),
-      cancellationPrns: filterPrnsByStatus(prns, 'awaiting_cancellation'),
-      issuedPrns: filterPrnsByStatuses(prns, [
-        'awaiting_acceptance',
-        'accepted'
-      ]),
-      cancelledPrns: filterPrnsByStatuses(prns, ['cancelled']),
-      hasCreatedPrns,
-      wasteBalance
+      ...toNoteRows(prns),
+      wasteBalance,
+      showsDecember,
+      yearOpen: isYearOpen(accreditation)
     })
 
     return h.view('prns/list', viewData)

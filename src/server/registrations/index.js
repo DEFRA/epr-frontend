@@ -1,25 +1,270 @@
-import { controller } from './controller.js'
+import { controller as accreditationController } from './details/accreditations/controller.js'
+import { controller as reportsController } from './details/accreditations/reports/controller.js'
+import { controller as detailsController } from './details/controller.js'
+import { controller as overseasSitesController } from './details/overseas-sites/controller.js'
+import {
+  paramsOrNotFound,
+  registrationParamsSchema,
+  yearParamsSchema
+} from './details/helpers/params-validation.js'
+import { controller as registeredOnlyPeriodController } from './details/registered-only-periods/controller.js'
+import {
+  controller as operatorController,
+  registeredOnlyYearController,
+  registrationController as operatorRegistrationController
+} from './operator-controller.js'
+import {
+  wasteRecordsCsvDownloadController,
+  wasteRecordsCsvDownloadPath
+} from './waste-records-csv-download-controller.js'
+import { readsAnyOrganisation } from '#server/auth/reads-any-organisation.js'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+
+/**
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { RegistrationParams } from './details/controller.js'
+ * @import { OverseasSitesParams } from './details/overseas-sites/controller.js'
+ * @import { AccreditationParams } from './details/accreditations/controller.js'
+ * @import { AccreditationParams as AccreditationReportsParams } from './details/accreditations/reports/controller.js'
+ * @import { OperatorRegisteredOnlyParams } from './operator-controller.js'
+ */
+
+/**
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const registrationController = {
+  options: {
+    validate: paramsOrNotFound(registrationParamsSchema, {
+      message: 'Registration not found',
+      code: errorCodes.registrationNotFound,
+      action: 'fetch_registration',
+      reason: 'the address holds no such organisation number'
+    })
+  },
+  /**
+   * @param {HapiRequest & { params: RegistrationParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    return readsAsARegulator(request.auth.credentials)
+      ? detailsController.handler(request, h)
+      : operatorRegistrationController.handler(request, h)
+  }
+}
+
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
+const registeredOnlyYearRoute = {
+  options: {
+    validate: paramsOrNotFound(yearParamsSchema, {
+      message: 'Registered-only year not found',
+      code: errorCodes.registrationNotFound,
+      action: 'fetch_registered_only_year',
+      reason: 'the address holds no such organisation number or year'
+    })
+  },
+  /**
+   * @param {HapiRequest & { params: OperatorRegisteredOnlyParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    if (readsAsARegulator(request.auth.credentials)) {
+      throw notFound(
+        'Registered-only year not found',
+        errorCodes.registrationNotFound,
+        {
+          event: {
+            action: 'fetch_registered_only_year',
+            reason: 'caller reads as a regulator'
+          }
+        }
+      )
+    }
+
+    return registeredOnlyYearController.handler(request, h)
+  }
+}
+
+/**
+ * A regulator gets the accreditation page; anyone else gets their registration
+ * page for that year's accreditation.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const accreditationRoute = {
+  options: {
+    validate: paramsOrNotFound(yearParamsSchema, {
+      message: 'Accreditation not found',
+      code: errorCodes.accreditationNotFound,
+      action: 'fetch_accreditation',
+      reason: 'the address holds no such organisation number or year'
+    })
+  },
+  /**
+   * @param {HapiRequest & { params: AccreditationParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    return readsAsARegulator(request.auth.credentials)
+      ? accreditationController.handler(request, h)
+      : operatorController.handler(request, h)
+  }
+}
+
+/**
+ * Answers nothing to a caller who does not read as a regulator: there is no
+ * operator page at this address to fall through to.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const reportsRoute = {
+  options: reportsController.options,
+  /**
+   * @param {HapiRequest & { params: AccreditationReportsParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    if (!readsAsARegulator(request.auth.credentials)) {
+      throw notFound(
+        'Accreditation reports not found',
+        errorCodes.accreditationNotFound,
+        {
+          event: {
+            action: 'fetch_accreditation_reports',
+            reason: 'caller does not read as a regulator'
+          }
+        }
+      )
+    }
+
+    return reportsController.handler(request, h)
+  }
+}
+
+/**
+ * Answers nothing to a session that may not read this organisation, and for
+ * the same reason as the reports above it: there is no operator page at
+ * this address to fall through to.
+ *
+ * The scope decides rather than the role that usually carries it, and it is
+ * read from the session, so the gate is narrower than the backend route it
+ * fronts and no operator reaches the page.
+ *
+ * A refusal is logged under its own action so it can be counted apart from a
+ * registration that genuinely is not there. Both answer 404 to the caller, and
+ * on the one address here that reaches another organisation's records, the
+ * difference between a probe and a stale link is worth being able to see.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const overseasSitesRoute = {
+  options: overseasSitesController.options,
+  /**
+   * @param {HapiRequest & { params: OverseasSitesParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    if (!readsAnyOrganisation(request.auth.credentials)) {
+      throw notFound(
+        'Overseas sites not found',
+        errorCodes.registrationNotFound,
+        {
+          event: {
+            action: 'refuse_overseas_sites',
+            reason: 'caller may not read this organisation'
+          }
+        }
+      )
+    }
+
+    return overseasSitesController.handler(request, h)
+  }
+}
+
+/**
+ * @typedef {{
+ *   organisationNumber: OrganisationNumber,
+ *   registrationNumber: RegistrationNumber,
+ *   year: Year
+ * }} RegisteredOnlyPeriodParams
+ */
+
+/**
+ * Gated the same way as the reports above it, and for the same reason:
+ * there is no operator page at this address to fall through to.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const registeredOnlyPeriodRoute = {
+  options: registeredOnlyPeriodController.options,
+  /**
+   * @param {HapiRequest & { params: RegisteredOnlyPeriodParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    if (!readsAsARegulator(request.auth.credentials)) {
+      throw notFound(
+        'Registered-only period not found',
+        errorCodes.registrationNotFound,
+        {
+          event: {
+            action: 'fetch_registered_only_period',
+            reason: 'caller does not read as a regulator'
+          }
+        }
+      )
+    }
+
+    return registeredOnlyPeriodController.handler(request, h)
+  }
+}
 
 /**
  * Sets up the routes used in the accreditation dashboard page.
  * These routes are registered in src/server/router.js.
  */
-
 export const registrations = {
   plugin: {
     name: 'registrations',
     register(server) {
       server.route([
         {
-          ...controller,
+          ...registrationController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}'
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}'
+        },
+        {
+          ...registeredOnlyYearRoute,
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/{year}'
+        },
+        {
+          ...accreditationRoute,
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}'
+        },
+        {
+          ...reportsRoute,
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/reports'
+        },
+        {
+          ...overseasSitesRoute,
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/overseas-sites'
+        },
+        {
+          ...registeredOnlyPeriodRoute,
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/registered-only-periods/{year}'
+        },
+        {
+          ...wasteRecordsCsvDownloadController,
+          method: 'GET',
+          path: wasteRecordsCsvDownloadPath
         }
       ])
     }
   }
 }
-
-/**
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
- */

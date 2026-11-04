@@ -1,11 +1,12 @@
 import Joi from 'joi'
 
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { isResubmission } from './helpers/resubmission.js'
 import { updateReport } from './helpers/update-report.js'
 import { buildValidationErrors } from './helpers/validation.js'
@@ -51,7 +52,7 @@ const payloadSchema = Joi.object({
  * registered-only operators have no notes, so it is omitted for them. Both
  * variants share the same character limit.
  * @param {number} submissionNumber
- * @param {Registration} registration
+ * @param {RegistrationView} registration
  * @param {Accreditation | undefined} accreditation
  * @param {Localise} localise
  * @returns {SupportingInfoCopy}
@@ -117,7 +118,7 @@ function buildSupportingInfoCopy(
 
 /**
  * @param {string} basePath
- * @param {Registration} registration
+ * @param {RegistrationView} registration
  * @param {Accreditation | undefined} accreditation
  * @returns {string}
  */
@@ -159,8 +160,8 @@ function getBackPage(basePath, registration, accreditation) {
  */
 async function buildViewData(request, options = {}) {
   const {
-    organisationId,
-    registrationId,
+    organisationNumber,
+    registrationNumber,
     year,
     cadence,
     period,
@@ -170,26 +171,20 @@ async function buildViewData(request, options = {}) {
   const { t: localise } = request
 
   const { registration, accreditation } =
-    await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
+    await fetchRegistrationWithAccreditation(
+      { organisationNumber, registrationNumber, year },
+      session.backendToken
     )
 
   const reportDetail = await fetchReportDetail(
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber,
-    session.idToken
+    request.params,
+    session.backendToken
   )
 
-  const material = getDisplayMaterial(registration)
+  const material = getMaterialDisplayName(registration.material)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+  const basePath = reportPath(request.params)
 
   const backPage = getBackPage(basePath, registration, accreditation)
 
@@ -211,9 +206,7 @@ async function buildViewData(request, options = {}) {
     hint: copy.hint,
     inset: copy.inset,
     backUrl: request.localiseUrl(backPage),
-    deleteUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
-    ),
+    deleteUrl: request.localiseUrl(`${basePath}/delete`),
     maxLength: MAX_SUPPORTING_INFO_LENGTH,
     value: options.value ?? reportDetail.supportingInformation ?? '',
     errors: options.errors ?? null,
@@ -272,48 +265,28 @@ export const supportingInformationPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
     const { supportingInformation, action } = request.payload
 
     await updateReport(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
+      request.params,
       { supportingInformation },
-      request.auth.credentials.idToken
+      request.auth.credentials.backendToken
     )
-
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
     if (action === 'continue') {
       return h.redirect(
-        request.localiseUrl(
-          `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}/check-your-answers`
-        )
+        request.localiseUrl(`${reportPath(request.params)}/check-your-answers`)
       )
     }
 
-    return h.redirect(request.localiseUrl(basePath))
+    return h.redirect(request.localiseUrl(reportsListPath(request.params)))
   }
 }
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Localise } from './helpers/format-period-label.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  */

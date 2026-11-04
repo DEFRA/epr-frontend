@@ -1,22 +1,20 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
 
 /**
- * @import { UserSession } from '../types/session.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { UserOrganisations } from '../types/organisations.js'
+ * @import { UserSession } from '../types/session.js'
  */
 
 /**
  * Fetches user organisations from the backend API
- * @param {string} idToken
+ * @param {BackendToken} backendToken
  * @returns {Promise<UserOrganisations>}
  */
-export async function fetchUserOrganisations(idToken) {
+export async function fetchUserOrganisations(backendToken) {
   /** @type {{ organisations: UserOrganisations }} */
-  const data = await fetchJsonFromBackend('/v1/me/organisations', {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${idToken}`
-    }
-  })
-  return data.organisations
+  const { organisations } = await backend(backendToken).get(
+    '/v1/me/organisations'
+  )
+  return organisations
 }

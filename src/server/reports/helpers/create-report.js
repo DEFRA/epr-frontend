@@ -1,36 +1,17 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+
+import { reportApiPath } from './report-paths.js'
 
 /**
- * @typedef {{
- *   id: string,
- *   status: string
- * }} CreateReportResponse
+ * @import { SubmissionKeys } from './report-paths.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  */
 
 /**
  * Creates an in-progress report for a specific period via the backend API.
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
- * @param {string} cadence
- * @param {number} period
- * @param {number} submissionNumber
- * @param {string} idToken
- * @returns {Promise<CreateReportResponse>}
+ * @param {SubmissionKeys} keys
+ * @param {BackendToken} backendToken
+ * @returns {Promise<unknown>}
  */
-export async function createReport(
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period,
-  submissionNumber,
-  idToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
-
-  return fetchJsonFromBackend(path, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${idToken}` }
-  })
-}
+export const createReport = (keys, backendToken) =>
+  backend(backendToken).post(reportApiPath(keys))

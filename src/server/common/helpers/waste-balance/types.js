@@ -1,7 +1,15 @@
 /**
+ * `decemberAmount`/`decemberAvailableAmount` are the December portions of
+ * `amount`/`availableAmount`, additive and absent until a December portion
+ * exists (see epr-backend's ledger-schema.js). `nonDecemberAvailableAmount`
+ * is the backend-derived remainder (`availableAmount - decemberAvailableAmount`),
+ * present under the same condition as `decemberAvailableAmount`.
  * @typedef {{
  *   amount: number
  *   availableAmount: number
+ *   decemberAmount?: number
+ *   decemberAvailableAmount?: number
+ *   nonDecemberAvailableAmount?: number
  * }} WasteBalance
  */
 

@@ -1,10 +1,28 @@
+import { config } from '#config/config.js'
+import {
+  isRegisteredOnlyProcessingType,
+  PROCESSING_TYPES
+} from '#domain/summary-logs/meta-fields.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
+import { toYear } from '#server/common/helpers/year.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { extractCookieValues } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
@@ -21,14 +39,15 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
+import { CADENCE } from '#server/reports/constants.js'
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
- * @import { LoadRow, PeriodStatusByChange, SummaryLogStatusResponse } from './types.js'
+ * @import { LedgerAccreditation, LoadRow, PeriodStatusByChange, SummaryLogStatusResponse } from './types.js'
  */
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
@@ -60,20 +79,16 @@ vi.mock(
 )
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js'),
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js'),
   () => ({
-    fetchRegistrationAndAccreditation: vi.fn().mockResolvedValue({
-      organisationData: undefined,
-      registration: undefined,
-      accreditation: undefined
-    })
+    fetchRegistrationWithAccreditation: vi.fn()
   })
 )
 
 vi.mock(
-  import('#server/common/helpers/waste-balance/fetch-waste-balances.js'),
+  import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'),
   () => ({
-    fetchWasteBalances: vi.fn()
+    fetchOrganisationWasteBalances: vi.fn()
   })
 )
 
@@ -89,25 +104,72 @@ const mockSubmitSummaryLog = vi.mocked(submitSummaryLog, {
   partial: true,
   deep: true
 })
-const mockFetchRegistrationAndAccreditation = vi.mocked(
-  fetchRegistrationAndAccreditation,
-  { partial: true, deep: true }
+const mockFetchRegistrationWithAccreditation = vi.mocked(
+  fetchRegistrationWithAccreditation
 )
-const mockFetchWasteBalances = vi.mocked(fetchWasteBalances, {
-  partial: true,
-  deep: true
+const mockFetchOrganisationWasteBalances = vi.mocked(
+  fetchOrganisationWasteBalances
+)
+
+const accredited2026 = buildRegistrationWithAccreditation()
+const registeredOnly = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
+})
+const { accreditationNumber: accreditationNumber2026 } =
+  accredited2026.accreditation
+const accreditationNumber2027 = toAccreditationNumber('A27EN0000000001PL')
+const accreditation2027 = buildAccreditationView({
+  accreditationNumber: accreditationNumber2027
+})
+const accredited2027 = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
+    accreditations: {
+      2026: buildAccreditationView(),
+      2027: accreditation2027
+    }
+  }),
+  accreditation: accreditation2027
 })
 
-const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
+/**
+ * @param {{ year?: number | string }} keys
+ */
+const accreditedByYear = async ({ year }) =>
+  year === 2027 ? accredited2027 : accredited2026
+
+const balancesForBothYears = () => ({
+  [accreditationNumber2026]: { amount: 2026, availableAmount: 2026 },
+  [accreditationNumber2027]: { amount: 2027, availableAmount: 2027 }
+})
+
+const accreditedLedger = /** @type {const} */ ({
+  kind: 'accredited',
+  accreditationNumber: accreditationNumber2027
+})
+const registeredOnlyLedger = /** @type {const} */ ({ kind: 'registeredOnly' })
+// Off-contract on purpose: the status read keeps a value failing its schema.
+const unknownLedger = /** @type {LedgerAccreditation} */ (
+  /** @type {unknown} */ ({ kind: 'other' })
+)
+
+const failedStatus = (fields) => ({
+  year: 2026,
+  ledgerAccreditation: registeredOnlyLedger,
+  ...fields
+})
+
+const mockAuth = buildMockAuth({
+  backendToken: toBackendToken('test-id-token')
+})
 
 const enablesClientSidePolling = () =>
   expect.stringContaining('meta http-equiv="refresh"')
 
 describe('#summaryLogUploadProgressController', () => {
-  const organisationId = '123'
-  const registrationId = '456'
+  const organisationNumber = '500118'
+  const registrationNumber = 'R26ER5001180041PL'
   const summaryLogId = '789'
-  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs`
+  const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs`
   const summaryLogBaseUrl = `${baseUrl}/${summaryLogId}`
   const url = summaryLogBaseUrl
 
@@ -122,6 +184,11 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     mockSubmitSummaryLog.mockReset()
+
+    mockFetchRegistrationWithAccreditation
+      .mockReset()
+      .mockResolvedValue(registeredOnly)
+    mockFetchOrganisationWasteBalances.mockReset()
   })
 
   it('should provide expected response', async ({ server }) => {
@@ -132,10 +199,9 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     expect(fetchSummaryLogStatus).toHaveBeenCalledWith(
-      organisationId,
-      registrationId,
+      { organisationNumber, registrationNumber },
       summaryLogId,
-      { idToken: 'test-id-token' }
+      { backendToken: 'test-id-token' }
     )
     expect(result).toStrictEqual(expect.stringContaining('Summary log |'))
     expect(statusCode).toBe(statusCodes.ok)
@@ -235,11 +301,50 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('terminal states', () => {
+    const ZERO_CHANGE = {
+      balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+      nonBalanceAffecting: { count: 0, rows: [] }
+    }
+    const emptyPeriod = () => ({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
+
+    const closedAdjustmentRows = () => ({
+      added: ZERO_CHANGE,
+      adjusted: {
+        balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
+        nonBalanceAffecting: { count: 0, rows: [] }
+      }
+    })
+
+    const submittedWithClosedAdjustment = () => ({
+      status: summaryLogStatuses.submitted,
+      processingType: PROCESSING_TYPES.EXPORTER,
+      year: 2026,
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: closedAdjustmentRows(),
+        periodsRequiringResubmission: [
+          { year: toYear(2025), cadence: CADENCE.MONTHLY, period: 1 }
+        ]
+      }
+    })
+
+    const getMain = async (server) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+      return getByRole(body, 'main')
+    }
+
     it('status: submitted - should show success page and stop polling', async ({
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted,
+        processingType: 'EXPORTER',
+        year: 2026,
         accreditationNumber: 'ACC-2025-001'
       })
 
@@ -263,11 +368,45 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    it('status: submitted - should link to organisation root', async ({
+    it("status: submitted - should show the summary log's year in the heading", async ({
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitted
+        status: summaryLogStatuses.submitted,
+        processingType: 'EXPORTER',
+        year: 2027
+      })
+
+      const main = await getMain(server)
+
+      expect(getByRole(main, 'heading', { level: 1 }).textContent?.trim()).toBe(
+        'Summary log uploaded (2027)'
+      )
+    })
+
+    it("status: submitted - should link to the home page for the summary log's year", async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submitted,
+        processingType: 'EXPORTER',
+        year: 2027
+      })
+
+      const main = await getMain(server)
+
+      expect(
+        getByRole(main, 'link', { name: 'Return to home' }).getAttribute('href')
+      ).toBe(`/organisations/${organisationNumber}/2027`)
+    })
+
+    it("status: submitted - should title the page with the summary log's year", async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submitted,
+        processingType: 'EXPORTER',
+        year: 2027
       })
 
       const { result } = await server.inject({
@@ -276,33 +415,124 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
-      expect(result).toStrictEqual(
-        expect.stringContaining(`href="/organisations/${organisationId}"`)
+      expect(new JSDOM(result).window.document.title).toMatch(
+        /^Summary log uploaded \(2027\) \|/
       )
     })
 
-    describe('waste balance', () => {
-      it('status: submitted - should fetch waste balance data', async ({
-        server
-      }) => {
-        const accreditationId = 'accreditation-id-456'
-
+    it.for([summaryLogStatuses.submitted, summaryLogStatuses.validated])(
+      'status: %s - fails for a summary log without a year',
+      async (status, { server }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.submitted,
-          accreditationNumber: 'ACC-2025-001'
-        })
-
-        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId, accreditationId },
-          accreditation: {
-            id: accreditationId,
-            accreditationNumber: 'ACC-2025-001'
+          status,
+          ledgerAccreditation: accreditedLedger,
+          processingType: 'EXPORTER',
+          loadsByReportingPeriod: {
+            openPeriodLoads: emptyPeriod(),
+            closedPeriodLoads: emptyPeriod()
           }
         })
 
-        mockFetchWasteBalances.mockResolvedValueOnce({
-          [accreditationId]: {
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+      }
+    )
+
+    it('status: submitted - fails for a summary log without a processing type', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submitted,
+        year: 2026
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    it.for([summaryLogStatuses.submitted, summaryLogStatuses.validated])(
+      'status: %s - reads neither the registration nor a balance for a registered-only summary log, even once the registration is accredited',
+      async (status, { server }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status,
+          year: 2026,
+          ledgerAccreditation: registeredOnlyLedger,
+          processingType: 'REPROCESSOR_REGISTERED_ONLY',
+          loadsByReportingPeriod: {
+            openPeriodLoads: emptyPeriod(),
+            closedPeriodLoads: emptyPeriod()
+          }
+        })
+        mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited2026)
+        mockFetchOrganisationWasteBalances.mockResolvedValue(
+          balancesForBothYears()
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(fetchRegistrationWithAccreditation).not.toHaveBeenCalled()
+        expect(fetchOrganisationWasteBalances).not.toHaveBeenCalled()
+        expect(result).not.toContain('2,026.00')
+      }
+    )
+
+    describe('waste balance', () => {
+      it("status: submitted - shows the balance of the summary log's accreditation", async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
+          year: 2027
+        })
+        mockFetchRegistrationWithAccreditation.mockImplementation(
+          accreditedByYear
+        )
+        mockFetchOrganisationWasteBalances.mockResolvedValueOnce(
+          balancesForBothYears()
+        )
+
+        const main = await getMain(server)
+
+        expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
+          accredited2026.organisation.organisationNumber,
+          2027,
+          'test-id-token'
+        )
+        expect(main.textContent).toContain('2,027.00 tonnes')
+      })
+
+      it("status: submitted - reads the registration's accreditation for the summary log's year", async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
+          year: 2026,
+          accreditationNumber: 'ACC-2025-001'
+        })
+
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+          accredited2026
+        )
+
+        mockFetchOrganisationWasteBalances.mockResolvedValueOnce({
+          [accreditationNumber2026]: {
             amount: 1000,
             availableAmount: 1234.56
           }
@@ -315,14 +545,13 @@ describe('#summaryLogUploadProgressController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(fetchRegistrationAndAccreditation).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
+        expect(fetchRegistrationWithAccreditation).toHaveBeenCalledWith(
+          { organisationNumber, registrationNumber, year: 2026 },
           'test-id-token'
         )
-        expect(fetchWasteBalances).toHaveBeenCalledWith(
-          organisationId,
-          [accreditationId],
+        expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
+          accredited2026.organisation.organisationNumber,
+          2026,
           'test-id-token'
         )
       })
@@ -333,24 +562,19 @@ describe('#summaryLogUploadProgressController', () => {
       ])(
         'status: submitted - should display $label in the confirmation panel',
         async ({ availableAmount, expected }, { server }) => {
-          const accreditationId = 'accreditation-id-456'
-
           mockFetchSummaryLogStatus.mockResolvedValueOnce({
             status: summaryLogStatuses.submitted,
+            processingType: 'EXPORTER',
+            year: 2026,
             accreditationNumber: 'ACC-2025-001'
           })
 
-          mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
-            organisationData: { id: organisationId },
-            registration: { id: registrationId, accreditationId },
-            accreditation: {
-              id: accreditationId,
-              accreditationNumber: 'ACC-2025-001'
-            }
-          })
+          mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+            accredited2026
+          )
 
-          mockFetchWasteBalances.mockResolvedValueOnce({
-            [accreditationId]: {
+          mockFetchOrganisationWasteBalances.mockResolvedValueOnce({
+            [accreditationNumber2026]: {
               amount: 1000,
               availableAmount
             }
@@ -381,14 +605,14 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
+          year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId },
-          accreditation: undefined
-        })
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+          registeredOnly
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -407,23 +631,18 @@ describe('#summaryLogUploadProgressController', () => {
       it('status: submitted - should not display waste balance when balance not found', async ({
         server
       }) => {
-        const accreditationId = 'accreditation-id-456'
-
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
+          year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId, accreditationId },
-          accreditation: {
-            id: accreditationId,
-            accreditationNumber: 'ACC-2025-001'
-          }
-        })
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+          accredited2026
+        )
 
-        mockFetchWasteBalances.mockResolvedValueOnce({})
+        mockFetchOrganisationWasteBalances.mockResolvedValueOnce({})
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -435,27 +654,23 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).not.toContain('Your updated waste balance')
       })
 
-      it('status: submitted - should handle waste balance fetch failure gracefully', async ({
+      it('status: submitted - shows the page without the balance when the backend fails to serve it', async ({
         server
       }) => {
-        const accreditationId = 'accreditation-id-456'
-        const fetchError = new Error('Waste balance service unavailable')
+        const fetchError = Boom.badGateway('Waste balance service unavailable')
 
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
+          year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId, accreditationId },
-          accreditation: {
-            id: accreditationId,
-            accreditationNumber: 'ACC-2025-001'
-          }
-        })
+        mockFetchRegistrationWithAccreditation.mockResolvedValueOnce(
+          accredited2026
+        )
 
-        mockFetchWasteBalances.mockRejectedValueOnce(fetchError)
+        mockFetchOrganisationWasteBalances.mockRejectedValueOnce(fetchError)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -467,10 +682,12 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).toContain('Summary log uploaded')
         expect(result).not.toContain('Your updated waste balance')
 
-        expect(server.loggerMocks.error).toHaveBeenCalledWith({
-          message: 'Failed to fetch waste balance data',
-          err: fetchError
-        })
+        expect(server.loggerMocks.error).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'Failed to fetch waste balance',
+            err: fetchError
+          })
+        )
       })
 
       it('status: submitted - should propagate 404 when registration not found', async ({
@@ -478,10 +695,12 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
+          year: 2026,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        mockFetchRegistrationAndAccreditation.mockRejectedValueOnce(
+        mockFetchRegistrationWithAccreditation.mockRejectedValueOnce(
           Boom.notFound('Registration not found')
         )
 
@@ -496,42 +715,13 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('closed-period adjustments "Further action needed" section', () => {
-      const ZERO_CHANGE = {
-        balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
-        nonBalanceAffecting: { count: 0, rows: [] }
-      }
-      const emptyPeriod = () => ({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
-
-      const submittedWithClosedAdjustment = () => ({
-        status: summaryLogStatuses.submitted,
-        loadsByReportingPeriod: {
-          openPeriodLoads: emptyPeriod(),
-          closedPeriodLoads: {
-            added: ZERO_CHANGE,
-            adjusted: {
-              balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
-              nonBalanceAffecting: { count: 0, rows: [] }
-            }
-          }
-        }
-      })
-
-      const getMain = async (server) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
-        const { body } = new JSDOM(result).window.document
-        return getByRole(body, 'main')
-      }
-
-      it('shows the section and a "Go to reports" link when a closed period changed', async ({
+      it('shows the section and a "Go to reports" link to the summary log\'s year when a closed period changed', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce(
-          submittedWithClosedAdjustment()
-        )
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          ...submittedWithClosedAdjustment(),
+          year: 2025
+        })
 
         const main = await getMain(server)
         const reportsButton = queryByRole(main, 'button', {
@@ -543,7 +733,7 @@ describe('#summaryLogUploadProgressController', () => {
         ).not.toBeNull()
         expect(reportsButton).not.toBeNull()
         expect(reportsButton?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2025`
         )
       })
 
@@ -552,6 +742,8 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
+          year: 2026,
           loadsByReportingPeriod: {
             openPeriodLoads: {
               added: {
@@ -573,17 +765,147 @@ describe('#summaryLogUploadProgressController', () => {
           queryByRole(main, 'button', { name: 'Go to reports' })
         ).toBeNull()
       })
+
+      it('hides the section when a closed period changed but no figures require resubmission', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
+          year: 2026,
+          loadsByReportingPeriod: {
+            openPeriodLoads: emptyPeriod(),
+            closedPeriodLoads: closedAdjustmentRows(),
+            periodsRequiringResubmission: []
+          }
+        })
+
+        const main = await getMain(server)
+
+        expect(
+          queryByRole(main, 'heading', { name: 'Further action needed' })
+        ).toBeNull()
+        expect(
+          queryByRole(main, 'button', { name: 'Go to reports' })
+        ).toBeNull()
+      })
+
+      it('shows the section from closed-period counts when the backend omits periodsRequiringResubmission', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          processingType: 'EXPORTER',
+          year: 2026,
+          loadsByReportingPeriod: {
+            openPeriodLoads: emptyPeriod(),
+            closedPeriodLoads: closedAdjustmentRows()
+          }
+        })
+
+        const main = await getMain(server)
+
+        expect(
+          queryByRole(main, 'heading', { name: 'Further action needed' })
+        ).not.toBeNull()
+        expect(
+          queryByRole(main, 'button', { name: 'Go to reports' })
+        ).not.toBeNull()
+      })
     })
 
-    it('status: submitted with freshData from POST - should use freshData and not call backend', async ({
+    describe('satisfaction survey', () => {
+      const surveyUrl = 'https://survey.example/summary-log'
+      const surveyTitle = 'Help us improve this service'
+      const surveyText = 'Give us your feedback (opens in a new tab)'
+
+      const liveSurvey = () => {
+        config.set('satisfactionSurvey.isEnabled', true)
+        config.set('satisfactionSurvey.summaryLogUrl', surveyUrl)
+      }
+
+      afterEach(() => {
+        config.reset('satisfactionSurvey.isEnabled')
+        config.reset('satisfactionSurvey.summaryLogUrl')
+      })
+
+      const submittedWithoutClosedAdjustment = () => ({
+        status: summaryLogStatuses.submitted,
+        processingType: PROCESSING_TYPES.EXPORTER,
+        year: 2026
+      })
+
+      const getBody = async (server) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        return new JSDOM(result, { url: 'http://localhost' }).window.document
+          .body
+      }
+
+      it('asks nothing while the surveys are switched off', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          submittedWithoutClosedAdjustment()
+        )
+
+        const body = await getBody(server)
+
+        expect(queryByText(body, surveyTitle)).toBeNull()
+      })
+
+      it.for([
+        {
+          description: 'an open period',
+          summaryLogStatus: submittedWithoutClosedAdjustment
+        },
+        {
+          description: 'a closed period needing further action',
+          summaryLogStatus: submittedWithClosedAdjustment
+        }
+      ])(
+        'asks below the page content after $description, leaving the links the user must act on alone',
+        async ({ summaryLogStatus }, { server }) => {
+          liveSurvey()
+          mockFetchSummaryLogStatus.mockResolvedValueOnce(summaryLogStatus())
+
+          const body = await getBody(server)
+          const main = getByRole(body, 'main')
+
+          expect(getByText(body, surveyTitle)).toBeDefined()
+          expect(queryByText(main, surveyTitle)).toBeNull()
+          expect(
+            getAllByRole(main, 'link').map((link) => link.textContent?.trim())
+          ).toStrictEqual(['Return to home'])
+        }
+      )
+
+      it('sends the user to the summary log survey, not one from another journey', async ({
+        server
+      }) => {
+        liveSurvey()
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          submittedWithoutClosedAdjustment()
+        )
+
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'link', { name: surveyText }).getAttribute('href')
+        ).toBe(surveyUrl)
+      })
+    })
+
+    it('status: submitting with freshData from POST - should use freshData and not call backend', async ({
       server
     }) => {
       const submitUrl = `${url}/submit`
 
-      mockSubmitSummaryLog.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitted,
-        accreditationNumber: 'ACC-2025-002'
-      })
+      mockSubmitSummaryLog.mockResolvedValueOnce({ status: 'submitting' })
 
       const { cookie, crumb } = await getCsrfToken(server, url, {
         auth: mockAuth
@@ -617,7 +939,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(fetchSummaryLogStatus).toHaveBeenCalledTimes(initialCallCount)
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Summary log uploaded')
+        expect.stringContaining('Your waste records are being updated')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
@@ -625,12 +947,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: rejected with validation failure code - should show validation failures page', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.rejected,
-        validation: {
-          failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.rejected,
+          validation: {
+            failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -669,10 +993,12 @@ describe('#summaryLogUploadProgressController', () => {
       it('should render a per-cell detail row instead of a collapsed category message', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: { failures: [locatedFailure] }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: { failures: [locatedFailure] }
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -698,49 +1024,51 @@ describe('#summaryLogUploadProgressController', () => {
       it('should render all records in one flat table with a Section column, sorting ROW_ID within each section', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [
-              {
-                errorCode: 'MUST_BE_A_NUMBER',
-                actual: 'x',
-                location: {
-                  sheet: 'Reprocessing',
-                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                  row: 10,
-                  rowId: '1003',
-                  column: 'D',
-                  header: 'NET_WEIGHT'
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  errorCode: 'MUST_BE_A_NUMBER',
+                  actual: 'x',
+                  location: {
+                    sheet: 'Reprocessing',
+                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                    row: 10,
+                    rowId: '1003',
+                    column: 'D',
+                    header: 'NET_WEIGHT'
+                  }
+                },
+                {
+                  errorCode: 'MUST_BE_A_NUMBER',
+                  actual: 'y',
+                  location: {
+                    sheet: 'Reprocessing',
+                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                    row: 8,
+                    rowId: '1001',
+                    column: 'D',
+                    header: 'NET_WEIGHT'
+                  }
+                },
+                {
+                  errorCode: 'MUST_BE_A_VALID_DATE',
+                  actual: 'z',
+                  location: {
+                    sheet: 'Reprocessing',
+                    table: 'SENT_ON_LOADS_FOR_REPROCESSING',
+                    row: 8,
+                    rowId: '1001',
+                    column: 'H',
+                    header: 'DATE_OF_EXPORT'
+                  }
                 }
-              },
-              {
-                errorCode: 'MUST_BE_A_NUMBER',
-                actual: 'y',
-                location: {
-                  sheet: 'Reprocessing',
-                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                  row: 8,
-                  rowId: '1001',
-                  column: 'D',
-                  header: 'NET_WEIGHT'
-                }
-              },
-              {
-                errorCode: 'MUST_BE_A_VALID_DATE',
-                actual: 'z',
-                location: {
-                  sheet: 'Reprocessing',
-                  table: 'SENT_ON_LOADS_FOR_REPROCESSING',
-                  row: 8,
-                  rowId: '1001',
-                  column: 'H',
-                  header: 'DATE_OF_EXPORT'
-                }
-              }
-            ]
-          }
-        })
+              ]
+            }
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -783,16 +1111,18 @@ describe('#summaryLogUploadProgressController', () => {
           }
         })
 
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [
-              located('1001', 'D'),
-              located('1002', 'E'),
-              located('1003', 'F')
-            ]
-          }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                located('1001', 'D'),
+                located('1002', 'E'),
+                located('1003', 'F')
+              ]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -819,13 +1149,15 @@ describe('#summaryLogUploadProgressController', () => {
           }
         }))
 
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures,
-            counts: { fatal: 150, error: 0, warning: 0, total: 150 }
-          }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures,
+              counts: { fatal: 150, error: 0, warning: 0, total: 150 }
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -844,10 +1176,12 @@ describe('#summaryLogUploadProgressController', () => {
       it('should not show a cap notice below the 50 limit', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: { failures: [locatedFailure] }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: { failures: [locatedFailure] }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -861,24 +1195,26 @@ describe('#summaryLogUploadProgressController', () => {
       it('should show "(empty)" when the failing cell has no value', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [
-              {
-                errorCode: 'FIELD_REQUIRED',
-                location: {
-                  sheet: 'Reprocessing',
-                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                  row: 8,
-                  rowId: '1001',
-                  column: 'C',
-                  header: 'EWC_CODE'
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  errorCode: 'FIELD_REQUIRED',
+                  location: {
+                    sheet: 'Reprocessing',
+                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                    row: 8,
+                    rowId: '1001',
+                    column: 'C',
+                    header: 'EWC_CODE'
+                  }
                 }
-              }
-            ]
-          }
-        })
+              ]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -895,12 +1231,14 @@ describe('#summaryLogUploadProgressController', () => {
       it('should render located errors as a table while keeping meta-level category messages', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [locatedFailure, { errorCode: 'REGISTRATION_MISMATCH' }]
-          }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [locatedFailure, { errorCode: 'REGISTRATION_MISMATCH' }]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -966,25 +1304,27 @@ describe('#summaryLogUploadProgressController', () => {
       ])(
         'maps errorCode %s to its per-cell problem',
         async ([errorCode, header, expectedProblem], { server }) => {
-          mockFetchSummaryLogStatus.mockResolvedValueOnce({
-            status: summaryLogStatuses.invalid,
-            validation: {
-              failures: [
-                {
-                  errorCode,
-                  actual: 'x',
-                  location: {
-                    sheet: 'Received',
-                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                    row: 4,
-                    rowId: '1001',
-                    column: 'D',
-                    header
+          mockFetchSummaryLogStatus.mockResolvedValueOnce(
+            failedStatus({
+              status: summaryLogStatuses.invalid,
+              validation: {
+                failures: [
+                  {
+                    errorCode,
+                    actual: 'x',
+                    location: {
+                      sheet: 'Received',
+                      table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                      row: 4,
+                      rowId: '1001',
+                      column: 'D',
+                      header
+                    }
                   }
-                }
-              ]
-            }
-          })
+                ]
+              }
+            })
+          )
 
           const { result } = await server.inject({
             method: 'GET',
@@ -1003,25 +1343,27 @@ describe('#summaryLogUploadProgressController', () => {
       it('should show a human-readable column label, not the raw header code', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [
-              {
-                errorCode: 'MUST_BE_VALID_EWC_CODE',
-                actual: '99',
-                location: {
-                  sheet: 'Received',
-                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                  row: 9,
-                  rowId: '1002',
-                  column: 'F',
-                  header: 'EWC_CODE'
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  errorCode: 'MUST_BE_VALID_EWC_CODE',
+                  actual: '99',
+                  location: {
+                    sheet: 'Received',
+                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                    row: 9,
+                    rowId: '1002',
+                    column: 'F',
+                    header: 'EWC_CODE'
+                  }
                 }
-              }
-            ]
-          }
-        })
+              ]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1038,25 +1380,27 @@ describe('#summaryLogUploadProgressController', () => {
       it('should fall back to the worksheet name as the Section when the table has no distinct label', async ({
         server
       }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [
-              {
-                errorCode: 'MUST_BE_A_NUMBER',
-                actual: 'x',
-                location: {
-                  sheet: 'Reprocessing',
-                  table: 'UNMAPPED_TABLE',
-                  row: 8,
-                  rowId: '1001',
-                  column: 'D',
-                  header: 'NET_WEIGHT'
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  errorCode: 'MUST_BE_A_NUMBER',
+                  actual: 'x',
+                  location: {
+                    sheet: 'Reprocessing',
+                    table: 'UNMAPPED_TABLE',
+                    row: 8,
+                    rowId: '1001',
+                    column: 'D',
+                    header: 'NET_WEIGHT'
+                  }
                 }
-              }
-            ]
-          }
-        })
+              ]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1086,16 +1430,18 @@ describe('#summaryLogUploadProgressController', () => {
           }
         })
 
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [
-              failingCell('K', 'GROSS_WEIGHT'),
-              failingCell('L', 'TARE_WEIGHT'),
-              failingCell('M', 'PALLET_WEIGHT')
-            ]
-          }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                failingCell('K', 'GROSS_WEIGHT'),
+                failingCell('L', 'TARE_WEIGHT'),
+                failingCell('M', 'PALLET_WEIGHT')
+              ]
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1161,10 +1507,12 @@ describe('#summaryLogUploadProgressController', () => {
     ])(
       'status: $status with $errorCode - should render its tailored failure copy, not the technical-error fallback',
       async ({ errorCode, status, copy }, { server }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status,
-          validation: { failures: [{ errorCode }] }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status,
+            validation: { failures: [{ errorCode }] }
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -1185,6 +1533,8 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected,
+        year: 2027,
+        ledgerAccreditation: accreditedLedger,
         validation: {
           failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
         }
@@ -1198,19 +1548,47 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-        organisationId,
-        registrationId,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        keys: { organisationNumber, registrationNumber },
+        year: 2027,
+        accredited: true,
+        redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
+        backendToken: 'test-id-token'
       })
+    })
+
+    it('status: rejected - should not initiate an upload for a regulator', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.rejected,
+          validation: {
+            failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
+          }
+        })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: buildMockAuth({
+          provider: OIDC_ENTRA_ID,
+          idToken: 'test-id-token',
+          ...sessionIdentity(IDENTITIES.regulator)
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(initiateSummaryLogUpload).not.toHaveBeenCalled()
+      expect(result).not.toContain('<form')
     })
 
     it('status: rejected without validation - should show validation failures page with technical error', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.rejected
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({ status: summaryLogStatuses.rejected })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1228,12 +1606,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with validation failures - should show validation failures page with correct content', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1253,12 +1633,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with validation failures - should show re-upload form and cancel button', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
+          }
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -1269,19 +1651,48 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('Upload updated XLSX file')
       expect(result).toContain('Continue')
       expect(result).toContain('Cancel and return to home')
-      expect(result).toContain(
-        `href="/organisations/${organisationId}/registrations/${registrationId}"`
-      )
     })
 
-    it('status: invalid - should render back link to registration dashboard', async ({
+    it.for([
+      summaryLogStatuses.invalid,
+      summaryLogStatuses.rejected,
+      summaryLogStatuses.validationFailed,
+      summaryLogStatuses.submissionFailed
+    ])(
+      "status: %s - links back and Cancel to the materials homepage for the summary log's year",
+      async (status, { server }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status,
+          year: 2027,
+          ledgerAccreditation: accreditedLedger
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+        const { body } = new JSDOM(result).window.document
+
+        const homepage = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2027`
+        expect(
+          getByRole(body, 'link', { name: 'Back' }).getAttribute('href')
+        ).toBe(homepage)
+        expect(
+          getByRole(body, 'button', {
+            name: 'Cancel and return to home'
+          }).getAttribute('href')
+        ).toBe(homepage)
+      }
+    )
+
+    it('re-uploads a registered-only summary log to the registered-only materials homepage', async ({
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
-        }
+        year: 2026,
+        ledgerAccreditation: registeredOnlyLedger
       })
 
       const { result } = await server.inject({
@@ -1289,10 +1700,19 @@ describe('#summaryLogUploadProgressController', () => {
         url,
         auth: mockAuth
       })
+      const { body } = new JSDOM(result).window.document
 
-      expect(result).toContain('govuk-back-link')
-      expect(result).toContain(
-        `href="/organisations/${organisationId}/registrations/${registrationId}"`
+      const homepage = `/organisations/${organisationNumber}/registrations/${registrationNumber}/2026`
+      expect(
+        getByRole(body, 'link', { name: 'Back' }).getAttribute('href')
+      ).toBe(homepage)
+      expect(
+        getByRole(body, 'button', {
+          name: 'Cancel and return to home'
+        }).getAttribute('href')
+      ).toBe(homepage)
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith(
+        expect.objectContaining({ year: 2026, accredited: false })
       )
     })
 
@@ -1301,6 +1721,8 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
+        year: 2027,
+        ledgerAccreditation: accreditedLedger,
         validation: {
           failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
         }
@@ -1314,28 +1736,31 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-        organisationId,
-        registrationId,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        keys: { organisationNumber, registrationNumber },
+        year: 2027,
+        accredited: true,
+        redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
+        backendToken: 'test-id-token'
       })
     })
 
     it('status: invalid with SEQUENTIAL_ROW_REMOVED alongside another failure - should render both the composite block and the other failure message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Received' }
-            },
-            { errorCode: 'HEADER_REQUIRED' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'SEQUENTIAL_ROW_REMOVED',
+                location: { sheet: 'Received' }
+              },
+              { errorCode: 'HEADER_REQUIRED' }
+            ]
+          }
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -1401,10 +1826,12 @@ describe('#summaryLogUploadProgressController', () => {
     ])(
       'status: invalid with SEQUENTIAL_ROW_REMOVED ($label) - should list affected sheets as bullets with preamble and closing',
       async ({ failures, expectedBullets }, { server }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: { failures }
-        })
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: { failures }
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -1441,12 +1868,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with unknown failure code - should show technical error message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'SOME_UNKNOWN_CODE' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'SOME_UNKNOWN_CODE' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1464,16 +1893,18 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with data entry failures - should show single deduplicated message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            { errorCode: 'VALUE_OUT_OF_RANGE' },
-            { errorCode: 'INVALID_TYPE' },
-            { errorCode: 'VALUE_OUT_OF_RANGE' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              { errorCode: 'VALUE_OUT_OF_RANGE' },
+              { errorCode: 'INVALID_TYPE' },
+              { errorCode: 'VALUE_OUT_OF_RANGE' }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1498,16 +1929,18 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with mixed failures - should show data entry message and other failures', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            { errorCode: 'VALUE_OUT_OF_RANGE' },
-            { errorCode: 'REGISTRATION_MISMATCH' },
-            { errorCode: 'INVALID_TYPE' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              { errorCode: 'VALUE_OUT_OF_RANGE' },
+              { errorCode: 'REGISTRATION_MISMATCH' },
+              { errorCode: 'INVALID_TYPE' }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1527,12 +1960,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with material failure - should show material invalid message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'MATERIAL_MISMATCH' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'MATERIAL_MISMATCH' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1549,12 +1984,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with accreditation failure - should show accreditation invalid message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'ACCREDITATION_MISMATCH' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'ACCREDITATION_MISMATCH' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1571,12 +2008,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with processing type failure - should show template incorrect message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'PROCESSING_TYPE_MISMATCH' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'PROCESSING_TYPE_MISMATCH' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1593,12 +2032,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with SPREADSHEET_MALFORMED_MARKERS failure - should show malformed template message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'SPREADSHEET_MALFORMED_MARKERS' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'SPREADSHEET_MALFORMED_MARKERS' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1615,12 +2056,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with SPREADSHEET_INVALID_ERROR failure - should show malformed template message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'SPREADSHEET_INVALID_ERROR' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: 'SPREADSHEET_INVALID_ERROR' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1637,15 +2080,17 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with multiple spreadsheet failures - should show single deduplicated message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            { errorCode: 'SPREADSHEET_MALFORMED_MARKERS' },
-            { errorCode: 'SPREADSHEET_INVALID_ERROR' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              { errorCode: 'SPREADSHEET_MALFORMED_MARKERS' },
+              { errorCode: 'SPREADSHEET_INVALID_ERROR' }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1672,12 +2117,14 @@ describe('#summaryLogUploadProgressController', () => {
       'VALIDATION_SYSTEM_ERROR',
       'UNKNOWN'
     ])('%s - should show technical error message', async (code, { server }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: code }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ errorCode: code }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1694,16 +2141,18 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with multiple technical errors - should show single deduplicated message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            { errorCode: 'FILE_UPLOAD_FAILED' },
-            { errorCode: 'FILE_DOWNLOAD_FAILED' },
-            { errorCode: 'VALIDATION_SYSTEM_ERROR' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              { errorCode: 'FILE_UPLOAD_FAILED' },
+              { errorCode: 'FILE_DOWNLOAD_FAILED' },
+              { errorCode: 'VALIDATION_SYSTEM_ERROR' }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1725,17 +2174,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with NET_WEIGHT_CALCULATION_MISMATCH errorCode - should show calculated field mismatch message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
-              location: { header: 'NET_WEIGHT' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
+                location: { header: 'NET_WEIGHT' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1752,17 +2203,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with weight numeric errorCode - should show weight format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_A_NUMBER',
-              location: { header: 'GROSS_WEIGHT' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                location: { header: 'GROSS_WEIGHT' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1779,17 +2232,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with date errorCode on date header - should show date format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_A_VALID_DATE',
-              location: { header: 'DATE_LOAD_LEFT_SITE' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_VALID_DATE',
+                location: { header: 'DATE_LOAD_LEFT_SITE' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1806,17 +2261,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with yes/no errorCode on yes/no header - should show yes/no format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_YES_OR_NO',
-              location: { header: 'BAILING_WIRE_PROTOCOL' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_YES_OR_NO',
+                location: { header: 'BAILING_WIRE_PROTOCOL' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1833,19 +2290,21 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with dropdown errorCode on dropdown header - should show dropdown format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
-              location: {
-                header: 'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION'
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
+                location: {
+                  header: 'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION'
+                }
               }
-            }
-          ]
-        }
-      })
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1862,17 +2321,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS errorCode on free-text header - should show free-text message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS',
-              location: { header: 'CONTAINER_NUMBER' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS',
+                location: { header: 'CONTAINER_NUMBER' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1889,17 +2350,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with ID errorCode on ID header - should show ID format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_3_DIGIT_ID',
-              location: { header: 'OSR_ID' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_3_DIGIT_ID',
+                location: { header: 'OSR_ID' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1916,17 +2379,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with percentage errorCode on percentage header - should show percentage format message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_AT_LEAST_ZERO',
-              location: { header: 'RECYCLABLE_PROPORTION_PERCENTAGE' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_AT_LEAST_ZERO',
+                location: { header: 'RECYCLABLE_PROPORTION_PERCENTAGE' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1943,17 +2408,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with known errorCode but unrecognised header - should show safety net fallback', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_A_VALID_DATE',
-              location: { header: 'SOME_DATE_FIELD' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_VALID_DATE',
+                location: { header: 'SOME_DATE_FIELD' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1970,17 +2437,19 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with completely unrecognised errorCode - should show technical error as fallback', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
-              location: { header: 'WHATEVER' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
+                location: { header: 'WHATEVER' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1997,21 +2466,23 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with unknown errorCode alongside real failures - should strip technical error', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'MUST_BE_A_NUMBER',
-              location: { header: 'GROSS_WEIGHT' }
-            },
-            {
-              errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
-              location: { header: 'WHATEVER' }
-            }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                location: { header: 'GROSS_WEIGHT' }
+              },
+              {
+                errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
+                location: { header: 'WHATEVER' }
+              }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2031,22 +2502,24 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with mixed errorCode failures - should show correct deduplicated messages', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
-              location: { header: 'NET_WEIGHT' }
-            },
-            {
-              errorCode: 'MUST_BE_A_NUMBER',
-              location: { header: 'GROSS_WEIGHT' }
-            },
-            { errorCode: 'REGISTRATION_MISMATCH' }
-          ]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
+                location: { header: 'NET_WEIGHT' }
+              },
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                location: { header: 'GROSS_WEIGHT' }
+              },
+              { errorCode: 'REGISTRATION_MISMATCH' }
+            ]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2069,12 +2542,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with empty validation failures - should show technical error message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: []
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: []
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2093,9 +2568,9 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid without validation object - should show technical error message', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({ status: summaryLogStatuses.invalid })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2113,12 +2588,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validation_failed - should show validation failures page with re-upload option', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validationFailed,
-        validation: {
-          failures: [{ errorCode: 'PROCESSING_FAILED' }]
-        }
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.validationFailed,
+          validation: {
+            failures: [{ errorCode: 'PROCESSING_FAILED' }]
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2135,7 +2612,9 @@ describe('#summaryLogUploadProgressController', () => {
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validationFailed
+        status: summaryLogStatuses.validationFailed,
+        year: 2027,
+        ledgerAccreditation: accreditedLedger
       })
 
       await server.inject({
@@ -2145,19 +2624,20 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-        organisationId,
-        registrationId,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        keys: { organisationNumber, registrationNumber },
+        year: 2027,
+        accredited: true,
+        redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
+        backendToken: 'test-id-token'
       })
     })
 
     it('status: submission_failed - should show validation failures page with re-upload option', async ({
       server
     }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submissionFailed
-      })
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({ status: summaryLogStatuses.submissionFailed })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2174,7 +2654,9 @@ describe('#summaryLogUploadProgressController', () => {
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submissionFailed
+        status: summaryLogStatuses.submissionFailed,
+        year: 2027,
+        ledgerAccreditation: accreditedLedger
       })
 
       await server.inject({
@@ -2184,19 +2666,51 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
-        organisationId,
-        registrationId,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        keys: { organisationNumber, registrationNumber },
+        year: 2027,
+        accredited: true,
+        redirectUrl: `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/{summaryLogId}`,
+        backendToken: 'test-id-token'
       })
     })
 
+    it.for(
+      [
+        summaryLogStatuses.invalid,
+        summaryLogStatuses.rejected,
+        summaryLogStatuses.validationFailed,
+        summaryLogStatuses.submissionFailed
+      ].flatMap((status) => [
+        { status, ledger: 'no', ledgerAccreditation: undefined },
+        { status, ledger: 'an unknown', ledgerAccreditation: unknownLedger }
+      ])
+    )(
+      'status: $status - fails for a summary log with $ledger ledger accreditation, starting no upload',
+      async ({ status, ledgerAccreditation }, { server }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status,
+          year: 2026,
+          ledgerAccreditation
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(initiateSummaryLogUpload).not.toHaveBeenCalled()
+      }
+    )
+
     describe('status: superseded', () => {
-      it('should show superseded page with link to organisation', async ({
+      it("should show superseded page with link to the organisation's home for the summary log's year", async ({
         server
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.superseded
+          status: summaryLogStatuses.superseded,
+          year: 2027
         })
 
         const { result, statusCode } = await server.inject({
@@ -2210,13 +2724,18 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).toContain(
           'A newer summary log has been uploaded. This upload is no longer being processed.'
         )
-        expect(result).toContain(`href="/organisations/${organisationId}"`)
-        expect(result).toContain('Return to home')
+        const { body } = new JSDOM(result).window.document
+        expect(
+          getByRole(body, 'link', { name: 'Return to home' }).getAttribute(
+            'href'
+          )
+        ).toBe(`/organisations/${organisationNumber}/2027`)
       })
 
       it('should not enable client-side polling', async ({ server }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.superseded
+          status: summaryLogStatuses.superseded,
+          year: 2026
         })
 
         const { result } = await server.inject({
@@ -2232,7 +2751,8 @@ describe('#summaryLogUploadProgressController', () => {
         const initialCallCount = mockInitiateSummaryLogUpload.mock.calls.length
 
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.superseded
+          status: summaryLogStatuses.superseded,
+          year: 2026
         })
 
         await server.inject({
@@ -2249,7 +2769,8 @@ describe('#summaryLogUploadProgressController', () => {
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.superseded
+        status: summaryLogStatuses.superseded,
+        year: 2026
       })
 
       const { result } = await server.inject({
@@ -2332,10 +2853,10 @@ describe('#summaryLogUploadProgressController', () => {
 })
 
 describe('summary log check view', () => {
-  const organisationId = '123'
-  const registrationId = '456'
+  const organisationNumber = '500118'
+  const registrationNumber = 'R26ER5001180041PL'
   const summaryLogId = '789'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+  const url = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
 
   /** @type {PeriodStatusByChange} */
   const ZERO_CHANGE = {
@@ -2347,10 +2868,10 @@ describe('summary log check view', () => {
 
   /** Make the current accredited waste balance available to the check page. */
   const givenWasteBalance = (availableAmount) => {
-    mockFetchRegistrationAndAccreditation.mockResolvedValue({
-      registration: { accreditationId: 'acc-1' }
+    mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited2026)
+    mockFetchOrganisationWasteBalances.mockResolvedValue({
+      [accreditationNumber2026]: { amount: availableAmount, availableAmount }
     })
-    mockFetchWasteBalances.mockResolvedValue({ 'acc-1': { availableAmount } })
   }
 
   const renderMain = async (server) => {
@@ -2367,6 +2888,8 @@ describe('summary log check view', () => {
   const givenValidatedCheckPage = () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2381,10 +2904,10 @@ describe('summary log check view', () => {
     })
     // No accreditation by default, so the projection panel stays hidden unless a
     // test opts in via givenWasteBalance().
-    mockFetchRegistrationAndAccreditation.mockReset().mockResolvedValue({
-      registration: { accreditationId: undefined }
-    })
-    mockFetchWasteBalances.mockReset().mockResolvedValue({})
+    mockFetchRegistrationWithAccreditation
+      .mockReset()
+      .mockResolvedValue(registeredOnly)
+    mockFetchOrganisationWasteBalances.mockReset().mockResolvedValue({})
   })
 
   it('status: validated - should render the check page without client-side polling', async ({
@@ -2397,15 +2920,45 @@ describe('summary log check view', () => {
     expect(result).not.toStrictEqual(enablesClientSidePolling())
   })
 
-  it('status: validated - should link back to the organisation home page', async ({
+  it("status: validated - should link to the home page for the summary log's year", async ({
     server
   }) => {
-    givenValidatedCheckPage()
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      year: 2027,
+      ledgerAccreditation: accreditedLedger,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    expect(
+      getByRole(main, 'link', { name: 'return to home' }).getAttribute('href')
+    ).toBe(`/organisations/${organisationNumber}/2027`)
+  })
+
+  it("status: validated - should title the page with the summary log's year", async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      year: 2027,
+      ledgerAccreditation: accreditedLedger,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
 
     const { result } = await renderMain(server)
 
-    expect(result).toStrictEqual(
-      expect.stringContaining(`href="/organisations/${organisationId}"`)
+    expect(new JSDOM(result).window.document.title).toMatch(
+      /^Upload your summary log \(2027\) \|/
     )
   })
 
@@ -2414,6 +2967,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2508,6 +3063,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2536,6 +3093,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: registeredOnlyLedger,
       processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2576,6 +3135,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2607,6 +3168,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2638,6 +3201,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2670,6 +3235,8 @@ describe('summary log check view', () => {
     // loadsByReportingPeriod guard in renderCheckView).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER'
     })
 
@@ -2693,6 +3260,8 @@ describe('summary log check view', () => {
     // than render the page as though the operator were accredited.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: registeredOnlyLedger,
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
         closedPeriodLoads: emptyPeriod()
@@ -2715,6 +3284,8 @@ describe('summary log check view', () => {
   it('uses the new page heading, intro and submit copy', async ({ server }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2027,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2725,7 +3296,10 @@ describe('summary log check view', () => {
     const { main, result } = await renderMain(server)
 
     expect(
-      getByRole(main, 'heading', { level: 1, name: /Upload your summary log/ })
+      getByRole(main, 'heading', {
+        level: 1,
+        name: 'Summary log Upload your summary log (2027)'
+      })
     ).toBeDefined()
     expect(
       getByRole(main, 'button', { name: 'Upload summary log' })
@@ -2747,11 +3321,14 @@ describe('summary log check view', () => {
   })
   /* eslint-enable vitest/max-expects */
 
-  it('renders a submit form and a back link to the upload page', async ({
+  it("renders a submit form and links to the accredited upload page for the summary log's year", async ({
     server
   }) => {
+    mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited2027)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2027,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
@@ -2763,19 +3340,114 @@ describe('summary log check view', () => {
 
     expect(result).toStrictEqual(
       expect.stringContaining(
-        'action="/organisations/123/registrations/456/summary-logs/789/submit"'
+        'action="/organisations/500118/registrations/R26ER5001180041PL/summary-logs/789/submit"'
       )
     )
     expect(result).toStrictEqual(
       expect.stringContaining('govuk-section-break--visible')
     )
 
-    const backLink = getByRole(main, 'button', {
-      name: 'Go back to previous page'
+    const uploadPage =
+      '/organisations/500118/registrations/R26ER5001180041PL/accreditations/2027/summary-logs/upload'
+    expect(
+      getByRole(main, 'button', {
+        name: 'Go back to previous page'
+      }).getAttribute('href')
+    ).toBe(uploadPage)
+    expect(
+      getByRole(main, 'link', { name: 'choose the file again' }).getAttribute(
+        'href'
+      )
+    ).toBe(uploadPage)
+  })
+
+  it("links a registered-only operator to the registered-only upload page for the summary log's year", async ({
+    server
+  }) => {
+    mockFetchRegistrationWithAccreditation.mockResolvedValue(registeredOnly)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: registeredOnlyLedger,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
     })
-    expect(backLink.getAttribute('href')).toBe(
-      '/organisations/123/registrations/456/summary-logs/upload'
-    )
+
+    const { main } = await renderMain(server)
+
+    const uploadPage =
+      '/organisations/500118/registrations/R26ER5001180041PL/2026/summary-logs/upload'
+    expect(
+      getByRole(main, 'button', {
+        name: 'Go back to previous page'
+      }).getAttribute('href')
+    ).toBe(uploadPage)
+    expect(
+      getByRole(main, 'link', { name: 'choose the file again' }).getAttribute(
+        'href'
+      )
+    ).toBe(uploadPage)
+  })
+
+  it.for([
+    { ledger: 'no', ledgerAccreditation: undefined },
+    { ledger: 'an unknown', ledgerAccreditation: unknownLedger }
+  ])(
+    'fails for a summary log with $ledger ledger accreditation',
+    async ({ ledgerAccreditation }, { server }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        year: 2026,
+        ledgerAccreditation,
+        processingType: 'EXPORTER_REGISTERED_ONLY',
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    }
+  )
+
+  it('links a registered-only summary log to the registered-only upload page, even once the registration is accredited for its year', async ({
+    server
+  }) => {
+    mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited2026)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: registeredOnlyLedger,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const uploadPage =
+      '/organisations/500118/registrations/R26ER5001180041PL/2026/summary-logs/upload'
+    expect(
+      getByRole(main, 'button', {
+        name: 'Go back to previous page'
+      }).getAttribute('href')
+    ).toBe(uploadPage)
+    expect(
+      getByRole(main, 'link', { name: 'choose the file again' }).getAttribute(
+        'href'
+      )
+    ).toBe(uploadPage)
   })
 
   it('shows the projected waste balance panel for an accredited operator with a non-zero delta', async ({
@@ -2784,6 +3456,8 @@ describe('summary log check view', () => {
     givenWasteBalance(100)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2810,12 +3484,46 @@ describe('summary log check view', () => {
     expect(result).toStrictEqual(expect.stringContaining('(from 100.00)'))
   })
 
+  it("projects from the balance of the summary log's accreditation", async ({
+    server
+  }) => {
+    mockFetchRegistrationWithAccreditation.mockImplementation(accreditedByYear)
+    mockFetchOrganisationWasteBalances.mockResolvedValue(balancesForBothYears())
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      year: 2027,
+      ledgerAccreditation: accreditedLedger,
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 5, tonnageDelta: 10 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(fetchOrganisationWasteBalances).toHaveBeenCalledWith(
+      accredited2026.organisation.organisationNumber,
+      2027,
+      'test-id-token'
+    )
+    expect(result).toStrictEqual(expect.stringContaining('(from 2,027.00)'))
+  })
+
   it('shows the unchanged projection panel when the net tonnage delta is zero', async ({
     server
   }) => {
     givenWasteBalance(100)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2852,6 +3560,8 @@ describe('summary log check view', () => {
     givenWasteBalance(100)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2893,6 +3603,8 @@ describe('summary log check view', () => {
     givenWasteBalance(100)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: registeredOnlyLedger,
       processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2918,9 +3630,11 @@ describe('summary log check view', () => {
   it('renders the page without the panel when the waste balance is unavailable', async ({
     server
   }) => {
-    // Default mocks: no accreditationId, so no balance can be fetched.
+    // Default mocks: no live accreditation, so no balance can be fetched.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -2952,6 +3666,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3015,6 +3731,8 @@ describe('summary log check view', () => {
     // "never count" heading and lists each row id (never the raw code).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3087,6 +3805,8 @@ describe('summary log check view', () => {
     // by-design Reprocessed section (never-counts heading + its row id listed).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3161,6 +3881,8 @@ describe('summary log check view', () => {
     // (its code is dropped), and the never-counts heading does not appear.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3232,6 +3954,8 @@ describe('summary log check view', () => {
     // behind the "never counts" line.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3287,6 +4011,8 @@ describe('summary log check view', () => {
     // the accredited "never count" line does not appear.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: registeredOnlyLedger,
       processingType: 'REPROCESSOR_REGISTERED_ONLY',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3339,6 +4065,8 @@ describe('summary log check view', () => {
     // ids under the neutral never-counts heading rather than the raw code.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3400,6 +4128,8 @@ describe('summary log check view', () => {
     // canonical summary-log flow order regardless of the order received.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3453,6 +4183,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3516,6 +4248,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3564,6 +4298,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3612,6 +4348,8 @@ describe('summary log check view', () => {
   it('suppresses any reason on an adjusted added load', async ({ server }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'REPROCESSOR_INPUT',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3656,6 +4394,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3701,6 +4441,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: registeredOnlyLedger,
       processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3758,6 +4500,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3801,6 +4545,8 @@ describe('summary log check view', () => {
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3832,6 +4578,8 @@ describe('summary log check view', () => {
   }) => {
     const prnIssuedRow = (wasteRecordType) => ({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       loadsByReportingPeriod: {
         openPeriodLoads: {
           added: {
@@ -3885,12 +4633,10 @@ describe('summary log check view', () => {
   it('renders an unmapped exclusion code verbatim as the reason', async ({
     server
   }) => {
-    // OUTSIDE_ACCREDITATION_PERIOD is filtered out upstream and should never
-    // reach the frontend; if any unmapped code does, the raw backend const is
-    // shown as the reason rather than dropped, so nothing the operator should
-    // see is hidden.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
+      year: 2026,
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: {
@@ -3902,7 +4648,7 @@ describe('summary log check view', () => {
                 {
                   rowId: '6',
                   wasteRecordType: 'exported',
-                  exclusionReasons: ['OUTSIDE_ACCREDITATION_PERIOD'],
+                  exclusionReasons: ['SOME_FUTURE_REASON'],
                   tonnageDelta: 0
                 }
               ]
@@ -3917,9 +4663,7 @@ describe('summary log check view', () => {
     const { main } = await renderMain(server)
 
     // Exact-text match: the raw const is appended after the row id full stop.
-    expect(
-      queryByText(main, 'Row ID: 6. OUTSIDE_ACCREDITATION_PERIOD')
-    ).not.toBeNull()
+    expect(queryByText(main, 'Row ID: 6. SOME_FUTURE_REASON')).not.toBeNull()
   })
 
   // The single source of truth for where an exclusion reason surfaces: on NEW
@@ -3967,6 +4711,8 @@ describe('summary log check view', () => {
         : { added: ZERO_CHANGE, adjusted: group }
     return {
       status: summaryLogStatuses.validated,
+      year: toYear(2026),
+      ledgerAccreditation: accreditedLedger,
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads,
@@ -4020,6 +4766,10 @@ describe('summary log check view', () => {
     exclusionReasons
   ) => ({
     status: summaryLogStatuses.validated,
+    year: toYear(2026),
+    ledgerAccreditation: isRegisteredOnlyProcessingType(processingType)
+      ? registeredOnlyLedger
+      : accreditedLedger,
     processingType,
     loadsByReportingPeriod: {
       openPeriodLoads: {
@@ -4204,7 +4954,9 @@ describe('summary log check view', () => {
       code: 'OUTSIDE_ACCREDITATION_PERIOD',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      expectedBullet: 'Row ID: 5. OUTSIDE_ACCREDITATION_PERIOD'
+      expectedBullet:
+        'Row ID: 5. The load date is outside of the accreditation period, ' +
+        'or the accreditation was suspended or cancelled for that date'
     }
   ]
 
@@ -4253,22 +5005,29 @@ describe('summary log check view', () => {
       'for any relevant period and an approved person from your business ' +
       'will need to resubmit it to your regulator.'
 
-    const periodWithClosedAdjustment = () => ({
-      openPeriodLoads: emptyPeriod(),
-      closedPeriodLoads: {
-        added: ZERO_CHANGE,
-        adjusted: {
-          balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
-          nonBalanceAffecting: { count: 0, rows: [] }
-        }
+    const closedAdjustmentRows = () => ({
+      added: ZERO_CHANGE,
+      adjusted: {
+        balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
+        nonBalanceAffecting: { count: 0, rows: [] }
       }
     })
 
-    it('shows the Important banner when the summary log touches a closed period', async ({
+    const periodWithClosedAdjustment = () => ({
+      openPeriodLoads: emptyPeriod(),
+      closedPeriodLoads: closedAdjustmentRows(),
+      periodsRequiringResubmission: [
+        { year: toYear(2025), cadence: CADENCE.MONTHLY, period: 1 }
+      ]
+    })
+
+    it('shows the Important banner when a closed period requires resubmission', async ({
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        year: 2026,
+        ledgerAccreditation: accreditedLedger,
         processingType: 'EXPORTER',
         loadsByReportingPeriod: periodWithClosedAdjustment()
       })
@@ -4283,6 +5042,8 @@ describe('summary log check view', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        year: 2026,
+        ledgerAccreditation: accreditedLedger,
         processingType: 'EXPORTER',
         loadsByReportingPeriod: {
           openPeriodLoads: {
@@ -4299,6 +5060,54 @@ describe('summary log check view', () => {
       const { main } = await renderMain(server)
 
       expect(queryByText(main, BANNER_BODY)).toBeNull()
+    })
+
+    it('hides the banner but keeps closed-period detail when figures are unchanged', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        year: 2026,
+        ledgerAccreditation: accreditedLedger,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: closedAdjustmentRows(),
+          periodsRequiringResubmission: []
+        }
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(queryByText(main, BANNER_BODY)).toBeNull()
+      expect(
+        queryByRole(main, 'heading', { name: 'Closed periods: adjusted loads' })
+      ).not.toBeNull()
+      expect(
+        queryByText(
+          main,
+          'The adjusted loads will remove 4.00 tonnes from your waste balance.'
+        )
+      ).not.toBeNull()
+    })
+
+    it('shows the banner from closed-period counts when the backend omits periodsRequiringResubmission', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        year: 2026,
+        ledgerAccreditation: accreditedLedger,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: closedAdjustmentRows()
+        }
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(queryByText(main, BANNER_BODY)).not.toBeNull()
     })
   })
 })

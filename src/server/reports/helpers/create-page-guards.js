@@ -1,61 +1,42 @@
 import Boom from '@hapi/boom'
 
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { badImplementation } from '#server/common/helpers/logging/cdp-boom.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { CADENCE } from '../constants.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { CADENCE, SUBMISSION_STATUS } from '../constants.js'
 import { fetchReportDetail } from './fetch-report-detail.js'
 import { formatPeriodLabel, formatPeriodShort } from './format-period-label.js'
+import { reportPath, reportsListPath } from './report-paths.js'
 
 /**
  * Fetches registration/accreditation and report detail, then enforces the
  * registration-type guard (any cadence). Returns validated data for pages
  * available to all matching registrations.
- * @param {(registration: Registration) => boolean} isMatchingRegistration
+ * @param {(registration: RegistrationView) => boolean} isMatchingRegistration
  * @param {HapiRequest & { params: PeriodParams }} request
  * @returns {Promise<{
- *   registration: Registration,
+ *   registration: RegistrationView,
  *   accreditation: Accreditation | undefined,
  *   reportDetail: ReportDetailResponse
  * }>}
  */
 async function fetchGuardedData(isMatchingRegistration, request) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = request.params
-  const session = request.auth.credentials
+  const { organisationNumber, registrationNumber, year } = request.params
+  const { backendToken } = request.auth.credentials
 
-  const [{ registration, accreditation }, reportDetail] = await Promise.all([
-    fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    ),
-    fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      session.idToken
+  const { registration, accreditation } =
+    await fetchRegistrationWithAccreditation(
+      { organisationNumber, registrationNumber, year },
+      backendToken
     )
-  ])
+  const reportDetail = await fetchReportDetail(request.params, backendToken)
 
   if (!isMatchingRegistration(registration)) {
     throw Boom.notFound()
   }
 
-  if (
-    !reportDetail.id ||
-    reportDetail.status?.currentStatus !== 'in_progress'
-  ) {
+  if (reportDetail.status !== SUBMISSION_STATUS.IN_PROGRESS) {
     throw Boom.notFound()
   }
 
@@ -66,11 +47,11 @@ async function fetchGuardedData(isMatchingRegistration, request) {
  * Fetches registration/accreditation and report detail, then enforces the
  * accredited-monthly guard. Returns validated data for pages available
  * only to accredited operators (prn-summary, free-perns/free-prns).
- * @param {(registration: Registration) => boolean} isMatchingRegistration
+ * @param {(registration: RegistrationView) => boolean} isMatchingRegistration
  * @param {string} reportType
  * @param {HapiRequest & { params: PeriodParams }} request
  * @returns {Promise<{
- *   registration: Registration,
+ *   registration: RegistrationView,
  *   accreditation: Accreditation,
  *   reportDetail: ReportDetailResponse
  * }>}
@@ -109,7 +90,7 @@ async function fetchGuardedAccreditedData(
 
 /**
  * @typedef {{
- *   registration: Registration,
+ *   registration: RegistrationView,
  *   accreditation: Accreditation | undefined,
  *   reportDetail: ReportDetailResponse,
  *   material: string,
@@ -168,7 +149,7 @@ async function fetchGuardedAccreditedData(
 /**
  * Fetches guarded data and builds the common view data fields shared by
  * pages. Page-specific fields are merged from the callback return value.
- * @param {(registration: Registration) => boolean} isMatchingRegistration
+ * @param {(registration: RegistrationView) => boolean} isMatchingRegistration
  * @param {string} reportType
  * @param {HapiRequest & { params: PeriodParams }} request
  * @param {(ctx: PageFieldsCtx) => PageFieldsResult} buildPageFields
@@ -182,14 +163,7 @@ async function buildViewData(
   buildPageFields,
   options = {}
 ) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = request.params
+  const { year, cadence, period } = request.params
   const { t: localise } = request
 
   const { registration, accreditation, reportDetail } = options.accreditedOnly
@@ -204,11 +178,10 @@ async function buildViewData(
     throw Boom.notFound()
   }
 
-  const material = getDisplayMaterial(registration)
+  const material = getMaterialDisplayName(registration.material)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const periodShort = formatPeriodShort({ year, period }, cadence, localise)
-  const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-  const periodPath = `${reportsListPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+  const periodPath = reportPath(request.params)
 
   const pageFields = buildPageFields({
     registration,
@@ -218,7 +191,7 @@ async function buildViewData(
     periodLabel,
     periodShort,
     periodPath,
-    reportsListPath,
+    reportsListPath: reportsListPath(request.params),
     period
   })
 
@@ -236,7 +209,7 @@ async function buildViewData(
  * and reprocessor subtrees both consume this factory; the only runtime
  * difference is which registration predicate is used.
  * @param {{
- *   isMatchingRegistration: (registration: Registration) => boolean,
+ *   isMatchingRegistration: (registration: RegistrationView) => boolean,
  *   reportType: string
  * }} options
  */
@@ -257,8 +230,7 @@ export function createPageGuards({ isMatchingRegistration, reportType }) {
 
 /**
  * @import { TFunction } from 'i18next'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './period-params-schema.js'
  * @import { ReportDetailResponse } from './fetch-report-detail.js'

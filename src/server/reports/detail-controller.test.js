@@ -1,6 +1,19 @@
+import { toYear } from '#server/common/helpers/year.js'
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -12,60 +25,50 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 /**
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Organisation } from '#domain/organisations/model.js'
- * @import { Registration } from '#domain/organisations/registration.js'
  * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 const mockAuth = buildMockAuth()
 
-const reprocessorRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
-  registration: /** @type {Registration} */ ({
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'reprocessor',
-    registrationNumber: 'REG001234',
-    site: {
-      address: {
-        line1: 'North Road',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
-      }
-    }
-  }),
-  accreditation: undefined
-}
+const regulatorAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
+  ...sessionIdentity(IDENTITIES.regulator)
+})
+
+const reprocessorView = buildRegistrationView({
+  wasteProcessingType: 'reprocessor',
+  reprocessingType: 'input',
+  site: {
+    address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
+  }
+})
+
+const reprocessorRegistration = buildRegistrationWithAccreditation({
+  organisation: { name: 'Acme Recycling Ltd' },
+  registration: { ...reprocessorView, accreditations: {} }
+})
 
 /** @type {ReportDetailResponse} */
 const reprocessorReportDetail = {
-  operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
+  status: 'not_started',
+  submissionNumber: 1,
+  canRequestResubmission: false,
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
   dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: {
-    material: 'plastic',
-    site: {
-      address: {
-        line1: 'North Road',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
-      }
-    }
-  },
   recyclingActivity: {
     totalTonnageReceived: 80.25,
     suppliers: [
@@ -106,24 +109,15 @@ const reprocessorReportDetail = {
 
 /** @type {ReportDetailResponse} */
 const emptyReportDetail = {
-  operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
+  status: 'not_started',
+  submissionNumber: 1,
+  canRequestResubmission: false,
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
   dueDate: '2026-05-31',
-  source: { summaryLogId: null, lastUploadedAt: null },
-  details: {
-    material: 'plastic',
-    site: {
-      address: {
-        line1: 'North Road',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
-      }
-    }
-  },
   recyclingActivity: {
     totalTonnageReceived: 0,
     suppliers: [],
@@ -138,49 +132,30 @@ const emptyReportDetail = {
   }
 }
 
-const accreditedReprocessorRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
-  registration: /** @type {Registration} */ ({
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'reprocessor',
-    registrationNumber: 'REG001234',
-    accreditationId: 'acc-001',
-    site: {
-      address: {
-        line1: 'North Road',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
-      }
+const accreditedReprocessorRegistration = buildRegistrationWithAccreditation({
+  organisation: { name: 'Acme Recycling Ltd' },
+  registration: {
+    ...reprocessorView,
+    accreditations: {
+      2026: buildAccreditationView({
+        accreditationNumber: toAccreditationNumber('ER992415095748M')
+      })
     }
-  }),
-  accreditation: /** @type {Accreditation} */ ({
-    id: 'acc-001',
-    accreditationNumber: 'ER992415095748M',
-    status: 'approved'
-  })
-}
+  }
+})
 
 /** @type {ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
-  operatorCategory: 'REPROCESSOR',
+  status: 'not_started',
+  submissionNumber: 1,
+  canRequestResubmission: false,
   cadence: 'monthly',
-  year: 2026,
+  year: toYear(2026),
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
   dueDate: '2026-04-30',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: {
-    material: 'plastic',
-    site: {
-      address: {
-        line1: 'North Road',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
-      }
-    }
-  },
   recyclingActivity: {
     totalTonnageReceived: 80.25,
     suppliers: [
@@ -219,30 +194,22 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
-const exporterRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-456' }),
-  registration: /** @type {Registration} */ ({
-    id: 'reg-002',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG002345'
-  }),
-  accreditation: undefined
-}
+const exporterRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
+})
 
 /** @type {ReportDetailResponse} */
 const exporterReportDetail = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+  status: 'not_started',
+  submissionNumber: 1,
+  canRequestResubmission: false,
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
   dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: {
-    material: 'plastic'
-  },
   recyclingActivity: {
     totalTonnageReceived: 80.25,
     suppliers: [
@@ -308,15 +275,16 @@ const exporterReportDetail = {
 
 /** @type {ReportDetailResponse} */
 const exporterWithUnapprovedReportDetail = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+  status: 'not_started',
+  submissionNumber: 1,
+  canRequestResubmission: false,
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
   dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: { material: 'plastic' },
   recyclingActivity: {
     totalTonnageReceived: 80.25,
     suppliers: [],
@@ -354,17 +322,15 @@ const exporterWithUnapprovedReportDetail = {
 
 /** @type {ReportDetailResponse} */
 const emptyExporterReportDetail = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+  status: 'not_started',
+  submissionNumber: 1,
+  canRequestResubmission: false,
   cadence: 'quarterly',
-  year: 2026,
+  year: toYear(2026),
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
   dueDate: '2026-05-31',
-  source: { summaryLogId: null, lastUploadedAt: null },
-  details: {
-    material: 'plastic'
-  },
   recyclingActivity: {
     totalTonnageReceived: 0,
     suppliers: [],
@@ -390,41 +356,34 @@ const emptyExporterReportDetail = {
 }
 
 const detailUrl =
-  '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1'
+  '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1'
 const exporterDetailUrl =
-  '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1'
+  '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1'
 const accreditedDetailUrl =
-  '/organisations/org-123/registrations/reg-001/reports/2026/monthly/2/submissions/1'
+  '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/2/submissions/1'
 
-const accreditedExporterRegistration = {
-  organisationData: /** @type {Organisation} */ ({ id: 'org-789' }),
-  registration: /** @type {Registration} */ ({
-    id: 'reg-003',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG003456',
-    accreditationId: 'acc-002'
-  }),
-  accreditation: /** @type {Accreditation} */ ({
-    id: 'acc-002',
-    accreditationNumber: 'EE992415095748M',
-    status: 'approved'
+const accreditedExporterRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
+    accreditations: {
+      2026: buildAccreditationView({
+        accreditationNumber: toAccreditationNumber('EE992415095748M')
+      })
+    }
   })
-}
+})
 
 /** @type {ReportDetailResponse} */
 const accreditedExporterReportDetail = {
-  operatorCategory: 'EXPORTER',
+  status: 'not_started',
+  submissionNumber: 1,
+  canRequestResubmission: false,
   cadence: 'monthly',
-  year: 2026,
+  year: toYear(2026),
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
   dueDate: '2026-04-30',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: {
-    material: 'plastic'
-  },
   recyclingActivity: {
     totalTonnageReceived: 80.25,
     suppliers: [],
@@ -472,7 +431,7 @@ const accreditedExporterReportDetail = {
 }
 
 const accreditedExporterDetailUrl =
-  '/organisations/org-789/registrations/reg-003/reports/2026/monthly/2/submissions/1'
+  '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/2/submissions/1'
 
 describe('#detailReportsController', () => {
   beforeEach(() => {
@@ -481,7 +440,7 @@ describe('#detailReportsController', () => {
 
   describe('for registered-only reprocessor with data', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(reprocessorReportDetail)
@@ -559,7 +518,7 @@ describe('#detailReportsController', () => {
 
       expect(backLink).not.toBeNull()
       expect(backLink?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
       )
     })
 
@@ -594,25 +553,6 @@ describe('#detailReportsController', () => {
       )
     })
 
-    it('should display upload new summary log button', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: detailUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const link = body.querySelector('a[href*="summary-logs/upload"]')
-
-      expect(link).not.toBeNull()
-      expect(link?.textContent).toContain('Upload new summary log')
-      expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/summary-logs/upload'
-      )
-    })
-
     it('should display cancel and return to reports link', async ({
       server
     }) => {
@@ -632,7 +572,7 @@ describe('#detailReportsController', () => {
 
       expect(link).not.toBeNull()
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
       )
     })
 
@@ -662,7 +602,7 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain('Registration:')
-      expect(body.textContent).toContain('REG001234')
+      expect(body.textContent).toContain('R25SR500030912PA')
     })
 
     it('should display details heading', async ({ server }) => {
@@ -971,7 +911,7 @@ describe('#detailReportsController', () => {
 
   describe('when no records match the period', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(emptyReportDetail)
@@ -1008,7 +948,7 @@ describe('#detailReportsController', () => {
 
   describe('for accredited reprocessor with data', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedReprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -1142,7 +1082,7 @@ describe('#detailReportsController', () => {
 
   describe('for registered-only exporter with data', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
@@ -1182,7 +1122,7 @@ describe('#detailReportsController', () => {
         getByRole(body, 'heading', { name: /Details/, level: 2 })
       ).toBeDefined()
       expect(body.textContent).toContain('Registration:')
-      expect(body.textContent).toContain('REG002345')
+      expect(body.textContent).toContain('R25SR500030912PA')
     })
 
     it('should display waste received for export heading', async ({
@@ -1396,7 +1336,7 @@ describe('#detailReportsController', () => {
 
   describe('for registered-only exporter with unapproved overseas sites', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -1482,7 +1422,7 @@ describe('#detailReportsController', () => {
 
   describe('for registered-only exporter with no data', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(emptyExporterReportDetail)
@@ -1559,7 +1499,7 @@ describe('#detailReportsController', () => {
 
   describe('for accredited exporter with data', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedExporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -1801,24 +1741,51 @@ describe('#detailReportsController', () => {
     })
   })
 
+  describe('when the summary log has incomplete mandatory data', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        exporterRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue({
+        ...emptyExporterReportDetail,
+        incompleteSummaryLogRows: {
+          total: 2,
+          issues: [
+            { sheet: 'Exported', rowId: '1001', field: 'SUPPLIER_NAME' },
+            { sheet: 'Sent on', rowId: '4001', field: 'FINAL_DESTINATION_NAME' }
+          ]
+        }
+      })
+    })
+
+    it('redirects to the report-data-incomplete screen instead of the preview', async ({
+      server
+    }) => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: exporterDetailUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(
+        `${exporterDetailUrl}/report-data-incomplete`
+      )
+    })
+  })
+
   describe('when report already exists', () => {
     it('should redirect to reports landing page instead of rendering', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...reprocessorReportDetail,
-        id: 'report-existing-001',
-        status: {
-          currentStatus: 'in_progress',
-          currentStatusAt: '2026-02-10T09:00:00.000Z',
-          created: {
-            at: '2026-02-10T09:00:00.000Z',
-            by: { id: 'user-1', name: 'Test User', position: 'Manager' }
-          }
-        }
+        status: 'in_progress',
+        createdAt: '2026-02-10T09:00:00.000Z',
+        createdBy: { name: 'Test User', position: 'Manager' }
       })
 
       const { statusCode, headers } = await server.inject({
@@ -1829,7 +1796,7 @@ describe('#detailReportsController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports'
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
       )
     })
   })
@@ -1838,13 +1805,13 @@ describe('#detailReportsController', () => {
     it('should return 404 when accredited registration uses quarterly cadence', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedReprocessorRegistration
       )
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1',
+        url: '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/1/submissions/1',
         auth: mockAuth
       })
 
@@ -1854,13 +1821,13 @@ describe('#detailReportsController', () => {
     it('should return 404 when registered-only registration uses monthly cadence', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1',
+        url: '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/1/submissions/1',
         auth: mockAuth
       })
 
@@ -1870,7 +1837,7 @@ describe('#detailReportsController', () => {
 
   describe('error handling', () => {
     it('should return 404 when registration not found', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockRejectedValue(
         Boom.notFound('Registration not found')
       )
 
@@ -1883,10 +1850,27 @@ describe('#detailReportsController', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
+    it('should return 404 when the backend has no accredited period for that year', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        accreditedReprocessorRegistration
+      )
+      vi.mocked(fetchReportDetail).mockRejectedValue(Boom.notFound())
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: accreditedDetailUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
     it('should return 400 for non-numeric year', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-001/reports/invalid/monthly/1/submissions/1',
+        url: '/organisations/500001/registrations/R25SR500030912PA/accreditations/invalid/reports/monthly/1/submissions/1',
         auth: mockAuth
       })
 
@@ -1896,11 +1880,110 @@ describe('#detailReportsController', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-001/reports/2026/biweekly/1/submissions/1',
+        url: '/organisations/500001/registrations/R25SR500030912PA/reports/2026/biweekly/1/submissions/1',
         auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
+    })
+  })
+
+  describe('the route back', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        accreditedReprocessorRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        accreditedReprocessorReportDetail
+      )
+    })
+
+    afterEach(() => {
+      config.set('featureFlags.regulatorAccess', false)
+    })
+
+    const loadBody = async (server, auth) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedDetailUrl,
+        auth
+      })
+
+      return new JSDOM(result).window.document.body
+    }
+
+    it('offers an operator a back link and no trail', async ({ server }) => {
+      const body = await loadBody(server, mockAuth)
+
+      expect(body.querySelector('.govuk-breadcrumbs')).toBeNull()
+      expect(body.querySelector('.govuk-back-link')).not.toBeNull()
+    })
+
+    it('walks a regulator back up through the accreditation', async ({
+      server
+    }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const body = await loadBody(server, regulatorAuth)
+
+      expect(
+        Array.from(body.querySelectorAll('.govuk-breadcrumbs__link')).map(
+          (link) => link.getAttribute('href')
+        )
+      ).toStrictEqual([
+        '/regulators/home',
+        '/organisations/500001',
+        '/organisations/500001/registrations/R25SR500030912PA',
+        '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
+      ])
+    })
+
+    it('takes the back link away from a regulator', async ({ server }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const body = await loadBody(server, regulatorAuth)
+
+      expect(body.querySelector('.govuk-back-link')).toBeNull()
+    })
+
+    it('keeps the cancel-and-return link for both audiences', async ({
+      server
+    }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const body = await loadBody(server, regulatorAuth)
+
+      expect(
+        getByRole(body, 'link', { name: /Cancel/ }).getAttribute('href')
+      ).toBe(
+        '/organisations/500001/registrations/R25SR500030912PA/reports/2026'
+      )
+    })
+  })
+
+  describe('the year it reads', () => {
+    it("asks for the accreditation of the report's year", async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        reprocessorRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(reprocessorReportDetail)
+
+      await server.inject({
+        method: 'GET',
+        url: detailUrl.replace('/2026/', '/2027/'),
+        auth: mockAuth
+      })
+
+      expect(fetchRegistrationWithAccreditation).toHaveBeenCalledWith(
+        {
+          organisationNumber: '500001',
+          registrationNumber: 'R25SR500030912PA',
+          year: 2027
+        },
+        'mock-backend-token'
+      )
     })
   })
 })

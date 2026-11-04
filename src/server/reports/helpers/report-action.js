@@ -2,8 +2,7 @@ import { SUBMISSION_STATUS } from '../constants.js'
 import { getInProgressActionPath } from './get-in-progress-action-path.js'
 
 /**
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue, SubmissionStatusValue } from '../constants.js'
  * @import { ReportingPeriod } from './fetch-reporting-periods.js'
  */
@@ -38,6 +37,29 @@ const ACTION_BY_STATUS = {
   [SUBMISSION_STATUS.REQUIRES_RESUBMISSION]:
     REPORT_ACTION.REVIEW_AND_CREATE_DRAFT
 }
+
+/**
+ * Whether an action only reads. Every other action opens a journey that changes
+ * the operator's data, so a session holding no write scope is offered no link
+ * for that row rather than a link into a page it cannot use.
+ *
+ * Exhaustive by ReportActionValue, so a new action is a type error until
+ * somebody decides which side of the line it falls.
+ * @type {Record<ReportActionValue, boolean>}
+ */
+const ACTION_READS = {
+  [REPORT_ACTION.CREATE_DRAFT]: false,
+  [REPORT_ACTION.CONTINUE]: false,
+  [REPORT_ACTION.REVIEW_AND_SUBMIT]: false,
+  [REPORT_ACTION.VIEW]: true,
+  [REPORT_ACTION.REVIEW_AND_CREATE_DRAFT]: false
+}
+
+/**
+ * @param {ReportActionValue} action
+ * @returns {boolean}
+ */
+export const actionReads = (action) => ACTION_READS[action]
 
 /** @type {Record<ReportActionValue, string>} */
 const actionLabelKeys = {
@@ -90,7 +112,7 @@ export const getActionLabel = (action, localise) =>
  * path. Continue varies by registration type, accreditation and cadence; the
  * others are fixed, and create-draft has no destination yet.
  * @param {ReportActionValue} action
- * @param {Pick<Registration, 'wasteProcessingType'>} registration
+ * @param {Pick<RegistrationView, 'wasteProcessingType'>} registration
  * @param {Accreditation | undefined} accreditation
  * @param {CadenceValue} cadence
  * @returns {string}

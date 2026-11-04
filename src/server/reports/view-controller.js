@@ -1,8 +1,9 @@
 import Boom from '@hapi/boom'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
   buildPrnSummaryViewData,
@@ -11,25 +12,27 @@ import {
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
   isReprocessorRegistration
 } from '#server/common/helpers/prns/registration-helpers.js'
+import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
 /** @import { SubmissionStatusValue } from './constants.js' */
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Localise } from './helpers/format-period-label.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
- * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'
+ * @import { ReportDetailResponse, ReportPerson } from './helpers/fetch-report-detail.js'
  */
 
 /**
@@ -87,7 +90,7 @@ function buildPageLabels({
  *   statusTag: string,
  *   statusTagClass: string,
  *   authorLabel: string,
- *   authorValue: string,
+ *   authorValue: string | undefined,
  *   dateLabel: string,
  *   dateValue: string
  * }} StatusDetails
@@ -101,9 +104,11 @@ function buildPageLabels({
  */
 function buildStatusDetails(reportDetail, status, localise) {
   const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
-  const statusEntry =
-    /** @type {NonNullable<ReportDetailResponse['status']>['created']} */
-    (isDraft ? reportDetail.status?.created : reportDetail.status?.submitted)
+  const { at, by } = /** @type {{ at: string, by: ReportPerson }} */ (
+    isDraft
+      ? { at: reportDetail.createdAt, by: reportDetail.createdBy }
+      : { at: reportDetail.submittedAt, by: reportDetail.submittedBy }
+  )
   const labelPrefix = isDraft ? 'created' : 'submitted'
 
   return {
@@ -112,11 +117,11 @@ function buildStatusDetails(reportDetail, status, localise) {
     ),
     statusTagClass: isDraft ? 'govuk-tag--blue' : 'govuk-tag--green',
     authorLabel: localise(`reports:view:${labelPrefix}ByLabel`),
-    authorValue: statusEntry.by.name,
+    authorValue: by.name,
     dateLabel: localise(`reports:view:${labelPrefix}OnLabel`),
     dateValue: localise(`reports:view:${labelPrefix}OnValue`, {
-      date: formatDate(statusEntry.at),
-      time: formatTime(statusEntry.at)
+      date: formatDate(at),
+      time: formatTime(at)
     })
   }
 }
@@ -131,7 +136,7 @@ function buildStatusDetails(reportDetail, status, localise) {
  */
 
 /**
- * @param {Registration} registration
+ * @param {RegistrationView} registration
  * @param {Accreditation | undefined} accreditation
  * @returns {RegistrationFlags}
  */
@@ -238,7 +243,7 @@ function buildViewData({
   localise
 }) {
   const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
-  const material = getDisplayMaterial(registration)
+  const material = getMaterialDisplayName(registration.material)
   const periodLabel = formatPeriodLabelWithComma(
     { year, period },
     cadence,
@@ -264,7 +269,7 @@ function buildViewData({
 
     material,
     periodLabel,
-    site: registration.site?.address?.line1,
+    site: siteNameOf(registration),
 
     ...buildActivityViewData({
       reportDetail,
@@ -303,35 +308,22 @@ export const viewGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { organisationNumber, registrationNumber, year, cadence, period } =
+      request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration, accreditation }, reportDetail] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      ),
-      fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        session.idToken
+    const { organisation, registration, accreditation } =
+      await fetchRegistrationWithAccreditation(
+        { organisationNumber, registrationNumber, year },
+        session.backendToken
       )
-    ])
+    const reportDetail = await fetchReportDetail(
+      request.params,
+      session.backendToken
+    )
 
-    const currentStatus = reportDetail.status?.currentStatus
+    const currentStatus = reportDetail.status
     if (
       currentStatus !== SUBMISSION_STATUS.SUBMITTED &&
       currentStatus !== SUBMISSION_STATUS.READY_TO_SUBMIT
@@ -339,15 +331,18 @@ export const viewGetController = {
       throw Boom.notFound()
     }
 
-    const reportsPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-    const backUrl = request.localiseUrl(reportsPath)
+    const reportsPath = reportsListPath(request.params)
     const reportsUrl = request.localiseUrl(reportsPath)
-    const periodPath = `${reportsPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
-    const makeChangesUrl = request.localiseUrl(`${periodPath}/make-changes`)
+    const isRegulator = readsAsARegulator(session)
+    // A regulator walks the trail back instead, so the page offers them no
+    // back link. An operator reads a report from their own list and keeps one.
+    const backUrl = isRegulator ? null : reportsUrl
+    const makeChangesUrl = request.localiseUrl(
+      `${reportPath(request.params)}/make-changes`
+    )
 
-    return h.view(
-      'reports/view',
-      buildViewData({
+    return h.view('reports/view', {
+      ...buildViewData({
         registration,
         accreditation,
         reportDetail,
@@ -359,7 +354,19 @@ export const viewGetController = {
         reportsUrl,
         makeChangesUrl,
         localise
-      })
-    )
+      }),
+      breadcrumbs: isRegulator
+        ? buildReportBreadcrumbs({
+            organisation,
+            registration,
+            keys: request.params,
+            pageName: localise('reports:view:pageTitle'),
+            year,
+            cadence,
+            localise,
+            localiseUrl: request.localiseUrl.bind(request)
+          })
+        : []
+    })
   }
 }

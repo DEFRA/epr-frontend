@@ -1,23 +1,33 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+
+import { reportsCalendarApiPath } from './report-paths.js'
 
 /**
- * Fetches available reporting periods for a registration from the backend.
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {string} idToken
- * @returns {Promise<ReportingPeriodsResponse>}
+ * Fetches a registration's reporting calendar for one year by its natural keys.
+ * @param {RegistrationYearKeys} keys
+ * @param {BackendToken} backendToken
+ * @returns {Promise<YearCalendarResponse>}
  */
-export async function fetchReportingPeriods(
-  organisationId,
-  registrationId,
-  idToken
-) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/calendar`
+export const fetchYearCalendar = (keys, backendToken) =>
+  backend(backendToken).get(reportsCalendarApiPath(keys))
 
-  return fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${idToken}` }
-  })
+/**
+ * Fetches a registration's registered-only and accredited periods for one year
+ * as one list, in date order, as a registration that changed type mid-year owes
+ * both.
+ * @param {RegistrationYearKeys} keys
+ * @param {BackendToken} backendToken
+ * @returns {Promise<ReportingPeriod[]>}
+ */
+export const fetchReportingPeriods = async (keys, backendToken) => {
+  const { registeredOnly, accredited } = await fetchYearCalendar(
+    keys,
+    backendToken
+  )
+  return [
+    ...(registeredOnly?.reportingPeriods ?? []),
+    ...(accredited?.reportingPeriods ?? [])
+  ].sort((a, b) => a.startDate.localeCompare(b.startDate))
 }
 
 /**
@@ -35,7 +45,8 @@ export async function fetchReportingPeriods(
 
 /**
  * @typedef {{
- *   year: number,
+ *   year: Year,
+ *   cadence: CadenceValue,
  *   period: number,
  *   submissionNumber: number,
  *   startDate: string,
@@ -47,12 +58,22 @@ export async function fetchReportingPeriods(
  */
 
 /**
+ * Each kind is absent when the registration has no ended period of it in the
+ * year.
  * @typedef {{
- *   cadence: CadenceValue,
- *   reportingPeriods: ReportingPeriod[]
- * }} ReportingPeriodsResponse
+ *   year: Year,
+ *   registeredOnly?: { reportingPeriods: ReportingPeriod[] },
+ *   accredited?: {
+ *     accreditationNumber: AccreditationNumber,
+ *     reportingPeriods: ReportingPeriod[]
+ *   }
+ * }} YearCalendarResponse
  */
 
 /**
  * @import { CadenceValue, SubmissionStatusValue } from '../constants.js'
+ * @import { RegistrationYearKeys } from './report-paths.js'
+ * @import { Year } from '#server/common/helpers/year.js'
+ * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  */

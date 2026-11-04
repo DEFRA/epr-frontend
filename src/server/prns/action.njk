@@ -5,6 +5,14 @@
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
+{% macro deleteWarningButton(deleteButton) %}
+  {{ govukButton({
+    text: deleteButton.text,
+    href: deleteButton.href,
+    classes: "govuk-button--warning"
+  }) }}
+{% endmacro %}
+
 {% block beforeContent %}
   {% if backUrl %}
     {{ govukBackLink({
@@ -50,7 +58,7 @@
       rows: accreditationRows
     }) }}
 
-    {% if issueButton %}
+    {% if issueButton and hasWriteScope %}
       <form method="POST" action="{{ issueButton.action }}" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
@@ -61,17 +69,15 @@
           }) }}
 
           {% if deleteButton %}
-            {{ govukButton({
-              text: deleteButton.text,
-              href: deleteButton.href,
-              classes: "govuk-button--warning"
-            }) }}
+            {{ deleteWarningButton(deleteButton) }}
           {% endif %}
         </div>
       </form>
+    {% elif deleteButton and hasWriteScope %}
+      {{ deleteWarningButton(deleteButton) }}
     {% endif %}
 
-    {% if cancelButton %}
+    {% if cancelButton and hasWriteScope %}
       {{ govukButton({
         text: cancelButton.text,
         href: cancelButton.href,

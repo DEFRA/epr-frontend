@@ -1,24 +1,47 @@
-import { isNil } from '#server/common/helpers/is-nil.js'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
   badImplementation,
   classifierTail
 } from '#server/common/helpers/logging/cdp-boom.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { availableForPool } from '#server/common/helpers/waste-balance/available-for-pool.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
+import {
+  closedYearSendsTo,
+  isClosedYearRefusal,
+  isYearOpen
+} from './helpers/closed-year.js'
 import {
   buildPrnCoreRows,
   buildPrnIssuerRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
-import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
+import { buildNoteBreadcrumbs } from './helpers/build-note-breadcrumbs.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
+import { noteReturn } from './helpers/note-return-path.js'
+import { prnsPath } from './helpers/prn-resource.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+
+/**
+ * @typedef {{ keys: AccreditationKeys, prnId: string, prnDraft: PrnDraftSession }} DraftParams
+ */
+
+/** @type {Record<'PRN' | 'PERN', string>} */
+const COMPLIANCE_YEAR_TEXT_KEY = {
+  PRN: 'prns:view:complianceYearTextPrn',
+  PERN: 'prns:view:complianceYearTextPern'
+}
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
@@ -27,8 +50,8 @@ export const viewController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
+    const keys = toAccreditationKeys(request.params)
+    const { prnId } = request.params
     const { t: localise } = request
     const session = request.auth.credentials
 
@@ -38,25 +61,11 @@ export const viewController = {
 
     if (prnDraft?.id === prnId) {
       // Creation flow - show check page with draft data
-      return handleDraftView(h, {
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnDraft,
-        localise,
-        session
-      })
+      return handleDraftView(h, { keys, prnDraft, localise, session })
     }
 
     // View existing PRN - fetch from backend
-    return handleExistingView(request, h, {
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      localise,
-      session
-    })
+    return handleExistingView(request, h, { keys, prnId, localise, session })
   }
 }
 
@@ -67,82 +76,55 @@ export const viewPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
-    const session = request.auth.credentials
+    const keys = toAccreditationKeys(request.params)
+    const { prnId } = request.params
+    const { backendToken } = request.auth.credentials
 
-    // Retrieve draft PRN data from session
     /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
 
     if (prnDraft?.id !== prnId) {
-      // No draft in session or ID mismatch - redirect to create page
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
-      )
+      return h.redirect(`${prnsPath(keys)}/create`)
     }
 
     try {
-      // Re-validate tonnage against Available Waste Balance before confirming
-      const wasteBalanceMap = await fetchWasteBalances(
-        organisationId,
-        [accreditationId],
-        session.idToken
-      )
-      const wasteBalance = wasteBalanceMap[accreditationId]
-      const availableAmount = wasteBalance?.availableAmount ?? 0
+      const [{ accreditation }, eligibility] = await Promise.all([
+        fetchRequiredAccreditation(keys, backendToken),
+        fetchDecemberPrnEligibility(keys, backendToken)
+      ])
 
-      if (prnDraft.tonnage > availableAmount) {
-        // Tonnage exceeds available balance - cancel draft and redirect with error
-        request.logger.warn({
-          message: 'PRN tonnage exceeds available waste balance',
-          event: {
-            action: 'prn_tonnage_exceeds_balance',
-            reference: prnId,
-            reason: `tonnage=${prnDraft.tonnage} availableAmount=${availableAmount}`
-          }
-        })
-
-        await updatePrnStatus(
-          organisationId,
-          registrationId,
-          accreditationId,
-          prnId,
-          { status: 'discarded' },
-          session.idToken
-        )
-
-        request.yar.clear('prnDraft')
-
-        return h.redirect(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create?error=insufficient_balance`
-        )
+      if (!isYearOpen(accreditation)) {
+        return h.redirect(closedYearSendsTo.note(request.params))
       }
 
-      // Update PRN status from draft to awaiting_authorisation
-      const result = await updatePrnStatus(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        { status: 'awaiting_authorisation' },
-        session.idToken
+      // A failed read fails the confirmation, so an outage never discards a draft
+      const balances = await fetchOrganisationWasteBalances(
+        keys.organisationNumber,
+        keys.year,
+        backendToken
       )
-
-      // Clear draft and store for created page
-      request.yar.clear('prnDraft')
-      request.yar.set('prnCreated', {
-        id: result.id,
-        tonnage: result.tonnage,
-        material: result.material,
-        status: result.status,
-        wasteProcessingType: prnDraft.wasteProcessingType
-      })
-
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+      const balance = balances[accreditation.accreditationNumber] ?? {
+        amount: 0,
+        availableAmount: 0
+      }
+      const availableAmount = availableForPool(
+        balance,
+        prnDraft.isDecemberWaste &&
+          eligibility.mode === DECEMBER_WASTE_CONTROL.selectPool
       )
+      const draftParams = { keys, prnId, prnDraft }
+
+      return await (prnDraft.tonnage > availableAmount
+        ? discardDraftOverBalance(request, h, {
+            ...draftParams,
+            availableAmount
+          })
+        : confirmDraft(request, h, draftParams))
     } catch (error) {
+      if (isClosedYearRefusal(error)) {
+        return h.redirect(closedYearSendsTo.note(request.params))
+      }
+
       if (error.isBoom) {
         throw error
       }
@@ -162,77 +144,121 @@ export const viewPostController = {
 }
 
 /**
+ * Discards a draft whose tonnage no longer fits the available waste balance.
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {DraftParams & { availableAmount: number }} params
+ */
+const discardDraftOverBalance = async (
+  request,
+  h,
+  { keys, prnId, availableAmount, prnDraft }
+) => {
+  request.logger.warn({
+    message: 'PRN tonnage exceeds available waste balance',
+    event: {
+      action: 'prn_tonnage_exceeds_balance',
+      reference: prnId,
+      reason: `tonnage=${prnDraft.tonnage} availableAmount=${availableAmount}`
+    }
+  })
+
+  await updatePrnStatus(
+    keys,
+    prnId,
+    { status: 'discarded' },
+    request.auth.credentials.backendToken
+  )
+
+  request.yar.clear('prnDraft')
+
+  const poolParam = prnDraft.isDecemberWaste ? '&pool=december' : ''
+
+  return h.redirect(
+    `${prnsPath(keys)}/create?error=insufficient_balance${poolParam}`
+  )
+}
+
+/**
+ * Moves a draft to awaiting authorisation, ending the create journey.
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {DraftParams} params
+ */
+const confirmDraft = async (request, h, { keys, prnId, prnDraft }) => {
+  const result = await updatePrnStatus(
+    keys,
+    prnId,
+    { status: 'awaiting_authorisation' },
+    request.auth.credentials.backendToken
+  )
+
+  request.yar.clear('prnDraft')
+  request.yar.set('prnCreated', {
+    id: result.id,
+    tonnage: result.tonnage,
+    material: result.material,
+    status: result.status,
+    wasteProcessingType: prnDraft.wasteProcessingType,
+    isDecemberWaste: prnDraft.isDecemberWaste
+  })
+
+  await metrics.journey.end(request, JOURNEY.createPrn, prnsPath(keys))
+
+  return h.redirect(`${prnsPath(keys)}/${prnId}/created`)
+}
+
+/**
  * Handle viewing a draft PRN (creation flow)
  * @param {ResponseToolkit} h
  * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string,
+ *   keys: AccreditationKeys,
  *   prnDraft: PrnDraftSession,
  *   localise: TFunction,
  *   session: UserSession
  * }} params
  */
-async function handleDraftView(
-  h,
-  {
-    organisationId,
-    registrationId,
-    accreditationId,
-    prnDraft,
-    localise,
-    session
-  }
-) {
-  const { organisationData, registration, accreditation } =
-    await getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      idToken: session.idToken,
-      accreditationId
-    })
+async function handleDraftView(h, { keys, prnDraft, localise, session }) {
+  const { organisation, registration, accreditation } =
+    await fetchRequiredAccreditation(keys, session.backendToken)
 
-  const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
+  const { noteType } = getNoteTypeDisplayNames(registration)
 
-  const displayMaterial = getDisplayMaterial(registration)
+  const displayMaterial = getMaterialDisplayName(registration.material)
 
   const prnDetailRows = buildDraftPrnDetailRows({
     prnDraft,
     localise,
-    organisationData
+    organisation
   })
 
   const accreditationRows = buildAccreditationRows({
     registration,
     accreditation,
     displayMaterial,
-    localise,
-    isExporter
+    localise
   })
 
   return h.view('prns/view', {
-    pageTitle: localise('prns:create:checkPageTitle', { noteType }),
-    caption: localise('prns:create:caption', { noteType }),
-    heading: localise('prns:create:checkHeading', { noteType }),
-    introText: localise('prns:create:checkIntroText', { noteType }),
+    accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
+    accreditationRows,
     authorisationText: localise('prns:create:checkAuthorisationText', {
       noteType
     }),
-    insetText: localise('prns:create:checkInsetText', { noteType }),
-    prnDetailsHeading: localise('prns:details:heading', { noteType }),
-    prnDetailRows,
-    accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
-    accreditationRows,
-    createButton: {
-      text: localise('prns:create:createButton', { noteType })
-    },
+    caption: localise('prns:create:caption', { noteType }),
+    createButton: isYearOpen(accreditation)
+      ? { text: localise('prns:create:createButton', { noteType }) }
+      : null,
     discardLink: {
-      text: localise('prns:create:discardLink'),
-      href: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnDraft.id}/discard`
+      href: `${prnsPath(keys)}/${prnDraft.id}/discard`,
+      text: localise('prns:create:discardLink')
     },
-    organisationId,
-    registrationId,
-    accreditationId
+    heading: localise('prns:create:checkHeading', { noteType }),
+    insetText: localise('prns:create:checkInsetText', { noteType }),
+    introText: localise('prns:create:checkIntroText', { noteType }),
+    pageTitle: localise('prns:create:checkPageTitle', { noteType }),
+    prnDetailRows,
+    prnDetailsHeading: localise('prns:details:heading', { noteType })
   })
 }
 
@@ -241,9 +267,7 @@ async function handleDraftView(
  * @param {HapiRequest} request
  * @param {ResponseToolkit} h
  * @param {{
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string,
+ *   keys: AccreditationKeys,
  *   prnId: string,
  *   localise: TFunction,
  *   session: UserSession
@@ -252,38 +276,43 @@ async function handleDraftView(
 async function handleExistingView(
   request,
   h,
-  { organisationId, registrationId, accreditationId, prnId, localise, session }
+  { keys, prnId, localise, session }
 ) {
   // Fetch PRN and registration data from backend
-  const [{ organisationData, registration, accreditation }, prn] =
+  const [{ organisation, registration, accreditation }, prn] =
     await Promise.all([
-      getRequiredRegistrationWithAccreditation({
-        organisationId,
-        registrationId,
-        idToken: session.idToken,
-        accreditationId
-      }),
-      fetchPackagingRecyclingNote(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        session.idToken
-      )
+      fetchRequiredAccreditation(keys, session.backendToken),
+      fetchPackagingRecyclingNote(keys, prnId, session.backendToken)
     ])
 
   const recipientDisplayName = getIssuedToOrgDisplayName(
     prn.issuedToOrganisation
   )
 
-  const { isExporter, noteType, noteTypeFull, wasteAction } =
+  const { noteType, noteTypeFull, noteTypePlural } =
     getNoteTypeDisplayNames(registration)
 
-  const backUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-  )
+  const isRegulator = readsAsARegulator(session)
 
-  const displayMaterial = getDisplayMaterial(registration)
+  const back = noteReturn(keys)
+
+  // A regulator walks the trail back instead, so the page offers them neither
+  // the back link nor the return link. An operator reads a note from their own
+  // list and keeps both.
+  const backUrl = isRegulator ? null : request.localiseUrl(back.path)
+
+  const breadcrumbs = isRegulator
+    ? buildNoteBreadcrumbs({
+        organisation,
+        keys,
+        noteTypePlural,
+        prn,
+        localise,
+        localiseUrl: request.localiseUrl.bind(request)
+      })
+    : []
+
+  const displayMaterial = getMaterialDisplayName(registration.material)
 
   const statusConfig = getStatusConfig(prn.status, localise)
   const isNotDraft = prn.status !== 'draft'
@@ -295,52 +324,47 @@ async function handleExistingView(
     statusConfig,
     isNotDraft,
     recipientDisplayName,
-    organisationData
+    organisation
   })
 
   const accreditationRows = buildAccreditationRows({
     registration,
     accreditation,
     displayMaterial,
-    localise,
-    isExporter
+    localise
   })
 
   const viewData = buildExistingPrnViewData({
     prn,
     noteType,
     noteTypeFull,
-    wasteAction,
     isNotDraft,
     prnDetailRows,
     accreditationRows,
     backUrl,
+    back,
+    isRegulator,
     localise,
-    request,
-    organisationId,
-    registrationId,
-    accreditationId
+    request
   })
 
-  return h.view('prns/view', viewData)
+  return h.view('prns/view', { ...viewData, breadcrumbs })
 }
 
 /**
  * Builds the view data object for an existing PRN
  * @param {{
  *   prn: PackagingRecyclingNote,
- *   noteType: string,
+ *   noteType: 'PRN' | 'PERN',
  *   noteTypeFull: string,
- *   wasteAction: string,
  *   isNotDraft: boolean,
  *   prnDetailRows: Array<object>,
  *   accreditationRows: Array<object>,
- *   backUrl: string,
+ *   backUrl: string | null,
+ *   back: { path: string, textKey: string },
+ *   isRegulator: boolean,
  *   localise: TFunction,
- *   request: HapiRequest,
- *   organisationId: string,
- *   registrationId: string,
- *   accreditationId: string
+ *   request: HapiRequest
  * }} params
  * @returns {object} View data object
  */
@@ -348,40 +372,37 @@ function buildExistingPrnViewData({
   prn,
   noteType,
   noteTypeFull,
-  wasteAction,
   isNotDraft,
   prnDetailRows,
   accreditationRows,
   backUrl,
+  back,
+  isRegulator,
   localise,
-  request,
-  organisationId,
-  registrationId,
-  accreditationId
+  request
 }) {
-  const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-
   return {
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
     heading: noteTypeFull,
     showRegulatorLogos: isNotDraft,
-    complianceYearText:
-      isNotDraft && !isNil(prn.accreditationYear)
-        ? localise('prns:view:complianceYearText', {
-            noteType,
-            wasteAction,
-            year: `<strong>${prn.accreditationYear}</strong>`
-          })
-        : null,
+    complianceYear: isNotDraft
+      ? {
+          textKey: COMPLIANCE_YEAR_TEXT_KEY[noteType],
+          accreditationYear: prn.accreditationYear,
+          obligationYear: prn.obligationYear
+        }
+      : null,
     prnDetailsHeading: localise('prns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl,
-    returnLink: {
-      href: request.localiseUrl(returnUrl),
-      text: localise('prns:view:returnLink', { noteType })
-    }
+    returnLink: isRegulator
+      ? null
+      : {
+          href: request.localiseUrl(back.path),
+          text: localise(back.textKey, { noteType })
+        }
   }
 }
 
@@ -390,11 +411,11 @@ function buildExistingPrnViewData({
  * @param {{
  *   prnDraft: PrnDraftSession,
  *   localise: TFunction,
- *   organisationData: { companyDetails?: { name: string, tradingName?: string | null, registrationType?: string } }
+ *   organisation: OrganisationView
  * }} params
  * @returns {Array} Summary list rows
  */
-function buildDraftPrnDetailRows({ prnDraft, localise, organisationData }) {
+function buildDraftPrnDetailRows({ prnDraft, localise, organisation }) {
   return [
     {
       key: { text: localise('prns:issuedToLabel') },
@@ -422,11 +443,7 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisationData }) {
     },
     {
       key: { text: localise('prns:issuerLabel') },
-      value: {
-        text: organisationData.companyDetails
-          ? getIssuingOrgDisplayName(organisationData.companyDetails)
-          : ''
-      }
+      value: { text: organisation.displayName }
     },
     {
       key: { text: localise('prns:issuedDateLabel') },
@@ -457,14 +474,14 @@ function buildExistingPrnDetailRows({
   statusConfig,
   isNotDraft,
   recipientDisplayName,
-  organisationData
+  organisation
 }) {
-  const rows = /** @type {SummaryListRow[]} */ ([
+  const rows = [
     {
       key: { text: localise('prns:details:numberLabel', { noteType }) },
       value: { text: prn.prnNumber || '' }
     }
-  ])
+  ]
 
   if (isNotDraft) {
     rows.push(buildStatusRow(localise, statusConfig))
@@ -473,9 +490,7 @@ function buildExistingPrnDetailRows({
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
-      issuerName: organisationData?.companyDetails
-        ? getIssuingOrgDisplayName(organisationData.companyDetails)
-        : ''
+      issuerName: organisation.displayName
     })
   )
 
@@ -487,7 +502,8 @@ function buildExistingPrnDetailRows({
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { UserSession } from '#server/auth/types/session.js'
- * @import { SummaryListRow } from './helpers/build-prn-detail-rows.js'
- * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'
  */

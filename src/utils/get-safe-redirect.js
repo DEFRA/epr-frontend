@@ -40,4 +40,11 @@ const getSafeRedirect = (redirect) => {
   }
 }
 
-export { getSafeRedirect }
+/**
+ * Whether a redirect is safe to use exactly as given, rather than needing the
+ * fallback in its place.
+ * @param {unknown} redirect
+ */
+const isSafeRedirect = (redirect) => getSafeRedirect(redirect) === redirect
+
+export { getSafeRedirect, isSafeRedirect }

@@ -12,6 +12,18 @@ export function extractCookieValues(setCookieHeader) {
 }
 
 /**
+ * The Set-Cookie header, attributes included, that sets the named cookie
+ * @param {string | string[] | undefined} setCookieHeader
+ * @param {string} name
+ * @returns {string | undefined}
+ */
+export function findSetCookie(setCookieHeader, name) {
+  return [setCookieHeader ?? []]
+    .flat()
+    .find((header) => header.startsWith(`${name}=`))
+}
+
+/**
  * Merge cookie strings, with later values overriding earlier ones
  * @param {...string} cookieStrings
  * @returns {string}

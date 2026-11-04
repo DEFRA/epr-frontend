@@ -1,6 +1,12 @@
 import { defraIdCallbackController } from '#server/auth/callback/controller.js'
+import * as addUserToOrganisationModule from '#server/auth/helpers/add-user-to-organisation.js'
+import * as fetchIdentityModule from '#server/auth/helpers/fetch-identity.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
-import { asUserOrganisations } from '#server/common/test-helpers/auth-helper.js'
+import {
+  asUserOrganisations,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import {
   mockHapiRequest,
   asResponseToolkit
@@ -25,16 +31,20 @@ vi.mock(import('node:crypto'), () => ({
   )
 }))
 
+vi.mock(import('#server/auth/helpers/fetch-identity.js'))
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
 vi.mock(import('#server/auth/helpers/add-user-to-organisation.js'))
 vi.mock(import('#server/common/helpers/metrics/index.js'))
 
 describe('#authCallbackController', () => {
   beforeEach(() => {
-    vi.mocked(metricsModule.metrics.signInSuccess).mockResolvedValue(undefined)
-    vi.mocked(metricsModule.metrics.signInFailure).mockResolvedValue(undefined)
+    vi.mocked(fetchIdentityModule.fetchIdentity).mockResolvedValue(
+      IDENTITIES.operator
+    )
+    vi.mocked(metricsModule.metrics.signIn.success).mockResolvedValue(undefined)
+    vi.mocked(metricsModule.metrics.signIn.failure).mockResolvedValue(undefined)
     vi.mocked(
-      metricsModule.metrics.signInSuccessNonInitialUser
+      metricsModule.metrics.signIn.successNonInitialUser
     ).mockResolvedValue(undefined)
   })
 
@@ -55,6 +65,7 @@ describe('#authCallbackController', () => {
         },
         linked: {
           id: 'defra-org-uuid',
+          orgId: 11111111,
           name: 'Test Defra Organisation',
           linkedBy: {
             email: 'user@example.com',
@@ -76,6 +87,7 @@ describe('#authCallbackController', () => {
             profile: mockProfile,
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             urls: {
               token: 'http://test.auth/token',
@@ -104,6 +116,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -112,7 +125,7 @@ describe('#authCallbackController', () => {
         asResponseToolkit(mockH)
       )
 
-      // First call stores initial session, second call adds linkedOrganisationId
+      // First call stores initial session, second call adds the linked organisation
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledTimes(2)
       expect(mockRequest.server.app.cache.set).toHaveBeenNthCalledWith(
         2,
@@ -120,13 +133,16 @@ describe('#authCallbackController', () => {
         {
           profile: mockProfile,
           idToken: 'mock-id-token',
+          backendToken: 'mock-backend-token',
           expiresAt: expect.any(String),
           refreshToken: 'mock-refresh-token',
           urls: {
             token: 'http://test.auth/token',
             logout: 'http://test.auth/logout'
           },
-          linkedOrganisationId: 'defra-org-uuid'
+          linkedOrganisationId: 'defra-org-uuid',
+          linkedOrganisationNumber: '11111111',
+          ...sessionIdentity(IDENTITIES.operator)
         }
       )
 
@@ -141,6 +157,68 @@ describe('#authCallbackController', () => {
       expect(result).toBe('redirect-response')
     })
 
+    it('takes the newest stashed referrer when the operator has more than one', async () => {
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockResolvedValue(
+        asUserOrganisations({
+          current: { id: 'defra-org-uuid', name: 'Test Defra Organisation' },
+          linked: {
+            id: 'defra-org-uuid',
+            orgId: '11111111',
+            name: 'Test Defra Organisation',
+            linkedBy: { email: 'user@example.com', id: 'user-123' },
+            linkedAt: '2025-12-10T09:00:00.000Z'
+          },
+          unlinked: []
+        })
+      )
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: {
+              id: 'user-123',
+              email: 'test@example.com',
+              displayName: 'Test User',
+              firstName: 'Test',
+              lastName: 'User'
+            },
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
+            refreshToken: 'mock-refresh-token',
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
+          }
+        },
+        server: {
+          app: { cache: { set: vi.fn().mockResolvedValue(undefined) } }
+        },
+        cookieAuth: { set: vi.fn() },
+        logger: { info: vi.fn(), error: vi.fn() },
+        yar: {
+          flash: vi.fn().mockReturnValue(['/first/page', '/second/page'])
+        },
+        localiseUrl: vi.fn((url) => url)
+      }
+
+      const mockH = {
+        unstate: vi.fn(),
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
+
+      await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
+
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/second/page')
+    })
+
     it('should log sign-in with userId for unique user logging', async () => {
       const mockProfile = {
         id: 'user-456',
@@ -151,6 +229,7 @@ describe('#authCallbackController', () => {
         current: { id: 'defra-org-uuid', name: 'Test Organisation' },
         linked: {
           id: 'defra-org-uuid',
+          orgId: '11111111',
           name: 'Test Organisation',
           linkedBy: { email: 'user@example.com', id: 'user-456' },
           linkedAt: '2025-12-10T09:00:00.000Z'
@@ -168,6 +247,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -185,7 +265,10 @@ describe('#authCallbackController', () => {
         localiseUrl: vi.fn((url) => url)
       }
 
-      const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
+      const mockH = {
+        unstate: vi.fn(),
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
 
       await defraIdCallbackController.handler(
         mockHapiRequest(mockRequest),
@@ -244,6 +327,7 @@ describe('#authCallbackController', () => {
           },
           linked: {
             id: 'linked-org-uuid',
+            orgId: '11111111',
             name: 'Test Defra Organisation',
             linkedBy: {
               email: 'user@example.com',
@@ -289,6 +373,7 @@ describe('#authCallbackController', () => {
         }
 
         const mockH = {
+          unstate: vi.fn(),
           redirect: vi.fn().mockReturnValue('redirect-response')
         }
 
@@ -298,8 +383,8 @@ describe('#authCallbackController', () => {
         )
 
         const expectedRedirect = isWelsh
-          ? '/cy/organisations/linked-org-uuid'
-          : '/organisations/linked-org-uuid'
+          ? '/cy/organisations/11111111'
+          : '/organisations/11111111'
 
         expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(expectedRedirect)
         expect(result).toBe('redirect-response')
@@ -319,6 +404,7 @@ describe('#authCallbackController', () => {
         },
         linked: {
           id: 'linked-org-uuid',
+          orgId: '11111111',
           name: 'Test Defra Organisation',
           linkedBy: {
             email: 'user@example.com',
@@ -339,6 +425,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -368,6 +455,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -376,11 +464,14 @@ describe('#authCallbackController', () => {
         asResponseToolkit(mockH)
       )
 
+      expect(
+        addUserToOrganisationModule.addUserToOrganisation
+      ).toHaveBeenCalledExactlyOnceWith('11111111', 'mock-backend-token')
       expect(mockRequest.localiseUrl).toHaveBeenCalledExactlyOnceWith(
-        '/organisations/linked-org-uuid'
+        '/organisations/11111111'
       )
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
-        '/organisations/linked-org-uuid'
+        '/organisations/11111111'
       )
       expect(result).toBe('redirect-response')
     })
@@ -399,6 +490,7 @@ describe('#authCallbackController', () => {
         },
         linked: {
           id: 'linked-org-id',
+          orgId: '11111111',
           name: 'Linked Organisation',
           linkedBy: {
             email: 'user@example.com',
@@ -410,7 +502,8 @@ describe('#authCallbackController', () => {
           {
             id: 'org-1',
             name: 'Test Company',
-            orgId: '11111111'
+            orgId: '11111111',
+            referenceNumber: 'org-1'
           },
           {
             id: 'org-2',
@@ -430,6 +523,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -459,6 +553,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -469,7 +564,7 @@ describe('#authCallbackController', () => {
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      ).toHaveBeenCalledExactlyOnceWith('mock-backend-token')
 
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
@@ -496,7 +591,8 @@ describe('#authCallbackController', () => {
           {
             id: 'org-1',
             name: 'Test Company',
-            orgId: '11111111'
+            orgId: 11111111,
+            referenceNumber: 'org-1'
           }
         ]
       }
@@ -511,6 +607,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -539,6 +636,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-to-linking')
       }
 
@@ -577,6 +675,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -617,6 +716,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -687,6 +787,7 @@ describe('#authCallbackController', () => {
         }
 
         const mockH = {
+          unstate: vi.fn(),
           redirect: vi.fn().mockReturnValue('redirect-response')
         }
 
@@ -721,6 +822,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -749,6 +851,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -766,7 +869,7 @@ describe('#authCallbackController', () => {
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      ).toHaveBeenCalledExactlyOnceWith('mock-backend-token')
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
         expect.any(Object)
@@ -792,6 +895,7 @@ describe('#authCallbackController', () => {
         },
         linked: {
           id: 'defra-org-uuid',
+          orgId: '11111111',
           name: 'Defra Registered Company Ltd',
           linkedBy: {
             email: 'admin@example.com',
@@ -818,6 +922,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -847,6 +952,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -876,12 +982,14 @@ describe('#authCallbackController', () => {
           {
             id: 'unlinked-org-1',
             name: 'Unlinked Organisation 1',
-            orgId: '11111111'
+            orgId: 11111111,
+            referenceNumber: 'unlinked-org-1'
           },
           {
             id: 'unlinked-org-2',
             name: 'Unlinked Organisation 2',
-            orgId: '22222222'
+            orgId: 22222222,
+            referenceNumber: 'unlinked-org-2'
           }
         ]
       }
@@ -896,6 +1004,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -924,6 +1033,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
@@ -962,6 +1072,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -990,6 +1101,7 @@ describe('#authCallbackController', () => {
       }
 
       const mockH = {
+        unstate: vi.fn(),
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 

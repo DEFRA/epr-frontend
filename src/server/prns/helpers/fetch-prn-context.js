@@ -1,7 +1,8 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { badRequest } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchPackagingRecyclingNote } from './fetch-packaging-recycling-note.js'
+import { prnsPath } from './prn-resource.js'
 
 const SAFE_PATH_SEGMENT_PATTERN = /^[A-Za-z0-9._~-]+$/
 
@@ -27,103 +28,68 @@ function getSafePathSegment(value, fieldName) {
 }
 
 /**
- * Builds the base path for PRN routes from request params.
- * Validates segments with getSafePathSegment to prevent path traversal/injection.
- * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
+ * The accreditation's keys from a PRN route's params.
+ * @param {PrnListParams} params
+ * @returns {AccreditationKeys}
  */
-function buildPrnBasePath({ organisationId, registrationId, accreditationId }) {
-  const safeOrgId = getSafePathSegment(organisationId, 'organisationId')
-  const safeRegId = getSafePathSegment(registrationId, 'registrationId')
-  const safeAccId = getSafePathSegment(accreditationId, 'accreditationId')
-  return `/organisations/${safeOrgId}/registrations/${safeRegId}/accreditations/${safeAccId}/packaging-recycling-notes`
-}
+const toAccreditationKeys = ({
+  organisationNumber,
+  registrationNumber,
+  year
+}) => ({ organisationNumber, registrationNumber, year })
 
 /**
  * Fetches PRN with registration data for GET handlers.
- * Extracts request params and fetches data in parallel.
  * @param {HapiRequest & { params: PrnDetailParams }} request
  */
 async function fetchPrnContext(request) {
-  const { organisationId, registrationId, accreditationId, prnId } =
-    request.params
-  const session = request.auth.credentials
-  const basePath = buildPrnBasePath({
-    organisationId,
-    registrationId,
-    accreditationId
-  })
-  const safePrnId = getSafePathSegment(prnId, 'prnId')
+  const keys = toAccreditationKeys(request.params)
+  const { backendToken } = request.auth.credentials
+  const safePrnId = getSafePathSegment(request.params.prnId, 'prnId')
 
   const [registrationData, prn] = await Promise.all([
-    getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      idToken: session.idToken,
-      accreditationId
-    }),
-    fetchPackagingRecyclingNote(
-      organisationId,
-      registrationId,
-      accreditationId,
-      safePrnId,
-      session.idToken
-    )
+    fetchRequiredAccreditation(keys, backendToken),
+    fetchPackagingRecyclingNote(keys, safePrnId, backendToken)
   ])
 
   return {
-    organisationId,
-    registrationId,
-    accreditationId,
+    keys,
     ...registrationData,
     prn,
-    basePath,
+    basePath: prnsPath(keys),
     prnId: safePrnId
   }
 }
 
 /**
  * Fetches PRN data for POST handlers that update status.
- * Extracts request params and fetches the PRN.
  * @param {HapiRequest & { params: PrnDetailParams }} request
  */
 async function fetchPrnForUpdate(request) {
-  const { organisationId, registrationId, accreditationId, prnId } =
-    request.params
-  const session = request.auth.credentials
-  const basePath = buildPrnBasePath({
-    organisationId,
-    registrationId,
-    accreditationId
-  })
-  const safePrnId = getSafePathSegment(prnId, 'prnId')
+  const keys = toAccreditationKeys(request.params)
+  const { backendToken } = request.auth.credentials
+  const safePrnId = getSafePathSegment(request.params.prnId, 'prnId')
 
-  const prn = await fetchPackagingRecyclingNote(
-    organisationId,
-    registrationId,
-    accreditationId,
-    safePrnId,
-    session.idToken
-  )
+  const prn = await fetchPackagingRecyclingNote(keys, safePrnId, backendToken)
 
   return {
-    organisationId,
-    registrationId,
-    accreditationId,
+    keys,
     prnId: safePrnId,
-    basePath,
+    basePath: prnsPath(keys),
     prn,
-    idToken: session.idToken
+    backendToken
   }
 }
 
 export {
-  buildPrnBasePath,
   fetchPrnContext,
   fetchPrnForUpdate,
-  getSafePathSegment
+  getSafePathSegment,
+  toAccreditationKeys
 }
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { PrnDetailParams } from './session-types.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { PrnDetailParams, PrnListParams } from './session-types.js'
  */

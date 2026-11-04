@@ -1,13 +1,12 @@
-/** @import { Accreditation } from '#domain/organisations/accreditation.js' */
+/** @import { Accreditation } from './organisation-view.js' */
 
 const ACTIVE_ACCREDITATION_STATUSES = new Set(['approved', 'suspended'])
 
 /**
- * Returns true when the accreditation is live (approved or suspended).
- * A 'created', 'rejected', or 'cancelled' accreditation must be treated as
- * registered-only — it has never been active.
- * @param {Accreditation | undefined | null} accreditation
- * @returns {boolean}
+ * Returns true when the accreditation in the organisation view is live.
+ * @param {Accreditation | undefined} accreditation
+ * @returns {accreditation is Accreditation}
  */
 export const isAccreditationActive = (accreditation) =>
-  !!accreditation && ACTIVE_ACCREDITATION_STATUSES.has(accreditation.status)
+  !!accreditation &&
+  ACTIVE_ACCREDITATION_STATUSES.has(accreditation.status.current)

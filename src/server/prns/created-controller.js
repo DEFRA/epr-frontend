@@ -1,4 +1,7 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { homePath } from '#server/organisations/home-page.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { prnsPath } from './helpers/prn-resource.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const createdController = {
@@ -7,9 +10,12 @@ export const createdController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
+    const keys = toAccreditationKeys(request.params)
+    const { prnId } = request.params
     const { t: localise } = request
+
+    const listUrl = prnsPath(keys)
+    const viewUrl = `${listUrl}/${prnId}/view`
 
     // Check for success session data
     /** @type {PrnCreatedSession | null} */
@@ -17,24 +23,28 @@ export const createdController = {
 
     if (prnCreated?.id !== prnId) {
       // No session data or ID mismatch - redirect to view page
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-      )
+      return h.redirect(viewUrl)
     }
 
     // Clear the session data
     request.yar.clear('prnCreated')
 
-    const { noteType, noteTypePlural } = getNoteTypeDisplayNames(prnCreated)
+    const { isExporter, noteType, noteTypePlural } =
+      getNoteTypeDisplayNames(prnCreated)
 
-    const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-    const viewUrl = `${listUrl}/${prnId}/view`
     const createUrl = `${listUrl}/create`
-    const homeUrl = `/organisations/${organisationId}`
+    const homeUrl = homePath(keys.organisationNumber, {
+      year: keys.year,
+      exporting: isExporter
+    })
+
+    const headingKey = prnCreated.isDecemberWaste
+      ? 'prns:create:successHeadingDecemberWaste'
+      : 'prns:create:successHeading'
 
     return h.view('prns/created', {
       pageTitle: localise('prns:create:successPageTitle', { noteType }),
-      heading: localise('prns:create:successHeading', { noteType }),
+      heading: localise(headingKey, { noteType }),
       prnNumberLabel: localise('prns:created:prnNumberLabel', { noteType }),
       prnNumber: prnCreated.prnNumber,
       statusLabel: localise('prns:created:statusLabel'),

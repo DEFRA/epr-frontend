@@ -1,4 +1,8 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
@@ -8,16 +12,26 @@ import { initiateSummaryLogUpload } from './initiate-summary-log-upload.js'
 
 const backendUrl = config.get('eprBackendUrl')
 
+const keys = {
+  organisationNumber: toOrganisationNumber('500118'),
+  registrationNumber: toRegistrationNumber('R26ER5001180041PL')
+}
+const registered = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/summary-logs/2027`
+const accredited = `${backendUrl}/organisations/500118/registrations/R26ER5001180041PL/accreditations/2027/summary-log`
+
+const backendToken = toBackendToken('test-id-token')
+
 describe(initiateSummaryLogUpload, () => {
-  test('calls backend summary-logs endpoint with redirectUrl', async ({
-    msw
-  }) => {
-    /** @type {Request | undefined} */
-    let capturedRequest
-    msw.use(
-      http.post(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs`,
-        async ({ request }) => {
+  test.for([
+    { kind: 'registered-only', isAccredited: false, url: registered },
+    { kind: 'accredited', isAccredited: true, url: accredited }
+  ])(
+    'starts a $kind upload for the year with the redirectUrl',
+    async ({ isAccredited, url }, { msw }) => {
+      /** @type {Request | undefined} */
+      let capturedRequest
+      msw.use(
+        http.post(url, ({ request }) => {
           capturedRequest = request
           return HttpResponse.json({
             summaryLogId: 'sl-123',
@@ -25,25 +39,25 @@ describe(initiateSummaryLogUpload, () => {
             uploadUrl: 'http://cdp/upload',
             statusUrl: 'http://cdp/status'
           })
-        }
+        })
       )
-    )
 
-    await initiateSummaryLogUpload({
-      organisationId: 'org-123',
-      registrationId: 'reg-456',
-      redirectUrl: '/redirect/path',
-      idToken: 'test-id-token'
-    })
+      await initiateSummaryLogUpload({
+        keys,
+        year: toYear(2027),
+        accredited: isAccredited,
+        redirectUrl: '/redirect/path',
+        backendToken
+      })
 
-    const request = /** @type {Request} */ (capturedRequest)
+      const request = /** @type {Request} */ (capturedRequest)
 
-    expect(request.headers.get('content-type')).toBe('application/json')
-    expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
-    await expect(request.json()).resolves.toStrictEqual({
-      redirectUrl: '/redirect/path'
-    })
-  })
+      expect(request.headers.get('content-type')).toBe('application/json')
+      await expect(request.json()).resolves.toStrictEqual({
+        redirectUrl: '/redirect/path'
+      })
+    }
+  )
 
   test('returns summaryLogId, uploadId, uploadUrl, and statusUrl from response', async ({
     msw
@@ -55,18 +69,14 @@ describe(initiateSummaryLogUpload, () => {
       statusUrl: 'http://cdp/status/up-101'
     }
 
-    msw.use(
-      http.post(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs`,
-        () => HttpResponse.json(mockResponse)
-      )
-    )
+    msw.use(http.post(registered, () => HttpResponse.json(mockResponse)))
 
     const result = await initiateSummaryLogUpload({
-      organisationId: 'org-123',
-      registrationId: 'reg-456',
+      keys,
+      year: toYear(2027),
+      accredited: false,
       redirectUrl: '/redirect/path',
-      idToken: 'test-id-token'
+      backendToken
     })
 
     expect(result).toStrictEqual(mockResponse)
@@ -77,7 +87,7 @@ describe(initiateSummaryLogUpload, () => {
   }) => {
     msw.use(
       http.post(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs`,
+        registered,
         () =>
           new HttpResponse(null, {
             status: 500,
@@ -88,10 +98,11 @@ describe(initiateSummaryLogUpload, () => {
 
     await expect(
       initiateSummaryLogUpload({
-        organisationId: 'org-123',
-        registrationId: 'reg-456',
+        keys,
+        year: toYear(2027),
+        accredited: false,
         redirectUrl: '/redirect/path',
-        idToken: 'test-id-token'
+        backendToken
       })
     ).rejects.toMatchObject({
       isBoom: true,

@@ -1,7 +1,7 @@
 {
   "extends": "./jsconfig.typecheck.base.json",
   "compilerOptions": {
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vitest/globals", "@testing-library/jest-dom/vitest"]
   },
   "include": [
     "**/*.test.js",
@@ -10,5 +10,5 @@
     "**/test-fixtures.js",
     "**/*.d.ts"
   ],
-  "exclude": ["node_modules", ".vite"]
+  "exclude": ["node_modules", ".vite", "src/client/**"]
 }

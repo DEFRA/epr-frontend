@@ -1,21 +1,40 @@
+import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
+import { isRegisteredOnlyProcessingType } from '#domain/summary-logs/meta-fields.js'
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { materialsHomepagePath } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { hasClosedPeriodChanges } from './closed-period-changes.js'
+import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
+import {
+  organisationPath as toOrganisationPath,
+  registrationPath as toRegistrationPath,
+  summaryLogUploadPathUnder
+} from '#server/reports/helpers/report-paths.js'
+import { requiresResubmission } from './closed-period-changes.js'
 import { renderCheckView } from './check-controller.js'
 import { buildValidationFailuresViewModel } from './validation-failures-view-model.js'
 
-/** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
+/**
+ * @import { UserSession } from '#server/auth/types/session.js'
+ * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+ * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
+ * @import { Year } from '#server/common/helpers/year.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ */
 
 /**
+ * @import { LedgerKind } from '#domain/ledger-kinds.js'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import {
+ *   LedgerAccreditation,
  *   LoadsByReportingPeriod,
+ *   StoredSummaryLog,
  *   SummaryLogParams,
- *   SummaryLogStatusResponse,
  *   SummaryLogsSession,
  *   ValidationResponse
  * } from './types.js'
@@ -28,24 +47,32 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  * @typedef {{
  *   status: string,
  *   validation?: ValidationResponse,
- *   accreditationNumber?: string,
+ *   accreditationNumber?: AccreditationNumber,
+ *   ledgerAccreditation?: LedgerAccreditation,
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType,
- *   organisationId: string,
- *   registrationId: string,
+ *   organisationPath: string,
+ *   registrationPath: string,
  *   summaryLogId: string,
  *   pollUrl: string,
  *   uploadUrl?: string,
  *   cancelUrl: string,
- *   wasteBalance?: number
+ *   wasteBalance?: number,
+ *   year?: Year
  * }} RenderContext
  */
 
 /**
- * A validated summary log's render context. The backend guarantees a processing
- * type on every validated response, so it is required here, narrowed at the
- * render boundary by toValidatedContext.
- * @typedef {RenderContext & { processingType: ProcessingType }} ValidatedRenderContext
+ * Optional fields because this also holds the session's submit response and the
+ * not-yet-stored placeholder, which carry only a status.
+ * @typedef {Partial<StoredSummaryLog> & { status: string }} StatusData
+ */
+
+/**
+ * The render context of a summary log that passed validation, whether validated
+ * or submitted. The backend guarantees its processing type and year, so both
+ * are required here, narrowed at the render boundary by toValidatedContext.
+ * @typedef {RenderContext & { processingType: ProcessingType, year: Year }} ValidatedRenderContext
  */
 
 const PROCESSING_STATES = new Set([
@@ -94,30 +121,22 @@ const getProgressViewData = (localise, status) => {
 /**
  * Gets status data from session (if fresh) or backend API
  * @param {HapiRequest} request - Hapi request object
- * @param {string} organisationId - Organisation ID
- * @param {string} registrationId - Registration ID
+ * @param {RegistrationKeys} keys
  * @param {string} summaryLogId - Summary log ID
- * @param {string} idToken - JWT ID token for authorization
- * @returns {Promise<SummaryLogStatusResponse>}
+ * @param {BackendToken} backendToken
+ * @returns {Promise<StatusData>}
  */
-const getStatusData = async (
-  request,
-  organisationId,
-  registrationId,
-  summaryLogId,
-  idToken
-) => {
+const getStatusData = async (request, keys, summaryLogId, backendToken) => {
   /** @type {SummaryLogsSession | null} */
   const storedSession = request.yar.get(sessionNames.summaryLogs)
   const summaryLogsSession = storedSession ?? {}
   const freshDataMap = summaryLogsSession.freshDataMap
   const freshData = freshDataMap?.[summaryLogId]
 
+  /** @type {StatusData} */
   const data =
     freshData ??
-    (await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-      idToken
-    }))
+    (await fetchSummaryLogStatus(keys, summaryLogId, { backendToken }))
 
   if (freshDataMap !== undefined && summaryLogId in freshDataMap) {
     const { [summaryLogId]: _, ...remainingMap } = freshDataMap // NOSONAR(javascript:S1481) intentional discard via destructure-rest
@@ -129,19 +148,54 @@ const getStatusData = async (
 
   const {
     accreditationNumber,
+    ledgerAccreditation,
     loadsByReportingPeriod,
     processingType,
     status,
-    validation
+    validation,
+    year
   } = data
 
   return {
     accreditationNumber,
+    ledgerAccreditation,
     loadsByReportingPeriod,
     processingType,
     status,
-    validation
+    validation,
+    year
   }
+}
+
+/**
+ * The submit response carries no year, but every summary log the backend
+ * serves does, so a missing year where one is read is a contract violation.
+ * @param {Year | undefined} value
+ * @returns {Year}
+ */
+const requiredYear = (value) => {
+  if (value === undefined) {
+    throw new Error('Expected year for summary log')
+  }
+
+  return value
+}
+
+/** @type {ReadonlySet<unknown>} */
+const ledgerKinds = new Set(Object.values(LEDGER_KINDS))
+
+/**
+ * Logs stored before the backend stamped their ledger answer without one, and
+ * the status read keeps a value failing its schema; we refuse to guess either.
+ * @param {LedgerAccreditation | undefined} value
+ * @returns {LedgerKind}
+ */
+const requiredLedgerKind = (value) => {
+  if (!ledgerKinds.has(value?.kind)) {
+    throw new Error('Expected a known ledgerAccreditation for summary log')
+  }
+
+  return /** @type {LedgerKind} */ (value?.kind)
 }
 
 /**
@@ -165,21 +219,31 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
 /**
  * Renders the success page after successful submission
  * @param {ResponseToolkit} h - Hapi response toolkit
- * @param {(key: string) => string} localise - i18n localisation function
- * @param {RenderContext} context - View context
+ * @param {(key: string, params?: object) => string} localise - i18n localisation function
+ * @param {ValidatedRenderContext} context - View context
  * @returns {ResponseObject} Hapi view response
  */
 const renderSuccessView = (
   h,
   localise,
-  { organisationId, registrationId, wasteBalance, loadsByReportingPeriod }
-) => {
-  return h.view(SUCCESS_VIEW_NAME, {
-    pageTitle: localise('summary-log:successPageTitle'),
-    organisationId,
-    registrationId,
+  {
+    organisationPath,
+    registrationPath,
     wasteBalance,
-    showFurtherAction: hasClosedPeriodChanges(loadsByReportingPeriod)
+    loadsByReportingPeriod,
+    year
+  }
+) => {
+  const heading = localise('summary-log:successHeading', { year })
+
+  return h.view(SUCCESS_VIEW_NAME, {
+    pageTitle: heading,
+    heading,
+    organisationPath,
+    registrationPath,
+    reportsUrl: `${registrationPath}/reports/${year}`,
+    wasteBalance,
+    showFurtherAction: requiresResubmission(loadsByReportingPeriod)
   })
 }
 
@@ -193,19 +257,19 @@ const renderSuccessView = (
 const renderSupersededView = (
   h,
   localise,
-  { organisationId, registrationId }
+  { organisationPath, registrationPath, year }
 ) => {
   return h.view(SUPERSEDED_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),
-    organisationId,
-    registrationId
+    organisationPath: `${organisationPath}/${requiredYear(year)}`,
+    registrationPath
   })
 }
 
 /**
  * Renders the validation failures page for invalid summary logs
  * @param {ResponseToolkit} h - Hapi response toolkit
- * @param {(key: string, params?: Record<string, unknown>) => string} localise - i18n localisation function
+ * @param {(key: string, params?: object) => string} localise - i18n localisation function
  * @param {RenderContext} context - View context
  * @returns {ResponseObject} Hapi view response
  */
@@ -254,13 +318,12 @@ const renderProgressView = (h, localise, { status, pollUrl }) => {
  * View resolver mapping - maps backend statuses to their render functions
  * @type {Record<string, (
  *   h: ResponseToolkit,
- *   localise: (key: string, params?: Record<string, unknown>) => string,
+ *   localise: (key: string, params?: object) => string,
  *   context: RenderContext
  * ) => ResponseObject>}
  */
 const viewResolvers = {
   [summaryLogStatuses.submitting]: renderSubmittingView,
-  [summaryLogStatuses.submitted]: renderSuccessView,
   [summaryLogStatuses.superseded]: renderSupersededView,
   [summaryLogStatuses.invalid]: renderValidationFailuresView,
   [summaryLogStatuses.rejected]: renderValidationFailuresView,
@@ -269,10 +332,10 @@ const viewResolvers = {
 }
 
 /**
- * Narrows a render context for a validated summary log. The backend guarantees
- * a processingType on every validated response, so a missing one is a contract
- * violation we fail loudly on here, at the boundary, rather than letting the
- * render paths treat the operator as accredited.
+ * Narrows the render context of a summary log that passed validation. A missing
+ * processing type or year is a contract violation we fail loudly on here, at
+ * the boundary, rather than letting the render paths treat the operator as
+ * accredited or link to no year.
  * @param {RenderContext} context
  * @returns {ValidatedRenderContext}
  */
@@ -281,122 +344,125 @@ const toValidatedContext = (context) => {
     throw new Error('Expected processingType for validated summary log')
   }
 
-  return { ...context, processingType: context.processingType }
+  return {
+    ...context,
+    processingType: context.processingType,
+    year: requiredYear(context.year)
+  }
 }
 
-/**
- * Renders appropriate view based on status
- * @param {{
- *   h: ResponseToolkit,
- *   localise: (key: string, params?: Record<string, unknown>) => string
- * } & RenderContext} options - Rendering options
- * @returns {ResponseObject} Hapi view response
- */
-const renderViewForStatus = (options) => {
-  const { h, localise, status } = options
+const PASSED_VALIDATION_STATES = new Set([
+  summaryLogStatuses.validated,
+  summaryLogStatuses.submitted
+])
 
-  if (status === summaryLogStatuses.validated) {
-    return renderCheckView(h, localise, toValidatedContext(options))
+/**
+ * Renders the check page or the success page.
+ * @param {ResponseToolkit} h
+ * @param {(key: string, params?: object) => string} localise
+ * @param {RenderContext} renderContext
+ * @param {{ keys: RegistrationKeys, session: UserSession, logger: TypedLogger }} reader
+ * @returns {Promise<ResponseObject>}
+ */
+const renderPassedValidationView = async (
+  h,
+  localise,
+  renderContext,
+  { keys, session, logger }
+) => {
+  const context = toValidatedContext(renderContext)
+
+  const { wasteBalance } = isRegisteredOnlyProcessingType(
+    context.processingType
+  )
+    ? {}
+    : await getWasteBalanceData(
+        await fetchRegistrationWithAccreditation(
+          { ...keys, year: context.year },
+          session.backendToken
+        ),
+        context.year,
+        session,
+        logger
+      )
+
+  const pageContext = {
+    ...context,
+    organisationPath: `${context.organisationPath}/${context.year}`,
+    wasteBalance
   }
 
-  const resolver = viewResolvers[status] ?? renderProgressView
+  if (context.status !== summaryLogStatuses.validated) {
+    return renderSuccessView(h, localise, pageContext)
+  }
 
-  return resolver(h, localise, options)
+  const homepagePath = materialsHomepagePath(keys, {
+    year: context.year,
+    kind: requiredLedgerKind(context.ledgerAccreditation)
+  })
+
+  return renderCheckView(h, localise, {
+    ...pageContext,
+    uploadPath: summaryLogUploadPathUnder(homepagePath)
+  })
 }
 
 /**
- * Gets a pre-signed upload URL for re-uploading a summary log
- * @param {string} status - Current summary log status
- * @param {string} organisationId - Organisation ID
- * @param {string} registrationId - Registration ID
+ * @param {RegistrationKeys} keys
+ * @param {{ year: Year, kind: LedgerKind }} homepage - The summary log's year and ledger
  * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
- * @param {string} idToken - JWT ID token for authorization
- * @returns {Promise<{uploadUrl?: string}>} Upload URL, or empty object if not needed
+ * @param {UserSession} session
+ * @returns {Promise<{cancelUrl: string, uploadUrl?: string}>}
  */
-const getUploadUrl = async (
-  status,
-  organisationId,
-  registrationId,
-  redirectUrl,
-  idToken
-) => {
-  if (!REUPLOAD_STATES.has(status)) {
-    return {}
+const getReuploadLinks = async (keys, homepage, redirectUrl, session) => {
+  const cancelUrl = materialsHomepagePath(keys, homepage)
+
+  // Asking for an upload URL creates a summary log, so this GET writes. A
+  // session holding no write scope reads the page without one; the re-upload
+  // form is hidden.
+  if (!hasWriteScope(session)) {
+    return { cancelUrl }
   }
 
   const { uploadUrl } = await initiateSummaryLogUpload({
-    organisationId,
-    registrationId,
+    keys,
+    year: homepage.year,
+    accredited: homepage.kind === LEDGER_KINDS.ACCREDITED,
     redirectUrl,
-    idToken
+    backendToken: session.backendToken
   })
 
-  return { uploadUrl }
+  return { cancelUrl, uploadUrl }
 }
 
 /**
- * Determines whether the current waste balance is needed for this render: after
- * submission (success page), or on the check page where it drives the
- * projected balance panel.
- * @param {string} status - Current summary log status
- * @returns {boolean}
- */
-const needsWasteBalance = (status) =>
-  status === summaryLogStatuses.submitted ||
-  status === summaryLogStatuses.validated
-
-/**
- * Gets waste balance data for a submitted summary log, or for the check page
- * where it drives the projected balance panel.
- * @param {string} status - Current summary log status
- * @param {string} organisationId - Organisation ID
- * @param {string} registrationId - Registration ID
- * @param {string} idToken - JWT ID token for authorization
+ * The current balance of the operator's accreditation for the summary log's
+ * year, or an empty object when it has no live one.
+ * @param {RegistrationWithAccreditation} registrationWithAccreditation - for the summary log's year
+ * @param {Year} summaryLogYear
+ * @param {UserSession} session
  * @param {TypedLogger} logger - Request logger
- * @returns {Promise<{wasteBalance?: number}>} Waste balance, or empty object if not applicable
+ * @returns {Promise<{wasteBalance?: number}>}
  */
 const getWasteBalanceData = async (
-  status,
-  organisationId,
-  registrationId,
-  idToken,
+  { organisation, accreditation },
+  summaryLogYear,
+  session,
   logger
 ) => {
-  if (!needsWasteBalance(status)) {
+  if (!accreditation) {
     return {}
   }
 
-  try {
-    const { registration } = await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      idToken
-    )
+  const balance = await fetchAccreditationBalance({
+    organisationNumber: organisation.organisationNumber,
+    year: summaryLogYear,
+    accreditationNumber: accreditation.accreditationNumber,
+    backendToken: session.backendToken,
+    logger
+  })
 
-    if (!registration.accreditationId) {
-      return {}
-    }
-
-    const wasteBalances = await fetchWasteBalances(
-      organisationId,
-      [registration.accreditationId],
-      idToken
-    )
-
-    const balance = wasteBalances[registration.accreditationId]
-
-    if (!balance) {
-      return {}
-    }
-
-    return { wasteBalance: balance.availableAmount }
-  } catch (error) {
-    if (error.isBoom) {
-      throw error
-    }
-    logger.error({ message: 'Failed to fetch waste balance data', err: error })
-    return {}
-  }
+  return balance ? { wasteBalance: balance.availableAmount } : {}
 }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -407,61 +473,64 @@ export const summaryLogUploadProgressController = {
    */
   handler: async (request, h) => {
     const localise = request.t
-    const { organisationId, registrationId, summaryLogId } = request.params
+    const { summaryLogId, ...keys } = request.params
 
     const session = request.auth.credentials
 
     const {
       accreditationNumber,
+      ledgerAccreditation,
       loadsByReportingPeriod,
       processingType,
       status,
-      validation
-    } = await getStatusData(
-      request,
-      organisationId,
-      registrationId,
-      summaryLogId,
-      session.idToken
-    )
+      validation,
+      year
+    } = await getStatusData(request, keys, summaryLogId, session.backendToken)
 
-    const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
-    const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
-    const redirectUrl = `${baseUrl}/summary-logs/{summaryLogId}`
-    const cancelUrl = baseUrl
+    const registrationPath = toRegistrationPath(keys)
+    const pollUrl = `${registrationPath}/summary-logs/${summaryLogId}`
+    const redirectUrl = `${registrationPath}/summary-logs/{summaryLogId}`
 
-    const { uploadUrl } = await getUploadUrl(
-      status,
-      organisationId,
-      registrationId,
-      redirectUrl,
-      session.idToken
-    )
+    const { uploadUrl, cancelUrl } = REUPLOAD_STATES.has(status)
+      ? await getReuploadLinks(
+          keys,
+          {
+            year: requiredYear(year),
+            kind: requiredLedgerKind(ledgerAccreditation)
+          },
+          redirectUrl,
+          session
+        )
+      : { cancelUrl: registrationPath }
 
-    const { wasteBalance } = await getWasteBalanceData(
-      status,
-      organisationId,
-      registrationId,
-      session.idToken,
-      request.logger
-    )
-
-    return renderViewForStatus({
-      h,
-      localise,
+    /** @type {RenderContext} */
+    const context = {
       status,
       validation,
       accreditationNumber,
+      ledgerAccreditation,
       loadsByReportingPeriod,
       processingType,
-      organisationId,
-      registrationId,
+      organisationPath: toOrganisationPath(keys),
+      registrationPath,
       summaryLogId,
       pollUrl,
       uploadUrl,
       cancelUrl,
-      wasteBalance
-    })
+      year
+    }
+
+    if (PASSED_VALIDATION_STATES.has(status)) {
+      return renderPassedValidationView(h, localise, context, {
+        keys,
+        session,
+        logger: request.logger
+      })
+    }
+
+    const resolver = viewResolvers[status] ?? renderProgressView
+
+    return resolver(h, localise, context)
   }
 }
 

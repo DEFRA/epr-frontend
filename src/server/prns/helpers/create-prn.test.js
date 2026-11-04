@@ -1,108 +1,57 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { toYear } from '#server/common/helpers/year.js'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
+import { it } from '#vite/fixtures/server.js'
 
 import { createPrn } from './create-prn.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(createPrn, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-789'
-  const idToken = 'test-token'
-
-  const payload = {
-    issuedToOrganisation: {
-      id: 'producer-1',
-      name: 'Acme Packaging Ltd'
-    },
-    tonnage: 100,
-    notes: 'Test notes'
-  }
-
-  const mockResponse = {
-    id: 'prn-789',
-    tonnage: 100,
-    material: 'plastic',
-    issuedToOrganisation: {
-      id: 'producer-1',
-      name: 'Acme Packaging Ltd'
-    },
-    status: 'draft',
-    createdAt: '2026-01-27T12:00:00.000Z',
-    wasteProcessingType: 'reprocessor',
-    processToBeUsed: 'R3',
-    isDecemberWaste: false
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('calls fetchJsonFromBackend with correct path and options', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await createPrn(
-      organisationId,
-      registrationId,
-      accreditationId,
-      payload,
-      idToken
+  it('should post the payload to the accreditation and resolve to the created note', async ({
+    msw
+  }) => {
+    const payload = {
+      issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+      tonnage: 20
+    }
+    /** @type {{ pathname: string, body: unknown }[]} */
+    const received = []
+    msw.use(
+      http.post(/packaging-recycling-notes$/, async ({ request }) => {
+        received.push({
+          pathname: new URL(request.url).pathname,
+          body: await request.json()
+        })
+        return HttpResponse.json(buildPrnResource({ id: 'prn-1' }), {
+          status: 201
+        })
+      })
     )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${idToken}`
-        },
-        body: JSON.stringify(payload)
-      }
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await createPrn('org/123', 'reg&456', 'acc#789', payload, idToken)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789/packaging-recycling-notes',
-      expect.any(Object)
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await createPrn(
-      organisationId,
-      registrationId,
-      accreditationId,
+      {
+        organisationNumber: toOrganisationNumber('500123'),
+        registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
+        year: toYear(2026)
+      },
       payload,
-      idToken
+      toBackendToken('a-token')
     )
 
-    expect(result).toStrictEqual(mockResponse)
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(
-      createPrn(
-        organisationId,
-        registrationId,
-        accreditationId,
-        payload,
-        idToken
-      )
-    ).rejects.toThrow('Network error')
+    expect(result).toMatchObject({ id: 'prn-1', status: 'draft' })
+    expect(received).toStrictEqual([
+      {
+        pathname:
+          '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes',
+        body: {
+          issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+          tonnage: 20
+        }
+      }
+    ])
   })
 })

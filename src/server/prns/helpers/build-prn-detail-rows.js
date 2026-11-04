@@ -2,26 +2,10 @@ import { tonnageToWords } from './tonnage-to-words.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 
 /**
- * @import { PackagingRecyclingNote } from './fetch-packaging-recycling-note.js'
- */
-
-/**
- * @typedef {{
- *   key: { text: string },
- *   value: { text: string } | { html: string }
- * }} SummaryListRow
- */
-
-/**
- * A PRN as rendered, which for a draft already carries its words rendering.
- * @typedef {PackagingRecyclingNote & { tonnageInWords?: string }} RenderablePrn
- */
-
-/**
  * Builds the status row for PRN details
  * @param {(key: string) => string} localise
  * @param {{text: string, class: string}} statusConfig
- * @returns {SummaryListRow}
+ * @returns {object}
  */
 export function buildStatusRow(localise, statusConfig) {
   return {
@@ -34,10 +18,10 @@ export function buildStatusRow(localise, statusConfig) {
 
 /**
  * Builds the core PRN rows (buyer, tonnage, process, december waste)
- * @param {RenderablePrn} prn
+ * @param {object} prn
  * @param {(key: string) => string} localise
  * @param {string} recipientDisplayName
- * @returns {SummaryListRow[]}
+ * @returns {Array}
  */
 export function buildPrnCoreRows(prn, localise, recipientDisplayName) {
   const decemberWasteText = prn.isDecemberWaste
@@ -71,11 +55,11 @@ export function buildPrnCoreRows(prn, localise, recipientDisplayName) {
 
 /**
  * Builds the issuer/issued-by rows for PRN details
- * @param {RenderablePrn} prn
+ * @param {object} prn
  * @param {(key: string) => string} localise
  * @param {object} [options]
  * @param {string} [options.issuerName] - Organisation name for the issuer row
- * @returns {SummaryListRow[]}
+ * @returns {Array}
  */
 export function buildPrnIssuerRows(prn, localise, { issuerName = '' } = {}) {
   const issuedDate = prn.issuedAt ? formatDate(prn.issuedAt) : ''

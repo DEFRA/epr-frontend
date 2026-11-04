@@ -1,15 +1,21 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/delete-report.js'))
 
@@ -22,20 +28,17 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const registeredOnlyExporter = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: undefined
+const registeredOnlyExporter = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/delete`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/delete`
+const reportAttempt = `${registrationNumber}/2026/quarterly/1/1`
+
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 describe('#deleteController', () => {
   beforeEach(() => {
@@ -44,7 +47,7 @@ describe('#deleteController', () => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
     })
@@ -111,8 +114,8 @@ describe('#deleteController', () => {
     describe('back link', () => {
       const host = 'localhost'
       const refererFor = (path) => `http://${host}${path}`
-      const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-      const periodPrefix = `${reportsListPath}/2026/quarterly/1`
+      const reportsListPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
+      const periodPrefix = `${reportsListPath}/quarterly/1`
 
       it('should fall back to the reports list when no referer header is present', async ({
         server
@@ -216,6 +219,38 @@ describe('#deleteController', () => {
 
         expect(backLink?.getAttribute('href')).toBe(reportsListPath)
       })
+
+      it('should fall back to the welsh reports list when the referer is the welsh delete page itself', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/cy${baseUrl}`,
+          auth: mockAuth,
+          headers: { host, referer: refererFor(`/cy${baseUrl}`) }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(`/cy${reportsListPath}`)
+      })
+
+      it('should fall back to the reports list when the referer path would leave the service', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { host, referer: refererFor('//evil.example.com/stolen') }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(reportsListPath)
+      })
     })
 
     it('should display the warning and guidance text', async ({ server }) => {
@@ -241,7 +276,7 @@ describe('#deleteController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(deleteReport).mockResolvedValue(
@@ -280,7 +315,7 @@ describe('#deleteController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
       })
 
@@ -300,13 +335,15 @@ describe('#deleteController', () => {
         })
 
         expect(deleteReport).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          2026,
-          'quarterly',
-          1,
-          1,
-          'mock-id-token'
+          {
+            organisationNumber,
+            registrationNumber,
+            year: 2026,
+            cadence: 'quarterly',
+            period: 1,
+            submissionNumber: 1
+          },
+          'mock-backend-token'
         )
       })
     })
@@ -314,12 +351,7 @@ describe('#deleteController', () => {
 
   describe('when deleteReport fails', () => {
     it('should propagate the error', async ({ server }) => {
-      vi.mocked(deleteReport).mockRejectedValue(
-        Object.assign(new Error('Backend error'), {
-          isBoom: true,
-          output: { statusCode: 500 }
-        })
-      )
+      vi.mocked(deleteReport).mockRejectedValue(Boom.internal('Backend error'))
 
       const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
         auth: mockAuth
@@ -339,7 +371,7 @@ describe('#deleteController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/delete`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/invalid/1/submissions/1/delete`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -351,7 +383,7 @@ describe('#deleteController', () => {
     })
 
     it('should return 400 for invalid year', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submissions/1/delete`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2023/quarterly/1/submissions/1/delete`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -363,7 +395,7 @@ describe('#deleteController', () => {
     })
 
     it('should return 400 for invalid period', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submissions/1/delete`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/13/submissions/1/delete`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -372,6 +404,51 @@ describe('#deleteController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
+    })
+  })
+
+  describe('journey events', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        registeredOnlyExporter
+      )
+      vi.mocked(deleteReport).mockResolvedValue(
+        /** @type {void} */ (/** @type {unknown} */ ({ ok: true }))
+      )
+    })
+
+    it('should record the journey start when the confirmation page renders', async ({
+      server
+    }) => {
+      await server.inject({ method: 'GET', url: baseUrl, auth: mockAuth })
+
+      expect(metrics.journey.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.deleteReport,
+        reportAttempt
+      )
+    })
+
+    it('should record the journey end once the report is deleted', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+        auth: mockAuth
+      })
+
+      await server.inject({
+        method: 'POST',
+        url: baseUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(metrics.journey.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.deleteReport,
+        reportAttempt
+      )
     })
   })
 })

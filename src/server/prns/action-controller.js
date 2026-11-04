@@ -1,16 +1,17 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
-import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnCoreRows,
   buildPrnIssuerRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
-import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import { isYearOpen } from './helpers/closed-year.js'
+import { fetchPrnContext } from './helpers/fetch-prn-context.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const actionController = {
@@ -19,27 +20,9 @@ export const actionController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
     const { t: localise } = request
-    const session = request.auth.credentials
-
-    const [{ organisationData, registration, accreditation }, prn] =
-      await Promise.all([
-        getRequiredRegistrationWithAccreditation({
-          organisationId,
-          registrationId,
-          idToken: session.idToken,
-          accreditationId
-        }),
-        fetchPackagingRecyclingNote(
-          organisationId,
-          registrationId,
-          accreditationId,
-          prnId,
-          session.idToken
-        )
-      ])
+    const { organisation, registration, accreditation, prn, basePath, prnId } =
+      await fetchPrnContext(request)
 
     const recipientDisplayName = getIssuedToOrgDisplayName(
       prn.issuedToOrganisation
@@ -47,17 +30,19 @@ export const actionController = {
 
     const viewData = buildActionViewData({
       accreditation,
-      accreditationId,
+      basePath,
       localise,
-      organisationData,
-      organisationId,
+      organisation,
       prn,
       prnId,
       recipientDisplayName,
       registration,
-      registrationId,
       request
     })
+
+    if (viewData.issueButton) {
+      await metrics.journey.start(request, JOURNEY.issuePrn, prnId)
+    }
 
     return h.view('prns/action', viewData)
   }
@@ -66,36 +51,30 @@ export const actionController = {
 /**
  * Builds the complete view data for the action page
  * @param {{
- *   accreditation: RegistrationWithAccreditation['accreditation'],
- *   accreditationId: string,
+ *   accreditation: Accreditation,
+ *   basePath: string,
  *   localise: TFunction,
- *   organisationData: RegistrationWithAccreditation['organisationData'],
- *   organisationId: string,
+ *   organisation: OrganisationView,
  *   prn: PackagingRecyclingNote,
  *   prnId: string,
  *   recipientDisplayName: string,
- *   registration: RegistrationWithAccreditation['registration'],
- *   registrationId: string,
+ *   registration: RegistrationView,
  *   request: HapiRequest
  * }} params
  */
 function buildActionViewData({
   accreditation,
-  accreditationId,
+  basePath,
   localise,
-  organisationData,
-  organisationId,
+  organisation,
   prn,
   prnId,
   recipientDisplayName,
   registration,
-  registrationId,
   request
 }) {
-  const { isExporter, noteType, noteTypeFull } =
-    getNoteTypeDisplayNames(registration)
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-  const displayMaterial = getDisplayMaterial(registration)
+  const { noteType, noteTypeFull } = getNoteTypeDisplayNames(registration)
+  const displayMaterial = getMaterialDisplayName(registration.material)
   const isNotDraft = prn.status !== 'draft'
   const statusConfig = getStatusConfig(prn.status, localise)
 
@@ -106,15 +85,14 @@ function buildActionViewData({
     statusConfig,
     isNotDraft,
     recipientDisplayName,
-    organisationData
+    organisation
   })
 
   const accreditationRows = buildAccreditationRows({
     registration,
     accreditation,
     displayMaterial,
-    localise,
-    isExporter
+    localise
   })
 
   const viewData = {
@@ -136,7 +114,8 @@ function buildActionViewData({
       noteType,
       request,
       basePath,
-      prnId
+      prnId,
+      yearOpen: isYearOpen(accreditation)
     }),
     returnLink: {
       href: request.localiseUrl(basePath),
@@ -158,18 +137,20 @@ function buildActionButtons({
   noteType,
   request,
   basePath,
-  prnId
+  prnId,
+  yearOpen
 }) {
   const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
   const isAwaitingCancellation = prn.status === 'awaiting_cancellation'
 
   return {
-    issueButton: isAwaitingAuthorisation
-      ? {
-          text: localise('prns:action:issueButton', { noteType }),
-          action: request.localiseUrl(`${basePath}/${prnId}/issue`)
-        }
-      : null,
+    issueButton:
+      isAwaitingAuthorisation && yearOpen
+        ? {
+            text: localise('prns:action:issueButton', { noteType }),
+            action: request.localiseUrl(`${basePath}/${prnId}/issue`)
+          }
+        : null,
     deleteButton: isAwaitingAuthorisation
       ? {
           text: localise('prns:action:deleteLink', { noteType }),
@@ -212,14 +193,14 @@ function buildActionPrnDetailRows({
   statusConfig,
   isNotDraft,
   recipientDisplayName,
-  organisationData
+  organisation
 }) {
-  const rows = /** @type {SummaryListRow[]} */ ([
+  const rows = [
     {
       key: { text: localise('prns:details:numberLabel', { noteType }) },
       value: { text: prn.prnNumber || '' }
     }
-  ])
+  ]
 
   if (isNotDraft) {
     rows.push(buildStatusRow(localise, statusConfig))
@@ -228,9 +209,7 @@ function buildActionPrnDetailRows({
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
-      issuerName: organisationData.companyDetails
-        ? getIssuingOrgDisplayName(organisationData.companyDetails)
-        : ''
+      issuerName: organisation.displayName
     })
   )
 
@@ -241,8 +220,7 @@ function buildActionPrnDetailRows({
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
- * @import { SummaryListRow } from './helpers/build-prn-detail-rows.js'
- * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+ * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'
  */

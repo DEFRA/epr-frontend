@@ -1,7 +1,9 @@
 import Joi from 'joi'
 
+import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
+import { CADENCE } from '#server/reports/constants.js'
 
 const nonNegativeInteger = Joi.number().integer().min(0).required()
 
@@ -71,12 +73,27 @@ const periodStatusByChangeSchema = Joi.object({
   adjusted: periodStatusGroupSchema.required()
 })
 
-export const loadsByReportingPeriodSchema = Joi.object({
-  openPeriodLoads: periodStatusByChangeSchema.required(),
-  closedPeriodLoads: periodStatusByChangeSchema.required()
+// periodsRequiringResubmission lists only the closed periods whose reported
+// figures changed, so it drives the resubmission messaging. It is optional and
+// left absent (rather than defaulted) when the backend omits it, so callers can
+// tell "backend has not shipped this field yet" (undefined -> fall back to the
+// raw closed-period counts) apart from "backend shipped it and no figures
+// changed" (empty array -> no resubmission needed).
+const periodRefSchema = Joi.object({
+  year: Joi.number().integer().required(),
+  cadence: Joi.string()
+    .valid(...Object.values(CADENCE))
+    .required(),
+  period: Joi.number().integer().required()
 })
 
-export const summaryLogStatusResponseSchema = Joi.object({
+export const loadsByReportingPeriodSchema = Joi.object({
+  openPeriodLoads: periodStatusByChangeSchema.required(),
+  closedPeriodLoads: periodStatusByChangeSchema.required(),
+  periodsRequiringResubmission: Joi.array().items(periodRefSchema)
+})
+
+const storedSummaryLogSchema = Joi.object({
   status: Joi.string()
     .valid(
       summaryLogStatuses.preprocessing,
@@ -105,5 +122,29 @@ export const summaryLogStatusResponseSchema = Joi.object({
   loadsByReportingPeriod: loadsByReportingPeriodSchema.optional(),
   processingType: Joi.string().optional(),
   material: Joi.string().optional(),
-  accreditationNumber: Joi.string().optional()
+  accreditationNumber: Joi.string().optional(),
+  year: Joi.number().integer().required(),
+  accreditationId: Joi.string().allow(null).optional(),
+  ledgerAccreditation: Joi.alternatives()
+    .try(
+      Joi.object({
+        kind: Joi.string().valid(LEDGER_KINDS.ACCREDITED).required(),
+        accreditationNumber: Joi.string().required()
+      }),
+      Joi.object({
+        kind: Joi.string().valid(LEDGER_KINDS.REGISTERED_ONLY).required()
+      })
+    )
+    .optional()
 })
+
+// Joi runs the conditional's test with the caller's stripUnknown, which would
+// strip a stored log's fields and let it match the placeholder.
+const placeholderSchema = Joi.object({
+  status: Joi.string().valid(summaryLogStatuses.preprocessing).required()
+}).prefs({ stripUnknown: false })
+
+export const summaryLogStatusResponseSchema = Joi.alternatives().conditional(
+  placeholderSchema,
+  { then: placeholderSchema, otherwise: storedSummaryLogSchema }
+)

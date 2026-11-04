@@ -7,6 +7,87 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
+const testOnlyImports = {
+  group: ['**/test-helpers/**', '\\#vite/**'],
+  message: 'Test helpers and fixtures are for tests only.'
+}
+
+/**
+ * Each brand is minted only where its value enters the app; everywhere else
+ * takes it already branded.
+ */
+const brandConstructors = [
+  {
+    name: 'toBackendToken',
+    module: 'backend-token.js',
+    mintedIn: [
+      'src/server/auth/plugins/defra-id.js',
+      'src/server/auth/plugins/entra-id.js'
+    ],
+    message:
+      'Only a sign-in provider mints a backend token - take one from the session instead.'
+  },
+  {
+    name: 'toOrganisationNumber',
+    module: 'organisation-number.js',
+    mintedIn: [
+      'src/server/common/helpers/organisations/organisation-number-of.js'
+    ],
+    message:
+      'An organisation number arrives branded from route params or the backend - type it there, or read a numeric orgId with organisationNumberOf.'
+  },
+  {
+    name: 'toRegistrationNumber',
+    module: 'registration-number.js',
+    mintedIn: [
+      'src/server/common/helpers/organisations/registration-in-view.js'
+    ],
+    message:
+      'A registration number arrives branded from route params or the backend - type it there instead.'
+  },
+  {
+    name: 'toYear',
+    module: 'year.js',
+    mintedIn: [
+      'src/server/common/helpers/route-params.js',
+      'src/server/common/helpers/organisations/fetch-organisation-years.js',
+      'src/server/common/helpers/organisations/accreditation-entries.js',
+      'src/server/registrations/details/helpers/timeline-dates.js',
+      'src/server/common/helpers/natural-keys/swap-keys.js'
+    ],
+    message:
+      'A year arrives branded from route params or the backend - type it there, or use currentYear or fixedYear.'
+  },
+  {
+    name: 'toAccreditationNumber',
+    module: 'accreditation-number.js',
+    mintedIn: [],
+    message:
+      'An accreditation number arrives branded from the backend - type it there instead.'
+  }
+]
+
+/**
+ * @param {typeof brandConstructors} constructors
+ */
+const restrictedImports = (constructors) => [
+  'error',
+  {
+    patterns: [
+      testOnlyImports,
+      ...constructors.map(({ name, module, message }) => ({
+        group: [`**/${module}`],
+        importNames: [name],
+        message
+      }))
+    ]
+  }
+]
+
+const mintingFiles = [
+  ...new Set(brandConstructors.flatMap(({ mintedIn }) => mintedIn))
+]
+
 export default [
   // ESLint recommended rules
   js.configs.recommended,
@@ -122,6 +203,24 @@ export default [
     }
   },
 
+  // Production code takes nothing from tests, and mints a brand only where
+  // its value enters the app
+  {
+    files: ['src/**/*.js'],
+    ignores: ['src/**/test-helpers/**', '**/*.test.js'],
+    rules: {
+      'no-restricted-imports': restrictedImports(brandConstructors)
+    }
+  },
+  ...mintingFiles.map((file) => ({
+    files: [file],
+    rules: {
+      'no-restricted-imports': restrictedImports(
+        brandConstructors.filter(({ mintedIn }) => !mintedIn.includes(file))
+      )
+    }
+  })),
+
   // CommonJS type for .cjs files
   {
     files: ['**/*.cjs'],
@@ -175,6 +274,10 @@ export default [
 
       // Custom vitest rule overrides
       'vitest/consistent-test-it': 'off',
+      'vitest/expect-expect': [
+        'error',
+        { assertFunctionNames: ['expect', 'expectTypeOf'] }
+      ],
       'vitest/no-hooks': 'off',
       'vitest/padding-around-all': 'off', // Let Prettier handle formatting
       'vitest/padding-around-expect-groups': 'off', // Let Prettier handle formatting

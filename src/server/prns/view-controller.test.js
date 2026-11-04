@@ -1,6 +1,15 @@
+import { toYear } from '#server/common/helpers/year.js'
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import {
   asCreatePrnResponse,
   asPackagingRecyclingNote,
@@ -10,26 +19,58 @@ import {
   extractCookieValues,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole, getByText, queryByRole } from '@testing-library/dom'
+import {
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { describe, expect, vi } from 'vitest'
+import { afterEach, describe, expect, vi } from 'vitest'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
-vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+vi.mock(
+  import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
+)
+vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
+
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
-const { fetchWasteBalances } =
-  await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
+const { fetchOrganisationWasteBalances } =
+  await import('#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js')
+
+/** @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js' */
+
+/**
+ * The organisation's balances, holding this accreditation's when given one.
+ * @param {WasteBalance | null} balance
+ */
+const mockBalance = (balance) =>
+  vi
+    .mocked(fetchOrganisationWasteBalances)
+    .mockResolvedValue(balance ? { 'ACC-001': balance } : {})
+const { fetchDecemberPrnEligibility } =
+  await import('./helpers/fetch-december-prn-eligibility.js')
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -38,54 +79,44 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
-  organisationData: {
-    id: 'org-123',
-    companyDetails: { name: 'Reprocessor Organisation' }
+const fixtureReprocessor = buildRegistrationWithAccreditation({
+  organisation: {
+    name: 'Reprocessor Organisation',
+    displayName: 'Reprocessor Organisation'
   },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'reprocessor-input',
-    material: 'plastic',
-    nation: 'england',
-    site: { address: { line1: 'Reprocessing Site' } },
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: { address: { fullAddress: 'Reprocessing Site' } }
+  }),
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
-  organisationData: {
-    id: 'org-123',
-    companyDetails: { name: 'Exporter Organisation' }
-  },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'exporter',
-    material: 'plastic',
-    nation: 'england',
-    site: null,
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
+const fixtureExporter = buildRegistrationWithAccreditation({
+  organisation: { name: 'Exporter Organisation' },
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const organisationNumber = toOrganisationNumber('500123')
+const registrationNumber = toRegistrationNumber('R26EN0000000001PL')
+const year = toYear(2026)
+const keys = { organisationNumber, registrationNumber, year }
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issue`
-const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/view`
-const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+const createUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/create`
+const viewUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/view`
+const issueUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issue`
+const pernViewUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${pernId}/view`
+const listUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes`
 
 const validPayload = {
   tonnage: '100',
   recipient: 'producer-1',
   notes: 'Test notes',
-  nation: 'england',
   wasteProcessingType: 'reprocessor-input'
 }
 
@@ -121,6 +152,8 @@ const mockPrnFromBackend = asPackagingRecyclingNote({
   createdAt: '2026-01-15T10:00:00.000Z',
   notes: 'Additional notes for this PRN',
   isDecemberWaste: true,
+  accreditationYear: 2026,
+  obligationYear: 2026,
   issuedAt: '2026-01-16T14:30:00.000Z',
   issuedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
@@ -135,6 +168,8 @@ const mockPernFromBackend = asPackagingRecyclingNote({
   createdAt: '2026-01-20T14:30:00.000Z',
   notes: null,
   isDecemberWaste: false,
+  accreditationYear: 2026,
+  obligationYear: 2026,
   issuedAt: '2026-01-21T09:00:00.000Z',
   issuedBy: { name: 'Jane Doe', position: 'Operations Manager' },
   wasteProcessingType: 'exporter'
@@ -143,14 +178,17 @@ const mockPernFromBackend = asPackagingRecyclingNote({
 describe('#viewController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnFromBackend)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
-    vi.mocked(fetchWasteBalances).mockResolvedValue({
-      'acc-001': { amount: 1000, availableAmount: 500 }
+    mockBalance({
+      amount: 1000,
+      availableAmount: 500
+    })
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      mode: 'none',
+      windowOpen: false
     })
   })
 
@@ -180,6 +218,27 @@ describe('#viewController', () => {
         expect(getByText(main, /Plastic/i)).toBeDefined()
       })
 
+      it('reads the note to a regulator without offering a way to change it', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: buildMockAuth({
+            provider: OIDC_ENTRA_ID,
+            ...sessionIdentity(IDENTITIES.regulator)
+          })
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
+        expect(main.querySelector('form')).toBeNull()
+        expect(main.querySelector('button')).toBeNull()
+      })
+
       it('displays issuer organisation name on certificate page', async ({
         server
       }) => {
@@ -199,18 +258,15 @@ describe('#viewController', () => {
         expect(getByText(main, /Reprocessor Organisation/i)).toBeDefined()
       })
 
-      it('displays issuer tradingName when present on certificate page', async ({
+      it('displays the issuer display name on certificate page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult({
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          buildRegistrationWithAccreditation({
             ...fixtureReprocessor,
-            organisationData: {
-              id: 'org-123',
-              companyDetails: {
-                name: 'Legal Reprocessor Ltd',
-                tradingName: 'Reprocessor Trading'
-              }
+            organisation: {
+              name: 'Legal Reprocessor Ltd',
+              displayName: 'Reprocessor Trading'
             }
           })
         )
@@ -229,41 +285,6 @@ describe('#viewController', () => {
 
         expect(getByText(main, /Reprocessor Trading/i)).toBeDefined()
         expect(body.innerHTML).not.toContain('>Legal Reprocessor Ltd<')
-      })
-
-      it('displays empty issuer when company details are missing on certificate page', async ({
-        server
-      }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult({
-            ...fixtureReprocessor,
-            organisationData: { id: 'org-123', companyDetails: null }
-          })
-        )
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const rows = body.querySelectorAll('.govuk-summary-list__row')
-        const issuerRow = Array.from(rows).find((row) =>
-          row
-            .querySelector('.govuk-summary-list__key')
-            ?.textContent?.includes('Issuer')
-        )
-
-        expect(issuerRow).toBeDefined()
-        expect(
-          issuerRow
-            .querySelector('.govuk-summary-list__value')
-            ?.textContent?.trim()
-        ).toBe('')
       })
 
       it('displays PRN number when provided', async ({ server }) => {
@@ -543,12 +564,59 @@ describe('#viewController', () => {
         expect(returnLink.getAttribute('href')).toBe(listUrl)
       })
 
+      describe('for a regulator, who walks the trail back', () => {
+        const asRegulator = (server) =>
+          server.inject({
+            method: 'GET',
+            url: viewUrl,
+            auth: buildMockAuth({
+              provider: OIDC_ENTRA_ID,
+              ...sessionIdentity(IDENTITIES.regulator)
+            })
+          })
+
+        beforeEach(() => {
+          config.set('featureFlags.regulatorAccess', true)
+        })
+
+        afterEach(() => {
+          config.set('featureFlags.regulatorAccess', false)
+        })
+
+        it('walks from all organisations down to the note', async ({
+          server
+        }) => {
+          const { result } = await asRegulator(server)
+          const { body } = new JSDOM(result).window.document
+
+          expect(
+            Array.from(body.querySelectorAll('.govuk-breadcrumbs__link')).map(
+              (link) => link.getAttribute('href')
+            )
+          ).toStrictEqual([
+            '/regulators/home',
+            `/organisations/${organisationNumber}`,
+            `/organisations/${organisationNumber}/registrations/${registrationNumber}`,
+            `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}`,
+            listUrl
+          ])
+        })
+
+        it('offers neither the back link nor the return link', async ({
+          server
+        }) => {
+          const { result } = await asRegulator(server)
+          const { body } = new JSDOM(result).window.document
+
+          expect(body.querySelector('.govuk-back-link')).toBeNull()
+          expect(queryByText(getByRole(body, 'main'), /Return to/i)).toBeNull()
+        })
+      })
+
       it('displays PERN details for exporter registration', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -576,9 +644,7 @@ describe('#viewController', () => {
       })
 
       it('displays issued date for issued PERN', async ({ server }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -603,9 +669,7 @@ describe('#viewController', () => {
       it('displays issued by and position for issued PERN', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -630,21 +694,21 @@ describe('#viewController', () => {
       it('shows reprocessing site address for reprocessors', async ({
         server
       }) => {
-        const reprocessorWithAddress = {
-          ...fixtureReprocessor,
-          registration: {
-            ...fixtureReprocessor.registration,
-            site: {
-              address: {
-                line1: '123 Reprocessing Lane',
-                town: 'Manchester',
-                postcode: 'M1 1AA'
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          buildRegistrationWithAccreditation({
+            ...fixtureReprocessor,
+            registration: buildRegistrationView({
+              wasteProcessingType: 'reprocessor',
+              reprocessingType: 'input',
+              site: {
+                address: {
+                  line1: '123 Reprocessing Lane',
+                  town: 'Manchester',
+                  postcode: 'M1 1AA'
+                }
               }
-            }
-          }
-        }
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult(reprocessorWithAddress)
+            })
+          })
         )
 
         const { result, statusCode } = await server.inject({
@@ -659,41 +723,16 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Reprocessing site/i)).toBeDefined()
+        expect(getByText(main, 'Reprocessing site')).toBeDefined()
         expect(
           getByText(main, /123 Reprocessing Lane, Manchester, M1 1AA/i)
         ).toBeDefined()
       })
 
-      it('shows empty reprocessing site address when site address is null', async ({
-        server
-      }) => {
-        const reprocessorWithoutAddress = {
-          ...fixtureReprocessor,
-          registration: {
-            ...fixtureReprocessor.registration,
-            site: null
-          }
-        }
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult(reprocessorWithoutAddress)
-        )
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-      })
-
       it('hides reprocessing site address for exporters', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           mockPernFromBackend
         )
@@ -792,7 +831,7 @@ describe('#viewController', () => {
 
       it('returns 404 when registration not found', async ({ server }) => {
         const Boom = await import('@hapi/boom')
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
+        vi.mocked(fetchRequiredAccreditation).mockRejectedValue(
           Boom.default.notFound('Registration not found')
         )
 
@@ -1032,7 +1071,8 @@ describe('#viewController', () => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
           asPackagingRecyclingNote({
             ...mockPrnFromBackend,
-            accreditationYear: 2026
+            accreditationYear: 2026,
+            obligationYear: 2026
           })
         )
 
@@ -1050,7 +1090,57 @@ describe('#viewController', () => {
 
         const complianceText = main.querySelector('.govuk-body')
         expect(complianceText.innerHTML).toBe(
-          'This PRN relates to waste accepted for reprocessing in <strong>2026</strong> and can count towards <strong>2026</strong> obligations.'
+          'This PRN relates to waste received at a reprocessing site subject to the accreditation in <strong>2026</strong> and can count towards <strong>2026</strong> obligations.'
+        )
+      })
+
+      it('should display PERN compliance year text referencing the overseas reprocessing site', async ({
+        server
+      }) => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPernFromBackend,
+            accreditationYear: 2026,
+            obligationYear: 2027
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(main.querySelector('.govuk-body').innerHTML).toBe(
+          'This PERN relates to waste received at an overseas reprocessing site subject to the accreditation in <strong>2026</strong> and can count towards <strong>2027</strong> obligations.'
+        )
+      })
+
+      it('should display the obligation year when it differs from the accreditation year', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            status: 'accepted',
+            accreditationYear: 2026,
+            obligationYear: 2027
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(main.querySelector('.govuk-body').innerHTML).toBe(
+          'This PRN relates to waste received at a reprocessing site subject to the accreditation in <strong>2026</strong> and can count towards <strong>2027</strong> obligations.'
         )
       })
 
@@ -1108,15 +1198,13 @@ describe('#viewController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issued`
         )
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'awaiting_acceptance' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
     })
@@ -1179,6 +1267,82 @@ describe('#viewController', () => {
         expect(getByText(main, /^Yes$/)).toBeDefined()
       })
 
+      it('hides the discard link from a regulator', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: buildMockAuth({
+            provider: OIDC_ENTRA_ID,
+            ...sessionIdentity(IDENTITIES.regulator)
+          }),
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByText(main, /Discard and start again/i)).toBeNull()
+      })
+
+      it('should offer only discarding the draft once the year has closed', async ({
+        server
+      }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+        const cookies = mergeCookies(
+          csrfCookie,
+          ...extractCookieValues(postResponse.headers['set-cookie'])
+        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          accreditation: buildAccreditationView({ prns: { open: false } })
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(queryByRole(main, 'button', { name: 'Create PRN' })).toBeNull()
+        expect(
+          getByRole(main, 'link', { name: /Discard and start again/i })
+        ).toBeDefined()
+      })
+
       it('displays discard link below create button on check page', async ({
         server
       }) => {
@@ -1218,7 +1382,7 @@ describe('#viewController', () => {
         const discardLink = getByText(main, /Discard and start again/i)
         expect(discardLink.tagName).toBe('A')
         expect(discardLink.classList.contains('govuk-link')).toBe(true)
-        const expectedDiscardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/discard`
+        const expectedDiscardUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/discard`
         expect(discardLink.getAttribute('href')).toBe(expectedDiscardUrl)
         expect(main.querySelector('.govuk-button--warning')).toBeNull()
       })
@@ -1264,18 +1428,15 @@ describe('#viewController', () => {
         expect(getByText(main, /Not provided/i)).toBeDefined()
       })
 
-      it('displays issuer tradingName when present on check page', async ({
+      it('displays the issuer display name on check page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult({
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          buildRegistrationWithAccreditation({
             ...fixtureReprocessor,
-            organisationData: {
-              id: 'org-123',
-              companyDetails: {
-                name: 'Legal Reprocessor Ltd',
-                tradingName: 'Reprocessor Trading'
-              }
+            organisation: {
+              name: 'Legal Reprocessor Ltd',
+              displayName: 'Reprocessor Trading'
             }
           })
         )
@@ -1326,61 +1487,6 @@ describe('#viewController', () => {
         expect(body.innerHTML).not.toContain('>Legal Reprocessor Ltd<')
       })
 
-      it('displays empty issuer when company details are missing', async ({
-        server
-      }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asGetRequiredRegistrationResult({
-            ...fixtureReprocessor,
-            organisationData: { id: 'org-123', companyDetails: null }
-          })
-        )
-
-        const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
-          createUrl,
-          { auth: mockAuth }
-        )
-
-        const postResponse = await server.inject({
-          method: 'POST',
-          url: createUrl,
-          auth: mockAuth,
-          headers: { cookie: csrfCookie },
-          payload: { ...validPayload, crumb }
-        })
-
-        const postCookieValues = extractCookieValues(
-          postResponse.headers['set-cookie']
-        )
-        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const rows = body.querySelectorAll('.govuk-summary-list__row')
-        const issuerRow = Array.from(rows).find((row) =>
-          row
-            .querySelector('.govuk-summary-list__key')
-            ?.textContent?.includes('Issuer')
-        )
-
-        expect(issuerRow).toBeDefined()
-        expect(
-          issuerRow
-            .querySelector('.govuk-summary-list__value')
-            ?.textContent?.trim()
-        ).toBe('')
-      })
-
       it('displays PRN details rows in correct order per design', async ({
         server
       }) => {
@@ -1428,7 +1534,7 @@ describe('#viewController', () => {
           'Tonnage',
           'Tonnage in words',
           'Process to be used',
-          'December waste',
+          'December waste?',
           'Issuer',
           'Issued date',
           'Issued by',
@@ -1480,9 +1586,7 @@ describe('#viewController', () => {
       it('displays PERN check page for exporter registration', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
 
         const exporterPayload = {
@@ -1563,17 +1667,15 @@ describe('#viewController', () => {
           payload: { crumb }
         })
 
-        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+        const createdUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/created`
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createdUrl)
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'awaiting_authorisation' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 
@@ -1688,8 +1790,9 @@ describe('#viewController', () => {
       it('cancels draft and redirects to error when tonnage exceeds available waste balance', async ({
         server
       }) => {
-        vi.mocked(fetchWasteBalances).mockResolvedValue({
-          'acc-001': { amount: 1000, availableAmount: 50 }
+        mockBalance({
+          amount: 1000,
+          availableAmount: 50
         })
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
@@ -1723,12 +1826,10 @@ describe('#viewController', () => {
         expect(headers.location).toContain(createUrl)
         expect(headers.location).toContain('error=insufficient_balance')
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'discarded' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
 
         expect(server.loggerMocks.warn).toHaveBeenCalledWith({
@@ -1744,8 +1845,9 @@ describe('#viewController', () => {
       it('proceeds when tonnage is within available waste balance', async ({
         server
       }) => {
-        vi.mocked(fetchWasteBalances).mockResolvedValue({
-          'acc-001': { amount: 1000, availableAmount: 100 }
+        mockBalance({
+          amount: 1000,
+          availableAmount: 100
         })
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
@@ -1775,24 +1877,214 @@ describe('#viewController', () => {
           payload: { crumb }
         })
 
-        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
+        const createdUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/created`
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createdUrl)
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'awaiting_authorisation' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 
-      it('treats missing waste balance as zero available', async ({
+      it('discards a December draft whose tonnage fits the total but not the December pool', async ({
         server
       }) => {
-        vi.mocked(fetchWasteBalances).mockResolvedValue({})
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: true })
+        )
+        mockBalance({
+          amount: 1000,
+          availableAmount: 1000,
+          decemberAmount: 60,
+          decemberAvailableAmount: 60
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toContain('error=insufficient_balance')
+      })
+
+      it('confirms a general draft whose tonnage fits total minus the reserved December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: false })
+        )
+        mockBalance({
+          amount: 1000,
+          availableAmount: 1100,
+          decemberAmount: 50,
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 1050
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        const createdUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/created`
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createdUrl)
+      })
+
+      it('discards a general draft whose tonnage exceeds total minus the reserved December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: false })
+        )
+        mockBalance({
+          amount: 1000,
+          availableAmount: 130,
+          decemberAmount: 50,
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 80
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toContain('error=insufficient_balance')
+      })
+
+      it('confirms a disclosure-only December draft against the total, when the accreditation has no separate December pool', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({ ...mockPrnCreated, isDecemberWaste: true })
+        )
+        mockBalance({
+          amount: 1000,
+          availableAmount: 1000
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, tonnage: '100', crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        const createdUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/created`
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createdUrl)
+      })
+
+      it('treats an accreditation with no balance as zero available', async ({
+        server
+      }) => {
+        mockBalance(null)
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,
@@ -1824,14 +2116,89 @@ describe('#viewController', () => {
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toContain('error=insufficient_balance')
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'discarded' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
+
+      it('keeps the draft when the waste balance cannot be read', async ({
+        server
+      }) => {
+        vi.mocked(fetchOrganisationWasteBalances).mockRejectedValue(
+          new Error('backend unavailable')
+        )
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const cookies = mergeCookies(
+          csrfCookie,
+          ...extractCookieValues(createResponse.headers['set-cookie'])
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(updatePrnStatus).not.toHaveBeenCalled()
+      })
+    })
+  })
+
+  describe('journey events', () => {
+    it('should record the create journey end once the note is confirmed', async ({
+      server
+    }) => {
+      const { cookie: csrfCookie, crumb } = await getCsrfToken(
+        server,
+        createUrl,
+        { auth: mockAuth }
+      )
+
+      const createResponse = await server.inject({
+        method: 'POST',
+        url: createUrl,
+        auth: mockAuth,
+        headers: { cookie: csrfCookie },
+        payload: { ...validPayload, crumb }
+      })
+
+      const cookies = mergeCookies(
+        csrfCookie,
+        ...extractCookieValues(createResponse.headers['set-cookie'])
+      )
+
+      await server.inject({
+        method: 'POST',
+        url: viewUrl,
+        auth: mockAuth,
+        headers: { cookie: cookies },
+        payload: { crumb }
+      })
+
+      expect(metrics.journey.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.createPrn,
+        listUrl
+      )
     })
   })
 })

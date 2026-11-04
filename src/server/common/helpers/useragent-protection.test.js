@@ -106,17 +106,14 @@ describe('user-agent protection', () => {
   }) => {
     const originalUserAgent =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 EdgeCustomLongName/SuperLongVersionString'
-    /** @type {string | undefined} */
-    let capturedUserAgent
+    let capturedUserAgent = null
 
     server.route({
       method: 'GET',
       path: '/test-truncation',
       options: { auth: false },
       handler: (request, h) => {
-        capturedUserAgent = /** @type {string} */ (
-          request.headers['user-agent']
-        )
+        capturedUserAgent = request.headers['user-agent']
         return h.response('OK').code(httpConstants.HTTP_STATUS_OK)
       }
     })
@@ -136,7 +133,9 @@ describe('user-agent protection', () => {
       originalUserAgent.substring(0, MAX_USER_AGENT_LENGTH)
     )
     expect(
-      originalUserAgent.startsWith(/** @type {string} */ (capturedUserAgent))
+      originalUserAgent.startsWith(
+        /** @type {string} */ (/** @type {unknown} */ (capturedUserAgent))
+      )
     ).toBe(true)
   })
 
@@ -145,17 +144,14 @@ describe('user-agent protection', () => {
   }) => {
     const normalUserAgent =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    /** @type {string | undefined} */
-    let capturedUserAgent
+    let capturedUserAgent = null
 
     server.route({
       method: 'GET',
       path: '/test-no-truncation',
       options: { auth: false },
       handler: (request, h) => {
-        capturedUserAgent = /** @type {string} */ (
-          request.headers['user-agent']
-        )
+        capturedUserAgent = request.headers['user-agent']
         return h.response('OK').code(httpConstants.HTTP_STATUS_OK)
       }
     })

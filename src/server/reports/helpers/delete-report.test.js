@@ -1,84 +1,49 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { toYear } from '#server/common/helpers/year.js'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import { it } from '#vite/fixtures/server.js'
 
 import { deleteReport } from './delete-report.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(deleteReport, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const year = 2026
-  const cadence = 'monthly'
-  const period = 1
-  const submissionNumber = 1
-  const idToken = 'test-token'
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('calls fetchJsonFromBackend with correct path and auth header', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(undefined)
-
-    await deleteReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      idToken
+  it('should delete the submission the period names', async ({ msw }) => {
+    /** @type {{ method: string, pathname: string, body: string }[]} */
+    const received = []
+    msw.use(
+      http.delete(/\/reports\//, async ({ request }) => {
+        received.push({
+          method: request.method,
+          pathname: new URL(request.url).pathname,
+          body: await request.text()
+        })
+        return new HttpResponse(null, { status: 204 })
+      })
     )
 
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/monthly/1/submissions/1',
+    const result = await deleteReport(
+      {
+        organisationNumber: toOrganisationNumber('500001'),
+        registrationNumber: toRegistrationNumber('R25/1'),
+        year: toYear(2026),
+        cadence: 'monthly',
+        period: 3,
+        submissionNumber: 1
+      },
+      toBackendToken('a-token')
+    )
+
+    expect(result).toBeUndefined()
+    expect(received).toStrictEqual([
       {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${idToken}`
-        }
+        pathname:
+          '/organisations/500001/registrations/R25%2F1/accreditations/2026/reports/monthly/3/submissions/1',
+        body: ''
       }
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(undefined)
-
-    await deleteReport(
-      'org/123',
-      'reg&456',
-      year,
-      'quarterly',
-      period,
-      submissionNumber,
-      idToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1',
-      expect.any(Object)
-    )
-  })
-
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(
-      deleteReport(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        idToken
-      )
-    ).rejects.toThrow('Network error')
+    ])
   })
 })

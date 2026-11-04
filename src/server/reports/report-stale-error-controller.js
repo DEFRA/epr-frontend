@@ -1,7 +1,8 @@
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { deleteReport } from './helpers/delete-report.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
 import { STALE_REASON } from './helpers/stale.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 /**
@@ -40,21 +41,12 @@ export const reportStaleErrorGetController = {
    */
   async handler(request, h) {
     const { t: localise } = request
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { organisationNumber, registrationNumber, year } = request.params
     const session = request.auth.credentials
 
-    const reportsUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports`
-    )
+    const reportsUrl = request.localiseUrl(reportsListPath(request.params))
 
-    const periodBase = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+    const periodBase = reportPath(request.params)
 
     const context =
       /** @type {{ periodPath: string, reasons: string[] } | undefined} */ (
@@ -64,14 +56,14 @@ export const reportStaleErrorGetController = {
       return h.redirect(reportsUrl)
     }
 
-    request.yar.clear('reportStaleErrorContext')
-
+    // The context is left in place so a refresh re-renders the error rather than
+    // ejecting the operator to their reports; a later staleness redirect for the
+    // same period overwrites it.
     const prefix = translationKeyPrefixFor(context.reasons)
 
-    const { registration } = await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
+    const { registration } = await fetchRegistrationWithAccreditation(
+      { organisationNumber, registrationNumber, year },
+      session.backendToken
     )
     const { noteType } = getNoteTypeDisplayNames(registration)
 
@@ -97,31 +89,11 @@ export const reportStaleErrorPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
     const session = request.auth.credentials
 
-    await deleteReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      session.idToken
-    )
+    await deleteReport(request.params, session.backendToken)
 
-    return h.redirect(
-      request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
-      )
-    )
+    return h.redirect(request.localiseUrl(reportsListPath(request.params)))
   }
 }
 

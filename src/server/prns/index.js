@@ -1,3 +1,7 @@
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { yearAddressed } from '#server/common/helpers/route-params.js'
+import { controller as regulatorListController } from '#server/registrations/details/accreditations/packaging-recycling-notes/controller.js'
+
 import { actionController } from './action-controller.js'
 import {
   cancelGetController,
@@ -6,6 +10,7 @@ import {
 import { cancelledController } from './cancelled-controller.js'
 import { controller } from './controller.js'
 import { createdController } from './created-controller.js'
+import { closedWithTheYear, closedYearSendsTo } from './helpers/closed-year.js'
 import {
   deleteGetController,
   deletePostController
@@ -21,23 +26,43 @@ import { postController } from './post-controller.js'
 import { viewController, viewPostController } from './view-controller.js'
 
 const basePath =
-  '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/packaging-recycling-notes'
+  '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/packaging-recycling-notes'
+
+/**
+ * One address, two audiences (PAE-1930). Only this route forks; with
+ * `featureFlags.regulatorAccess` off every session gets the operator's list.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const listRoute = {
+  /**
+   * @param {HapiRequest & { params: PrnListParams }} request
+   * @param {ResponseToolkit} h
+   */
+  handler(request, h) {
+    return readsAsARegulator(request.auth.credentials)
+      ? regulatorListController.handler(request, h)
+      : listController.handler(request, h)
+  }
+}
 
 export const prns = {
   plugin: {
     name: 'prns',
     register(server) {
-      server.route([
+      const routes = [
         {
-          ...listController,
+          ...listRoute,
           method: 'GET',
           path: basePath
         },
-        {
-          ...controller,
-          method: 'GET',
-          path: `${basePath}/create`
-        },
+        closedWithTheYear(
+          {
+            ...controller,
+            method: 'GET',
+            path: `${basePath}/create`
+          },
+          closedYearSendsTo.list
+        ),
         {
           ...postController,
           method: 'POST',
@@ -108,11 +133,15 @@ export const prns = {
           method: 'GET',
           path: `${basePath}/{prnId}/issued`
         }
-      ])
+      ]
+
+      server.route(routes.map(yearAddressed))
     }
   }
 }
 
 /**
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { PrnListParams } from './helpers/session-types.js'
  */

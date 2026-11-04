@@ -1,46 +1,62 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { DECEMBER_WASTE_CONTROL } from './helpers/december-waste-control.js'
+import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
  * Build view data for the create PRN/PERN page
  * @param {HapiRequest} request
  * @param {object} options
- * @param {string} options.organisationId
- * @param {string} options.registrationId
- * @param {{wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[]}} options.registration
+ * @param {AccreditationKeys} options.keys
+ * @param {RegistrationView} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
- * @param {{availableAmount: number} | null} [options.wasteBalance]
+ * @param {WasteBalance | null} [options.wasteBalance]
+ * @param {DecemberWasteControl} options.decemberWasteControl
+ * @returns {object}
  */
 export function buildCreatePrnViewData(
   request,
-  { organisationId, recipients, registration, registrationId, wasteBalance }
+  { keys, recipients, registration, wasteBalance, decemberWasteControl }
 ) {
   const { t: localise } = request
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
   const pageTitle = localise('prns:create:pageTitle', { noteType })
-  const material = getDisplayMaterial(registration)
+  const material = getMaterialDisplayName(registration.material)
 
-  const wasteBalanceText = wasteBalance
+  const isPoolMode =
+    decemberWasteControl.mode === DECEMBER_WASTE_CONTROL.selectPool
+
+  const wasteBalanceMessage = wasteBalance
     ? localise('prns:create:wasteBalanceText', {
         noteTypePlural,
         balance: formatTonnage(wasteBalance.availableAmount)
       })
     : null
 
+  const wasteBalanceText = isPoolMode
+    ? decemberWasteControl.insetText
+    : wasteBalanceMessage
+
+  const hasDecemberControl =
+    decemberWasteControl.mode !== DECEMBER_WASTE_CONTROL.none
+
+  const decemberWaste = hasDecemberControl ? decemberWasteControl : null
+
   return {
     pageTitle,
+    caption: localise('prns:create:caption', { noteType }),
     heading: pageTitle,
     wasteBalanceText,
-    backUrl: `/organisations/${organisationId}/registrations/${registrationId}`,
+    decemberWaste,
+    backUrl: accreditationPath(keys),
     material: {
       label: localise('prns:materialLabel'),
       value: material
     },
     hiddenFields: {
-      nation: registration.nation || 'england',
       wasteProcessingType: registration.wasteProcessingType
     },
     tonnage: {
@@ -73,5 +89,8 @@ export function buildCreatePrnViewData(
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { Material, GlassRecyclingProcess } from '#domain/organisations/model.js'
+ * @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { DecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
  */

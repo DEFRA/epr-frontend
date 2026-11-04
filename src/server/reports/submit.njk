@@ -61,7 +61,7 @@
       {% if site %}
         {% set yourReportRows = yourReportRows.concat([{
           key: { text: localise("reports:siteLabel") },
-          value: { text: site.address.line1 }
+          value: { text: site }
         }]) %}
       {% endif %}
       {{ govukSummaryList({ rows: yourReportRows }) }}
@@ -193,6 +193,7 @@
         {% endfor %}
       </ul>
 
+      {% if hasWriteScope %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         <input type="hidden" name="version" value="{{ version }}" />
@@ -226,6 +227,7 @@
           }) }}
         </div>
       </form>
+      {% endif %}
 
     </div>
   </div>

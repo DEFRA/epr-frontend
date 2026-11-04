@@ -6,12 +6,13 @@ import {
   isRegisteredOnlyProcessingType
 } from '#domain/summary-logs/meta-fields.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
-import { hasClosedPeriodChanges } from './closed-period-changes.js'
+import { requiresResubmission } from './closed-period-changes.js'
 
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import {
  *   BalanceAffectingBucket,
  *   BalanceAffectingViewModel,
@@ -53,7 +54,8 @@ const FIXED_REASON_CODES = new Set([
   CLASSIFICATION_REASON.ORS_NOT_APPROVED,
   CLASSIFICATION_REASON.ORS_NOT_FOUND,
   CLASSIFICATION_REASON.WASTE_REFUSED,
-  CLASSIFICATION_REASON.WASTE_STOPPED
+  CLASSIFICATION_REASON.WASTE_STOPPED,
+  CLASSIFICATION_REASON.OUTSIDE_ACCREDITATION_PERIOD
 ])
 
 /**
@@ -336,14 +338,16 @@ const buildPeriodViewModel = (period, ctx) => {
  * backend; if that invariant breaks we throw rather than rendering a misleading
  * empty page.
  * @param {ResponseToolkit} h - Hapi response toolkit
- * @param {(key: string, params?: Record<string, unknown>) => string} localise - i18n localisation function
+ * @param {(key: string, params?: object) => string} localise - i18n localisation function
  * @param {{
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType: ProcessingType,
- *   organisationId: string,
- *   registrationId: string,
+ *   organisationPath: string,
+ *   registrationPath: string,
  *   summaryLogId: string,
- *   wasteBalance?: number
+ *   uploadPath: string,
+ *   wasteBalance?: number,
+ *   year: Year
  * }} context - View context
  * @returns {ResponseObject} Hapi view response
  */
@@ -353,10 +357,12 @@ export const renderCheckView = (
   {
     loadsByReportingPeriod,
     processingType,
-    organisationId,
-    registrationId,
+    organisationPath,
+    registrationPath,
     summaryLogId,
-    wasteBalance
+    uploadPath,
+    wasteBalance,
+    year
   }
 ) => {
   if (loadsByReportingPeriod === undefined) {
@@ -372,16 +378,20 @@ export const renderCheckView = (
     ctx
   )
 
+  const heading = localise('summary-log:check.pageHeading', { year })
+
   return h.view(CHECK_VIEW_NAME, {
-    pageTitle: localise('summary-log:checkPageTitle'),
-    organisationId,
-    registrationId,
+    pageTitle: heading,
+    heading,
+    organisationPath,
+    registrationPath,
     summaryLogId,
+    uploadPath,
     isAccredited,
     maxRowsPerBucket: MAX_ROWS_PER_BUCKET,
     periodSections: { open, closed },
     isEmpty: open === null && closed === null,
-    showClosedPeriodImportant: hasClosedPeriodChanges(loadsByReportingPeriod),
+    showClosedPeriodImportant: requiresResubmission(loadsByReportingPeriod),
     wasteBalanceProjection: buildWasteBalanceProjection(
       isAccredited,
       wasteBalance,

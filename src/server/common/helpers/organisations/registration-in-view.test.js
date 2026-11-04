@@ -1,0 +1,107 @@
+import { toYear } from '#server/common/helpers/year.js'
+import { describe, expect, it } from 'vitest'
+
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+
+import {
+  accreditationIn,
+  registrationEntries,
+  registrationIn
+} from './registration-in-view.js'
+
+/**
+ * @import { OrganisationView, RegistrationView } from './organisation-view.js'
+ */
+
+const accreditation2025 = /** @type {const} */ ({
+  accreditationNumber: toAccreditationNumber('A25ER5001180114PL'),
+  prns: { open: true },
+  status: {
+    current: 'approved',
+    timeline: [{ status: 'approved', at: '2025-01-01T09:00:00.000Z' }]
+  }
+})
+
+const accreditation2026 = /** @type {const} */ ({
+  accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
+  prns: { open: true },
+  status: {
+    current: 'approved',
+    timeline: [{ status: 'approved', at: '2026-01-01T09:00:00.000Z' }]
+  }
+})
+
+const registration = /** @type {RegistrationView} */ ({
+  status: {
+    current: 'approved',
+    timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
+  },
+  validFrom: '2025-01-01',
+  material: 'plastic',
+  submittedToRegulator: { code: 'ea' },
+  wasteProcessingType: 'exporter',
+  accreditations: { 2026: accreditation2026, 2025: accreditation2025 }
+})
+
+const organisation = /** @type {OrganisationView} */ ({
+  organisationNumber: toOrganisationNumber('500001'),
+  name: 'Kirkby Plastics',
+  displayName: 'Kirkby Plastics',
+  status: { current: 'active' },
+  submittedToRegulator: { code: 'ea' },
+  registrations: { R25SR500030912PA: registration }
+})
+
+describe(registrationEntries, () => {
+  it('pairs each registration with the number it is keyed by', () => {
+    expect(registrationEntries(organisation.registrations)).toStrictEqual([
+      ['R25SR500030912PA', registration]
+    ])
+  })
+})
+
+describe(registrationIn, () => {
+  it('returns the registration with that number', () => {
+    expect(
+      registrationIn(organisation, toRegistrationNumber('R25SR500030912PA'))
+    ).toBe(registration)
+  })
+
+  it('is a 404 for a number the organisation does not hold', () => {
+    expect(() =>
+      registrationIn(organisation, toRegistrationNumber('R99XX'))
+    ).toThrow(
+      expect.objectContaining({
+        output: expect.objectContaining({ statusCode: statusCodes.notFound }),
+        code: errorCodes.registrationNotFound
+      })
+    )
+  })
+
+  it('is a 404 for an inherited key', () => {
+    expect(() =>
+      registrationIn(organisation, toRegistrationNumber('toString'))
+    ).toThrow(
+      expect.objectContaining({ code: errorCodes.registrationNotFound })
+    )
+  })
+})
+
+describe(accreditationIn, () => {
+  it('returns the accreditation for that year', () => {
+    expect(accreditationIn(registration, toYear(2025))).toBe(accreditation2025)
+  })
+
+  it('is a 404 for a year the registration holds no accreditation for', () => {
+    expect(() => accreditationIn(registration, toYear(2024))).toThrow(
+      expect.objectContaining({
+        output: expect.objectContaining({ statusCode: statusCodes.notFound }),
+        code: errorCodes.accreditationNotFound
+      })
+    )
+  })
+})

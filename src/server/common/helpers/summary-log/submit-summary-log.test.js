@@ -1,74 +1,43 @@
-import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
-import { test } from '#vite/fixtures/server.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import { it } from '#vite/fixtures/server.js'
 
 import { submitSummaryLog } from './submit-summary-log.js'
 
-const backendUrl = config.get('eprBackendUrl')
-
 describe(submitSummaryLog, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const summaryLogId = 'log-789'
-
-  test('submits summary log and returns response data', async ({ msw }) => {
-    const mockResponse = {
-      status: 'submitted',
-      accreditationNumber: '493021'
-    }
-
-    /** @type {Request | undefined} */
-    let capturedRequest
+  it('should submit the summary log the keys name and resolve to the outcome', async ({
+    msw
+  }) => {
+    /** @type {{ pathname: string }[]} */
+    const received = []
     msw.use(
-      http.post(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789/submit`,
-        ({ request }) => {
-          capturedRequest = request
-          return HttpResponse.json(mockResponse)
-        }
-      )
+      http.post(/\/submit$/, ({ request }) => {
+        received.push({
+          pathname: new URL(request.url).pathname
+        })
+        return HttpResponse.json({ status: 'submitting' })
+      })
     )
 
     const result = await submitSummaryLog(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      'test-id-token'
+      {
+        organisationNumber: toOrganisationNumber('500118'),
+        registrationNumber: toRegistrationNumber('R26/1')
+      },
+      'log#3',
+      toBackendToken('a-token')
     )
 
-    const request = /** @type {Request} */ (capturedRequest)
-
-    expect(request.headers.get('content-type')).toBe('application/json')
-    expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
-    expect(result).toStrictEqual(mockResponse)
-  })
-
-  test('throws Boom error when backend returns non-ok response', async ({
-    msw
-  }) => {
-    msw.use(
-      http.post(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789/submit`,
-        () =>
-          new HttpResponse(null, {
-            status: 500,
-            statusText: 'Internal Server Error'
-          })
-      )
-    )
-
-    await expect(
-      submitSummaryLog(
-        organisationId,
-        registrationId,
-        summaryLogId,
-        'test-id-token'
-      )
-    ).rejects.toMatchObject({
-      isBoom: true,
-      output: { statusCode: 500 }
-    })
+    expect(result).toStrictEqual({ status: 'submitting' })
+    expect(received).toStrictEqual([
+      {
+        pathname:
+          '/organisations/500118/registrations/R26%2F1/summary-logs/log%233/submit'
+      }
+    ])
   })
 })

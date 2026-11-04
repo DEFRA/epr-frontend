@@ -1,4 +1,6 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -7,30 +9,30 @@ import { addUserToOrganisation } from './add-user-to-organisation.js'
 
 describe('#addUserToOrganisation', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const mockIdToken = 'mock-id-token-12345'
-  const organisationId = 'org-123'
-  const userEndpoint = `${backendUrl}/v1/organisations/${organisationId}/user`
+  const mockBackendToken = toBackendToken('mock-backend-token-12345')
+  const organisationNumber = toOrganisationNumber('11111111')
+  const userEndpoint = `${backendUrl}/organisations/${organisationNumber}/user`
 
   beforeEach(({ msw }) => {
     msw.use(
       bearerAuthHandler(
         'put',
         userEndpoint,
-        mockIdToken,
-        () => new HttpResponse(null, { status: 200 })
+        mockBackendToken,
+        () => new HttpResponse(null, { status: 204 })
       )
     )
   })
 
   it('should add user to organisation successfully with valid token', async () => {
     await expect(
-      addUserToOrganisation(organisationId, mockIdToken)
+      addUserToOrganisation(organisationNumber, mockBackendToken)
     ).resolves.not.toThrow()
   })
 
   it('should throw error when backend returns 401', async () => {
     await expect(
-      addUserToOrganisation(organisationId, 'invalid-token')
+      addUserToOrganisation(organisationNumber, toBackendToken('invalid-token'))
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -47,7 +49,7 @@ describe('#addUserToOrganisation', () => {
     )
 
     await expect(
-      addUserToOrganisation(organisationId, mockIdToken)
+      addUserToOrganisation(organisationNumber, mockBackendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -60,7 +62,7 @@ describe('#addUserToOrganisation', () => {
     msw.use(http.put(userEndpoint, () => HttpResponse.error()))
 
     await expect(
-      addUserToOrganisation(organisationId, mockIdToken)
+      addUserToOrganisation(organisationNumber, mockBackendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {

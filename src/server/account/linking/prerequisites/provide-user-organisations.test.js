@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
@@ -25,7 +26,7 @@ describe('#provideUserOrganisations', () => {
       bearerAuthHandler(
         'get',
         `${backendUrl}/v1/me/organisations`,
-        'mock-id-token',
+        'mock-backend-token',
         () => HttpResponse.json({ organisations: mockOrganisations })
       )
     )
@@ -37,16 +38,20 @@ describe('#provideUserOrganisations', () => {
     expect(result).toStrictEqual(mockOrganisations)
   })
 
-  it('should return null when credentials is null', async () => {
+  it('should throw Boom.unauthorized when credentials is null', async () => {
     const mockRequest = {
       auth: {
         credentials: null
       }
     }
 
-    const result = await provideUserOrganisations.method(mockRequest)
-
-    expect(result).toBeNull()
+    await expect(
+      provideUserOrganisations.method(mockRequest)
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: { statusCode: 401 },
+      message: 'User session is required to fetch organisations'
+    })
   })
 
   it('should throw error when backend returns 401 unauthorized', async ({
@@ -58,7 +63,9 @@ describe('#provideUserOrganisations', () => {
       })
     )
 
-    const mockRequest = { auth: buildMockAuth({ idToken: 'invalid-token' }) }
+    const mockRequest = {
+      auth: buildMockAuth({ backendToken: toBackendToken('invalid-token') })
+    }
 
     await expect(provideUserOrganisations.method(mockRequest)).rejects.toThrow(
       '401 Unauthorized'

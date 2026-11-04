@@ -1,8 +1,20 @@
 {% extends 'layouts/page.njk' %}
 
+{# The page confirms a choice saved here itself, below #}
+{% block cookieBannerConfirmation %}{% endblock %}
+
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {% if analytics.confirmedChoice %}
+        {% call govukNotificationBanner({ type: 'success' }) %}
+          <p class="govuk-notification-banner__heading">
+            {{ localise('cookies:confirmation:heading') }}
+            {%- if backUrl %} <a class="govuk-notification-banner__link" href="{{ backUrl }}">{{ localise('cookies:confirmation:back') }}</a>.{% endif %}
+          </p>
+        {% endcall %}
+      {% endif %}
+
       <h1 class="govuk-heading-l">{{ localise('cookies:heading') }}</h1>
 
       <p class="govuk-body">{{ localise('cookies:intro1') }}</p>
@@ -34,9 +46,75 @@
             { text: localise('cookies:table:userSession:name') },
             { text: localise('cookies:table:userSession:purpose') },
             { text: localise('cookies:table:userSession:expires') }
+          ],
+          [
+            { text: localise('cookies:table:signInProvider:name') },
+            { text: localise('cookies:table:signInProvider:purpose') },
+            { text: localise('cookies:table:signInProvider:expires') }
+          ],
+          [
+            { text: localise('cookies:table:analyticsConsent:name') },
+            { text: localise('cookies:table:analyticsConsent:purpose') },
+            { text: localise('cookies:table:analyticsConsent:expires') }
           ]
         ]
       }) }}
+
+      {% if analytics.isEnabled %}
+        <h2 class="govuk-heading-m">{{ localise('cookies:analyticsCookies:heading') }}</h2>
+
+        <p class="govuk-body">{{ localise('cookies:analyticsCookies:description') }}</p>
+
+        {{ govukTable({
+          head: [
+            { text: localise('cookies:table:name') },
+            { text: localise('cookies:table:purpose') },
+            { text: localise('cookies:table:expires') }
+          ],
+          rows: [
+            [
+              { text: localise('cookies:analyticsCookies:ga:name') },
+              { text: localise('cookies:analyticsCookies:ga:purpose') },
+              { text: localise('cookies:analyticsCookies:ga:expires') }
+            ],
+            [
+              { text: localise('cookies:analyticsCookies:gaProperty:name') },
+              { text: localise('cookies:analyticsCookies:gaProperty:purpose') },
+              { text: localise('cookies:analyticsCookies:gaProperty:expires') }
+            ]
+          ]
+        }) }}
+
+        <form method="post" action="/cookies/consent">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          <input type="hidden" name="returnUrl" value="{{ localiseUrl('/cookies') }}" />
+          {% if backUrl %}
+            <input type="hidden" name="backUrl" value="{{ backUrl }}" />
+          {% endif %}
+          {{ govukRadios({
+            name: "analytics",
+            fieldset: {
+              legend: {
+                text: localise('cookies:choice:heading'),
+                classes: "govuk-fieldset__legend--m"
+              }
+            },
+            items: [
+              {
+                value: "accepted",
+                text: localise('cookies:choice:accept'),
+                checked: analytics.hasConsented
+              },
+              {
+                value: "rejected",
+                text: localise('cookies:choice:reject'),
+                checked: analytics.hasRejected
+              }
+            ]
+          }) }}
+          {{ govukButton({ text: localise('cookies:choice:save') }) }}
+        </form>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

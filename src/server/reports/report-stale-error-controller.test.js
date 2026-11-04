@@ -7,26 +7,26 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 /** @import { HapiServer } from '#server/common/hapi-types.js' */
-/** @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js' */
+/** @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js' */
 
 vi.mock(import('./helpers/delete-report.js'))
 vi.mock(import('./helpers/fetch-report-detail.js'))
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 
 const { deleteReport } = await import('./helpers/delete-report.js')
 const { fetchReportDetail } = await import('./helpers/fetch-report-detail.js')
 const { ReportStaleError, STALE_REASON } = await import('./helpers/stale.js')
-const { fetchRegistrationAndAccreditation } =
-  await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+const { fetchRegistrationWithAccreditation } =
+  await import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 
 const mockAuth = buildMockAuth()
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/report-stale-error`
-const periodUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/report-stale-error`
+const periodUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 
 /**
  * Trigger the onPreResponse redirect to the error page, returning the
@@ -40,9 +40,17 @@ async function triggerStalenessRedirect(server) {
     url: periodUrl,
     auth: mockAuth
   })
-  const setCookies = headers['set-cookie']
-  const cookies = Array.isArray(setCookies) ? setCookies : [setCookies]
-  return cookies
+  return refreshedCookie(headers['set-cookie'])
+}
+
+/**
+ * Extracts the session cookie from a Set-Cookie response header, mirroring how
+ * a browser updates its jar between requests.
+ * @param {string | string[] | undefined} setCookies
+ * @returns {string}
+ */
+function refreshedCookie(setCookies) {
+  return (Array.isArray(setCookies) ? setCookies : [setCookies])
     .filter(/** @returns {c is string} */ (c) => Boolean(c))
     .map((c) => c.split(';')[0])
     .join('; ')
@@ -51,7 +59,7 @@ async function triggerStalenessRedirect(server) {
 describe('#reportStaleErrorController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       /** @type {RegistrationWithAccreditation} */ (
         /** @type {unknown} */ ({
           registration: { wasteProcessingType: 'reprocessor' },
@@ -162,7 +170,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(button).toBeDefined()
         expect(button.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
         expect(button.classList.contains('govuk-button--secondary')).toBe(true)
       })
@@ -178,8 +186,33 @@ describe('#reportStaleErrorController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
+      })
+
+      it('renders the screen again on a refresh instead of ejecting to reports', async ({
+        server
+      }) => {
+        const cookie = await triggerStalenessRedirect(server)
+
+        const firstView = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie }
+        })
+
+        // The context is not consumed on view, so the same session cookie
+        // renders the error again on a refresh rather than redirecting.
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie }
+        })
+
+        expect(firstView.statusCode).toBe(statusCodes.ok)
+        expect(statusCode).toBe(statusCodes.ok)
       })
     })
 
@@ -242,7 +275,7 @@ describe('#reportStaleErrorController', () => {
       })
 
       it('names the note type as PERN for an exporter', async ({ server }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           /** @type {RegistrationWithAccreditation} */ (
             /** @type {unknown} */ ({
               registration: { wasteProcessingType: 'exporter' },
@@ -329,7 +362,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(button).toBeDefined()
         expect(button.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
         expect(button.classList.contains('govuk-button--secondary')).toBe(true)
       })
@@ -441,7 +474,7 @@ describe('#reportStaleErrorController', () => {
 
         expect(button).toBeDefined()
         expect(button.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
         expect(button.classList.contains('govuk-button--secondary')).toBe(true)
       })
@@ -481,13 +514,15 @@ describe('#reportStaleErrorController', () => {
       })
 
       expect(deleteReport).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        2026,
-        'quarterly',
-        1,
-        1,
-        'mock-id-token'
+        {
+          organisationNumber,
+          registrationNumber,
+          year: 2026,
+          cadence: 'quarterly',
+          period: 1,
+          submissionNumber: 1
+        },
+        'mock-backend-token'
       )
     })
 
@@ -506,7 +541,7 @@ describe('#reportStaleErrorController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
       )
     })
   })

@@ -1,8 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
@@ -11,7 +14,7 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./update-report.js'))
@@ -43,27 +46,22 @@ const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = { strategy: 'session', credentials: mockCredentials }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
 
 describe.each(subtrees)('$name prn summary page', (subtree) => {
-  const accreditedOperator = asRegistrationWithAccreditation({
-    organisationData: { id: organisationId },
-    registration: {
-      id: registrationId,
-      material: 'plastic',
-      wasteProcessingType: subtree.registrationType,
-      registrationNumber: 'REG001234'
-    },
-    accreditation: {
-      id: 'acc-001',
-      accreditationNumber: 'ER992415095748M'
-    }
+  const operatorView = buildRegistrationView({
+    wasteProcessingType: /** @type {'exporter' | 'reprocessor'} */ (
+      subtree.registrationType
+    )
   })
 
-  const registeredOnlyOperator = asRegistrationWithAccreditation({
-    ...accreditedOperator,
-    accreditation: undefined
+  const accreditedOperator = buildRegistrationWithAccreditation({
+    registration: operatorView
+  })
+
+  const registeredOnlyOperator = buildRegistrationWithAccreditation({
+    registration: { ...operatorView, accreditations: {} }
   })
 
   const reportDetail = {
@@ -78,9 +76,8 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
       lastUploadedAt: '2026-02-15T15:09:00.000Z'
     },
     details: { material: 'plastic' },
-    id: 'report-001',
     version: 1,
-    status: { currentStatus: 'in_progress' },
+    status: 'in_progress',
     supportingInformation: null,
     recyclingActivity: {
       totalTonnageReceived: 200,
@@ -101,7 +98,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
     prn: { ...reportDetail.prn, totalRevenue: 1576.12 }
   }
 
-  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/prn-summary`
+  const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/prn-summary`
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -109,7 +106,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedOperator
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -230,7 +227,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
     it(`should return 404 for ${subtree.registeredOnlyDescription}`, async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyOperator
       )
 
@@ -244,7 +241,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
     })
 
     it('should return 404 for quarterly cadence', async ({ server }) => {
-      const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/prn-summary`
+      const quarterlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/prn-summary`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -278,7 +275,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse({
           ...reportDetail,
-          status: { currentStatus: 'ready_to_submit' }
+          status: 'ready_to_submit'
         })
       )
 
@@ -296,7 +293,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
     const isReprocessor = subtree.name === 'reprocessor'
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedOperator
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -334,7 +331,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/${subtree.redirectSlug}`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/${subtree.redirectSlug}`
         )
 
         expect(server.loggerMocks.info).toHaveBeenCalledWith({
@@ -361,15 +358,15 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
 
         expect(updateReport).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'monthly',
             period: 1,
             submissionNumber: 1
           },
           { prnRevenue: 1576.12 },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })
@@ -390,7 +387,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
       })
 
@@ -411,7 +408,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
       })
 

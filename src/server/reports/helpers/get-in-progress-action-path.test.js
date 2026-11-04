@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest'
 
+import {
+  buildAccreditationView,
+  buildRegistrationView
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { CADENCE } from '../constants.js'
 import { getInProgressActionPath } from './get-in-progress-action-path.js'
 
-/**
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- */
-
-const exporter = { wasteProcessingType: 'exporter' }
-const reprocessor = { wasteProcessingType: 'reprocessor' }
-const accreditation = /** @type {Accreditation} */ (
-  /** @type {unknown} */ ({ id: 'acc-1' })
-)
+const exporter = buildRegistrationView()
+const reprocessor = buildRegistrationView({
+  wasteProcessingType: 'reprocessor'
+})
+const accreditation = buildAccreditationView()
 
 describe('#getInProgressActionPath', () => {
   it.each([

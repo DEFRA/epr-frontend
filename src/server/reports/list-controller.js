@@ -1,86 +1,57 @@
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import { escapeHtml } from '#server/common/helpers/escape-html.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
-import { formatTime } from '#server/common/helpers/format-time.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { SUBMISSION_STATUS } from './constants.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { materialsHomepage } from '#server/common/helpers/organisations/registration-in-view.js'
+import {
+  paramsOrNotFound,
+  yearParamsSchema
+} from '#server/registrations/details/helpers/params-validation.js'
+import { CADENCE, SUBMISSION_STATUS } from './constants.js'
+import { buildActionLinkHtml } from './helpers/build-action-link-html.js'
+import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
+import { buildStatusTagHtml } from './helpers/build-status-tag-html.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
+import { formatSubmittedDateTime } from './helpers/format-submitted-date-time.js'
 import {
-  getStatusLabel,
-  getStatusTagClass
-} from './helpers/format-submission-status.js'
-import { isResubmission } from './helpers/resubmission.js'
-import {
+  actionReads,
   getActionLabel,
   getActionPath,
   getRowAction,
   REPORT_ACTION
 } from './helpers/report-action.js'
+import { reportPath } from './helpers/report-paths.js'
 
 /**
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
  * @typedef {TableCell[]} TableRow
- * @typedef {{ organisationId: string, registrationId: string }} ReportListParams
  */
 
 /**
- * @param {string} actionLabel
- * @param {string} url
- * @param {string} label
- * @returns {string}
- */
-const buildActionLinkHtml = (actionLabel, url, label) =>
-  `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
-
-/**
- * A submitted period that is a resubmission (a later submission for the period,
- * flag-gated) reads "Resubmitted" rather than "Submitted". The backend emits no
- * distinct status for this, so the label is derived from the submission number
- * at this call site; the tag colour stays green, as submitted.
- * @param {SubmissionStatusValue} status
- * @param {TFunction} localise
- * @param {number} submissionNumber
- * @returns {string}
- */
-const buildStatusTagHtml = (status, localise, submissionNumber) => {
-  const statusLabel =
-    status === SUBMISSION_STATUS.SUBMITTED && isResubmission(submissionNumber)
-      ? localise('reports:statusResubmitted')
-      : getStatusLabel(status, localise)
-  const statusTagClass = getStatusTagClass(status)
-
-  return `<strong class="govuk-tag ${statusTagClass}">${escapeHtml(statusLabel)}</strong>`
-}
-
-/**
- * @param {string | null | undefined} isoString
- * @returns {string}
- */
-const formatSubmittedDateTime = (isoString) => {
-  if (!isoString) {
-    return ''
-  }
-  return `${formatDateShort(isoString)}, ${formatTime(isoString)}`
-}
-
-/**
+ * The row's action link, or an empty cell where the session may not take the
+ * action. The link is assembled here rather than in the template, so the
+ * template scan that hides write controls cannot see it and the decision has to
+ * be made at this call site.
  * @param {{
  *   accreditation: Accreditation | undefined,
- *   cadence: CadenceValue,
+ *   canWrite: boolean,
  *   label: string,
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
  *   period: ReportingPeriod,
  *   periodPath: string,
- *   registration: Pick<Registration, 'wasteProcessingType'>
+ *   registration: Pick<RegistrationView, 'wasteProcessingType'>
  * }} options
  * @returns {TableCell}
  */
 const buildActionCell = ({
   accreditation,
-  cadence,
+  canWrite,
   label,
   localise,
   localiseUrl,
@@ -89,7 +60,21 @@ const buildActionCell = ({
   registration
 }) => {
   const action = getRowAction(period)
-  const actionPath = getActionPath(action, registration, accreditation, cadence)
+  // The report pages decide their steps by the year's accreditation, so a
+  // period of the other kind can only be read for now.
+  const isCurrentKind =
+    period.cadence === (accreditation ? CADENCE.MONTHLY : CADENCE.QUARTERLY)
+
+  if (!(canWrite && isCurrentKind) && !actionReads(action)) {
+    return { text: '', classes: cssClasses.textAlign.right }
+  }
+
+  const actionPath = getActionPath(
+    action,
+    registration,
+    accreditation,
+    period.cadence
+  )
   const actionLabel = getActionLabel(action, localise)
 
   const url = localiseUrl(`${periodPath}${actionPath}`)
@@ -104,21 +89,21 @@ const buildActionCell = ({
  * Build table rows for the govukTable macro, partitioned by submission status.
  * @param {{
  *   accreditation: Accreditation | undefined,
- *   cadence: CadenceValue,
+ *   canWrite: boolean,
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
- *   organisationId: string,
- *   registration: Registration,
+ *   keys: RegistrationKeys,
+ *   registration: RegistrationView,
  *   reportingPeriods: ReportingPeriod[]
  * }} options
  * @returns {{ activeRows: TableRow[], submittedRows: TableRow[] }}
  */
 function buildRows({
   accreditation,
-  cadence,
+  canWrite,
   localise,
   localiseUrl,
-  organisationId,
+  keys,
   registration,
   reportingPeriods
 }) {
@@ -128,17 +113,23 @@ function buildRows({
   const submittedRows = []
 
   for (const period of reportingPeriods) {
-    const periodPath = `/organisations/${organisationId}/registrations/${registration.id}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
+    const periodPath = reportPath({
+      ...keys,
+      year: period.year,
+      cadence: period.cadence,
+      period: period.period,
+      submissionNumber: period.submissionNumber
+    })
 
-    const label = formatPeriodLabelWithComma(period, cadence, localise)
+    const label = formatPeriodLabelWithComma(period, period.cadence, localise)
 
     const status = period.periodStatus
 
     const actionCell = buildActionCell({
+      canWrite,
       period,
       registration,
       accreditation,
-      cadence,
       localise,
       localiseUrl,
       periodPath,
@@ -234,33 +225,69 @@ const buildApprovedPersonBanner = (reportingPeriods, localise) => {
   return count > 0 ? localise('reports:approvedPersonBanner', { count }) : null
 }
 
-/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: ReportListParams }>>} */
+/**
+ * The page's heading and title, each naming the year. A regulator reads
+ * "Reports"; an operator "Manage reports".
+ * @param {{ session: UserSession, localise: TFunction, material: string, year: Year }} options
+ * @returns {{ heading: string, pageTitle: string }}
+ */
+const buildTitles = ({ session, localise, material, year }) =>
+  readsAsARegulator(session)
+    ? {
+        heading: localise('reports:heading', { year }),
+        pageTitle: localise('reports:pageTitle', { year, material })
+      }
+    : {
+        heading: localise('reports:manageReportsHeading', { year }),
+        pageTitle: localise('reports:manageReportsPageTitle', {
+          year,
+          material
+        })
+      }
+
+/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: RegistrationYearKeys }>>} */
 export const listController = {
+  options: {
+    validate: paramsOrNotFound(yearParamsSchema, {
+      message: 'Reports not found',
+      code: errorCodes.registrationNotFound,
+      action: 'fetch_reports',
+      reason: 'the address holds no such year'
+    })
+  },
   async handler(request, h) {
-    const { organisationId, registrationId } = request.params
+    const { organisationNumber, registrationNumber, year } = request.params
+    const keys = { organisationNumber, registrationNumber }
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration, accreditation }, { cadence, reportingPeriods }] =
+    const [{ organisation, registration, accreditation }, reportingPeriods] =
       await Promise.all([
-        fetchRegistrationAndAccreditation(
-          organisationId,
-          registrationId,
-          session.idToken
+        fetchRegistrationWithAccreditation(
+          request.params,
+          session.backendToken
         ),
-        fetchReportingPeriods(organisationId, registrationId, session.idToken)
+        fetchReportingPeriods(request.params, session.backendToken)
       ])
 
-    const material = getDisplayMaterial(registration)
+    const homepage = materialsHomepage(keys, registration, year)
+
+    if (homepage === null) {
+      throw notFound('Reports not found', errorCodes.registrationNotFound, {
+        event: { action: 'fetch_reports', reason: `year=${year}` }
+      })
+    }
+
+    const material = getMaterialDisplayName(registration.material)
 
     const { activeHeader, submittedHeader } = buildHeaders(localise)
 
     const { activeRows, submittedRows } = buildRows({
       accreditation,
-      cadence,
+      canWrite: hasWriteScope(session),
       localise,
       localiseUrl: (url) => request.localiseUrl(url),
-      organisationId,
+      keys,
       registration,
       reportingPeriods
     })
@@ -270,6 +297,8 @@ export const listController = {
       localise
     )
 
+    const titles = buildTitles({ session, localise, material, year })
+
     const viewData = {
       active: {
         head: activeHeader,
@@ -277,12 +306,19 @@ export const listController = {
         emptyMessage: localise('reports:actionRequiredEmpty')
       },
       approvedPersonBanner,
-      backUrl: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}`
-      ),
-      heading: localise('reports:heading'),
+      backUrl: request.localiseUrl(homepage.path),
+      breadcrumbs: readsAsARegulator(session)
+        ? buildReportBreadcrumbs({
+            organisation,
+            registration,
+            keys,
+            pageName: titles.heading,
+            localise,
+            localiseUrl: (url) => request.localiseUrl(url)
+          })
+        : [],
+      ...titles,
       material,
-      pageTitle: localise('reports:pageTitle', { material }),
       submitted: {
         head: submittedHeader,
         rows: submittedRows,
@@ -296,9 +332,10 @@ export const listController = {
 
 /**
  * @import { TFunction } from 'i18next'
+ * @import { UserSession } from '#server/auth/types/session.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
- * @import { CadenceValue, SubmissionStatusValue } from './constants.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
+ * @import { RegistrationKeys, RegistrationYearKeys } from './helpers/report-paths.js'
  */

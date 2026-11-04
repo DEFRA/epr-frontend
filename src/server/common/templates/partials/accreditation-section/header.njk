@@ -1,0 +1,19 @@
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{# sectionHeading, sectionHref, sectionHasRows, sectionTestId, sectionViewAllText, sectionViewAllHiddenText, sectionMostRecentText #}
+{# Three sections carry this link, so each names its own list for a screen
+   reader rather than reading "View all" three times over. #}
+<div class="govuk-!-margin-top-9 govuk-!-margin-bottom-6">
+  <h2 class="govuk-heading-m govuk-!-display-inline-block govuk-!-margin-bottom-0">{{ sectionHeading }}</h2>
+  {# No button where the full list would only repeat the empty state. #}
+  {% if sectionHasRows %}
+    {{ govukButton({
+      html: sectionViewAllText + ' <span class="govuk-visually-hidden">' + sectionViewAllHiddenText + '</span>',
+      href: sectionHref,
+      classes: "govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-margin-left-3"
+    }) }}
+  {% endif %}
+</div>
+{% if sectionHasRows %}
+  <h3 class="govuk-heading-s" data-testid="{{ sectionTestId }}-most-recent">{{ sectionMostRecentText }}</h3>
+{% endif %}

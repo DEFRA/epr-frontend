@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -47,7 +48,7 @@ describe(formatPeriodLabel, () => {
     {
       cadence: 'monthly',
       period: {
-        year: 2026,
+        year: toYear(2026),
         period: 1,
         startDate: '2026-01-01',
         endDate: '2026-01-31'
@@ -57,7 +58,7 @@ describe(formatPeriodLabel, () => {
     {
       cadence: 'monthly',
       period: {
-        year: 2026,
+        year: toYear(2026),
         period: 6,
         startDate: '2026-06-01',
         endDate: '2026-06-30'
@@ -67,7 +68,7 @@ describe(formatPeriodLabel, () => {
     {
       cadence: 'monthly',
       period: {
-        year: 2025,
+        year: toYear(2025),
         period: 12,
         startDate: '2025-12-01',
         endDate: '2025-12-31'
@@ -77,7 +78,7 @@ describe(formatPeriodLabel, () => {
     {
       cadence: 'quarterly',
       period: {
-        year: 2026,
+        year: toYear(2026),
         period: 1,
         startDate: '2026-01-01',
         endDate: '2026-03-31'
@@ -87,7 +88,7 @@ describe(formatPeriodLabel, () => {
     {
       cadence: 'quarterly',
       period: {
-        year: 2026,
+        year: toYear(2026),
         period: 4,
         startDate: '2026-10-01',
         endDate: '2026-12-31'
@@ -113,7 +114,7 @@ describe(formatPeriodLabelWithComma, () => {
     {
       cadence: 'monthly',
       period: {
-        year: 2026,
+        year: toYear(2026),
         period: 1,
         startDate: '2026-01-01',
         endDate: '2026-01-31'
@@ -123,7 +124,7 @@ describe(formatPeriodLabelWithComma, () => {
     {
       cadence: 'monthly',
       period: {
-        year: 2026,
+        year: toYear(2026),
         period: 6,
         startDate: '2026-06-01',
         endDate: '2026-06-30'
@@ -133,7 +134,7 @@ describe(formatPeriodLabelWithComma, () => {
     {
       cadence: 'monthly',
       period: {
-        year: 2025,
+        year: toYear(2025),
         period: 12,
         startDate: '2025-12-01',
         endDate: '2025-12-31'
@@ -143,7 +144,7 @@ describe(formatPeriodLabelWithComma, () => {
     {
       cadence: 'quarterly',
       period: {
-        year: 2026,
+        year: toYear(2026),
         period: 1,
         startDate: '2026-01-01',
         endDate: '2026-03-31'
@@ -153,7 +154,7 @@ describe(formatPeriodLabelWithComma, () => {
     {
       cadence: 'quarterly',
       period: {
-        year: 2026,
+        year: toYear(2026),
         period: 4,
         startDate: '2026-10-01',
         endDate: '2026-12-31'

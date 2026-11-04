@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { getTracingHeaderName } from '#server/common/helpers/request-tracing.js'
 import { withTraceId } from '@defra/hapi-tracing'
 
@@ -6,14 +5,19 @@ import { getUserSession } from './get-user-session.js'
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { AuthProvider } from '../types/auth-provider.js'
  */
 
 /**
- * Refresh id token using refresh token
+ * Refresh the session's tokens at the provider that issued them.
+ *
+ * The session records the token endpoint of its own provider, and the auth
+ * provider carries the credentials and the scopes that endpoint expects.
  * @param {HapiRequest} request - Hapi request object
+ * @param {AuthProvider} authProvider - The auth provider that issued the session
  * @returns {Promise<Response>}
  */
-async function refreshIdToken(request) {
+async function refreshIdToken(request, authProvider) {
   const { ok, value: session } = await getUserSession(request)
 
   if (!ok) {
@@ -24,19 +28,11 @@ async function refreshIdToken(request) {
     throw new Error('Cannot refresh token: no refresh token found')
   }
 
-  const refreshToken = session.refreshToken
-  const clientId = config.get('defraId.clientId')
-  const clientSecret = config.get('defraId.clientSecret')
-  const serviceId = config.get('defraId.serviceId')
-
-  const params = new URLSearchParams()
-
-  params.append('client_id', clientId)
-  params.append('client_secret', clientSecret)
-  params.append('grant_type', 'refresh_token')
-  params.append('refresh_token', refreshToken)
-  params.append('scope', 'openid offline_access')
-  params.append('serviceId', serviceId)
+  const params = new URLSearchParams({
+    ...authProvider.tokenRequestParams,
+    grant_type: 'refresh_token',
+    refresh_token: session.refreshToken
+  })
 
   const response = await fetch(session.urls.token, {
     method: 'post',

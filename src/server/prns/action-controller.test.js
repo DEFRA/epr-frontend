@@ -1,12 +1,19 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
+import {
   asIssuedToOrganisation,
   asPackagingRecyclingNote
 } from '#server/common/test-helpers/prn-fixtures.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import Boom from '@hapi/boom'
@@ -14,9 +21,12 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
+
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
 const mockCredentials = buildMockAuth().credentials
 
@@ -25,58 +35,35 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
-  organisationData: {
-    id: 'org-123',
-    companyDetails: { name: 'Reprocessor Organisation' }
-  },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'reprocessor-input',
-    material: 'plastic',
-    nation: 'england',
+const fixtureReprocessor = buildRegistrationWithAccreditation({
+  organisation: { name: 'Reprocessor Organisation' },
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
     site: {
       address: {
         line1: '123 Reprocessing Lane',
         town: 'Manchester',
         postcode: 'M1 1AA'
       }
-    },
-    accreditationId: 'acc-001'
-  },
-  accreditation: {
-    id: 'acc-001',
-    status: 'approved',
-    accreditationNumber: 'ACC-001'
-  }
+    }
+  }),
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
-  organisationData: {
-    id: 'org-123',
-    companyDetails: { name: 'Exporter Organisation' }
-  },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'exporter',
-    material: 'plastic',
-    nation: 'england',
-    site: null,
-    accreditationId: 'acc-001'
-  },
-  accreditation: {
-    id: 'acc-001',
-    status: 'approved',
-    accreditationNumber: 'ACC-001'
-  }
+const fixtureExporter = buildRegistrationWithAccreditation({
+  organisation: { name: 'Exporter Organisation' },
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+const basePath =
+  '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'
 const actionUrl = `${basePath}/${prnId}`
 const pernActionUrl = `${basePath}/${pernId}`
 const viewUrl = `${basePath}/${prnId}/view`
@@ -118,15 +105,64 @@ const mockPernAwaitingAuth = asPackagingRecyclingNote({
 describe('#actionController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
       mockPrnAwaitingAuth
     )
   })
 
   describe('request handling', () => {
+    describe('once the year has closed', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          accreditation: buildAccreditationView({ prns: { open: false } })
+        })
+      })
+
+      it('should offer deleting but not issuing a note awaiting authorisation', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: actionUrl,
+          auth: mockAuth
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(queryByRole(main, 'button', { name: /Issue PRN/i })).toBeNull()
+        expect(getByRole(main, 'button', { name: /Delete PRN/i })).toBeDefined()
+      })
+
+      it('should not start the issue journey', async ({ server }) => {
+        await server.inject({ method: 'GET', url: actionUrl, auth: mockAuth })
+
+        expect(metrics.journey.start).not.toHaveBeenCalled()
+      })
+
+      it('should still offer confirming a requested cancellation', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnAwaitingAuth,
+            status: 'awaiting_cancellation'
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: actionUrl,
+          auth: mockAuth
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(getByRole(main, 'button', { name: /Cancel PRN/i })).toBeDefined()
+      })
+    })
+
     it('displays PRN details on the action page', async ({ server }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -397,9 +433,7 @@ describe('#actionController', () => {
     it('displays PERN action page for exporter registration', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureExporter
-      )
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
         mockPernAwaitingAuth
       )
@@ -487,18 +521,15 @@ describe('#actionController', () => {
       expect(tag).toBeNull()
     })
 
-    it('displays issuer tradingName when present on action page', async ({
+    it('displays the issuer display name on action page', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asGetRequiredRegistrationResult({
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        buildRegistrationWithAccreditation({
           ...fixtureReprocessor,
-          organisationData: {
-            id: 'org-123',
-            companyDetails: {
-              name: 'Legal Reprocessor Ltd',
-              tradingName: 'Reprocessor Trading'
-            }
+          organisation: {
+            name: 'Legal Reprocessor Ltd',
+            displayName: 'Reprocessor Trading'
           }
         })
       )
@@ -529,83 +560,20 @@ describe('#actionController', () => {
       expect(body.innerHTML).not.toContain('>Legal Reprocessor Ltd<')
     })
 
-    it('should display empty issuer when organisationData.companyDetails is null', async ({
+    it('displays the reprocessing site address on one line', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asGetRequiredRegistrationResult({
-          ...fixtureReprocessor,
-          organisationData: {
-            ...fixtureReprocessor.organisationData,
-            companyDetails: null
-          }
-        })
-      )
-
-      const { result, statusCode } = await server.inject({
+      const { result } = await server.inject({
         method: 'GET',
         url: actionUrl,
         auth: mockAuth
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      const { body } = new JSDOM(result).window.document
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const rows = body.querySelectorAll('.govuk-summary-list__row')
-      const issuerRow = Array.from(rows).find((row) =>
-        row
-          .querySelector('.govuk-summary-list__key')
-          ?.textContent?.includes('Issuer')
-      )
-
-      expect(issuerRow).toBeDefined()
       expect(
-        issuerRow
-          .querySelector('.govuk-summary-list__value')
-          ?.textContent?.trim()
-      ).toBe('')
-    })
-
-    it('displays empty accreditation number when accreditation is null', async ({
-      server
-    }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asGetRequiredRegistrationResult({
-          ...fixtureReprocessor,
-          accreditation: null
-        })
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: actionUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('displays empty reprocessing site address when site is null', async ({
-      server
-    }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asGetRequiredRegistrationResult({
-          ...fixtureReprocessor,
-          registration: {
-            ...fixtureReprocessor.registration,
-            site: null
-          }
-        })
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: actionUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
+        getByText(body, '123 Reprocessing Lane, Manchester, M1 1AA')
+      ).toBeDefined()
     })
 
     it('handles unknown status gracefully', async ({ server }) => {
@@ -632,7 +600,7 @@ describe('#actionController', () => {
     })
 
     it('returns 404 when registration not found', async ({ server }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
+      vi.mocked(fetchRequiredAccreditation).mockRejectedValue(
         Boom.notFound('Registration not found')
       )
 
@@ -704,9 +672,7 @@ describe('#actionController', () => {
     it('displays Cancel PERN button for exporter with awaiting_cancellation status', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureExporter
-      )
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
         asPackagingRecyclingNote({
           ...mockPernAwaitingAuth,
@@ -741,6 +707,30 @@ describe('#actionController', () => {
       const returnLink = getByText(main, /Return to PRN list/i)
       expect(returnLink).toBeDefined()
       expect(returnLink.getAttribute('href')).toBe(basePath)
+    })
+  })
+
+  describe('journey events', () => {
+    it('should record the issue journey start when the note can be issued', async ({
+      server
+    }) => {
+      await server.inject({ method: 'GET', url: actionUrl, auth: mockAuth })
+
+      expect(metrics.journey.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.issuePrn,
+        prnId
+      )
+    })
+
+    it('should not record the issue journey start once the note is issued', async ({
+      server
+    }) => {
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnIssued)
+
+      await server.inject({ method: 'GET', url: actionUrl, auth: mockAuth })
+
+      expect(metrics.journey.start).not.toHaveBeenCalled()
     })
   })
 })

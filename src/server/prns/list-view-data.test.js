@@ -1,11 +1,18 @@
+import { toYear } from '#server/common/helpers/year.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { describe, expect, it, vi } from 'vitest'
+import { SCOPES } from '#server/auth/scopes.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { buildListViewData } from './list-view-data.js'
 
-const createMockRequest = () => ({
+/** @param {string[]} scope */
+const createMockRequest = (scope = [SCOPES.organisationLinkedWrite]) => ({
+  auth: { credentials: { scope } },
   t: vi.fn((key, params = {}) => {
     const translations = {
-      'prns:list:pageTitle': params.noteTypePlural,
+      'prns:list:pageTitle': `${params.noteTypePlural} (${params.year})`,
       'prns:list:balanceHint': `This is the balance available for creating new ${params.noteTypePlural}`,
       'prns:list:cancelHint': `If you delete or cancel a ${params.noteType}, its tonnage will be added to your available waste balance.`,
       'prns:list:createLink': `Create a ${params.noteType}`,
@@ -24,7 +31,11 @@ const createMockRequest = () => ({
       'prns:list:table:statusHeading': 'Status',
       'prns:list:table:actionHeading': '',
       'prns:list:table:selectText': 'Select',
+      'prns:list:table:viewText': 'View',
       'prns:list:table:totalLabel': 'Total',
+      'prns:decemberWasteLabel': 'December waste?',
+      'prns:decemberWasteYes': 'Yes',
+      'prns:decemberWasteNo': 'No',
       'prns:list:noPrnsCreated': `You have not created any ${params.noteTypePlural}.`,
       'prns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
       'prns:list:status:awaitingAcceptance': 'Awaiting acceptance',
@@ -61,14 +72,16 @@ const stubPrns = [
     recipient: 'Acme Packaging Ltd',
     createdAt: '2026-01-15',
     tonnage: 50,
-    status: 'awaiting_authorisation'
+    status: 'awaiting_authorisation',
+    isDecemberWaste: true
   },
   {
     id: 'prn-002',
     recipient: 'BigCo Waste Solutions',
     createdAt: '2026-01-18',
     tonnage: 120,
-    status: 'awaiting_authorisation'
+    status: 'awaiting_authorisation',
+    isDecemberWaste: false
   }
 ]
 
@@ -78,14 +91,16 @@ const stubCancellationPrns = [
     recipient: 'TFR Facilities',
     createdAt: '2025-08-13',
     tonnage: 5,
-    status: 'awaiting_cancellation'
+    status: 'awaiting_cancellation',
+    isDecemberWaste: true
   },
   {
     id: 'prn-cancel-002',
     recipient: 'Linton Construction',
     createdAt: '2025-08-07',
     tonnage: 25,
-    status: 'awaiting_cancellation'
+    status: 'awaiting_cancellation',
+    isDecemberWaste: false
   }
 ]
 
@@ -95,14 +110,16 @@ const stubIssuedPrns = [
     prnNumber: 'ER2612345',
     recipient: 'Radar',
     issuedAt: '2026-01-29',
-    status: 'awaiting_acceptance'
+    status: 'awaiting_acceptance',
+    isDecemberWaste: true
   },
   {
     id: 'prn-004',
     prnNumber: 'ER2654321',
     recipient: 'Renewable Products',
     issuedAt: '2026-01-26',
-    status: 'awaiting_acceptance'
+    status: 'awaiting_acceptance',
+    isDecemberWaste: false
   }
 ]
 
@@ -113,7 +130,8 @@ const stubCancelledPrns = [
     recipient: 'Cancelled Corp',
     issuedAt: '2026-01-10',
     tonnage: 40,
-    status: 'cancelled'
+    status: 'cancelled',
+    isDecemberWaste: true
   },
   {
     id: 'prn-006',
@@ -121,7 +139,8 @@ const stubCancelledPrns = [
     recipient: 'Revoked Ltd',
     issuedAt: '2026-01-12',
     tonnage: 20,
-    status: 'cancelled'
+    status: 'cancelled',
+    isDecemberWaste: false
   }
 ]
 
@@ -137,58 +156,78 @@ const exporterRegistration = {
 
 const mockWasteBalance = { availableAmount: 150.5 }
 
+const reprocessorKeys = {
+  organisationNumber: toOrganisationNumber('500001'),
+  registrationNumber: toRegistrationNumber('R26ER1'),
+  year: toYear(2026)
+}
+
+const exporterKeys = {
+  organisationNumber: toOrganisationNumber('500002'),
+  registrationNumber: toRegistrationNumber('R26EX2'),
+  year: toYear(2026)
+}
+
 describe('#buildListViewData', () => {
   describe('for reprocessor (PRN)', () => {
     it('should return page title with PRN text', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.pageTitle).toBe('PRNs')
-      expect(result.heading).toBe('PRNs')
+      expect(result.pageTitle).toBe('PRNs (2026)')
+      expect(result.heading).toBe('PRNs (2026)')
     })
 
     it('should return correct back URL', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
       expect(result.backUrl).toBe(
-        '/organisations/org-123/registrations/reg-001'
+        '/organisations/500001/registrations/R26ER1/accreditations/2026'
       )
     })
 
     it('should return correct create link', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.createLink.href).toBe(
-        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/create'
+      expect(result.createLink?.href).toBe(
+        '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/create'
       )
-      expect(result.createLink.text).toBe('Create a PRN')
+      expect(result.createLink?.text).toBe('Create a PRN')
+    })
+
+    it('should offer no create link once the year has closed', () => {
+      const result = buildListViewData(createMockRequest(), {
+        yearOpen: false,
+        keys: reprocessorKeys,
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.createLink).toBeNull()
     })
 
     it('should return waste balance data', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -203,9 +242,8 @@ describe('#buildListViewData', () => {
 
     it('should return select heading and awaiting authorisation heading', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -219,9 +257,8 @@ describe('#buildListViewData', () => {
 
     it('should return tab labels', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -233,9 +270,8 @@ describe('#buildListViewData', () => {
 
     it('should return cancel hint with delete wording', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -248,9 +284,8 @@ describe('#buildListViewData', () => {
 
     it('should return no issued text for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -261,9 +296,8 @@ describe('#buildListViewData', () => {
 
     it('should return table rows in govukTable format with total row', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -271,9 +305,10 @@ describe('#buildListViewData', () => {
 
       // 2 data rows + 1 total row
       expect(result.table.rows).toHaveLength(3)
-      expect(result.table.rows[0]).toHaveLength(5)
+      expect(result.table.rows[0]).toHaveLength(6)
       expect(result.table.rows[0][0]).toStrictEqual({
-        text: 'Acme Packaging Ltd'
+        text: 'Acme Packaging Ltd',
+        classes: 'epr-break-word'
       })
       expect(result.table.rows[0][1]).toStrictEqual({ text: '15 January 2026' })
       expect(result.table.rows[0][2]).toStrictEqual({ text: 50 })
@@ -281,9 +316,8 @@ describe('#buildListViewData', () => {
 
     it('should return total row with sum of tonnage', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -294,6 +328,7 @@ describe('#buildListViewData', () => {
       expect(totalRow[0].classes).toBe(cssClasses.fontWeight.bold)
       expect(totalRow[2].text).toBe(170) // 50 + 120
       expect(totalRow[2].classes).toBe(cssClasses.fontWeight.bold)
+      expect(totalRow).toHaveLength(6)
     })
 
     it('should treat undefined tonnage as zero in total row', () => {
@@ -303,9 +338,8 @@ describe('#buildListViewData', () => {
       ]
 
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: prnsWithMissingTonnage,
         wasteBalance: mockWasteBalance
@@ -317,40 +351,71 @@ describe('#buildListViewData', () => {
 
     it('should return status as govukTag HTML', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][3].html).toContain('govuk-tag--blue')
-      expect(result.table.rows[0][3].html).toContain('Awaiting authorisation')
+      expect(result.table.rows[0][4].html).toContain('govuk-tag--blue')
+      expect(result.table.rows[0][4].html).toContain('Awaiting authorisation')
     })
 
     it('should return select link pointing to action page', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][4].html).toContain('govuk-link')
-      expect(result.table.rows[0][4].html).toContain(
-        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-001'
+      expect(result.table.rows[0][5].html).toContain('govuk-link')
+      expect(result.table.rows[0][5].html).toContain(
+        '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/prn-001'
       )
-      expect(result.table.rows[0][4].html).not.toContain('prn-001/view')
+      expect(result.table.rows[0][5].html).not.toContain('prn-001/view')
+    })
+
+    it("sends a session holding no write scope to the note's read page, because Select issues or cancels it", () => {
+      const result = buildListViewData(
+        createMockRequest([...IDENTITIES.operatorWithoutWrite.scopes]),
+        {
+          yearOpen: true,
+          keys: reprocessorKeys,
+          registration: reprocessorRegistration,
+          prns: stubPrns,
+          wasteBalance: mockWasteBalance
+        }
+      )
+
+      expect(result.table.rows[0][5].html).toContain(
+        '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/prn-001/view'
+      )
+      expect(result.table.rows[0][5].html).toContain('>View<')
+    })
+
+    it('keeps the view link on an issued note for a session holding no write scope, because it only reads', () => {
+      const result = buildListViewData(
+        createMockRequest([...IDENTITIES.operatorWithoutWrite.scopes]),
+        {
+          yearOpen: true,
+          keys: reprocessorKeys,
+          registration: reprocessorRegistration,
+          prns: stubPrns,
+          issuedPrns: stubIssuedPrns,
+          wasteBalance: mockWasteBalance
+        }
+      )
+
+      expect(result.issuedTable.rows[0][6].html).toContain('prn-003/view')
     })
 
     it('should return table headings', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -361,6 +426,7 @@ describe('#buildListViewData', () => {
       )
       expect(result.table.headings.createdAt).toBe('Date created')
       expect(result.table.headings.tonnage).toBe('Tonnage')
+      expect(result.table.headings.decemberWaste).toBe('December waste?')
       expect(result.table.headings.status).toBe('Status')
     })
   })
@@ -368,36 +434,33 @@ describe('#buildListViewData', () => {
   describe('for exporter (PERN)', () => {
     it('should return page title with PERN text', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
-        accreditationId: 'acc-002',
+        yearOpen: true,
+        keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.pageTitle).toBe('PERNs')
-      expect(result.heading).toBe('PERNs')
+      expect(result.pageTitle).toBe('PERNs (2026)')
+      expect(result.heading).toBe('PERNs (2026)')
     })
 
     it('should return create link with PERN text', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
-        accreditationId: 'acc-002',
+        yearOpen: true,
+        keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.createLink.text).toBe('Create a PERN')
+      expect(result.createLink?.text).toBe('Create a PERN')
     })
 
     it('should return select heading and awaiting authorisation heading with PERN text', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
-        accreditationId: 'acc-002',
+        yearOpen: true,
+        keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -411,9 +474,8 @@ describe('#buildListViewData', () => {
 
     it('should return cancel hint with PERN text and delete wording', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
-        accreditationId: 'acc-002',
+        yearOpen: true,
+        keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -426,9 +488,8 @@ describe('#buildListViewData', () => {
 
     it('should return no issued text for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
-        accreditationId: 'acc-002',
+        yearOpen: true,
+        keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -441,9 +502,8 @@ describe('#buildListViewData', () => {
   describe('hasCreatedPrns flag', () => {
     it('should pass through hasCreatedPrns as true when PRNs exist', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         hasCreatedPrns: true,
@@ -455,9 +515,8 @@ describe('#buildListViewData', () => {
 
     it('should pass through hasCreatedPrns as false when no PRNs exist', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: [],
         hasCreatedPrns: false,
@@ -469,9 +528,8 @@ describe('#buildListViewData', () => {
 
     it('should return type-specific noPrnsCreatedText for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: [],
         hasCreatedPrns: false,
@@ -483,9 +541,8 @@ describe('#buildListViewData', () => {
 
     it('should return type-specific noPrnsCreatedText for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
-        accreditationId: 'acc-002',
+        yearOpen: true,
+        keys: exporterKeys,
         registration: exporterRegistration,
         prns: [],
         hasCreatedPrns: false,
@@ -499,9 +556,8 @@ describe('#buildListViewData', () => {
   describe('issued table', () => {
     it('should return issued table rows with PRN number, recipient and date issued', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
@@ -515,7 +571,8 @@ describe('#buildListViewData', () => {
         text: 'ER2612345'
       })
       expect(result.issuedTable.rows[0][1]).toStrictEqual({
-        text: 'Radar'
+        text: 'Radar',
+        classes: 'epr-break-word'
       })
       expect(result.issuedTable.rows[0][2]).toStrictEqual({
         text: '29 January 2026'
@@ -524,9 +581,8 @@ describe('#buildListViewData', () => {
 
     it('should return issued table status as govuk-tag', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
@@ -535,17 +591,16 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows[0][4].html).toContain(
+      expect(result.issuedTable.rows[0][5].html).toContain(
         'Awaiting acceptance'
       )
-      expect(result.issuedTable.rows[0][4].html).toContain('govuk-tag')
+      expect(result.issuedTable.rows[0][5].html).toContain('govuk-tag')
     })
 
     it('should return issued table headings for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
@@ -559,6 +614,7 @@ describe('#buildListViewData', () => {
         recipient: 'Producer or compliance scheme',
         dateIssued: 'Date issued',
         tonnage: 'Tonnage',
+        decemberWaste: 'December waste?',
         status: 'Status',
         action: 'View in new tab'
       })
@@ -566,9 +622,8 @@ describe('#buildListViewData', () => {
 
     it('should return issued table headings for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
@@ -582,6 +637,7 @@ describe('#buildListViewData', () => {
         recipient: 'Producer or compliance scheme',
         dateIssued: 'Date issued',
         tonnage: 'Tonnage',
+        decemberWaste: 'December waste?',
         status: 'Status',
         action: 'View in new tab'
       })
@@ -589,9 +645,8 @@ describe('#buildListViewData', () => {
 
     it('should return view links for each issued PRN with target="_blank"', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
@@ -600,18 +655,17 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows[0][5].html).toContain('govuk-link')
-      expect(result.issuedTable.rows[0][5].html).toContain(
-        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-003/view'
+      expect(result.issuedTable.rows[0][6].html).toContain('govuk-link')
+      expect(result.issuedTable.rows[0][6].html).toContain(
+        '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/prn-003/view'
       )
-      expect(result.issuedTable.rows[0][5].html).toContain('target="_blank"')
+      expect(result.issuedTable.rows[0][6].html).toContain('target="_blank"')
     })
 
     it('should return empty issued table rows when no issued PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         issuedPrns: [],
@@ -625,9 +679,8 @@ describe('#buildListViewData', () => {
 
     it('should return issued heading for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
@@ -641,9 +694,8 @@ describe('#buildListViewData', () => {
 
     it('should return issued heading for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
-        accreditationId: 'acc-002',
+        yearOpen: true,
+        keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
@@ -659,9 +711,8 @@ describe('#buildListViewData', () => {
   describe('cancellation table', () => {
     it('should return awaiting cancellation heading for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancellationPrns: stubCancellationPrns,
@@ -676,9 +727,8 @@ describe('#buildListViewData', () => {
 
     it('should return awaiting cancellation heading for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
-        accreditationId: 'acc-002',
+        yearOpen: true,
+        keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         cancellationPrns: stubCancellationPrns,
@@ -693,9 +743,8 @@ describe('#buildListViewData', () => {
 
     it('should return cancellation table with correct headings', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancellationPrns: stubCancellationPrns,
@@ -708,14 +757,16 @@ describe('#buildListViewData', () => {
       )
       expect(result.cancellationTable.headings.createdAt).toBe('Date created')
       expect(result.cancellationTable.headings.tonnage).toBe('Tonnage')
+      expect(result.cancellationTable.headings.decemberWaste).toBe(
+        'December waste?'
+      )
       expect(result.cancellationTable.headings.status).toBe('Status')
     })
 
     it('should return cancellation table rows with status tags', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancellationPrns: stubCancellationPrns,
@@ -728,7 +779,8 @@ describe('#buildListViewData', () => {
 
       // First data row
       expect(result.cancellationTable.rows[0][0]).toStrictEqual({
-        text: 'TFR Facilities'
+        text: 'TFR Facilities',
+        classes: 'epr-break-word'
       })
       expect(result.cancellationTable.rows[0][1]).toStrictEqual({
         text: '13 August 2025'
@@ -736,16 +788,15 @@ describe('#buildListViewData', () => {
       expect(result.cancellationTable.rows[0][2]).toStrictEqual({
         text: 5
       })
-      expect(result.cancellationTable.rows[0][3]).toStrictEqual({
+      expect(result.cancellationTable.rows[0][4]).toStrictEqual({
         html: '<strong class="govuk-tag govuk-tag--yellow epr-tag--no-max-width">Awaiting cancellation</strong>'
       })
     })
 
     it('should return cancellation table with total row', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancellationPrns: stubCancellationPrns,
@@ -758,13 +809,13 @@ describe('#buildListViewData', () => {
       expect(totalRow[0].classes).toBe(cssClasses.fontWeight.bold)
       expect(totalRow[2].text).toBe(30) // 5 + 25
       expect(totalRow[2].classes).toBe(cssClasses.fontWeight.bold)
+      expect(totalRow).toHaveLength(6)
     })
 
     it('should return cancellation table with select links', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancellationPrns: stubCancellationPrns,
@@ -772,17 +823,16 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.cancellationTable.rows[0][4].html).toContain('govuk-link')
-      expect(result.cancellationTable.rows[0][4].html).toContain(
-        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-cancel-001'
+      expect(result.cancellationTable.rows[0][5].html).toContain('govuk-link')
+      expect(result.cancellationTable.rows[0][5].html).toContain(
+        '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/prn-cancel-001'
       )
     })
 
     it('should return empty cancellation table when no cancellation PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancellationPrns: [],
@@ -795,9 +845,8 @@ describe('#buildListViewData', () => {
 
     it('should default to empty cancellation table when cancellationPrns not provided', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         hasCreatedPrns: true,
@@ -811,9 +860,8 @@ describe('#buildListViewData', () => {
   describe('cancelled table', () => {
     it('should return cancelled table rows with PRN number, recipient and date issued', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancelledPrns: stubCancelledPrns,
@@ -826,7 +874,8 @@ describe('#buildListViewData', () => {
         text: 'ER2611111'
       })
       expect(result.cancelledTable.rows[0][1]).toStrictEqual({
-        text: 'Cancelled Corp'
+        text: 'Cancelled Corp',
+        classes: 'epr-break-word'
       })
       expect(result.cancelledTable.rows[0][2]).toStrictEqual({
         text: '10 January 2026'
@@ -838,9 +887,8 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled table status as govuk-tag with red colour', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancelledPrns: stubCancelledPrns,
@@ -848,15 +896,14 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.cancelledTable.rows[0][4].html).toContain('Cancelled')
-      expect(result.cancelledTable.rows[0][4].html).toContain('govuk-tag--red')
+      expect(result.cancelledTable.rows[0][5].html).toContain('Cancelled')
+      expect(result.cancelledTable.rows[0][5].html).toContain('govuk-tag--red')
     })
 
     it('should return cancelled table headings for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancelledPrns: stubCancelledPrns,
@@ -869,6 +916,7 @@ describe('#buildListViewData', () => {
         recipient: 'Producer or compliance scheme',
         dateIssued: 'Date issued',
         tonnage: 'Tonnage',
+        decemberWaste: 'December waste?',
         status: 'Status',
         action: 'View in new tab'
       })
@@ -876,9 +924,8 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled table headings for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         cancelledPrns: stubCancelledPrns,
@@ -891,9 +938,8 @@ describe('#buildListViewData', () => {
 
     it('should return view links for each cancelled PRN with target="_blank"', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancelledPrns: stubCancelledPrns,
@@ -901,18 +947,17 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.cancelledTable.rows[0][5].html).toContain('govuk-link')
-      expect(result.cancelledTable.rows[0][5].html).toContain(
-        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-005/view'
+      expect(result.cancelledTable.rows[0][6].html).toContain('govuk-link')
+      expect(result.cancelledTable.rows[0][6].html).toContain(
+        '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/prn-005/view'
       )
-      expect(result.cancelledTable.rows[0][5].html).toContain('target="_blank"')
+      expect(result.cancelledTable.rows[0][6].html).toContain('target="_blank"')
     })
 
     it('should return empty cancelled table rows when no cancelled PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancelledPrns: [],
@@ -925,9 +970,8 @@ describe('#buildListViewData', () => {
 
     it('should default to empty cancelled table when cancelledPrns not provided', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         hasCreatedPrns: true,
@@ -939,9 +983,8 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled heading for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         cancelledPrns: stubCancelledPrns,
@@ -954,9 +997,8 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled heading for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
-        accreditationId: 'acc-002',
+        yearOpen: true,
+        keys: exporterKeys,
         registration: exporterRegistration,
         prns: stubPrns,
         cancelledPrns: stubCancelledPrns,
@@ -969,9 +1011,8 @@ describe('#buildListViewData', () => {
 
     it('should return no cancelled text for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -982,9 +1023,8 @@ describe('#buildListViewData', () => {
 
     it('should return cancelled tab label', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         wasteBalance: mockWasteBalance
@@ -997,9 +1037,8 @@ describe('#buildListViewData', () => {
   describe('edge cases', () => {
     it('should handle null waste balance', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: stubPrns,
         hasCreatedPrns: true,
@@ -1011,9 +1050,8 @@ describe('#buildListViewData', () => {
 
     it('should handle empty PRN list', () => {
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: [],
         hasCreatedPrns: false,
@@ -1036,16 +1074,15 @@ describe('#buildListViewData', () => {
       ]
 
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: prnAwaitingAcceptance,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][3].html).toContain('govuk-tag--purple')
-      expect(result.table.rows[0][3].html).toContain('Awaiting acceptance')
+      expect(result.table.rows[0][4].html).toContain('govuk-tag--purple')
+      expect(result.table.rows[0][4].html).toContain('Awaiting acceptance')
     })
 
     it('should return unknown status as-is in tag', () => {
@@ -1060,15 +1097,60 @@ describe('#buildListViewData', () => {
       ]
 
       const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
+        yearOpen: true,
+        keys: reprocessorKeys,
         registration: reprocessorRegistration,
         prns: prnWithUnknownStatus,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][3].html).toContain('unknown_status')
+      expect(result.table.rows[0][4].html).toContain('unknown_status')
     })
+  })
+
+  describe('December waste column', () => {
+    const decemberWasteColumnIndex = {
+      table: 3,
+      cancellationTable: 3,
+      issuedTable: 4,
+      cancelledTable: 4
+    }
+
+    it.each([
+      ['awaiting-action table', 'table', { prns: stubPrns }],
+      [
+        'awaiting-cancellation table',
+        'cancellationTable',
+        { prns: stubPrns, cancellationPrns: stubCancellationPrns }
+      ],
+      [
+        'issued table',
+        'issuedTable',
+        { prns: stubPrns, issuedPrns: stubIssuedPrns }
+      ],
+      [
+        'cancelled table',
+        'cancelledTable',
+        { prns: stubPrns, cancelledPrns: stubCancelledPrns }
+      ]
+    ])(
+      'lets an operator tell a December Waste note apart from a general one at a glance in the %s',
+      (_name, tableKey, listArgs) => {
+        const result = buildListViewData(createMockRequest(), {
+          yearOpen: true,
+          keys: reprocessorKeys,
+          registration: reprocessorRegistration,
+          wasteBalance: mockWasteBalance,
+          ...listArgs
+        })
+
+        const table = result[tableKey]
+        const columnIndex = decemberWasteColumnIndex[tableKey]
+
+        expect(table.headings.decemberWaste).toBe('December waste?')
+        expect(table.rows[0][columnIndex]).toStrictEqual({ text: 'Yes' })
+        expect(table.rows[1][columnIndex]).toStrictEqual({ text: 'No' })
+      }
+    )
   })
 })

@@ -1,0 +1,172 @@
+import {
+  containerId,
+  measurementId
+} from '#server/common/test-helpers/analytics-helper.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
+import { it } from '#vite/fixtures/server.js'
+import { JSDOM } from 'jsdom'
+import { afterEach, describe, expect, vi } from 'vitest'
+
+const authority = 'localhost:3000'
+const consented = { cookie: 'analyticsConsent=accepted' }
+const linedUp = {
+  ANALYTICS_ENABLED: 'true',
+  ANALYTICS_MEASUREMENT_ID: measurementId,
+  ANALYTICS_CONTAINER_ID: containerId
+}
+
+/**
+ * The content security policy is built once, when the plugin module is first
+ * imported, while consent and the tag are decided per request. A test that only
+ * flips config at runtime therefore proves nothing about the policy the browser
+ * actually receives. Booting a server with the environment already set is the
+ * only way to see both halves as a deployed instance would.
+ * @param {Record<string, string>} env
+ */
+const serverStartedWith = async (env) => {
+  Object.entries(env).forEach(([name, value]) => vi.stubEnv(name, value))
+  vi.resetModules()
+
+  const { createServer } = await import('#server/index.js')
+  const server = await createServer()
+  await server.initialize()
+
+  return server
+}
+
+/**
+ * @param {string} header
+ * @param {string} directive
+ */
+const sourcesFor = (header, directive) =>
+  header.split(';').find((part) => part.startsWith(`${directive} `)) ?? ''
+
+describe('#analytics switched on end to end', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  describe('when every switch is lined up', () => {
+    it('should permit the very origins the page then loads', async () => {
+      const server = await serverStartedWith(linedUp)
+
+      const { headers, result } = await server.inject({
+        method: 'GET',
+        url: '/start',
+        headers: consented
+      })
+      await server.stop()
+
+      const policy = String(headers['content-security-policy'])
+      const { document } = new JSDOM(asHtml(result)).window
+      const tag = document.querySelector('head script[src]')
+      const published = Object.fromEntries(
+        [...document.querySelectorAll('meta[name^="analytics-"]')].map(
+          (meta) => [meta.getAttribute('name'), meta.getAttribute('content')]
+        )
+      )
+
+      expect(sourcesFor(policy, 'script-src')).toContain(
+        'https://www.googletagmanager.com'
+      )
+      expect(sourcesFor(policy, 'connect-src')).toContain(
+        'https://*.google-analytics.com'
+      )
+      expect(tag?.getAttribute('src')).toContain('analytics')
+      expect(published).toStrictEqual({
+        'analytics-container-id': containerId,
+        'analytics-measurement-id': measurementId,
+        'analytics-page-path': '/start'
+      })
+    })
+
+    it.for([
+      { description: 'only when asked for', preview: 'true', expected: true },
+      { description: 'not otherwise', preview: 'false', expected: false }
+    ])(
+      'should permit the preview console $description',
+      async ({ preview, expected }) => {
+        const server = await serverStartedWith({
+          ...linedUp,
+          ANALYTICS_PREVIEW_ENABLED: preview
+        })
+
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: '/start'
+        })
+        await server.stop()
+
+        expect(
+          String(headers['content-security-policy']).includes(
+            'https://tagmanager.google.com'
+          )
+        ).toBe(expected)
+      }
+    )
+  })
+
+  describe('when the visitor came from somewhere', () => {
+    it.for([
+      [
+        'this service',
+        `http://${authority}/organisations/68e68d9c78f83083f0f17a76`,
+        '/organisations/:organisationNumber'
+      ],
+      ['another site', 'https://www.gov.uk/guidance/packaging-waste', null]
+    ])('should publish the step behind %s', async ([, referer, expected]) => {
+      const server = await serverStartedWith(linedUp)
+
+      const { result } = await server.inject({
+        authority,
+        method: 'GET',
+        url: '/start',
+        headers: { ...consented, referer: String(referer) }
+      })
+      await server.stop()
+
+      const { document } = new JSDOM(asHtml(result)).window
+
+      expect(
+        document
+          .querySelector('meta[name="analytics-page-referrer"]')
+          ?.getAttribute('content') ?? null
+      ).toBe(expected)
+    })
+  })
+
+  describe('when a switch is out of line', () => {
+    it.for([
+      ['the flag is off', { ...linedUp, ANALYTICS_ENABLED: 'false' }],
+      [
+        'no measurement id is configured',
+        { ...linedUp, ANALYTICS_MEASUREMENT_ID: '' }
+      ],
+      [
+        'no container id is configured',
+        { ...linedUp, ANALYTICS_CONTAINER_ID: '' }
+      ]
+    ])('should record nothing when %s', async ([, env]) => {
+      const server = await serverStartedWith({
+        .../** @type {Record<string, string>} */ (env),
+        ANALYTICS_PREVIEW_ENABLED: 'true'
+      })
+
+      const { headers, result } = await server.inject({
+        method: 'GET',
+        url: '/start',
+        headers: consented
+      })
+      await server.stop()
+
+      const policy = String(headers['content-security-policy'])
+      const { document } = new JSDOM(asHtml(result)).window
+
+      expect(policy).not.toContain('googletagmanager')
+      expect(
+        document.querySelector('meta[name="analytics-measurement-id"]')
+      ).toBeNull()
+    })
+  })
+})

@@ -1,22 +1,15 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
-/** @import {Organisation} from '#domain/organisations/model.js' */
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
+/** @import { OrganisationById } from '#server/common/helpers/natural-keys/types.js' */
 
 /**
  * Fetches organisation data by ID from EPR Backend
  * @param {string} organisationId - The organisation ID
- * @param {string} idToken - JWT ID token for authorization
- * @returns {Promise<Organisation>} Organisation data with accreditations and registrations
+ * @param {BackendToken} backendToken
+ * @returns {Promise<OrganisationById>}
  */
-async function fetchOrganisationById(organisationId, idToken) {
-  const path = `/v1/organisations/${organisationId}`
-
-  return fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${idToken}`
-    }
-  })
-}
+const fetchOrganisationById = (organisationId, backendToken) =>
+  backend(backendToken).get(path`/v1/organisations/${organisationId}`)
 
 export { fetchOrganisationById }

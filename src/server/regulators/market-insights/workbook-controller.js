@@ -1,0 +1,48 @@
+import { backend, path } from '#server/common/helpers/backend-client.js'
+
+import { reportingPeriodNow } from './helpers/reporting-period.js'
+
+/**
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ */
+
+const DEFAULT_CONTENT_TYPE =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+/**
+ * Serves the market insights workbook, in the published format, for the
+ * reporting period the pages show: redacted as it would be published, or
+ * unredacted for regulators to compare against.
+ *
+ * The backend builds the workbook inside the request and this passes the body
+ * straight through, so nothing is held here and nothing is stored. The
+ * response takes tens of seconds, which is accepted: one regulator asks for it
+ * at a time, rarely, and knows they asked.
+ * @param {{ unredacted?: boolean }} [options]
+ * @returns {Partial<HapiServerRoute<HapiRequest>>}
+ */
+export const marketInsightsWorkbookController = ({
+  unredacted = false
+} = {}) => ({
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
+  async handler(request, h) {
+    const { backendToken } = request.auth.credentials
+    const { year, month } = reportingPeriodNow()
+
+    const { body, contentDisposition, contentType } = await backend(
+      backendToken
+    ).stream(path`/v1/market-insights/${year}/monthly/${month}/workbook.xlsx`, {
+      query: { ...(unredacted && { unredacted: 'true' }) }
+    })
+
+    const response = h.response(body).type(contentType ?? DEFAULT_CONTENT_TYPE)
+
+    return contentDisposition
+      ? response.header('Content-Disposition', contentDisposition)
+      : response
+  }
+})

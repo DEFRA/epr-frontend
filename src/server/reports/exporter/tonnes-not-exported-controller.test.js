@@ -1,8 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
@@ -11,7 +14,7 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('../helpers/update-report.js'))
@@ -25,15 +28,8 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const registeredOnlyExporter = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'EX992415095748P'
-  },
-  accreditation: undefined
+const registeredOnlyExporter = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
 })
 
 const reportDetail = {
@@ -45,9 +41,8 @@ const reportDetail = {
   endDate: '2026-03-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-04-01T10:00:00.000Z' },
   details: { material: 'plastic' },
-  id: 'report-001',
   version: 1,
-  status: { currentStatus: 'in_progress' },
+  status: 'in_progress',
   supportingInformation: null,
   recyclingActivity: {
     totalTonnageReceived: 100,
@@ -67,9 +62,9 @@ const reportDetail = {
   }
 }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/tonnes-not-exported`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const quarterlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/tonnes-not-exported`
 
 describe('#tonnesNotExportedController', () => {
   beforeEach(() => {
@@ -78,7 +73,7 @@ describe('#tonnesNotExportedController', () => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -157,7 +152,7 @@ describe('#tonnesNotExportedController', () => {
       })
 
       expect(result).toContain(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports"`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026"`
       )
     })
 
@@ -167,7 +162,7 @@ describe('#tonnesNotExportedController', () => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse({
           ...reportDetail,
-          status: { currentStatus: 'ready_to_submit' }
+          status: 'ready_to_submit'
         })
       )
 
@@ -181,11 +176,8 @@ describe('#tonnesNotExportedController', () => {
     })
 
     it('should return 404 for accredited exporter', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        asRegistrationWithAccreditation({
-          ...registeredOnlyExporter,
-          accreditation: { id: 'acc-001', accreditationNumber: 'ACC123' }
-        })
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        buildRegistrationWithAccreditation()
       )
 
       const { statusCode } = await server.inject({
@@ -198,13 +190,14 @@ describe('#tonnesNotExportedController', () => {
     })
 
     it('should return 404 for reprocessor', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-        ...registeredOnlyExporter,
-        registration: {
-          ...registeredOnlyExporter.registration,
-          wasteProcessingType: 'reprocessor'
-        }
-      })
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+        buildRegistrationWithAccreditation({
+          registration: buildRegistrationView({
+            wasteProcessingType: 'reprocessor',
+            accreditations: {}
+          })
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -218,7 +211,7 @@ describe('#tonnesNotExportedController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -244,7 +237,7 @@ describe('#tonnesNotExportedController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/supporting-information`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/supporting-information`
       )
     })
 
@@ -265,7 +258,7 @@ describe('#tonnesNotExportedController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
       )
     })
 
@@ -286,7 +279,7 @@ describe('#tonnesNotExportedController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
       )
     })
 
@@ -348,15 +341,15 @@ describe('#tonnesNotExportedController', () => {
 
       expect(updateReport).toHaveBeenCalledWith(
         {
-          organisationId,
-          registrationId,
+          organisationNumber,
+          registrationNumber,
           year: 2026,
           cadence: 'quarterly',
           period: 1,
           submissionNumber: 1
         },
         { tonnageNotExported: 15.5 },
-        'mock-id-token'
+        'mock-backend-token'
       )
     })
 

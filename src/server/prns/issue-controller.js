@@ -1,5 +1,14 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import {
+  closedYearSendsTo,
+  isClosedYearRefusal
+} from './helpers/closed-year.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { prnsPath } from './helpers/prn-resource.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
+import { organisationPath } from '#server/reports/helpers/report-paths.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const issueController = {
@@ -8,18 +17,17 @@ export const issueController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
+    const keys = toAccreditationKeys(request.params)
+    const { prnId } = request.params
     const session = request.auth.credentials
+    const notePath = `${prnsPath(keys)}/${prnId}`
 
     try {
       const updatedPrn = await updatePrnStatus(
-        organisationId,
-        registrationId,
-        accreditationId,
+        keys,
         prnId,
         { status: 'awaiting_acceptance' },
-        session.idToken
+        session.backendToken
       )
 
       // Store prnNumber in session to mitigate MongoDB replication lag.
@@ -30,20 +38,22 @@ export const issueController = {
         prnNumber: updatedPrn.prnNumber
       })
 
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
-      )
+      await metrics.journey.end(request, JOURNEY.issuePrn, prnId)
+
+      return h.redirect(`${notePath}/issued`)
     } catch (error) {
+      if (isClosedYearRefusal(error)) {
+        return h.redirect(closedYearSendsTo.note(request.params))
+      }
+
       request.logger.error({ message: 'Failed to issue PRN', err: error })
 
-      const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}`
-
       if (error.isBoom && error.output.statusCode === statusCodes.conflict) {
-        return h.redirect(`/organisations/${organisationId}/error`)
+        return h.redirect(`${organisationPath(keys)}/error`)
       }
 
       // All other errors (including WB calculation failures) redirect to action page
-      return h.redirect(`${basePath}?error=issue_failed`)
+      return h.redirect(`${notePath}?error=issue_failed`)
     }
   }
 }

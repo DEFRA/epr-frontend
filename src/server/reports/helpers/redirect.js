@@ -1,32 +1,22 @@
+import { reportPath, reportsListPath } from './report-paths.js'
+
 /**
  * Returns the redirect URL for save (reports list) or continue (next page).
  * @param {HapiRequest} request
- * @param {{ organisationId: string, registrationId: string, year: number, cadence: CadenceValue, period: number, submissionNumber: number }} params
+ * @param {SubmissionKeys} params
  * @param {string} action - 'continue' or 'save'
  * @param {string} nextPage - path segment for the continue destination (e.g. 'free-perns')
  * @returns {string}
  */
 export function getRedirectUrl(request, params, action, nextPage) {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = params
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-
   if (action === 'continue') {
-    return request.localiseUrl(
-      `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}/${nextPage}`
-    )
+    return request.localiseUrl(`${reportPath(params)}/${nextPage}`)
   }
 
-  return request.localiseUrl(basePath)
+  return request.localiseUrl(reportsListPath(params))
 }
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { CadenceValue } from '../constants.js'
+ * @import { SubmissionKeys } from './report-paths.js'
  */

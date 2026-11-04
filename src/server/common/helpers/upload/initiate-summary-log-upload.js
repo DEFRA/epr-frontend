@@ -1,29 +1,36 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import {
+  accreditationPath,
+  registrationPath
+} from '#server/reports/helpers/report-paths.js'
+
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
+/** @import { Year } from '#server/common/helpers/year.js' */
+/** @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js' */
 
 /**
- * Initiates a summary log upload via the backend.
+ * Starts a summary log upload for the year, at the accredited or
+ * registered-only address.
  * @param {object} options
- * @param {string} options.organisationId
- * @param {string} options.registrationId
+ * @param {RegistrationKeys} options.keys
+ * @param {Year} options.year
+ * @param {boolean} options.accredited
  * @param {string} options.redirectUrl
- * @param {string} options.idToken
+ * @param {BackendToken} options.backendToken
  * @returns {Promise<{summaryLogId: string, uploadId: string, uploadUrl: string, statusUrl: string}>}
  */
-async function initiateSummaryLogUpload({
-  organisationId,
-  registrationId,
+const initiateSummaryLogUpload = ({
+  keys,
+  year,
+  accredited,
   redirectUrl,
-  idToken
-}) {
-  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`
-
-  return fetchJsonFromBackend(path, {
-    method: 'POST',
-    body: JSON.stringify({ redirectUrl }),
-    headers: {
-      Authorization: `Bearer ${idToken}`
-    }
-  })
-}
+  backendToken
+}) =>
+  backend(backendToken).post(
+    accredited
+      ? `${accreditationPath({ ...keys, year })}/summary-log`
+      : `${registrationPath(keys)}/summary-logs/${year}`,
+    { redirectUrl }
+  )
 
 export { initiateSummaryLogUpload }

@@ -5,10 +5,11 @@ import {
 } from '#server/common/helpers/logging/cdp-boom.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import {
-  buildPrnBasePath,
   fetchPrnContext,
   fetchPrnForUpdate
 } from './helpers/fetch-prn-context.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -21,13 +22,14 @@ export const cancelGetController = {
     const { registration, prn, basePath, prnId } =
       await fetchPrnContext(request)
     const { t: localise } = request
-    const redirectBasePath = buildPrnBasePath(request.params)
 
     if (prn.status !== 'awaiting_cancellation') {
-      return h.redirect(redirectBasePath)
+      return h.redirect(basePath)
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
+
+    await metrics.journey.start(request, JOURNEY.cancelPrn, prnId)
 
     return h.view('prns/cancel', {
       pageTitle: localise('prns:cancel:pageTitle', { noteType }),
@@ -47,39 +49,19 @@ export const cancelPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      prn,
-      idToken
-    } = await fetchPrnForUpdate(request)
-    const {
-      organisationId: orgId,
-      registrationId: regId,
-      accreditationId: accId,
-      prnId: noteId
-    } = request.params
-    const redirectBasePath = buildPrnBasePath(request.params)
+    const { keys, prnId, prn, basePath, backendToken } =
+      await fetchPrnForUpdate(request)
 
     if (prn.status !== 'awaiting_cancellation') {
-      return h.redirect(redirectBasePath)
+      return h.redirect(basePath)
     }
 
     try {
-      await updatePrnStatus(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        { status: 'cancelled' },
-        idToken
-      )
+      await updatePrnStatus(keys, prnId, { status: 'cancelled' }, backendToken)
 
-      return h.redirect(
-        `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes/${noteId}/cancelled`
-      )
+      await metrics.journey.end(request, JOURNEY.cancelPrn, prnId)
+
+      return h.redirect(`${basePath}/${prnId}/cancelled`)
     } catch (error) {
       if (error.isBoom) {
         throw error

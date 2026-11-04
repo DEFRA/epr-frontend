@@ -16,13 +16,19 @@ describe(formatDate, () => {
   })
 
   it('should use UTC to avoid timezone shifts', () => {
-    expect(formatDate('2026-03-01T00:30:00.000Z')).toBe('1 March 2026')
+    expect(formatDate('2026-08-18T23:30:00.000Z')).toBe('18 August 2026')
   })
 
   it('should omit year when includeYear is false', () => {
     expect(formatDate('2026-02-15T15:09:00.000Z', { includeYear: false })).toBe(
       '15 February'
     )
+  })
+
+  it('should read a date in the zone the caller names', () => {
+    expect(
+      formatDate('2026-08-18T23:30:00.000Z', { timeZone: 'Europe/London' })
+    ).toBe('19 August 2026')
   })
 
   it('should return empty string for null input', () => {
@@ -52,7 +58,15 @@ describe(formatDateShort, () => {
   })
 
   it('should use UTC to avoid timezone shifts', () => {
-    expect(formatDateShort('2026-03-01T00:30:00.000Z')).toBe('1 Mar 2026')
+    expect(formatDateShort('2026-08-18T23:30:00.000Z')).toBe('18 Aug 2026')
+  })
+
+  it('should read a date in the zone the caller names', () => {
+    expect(
+      formatDateShort('2026-08-18T23:30:00.000Z', {
+        timeZone: 'Europe/London'
+      })
+    ).toBe('19 Aug 2026')
   })
 
   it('should omit year when includeYear is false', () => {

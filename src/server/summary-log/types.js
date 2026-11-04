@@ -1,6 +1,12 @@
 /**
+ * @import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
+ * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
+ * @import { Year } from '#server/common/helpers/year.js'
+ * @import { CadenceValue } from '#server/reports/constants.js'
  */
 
 /**
@@ -95,7 +101,7 @@
 
 /**
  * i18next translation function (Hapi `request.t`).
- * @typedef {(key: string, params?: Record<string, unknown>) => string} Localise
+ * @typedef {(key: string, params?: object) => string} Localise
  */
 
 /**
@@ -225,10 +231,15 @@
 
 /**
  * loadsByReportingPeriod payload from the backend. Required on the response
- * when status is VALIDATED, otherwise absent.
+ * when status is VALIDATED, otherwise absent. periodsRequiringResubmission
+ * lists only the closed periods whose reported figures changed (empty when
+ * none) and drives the resubmission messaging; closedPeriodLoads still carries
+ * the display data (counts, tonnages, row detail).
+ * @typedef {{ year: Year, cadence: CadenceValue, period: number }} PeriodRef
  * @typedef {{
  *   openPeriodLoads: PeriodStatus,
- *   closedPeriodLoads: PeriodStatus
+ *   closedPeriodLoads: PeriodStatus,
+ *   periodsRequiringResubmission?: PeriodRef[]
  * }} LoadsByReportingPeriod
  */
 
@@ -255,21 +266,42 @@
  */
 
 /**
+ * The ledger a summary log was uploaded to, fixed for its whole life. Absent
+ * for logs stored before the backend stamped it.
+ * @typedef {{ kind: typeof LEDGER_KINDS.ACCREDITED, accreditationNumber: string } | { kind: typeof LEDGER_KINDS.REGISTERED_ONLY }} LedgerAccreditation
+ */
+
+/**
  * @typedef {{
- *   accreditationNumber?: string,
+ *   accreditationNumber?: AccreditationNumber,
+ *   ledgerAccreditation?: LedgerAccreditation,
  *   loads?: RawLoads,
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType
  *   status: string,
  *   validation?: ValidationResponse,
- * }} SummaryLogStatusResponse
+ *   year: Year,
+ * }} StoredSummaryLog
+ */
+
+/**
+ * What the backend serves for a summary log it has not stored yet.
+ * @typedef {{ status: 'preprocessing' }} SummaryLogPlaceholder
+ */
+
+/**
+ * @typedef {StoredSummaryLog | SummaryLogPlaceholder} SummaryLogStatusResponse
+ */
+
+/**
+ * @typedef {{ status: 'submitting' }} SummaryLogSubmitResponse
  */
 
 /**
  * Route params for summary-log controllers.
  * @typedef {{
- *   organisationId: string,
- *   registrationId: string,
+ *   organisationNumber: OrganisationNumber,
+ *   registrationNumber: RegistrationNumber,
  *   summaryLogId: string
  * }} SummaryLogParams
  */
@@ -280,7 +312,7 @@
  * summaryLogUploadProgressController reads on the next request to bridge
  * backend replication lag.
  * @typedef {{
- *   freshDataMap?: Record<string, SummaryLogStatusResponse>
+ *   freshDataMap?: Record<string, SummaryLogSubmitResponse>
  * }} SummaryLogsSession
  */
 

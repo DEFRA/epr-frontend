@@ -1,23 +1,37 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import {
   asIssuedToOrganisation,
   asPackagingRecyclingNote
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole, getByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { describe, expect, vi } from 'vitest'
+import { afterEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 
-const { getRequiredRegistrationWithAccreditation } =
-  await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+const { fetchRequiredAccreditation } =
+  await import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
 
@@ -28,36 +42,17 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
-  organisationData: {
-    id: 'org-123',
-    companyDetails: { name: 'Reprocessor Organisation' }
-  },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'reprocessor-input',
-    material: 'plastic',
-    nation: 'england',
-    site: { address: { line1: 'Reprocessing Site' } },
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
+const fixtureReprocessor = buildRegistrationWithAccreditation({
+  organisation: { name: 'Reprocessor Organisation' },
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: { address: { fullAddress: 'Reprocessing Site' } }
+  })
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
-  organisationData: {
-    id: 'org-123',
-    companyDetails: { name: 'Exporter Organisation' }
-  },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'exporter',
-    material: 'plastic',
-    nation: 'england',
-    site: null,
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
+const fixtureExporter = buildRegistrationWithAccreditation({
+  organisation: { name: 'Exporter Organisation' }
 })
 
 const mockIssuedPrn = asPackagingRecyclingNote({
@@ -78,20 +73,18 @@ const mockIssuedPern = asPackagingRecyclingNote({
   status: 'awaiting_acceptance'
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const organisationNumber = '500123'
+const registrationNumber = 'R26EN0000000001PL'
+const year = '2026'
 const prnId = 'prn-789'
-const issuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+const issuedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issued`
+const viewUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/view`
+const listUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes`
 
 describe('#issuedController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureReprocessor)
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPrn)
   })
 
@@ -387,8 +380,100 @@ describe('#issuedController', () => {
         })
         expect(returnHomeLink).toBeDefined()
         expect(returnHomeLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}`
         )
+      })
+
+      describe('satisfaction survey', () => {
+        const surveyUrl = 'https://survey.example/prn'
+        const surveyTitle = 'Help us improve this service'
+        const surveyText = 'Give us your feedback (opens in a new tab)'
+
+        const liveSurvey = () => {
+          config.set('satisfactionSurvey.isEnabled', true)
+          config.set('satisfactionSurvey.prnUrl', surveyUrl)
+        }
+
+        afterEach(() => {
+          config.reset('satisfactionSurvey.isEnabled')
+          config.reset('satisfactionSurvey.prnUrl')
+        })
+
+        const getBody = async (server, auth = mockAuth) => {
+          const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
+            auth
+          })
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: issuedUrl,
+            auth,
+            headers: { cookie: csrfCookie }
+          })
+
+          return new JSDOM(result, { url: 'http://localhost' }).window.document
+            .body
+        }
+
+        it('asks nothing while the surveys are switched off', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(queryByText(body, surveyTitle)).toBeNull()
+        })
+
+        it('still says what happens next while the surveys are switched off', async ({
+          server
+        }) => {
+          const main = getByRole(await getBody(server), 'main')
+
+          expect(
+            queryByRole(main, 'heading', { name: 'What happens next' })
+          ).not.toBeNull()
+        })
+
+        it('asks below the page content, leaving what happens next alone', async ({
+          server
+        }) => {
+          liveSurvey()
+
+          const body = await getBody(server)
+          const main = getByRole(body, 'main')
+
+          expect(getByText(body, surveyTitle)).toBeDefined()
+          expect(queryByText(main, surveyTitle)).toBeNull()
+          expect(
+            getAllByRole(main, 'link').map((link) => link.textContent?.trim())
+          ).toStrictEqual([
+            'Issue another PRN',
+            'Manage PRNs',
+            'Return to home'
+          ])
+        })
+
+        it('still asks a user who cannot issue notes', async ({ server }) => {
+          liveSurvey()
+
+          const body = await getBody(
+            server,
+            buildMockAuth(sessionIdentity(IDENTITIES.operatorWithoutWrite))
+          )
+
+          expect(getByText(body, surveyTitle)).toBeDefined()
+        })
+
+        it('sends the user to the notes survey, not one from another journey', async ({
+          server
+        }) => {
+          liveSurvey()
+
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'link', { name: surveyText }).getAttribute('href')
+          ).toBe(surveyUrl)
+        })
       })
 
       it('redirects to view page if PRN not in awaiting_acceptance status', async ({
@@ -419,14 +504,12 @@ describe('#issuedController', () => {
 
     describe('exporter (pern)', () => {
       const pernId = 'pern-123'
-      const pernIssuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/issued`
+      const pernIssuedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${pernId}/issued`
 
       it('displays PERN text for exporter wasteProcessingType', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
 
         const { cookie: csrfCookie } = await getCsrfToken(
@@ -455,9 +538,7 @@ describe('#issuedController', () => {
       it('displays View PERN button with opens in a new tab text for exporter', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
 
         const { cookie: csrfCookie } = await getCsrfToken(

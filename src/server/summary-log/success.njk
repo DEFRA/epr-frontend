@@ -1,11 +1,12 @@
 {% extends 'layouts/page.njk' %}
+{% from "satisfaction-survey/macro.njk" import appSatisfactionSurvey %}
 
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
     <div class="govuk-panel govuk-panel--confirmation">
       <h1 class="govuk-panel__title">
-        {{ localise('summary-log:successPageTitle') }}
+        {{ heading }}
       </h1>
       {% if wasteBalance is defined %}
       <div class="govuk-panel__body">
@@ -26,13 +27,17 @@
     <p class="govuk-body">{{ localise('summary-log:closedPeriodAdjustments.furtherActionPara3') }}</p>
     {{ govukButton({
       text: localise('summary-log:closedPeriodAdjustments.goToReports'),
-      href: '/organisations/' + organisationId + '/registrations/' + registrationId + '/reports'
+      href: reportsUrl
     }) }}
     {% endif %}
 
     <p class="govuk-body">
-      <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
+      <a href="{{ organisationPath }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
     </p>
   </div>
 </div>
+{% endblock %}
+
+{% block footerStart %}
+{{ appSatisfactionSurvey(satisfactionSurvey.summaryLog) }}
 {% endblock %}

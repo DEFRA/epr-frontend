@@ -1,3 +1,4 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import {
@@ -5,24 +6,32 @@ import {
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import {
   asPackagingRecyclingNote,
   asUpdatePrnStatusResponse
 } from '#server/common/test-helpers/prn-fixtures.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 
-const { getRequiredRegistrationWithAccreditation } =
-  await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
+
+const { fetchRequiredAccreditation } =
+  await import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
@@ -34,15 +43,15 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const organisationNumber = '500123'
+const registrationNumber = 'R26EN0000000001PL'
+const year = toYear(2026)
 const prnId = 'prn-789'
-const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issue`
-const actionUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-const issuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
-const errorUrl = `/organisations/${organisationId}/error`
+const issueUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issue`
+const actionUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}`
+const viewUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/view`
+const issuedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issued`
+const errorUrl = `/organisations/${organisationNumber}/error`
 
 const mockPrnIssued = asUpdatePrnStatusResponse({
   id: 'prn-789',
@@ -53,21 +62,14 @@ const mockPrnIssued = asUpdatePrnStatusResponse({
 describe('#issueController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      asGetRequiredRegistrationResult({
-        organisationData: {
-          id: organisationId,
-          companyDetails: { name: 'Test Org' }
-        },
-        registration: {
-          id: registrationId,
-          wasteProcessingType: 'reprocessor-input',
-          material: 'plastic',
-          nation: 'england',
-          site: { address: { line1: 'Test Site' } },
-          accreditationId
-        },
-        accreditation: { id: accreditationId, status: 'approved' }
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+      buildRegistrationWithAccreditation({
+        organisation: { name: 'Test Org' },
+        registration: buildRegistrationView({
+          wasteProcessingType: 'reprocessor',
+          reprocessingType: 'input',
+          site: { address: { fullAddress: 'Test Site' } }
+        })
       })
     )
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
@@ -104,12 +106,10 @@ describe('#issueController', () => {
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(issuedUrl)
       expect(updatePrnStatus).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        accreditationId,
+        { organisationNumber, registrationNumber, year },
         prnId,
         { status: 'awaiting_acceptance' },
-        mockCredentials.idToken
+        mockCredentials.backendToken
       )
     })
 
@@ -298,7 +298,7 @@ describe('#issueController', () => {
         const cookies = mergeCookies(csrfCookie, ...postCookieValues)
 
         // GET issued page for a DIFFERENT PRN
-        const differentIssuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/different-prn/issued`
+        const differentIssuedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/different-prn/issued`
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -316,6 +316,34 @@ describe('#issueController', () => {
         // Session prnNumber should NOT be used (ID mismatch)
         expect(queryByText(main, /ER2625001A/)).toBeNull()
       })
+    })
+  })
+
+  describe('journey events', () => {
+    it('should record the issue journey end once the note is issued', async ({
+      server
+    }) => {
+      const { cookie: csrfCookie, crumb } = await getCsrfToken(
+        server,
+        viewUrl,
+        {
+          auth: mockAuth
+        }
+      )
+
+      await server.inject({
+        method: 'POST',
+        url: issueUrl,
+        auth: mockAuth,
+        headers: { cookie: csrfCookie },
+        payload: { crumb }
+      })
+
+      expect(metrics.journey.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.issuePrn,
+        prnId
+      )
     })
   })
 })

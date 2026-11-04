@@ -92,7 +92,6 @@ export function createApiWasteOrganisationsService(logger) {
 
       const auth = Buffer.from(`${username}:${password}`).toString('base64')
 
-      /** @type {{ organisations: RawWasteOrganisation[] }} */
       const response = await fetchJson(`${url}?${params.toString()}`, {
         headers: {
           ...(isDevelopment && { 'x-api-key': key }),

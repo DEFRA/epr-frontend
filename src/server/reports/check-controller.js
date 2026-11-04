@@ -1,6 +1,7 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -16,6 +17,10 @@ import {
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportAttempt } from './helpers/report-attempt.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
@@ -32,7 +37,7 @@ function getSupportingInformation(reportDetail, localise) {
 }
 
 /**
- * @param {Pick<Registration, 'wasteProcessingType'>} registration
+ * @param {Pick<RegistrationView, 'wasteProcessingType'>} registration
  * @param {TFunction} localise
  * @returns {{
  *   freeLabel: string,
@@ -72,7 +77,8 @@ function buildNoteTypeLabels(registration, localise) {
  *   localiseUrl: (path: string) => string,
  *   material: string,
  *   periodLabel: string,
- *   registration: Registration,
+ *   registration: RegistrationView,
+ *   registrationNumber: RegistrationNumber,
  *   reportDetail: ReportDetailResponse
  * }} params
  * @returns {object}
@@ -86,6 +92,7 @@ function buildCheckViewData({
   material,
   periodLabel,
   registration,
+  registrationNumber,
   reportDetail
 }) {
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
@@ -120,9 +127,9 @@ function buildCheckViewData({
       tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
       tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
     },
-    registrationNumber: registration.registrationNumber,
+    registrationNumber,
     showApprovalColumn: isAccreditedExporter,
-    site: registration.site,
+    site: siteNameOf(registration),
     supportingInformation: getSupportingInformation(reportDetail, localise),
     supportingInformationLabel: localise('reports:supportingInformationLabel'),
     tonnageNotExportedChangeUrl: localiseUrl(`${basePath}/tonnes-not-exported`),
@@ -154,44 +161,28 @@ export const checkGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { organisationNumber, registrationNumber, year, cadence, period } =
+      request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
     const { registration, accreditation } =
-      await fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
+      await fetchRegistrationWithAccreditation(
+        { organisationNumber, registrationNumber, year },
+        session.backendToken
       )
 
     const reportDetail = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      session.idToken
+      request.params,
+      session.backendToken
     )
 
-    if (reportDetail.status?.currentStatus !== SUBMISSION_STATUS.IN_PROGRESS) {
-      return h.redirect(
-        request.localiseUrl(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
-        )
-      )
+    if (reportDetail.status !== SUBMISSION_STATUS.IN_PROGRESS) {
+      return h.redirect(request.localiseUrl(reportsListPath(request.params)))
     }
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
-    const material = getDisplayMaterial(registration)
+    const basePath = reportPath(request.params)
+    const material = getMaterialDisplayName(registration.material)
     const periodLabel = formatPeriodLabelWithComma(
       { year, period },
       cadence,
@@ -201,6 +192,7 @@ export const checkGetController = {
 
     const viewData = buildCheckViewData({
       registration,
+      registrationNumber,
       accreditation,
       reportDetail,
       basePath,
@@ -231,45 +223,30 @@ export const checkPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
     const { version } = request.payload
     const session = request.auth.credentials
 
     const transition = { status: SUBMISSION_STATUS.READY_TO_SUBMIT, version }
 
-    await updateReportStatus(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      transition,
-      session.idToken
+    await updateReportStatus(request.params, transition, session.backendToken)
+
+    await metrics.journey.end(
+      request,
+      JOURNEY.createReport,
+      reportAttempt(request.params)
     )
 
     return h.redirect(
-      request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/created`
-      )
+      request.localiseUrl(`${reportPath(request.params)}/created`)
     )
   }
 }
 
 /**
+ * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { TFunction } from 'i18next'
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { VersionedPayload } from './helpers/versioned-payload-schema.js'

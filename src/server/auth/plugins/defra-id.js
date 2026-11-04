@@ -1,5 +1,6 @@
 import { asHapiRequest } from '#server/common/hapi-types.js'
 import { config } from '#config/config.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { paths } from '#server/paths.js'
 import bell from '@hapi/bell'
 import {
@@ -8,22 +9,52 @@ import {
 } from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 import { getRedirectUrl } from '../helpers/get-redirect-url.js'
+import { recordSignInReferrer } from '../helpers/record-sign-in-referrer.js'
 
 /**
  * @import { AzureB2CTokenParams, AzureB2CBellCredentials, BellProfileTarget, OAuthBellCredentials, OAuthTokenParams } from '../types/auth.js'
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { AuthProvider } from '../types/auth-provider.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
 export const OIDC_DEFRA_ID = 'defra-id'
 
+const DEFRA_ID_SCOPES = ['openid', 'offline_access']
+
+/**
+ * Describe what Defra ID does differently from the other OIDC providers.
+ *
+ * A Defra ID session presents the id token to the backend, so the id token is
+ * both the token to verify and the token the session carries.
+ * @param {VerifyToken} verifyToken - Token verification function
+ * @returns {AuthProvider}
+ */
+const createDefraIdAuthProvider = (verifyToken) => ({
+  tokenRequestParams: {
+    client_id: config.get('defraId.clientId'),
+    client_secret: config.get('defraId.clientSecret'),
+    scope: DEFRA_ID_SCOPES.join(' '),
+    serviceId: config.get('defraId.serviceId')
+  },
+  selectBackendToken: (tokens) => toBackendToken(tokens.id_token),
+  verifyBackendToken: async (token) => {
+    const payload = await verifyToken(token)
+
+    return {
+      profile: buildUserProfile(payload),
+      expiresAt: getTokenExpiresAt(payload)
+    }
+  }
+})
+
 /**
  * Create Defra ID OIDC authentication plugin
- * Factory function that creates a plugin with verifyToken closure
- * @param {VerifyToken} verifyToken - Token verification function
+ * Factory function that creates a plugin with the Defra ID auth provider
+ * @param {AuthProvider} authProvider - What Defra ID does differently
  * @returns {ServerRegisterPluginObject<void>}
  */
-const createDefraId = (verifyToken) => ({
+const createDefraId = (authProvider) => ({
   plugin: {
     name: OIDC_DEFRA_ID,
     register: async (server) => {
@@ -51,12 +82,7 @@ const createDefraId = (verifyToken) => ({
         cookie: 'bell-defra-id',
         isSecure: config.get('session.cookie.secure'),
         location: (request) => {
-          if (request.info.referrer) {
-            const { hash, pathname, search } = new URL(request.info.referrer)
-
-            const referrer = `${pathname}${search}${hash}`
-            request.yar.flash('referrer', referrer)
-          }
+          recordSignInReferrer(request)
 
           return getRedirectUrl(
             asHapiRequest(request),
@@ -70,26 +96,33 @@ const createDefraId = (verifyToken) => ({
           useParamsAuth: true,
           auth: authBaseUrl,
           token: oidcConf.token_endpoint,
-          scope: ['openid', 'offline_access'],
+          scope: DEFRA_ID_SCOPES,
           /**
            * Extract user profile from OIDC ID token and populate credentials.
            * Bell gives us a plain `BellCredentials` object which we mutate
-           * into a `UserSession` by attaching the profile, token expiry, id
-           * token and OIDC URLs.
+           * into a `UserSession` by attaching the profile, token expiry,
+           * tokens and OIDC URLs.
+           *
+           * A Defra ID session presents the id token to the backend, so the
+           * id token is also the backend token.
            * @param {BellProfileTarget} credentials
            * @param {OAuthTokenParams | AzureB2CTokenParams} params
            * @returns {Promise<void>}
            */
           profile: async function (credentials, params) {
-            const payload = await verifyToken(params.id_token)
+            const backendToken = authProvider.selectBackendToken(params)
+            const { profile, expiresAt } =
+              await authProvider.verifyBackendToken(backendToken)
 
-            credentials.profile = buildUserProfile(payload)
-            credentials.expiresAt = getTokenExpiresAt(payload)
+            credentials.profile = profile
+            credentials.expiresAt = expiresAt
             credentials.idToken = params.id_token
+            credentials.backendToken = backendToken
             credentials.urls = {
               token: oidcConf.token_endpoint,
               logout: oidcConf.end_session_endpoint
             }
+            credentials.scope = []
           }
         },
         providerParams: function (request) {
@@ -104,4 +137,4 @@ const createDefraId = (verifyToken) => ({
   }
 })
 
-export { createDefraId }
+export { createDefraId, createDefraIdAuthProvider }

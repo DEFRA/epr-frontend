@@ -1,8 +1,10 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -15,13 +17,20 @@ import {
   buildUnapprovedOverseasSiteDetailRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
+import { buildReportBreadcrumbs } from './helpers/build-report-breadcrumbs.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import {
+  summaryLogUploadPath,
+  reportPath,
+  reportsListPath
+} from './helpers/report-paths.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
+import { SUBMISSION_STATUS } from './constants.js'
 
 /**
- * @param {ExportActivity | undefined} exportActivity
+ * @param {object|undefined} exportActivity
  * @param {boolean} isExporter
  * @param {boolean} isAccreditedExporter
  * @param {string} fallbackText
@@ -98,22 +107,24 @@ function buildSectionIntros(
 }
 
 /**
- * @param {{ organisationId: string, registrationId: string }} ids
- * @param {Registration} registration
+ * @param {RegistrationYearKeys} keys
+ * @param {string} uploadPath
+ * @param {RegistrationView} registration
  * @param {Accreditation | undefined} accreditation
- * @param {ReportDetailResponse} reportDetail
- * @param {(key: string, params?: Record<string, unknown>) => string} localise
+ * @param {object} reportDetail
+ * @param {(key: string, params?: object) => string} localise
  * @param {(path: string) => string} localiseUrl
  */
 function buildViewData(
-  { organisationId, registrationId },
+  keys,
+  uploadPath,
   registration,
   accreditation,
   reportDetail,
   localise,
   localiseUrl
 ) {
-  const material = getDisplayMaterial(registration)
+  const material = getMaterialDisplayName(registration.material)
   const periodLabel = formatPeriodLabelWithComma(
     { year: reportDetail.year, period: reportDetail.period },
     reportDetail.cadence,
@@ -137,12 +148,8 @@ function buildViewData(
     wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
       wasteActionGerund
     }),
-    backUrl: localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports`
-    ),
-    uploadUrl: localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-    ),
+    backUrl: localiseUrl(reportsListPath(keys)),
+    uploadUrl: localiseUrl(uploadPath),
     lastUploadedAt: reportDetail.source?.lastUploadedAt
       ? {
           date: formatDate(reportDetail.source.lastUploadedAt),
@@ -150,8 +157,8 @@ function buildViewData(
         }
       : null,
     accreditation: accreditation?.accreditationNumber,
-    registrationNumber: registration.registrationNumber,
-    site: reportDetail.details.site,
+    registrationNumber: keys.registrationNumber,
+    site: siteNameOf(registration),
     wasteReceived: {
       totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
       supplierRows: buildSupplierRows(recyclingActivity.suppliers, fallbackText)
@@ -193,46 +200,45 @@ export const detailController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { organisationNumber, registrationNumber, year, cadence } =
+      request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { registration, accreditation } =
-      await fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
+    const { organisation, registration, accreditation } =
+      await fetchRegistrationWithAccreditation(
+        { organisationNumber, registrationNumber, year },
+        session.backendToken
       )
 
     validateCadenceForRegistration(cadence, accreditation)
 
     const reportDetail = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      session.idToken
+      request.params,
+      session.backendToken
     )
 
-    if (reportDetail.id) {
+    if (reportDetail.status !== SUBMISSION_STATUS.NOT_STARTED) {
+      return h.redirect(request.localiseUrl(reportsListPath(request.params)))
+    }
+
+    const basePath = reportPath(request.params)
+    const uploadPath = summaryLogUploadPath(request.params)
+
+    if (reportDetail.incompleteSummaryLogRows) {
+      request.yar.set('reportDataIncompleteContext', {
+        periodPath: basePath,
+        uploadPath,
+        payload: reportDetail.incompleteSummaryLogRows
+      })
       return h.redirect(
-        request.localiseUrl(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
-        )
+        request.localiseUrl(`${basePath}/report-data-incomplete`)
       )
     }
 
     const viewData = buildViewData(
-      { organisationId, registrationId },
+      request.params,
+      uploadPath,
       registration,
       accreditation,
       reportDetail,
@@ -240,15 +246,28 @@ export const detailController = {
       request.localiseUrl.bind(request)
     )
 
-    return h.view('reports/detail', viewData)
+    return h.view('reports/detail', {
+      ...viewData,
+      breadcrumbs: readsAsARegulator(session)
+        ? buildReportBreadcrumbs({
+            organisation,
+            registration,
+            keys: request.params,
+            pageName: viewData.heading,
+            year,
+            cadence,
+            localise,
+            localiseUrl: request.localiseUrl.bind(request)
+          })
+        : []
+    })
   }
 }
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { Accreditation } from '#domain/organisations/accreditation.js'
- * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { ExportActivity, ReportDetailResponse } from './helpers/fetch-report-detail.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
+ * @import { RegistrationYearKeys } from './helpers/report-paths.js'
  */

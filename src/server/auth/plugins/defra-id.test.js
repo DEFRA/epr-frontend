@@ -3,8 +3,13 @@ import { it } from '#vite/fixtures/server.js'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
-import { createDefraId, OIDC_DEFRA_ID } from './defra-id.js'
+import {
+  createDefraId,
+  createDefraIdAuthProvider,
+  OIDC_DEFRA_ID
+} from './defra-id.js'
 
 const mockLogger = createMockLogger()
 
@@ -56,7 +61,7 @@ describe('#defraId', () => {
       app: {}
     }
 
-    defraId = createDefraId(mockVerifyToken)
+    defraId = createDefraId(createDefraIdAuthProvider(mockVerifyToken))
   })
 
   afterEach(() => {
@@ -246,6 +251,7 @@ describe('#defraId', () => {
       const mockRequest = {
         info: { host: 'localhost:3000' },
         headers: {},
+        query: {},
         server: { info: { protocol: 'http' } }
       }
 
@@ -267,6 +273,7 @@ describe('#defraId', () => {
           host: 'localhost:3000'
         },
         headers: {},
+        query: {},
         server: { info: { protocol: 'http' } },
         yar: {
           flash: vi.fn()
@@ -279,6 +286,31 @@ describe('#defraId', () => {
         'referrer',
         '/dashboard'
       )
+    })
+
+    it('should not store a referrer when returning from the identity provider', async () => {
+      await defraId.plugin.register(mockServer)
+
+      const strategyCall = mockServer.auth.strategy.mock.calls[0]
+      const config = strategyCall[2]
+      const locationFn = config.location
+
+      const mockRequest = {
+        info: {
+          referrer: 'http://defra-id.auth/',
+          host: 'localhost:3000'
+        },
+        headers: {},
+        query: { code: 'an-authorization-code' },
+        server: { info: { protocol: 'http' } },
+        yar: {
+          flash: vi.fn()
+        }
+      }
+
+      locationFn(mockRequest)
+
+      expect(mockRequest.yar.flash).not.toHaveBeenCalled()
     })
   })
 
@@ -339,6 +371,20 @@ describe('#defraId', () => {
       })
     })
 
+    it('should present the id token to the backend, not the access token', async () => {
+      mockVerifyToken.mockResolvedValue({
+        sub: 'user-123',
+        email: 'john.doe@example.com',
+        exp: 1735689600
+      })
+
+      const mockCredentials = { token: 'mock-access-token' }
+
+      await profileFn(mockCredentials, { id_token: 'mock-id-token' })
+
+      expect(mockCredentials.backendToken).toBe('mock-id-token')
+    })
+
     it('should set all credential fields from OIDC response', async () => {
       const mockPayload = {
         sub: 'user-456',
@@ -377,6 +423,47 @@ describe('#defraId', () => {
       expect(mockCredentials.urls).toStrictEqual({
         token: 'http://defra-id.auth/token',
         logout: 'http://defra-id.auth/logout'
+      })
+    })
+  })
+
+  describe('the Defra ID auth provider', () => {
+    it('asks Defra ID with its own client credentials and service', () => {
+      const authProvider = createDefraIdAuthProvider(mockVerifyToken)
+
+      expect(authProvider.tokenRequestParams).toStrictEqual({
+        client_id: 'test-client-id',
+        client_secret: 'test-client-secret',
+        scope: 'openid offline_access',
+        serviceId: 'test-service-id'
+      })
+    })
+
+    it('presents the id token to the backend', () => {
+      const authProvider = createDefraIdAuthProvider(mockVerifyToken)
+
+      expect(
+        authProvider.selectBackendToken({
+          id_token: 'an-id-token',
+          access_token: 'an-access-token'
+        })
+      ).toBe('an-id-token')
+    })
+
+    it('reads the identity from the verified id token', async () => {
+      mockVerifyToken.mockResolvedValue({
+        sub: 'user-123',
+        email: 'john.doe@example.com',
+        exp: 1735689600 // 2025-01-01T00:00:00.000Z
+      })
+
+      const authProvider = createDefraIdAuthProvider(mockVerifyToken)
+
+      await expect(
+        authProvider.verifyBackendToken(toBackendToken('an-id-token'))
+      ).resolves.toStrictEqual({
+        profile: { id: 'user-123', email: 'john.doe@example.com' },
+        expiresAt: '2025-01-01T00:00:00.000Z'
       })
     })
   })

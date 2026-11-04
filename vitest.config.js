@@ -28,10 +28,10 @@ export default defineConfig({
         'src/**/*.njk',
         'src/**/*.scss',
         'src/client/javascripts/application.js',
-        'src/domain',
-        'src/server/auth/types',
-        'src/server/common/test-helpers',
-        'src/server/types',
+        'src/domain/**',
+        'src/server/auth/types/**',
+        'src/server/common/test-helpers/**',
+        'src/server/types/**',
         'src/**/types.js'
       ],
       thresholds: {

@@ -1,0 +1,76 @@
+import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { backend } from '#server/common/helpers/backend-client.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { registrationPath as toRegistrationPath } from '#server/reports/helpers/report-paths.js'
+
+/**
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ */
+
+export const summaryLogCsvDownloadPath =
+  '/organisations/{organisationNumber}/registrations/{registrationNumber}/summary-logs/files/{fileId}/download.csv'
+
+/**
+ * The address of one summary log's records as CSV, addressed by its file - the
+ * id the ledger records. The file id goes straight into an href, so it is
+ * encoded.
+ *
+ * The `.csv` suffix keeps the journey tests' `a[href$="/download"]` selector
+ * matching the workbook link alone.
+ * @param {{ registrationPath: string, fileId: string }} params
+ * @returns {string}
+ */
+export const buildSummaryLogCsvDownloadPath = ({ registrationPath, fileId }) =>
+  `${registrationPath}/summary-logs/files/${encodeURIComponent(fileId)}/download.csv`
+
+const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
+
+/**
+ * Serves the records of the summary log a regulator asked for, as CSV. The
+ * backend generates it, so the body is passed straight through rather than
+ * held: an export can be arbitrarily large.
+ *
+ * The plugin this sits in is registered unconditionally, being operator-facing,
+ * so this route guards itself rather than inheriting a gate.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+export const summaryLogCsvDownloadController = {
+  /**
+   * @param {HapiRequest & {
+   *   params: RegistrationKeys & { fileId: string }
+   * }} request
+   * @param {ResponseToolkit} h
+   */
+  async handler(request, h) {
+    const { fileId, ...keys } = request.params
+    const { backendToken } = request.auth.credentials
+
+    if (!readsWasteRecordsDownloads(request.auth.credentials)) {
+      throw notFound(
+        'Summary log records not found',
+        errorCodes.summaryLogNotFound,
+        {
+          event: {
+            action: 'download_summary_log_csv',
+            reason: `records not offered to this caller fileId=${fileId}`
+          }
+        }
+      )
+    }
+
+    const { body, contentDisposition, contentType } = await backend(
+      backendToken
+    ).stream(
+      `${toRegistrationPath(keys)}/summary-logs/files/${encodeURIComponent(fileId)}/records.csv`
+    )
+
+    const response = h.response(body).type(contentType ?? DEFAULT_CONTENT_TYPE)
+
+    return contentDisposition
+      ? response.header('Content-Disposition', contentDisposition)
+      : response
+  }
+}

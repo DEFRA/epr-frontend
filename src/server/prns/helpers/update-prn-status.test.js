@@ -1,109 +1,92 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { toYear } from '#server/common/helpers/year.js'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
 
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
+import { it } from '#vite/fixtures/server.js'
+
+import { isClosedYearRefusal } from './closed-year.js'
 import { updatePrnStatus } from './update-prn-status.js'
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
-
-const { fetchJsonFromBackend } =
-  await import('#server/common/helpers/fetch-json-from-backend.js')
-
 describe(updatePrnStatus, () => {
-  const organisationId = 'org-123'
-  const registrationId = 'reg-456'
-  const accreditationId = 'acc-abc'
-  const prnId = 'prn-789'
-  const idToken = 'test-token'
-
-  const payload = {
-    status: 'awaiting_authorisation'
-  }
-
-  const mockResponse = {
-    id: 'prn-789',
-    prnNumber: 'PRN-2026-001',
-    tonnage: 100,
-    material: 'plastic',
-    issuedToOrganisation: 'producer-org',
-    status: 'awaiting_authorisation',
-    updatedAt: '2026-01-28T12:00:00.000Z'
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('calls fetchJsonFromBackend with correct path and options', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updatePrnStatus(
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      payload,
-      idToken
+  it('should post the status to the note the keys name and resolve to it in the page shape', async ({
+    msw
+  }) => {
+    /** @type {{ body: unknown, pathname: string }[]} */
+    const received = []
+    msw.use(
+      http.post(/\/status$/, async ({ request }) => {
+        received.push({
+          body: await request.json(),
+          pathname: new URL(request.url).pathname
+        })
+        return HttpResponse.json(
+          buildPrnResource({
+            status: { current: 'awaiting_acceptance', timeline: [] },
+            prnNumber: 'ER2625001A'
+          })
+        )
+      })
     )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-abc/packaging-recycling-notes/prn-789/status',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${idToken}`
-        },
-        body: JSON.stringify(payload)
-      }
-    )
-  })
-
-  it('encodes URL path parameters with special characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
-
-    await updatePrnStatus(
-      'org/123',
-      'reg&456',
-      'acc@abc',
-      'prn#789',
-      payload,
-      idToken
-    )
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%40abc/packaging-recycling-notes/prn%23789/status',
-      expect.any(Object)
-    )
-  })
-
-  it('returns the response from fetchJsonFromBackend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await updatePrnStatus(
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      payload,
-      idToken
+      {
+        organisationNumber: toOrganisationNumber('500123'),
+        registrationNumber: toRegistrationNumber('R26/1'),
+        year: toYear(2026)
+      },
+      'prn#789',
+      { status: 'awaiting_acceptance' },
+      toBackendToken('a-token')
     )
 
-    expect(result).toStrictEqual(mockResponse)
+    expect(result).toMatchObject({
+      id: 'prn-789',
+      status: 'awaiting_acceptance',
+      prnNumber: 'ER2625001A',
+      material: 'plastic'
+    })
+    expect(received).toStrictEqual([
+      {
+        body: { status: 'awaiting_acceptance' },
+        pathname:
+          '/organisations/500123/registrations/R26%2F1/accreditations/2026/packaging-recycling-notes/prn%23789/status'
+      }
+    ])
   })
 
-  it('propagates errors from fetchJsonFromBackend', async () => {
-    const error = new Error('Network error')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
-
-    await expect(
-      updatePrnStatus(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        payload,
-        idToken
+  it('should reject as a closed-year refusal when the backend says the year has closed', async ({
+    msw
+  }) => {
+    msw.use(
+      http.post(/\/status$/, () =>
+        HttpResponse.json(
+          {
+            statusCode: 409,
+            error: 'Conflict',
+            message:
+              'The deadline for a 2026 relevant year was 31 January 2027.',
+            code: 'RELEVANT_YEAR_CLOSED'
+          },
+          { status: 409 }
+        )
       )
-    ).rejects.toThrow('Network error')
+    )
+
+    const error = await updatePrnStatus(
+      {
+        organisationNumber: toOrganisationNumber('500123'),
+        registrationNumber: toRegistrationNumber('R26/1'),
+        year: toYear(2026)
+      },
+      'prn-789',
+      { status: 'awaiting_acceptance' },
+      toBackendToken('a-token')
+    ).catch((rejected) => rejected)
+
+    expect(isClosedYearRefusal(error)).toBe(true)
   })
 })

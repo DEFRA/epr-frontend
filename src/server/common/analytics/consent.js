@@ -1,0 +1,121 @@
+import { isAnalyticsEnabled } from '#server/common/analytics/enabled.js'
+import { asHapiRequest } from '#server/common/hapi-types.js'
+import { take } from '#server/common/helpers/session-cache/take.js'
+
+/**
+ * @import { Request, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
+
+export const ANALYTICS_CONSENT_COOKIE = 'analyticsConsent'
+
+export const ANALYTICS_CONSENT = /** @type {const} */ ({
+  accepted: 'accepted',
+  rejected: 'rejected'
+})
+
+/**
+ * @typedef {typeof ANALYTICS_CONSENT[keyof typeof ANALYTICS_CONSENT]} AnalyticsConsent
+ */
+
+export const ANALYTICS_CONSENT_SESSION_KEY = 'analyticsConsentChoice'
+
+/**
+ * @param {unknown} value
+ * @returns {AnalyticsConsent | null}
+ */
+const asConsent = (value) =>
+  value === ANALYTICS_CONSENT.accepted || value === ANALYTICS_CONSENT.rejected
+    ? value
+    : null
+
+/**
+ * @param {HapiRequest | null} request
+ */
+const readConsent = (request) =>
+  asConsent(request?.state?.[ANALYTICS_CONSENT_COOKIE])
+
+/**
+ * Vision marks the responses it renders with a variety hapi's typings omit. An
+ * error is rendered as a page by `catchAll`.
+ * @param {HapiRequest['response']} response
+ */
+const rendersPage = (response) =>
+  'isBoom' in response ||
+  /** @type {{ variety?: string }} */ (response).variety === 'view'
+
+/**
+ * Consumes the choice made on the previous request so only the next page
+ * confirms it. Runs before yar saves the session, which a view's context is
+ * built too late to do.
+ * @param {Request} r
+ * @param {ResponseToolkit} h
+ */
+export const takeConfirmedChoice = (r, h) => {
+  const request = asHapiRequest(r)
+
+  if (rendersPage(request.response)) {
+    request.app.analyticsConfirmedChoice = asConsent(
+      take(request.yar, ANALYTICS_CONSENT_SESSION_KEY)
+    )
+  }
+
+  return h.continue
+}
+
+/**
+ * The page being rendered, in the visitor's language.
+ * @param {HapiRequest | null} request
+ */
+const currentPage = (request) => {
+  if (!request?.url) {
+    return '/'
+  }
+
+  const path = `${request.url.pathname}${request.url.search}`
+
+  return request.localiseUrl?.(path) ?? path
+}
+
+/**
+ * Whether analytics may run, and whether we still need to ask. Every answer
+ * comes from one place so a page cannot show the banner while already tracking,
+ * or track while still asking. `hasRejected` is not the negation of
+ * `hasConsented`: a visitor who has answered nothing has neither. `returnUrl`
+ * sends the visitor back to the page they answered from, and is server-built so
+ * it is always a local path.
+ * @param {HapiRequest | null} request
+ * @returns {{
+ *   confirmedChoice: AnalyticsConsent | null,
+ *   hasConsented: boolean,
+ *   hasRejected: boolean,
+ *   isEnabled: boolean,
+ *   returnUrl: string,
+ *   shouldAskConsent: boolean
+ * }}
+ */
+export const analyticsConsent = (request) => {
+  const returnUrl = currentPage(request)
+
+  if (!isAnalyticsEnabled()) {
+    return {
+      confirmedChoice: null,
+      hasConsented: false,
+      hasRejected: false,
+      isEnabled: false,
+      returnUrl,
+      shouldAskConsent: false
+    }
+  }
+
+  const consent = readConsent(request)
+
+  return {
+    confirmedChoice: request?.app?.analyticsConfirmedChoice ?? null,
+    hasConsented: consent === ANALYTICS_CONSENT.accepted,
+    hasRejected: consent === ANALYTICS_CONSENT.rejected,
+    isEnabled: true,
+    returnUrl,
+    shouldAskConsent: consent === null
+  }
+}

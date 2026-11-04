@@ -1,6 +1,17 @@
+import { toYear } from '#server/common/helpers/year.js'
+import { config } from '#config/config.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
+import {
+  buildMockAuth,
+  sessionIdentity
+} from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
@@ -12,29 +23,55 @@ import { JSDOM } from 'jsdom'
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 const mockAuth = buildMockAuth()
 
-async function loadPage({ server, registrationAndAccreditation }) {
-  vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+const regulatorAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-1', email: 'ines.harlow@example.gov.uk' },
+  ...sessionIdentity(IDENTITIES.regulator)
+})
+
+const registrationPath = '/organisations/500001/registrations/R25SR500030912PA'
+
+/**
+ * @param {string} cadence
+ */
+const periodPath = (cadence) =>
+  cadence === 'monthly'
+    ? `${registrationPath}/accreditations/2026/reports/monthly/1/submissions/1`
+    : `${registrationPath}/reports/2026/quarterly/1/submissions/1`
+
+async function loadPage({
+  server,
+  registrationAndAccreditation,
+  auth = mockAuth,
+  cadence = 'monthly'
+}) {
+  vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
     registrationAndAccreditation
   )
-  const organisationId = registrationAndAccreditation.organisationData?.id
-  const registrationId = registrationAndAccreditation.registration?.id
   return await server.inject({
     method: 'GET',
-    url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/view`,
-    auth: mockAuth
+    url: `${periodPath(cadence)}/view`,
+    auth
   })
 }
 
-async function loadPageBody({ server, registrationAndAccreditation }) {
+async function loadPageBody({
+  server,
+  registrationAndAccreditation,
+  auth = mockAuth,
+  cadence = 'monthly'
+}) {
   const { result } = await loadPage({
     server,
-    registrationAndAccreditation
+    registrationAndAccreditation,
+    auth,
+    cadence
   })
 
   const dom = new JSDOM(result)
@@ -42,63 +79,33 @@ async function loadPageBody({ server, registrationAndAccreditation }) {
 }
 
 describe('#viewController', () => {
-  const mockAccreditedReprocessor = {
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor',
-      registrationNumber: 'REG001234',
-      site: {
-        address: {
-          line1: 'North Road',
-          town: 'Manchester',
-          postcode: 'M1 1AA'
-        }
-      }
-    },
-    accreditation: { id: 'acc-001' }
-  }
+  const reprocessorView = buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: {
+      address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
+    }
+  })
+  const organisation = { name: 'Acme Recycling Ltd' }
 
-  const mockAccreditedExporter = {
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234'
-    },
-    accreditation: { id: 'acc-001' }
-  }
+  const mockAccreditedReprocessor = buildRegistrationWithAccreditation({
+    organisation,
+    registration: reprocessorView
+  })
 
-  const mockRegisteredOnlyReprocessor = {
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'reprocessor',
-      registrationNumber: 'REG001234',
-      site: {
-        address: {
-          line1: 'North Road',
-          town: 'Manchester',
-          postcode: 'M1 1AA'
-        }
-      }
-    },
-    accreditation: undefined
-  }
+  const mockAccreditedExporter = buildRegistrationWithAccreditation({
+    organisation
+  })
 
-  const mockRegisteredOnlyExporter = {
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234'
-    },
-    accreditation: undefined
-  }
+  const mockRegisteredOnlyReprocessor = buildRegistrationWithAccreditation({
+    organisation,
+    registration: { ...reprocessorView, accreditations: {} }
+  })
+
+  const mockRegisteredOnlyExporter = buildRegistrationWithAccreditation({
+    organisation,
+    registration: buildRegistrationView({ accreditations: {} })
+  })
 
   const reprocessors = [
     {
@@ -128,9 +135,7 @@ describe('#viewController', () => {
 
   describe('for a report that cannot be viewed', () => {
     const reportDetail = /** @type {ReportDetailResponse} */ ({
-      status: {
-        currentStatus: 'in_progress'
-      }
+      status: 'in_progress'
     })
 
     beforeAll(() => {
@@ -149,13 +154,9 @@ describe('#viewController', () => {
 
   describe('for a draft report', () => {
     const reportDetail = /** @type {ReportDetailResponse} */ ({
-      status: {
-        currentStatus: 'ready_to_submit',
-        created: {
-          at: '2026-04-20T15:56:00.000Z',
-          by: { id: 'user-789', name: 'Michael Doran', position: 'Manager' }
-        }
-      },
+      status: 'ready_to_submit',
+      createdAt: '2026-04-20T15:56:00.000Z',
+      createdBy: { name: 'Michael Doran', position: 'Manager' },
       dueDate: '2026-04-21',
       recyclingActivity: {
         totalTonnageReceived: 12.5,
@@ -323,9 +324,8 @@ describe('#viewController', () => {
 
   describe('for a submitted report', () => {
     const reportDetail = /** @type {ReportDetailResponse} */ ({
-      operatorCategory: 'REPROCESSOR',
       cadence: 'monthly',
-      year: 2026,
+      year: toYear(2026),
       period: 1,
       startDate: '2026-01-01',
       endDate: '2026-01-31',
@@ -333,19 +333,13 @@ describe('#viewController', () => {
         summaryLogId: 'sl-1',
         lastUploadedAt: '2026-02-15T15:09:00.000Z'
       },
-      details: { material: 'plastic' },
-      status: {
-        currentStatus: 'submitted',
-        currentStatusAt: '2026-03-15T14:30:00.000Z',
-        created: {
-          at: '2026-02-15T15:09:00.000Z',
-          by: { id: 'user-456', name: 'Michael Doran', position: 'Manager' }
-        },
-        submitted: {
-          at: '2026-03-15T14:30:00.000Z',
-          by: { id: 'user-456', name: 'Michael Doran', position: 'Manager' }
-        }
-      },
+      status: 'submitted',
+      submissionNumber: 1,
+      canRequestResubmission: false,
+      createdAt: '2026-02-15T15:09:00.000Z',
+      createdBy: { name: 'Michael Doran', position: 'Manager' },
+      submittedAt: '2026-03-15T14:30:00.000Z',
+      submittedBy: { name: 'Michael Doran', position: 'Manager' },
       dueDate: '2026-05-31',
       recyclingActivity: {
         totalTonnageReceived: 12.5,
@@ -450,8 +444,94 @@ describe('#viewController', () => {
 
       expect(backLink).not.toBeNull()
       expect(backLink?.getAttribute('href')).toBe(
-        `/organisations/${mockAccreditedReprocessor.organisationData.id}/registrations/${mockAccreditedReprocessor.registration.id}/reports`
+        `${registrationPath}/reports/2026`
       )
+    })
+
+    describe('for a regulator, who has no report list of their own', () => {
+      /** The linked crumbs, in order. The page's own crumb carries no link. */
+      const trailHrefs = (body) =>
+        Array.from(body.querySelectorAll('.govuk-breadcrumbs__link')).map(
+          (link) => link.getAttribute('href')
+        )
+
+      beforeAll(() => {
+        config.set('featureFlags.regulatorAccess', true)
+      })
+
+      afterAll(() => {
+        config.set('featureFlags.regulatorAccess', false)
+      })
+
+      it('offers no back link, the trail being the way back', async ({
+        server
+      }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockAccreditedReprocessor,
+          auth: regulatorAuth
+        })
+
+        expect(body.querySelector('.govuk-back-link')).toBeNull()
+      })
+
+      it('walks the trail up from all organisations to the report', async ({
+        server
+      }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockAccreditedReprocessor,
+          auth: regulatorAuth
+        })
+
+        expect(trailHrefs(body)).toStrictEqual([
+          '/regulators/home',
+          '/organisations/500001',
+          '/organisations/500001/registrations/R25SR500030912PA',
+          '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
+        ])
+      })
+
+      it('hangs a monthly report off the accreditation', async ({ server }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockAccreditedReprocessor,
+          auth: regulatorAuth
+        })
+
+        expect(trailHrefs(body).at(-1)).toBe(
+          '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
+        )
+      })
+
+      it('hangs a quarterly report off the registered-only year', async ({
+        server
+      }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockAccreditedReprocessor,
+          auth: regulatorAuth,
+          cadence: 'quarterly'
+        })
+
+        expect(trailHrefs(body).at(-1)).toBe(
+          '/organisations/500001/registrations/R25SR500030912PA/registered-only-periods/2026'
+        )
+      })
+
+      it('stops at the registration where there is no accreditation', async ({
+        server
+      }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockRegisteredOnlyReprocessor,
+          auth: regulatorAuth
+        })
+
+        expect(trailHrefs(body).at(-1)).toBe(
+          '/organisations/500001/registrations/R25SR500030912PA'
+        )
+      })
     })
 
     describe('submission-details section', () => {
@@ -1756,7 +1836,7 @@ describe('#viewController', () => {
 
           expect(button).toHaveLength(1)
           expect(button[0].getAttribute('href')).toBe(
-            `/organisations/${mockAccreditedReprocessor.organisationData.id}/registrations/${mockAccreditedReprocessor.registration.id}/reports/2026/monthly/1/submissions/1/make-changes`
+            `${periodPath('monthly')}/make-changes`
           )
         })
       })

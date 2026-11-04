@@ -12,14 +12,16 @@
  * @param {HapiRequest} request
  * @param {UserOrganisations} organisations
  * @param {{ errors?: Record<string, FieldError> }} [options]
+ * @returns {object}
  */
 export function buildLinkingViewData(request, organisations, options = {}) {
   const unlinked = organisations.unlinked
     .toSorted((a, b) => a.name.localeCompare(b.name))
     .map((o) => ({
-      id: o.id,
       displayName: `${o.name} (ID: ${o.orgId})`,
-      name: o.name
+      name: o.name,
+      organisationNumber: String(o.orgId),
+      referenceNumber: o.referenceNumber
     }))
 
   const troubleshooting = {
@@ -46,19 +48,22 @@ export function buildLinkingViewData(request, organisations, options = {}) {
     }
   }
 
-  const errors = options.errors
-
-  return {
+  const viewData = {
     pageTitle: request.t('account:linking:pageTitle'),
     unlinked,
     organisationName: organisations.current.name,
-    troubleshooting,
-    ...(errors && {
-      errors,
-      errorSummary: Object.entries(errors).map(([fieldName, error]) => ({
+    troubleshooting
+  }
+
+  if (options.errors) {
+    viewData.errors = options.errors
+    viewData.errorSummary = Object.entries(options.errors).map(
+      ([fieldName, error]) => ({
         text: error.text,
         href: `#${fieldName}`
-      }))
-    })
+      })
+    )
   }
+
+  return viewData
 }

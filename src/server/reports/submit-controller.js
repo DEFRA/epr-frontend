@@ -3,8 +3,9 @@ import Boom from '@hapi/boom'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import {
   getNoteTypeDisplayNames,
   isExporterRegistration,
@@ -24,17 +25,21 @@ import {
   getStatusTagClass
 } from './helpers/format-submission-status.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { reportAttempt } from './helpers/report-attempt.js'
+import { reportPath, reportsListPath } from './helpers/report-paths.js'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { isResubmission } from './helpers/resubmission.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { buildValidationErrors } from './helpers/validation.js'
 import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /** @import { Localise } from './helpers/format-period-label.js' */
-/** @import { Accreditation } from '#domain/organisations/accreditation.js' */
-/** @import { Registration } from '#domain/organisations/registration.js' */
+/** @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
 /** @import { ValidationError } from 'joi' */
 
 /**
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { CadenceValue } from './constants.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
@@ -44,18 +49,21 @@ import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
  */
 
 /**
- * @param {{ at: string, by: { name: string } }} statusCreated
+ * @param {Pick<ReportDetailResponse, 'createdAt' | 'createdBy'>} reportDetail
  * @param {Localise} localise
- * @returns {{ createdBy: string, createdOn: string }}
+ * @returns {{ createdBy: string | undefined, createdOn: string }}
  */
-function getCreationDetails(statusCreated, localise) {
-  const { by, at } = statusCreated
+function getCreationDetails(reportDetail, localise) {
+  const { createdAt, createdBy } =
+    /** @type {Required<Pick<ReportDetailResponse, 'createdAt' | 'createdBy'>>} */ (
+      reportDetail
+    )
 
   return {
-    createdBy: by.name,
+    createdBy: createdBy.name,
     createdOn: localise('reports:submitCreatedOnValue', {
-      date: formatDate(at),
-      time: formatTime(at)
+      date: formatDate(createdAt),
+      time: formatTime(createdAt)
     })
   }
 }
@@ -106,7 +114,7 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
 })
 
 /**
- * @param {Pick<ReportDetailResponse, 'recyclingActivity' | 'exportActivity' | 'wasteSent'>} activity
+ * @param {{ recyclingActivity: object, exportActivity: object | undefined, wasteSent: object }} activity
  * @param {{ isExporter: boolean, isAccreditedExporter: boolean }} flags
  * @param {string} fallbackText
  * @returns {{ wasteReceived: object, wasteExported: object | null, wasteSentOn: object, recyclingActivity: { tonnageRecycled: string, tonnageNotRecycled: string } }}
@@ -132,12 +140,14 @@ function buildActivityViewData(
 
 /**
  * @typedef {{
- *   registration: Registration,
+ *   organisation: OrganisationView,
+ *   registration: RegistrationView,
  *   accreditation: Accreditation | undefined,
  *   reportDetail: ReportDetailResponse,
  *   reportsUrl: string,
+ *   deleteUrl: string,
  *   localise: Localise,
- *   year: number,
+ *   year: Year,
  *   cadence: CadenceValue,
  *   period: number,
  *   submissionNumber: number,
@@ -182,28 +192,24 @@ function buildSubmitStatus(submissionNumber, localise) {
 }
 
 /**
- * @param {Pick<BuildViewModelParams, 'registration' | 'reportDetail' | 'year' | 'cadence' | 'period' | 'localise'>} params
- * @returns {{ status: NonNullable<ReportDetailResponse['status']>, material: string, periodLabel: string }}
+ * @param {Pick<BuildViewModelParams, 'registration' | 'year' | 'cadence' | 'period' | 'localise'>} params
+ * @returns {{ material: string, periodLabel: string }}
  */
 function getReportSummaryFields({
   registration,
-  reportDetail,
   year,
   cadence,
   period,
   localise
 }) {
-  const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
-    reportDetail.status
-  )
-  const material = getDisplayMaterial(registration)
+  const material = getMaterialDisplayName(registration.material)
   const periodLabel = formatPeriodLabelWithComma(
     { year, period },
     cadence,
     localise
   )
 
-  return { status, material, periodLabel }
+  return { material, periodLabel }
 }
 
 /**
@@ -211,10 +217,12 @@ function getReportSummaryFields({
  * @returns {object}
  */
 function buildViewModel({
+  organisation,
   registration,
   accreditation,
   reportDetail,
   reportsUrl,
+  deleteUrl,
   localise,
   year,
   cadence,
@@ -224,9 +232,8 @@ function buildViewModel({
   errors,
   errorSummary
 }) {
-  const { status, material, periodLabel } = getReportSummaryFields({
+  const { material, periodLabel } = getReportSummaryFields({
     registration,
-    reportDetail,
     year,
     cadence,
     period,
@@ -238,7 +245,7 @@ function buildViewModel({
   const isRegisteredOnlyExporter = isExporter && !accreditation
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
-  const { createdBy, createdOn } = getCreationDetails(status.created, localise)
+  const { createdBy, createdOn } = getCreationDetails(reportDetail, localise)
   const submitStatus = buildSubmitStatus(submissionNumber, localise)
   const fallbackText = localise('reports:noneProvided')
   const activityViewData = buildActivityViewData(
@@ -271,16 +278,16 @@ function buildViewModel({
     createdOn,
     periodLabel,
     material,
-    site: reportDetail.details.site,
+    site: siteNameOf(registration),
     ...activityViewData,
     prn: buildPrnSummaryViewData(reportDetail.prn),
     supportingInformation: reportDetail.supportingInformation || fallbackText,
-    declarationItems: buildDeclarationItems(localise, registration.orgName),
+    declarationItems: buildDeclarationItems(localise, organisation.displayName),
     version: reportDetail.version,
     submissionDeclaredBy: submissionDeclaredBy ?? null,
     errors: errors ?? null,
     errorSummary: errorSummary ?? null,
-    deleteUrl: `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
+    deleteUrl
   }
 }
 
@@ -291,8 +298,8 @@ function buildViewModel({
  */
 async function buildViewData(request, options = {}) {
   const {
-    organisationId,
-    registrationId,
+    organisationNumber,
+    registrationNumber,
     year,
     cadence,
     period,
@@ -301,32 +308,23 @@ async function buildViewData(request, options = {}) {
   const session = request.auth.credentials
   const { t: localise } = request
 
-  const [{ registration, accreditation }, reportDetail] = await Promise.all([
-    fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    ),
-    fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      session.idToken
+  const { organisation, registration, accreditation } =
+    await fetchRegistrationWithAccreditation(
+      { organisationNumber, registrationNumber, year },
+      session.backendToken
     )
-  ])
-
-  const reportsUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/reports`
+  const reportDetail = await fetchReportDetail(
+    request.params,
+    session.backendToken
   )
 
   return buildViewModel({
+    organisation,
     registration,
     accreditation,
     reportDetail,
-    reportsUrl,
+    reportsUrl: request.localiseUrl(reportsListPath(request.params)),
+    deleteUrl: request.localiseUrl(`${reportPath(request.params)}/delete`),
     localise,
     year,
     cadence,
@@ -348,35 +346,16 @@ export const submitGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
     const session = request.auth.credentials
 
-    const reportDetail = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      session.idToken
+    const { status } = await fetchReportDetail(
+      request.params,
+      session.backendToken
     )
 
-    const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
-      reportDetail.status
-    )
-
-    if (status.currentStatus === SUBMISSION_STATUS.SUBMITTED) {
+    if (status === SUBMISSION_STATUS.SUBMITTED) {
       return h.redirect(
-        request.localiseUrl(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/submitted`
-        )
+        request.localiseUrl(`${reportPath(request.params)}/submitted`)
       )
     }
 
@@ -386,11 +365,17 @@ export const submitGetController = {
     // upholds the resubmission variant's precondition: a report reaching the
     // render below is ready to submit, so a submissionNumber above the first is
     // genuinely a resubmission awaiting submission.
-    if (status.currentStatus !== SUBMISSION_STATUS.READY_TO_SUBMIT) {
+    if (status !== SUBMISSION_STATUS.READY_TO_SUBMIT) {
       throw Boom.notFound()
     }
 
     const viewData = await buildViewData(request)
+
+    await metrics.journey.start(
+      request,
+      JOURNEY.submitReport,
+      reportAttempt(request.params)
+    )
 
     return h.view('reports/submit', viewData)
   }
@@ -431,14 +416,6 @@ export const submitPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
     const { version, submissionDeclaredBy } = request.payload
     const session = request.auth.credentials
 
@@ -448,23 +425,16 @@ export const submitPostController = {
       submissionDeclaredBy
     }
 
-    await updateReportStatus(
-      {
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber
-      },
-      transition,
-      session.idToken
+    await updateReportStatus(request.params, transition, session.backendToken)
+
+    await metrics.journey.end(
+      request,
+      JOURNEY.submitReport,
+      reportAttempt(request.params)
     )
 
     return h.redirect(
-      request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/submitted`
-      )
+      request.localiseUrl(`${reportPath(request.params)}/submitted`)
     )
   }
 }

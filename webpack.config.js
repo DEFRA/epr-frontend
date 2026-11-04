@@ -27,6 +27,9 @@ export default {
   entry: {
     application: {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
+    },
+    analytics: {
+      import: ['./javascripts/analytics.js']
     }
   },
   experiments: {
@@ -36,7 +39,8 @@ export default {
   devtool: NODE_ENV === 'production' ? 'source-map' : 'inline-source-map',
   watchOptions: {
     aggregateTimeout: 200,
-    poll: 1000
+    poll: 1000,
+    ignored: '**/node_modules/**'
   },
   output: {
     filename:

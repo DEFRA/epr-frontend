@@ -1,5 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import {
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
@@ -9,7 +13,7 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/update-report.js'))
@@ -17,38 +21,19 @@ vi.mock(import('./helpers/update-report.js'))
 const { updateReport } = await import('./helpers/update-report.js')
 
 /**
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
  * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
  */
 
 const mockAuth = buildMockAuth()
 
-const registeredOnlyExporter = /** @type {RegistrationWithAccreditation} */ (
-  /** @type {unknown} */ ({
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234'
-    },
-    accreditation: undefined
-  })
-)
+const registeredOnlyExporter = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
+})
 
-const accreditedExporter = /** @type {RegistrationWithAccreditation} */ (
-  /** @type {unknown} */ ({
-    ...registeredOnlyExporter,
-    accreditation: {
-      id: 'acc-001',
-      accreditationNumber: 'ER992415095748M'
-    }
-  })
-)
+const accreditedExporter = buildRegistrationWithAccreditation()
 
 const reportDetailWithoutSupportingInfo = /** @type {ReportDetailResponse} */ (
   /** @type {unknown} */ ({
-    operatorCategory: 'EXPORTER_REGISTERED_ONLY',
     cadence: 'quarterly',
     year: 2026,
     period: 1,
@@ -58,8 +43,6 @@ const reportDetailWithoutSupportingInfo = /** @type {ReportDetailResponse} */ (
       summaryLogId: 'sl-1',
       lastUploadedAt: '2026-02-15T15:09:00.000Z'
     },
-    details: { material: 'plastic' },
-    id: 'report-001',
     version: 1,
     status: 'in_progress',
     supportingInformation: null,
@@ -93,9 +76,9 @@ const reportDetailWithSupportingInfo = /** @type {ReportDetailResponse} */ (
   })
 )
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/supporting-information`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/supporting-information`
 
 describe('#supportingInformationController', () => {
   beforeEach(() => {
@@ -104,7 +87,7 @@ describe('#supportingInformationController', () => {
 
   describe('GET', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
     })
@@ -279,7 +262,7 @@ describe('#supportingInformationController', () => {
         expect(deleteLink).not.toBeNull()
         expect(deleteLink?.textContent).toContain('Delete report')
         expect(deleteLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/delete`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/delete`
         )
       })
 
@@ -299,22 +282,22 @@ describe('#supportingInformationController', () => {
 
         expect(backLink).not.toBeNull()
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/tonnes-not-exported`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/tonnes-not-exported`
         )
       })
 
       it('should display back link to free-prns for accredited reprocessor', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          ...accreditedExporter,
-          registration: {
-            ...accreditedExporter.registration,
-            wasteProcessingType: 'reprocessor'
-          }
-        })
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+          buildRegistrationWithAccreditation({
+            registration: buildRegistrationView({
+              wasteProcessingType: 'reprocessor'
+            })
+          })
+        )
 
-        const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/supporting-information`
+        const monthlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/supporting-information`
 
         const { result } = await server.inject({
           method: 'GET',
@@ -328,22 +311,23 @@ describe('#supportingInformationController', () => {
         const backLink = body.querySelector('.govuk-back-link')
 
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/free-prns`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/free-prns`
         )
       })
 
       it('should display back link to tonnes-not-recycled for registered-only reprocessor', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          ...registeredOnlyExporter,
-          registration: {
-            ...registeredOnlyExporter.registration,
-            wasteProcessingType: 'reprocessor'
-          }
-        })
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
+          buildRegistrationWithAccreditation({
+            registration: buildRegistrationView({
+              wasteProcessingType: 'reprocessor',
+              accreditations: {}
+            })
+          })
+        )
 
-        const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/supporting-information`
+        const quarterlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/supporting-information`
 
         const { result } = await server.inject({
           method: 'GET',
@@ -357,18 +341,18 @@ describe('#supportingInformationController', () => {
         const backLink = body.querySelector('.govuk-back-link')
 
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/tonnes-not-recycled`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/tonnes-not-recycled`
         )
       })
 
       it('should display back link to free-perns for accredited exporter', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           accreditedExporter
         )
 
-        const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/supporting-information`
+        const monthlyUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/supporting-information`
 
         const { result } = await server.inject({
           method: 'GET',
@@ -383,7 +367,7 @@ describe('#supportingInformationController', () => {
 
         expect(backLink).not.toBeNull()
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/free-perns`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/2026/reports/monthly/1/submissions/1/free-perns`
         )
       })
     })
@@ -418,7 +402,7 @@ describe('#supportingInformationController', () => {
 
   describe('POST', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -465,7 +449,7 @@ describe('#supportingInformationController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/check-your-answers`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/check-your-answers`
         )
       })
 
@@ -490,15 +474,15 @@ describe('#supportingInformationController', () => {
 
         expect(updateReport).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'quarterly',
             period: 1,
             submissionNumber: 1
           },
           { supportingInformation: 'Notes for regulator' },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
 
@@ -523,15 +507,15 @@ describe('#supportingInformationController', () => {
 
         expect(updateReport).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'quarterly',
             period: 1,
             submissionNumber: 1
           },
           { supportingInformation: '' },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })
@@ -558,7 +542,7 @@ describe('#supportingInformationController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
         )
       })
 
@@ -583,15 +567,15 @@ describe('#supportingInformationController', () => {
 
         expect(updateReport).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'quarterly',
             period: 1,
             submissionNumber: 1
           },
           { supportingInformation: 'Partial notes' },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })
@@ -726,10 +710,10 @@ describe('#supportingInformationController', () => {
   })
 
   describe('resubmission variant (submissionNumber > 1)', () => {
-    const resubmissionUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/2/submissions/2/supporting-information`
+    const resubmissionUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/2/submissions/2/supporting-information`
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(
@@ -816,7 +800,7 @@ describe('#supportingInformationController', () => {
       it('should include the note-type bullet for an accredited operator', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
           accreditedExporter
         )
 
@@ -884,7 +868,7 @@ describe('#supportingInformationController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/supporting-information`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/invalid/1/submissions/1/supporting-information`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -896,7 +880,7 @@ describe('#supportingInformationController', () => {
     })
 
     it('should return 400 for invalid year', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submissions/1/supporting-information`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2023/quarterly/1/submissions/1/supporting-information`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -908,7 +892,7 @@ describe('#supportingInformationController', () => {
     })
 
     it('should return 400 for invalid period', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submissions/1/supporting-information`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/13/submissions/1/supporting-information`
 
       const { statusCode } = await server.inject({
         method: 'GET',

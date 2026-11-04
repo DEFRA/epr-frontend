@@ -1,4 +1,6 @@
 /**
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { BellCredentials } from '../types/auth.js'
  */
 
@@ -10,6 +12,8 @@
  *
  * `email` is optional because the Defra ID id_token doesn't guarantee its
  * presence (the `email` scope isn't requested — see DefraIdJwtPayload).
+ *
+ * access to regulator-only areas — see entra-id.js).
  * @typedef {{
  *   id: string
  *   email?: string
@@ -18,14 +22,32 @@
 
 /**
  * Complete user session stored in cache
+ *
+ * `idToken` is the OIDC id token, and the only consumer is the `id_token_hint`
+ * on the provider logout URL. `backendToken` is what every backend call
+ * presents: the id token for a Defra ID session, and the access token for an
+ * Entra ID session, because the `roles` claim the backend resolves a regulator
+ * from arrives on the access token.
+ *
+ * `role` and `scope` are the backend's answer to who this identity is, fetched
+ * at sign-in and again on every token refresh. `role` says who the user is and
+ * decides where they land; `scope` says what they may do and every guard reads
+ * it. `role` is `null` for an identity the backend does not recognise.
+ *
+ * `linkedOrganisationId` is only for the accreditation renewal link, until the
+ * registration service accepts organisation and registration numbers.
  * @typedef {Omit<BellCredentials, 'expiresIn' | 'token'> & {
  *   profile: UserProfile
  *   linkedOrganisationId?: string
+ *   linkedOrganisationNumber?: OrganisationNumber
  *   expiresAt: string
  *   idToken: string
+ *   backendToken: BackendToken
  *   refreshToken: string
  *   urls: { token: string, logout: string }
  *   idTokenRefreshInProgress?: boolean
+ *   role: string | null
+ *   scope: string[]
  * }} UserSession
  */
 

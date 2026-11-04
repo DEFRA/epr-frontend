@@ -5,7 +5,10 @@
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
+{# `super()` keeps the layout's breadcrumbs. A regulator walks
+   the trail back, so only an operator is offered the back link. #}
 {% block beforeContent %}
+  {{ super() }}
   {% if backUrl %}
     {{ govukBackLink({
       text: localise("common:back"),
@@ -50,8 +53,11 @@
 
     <h2 class="govuk-heading-m">{{ prnDetailsHeading }}</h2>
 
-    {% if complianceYearText %}
-      <p class="govuk-body">{{ complianceYearText | safe }}</p>
+    {% if complianceYear %}
+      <p class="govuk-body">{{ localise(complianceYear.textKey, {
+        accreditationYear: "<strong>" ~ complianceYear.accreditationYear ~ "</strong>",
+        obligationYear: "<strong>" ~ complianceYear.obligationYear ~ "</strong>"
+      }) | safe }}</p>
     {% endif %}
 
     {{ govukSummaryList({
@@ -64,7 +70,7 @@
       rows: accreditationRows
     }) }}
 
-    {% if createButton %}
+    {% if createButton and hasWriteScope %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
@@ -73,12 +79,12 @@
           preventDoubleClick: true
         }) }}
       </form>
+    {% endif %}
 
-      {% if discardLink %}
-        <p class="govuk-body">
-          <a href="{{ discardLink.href }}" class="govuk-link">{{ discardLink.text }}</a>
-        </p>
-      {% endif %}
+    {% if discardLink and hasWriteScope %}
+      <p class="govuk-body">
+        <a href="{{ discardLink.href }}" class="govuk-link">{{ discardLink.text }}</a>
+      </p>
     {% endif %}
 
     {% if returnLink %}

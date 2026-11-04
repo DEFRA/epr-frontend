@@ -1,6 +1,15 @@
+import { toYear } from '#server/common/helpers/year.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -10,83 +19,69 @@ import { describe, expect, vi } from 'vitest'
 
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
- * @import { CreatePrnResponse } from './helpers/create-prn.js'
+ * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  */
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
-vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
+vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
-
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const { fetchPrnWasteBalance } =
+  await import('./helpers/fetch-prn-waste-balance.js')
+const { fetchDecemberPrnEligibility } =
+  await import('./helpers/fetch-december-prn-eligibility.js')
 
 const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
-  /** @type {unknown} */ ({
-    strategy: 'session',
-    credentials: mockCredentials
-  })
+  /** @type {unknown} */ (buildMockAuth())
 )
 
-const fixtureReprocessor =
-  /** @type {Required<RegistrationWithAccreditation>} */ (
-    /** @type {unknown} */ ({
-      organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
-      registration: {
-        id: 'reg-456',
-        wasteProcessingType: 'reprocessor-input',
-        material: 'plastic',
-        nation: 'england',
-        site: { address: { line1: 'Reprocessing Site' } },
-        accreditationId: 'acc-001'
-      },
-      accreditation: { id: 'acc-001', status: 'approved' }
-    })
-  )
-
-const fixtureExporter = /** @type {Required<RegistrationWithAccreditation>} */ (
-  /** @type {unknown} */ ({
-    organisationData: { id: 'org-123', name: 'Exporter Organisation' },
-    registration: {
-      id: 'reg-456',
-      wasteProcessingType: 'exporter',
-      material: 'plastic',
-      nation: 'england',
-      site: { address: { line1: 'Export Site' } },
-      accreditationId: 'acc-001'
-    },
-    accreditation: { id: 'acc-001', status: 'approved' }
+const fixtureReprocessor = buildRegistrationWithAccreditation({
+  organisation: { name: 'Reprocessor Organisation' },
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: { address: { fullAddress: 'Reprocessing Site' } }
+  }),
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
   })
-)
+})
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
-const url = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+const fixtureExporter = buildRegistrationWithAccreditation({
+  organisation: { name: 'Exporter Organisation' },
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
+})
+
+const keys = {
+  organisationNumber: toOrganisationNumber('500123'),
+  registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
+  year: toYear(2026)
+}
+const prnsBase =
+  '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'
+const url = `${prnsBase}/create`
 
 const validPayload = {
   tonnage: '100',
   recipient: 'dd793573-b218-47a7-be85-1c777ca0d0d8',
   notes: 'Test notes',
-  nation: 'england',
   wasteProcessingType: 'reprocessor-input'
 }
 
 describe('#postCreatePrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
-    )
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureReprocessor)
+    vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+      mode: 'none',
+      windowOpen: false
+    })
   })
 
   describe('request handling', () => {
@@ -110,7 +105,7 @@ describe('#postCreatePrnController', () => {
         server
       }) => {
         vi.mocked(createPrn).mockResolvedValue(
-          /** @type {CreatePrnResponse} */ (
+          /** @type {PackagingRecyclingNote} */ (
             /** @type {unknown} */ ({
               id: 'prn-789',
               tonnage: 100,
@@ -136,14 +131,12 @@ describe('#postCreatePrnController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-789/view`
-        )
+        expect(headers.location).toBe(`${prnsBase}/prn-789/view`)
       })
 
       it('calls createPrn with correct parameters', async ({ server }) => {
         vi.mocked(createPrn).mockResolvedValue(
-          /** @type {CreatePrnResponse} */ (
+          /** @type {PackagingRecyclingNote} */ (
             /** @type {unknown} */ ({
               id: 'prn-789',
               tonnage: 100,
@@ -169,9 +162,7 @@ describe('#postCreatePrnController', () => {
         })
 
         expect(createPrn).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           {
             issuedToOrganisation: {
               id: validPayload.recipient,
@@ -180,15 +171,16 @@ describe('#postCreatePrnController', () => {
               registrationType: 'LARGE_PRODUCER'
             },
             tonnage: 100,
-            notes: 'Test notes'
+            notes: 'Test notes',
+            isDecemberWaste: false
           },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
 
       it('omits notes when notes is empty', async ({ server }) => {
         vi.mocked(createPrn).mockResolvedValue(
-          /** @type {CreatePrnResponse} */ (
+          /** @type {PackagingRecyclingNote} */ (
             /** @type {unknown} */ ({
               id: 'prn-789',
               tonnage: 100,
@@ -214,13 +206,11 @@ describe('#postCreatePrnController', () => {
         })
 
         expect(createPrn).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           expect.objectContaining({
             notes: undefined
           }),
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
 
@@ -263,6 +253,25 @@ describe('#postCreatePrnController', () => {
           'Select a valid packaging producer or compliance scheme'
         )
       })
+    })
+
+    it('is not found for a year the service does not answer for, even with a payload it would reject', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, url, {
+        auth: mockAuth
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: url.replace('/accreditations/2026/', '/accreditations/2023/'),
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { ...validPayload, tonnage: '', crumb }
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(createPrn).not.toHaveBeenCalled()
     })
 
     describe('with invalid payload', () => {
@@ -431,9 +440,7 @@ describe('#postCreatePrnController', () => {
       it('shows PERN-specific tonnage error for exporter registrations', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
 
         const { cookie, crumb } = await getCsrfToken(server, url, {
           auth: mockAuth
@@ -532,10 +539,10 @@ describe('#postCreatePrnController', () => {
 
     describe('waste balance on error', () => {
       beforeEach(() => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
-        vi.mocked(getWasteBalance).mockResolvedValue({
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
           amount: 1000,
           availableAmount: 500
         })
@@ -575,7 +582,7 @@ describe('#postCreatePrnController', () => {
         // Back link should have correct URL
         const backLink = body.querySelector('.govuk-back-link')
         expect(backLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}`
+          '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026'
         )
       })
 
@@ -616,7 +623,272 @@ describe('#postCreatePrnController', () => {
         // Back link should have correct URL
         const backLink = body.querySelector('.govuk-back-link')
         expect(backLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}`
+          '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026'
+        )
+      })
+    })
+
+    it('should send the session back to the list when the backend says the year has closed', async ({
+      server
+    }) => {
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+      const boom = Boom.conflict(
+        'The deadline for a 2026 relevant year was 31 January 2027.'
+      )
+      boom.output.payload.code = 'RELEVANT_YEAR_CLOSED'
+      vi.mocked(createPrn).mockRejectedValue(boom)
+
+      const { cookie, crumb } = await getCsrfToken(server, url, {
+        auth: mockAuth
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { ...validPayload, crumb }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(prnsBase)
+    })
+
+    describe('consume backend insufficient-balance verdict', () => {
+      const insufficientBalanceMessage =
+        'The tonnage you entered exceeds your available waste balance'
+
+      beforeEach(() => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+      })
+
+      it('re-renders the create form when the backend rejects with INSUFFICIENT_AVAILABLE_BALANCE', async ({
+        server
+      }) => {
+        const boom = Boom.conflict('Insufficient available waste balance')
+        boom.output.payload.code = 'INSUFFICIENT_AVAILABLE_BALANCE'
+        vi.mocked(createPrn).mockRejectedValue(boom)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '600', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(createPrn).toHaveBeenCalledWith(
+          keys,
+          expect.objectContaining({ tonnage: 600 }),
+          'mock-backend-token'
+        )
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(
+          getByText(errorSummary, insufficientBalanceMessage)
+        ).toBeDefined()
+
+        const inlineError = body.querySelector('#tonnage-error')
+        expect(inlineError.textContent).toContain(insufficientBalanceMessage)
+      })
+
+      it('preserves entered values and shows the balance hint when the backend rejects', async ({
+        server
+      }) => {
+        const boom = Boom.conflict('Insufficient available waste balance')
+        boom.output.payload.code = 'INSUFFICIENT_AVAILABLE_BALANCE'
+        vi.mocked(createPrn).mockRejectedValue(boom)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '600', crumb }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(body.querySelector('#tonnage').value).toBe('600')
+        const notesField = getByRole(main, 'textbox', { name: /notes/i })
+        expect(notesField.value).toBe('Test notes')
+        const selectedOption = body.querySelector('#recipient option[selected]')
+        expect(selectedOption.value).toBe(validPayload.recipient)
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText.textContent).toContain('500.00')
+      })
+
+      it('re-throws a conflict without the balance code, degrading to the confirm-time check', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockRejectedValue(
+          Boom.conflict('Some other conflict')
+        )
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '600', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.conflict)
+      })
+
+      it('keeps the December waste answer selected on re-render, despite Joi having coerced it to a boolean', async ({
+        server
+      }) => {
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'manual',
+          windowOpen: true
+        })
+        const boom = Boom.conflict('Insufficient available waste balance')
+        boom.output.payload.code = 'INSUFFICIENT_AVAILABLE_BALANCE'
+        vi.mocked(createPrn).mockRejectedValue(boom)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: {
+            ...validPayload,
+            tonnage: '600',
+            isDecemberWaste: 'true',
+            crumb
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.querySelector('#is-december-waste-2').checked).toBe(true)
+        expect(body.querySelector('#is-december-waste').checked).toBe(false)
+      })
+
+      it('shows the December-specific message when the December pool is rejected', async ({
+        server
+      }) => {
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
+          amount: 60,
+          availableAmount: 60,
+          decemberAmount: 20,
+          decemberAvailableAmount: 20,
+          nonDecemberAvailableAmount: 40
+        })
+        const boom = Boom.conflict('Insufficient available waste balance')
+        boom.output.payload.code = 'INSUFFICIENT_AVAILABLE_BALANCE'
+        vi.mocked(createPrn).mockRejectedValue(boom)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: {
+            ...validPayload,
+            tonnage: '30',
+            isDecemberWaste: 'true',
+            crumb
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const inlineError = body.querySelector('#tonnage-error')
+
+        expect(inlineError.textContent).toContain(
+          'exceeds your available December waste balance'
+        )
+      })
+
+      it('shows the non-December-specific message when the general pool is rejected', async ({
+        server
+      }) => {
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'pool',
+          windowOpen: true
+        })
+        vi.mocked(fetchPrnWasteBalance).mockResolvedValue({
+          amount: 60,
+          availableAmount: 60,
+          decemberAmount: 50,
+          decemberAvailableAmount: 50,
+          nonDecemberAvailableAmount: 10
+        })
+        const boom = Boom.conflict('Insufficient available waste balance')
+        boom.output.payload.code = 'INSUFFICIENT_AVAILABLE_BALANCE'
+        vi.mocked(createPrn).mockRejectedValue(boom)
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: {
+            ...validPayload,
+            tonnage: '40',
+            isDecemberWaste: 'false',
+            crumb
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const inlineError = body.querySelector('#tonnage-error')
+
+        expect(inlineError.textContent).toContain(
+          'exceeds your available non-December waste balance'
         )
       })
     })

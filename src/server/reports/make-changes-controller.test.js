@@ -1,16 +1,21 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/request-resubmission.js'))
@@ -21,22 +26,22 @@ const { requestResubmission } =
 const mockCredentials = buildMockAuth().credentials
 const mockAuth = { strategy: 'session', credentials: mockCredentials }
 
-const registrationWith = (wasteProcessingType, accreditation) =>
-  asRegistrationWithAccreditation({
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
+/**
+ * @param {'exporter' | 'reprocessor'} wasteProcessingType
+ * @param {boolean} accredited
+ */
+const registrationWith = (wasteProcessingType, accredited) =>
+  buildRegistrationWithAccreditation({
+    registration: buildRegistrationView({
       wasteProcessingType,
-      registrationNumber: 'REG001234'
-    },
-    accreditation
+      accreditations: accredited ? { 2026: buildAccreditationView() } : {}
+    })
   })
 
-const registeredOnlyExporter = registrationWith('exporter', undefined)
-const registeredOnlyReprocessor = registrationWith('reprocessor', undefined)
-const accreditedExporter = registrationWith('exporter', { id: 'acc-001' })
-const accreditedReprocessor = registrationWith('reprocessor', { id: 'acc-001' })
+const registeredOnlyExporter = registrationWith('exporter', false)
+const registeredOnlyReprocessor = registrationWith('reprocessor', false)
+const accreditedExporter = registrationWith('exporter', true)
+const accreditedReprocessor = registrationWith('reprocessor', true)
 
 const accreditedScenarios = [
   {
@@ -85,14 +90,14 @@ const noteTypeSectionScenarios = [
   ...registeredOnlyScenarios
 ]
 
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/make-changes`
-const viewPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/view`
-const nextSubmissionPeriodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2`
+const organisationNumber = '500001'
+const registrationNumber = 'R25SR500030912PA'
+const baseUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/make-changes`
+const viewPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1/view`
+const nextSubmissionPeriodPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/2`
 
 /**
- * @param {Partial<ReportDetailResponse['status']>} status
+ * @param {ReportDetailResponse['status']} status
  * @param {boolean} canRequestResubmission
  * @returns {ReportDetailResponse}
  */
@@ -103,15 +108,12 @@ function buildReportDetail(status, canRequestResubmission) {
   })
 }
 
-const submittedEligibleReportDetail = buildReportDetail(
-  { currentStatus: 'submitted' },
-  true
-)
+const submittedEligibleReportDetail = buildReportDetail('submitted', true)
 
 describe('#makeChangesController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       registeredOnlyExporter
     )
   })
@@ -168,25 +170,6 @@ describe('#makeChangesController', () => {
       expect(getByRole(body, 'link', { name: 'Cancel' })).toBeDefined()
     })
 
-    it('should link the upload button to the summary log upload page', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: baseUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const uploadLink = getByRole(dom.window.document.body, 'button', {
-        name: 'Upload new summary log'
-      })
-
-      expect(uploadLink.getAttribute('href')).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-      )
-    })
-
     describe('note-type section', () => {
       it.for(noteTypeSectionScenarios)(
         'should show the $scenario copy',
@@ -194,7 +177,7 @@ describe('#makeChangesController', () => {
           { registration, heading, bodyText, summaryLogText },
           { server }
         ) => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
             registration
           )
 
@@ -218,7 +201,7 @@ describe('#makeChangesController', () => {
       server
     }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
-        buildReportDetail({ currentStatus: 'in_progress' }, true)
+        buildReportDetail('in_progress', true)
       )
 
       const { statusCode } = await server.inject({
@@ -234,7 +217,7 @@ describe('#makeChangesController', () => {
       server
     }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
-        buildReportDetail({ currentStatus: 'submitted' }, false)
+        buildReportDetail('submitted', false)
       )
 
       const { statusCode } = await server.inject({
@@ -309,14 +292,14 @@ describe('#makeChangesController', () => {
 
         expect(requestResubmission).toHaveBeenCalledWith(
           {
-            organisationId,
-            registrationId,
+            organisationNumber,
+            registrationNumber,
             year: 2026,
             cadence: 'quarterly',
             period: 1,
             submissionNumber: 1
           },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })
@@ -355,10 +338,7 @@ describe('#makeChangesController', () => {
     describe('when requestResubmission fails for another reason', () => {
       it('should propagate the error', async ({ server }) => {
         vi.mocked(requestResubmission).mockRejectedValue(
-          Object.assign(new Error('Backend error'), {
-            isBoom: true,
-            output: { statusCode: 500 }
-          })
+          Boom.internal('Backend error')
         )
 
         const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
@@ -380,7 +360,7 @@ describe('#makeChangesController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/make-changes`
+      const invalidUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/invalid/1/submissions/1/make-changes`
 
       const { statusCode } = await server.inject({
         method: 'GET',

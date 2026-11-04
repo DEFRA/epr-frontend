@@ -1,5 +1,14 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
+import { toYear } from '#server/common/helpers/year.js'
+import { config } from '#config/config.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import {
   asCreatePrnResponse,
   asUpdatePrnStatusResponse
@@ -14,17 +23,20 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
+import { http, HttpResponse } from 'msw'
+import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
-vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 
-const { getWasteBalance } =
-  await import('#server/common/helpers/waste-balance/get-waste-balance.js')
+const { fetchPrnWasteBalance } =
+  await import('./helpers/fetch-prn-waste-balance.js')
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 
@@ -35,47 +47,43 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asGetRequiredRegistrationResult({
-  organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'reprocessor-input',
-    material: 'plastic',
-    nation: 'england',
-    site: { address: { line1: 'Reprocessing Site' } },
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
+const fixtureReprocessor = buildRegistrationWithAccreditation({
+  organisation: { name: 'Reprocessor Organisation' },
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: { address: { fullAddress: 'Reprocessing Site' } }
+  }),
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
-const fixtureExporter = asGetRequiredRegistrationResult({
-  organisationData: { id: 'org-123', name: 'Exporter Organisation' },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'exporter',
-    material: 'plastic',
-    nation: 'england',
-    site: null,
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
+const fixtureExporter = buildRegistrationWithAccreditation({
+  organisation: { name: 'Exporter Organisation' },
+  accreditation: buildAccreditationView({
+    accreditationNumber: toAccreditationNumber('ACC-001')
+  })
 })
 
-const organisationId = 'org-123'
-const registrationId = 'reg-456'
-const accreditationId = 'acc-001'
+const keys = {
+  organisationNumber: toOrganisationNumber('500123'),
+  registrationNumber: toRegistrationNumber('R26EN0000000001PL'),
+  year: toYear(2026)
+}
+const prnsBase =
+  '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes'
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-const discardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/discard`
-const pernDiscardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/discard`
+const createUrl = `${prnsBase}/create`
+const viewUrl = `${prnsBase}/${prnId}/view`
+const discardUrl = `${prnsBase}/${prnId}/discard`
+const pernDiscardUrl = `${prnsBase}/${pernId}/discard`
 
 const validPayload = {
   tonnage: '100',
   recipient: 'producer-1',
   notes: 'Test notes',
-  nation: 'england',
   wasteProcessingType: 'reprocessor-input'
 }
 
@@ -95,13 +103,20 @@ const mockPernCreated = asCreatePrnResponse({
   wasteProcessingType: 'exporter'
 })
 
+vi.spyOn(metrics.journey, 'start').mockResolvedValue()
+vi.spyOn(metrics.journey, 'end').mockResolvedValue()
+
 describe('#discardController', () => {
-  beforeEach(() => {
+  beforeEach(({ msw }) => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
+    msw.use(
+      http.get(
+        `${config.get('eprBackendUrl')}/organisations/:organisationNumber/registrations/:registrationNumber/accreditations/:year/packaging-recycling-notes/december-prn-eligibility`,
+        () => HttpResponse.json({ mode: 'pool', windowOpen: false })
+      )
     )
-    vi.mocked(getWasteBalance).mockResolvedValue(null)
+    vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureReprocessor)
+    vi.mocked(fetchPrnWasteBalance).mockResolvedValue(null)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(
       asUpdatePrnStatusResponse({
@@ -264,9 +279,7 @@ describe('#discardController', () => {
       it('displays PERN wording for exporter registration', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
         vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
 
         const exporterPayload = {
@@ -345,7 +358,7 @@ describe('#discardController', () => {
         const cookies = mergeCookies(csrfCookie, ...postCookieValues)
 
         // Visit discard URL with a different PRN ID
-        const wrongPrnDiscardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/wrong-prn-id/discard`
+        const wrongPrnDiscardUrl = `${prnsBase}/wrong-prn-id/discard`
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',
@@ -393,12 +406,10 @@ describe('#discardController', () => {
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createUrl)
         expect(updatePrnStatus).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
+          keys,
           prnId,
           { status: 'discarded' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 
@@ -560,6 +571,70 @@ describe('#discardController', () => {
 
         expect(statusCode).toBe(statusCodes.forbidden)
       })
+    })
+  })
+
+  describe('journey events', () => {
+    const startDraft = async (server) => {
+      const { cookie: csrfCookie, crumb } = await getCsrfToken(
+        server,
+        createUrl,
+        { auth: mockAuth }
+      )
+
+      const postResponse = await server.inject({
+        method: 'POST',
+        url: createUrl,
+        auth: mockAuth,
+        headers: { cookie: csrfCookie },
+        payload: { ...validPayload, crumb }
+      })
+
+      const cookies = mergeCookies(
+        csrfCookie,
+        ...extractCookieValues(postResponse.headers['set-cookie'])
+      )
+
+      return { cookies, crumb }
+    }
+
+    it('should record the journey start when the confirmation page renders', async ({
+      server
+    }) => {
+      const { cookies } = await startDraft(server)
+
+      await server.inject({
+        method: 'GET',
+        url: discardUrl,
+        auth: mockAuth,
+        headers: { cookie: cookies }
+      })
+
+      expect(metrics.journey.start).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.discardPrn,
+        prnId
+      )
+    })
+
+    it('should record the journey end once the action succeeds', async ({
+      server
+    }) => {
+      const { cookies, crumb } = await startDraft(server)
+
+      await server.inject({
+        method: 'POST',
+        url: discardUrl,
+        auth: mockAuth,
+        headers: { cookie: cookies },
+        payload: { crumb }
+      })
+
+      expect(metrics.journey.end).toHaveBeenCalledWith(
+        expect.anything(),
+        JOURNEY.discardPrn,
+        prnId
+      )
     })
   })
 })

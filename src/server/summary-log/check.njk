@@ -157,7 +157,7 @@
   <div class="govuk-grid-column-full">
     <h1 class="govuk-heading-xl">
       <span class="govuk-caption-xl">{{ localise('summary-log:check.pageCaption') }}</span>
-      {{ localise('summary-log:check.pageHeading') }}
+      {{ heading }}
     </h1>
 
     <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
@@ -167,9 +167,9 @@
       <p class="govuk-body">
         <strong>{{ localise('summary-log:check.insetWrongLead') }}</strong>
         {{ localise('summary-log:check.insetEditAnd') }}
-        <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:check.insetChooseFileLink') }}</a>
+        <a href="{{ uploadPath }}" class="govuk-link">{{ localise('summary-log:check.insetChooseFileLink') }}</a>
         {{ localise('summary-log:check.insetBeforeHome') }}
-        <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:check.insetHomeLink') }}</a>).
+        <a href="{{ organisationPath }}" class="govuk-link">{{ localise('summary-log:check.insetHomeLink') }}</a>).
       </p>
     </div>
 
@@ -228,7 +228,8 @@
       }) }}
     {% endif %}
 
-    <form class="govuk-!-margin-top-6" method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
+    {% if hasWriteScope %}
+    <form class="govuk-!-margin-top-6" method="POST" action="{{ registrationPath }}/summary-logs/{{ summaryLogId }}/submit">
       <input type="hidden" name="crumb" value="{{ crumb }}" />
       <div class="govuk-button-group">
         {{ govukButton({
@@ -237,11 +238,12 @@
         }) }}
         {{ govukButton({
           text: localise('summary-log:check.goBackButton'),
-          href: '/organisations/' + organisationId + '/registrations/' + registrationId + '/summary-logs/upload',
+          href: uploadPath,
           classes: 'govuk-button--secondary'
         }) }}
       </div>
     </form>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

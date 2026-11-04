@@ -1,15 +1,17 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { backend, path } from '#server/common/helpers/backend-client.js'
 
 /**
- * @param {string} idToken
- * @param {string} organisationId
+ * @import { BackendToken } from '#server/common/helpers/backend-token.js'
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
+ */
+
+/**
+ * @param {BackendToken} backendToken
+ * @param {OrganisationNumber} organisationNumber
  * @returns {Promise<void>}
  */
-export async function linkOrganisation(idToken, organisationId) {
-  await fetchJsonFromBackend(`/v1/organisations/${organisationId}/link`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${idToken}`
-    }
-  })
+export const linkOrganisation = async (backendToken, organisationNumber) => {
+  await backend(backendToken).post(
+    path`/organisations/${organisationNumber}/link`
+  )
 }

@@ -1,5 +1,13 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { fetchRegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+import {
+  buildAccreditationView,
+  buildRegistrationView,
+  buildRegistrationWithAccreditation
+} from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
@@ -8,51 +16,37 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 /**
- * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
  * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
  */
 
 const mockAuth = buildMockAuth()
 
-const mockRegistration = /** @type {RegistrationWithAccreditation} */ (
-  /** @type {unknown} */ ({
-    organisationData: { id: 'org-123' },
-    registration: {
-      id: 'reg-001',
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234'
-    },
-    accreditation: undefined
-  })
-)
+const mockRegistration = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({ accreditations: {} })
+})
 
-const accreditedReprocessorWithSite =
-  /** @type {RegistrationWithAccreditation} */ (
-    /** @type {unknown} */ ({
-      organisationData: { id: 'org-123' },
-      registration: {
-        id: 'reg-001',
-        material: 'plastic',
-        wasteProcessingType: 'reprocessor',
-        registrationNumber: 'REG001234',
-        site: { address: { line1: 'North Road' } }
-      },
-      accreditation: {
-        id: 'acc-001',
-        accreditationNumber: 'ER992415095748M'
-      }
-    })
-  )
+const accreditedReprocessorWithSite = buildRegistrationWithAccreditation({
+  registration: buildRegistrationView({
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: {
+      address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
+    },
+    accreditations: {
+      2026: buildAccreditationView({
+        accreditationNumber: toAccreditationNumber('ER992415095748M')
+      })
+    }
+  })
+})
 
 const mockReportDetail = /** @type {ReportDetailResponse} */ (
   /** @type {unknown} */ ({
-    operatorCategory: 'EXPORTER_REGISTERED_ONLY',
     cadence: 'quarterly',
     year: 2026,
     period: 1,
@@ -63,10 +57,8 @@ const mockReportDetail = /** @type {ReportDetailResponse} */ (
       summaryLogId: 'sl-1',
       lastUploadedAt: '2026-02-15T15:09:00.000Z'
     },
-    details: { material: 'plastic' },
-    id: 'report-001',
     version: 1,
-    status: { currentStatus: 'ready_to_submit' },
+    status: 'ready_to_submit',
     supportingInformation: null,
     recyclingActivity: {
       totalTonnageReceived: 80.25,
@@ -84,31 +76,16 @@ const mockReportDetail = /** @type {ReportDetailResponse} */ (
   })
 )
 
-/**
- * Builds a full report status with the given currentStatus. The created-page
- * guard only reads currentStatus; the sibling fields satisfy the type.
- * @param {string} currentStatus
- * @returns {ReportDetailResponse['status']}
- */
-const buildStatus = (currentStatus) => ({
-  currentStatus,
-  currentStatusAt: '2026-04-01T09:00:00.000Z',
-  created: {
-    at: '2026-04-01T09:00:00.000Z',
-    by: { id: 'user-123', name: 'Test User', position: 'Director' }
-  }
-})
-
-const organisationId = 'org-123'
-const registrationId = 'reg-001'
-const basePeriodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
+const organisationNumber = toOrganisationNumber('500001')
+const registrationNumber = toRegistrationNumber('R25SR500030912PA')
+const basePeriodPath = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/1`
 const createdUrl = `${basePeriodPath}/created`
-const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+const listUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026`
 
 describe('#createdController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
       mockRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(mockReportDetail)
@@ -186,7 +163,7 @@ describe('#createdController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain('Registration:')
-      expect(body.textContent).toContain('REG001234')
+      expect(body.textContent).toContain(registrationNumber)
     })
 
     it('should display material', async ({ server }) => {
@@ -306,7 +283,9 @@ describe('#createdController', () => {
       expect(link.closest('a').getAttribute('rel')).toBe('noopener noreferrer')
     })
 
-    it('should display Return to home link', async ({ server }) => {
+    it("should link Return to home to the exporter's home page for the report's year", async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: createdUrl,
@@ -318,9 +297,8 @@ describe('#createdController', () => {
       const main = getByRole(body, 'main')
       const returnLink = getByText(main, /Return to home/)
 
-      expect(returnLink).toBeDefined()
       expect(returnLink.getAttribute('href')).toBe(
-        `/organisations/${organisationId}`
+        `/organisations/${organisationNumber}/2026/exporting`
       )
     })
 
@@ -356,8 +334,27 @@ describe('#createdController', () => {
 
   describe('accredited reprocessor with a site', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationWithAccreditation).mockResolvedValue(
         accreditedReprocessorWithSite
+      )
+    })
+
+    it("should link Return to home to the reprocessor's home page for the report's year", async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: createdUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+      const returnLink = getByText(main, /Return to home/)
+
+      expect(returnLink.getAttribute('href')).toBe(
+        `/organisations/${organisationNumber}/2026`
       )
     })
 
@@ -394,7 +391,7 @@ describe('#createdController', () => {
   })
 
   describe('resubmission variant (submissionNumber > 1)', () => {
-    const resubmissionCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/created`
+    const resubmissionCreatedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/1/submissions/2/created`
 
     it('should show Requires resubmission status in the confirmation panel', async ({
       server
@@ -418,7 +415,7 @@ describe('#createdController', () => {
     it('should return 404 when status is in_progress', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: buildStatus('in_progress')
+        status: 'in_progress'
       })
 
       const { statusCode } = await server.inject({
@@ -433,7 +430,7 @@ describe('#createdController', () => {
     it('should return 404 when status is submitted', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: buildStatus('submitted')
+        status: 'submitted'
       })
 
       const { statusCode } = await server.inject({
@@ -448,7 +445,7 @@ describe('#createdController', () => {
     it('should return 404 when status is due', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: buildStatus('due')
+        status: 'due'
       })
 
       const { statusCode } = await server.inject({
@@ -465,7 +462,7 @@ describe('#createdController', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/created`,
+        url: `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/invalid/1/submissions/1/created`,
         auth: mockAuth
       })
 
@@ -475,7 +472,7 @@ describe('#createdController', () => {
     it('should return 400 for invalid year', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submissions/1/created`,
+        url: `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2023/quarterly/1/submissions/1/created`,
         auth: mockAuth
       })
 
@@ -485,7 +482,7 @@ describe('#createdController', () => {
     it('should return 400 for invalid period', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submissions/1/created`,
+        url: `/organisations/${organisationNumber}/registrations/${registrationNumber}/reports/2026/quarterly/13/submissions/1/created`,
         auth: mockAuth
       })
 

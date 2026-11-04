@@ -1,0 +1,26 @@
+import { backend } from '#server/common/helpers/backend-client.js'
+
+/** @import { OutstandingReturnsData } from './to-outstanding-returns-tables.js' */
+/** @import { BackendToken } from '#server/common/helpers/backend-token.js' */
+
+/**
+ * The count of outstanding monthly reports for a reporting period, as the
+ * backend returns it. Every material and tonnage band is served for every
+ * month, at zero where nothing is outstanding.
+ * @typedef {{
+ *   meta: { generatedAt: string },
+ *   data: OutstandingReturnsData
+ * }} OutstandingReturnsAggregate
+ */
+
+/**
+ * Fetches the outstanding reports count from January through a reporting
+ * month. The backend rejects a month that has not ended, so the page can only
+ * ask for complete ones.
+ * @param {{ year: number, month: number, backendToken: BackendToken }} period
+ * @returns {Promise<OutstandingReturnsAggregate>}
+ */
+export const fetchOutstandingReturns = ({ year, month, backendToken }) =>
+  backend(backendToken).get(
+    `/v1/market-insights/${year}/monthly/${month}/outstanding-returns`
+  )

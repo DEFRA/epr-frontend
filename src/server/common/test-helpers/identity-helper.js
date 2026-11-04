@@ -1,0 +1,65 @@
+import { config } from '#config/config.js'
+import { REGULATOR_ROLE } from '#server/auth/roles.js'
+import { SCOPES } from '#server/auth/scopes.js'
+import { http, HttpResponse } from 'msw'
+
+/**
+ * The identities the backend resolves, as `/v1/me` reports them. An operator
+ * holds its own linked organisation's read and write scopes. A regulator reads
+ * and searches every organisation and writes nothing. An identity on no list at
+ * all is granted nothing.
+ *
+ * The backend decides every scope here and this fixture restates the ones this
+ * app names. A guard added later must add its scope here too, or an
+ * integration test signs a user in with less than the real session carries.
+ * The regulator's `organisation.search` guards the regulator's own page,
+ * `waste-balance.ledger.read` guards the waste balance ledger,
+ * `organisation.read` guards the overseas reprocessing sites and
+ * `market-data.read` guards the market insights preview, so a stale fixture is
+ * caught on any of the four.
+ *
+ * `operatorWithoutWrite` is the same operator after the backend stops granting
+ * the write scope: a narrower answer that still names a role.
+ *
+ * `support` is the lowest admin tier: a regulator's reads and no writes.
+ */
+export const IDENTITIES = Object.freeze({
+  operator: {
+    role: 'operator',
+    scopes: ['organisation.linked.read', SCOPES.organisationLinkedWrite]
+  },
+  operatorWithoutWrite: {
+    role: 'operator',
+    scopes: ['organisation.linked.read']
+  },
+  regulator: {
+    role: REGULATOR_ROLE,
+    scopes: [
+      SCOPES.marketDataRead,
+      SCOPES.organisationRead,
+      SCOPES.organisationSearch,
+      SCOPES.wasteBalanceLedgerRead
+    ]
+  },
+  support: {
+    role: 'support',
+    scopes: [
+      'admin.read',
+      SCOPES.marketDataRead,
+      SCOPES.organisationRead,
+      SCOPES.organisationSearch,
+      'summary-log.read',
+      SCOPES.wasteBalanceLedgerRead
+    ]
+  },
+  unrecognised: { role: null, scopes: [] }
+})
+
+/**
+ * MSW handler for the backend's identity endpoint.
+ * @param {{ role: string | null, scopes: string[] }} [identity]
+ */
+export const identityHandler = (identity = IDENTITIES.operator) =>
+  http.get(`${config.get('eprBackendUrl')}/v1/me`, () =>
+    HttpResponse.json(identity)
+  )

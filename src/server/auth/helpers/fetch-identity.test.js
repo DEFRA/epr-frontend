@@ -1,0 +1,84 @@
+import { config } from '#config/config.js'
+import { hasWriteScope } from '#server/auth/scopes.js'
+import { toBackendToken } from '#server/common/helpers/backend-token.js'
+import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
+import { beforeEach, it } from '#vite/fixtures/server.js'
+import { HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+import { fetchIdentity } from './fetch-identity.js'
+
+describe('#fetchIdentity', () => {
+  const backendUrl = config.get('eprBackendUrl')
+  const mockBackendToken = toBackendToken('mock-backend-token-12345')
+
+  /**
+   * @param {{ role?: string | null, scopes?: unknown[] }} body
+   */
+  const identityResponse = (body) =>
+    bearerAuthHandler('get', `${backendUrl}/v1/me`, mockBackendToken, () =>
+      HttpResponse.json(body)
+    )
+
+  beforeEach(({ msw }) => {
+    msw.use(
+      identityResponse({
+        role: 'operator',
+        scopes: ['organisation.linked.read', 'organisation.linked.write']
+      })
+    )
+  })
+
+  it('should return the role and scopes the backend resolved', async () => {
+    const result = await fetchIdentity(mockBackendToken)
+
+    expect(result).toStrictEqual({
+      role: 'operator',
+      scopes: ['organisation.linked.read', 'organisation.linked.write']
+    })
+  })
+
+  it('should return a regulator identity without a write scope', async ({
+    msw
+  }) => {
+    msw.use(identityResponse(IDENTITIES.regulator))
+
+    const result = await fetchIdentity(mockBackendToken)
+
+    expect(hasWriteScope({ scope: result.scopes })).toBe(false)
+  })
+
+  it('should return no role and no scopes for an identity the backend does not recognise', async ({
+    msw
+  }) => {
+    msw.use(identityResponse({ role: null, scopes: [] }))
+
+    const result = await fetchIdentity(mockBackendToken)
+
+    expect(result).toStrictEqual({ role: null, scopes: [] })
+  })
+
+  it.for([
+    {
+      description: 'omits the scopes',
+      body: { role: 'operator' },
+      reason: 'scopes: any.required'
+    },
+    {
+      description: 'has scopes that are not strings',
+      body: { role: 'operator', scopes: [{}] },
+      reason: 'scopes.0: string.base'
+    }
+  ])(
+    'should reject as a bad gateway a response that $description',
+    async ({ body, reason }, { msw }) => {
+      msw.use(identityResponse(body))
+
+      await expect(fetchIdentity(mockBackendToken)).rejects.toMatchObject({
+        output: { statusCode: 502 },
+        code: 'backend_response_invalid',
+        event: { reason }
+      })
+    }
+  )
+})

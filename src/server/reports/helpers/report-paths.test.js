@@ -1,0 +1,151 @@
+import { toYear } from '#server/common/helpers/year.js'
+import { describe, expect, expectTypeOf, it } from 'vitest'
+
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
+import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
+
+import { CADENCE } from '../constants.js'
+import {
+  accreditationPath,
+  organisationPath,
+  reportApiPath,
+  reportPath,
+  reportsCalendarApiPath,
+  registrationPath,
+  reportsListPath
+} from './report-paths.js'
+
+const registrationKeys = {
+  organisationNumber: toOrganisationNumber('500001'),
+  registrationNumber: toRegistrationNumber('R25SR500030912PA')
+}
+
+const quarterlyKeys = {
+  ...registrationKeys,
+  year: toYear(2026),
+  cadence: CADENCE.QUARTERLY,
+  period: 3,
+  submissionNumber: 2
+}
+
+const monthlyKeys = {
+  ...registrationKeys,
+  year: toYear(2026),
+  cadence: CADENCE.MONTHLY,
+  period: 8,
+  submissionNumber: 1
+}
+
+describe(accreditationPath, () => {
+  it("gives the accreditation under its registration's year", () => {
+    expect(accreditationPath({ ...registrationKeys, year: toYear(2026) })).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026'
+    )
+  })
+
+  it('encodes the registration number', () => {
+    expect(
+      accreditationPath({
+        organisationNumber: toOrganisationNumber('500001'),
+        registrationNumber: toRegistrationNumber('R25/SR&1'),
+        year: toYear(2026)
+      })
+    ).toBe(
+      '/organisations/500001/registrations/R25%2FSR%261/accreditations/2026'
+    )
+  })
+})
+
+describe(reportPath, () => {
+  it('puts a quarterly submission under the registration reports', () => {
+    expect(reportPath(quarterlyKeys)).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/3/submissions/2'
+    )
+  })
+
+  it("puts a monthly submission under its accreditation's year", () => {
+    expect(reportPath(monthlyKeys)).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/8/submissions/1'
+    )
+  })
+
+  it('encodes a registration number holding reserved characters', () => {
+    expect(
+      reportPath({
+        ...quarterlyKeys,
+        registrationNumber: toRegistrationNumber('R25/SR&1')
+      })
+    ).toBe(
+      '/organisations/500001/registrations/R25%2FSR%261/reports/2026/quarterly/3/submissions/2'
+    )
+  })
+})
+
+describe(reportApiPath, () => {
+  it('gives the backend registered-only route for a quarterly submission', () => {
+    expect(reportApiPath(quarterlyKeys)).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/quarterly/3/submissions/2'
+    )
+  })
+
+  it('gives the backend accredited route for a monthly submission', () => {
+    expect(reportApiPath(monthlyKeys)).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/accreditations/2026/reports/monthly/8/submissions/1'
+    )
+  })
+})
+
+describe(organisationPath, () => {
+  it('gives the organisation home page, encoding the number', () => {
+    expect(
+      organisationPath({ organisationNumber: toOrganisationNumber('5/1') })
+    ).toBe('/organisations/5%2F1')
+  })
+})
+
+describe(reportsListPath, () => {
+  it("gives the report list for the registration's year", () => {
+    expect(reportsListPath({ ...registrationKeys, year: toYear(2025) })).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2025'
+    )
+  })
+
+  it('encodes the organisation and registration numbers', () => {
+    expect(
+      reportsListPath({
+        organisationNumber: toOrganisationNumber('5/1'),
+        registrationNumber: toRegistrationNumber('R&1'),
+        year: toYear(2025)
+      })
+    ).toBe('/organisations/5%2F1/registrations/R%261/reports/2025')
+  })
+})
+
+describe(reportsCalendarApiPath, () => {
+  it("gives the backend calendar route for the registration's year", () => {
+    expect(
+      reportsCalendarApiPath({ ...registrationKeys, year: toYear(2026) })
+    ).toBe(
+      '/organisations/500001/registrations/R25SR500030912PA/reports/2026/calendar'
+    )
+  })
+})
+
+describe(registrationPath, () => {
+  it('should take each number only as its own kind', () => {
+    const { organisationNumber, registrationNumber } = registrationKeys
+
+    expectTypeOf(registrationPath).toBeCallableWith(registrationKeys)
+    expectTypeOf(registrationPath).toBeCallableWith({
+      // @ts-expect-error a registration number is not an organisation number
+      organisationNumber: registrationNumber,
+      // @ts-expect-error an organisation number is not a registration number
+      registrationNumber: organisationNumber
+    })
+    expectTypeOf(registrationPath).toBeCallableWith({
+      organisationNumber,
+      // @ts-expect-error a bare string is not a registration number
+      registrationNumber: 'R25SR500030912PA'
+    })
+  })
+})

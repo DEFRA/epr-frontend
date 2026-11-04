@@ -1,5 +1,5 @@
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { fetchRequiredAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
@@ -9,13 +9,33 @@ import {
 } from '#server/common/helpers/logging/cdp-boom.js'
 import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
+import {
+  closedYearSendsTo,
+  isClosedYearRefusal
+} from './helpers/closed-year.js'
 import { createPrn } from './helpers/create-prn.js'
+import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
+import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
+import { prnsPath } from './helpers/prn-resource.js'
+import { resolveDecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
+import { resolveInsufficientBalanceMessageKey } from './helpers/insufficient-balance-error.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /** @import { ValidationErrorItem } from 'joi' */
 
 const MIN_TONNAGE = 1
+
+const CREATE_VIEW = 'prns/create'
+const ERROR_SUMMARY_TITLE_KEY = 'prns:errorSummaryTitle'
+
+// Contract shared with the backend: the create-draft route returns this code
+// in the 409 body when the requested tonnage exceeds the available balance.
+// The backend owns the rule; the frontend only renders its verdict. Until the
+// backend emits this code the branch is inert, so behaviour degrades to the
+// existing confirm-time check.
+const INSUFFICIENT_BALANCE_CODE = 'INSUFFICIENT_AVAILABLE_BALANCE'
 
 const ERROR_KEYS = Object.freeze({
   notesTooLong: 'notesTooLong',
@@ -43,8 +63,8 @@ const payloadSchema = Joi.object({
     .messages({
       'string.max': `Notes must be ${NOTES_MAX_LENGTH} characters or fewer`
     }),
-  nation: Joi.string().required(),
-  wasteProcessingType: Joi.string().required()
+  wasteProcessingType: Joi.string().required(),
+  isDecemberWaste: Joi.boolean().default(false)
 })
 
 /**
@@ -56,8 +76,8 @@ const payloadSchema = Joi.object({
  *   tonnage: string,
  *   recipient: string,
  *   notes?: string,
- *   nation: string,
- *   wasteProcessingType: string
+ *   wasteProcessingType: string,
+ *   isDecemberWaste?: boolean
  * }} CreatePrnPayload
  */
 
@@ -93,7 +113,7 @@ function getNoteType(wasteProcessingType) {
 /**
  * Build error objects for form display
  * @param {Joi.ValidationError} validationError
- * @param {(key: string, params?: Record<string, unknown>) => string} localise
+ * @param {(key: string, params?: object) => string} localise
  * @param {string} wasteProcessingType
  * @returns {{errors: object, errorSummary: {title: string, list: Array}}}
  */
@@ -114,14 +134,113 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
   return {
     errors,
     errorSummary: {
-      title: localise('prns:errorSummaryTitle'),
+      title: localise(ERROR_SUMMARY_TITLE_KEY),
       list: errorList
     }
   }
 }
 
 /**
- * @param {CreatePrnResponse} result - The created PRN draft from the backend
+ * Fetches everything `buildCreatePrnViewData` needs to re-render the create
+ * form, shared by the three re-render paths (insufficient balance, invalid
+ * recipient, validation failAction) so they can't drift on which calls they
+ * make.
+ * @param {HapiRequest} request
+ * @param {AccreditationKeys} keys
+ * @returns {Promise<{ registration: RegistrationView, wasteBalance: WasteBalance | null, decemberWasteControl: DecemberWasteControl }>}
+ */
+async function fetchCreatePrnViewDataInputs(request, keys) {
+  const { backendToken } = request.auth.credentials
+
+  const [{ registration, accreditation }, decemberPrnEligibility] =
+    await Promise.all([
+      fetchRequiredAccreditation(keys, backendToken),
+      fetchDecemberPrnEligibility(keys, backendToken)
+    ])
+
+  const wasteBalance = await fetchPrnWasteBalance({
+    keys,
+    accreditationNumber: accreditation.accreditationNumber,
+    backendToken,
+    logger: request.logger
+  })
+
+  const { noteTypePlural } = getNoteTypeDisplayNames(registration)
+
+  return {
+    registration,
+    wasteBalance,
+    decemberWasteControl: resolveDecemberWasteControl(
+      decemberPrnEligibility,
+      request.t,
+      noteTypePlural,
+      wasteBalance
+    )
+  }
+}
+
+/**
+ * Re-render the create form when the backend rejects draft creation because
+ * the entered tonnage exceeds the available waste balance. The rejection
+ * decision is the backend's; the frontend picks the message wording from
+ * which pot the operator submitted, since the backend's 409 carries no pool
+ * discriminator by design (ADR-0049).
+ * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
+ * @param {ResponseToolkit} h
+ * @param {Array<WasteOrganisation>} organisations
+ */
+async function handleInsufficientBalance(request, h, organisations) {
+  const keys = toAccreditationKeys(request.params)
+  const { t: localise } = request
+
+  const { registration, wasteBalance, decemberWasteControl } =
+    await fetchCreatePrnViewDataInputs(request, keys)
+
+  const messageKey = resolveInsufficientBalanceMessageKey(
+    decemberWasteControl.mode,
+    request.payload.isDecemberWaste
+  )
+  const message = localise(messageKey)
+
+  const errors = { tonnage: { text: message } }
+  const errorSummary = {
+    title: localise(ERROR_SUMMARY_TITLE_KEY),
+    list: [{ text: message, href: '#tonnage' }]
+  }
+
+  const viewData = buildCreatePrnViewData(request, {
+    keys,
+    recipients: mapToSelectOptions(organisations),
+    registration,
+    wasteBalance,
+    decemberWasteControl
+  })
+
+  return h.view(CREATE_VIEW, {
+    ...viewData,
+    errors,
+    errorSummary,
+    formValues: reRenderFormValues(request.payload)
+  })
+}
+
+/**
+ * `request.payload` here has already been through Joi, so `isDecemberWaste`
+ * is a boolean while the radio items' values are the strings `'true'`/`'false'`
+ * (see view-data.js). The govukRadios macro checks `item.value == params.value`,
+ * and in Nunjucks `"true" == true` is false, so without this the previously
+ * selected radio would never come back checked on re-render.
+ * @param {CreatePrnPayload} payload
+ */
+function reRenderFormValues(payload) {
+  return {
+    ...payload,
+    isDecemberWaste: String(payload.isDecemberWaste)
+  }
+}
+
+/**
+ * @param {PackagingRecyclingNote} result - The created PRN draft from the backend
  * @param {string} recipientDisplayName - The resolved display name for the recipient
  * @param {string | undefined} notes - Issuer notes
  */
@@ -148,8 +267,7 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
  * @param {Array<WasteOrganisation>} organisations
  */
 async function handleInvalidRecipient(request, h, organisations) {
-  const { organisationId, registrationId, accreditationId } = request.params
-  const session = request.auth.credentials
+  const keys = toAccreditationKeys(request.params)
   const { t: localise } = request
 
   const noteType = getNoteType(request.payload.wasteProcessingType)
@@ -159,38 +277,26 @@ async function handleInvalidRecipient(request, h, organisations) {
 
   const errors = { recipient: { text: message } }
   const errorSummary = {
-    title: localise('prns:errorSummaryTitle'),
+    title: localise(ERROR_SUMMARY_TITLE_KEY),
     list: [{ text: message, href: '#recipient' }]
   }
 
-  const [{ registration }, wasteBalance] = await Promise.all([
-    getRequiredRegistrationWithAccreditation({
-      organisationId,
-      registrationId,
-      idToken: session.idToken,
-      accreditationId
-    }),
-    getWasteBalance(
-      organisationId,
-      accreditationId,
-      session.idToken,
-      request.logger
-    )
-  ])
+  const { registration, wasteBalance, decemberWasteControl } =
+    await fetchCreatePrnViewDataInputs(request, keys)
 
   const viewData = buildCreatePrnViewData(request, {
-    organisationId,
+    keys,
     recipients: mapToSelectOptions(organisations),
     registration,
-    registrationId,
-    wasteBalance
+    wasteBalance,
+    decemberWasteControl
   })
 
-  return h.view('prns/create', {
+  return h.view(CREATE_VIEW, {
     ...viewData,
     errors,
     errorSummary,
-    formValues: request.payload
+    formValues: reRenderFormValues(request.payload)
   })
 }
 
@@ -206,10 +312,7 @@ export const postController = {
        *   payload validation configured this is always the Joi ValidationError.
        */
       failAction: async (request, h, error) => {
-        const { organisationId, registrationId, accreditationId } =
-          request.params
-        const session = request.auth.credentials
-
+        const keys = toAccreditationKeys(request.params)
         const { t: localise } = request
         const { errors, errorSummary } = buildValidationErrors(
           /** @type {Joi.ValidationError} */ (error),
@@ -217,33 +320,24 @@ export const postController = {
           request.payload.wasteProcessingType
         )
 
-        const [{ registration }, { organisations }, wasteBalance] =
-          await Promise.all([
-            getRequiredRegistrationWithAccreditation({
-              organisationId,
-              registrationId,
-              idToken: session.idToken,
-              accreditationId
-            }),
-            request.wasteOrganisationsService.getOrganisations(),
-            getWasteBalance(
-              organisationId,
-              accreditationId,
-              session.idToken,
-              request.logger
-            )
-          ])
+        const [
+          { organisations },
+          { registration, wasteBalance, decemberWasteControl }
+        ] = await Promise.all([
+          request.wasteOrganisationsService.getOrganisations(),
+          fetchCreatePrnViewDataInputs(request, keys)
+        ])
 
         const viewData = buildCreatePrnViewData(request, {
-          organisationId,
+          keys,
           recipients: mapToSelectOptions(organisations),
           registration,
-          registrationId,
-          wasteBalance
+          wasteBalance,
+          decemberWasteControl
         })
 
         return h
-          .view('prns/create', {
+          .view(CREATE_VIEW, {
             ...viewData,
             errors,
             errorSummary,
@@ -258,9 +352,9 @@ export const postController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
-    const session = request.auth.credentials
-    const { tonnage, recipient, notes } = request.payload
+    const keys = toAccreditationKeys(request.params)
+    const { backendToken } = request.auth.credentials
+    const { tonnage, recipient, notes, isDecemberWaste } = request.payload
 
     const { organisations } =
       await request.wasteOrganisationsService.getOrganisations()
@@ -284,15 +378,14 @@ export const postController = {
     try {
       // Create PRN as draft in backend
       const result = await createPrn(
-        organisationId,
-        registrationId,
-        accreditationId,
+        keys,
         {
           issuedToOrganisation,
           tonnage: Number.parseInt(tonnage, 10),
-          notes: notes || undefined
+          notes: notes || undefined,
+          isDecemberWaste
         },
-        session.idToken
+        backendToken
       )
 
       // Store PRN data in session for check/confirm page
@@ -301,10 +394,16 @@ export const postController = {
         buildPrnDraftSession(result, recipientDisplayName, notes)
       )
 
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${result.id}/view`
-      )
+      return h.redirect(`${prnsPath(keys)}/${result.id}/view`)
     } catch (error) {
+      if (error.output?.payload?.code === INSUFFICIENT_BALANCE_CODE) {
+        return handleInsufficientBalance(request, h, organisations)
+      }
+
+      if (isClosedYearRefusal(error)) {
+        return h.redirect(closedYearSendsTo.list(request.params))
+      }
+
       if (error.isBoom) {
         throw error
       }
@@ -327,6 +426,10 @@ export const postController = {
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
- * @import { CreatePrnResponse } from './helpers/create-prn.js'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
+ * @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnListParams } from './helpers/session-types.js'
+ * @import { DecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
  */

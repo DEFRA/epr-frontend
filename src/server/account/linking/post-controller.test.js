@@ -14,24 +14,23 @@ import { describe, expect } from 'vitest'
 const backendUrl = config.get('eprBackendUrl')
 const url = '/account/linking'
 const organisationId = 'org-1'
+const organisationNumber = '12345678'
 
 const mockAuth = buildMockAuth()
 
 const userOrganisations = {
   current: { id: 'defra-org-123', name: 'My Defra Organisation' },
   linked: null,
-  unlinked: [
-    { id: organisationId, name: 'Test Company Ltd', orgId: '12345678' }
-  ]
+  unlinked: [{ id: organisationId, name: 'Test Company Ltd', orgId: 12345678 }]
 }
 
-// Authorises on the session idToken, so a 200 also proves the handler forwards
+// Authorises on the session backendToken, so a 200 also proves the handler forwards
 // the bearer token to the backend link endpoint.
 const linkSucceeds = () =>
   bearerAuthHandler(
     'post',
-    `${backendUrl}/v1/organisations/${organisationId}/link`,
-    'mock-id-token',
+    `${backendUrl}/organisations/${organisationNumber}/link`,
+    'mock-backend-token',
     () => HttpResponse.json({})
   )
 
@@ -49,7 +48,7 @@ describe('account linking POST controller', () => {
       method: 'POST',
       url,
       auth: mockAuth,
-      payload: { organisationId }
+      payload: { organisationNumber }
     })
 
     expect(statusCode).toBe(statusCodes.forbidden)
@@ -70,11 +69,11 @@ describe('account linking POST controller', () => {
       url,
       auth: mockAuth,
       headers: { cookie },
-      payload: { organisationId, crumb }
+      payload: { organisationNumber, crumb }
     })
 
     expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(`/organisations/${organisationId}`)
+    expect(headers.location).toBe(`/organisations/${organisationNumber}`)
   })
 
   it('should store the linked organisation on the session when signed in', async ({
@@ -98,7 +97,7 @@ describe('account linking POST controller', () => {
       url,
       auth: mockAuth,
       headers: { cookie: mergeCookies(cookie, `userSession=${sealedSession}`) },
-      payload: { organisationId, crumb }
+      payload: { organisationNumber, crumb }
     })
 
     expect(statusCode).toBe(statusCodes.found)
@@ -106,6 +105,32 @@ describe('account linking POST controller', () => {
     const cached = await server.app.cache.get(sessionId)
 
     expect(cached?.linkedOrganisationId).toBe(organisationId)
+    expect(cached?.linkedOrganisationNumber).toBe(organisationNumber)
+  })
+
+  it('should re-render with an error and link nothing when the number is not listed', async ({
+    server
+  }) => {
+    const { cookie, crumb } = await getCsrfToken(server, url, {
+      auth: mockAuth
+    })
+
+    const { statusCode, result } = await server.inject({
+      method: 'POST',
+      url,
+      auth: mockAuth,
+      headers: { cookie },
+      payload: { organisationNumber: '99999999', crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+
+    const { body } = new JSDOM(result).window.document
+    const main = getByRole(body, 'main')
+
+    expect(
+      getByRole(main, 'link', { name: 'Select an organisation to link' })
+    ).toBeDefined()
   })
 
   it('should re-render with an error when no organisation is selected', async ({
