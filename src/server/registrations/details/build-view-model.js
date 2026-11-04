@@ -2,7 +2,6 @@ import { capitalize } from 'lodash-es'
 
 import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { accreditationEntries } from '#server/common/helpers/organisations/accreditation-entries.js'
 import { siteLineOf } from '#server/common/helpers/organisations/site-name.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
@@ -15,6 +14,7 @@ import {
 import { toCaption } from './helpers/caption.js'
 import { toDateRange } from './helpers/date-range.js'
 import {
+  accreditationEntries,
   accreditedDateRange,
   registeredYears
 } from './helpers/reg-acc-status.js'

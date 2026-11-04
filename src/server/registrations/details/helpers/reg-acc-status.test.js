@@ -1,9 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { REG_ACC_STATUS } from '#domain/organisations/model.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toYear } from '#server/common/helpers/year.js'
+import { buildAccreditationView } from '#server/common/test-helpers/organisation-view-fixtures.js'
 
-import { accreditedDateRange, registeredYears } from './reg-acc-status.js'
+import {
+  accreditationEntries,
+  accreditedDateRange,
+  registeredYears
+} from './reg-acc-status.js'
 
 /** @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
 
@@ -22,6 +28,28 @@ const cancelled = { status: REG_ACC_STATUS.CANCELLED }
 
 const YEAR = toYear(2026)
 const NOW = new Date('2026-06-15T10:00:00.000Z')
+
+/**
+ * @param {string} accreditationNumber
+ */
+const accreditationNumbered = (accreditationNumber) =>
+  buildAccreditationView({
+    accreditationNumber: toAccreditationNumber(accreditationNumber)
+  })
+
+describe(accreditationEntries, () => {
+  it('pairs each accreditation with the year it is keyed by, as a number', () => {
+    const accreditation2025 = accreditationNumbered('A25ER5001180114PL')
+    const accreditation2026 = accreditationNumbered('A26ER5001180114PL')
+
+    expect(
+      accreditationEntries({ 2026: accreditation2026, 2025: accreditation2025 })
+    ).toStrictEqual([
+      [2025, accreditation2025],
+      [2026, accreditation2026]
+    ])
+  })
+})
 
 describe(registeredYears, () => {
   beforeEach(() => {

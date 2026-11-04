@@ -4,11 +4,11 @@ import {
   toCalendarDate,
   utcCalendarDate
 } from '#server/common/helpers/calendar-date.js'
-import { yearEntries } from '#server/common/helpers/organisations/accreditation-entries.js'
+import { toYear } from '#server/common/helpers/year.js'
 
 /**
  * @import { RegAccStatus } from '#domain/organisations/model.js'
- * @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { DateRange } from './types.js'
  */
@@ -18,6 +18,22 @@ const REGISTERED_STATUSES = [
   REG_ACC_STATUS.REGISTERED_ONLY,
   REG_ACC_STATUS.ACCREDITED
 ]
+
+/**
+ * @template T
+ * @param {Record<string, T>} byYear
+ * @returns {[Year, T][]}
+ */
+const yearEntries = (byYear) =>
+  Object.entries(byYear).map(([year, value]) => [toYear(Number(year)), value])
+
+/**
+ * Each of the registration's accreditations, with the year it is keyed by.
+ * @param {RegistrationView['accreditations']} accreditations
+ * @returns {[Year, Accreditation][]}
+ */
+export const accreditationEntries = (accreditations) =>
+  yearEntries(accreditations)
 
 /**
  * The years holding at least one day in the given statuses up to today, most
