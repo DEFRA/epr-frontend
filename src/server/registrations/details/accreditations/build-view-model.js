@@ -27,7 +27,7 @@ import { toRegistrationTrail } from '../helpers/accreditation-child-page.js'
 import { toCaption } from '../helpers/caption.js'
 import { toDateRange } from '../helpers/date-range.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
-import { accreditedDateRange } from '../helpers/reg-acc-status.js'
+import { accreditedDateRange } from '#server/common/helpers/organisations/registration-years.js'
 
 /**
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'

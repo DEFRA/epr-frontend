@@ -13,7 +13,7 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 import { toCaption } from '../helpers/caption.js'
-import { registeredYears } from '../helpers/reg-acc-status.js'
+import { registeredYears } from '#server/common/helpers/organisations/registration-years.js'
 import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
 
 /**

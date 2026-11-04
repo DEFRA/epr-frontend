@@ -8,9 +8,9 @@ import { toYear } from '#server/common/helpers/year.js'
 
 /**
  * @import { RegAccStatus } from '#domain/organisations/model.js'
- * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { Accreditation, RegistrationView } from './organisation-view.js'
  * @import { Year } from '#server/common/helpers/year.js'
- * @import { DateRange } from './types.js'
+ * @import { DateRange } from './registration-resource.js'
  */
 
 /** @type {readonly RegAccStatus[]} */
