@@ -1,5 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest'
 import {
+  assertNextYearClosedInProd,
   assertOptionalHttpUrl,
   assertValidReapplyWindow,
   assertValidReapplyWindowBound,
@@ -143,6 +144,35 @@ describe('#config', () => {
         expect(() => assertValidReapplyWindowBound(value)).toThrow(
           /must name a real UK date/
         )
+      }
+    )
+  })
+
+  describe(assertNextYearClosedInProd, () => {
+    it('should refuse to open next year in prod', () => {
+      expect(() =>
+        assertNextYearClosedInProd({
+          cdpEnvironment: 'prod',
+          openNextYear: true
+        })
+      ).toThrow(/openNextYear must not be set in prod/)
+    })
+
+    it('should let prod keep next year closed', () => {
+      expect(() =>
+        assertNextYearClosedInProd({
+          cdpEnvironment: 'prod',
+          openNextYear: false
+        })
+      ).not.toThrow()
+    })
+
+    it.each(['local', 'dev', 'test', 'perf-test', 'ext-test'])(
+      'should let %s open next year',
+      (cdpEnvironment) => {
+        expect(() =>
+          assertNextYearClosedInProd({ cdpEnvironment, openNextYear: true })
+        ).not.toThrow()
       }
     )
   })

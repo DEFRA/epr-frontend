@@ -1899,6 +1899,48 @@ describe('#listReportsController', () => {
 
         expect(headers.location).toBe(`/cy${registrationUrl}/reports/2027`)
       })
+
+      describe('once next year is open', () => {
+        beforeEach(() => {
+          config.set('openNextYear', true)
+        })
+
+        afterEach(() => {
+          config.reset('openNextYear')
+        })
+
+        it('sends the address to next year for a registration running into it', async ({
+          server
+        }) => {
+          backendServesRegistrationWith('approved', [
+            { status: 'approved', at: '2026-01-01T00:00:00.000Z' }
+          ])
+
+          const { headers } = await server.inject({
+            method: 'GET',
+            url: `${registrationUrl}/reports`,
+            auth: mockAuth
+          })
+
+          expect(headers.location).toBe(`${registrationUrl}/reports/2028`)
+        })
+
+        it("sends the address to next year's list for a registration never approved", async ({
+          server
+        }) => {
+          backendServesRegistrationWith('created', [
+            { status: 'created', at: '2026-03-01T00:00:00.000Z' }
+          ])
+
+          const { headers } = await server.inject({
+            method: 'GET',
+            url: `${registrationUrl}/reports`,
+            auth: mockAuth
+          })
+
+          expect(headers.location).toBe(`${registrationUrl}/reports/2028`)
+        })
+      })
     })
   })
 

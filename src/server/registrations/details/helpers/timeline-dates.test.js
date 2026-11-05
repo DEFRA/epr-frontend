@@ -378,21 +378,27 @@ describe(accreditedDateRange, () => {
 })
 
 describe(registeredYears, () => {
-  const now = new Date('2026-06-15T00:00:00Z')
+  const latestYear = toYear(2026)
 
   it('names no year for a registration never approved', () => {
     expect(
       registeredYears(
         aRegistration({ '2025-01-01T00:00:00.000Z': 'created' }),
-        now
+        latestYear
       )
     ).toStrictEqual([])
   })
 
-  it('runs from the year first approved to the current year, most recent first', () => {
-    expect(registeredYears(approvedOn('2024-06-01'), now)).toStrictEqual([
-      2026, 2025, 2024
-    ])
+  it('runs from the year first approved to the latest open year, most recent first', () => {
+    expect(registeredYears(approvedOn('2024-06-01'), latestYear)).toStrictEqual(
+      [2026, 2025, 2024]
+    )
+  })
+
+  it('runs into the next year once that year is open', () => {
+    expect(
+      registeredYears(approvedOn('2025-06-01'), toYear(2027))
+    ).toStrictEqual([2027, 2026, 2025])
   })
 
   it('leaves out a year spent wholly cancelled', () => {
@@ -403,7 +409,7 @@ describe(registeredYears, () => {
           '2024-06-01T09:00:00.000Z': 'cancelled',
           '2026-02-01T09:00:00.000Z': 'approved'
         }),
-        now
+        latestYear
       )
     ).toStrictEqual([2026, 2024])
   })
@@ -415,40 +421,48 @@ describe(registeredYears, () => {
           '2024-01-01T00:00:00.000Z': 'approved',
           '2025-03-01T09:00:00.000Z': 'cancelled'
         }),
-        now
+        latestYear
       )
     ).toStrictEqual([2025, 2024])
   })
 
   it('names no year for an approval that has not started yet', () => {
-    expect(registeredYears(approvedOn('2027-01-01'), now)).toStrictEqual([])
+    expect(registeredYears(approvedOn('2027-01-01'), latestYear)).toStrictEqual(
+      []
+    )
   })
 })
 
 describe(registeredStretches, () => {
-  const now = new Date('2026-06-15T00:00:00Z')
+  const latestYear = toYear(2026)
 
-  it('runs from the approval to today in the current year', () => {
+  it('runs from the approval to the end of the latest open year', () => {
     expect(
-      registeredStretches(approvedOn('2026-02-10'), 2026, now)
-    ).toStrictEqual([{ from: '2026-02-10', to: '2026-06-15' }])
+      registeredStretches(approvedOn('2026-02-10'), 2026, latestYear)
+    ).toStrictEqual([{ from: '2026-02-10', to: '2026-12-31' }])
   })
 
   it('starts on 1 January when approved in an earlier year', () => {
     expect(
-      registeredStretches(approvedOn('2025-04-01'), 2026, now)
-    ).toStrictEqual([{ from: '2026-01-01', to: '2026-06-15' }])
+      registeredStretches(approvedOn('2025-04-01'), 2026, latestYear)
+    ).toStrictEqual([{ from: '2026-01-01', to: '2026-12-31' }])
   })
 
-  it('closes an earlier year at 31 December rather than at today', () => {
+  it('closes an earlier year at 31 December', () => {
     expect(
-      registeredStretches(approvedOn('2025-01-01'), 2025, now)
+      registeredStretches(approvedOn('2025-01-01'), 2025, latestYear)
     ).toStrictEqual([{ from: '2025-01-01', to: '2025-12-31' }])
+  })
+
+  it('holds nothing for a year after the latest open year', () => {
+    expect(
+      registeredStretches(approvedOn('2025-01-01'), 2027, latestYear)
+    ).toStrictEqual([])
   })
 
   it('holds nothing for a year before the approval', () => {
     expect(
-      registeredStretches(approvedOn('2026-01-01'), 2025, now)
+      registeredStretches(approvedOn('2026-01-01'), 2025, latestYear)
     ).toStrictEqual([])
   })
 
@@ -461,11 +475,11 @@ describe(registeredStretches, () => {
           '2026-05-01T09:00:00.000Z': 'approved'
         }),
         2026,
-        now
+        latestYear
       )
     ).toStrictEqual([
       { from: '2026-01-01', to: '2026-02-28' },
-      { from: '2026-05-01', to: '2026-06-15' }
+      { from: '2026-05-01', to: '2026-12-31' }
     ])
   })
 
@@ -477,7 +491,7 @@ describe(registeredStretches, () => {
           '2026-04-01T09:00:00.000Z': 'created'
         }),
         2026,
-        now
+        latestYear
       )
     ).toStrictEqual([{ from: '2026-01-01', to: '2026-03-31' }])
   })
@@ -501,7 +515,7 @@ describe(registrationAccreditedStretches, () => {
 })
 
 describe('registered-only time from timelines', () => {
-  const now = new Date('2026-12-31T00:00:00Z')
+  const latestYear = toYear(2026)
 
   /**
    * @param {RegistrationView} registration
@@ -509,7 +523,7 @@ describe('registered-only time from timelines', () => {
    */
   const registeredOnly = (registration, year = 2026) =>
     registeredOnlyStretches({
-      registered: registeredStretches(registration, year, now),
+      registered: registeredStretches(registration, year, latestYear),
       accredited: registrationAccreditedStretches(registration)
     })
 

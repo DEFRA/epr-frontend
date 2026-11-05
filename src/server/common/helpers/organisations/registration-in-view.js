@@ -2,7 +2,7 @@ import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
-import { currentYear } from '#server/common/helpers/year.js'
+import { latestOpenYear } from '#server/common/helpers/year.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 import {
   accreditationPath,
@@ -131,7 +131,7 @@ export const materialsHomepage = (keys, registration, year) => {
 }
 
 /**
- * The materials homepage for the latest registered year, or the current
+ * The materials homepage for the latest registered year, or the latest open
  * year's registered-only address for a registration never registered.
  * @param {RegistrationKeys} keys
  * @param {RegistrationView} registration
@@ -143,5 +143,7 @@ export const defaultMaterialsHomepagePath = (keys, registration) => {
     ? materialsHomepage(keys, registration, latestYear)
     : null
 
-  return homepage?.path ?? registeredOnlyPath({ ...keys, year: currentYear() })
+  return (
+    homepage?.path ?? registeredOnlyPath({ ...keys, year: latestOpenYear() })
+  )
 }

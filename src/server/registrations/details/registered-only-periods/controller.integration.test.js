@@ -22,7 +22,7 @@ import {
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect } from 'vitest'
 
 /**
  * @import { SetupServer } from 'msw/node'
@@ -491,6 +491,44 @@ describe('the registered-only period page', () => {
     const { statusCode } = await visit(server, regulator)
 
     expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  describe('next year', () => {
+    const nextYear = new Date().getUTCFullYear() + 1
+
+    /** @param {SetupServer} msw */
+    const backendHoldsNextYear = (msw) => {
+      backendHolds(msw)
+      msw.use(
+        http.get(`${backendUrl}${registrationPath}/ledger/${nextYear}`, () =>
+          HttpResponse.json({ events: [] })
+        )
+      )
+    }
+
+    afterEach(() => {
+      config.reset('openNextYear')
+    })
+
+    it('does not exist while next year is closed', async ({ server, msw }) => {
+      backendHoldsNextYear(msw)
+
+      const { statusCode } = await visit(server, regulator, nextYear)
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('exists for a registration running into it once it is open', async ({
+      server,
+      msw
+    }) => {
+      config.set('openNextYear', true)
+      backendHoldsNextYear(msw)
+
+      const { statusCode } = await visit(server, regulator, nextYear)
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
   })
 
   it('does not exist for an organisation number that is not digits', async ({

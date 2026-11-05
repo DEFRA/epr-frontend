@@ -1,3 +1,5 @@
+import { config } from '#config/config.js'
+
 /**
  * @import { Brand } from './brand.js'
  */
@@ -17,10 +19,12 @@
 export const toYear = (value) => /** @type {Year} */ (value)
 
 /**
- * The year it is now, in UTC.
+ * The latest year the service serves: the UTC year it is now, or the one
+ * after where next year is open.
  * @returns {Year}
  */
-export const currentYear = () => toYear(new Date().getUTCFullYear())
+export const latestOpenYear = () =>
+  toYear(new Date().getUTCFullYear() + (config.get('openNextYear') ? 1 : 0))
 
 const FIXED_YEAR = 2026
 

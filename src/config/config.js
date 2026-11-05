@@ -71,6 +71,12 @@ export const config = convict({
     default: 'local',
     env: 'ENVIRONMENT'
   },
+  openNextYear: {
+    doc: 'Serve next year as well as this one, so data for it can be checked before it starts. Refused in prod',
+    format: Boolean,
+    default: false,
+    env: 'OPEN_NEXT_YEAR'
+  },
   port: {
     doc: 'The port to bind.',
     format: 'port',
@@ -528,6 +534,23 @@ export function assertValidReapplyWindowBound(value) {
 }
 
 assertValidReapplyWindow(config.get('reapplyAccreditation'))
+
+/**
+ * @param {{ cdpEnvironment: string; openNextYear: boolean }} settings
+ */
+export const assertNextYearClosedInProd = ({
+  cdpEnvironment,
+  openNextYear
+}) => {
+  if (cdpEnvironment === 'prod' && openNextYear) {
+    throw new Error('openNextYear must not be set in prod')
+  }
+}
+
+assertNextYearClosedInProd({
+  cdpEnvironment: config.get('cdpEnvironment'),
+  openNextYear: config.get('openNextYear')
+})
 
 export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'

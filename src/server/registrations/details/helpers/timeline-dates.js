@@ -2,12 +2,9 @@ import {
   ACCREDITATION_STATUS,
   REGISTRATION_STATUS
 } from '#domain/organisations/model.js'
-import {
-  toCalendarDate,
-  utcCalendarDate
-} from '#server/common/helpers/calendar-date.js'
+import { toCalendarDate } from '#server/common/helpers/calendar-date.js'
 import { accreditationEntries } from '#server/common/helpers/organisations/accreditation-entries.js'
-import { toYear } from '#server/common/helpers/year.js'
+import { latestOpenYear, toYear } from '#server/common/helpers/year.js'
 
 import {
   earlier,
@@ -150,45 +147,55 @@ export const accreditedDateRange = ({ status: { timeline } }, year) => {
 }
 
 /**
- * The registration's approved runs up to today.
+ * The registration's approved runs up to the end of the latest open year.
  * @param {RegistrationView} registration
- * @param {CalendarDate} today
+ * @param {Year} latestYear
  * @returns {Stretch[]}
  */
-const registeredRunsToDate = ({ status }, today) =>
-  liveRuns(status.timeline, REGISTERED_STATUSES)
-    .map(({ from, to }) => ({ from, to: earlier(to ?? today, today) }))
+const registeredRunsToLatestYear = ({ status }, latestYear) => {
+  const lastDay = lastDayOf(latestYear)
+
+  return liveRuns(status.timeline, REGISTERED_STATUSES)
+    .map(({ from, to }) => ({ from, to: earlier(to ?? lastDay, lastDay) }))
     .filter(({ from, to }) => from.localeCompare(to) <= 0)
+}
 
 /**
- * The years holding at least one approved day up to today, most recent first.
+ * The years holding at least one approved day, up to the latest open year,
+ * most recent first.
  * @param {RegistrationView} registration
- * @param {Date} [now]
+ * @param {Year} [latestYear]
  * @returns {Year[]}
  */
-export const registeredYears = (registration, now = new Date()) => {
-  const years = registeredRunsToDate(
-    registration,
-    utcCalendarDate(now)
-  ).flatMap(({ from, to }) =>
-    Array.from(
-      { length: yearOf(to) - yearOf(from) + 1 },
-      (_, offset) => yearOf(from) + offset
-    )
+export const registeredYears = (
+  registration,
+  latestYear = latestOpenYear()
+) => {
+  const years = registeredRunsToLatestYear(registration, latestYear).flatMap(
+    ({ from, to }) =>
+      Array.from(
+        { length: yearOf(to) - yearOf(from) + 1 },
+        (_, offset) => yearOf(from) + offset
+      )
   )
 
   return [...new Set(years)].sort((one, other) => other - one).map(toYear)
 }
 
 /**
- * The registration's approved runs within the year, and up to today.
+ * The registration's approved runs within the year, and up to the end of the
+ * latest open year.
  * @param {RegistrationView} registration
  * @param {number} year
- * @param {Date} [now]
+ * @param {Year} [latestYear]
  * @returns {Stretch[]}
  */
-export const registeredStretches = (registration, year, now = new Date()) =>
-  clip(registeredRunsToDate(registration, utcCalendarDate(now)), {
+export const registeredStretches = (
+  registration,
+  year,
+  latestYear = latestOpenYear()
+) =>
+  clip(registeredRunsToLatestYear(registration, latestYear), {
     from: firstDayOf(year),
     to: lastDayOf(year)
   })

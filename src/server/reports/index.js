@@ -4,7 +4,7 @@ import Joi from 'joi'
 import { asHapiRequest } from '#server/common/hapi-types.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
-import { currentYear } from '#server/common/helpers/year.js'
+import { latestOpenYear } from '#server/common/helpers/year.js'
 import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
 
 import { checkGetController, checkPostController } from './check-controller.js'
@@ -271,7 +271,7 @@ const monthlyToAccreditedRoute = {
 
 /**
  * Sends the yearless report list address to the latest year the registration
- * was approved in, as the organisation home does, or the current year if none.
+ * was approved in, as the organisation home does, or the latest open year if none.
  * @type {ServerRoute}
  */
 const latestYearListRoute = {
@@ -290,7 +290,7 @@ const latestYearListRoute = {
     return redirectPreservingMethod(
       request,
       h,
-      reportsListPath({ ...keys, year: latestYear ?? currentYear() })
+      reportsListPath({ ...keys, year: latestYear ?? latestOpenYear() })
     )
   }
 }
