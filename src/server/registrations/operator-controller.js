@@ -25,7 +25,6 @@ import { homePath } from '#server/organisations/home-page.js'
 import {
   accreditationPath,
   registeredOnlyPath,
-  registrationPath,
   reportsListPath,
   summaryLogUploadPathUnder
 } from '#server/reports/helpers/report-paths.js'
@@ -332,7 +331,7 @@ const buildRegisteredOnlyViewModel = ({
   accreditation: { exists: false },
   prns: null,
   reapplyAccreditation: null,
-  wasteBalanceLedgerUrl: toLedgerUrl(request, registrationPath(keys))
+  wasteBalanceLedgerUrl: null
 })
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */

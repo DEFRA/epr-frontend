@@ -1,101 +1,64 @@
-import Boom from '@hapi/boom'
-
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
 import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { fetchRequiredAnyAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
-import {
-  fetchAccreditationLedgerEvents,
-  fetchRegisteredOnlyLedgerEvents
-} from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
-import {
-  toAccreditationChildPage,
-  toRegistrationTrail
-} from '#server/registrations/details/helpers/accreditation-child-page.js'
+import { fetchAccreditationLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
+import { toAccreditationChildPage } from '#server/registrations/details/helpers/accreditation-child-page.js'
 import {
   accreditationPath,
   organisationPath,
   registrationPath
 } from '#server/reports/helpers/report-paths.js'
-import { fixedYear } from '#server/common/helpers/year.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { BackendToken } from '#server/common/helpers/backend-token.js'
- * @import { Year } from '#server/common/helpers/year.js'
- * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
- * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
- * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
- * @typedef {RegistrationKeys & { year?: Year }} WasteBalanceLedgerParams
- */
-
-/**
- * One waste balance ledger, read as business events.
+ * One accreditation's waste balance ledger, read as business events.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const controller = {
   /**
-   * @param {HapiRequest & { params: WasteBalanceLedgerParams }} request
+   * @param {HapiRequest & { params: AccreditationKeys }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
     const session = request.auth.credentials
     const { organisationNumber, registrationNumber, year } = request.params
     const registrationKeys = { organisationNumber, registrationNumber }
+    const keys = { ...registrationKeys, year }
 
-    const { organisation, registration, accreditation, events } = year
-      ? await readAccreditedLedger(
-          { ...registrationKeys, year },
-          session.backendToken
-        )
-      : await readRegisteredOnlyLedger(registrationKeys, request)
+    const { organisation, registration, accreditation } =
+      await fetchRequiredAnyAccreditation(keys, session.backendToken)
+    const events = await fetchAccreditationLedgerEvents(
+      keys,
+      session.backendToken
+    )
 
     const { t: localise } = request
     const { noteType } = getNoteTypeDisplayNames(registration)
-    const heading = localise('waste-balance-ledger:heading')
-    const name = organisation.displayName
     const ledgerRegistrationPath = registrationPath(registrationKeys)
-    const ledgerAccreditationPath = year
-      ? accreditationPath({ ...registrationKeys, year })
-      : undefined
-    const recordPaths = {
-      organisation: organisationPath(registrationKeys),
-      registration: ledgerRegistrationPath
-    }
-
-    // The registered-only partition sits under no accreditation, so its trail
-    // stops at the registration and its caption names the phase instead.
-    const page = accreditation
-      ? toAccreditationChildPage({
-          heading,
-          localise,
-          localiseUrl: request.localiseUrl,
-          organisationName: name,
-          registrationNumber,
-          accreditationNumber: accreditation.accreditationNumber,
-          paths: {
-            ...recordPaths,
-            accreditation: /** @type {string} */ (ledgerAccreditationPath)
-          }
-        })
-      : toRegisteredOnlyPage({
-          heading,
-          localise,
-          localiseUrl: request.localiseUrl,
-          name,
-          paths: recordPaths
-        })
+    const ledgerAccreditationPath = accreditationPath(keys)
 
     return h.view('waste-balance-ledger/index', {
-      ...page,
+      ...toAccreditationChildPage({
+        heading: localise('waste-balance-ledger:heading'),
+        localise,
+        localiseUrl: request.localiseUrl,
+        organisationName: organisation.displayName,
+        registrationNumber,
+        accreditationNumber: accreditation.accreditationNumber,
+        paths: {
+          organisation: organisationPath(registrationKeys),
+          registration: ledgerRegistrationPath,
+          accreditation: ledgerAccreditationPath
+        }
+      }),
       ledgerRows: buildLedgerRows({
         accreditationPath: ledgerAccreditationPath,
         events,
@@ -110,89 +73,3 @@ export const controller = {
     })
   }
 }
-
-/**
- * The year's accreditation, whatever its status, and its ledger.
- * @param {AccreditationKeys} keys
- * @param {BackendToken} backendToken
- * @returns {Promise<LedgerRead>}
- */
-async function readAccreditedLedger(keys, backendToken) {
-  const { organisation, registration, accreditation } =
-    await fetchRequiredAnyAccreditation(keys, backendToken)
-  const events = await fetchAccreditationLedgerEvents(keys, backendToken)
-
-  return { organisation, registration, accreditation, events }
-}
-
-/**
- * The registration and its registered-only ledger; a 404 ledger reads as empty.
- * @param {RegistrationKeys} keys
- * @param {HapiRequest} request
- * @returns {Promise<LedgerRead>}
- */
-async function readRegisteredOnlyLedger(keys, request) {
-  const session = request.auth.credentials
-  const { organisation, registration } = await fetchRegistration({
-    ...keys,
-    backendToken: session.backendToken
-  })
-
-  try {
-    const events = await fetchRegisteredOnlyLedgerEvents(
-      { ...keys, year: fixedYear },
-      session.backendToken
-    )
-
-    return { organisation, registration, events }
-  } catch (error) {
-    if (!Boom.isBoom(error, statusCodes.notFound)) {
-      throw error
-    }
-
-    request.logger.info({
-      message: 'No registered-only ledger for the year, showing it empty',
-      event: {
-        action: 'fetch_registered_only_ledger',
-        reason: `organisationNumber=${keys.organisationNumber} registrationNumber=${keys.registrationNumber} year=${fixedYear}`
-      }
-    })
-
-    return { organisation, registration, events: [] }
-  }
-}
-
-/**
- * @param {{
- *   heading: string,
- *   localise: HapiRequest['t'],
- *   localiseUrl: HapiRequest['localiseUrl'],
- *   name: string,
- *   paths: { organisation: string, registration: string }
- * }} params
- */
-function toRegisteredOnlyPage({ heading, localise, localiseUrl, name, paths }) {
-  return {
-    breadcrumbs: [
-      ...toRegistrationTrail({
-        localise,
-        localiseUrl,
-        organisationName: name,
-        paths
-      }),
-      { text: heading }
-    ],
-    caption: localise('waste-balance-ledger:registeredOnlyCaption'),
-    heading,
-    pageTitle: localise('waste-balance-ledger:pageTitle')
-  }
-}
-
-/**
- * @typedef {{
- *   organisation: OrganisationView,
- *   registration: RegistrationView,
- *   accreditation?: Accreditation,
- *   events: LedgerEvent[]
- * }} LedgerRead
- */
