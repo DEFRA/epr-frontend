@@ -20,7 +20,15 @@ import { recordSignInReferrer } from '../helpers/record-sign-in-referrer.js'
 
 export const OIDC_DEFRA_ID = 'defra-id'
 
-const DEFRA_ID_SCOPES = ['openid', 'offline_access']
+/**
+ * The client id is a resource scope: without it Azure B2C issues no access
+ * token, which `@hapi/bell` requires.
+ */
+const DEFRA_ID_SCOPES = [
+  'openid',
+  'offline_access',
+  config.get('defraId.clientId')
+]
 
 /**
  * Describe what Defra ID does differently from the other OIDC providers.

@@ -158,7 +158,11 @@ describe('#defraId', () => {
       expect(config.provider.name).toBe(OIDC_DEFRA_ID)
       expect(config.provider.protocol).toBe('oauth2')
       expect(config.provider.useParamsAuth).toBe(true)
-      expect(config.provider.scope).toStrictEqual(['openid', 'offline_access'])
+      expect(config.provider.scope).toStrictEqual([
+        'openid',
+        'offline_access',
+        'test-client-id'
+      ])
     })
 
     it('should include serviceId in provider params', async () => {
@@ -434,7 +438,7 @@ describe('#defraId', () => {
       expect(authProvider.tokenRequestParams).toStrictEqual({
         client_id: 'test-client-id',
         client_secret: 'test-client-secret',
-        scope: 'openid offline_access',
+        scope: 'openid offline_access test-client-id',
         serviceId: 'test-service-id'
       })
     })
