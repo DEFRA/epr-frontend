@@ -686,7 +686,7 @@ describe("the operator's registered-only page for a year", () => {
       url: registeredOnlyPath,
       auth: buildMockAuth({
         linkedOrganisationId: organisationId,
-        scope: [SCOPES.organisationLinkedWrite, SCOPES.wasteBalanceLedgerRead]
+        scope: [SCOPES.organisationLinkedWrite]
       })
     })
 
@@ -699,18 +699,21 @@ describe("the operator's registered-only page for a year", () => {
     expect(hrefOf(body, 'Manage reports')).toBe(
       `${registrationPath}/reports/${year}`
     )
-    expect(hrefOf(body, 'View waste balance ledger')).toBe(
-      `${registrationPath}/waste-balance-ledger`
-    )
   })
 
-  it('offers no ledger link to a session that may not read it', async ({
+  it('offers no ledger link, even to a session that may read it', async ({
     server,
     msw
   }) => {
     backendHolds(msw, { registration: registeredOnly })
 
-    const { body } = await visit(server, { url: registeredOnlyPath })
+    const { body } = await visit(server, {
+      url: registeredOnlyPath,
+      auth: buildMockAuth({
+        linkedOrganisationId: organisationId,
+        scope: [SCOPES.organisationLinkedWrite, SCOPES.wasteBalanceLedgerRead]
+      })
+    })
 
     expect(
       queryByRole(body, 'link', { name: 'View waste balance ledger' })

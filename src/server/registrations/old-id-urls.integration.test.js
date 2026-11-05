@@ -379,34 +379,29 @@ describe('old registration and accreditation page URLs', () => {
   })
 
   describe('the waste balance ledger', () => {
-    it.for([
-      {
-        name: 'registered-only',
-        oldUrl: `${byIds}/waste-balance-ledger`,
-        newUrl: `${byNumbers}/waste-balance-ledger`
-      },
-      {
-        name: 'accredited',
-        oldUrl: `${byIds}/accreditations/${accreditationId}/waste-balance-ledger`,
-        newUrl: `${byNumbers}/accreditations/2026/waste-balance-ledger`
-      }
-    ])(
-      'sends a regulator from the $name id URL to the number URL',
-      async ({ oldUrl, newUrl }, { server, msw }) => {
-        backendHolds(msw)
+    it('sends a regulator from the id URL to the number URL', async ({
+      server,
+      msw
+    }) => {
+      backendHolds(msw)
 
-        const redirect = await visit(server, oldUrl, regulator)
-        const page = await visit(
-          server,
-          /** @type {string} */ (redirect.headers.location),
-          regulator
-        )
+      const redirect = await visit(
+        server,
+        `${byIds}/accreditations/${accreditationId}/waste-balance-ledger`,
+        regulator
+      )
+      const page = await visit(
+        server,
+        /** @type {string} */ (redirect.headers.location),
+        regulator
+      )
 
-        expect(redirect.statusCode).toBe(statusCodes.found)
-        expect(redirect.headers.location).toBe(newUrl)
-        expect(page.statusCode).toBe(statusCodes.ok)
-      }
-    )
+      expect(redirect.statusCode).toBe(statusCodes.found)
+      expect(redirect.headers.location).toBe(
+        `${byNumbers}/accreditations/2026/waste-balance-ledger`
+      )
+      expect(page.statusCode).toBe(statusCodes.ok)
+    })
   })
 
   describe('the accreditation page', () => {
