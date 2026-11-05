@@ -1,7 +1,6 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import { fixedYear } from '#server/common/helpers/year.js'
 
 import { isAccreditationActive } from './accreditation-helpers.js'
 import { fetchRegistration } from './fetch-registration.js'
@@ -24,14 +23,13 @@ import { fetchRegistration } from './fetch-registration.js'
  */
 
 /**
- * The registration by number, with its live accreditation for the year, or
- * for {@link fixedYear} where the page has no year.
- * @param {RegistrationKeys & { year?: Year }} keys
+ * The registration by number, with its live accreditation for the year.
+ * @param {AccreditationKeys} keys
  * @param {BackendToken} backendToken
  * @returns {Promise<RegistrationWithAccreditation>}
  */
 export const fetchRegistrationWithAccreditation = async (
-  { year = fixedYear, ...keys },
+  { year, ...keys },
   backendToken
 ) => {
   const { organisation, registration } = await fetchRegistration({
