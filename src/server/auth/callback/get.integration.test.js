@@ -14,6 +14,7 @@ import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
 
 /**
  * @import { ServerInjectResponse } from '@hapi/hapi'
+ * @import { AzureB2CTokenParams } from '#server/auth/types/auth.js'
  */
 
 const mock = {
@@ -27,6 +28,26 @@ vi.spyOn(metrics.signIn, 'successNonInitialUser').mockResolvedValue()
 vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mock.cdpAuditing(...args)
 }))
+
+/**
+ * What Defra ID's Azure B2C returns when the client id is a requested scope.
+ * @param {string} idToken
+ * @returns {AzureB2CTokenParams}
+ */
+const azureB2CTokenResponse = (idToken) => ({
+  access_token: 'access-token',
+  expires_in: 3600,
+  expires_on: 1793900000,
+  id_token: idToken,
+  id_token_expires_in: 1200,
+  not_before: 1793896400,
+  profile_info: 'profile-info',
+  refresh_token: 'refresh-token',
+  refresh_token_expires_in: 86400,
+  resource: 'test-client-id',
+  scope: 'test-client-id offline_access openid',
+  token_type: 'Bearer'
+})
 
 const performSignInFlow = async (
   server,
@@ -47,7 +68,7 @@ const performSignInFlow = async (
 
   mswServer.use(
     http.post('http://defra-id.auth/token', () =>
-      HttpResponse.json({ id_token: idToken })
+      HttpResponse.json(azureB2CTokenResponse(idToken))
     )
   )
 
