@@ -51,6 +51,7 @@ const defraIdCallbackController = {
    */
   handler: async (request, h) => {
     if (request.auth?.error) {
+      logSignInFailure(request, request.auth.error)
       await metrics.signIn.failure(OIDC_DEFRA_ID)
     }
 
@@ -122,6 +123,18 @@ async function applyBackendIdentity(session) {
   session.role = role
   session.scope = scopes
 }
+
+/**
+ * Logs the message only: the error bell raises carries the token response.
+ * @param {HapiRequest} request
+ * @param {Error} error
+ */
+const logSignInFailure = (request, error) =>
+  request.logger.error({
+    message: 'User sign in failed',
+    error: { message: error.message },
+    event: { action: 'signInFailure', outcome: 'failure' }
+  })
 
 /**
  * The referrer stash is a queue, and a sign in that ends without redirecting

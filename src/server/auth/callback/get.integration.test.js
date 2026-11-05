@@ -52,7 +52,12 @@ const azureB2CTokenResponse = (idToken) => ({
 const performSignInFlow = async (
   server,
   mswServer,
-  { idToken, publicKey, cookie = '' }
+  {
+    idToken,
+    publicKey,
+    cookie = '',
+    tokenResponse = azureB2CTokenResponse(idToken)
+  }
 ) => {
   const signInResponse = await server.inject({
     method: 'GET',
@@ -68,7 +73,7 @@ const performSignInFlow = async (
 
   mswServer.use(
     http.post('http://defra-id.auth/token', () =>
-      HttpResponse.json(azureB2CTokenResponse(idToken))
+      HttpResponse.json(tokenResponse)
     )
   )
 
@@ -332,6 +337,34 @@ describe('/auth/callback - GET integration', async () => {
     it('records sign in failure metric', () => {
       expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
       expect(metrics.signIn.failure).toHaveBeenCalledWith('defra-id')
+    })
+  })
+
+  describe('on a token response without an access token', () => {
+    let response
+
+    beforeEach(async ({ server, msw }) => {
+      const { access_token: _, ...withoutAccessToken } = azureB2CTokenResponse(
+        idTokenAndPublicKey.idToken
+      )
+
+      response = await performSignInFlow(server, msw, {
+        ...idTokenAndPublicKey,
+        tokenResponse: withoutAccessToken
+      })
+    })
+
+    it('redirects user to start page', () => {
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/')
+    })
+
+    it('logs why sign in failed, without the tokens', ({ server }) => {
+      expect(server.loggerMocks.error).toHaveBeenCalledExactlyOnceWith({
+        message: 'User sign in failed',
+        error: { message: 'Failed obtaining defra-id access token' },
+        event: { action: 'signInFailure', outcome: 'failure' }
+      })
     })
   })
 
