@@ -2,6 +2,7 @@
  * @import {
  *   AccreditationStatus,
  *   Material,
+ *   RegAccStatus,
  *   RegistrationStatus,
  *   RegulatorValue,
  *   ReprocessingType
@@ -19,6 +20,12 @@
 /**
  * @template {string} S
  * @typedef {{ current: S, timeline: StatusTimeline }} Status
+ */
+
+/**
+ * By year, the date each status starts. A status holds until the next date, or
+ * the end of the year.
+ * @typedef {Record<string, Record<string, { status: RegAccStatus }>>} RegAccStatusByDate
  */
 
 /**
@@ -53,6 +60,7 @@
 /**
  * @typedef {{
  *   status: Status<RegistrationStatus>,
+ *   regAccStatusByDate: RegAccStatusByDate,
  *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },

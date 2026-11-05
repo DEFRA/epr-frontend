@@ -1,3 +1,4 @@
+/** @import { RegAccStatusByDate } from '#server/common/helpers/organisations/organisation-view.js'; */
 import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
@@ -122,6 +123,9 @@ const registeredOnlyFrom2025 = buildRegistrationWithAccreditation({
     status: {
       current: 'approved',
       timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
+    },
+    regAccStatusByDate: {
+      2025: { '2025-01-01': { status: 'registeredOnly' } }
     },
     accreditations: {}
   })
@@ -1829,12 +1833,18 @@ describe('#listReportsController', () => {
       /**
        * @param {RegistrationStatus} current
        * @param {StatusTimeline} timeline
+       * @param {RegAccStatusByDate} regAccStatusByDate
        */
-      const backendServesRegistrationWith = (current, timeline) =>
+      const backendServesRegistrationWith = (
+        current,
+        timeline,
+        regAccStatusByDate
+      ) =>
         vi.mocked(fetchRegistration).mockResolvedValue({
           organisation: accreditedRegistration.organisation,
           registration: buildRegistrationView({
-            status: { current, timeline }
+            status: { current, timeline },
+            regAccStatusByDate
           })
         })
 
@@ -1848,10 +1858,20 @@ describe('#listReportsController', () => {
       it('sends the address to the latest year the registration was approved in', async ({
         server
       }) => {
-        backendServesRegistrationWith('cancelled', [
-          { status: 'approved', at: '2024-01-01T00:00:00.000Z' },
-          { status: 'cancelled', at: '2025-06-30T00:00:00.000Z' }
-        ])
+        backendServesRegistrationWith(
+          'cancelled',
+          [
+            { status: 'approved', at: '2024-01-01T00:00:00.000Z' },
+            { status: 'cancelled', at: '2025-06-30T00:00:00.000Z' }
+          ],
+          {
+            2024: { '2024-01-01': { status: 'registeredOnly' } },
+            2025: {
+              '2025-01-01': { status: 'registeredOnly' },
+              '2025-06-30': { status: 'cancelled' }
+            }
+          }
+        )
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',
@@ -1871,9 +1891,11 @@ describe('#listReportsController', () => {
       it("sends the address to the current year's list for a registration never approved", async ({
         server
       }) => {
-        backendServesRegistrationWith('created', [
-          { status: 'created', at: '2026-03-01T00:00:00.000Z' }
-        ])
+        backendServesRegistrationWith(
+          'created',
+          [{ status: 'created', at: '2026-03-01T00:00:00.000Z' }],
+          {}
+        )
 
         const { headers } = await server.inject({
           method: 'GET',
@@ -1887,9 +1909,14 @@ describe('#listReportsController', () => {
       it('keeps the language when sending the address on', async ({
         server
       }) => {
-        backendServesRegistrationWith('approved', [
-          { status: 'approved', at: '2026-01-01T00:00:00.000Z' }
-        ])
+        backendServesRegistrationWith(
+          'approved',
+          [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }],
+          {
+            2026: { '2026-01-01': { status: 'registeredOnly' } },
+            2027: { '2027-01-01': { status: 'registeredOnly' } }
+          }
+        )
 
         const { headers } = await server.inject({
           method: 'GET',

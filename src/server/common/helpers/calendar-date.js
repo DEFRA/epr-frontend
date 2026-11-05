@@ -34,3 +34,13 @@ export const toCalendarDate = (value) =>
  * @returns {CalendarDate}
  */
 export const utcCalendarDate = (date) => toCalendarDate(date.toISOString())
+
+/**
+ * @param {CalendarDate} date
+ * @returns {CalendarDate}
+ */
+export const dayBefore = (date) => {
+  const shifted = new Date(date)
+  shifted.setUTCDate(shifted.getUTCDate() - 1)
+  return utcCalendarDate(shifted)
+}

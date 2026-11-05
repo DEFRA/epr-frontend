@@ -75,6 +75,7 @@ const aRegistration = (accreditations = {}) => ({
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
+  regAccStatusByDate: { 2026: { '2026-01-01': { status: 'registeredOnly' } } },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
@@ -202,9 +203,14 @@ describe(buildViewModel, () => {
   it('holds none where the accreditation ran from the registration start', () => {
     expect(
       build({
-        registration: aRegistration({
-          2026: anAccreditation({ '2026-01-01T09:00:00.000Z': 'approved' })
-        })
+        registration: {
+          ...aRegistration({
+            2026: anAccreditation({ '2026-01-01T09:00:00.000Z': 'approved' })
+          }),
+          regAccStatusByDate: {
+            2026: { '2026-01-01': { status: 'accredited' } }
+          }
+        }
       }).hasData
     ).toBe(false)
   })
@@ -226,12 +232,17 @@ describe(buildViewModel, () => {
   it('holds none where the accreditation was only suspended', () => {
     expect(
       build({
-        registration: aRegistration({
-          2026: anAccreditation({
-            '2026-01-01T09:00:00.000Z': 'approved',
-            '2026-03-10T09:00:00.000Z': 'suspended'
-          })
-        })
+        registration: {
+          ...aRegistration({
+            2026: anAccreditation({
+              '2026-01-01T09:00:00.000Z': 'approved',
+              '2026-03-10T09:00:00.000Z': 'suspended'
+            })
+          }),
+          regAccStatusByDate: {
+            2026: { '2026-01-01': { status: 'accredited' } }
+          }
+        }
       }).hasData
     ).toBe(false)
   })
@@ -246,6 +257,12 @@ describe(buildViewModel, () => {
       build({
         registration: {
           ...aRegistration({ 2026: anAccreditation(cancelledOn) }),
+          regAccStatusByDate: {
+            2026: {
+              '2026-01-01': { status: 'accredited' },
+              '2026-03-01': { status: 'cancelled' }
+            }
+          },
           status: {
             current: 'cancelled',
             timeline: anAccreditation(cancelledOn).status.timeline

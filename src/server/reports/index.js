@@ -5,7 +5,7 @@ import { asHapiRequest } from '#server/common/hapi-types.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
 import { currentYear } from '#server/common/helpers/year.js'
-import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
+import { registeredYears } from '#server/common/helpers/organisations/registration-years.js'
 
 import { checkGetController, checkPostController } from './check-controller.js'
 import { createController } from './create-controller.js'

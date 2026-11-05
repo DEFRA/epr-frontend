@@ -52,6 +52,9 @@ const organisationView = {
   registrations: {
     [registrationNumber]: {
       status: approvedThisYear,
+      regAccStatusByDate: {
+        [thisYear]: { [`${thisYear}-01-01`]: { status: 'registeredOnly' } }
+      },
       validFrom: '2026-01-01',
       material: 'plastic',
       submittedToRegulator: { code: 'ea' },

@@ -120,13 +120,15 @@ const approvedSinceYear = {
 /**
  * @param {{
  *   accreditations?: Record<string, Accreditation>,
- *   status?: RegistrationView['status']
+ *   status?: RegistrationView['status'],
+ *   regAccStatusByDate?: RegistrationView['regAccStatusByDate']
  * }} [overrides]
  * @returns {OrganisationView}
  */
 const anOrganisation = ({
   accreditations = {},
-  status = approvedSinceYear
+  status = approvedSinceYear,
+  regAccStatusByDate = { 2026: { '2026-01-01': { status: 'registeredOnly' } } }
 } = {}) => ({
   organisationNumber: toOrganisationNumber('500118'),
   name: 'Kirkby Plastics Ltd',
@@ -136,6 +138,7 @@ const anOrganisation = ({
   registrations: {
     [registrationNumber]: {
       status,
+      regAccStatusByDate,
       validFrom: '2026-01-01',
       material: 'plastic',
       submittedToRegulator: { code: 'ea' },
@@ -153,6 +156,7 @@ const anOrganisation = ({
  * @param {{
  *   accreditations?: Record<string, Accreditation>,
  *   status?: RegistrationView['status'],
+ *   regAccStatusByDate?: RegistrationView['regAccStatusByDate'],
  *   reportingPeriods?: ReportingPeriod[],
  *   accreditedPeriods?: ReportingPeriod[],
  *   calendarStatus?: number,
@@ -166,6 +170,7 @@ const backendHolds = (
   {
     accreditations,
     status,
+    regAccStatusByDate,
     reportingPeriods = [],
     accreditedPeriods = [],
     calendarStatus = statusCodes.ok,
@@ -179,7 +184,9 @@ const backendHolds = (
 
   msw.use(
     http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
-      HttpResponse.json(anOrganisation({ accreditations, status }))
+      HttpResponse.json(
+        anOrganisation({ accreditations, status, regAccStatusByDate })
+      )
     ),
     http.get(
       `${backendUrl}${registrationPath}/reports/:year/calendar`,
@@ -273,7 +280,8 @@ describe('the registered-only period page', () => {
     msw
   }) => {
     backendHolds(msw, {
-      accreditations: { 2026: anAccreditation('2026-01-01') }
+      accreditations: { 2026: anAccreditation('2026-01-01') },
+      regAccStatusByDate: { 2026: { '2026-01-01': { status: 'accredited' } } }
     })
 
     const { body } = await visit(server, regulator)
@@ -421,7 +429,8 @@ describe('the registered-only period page', () => {
     msw
   }) => {
     backendHolds(msw, {
-      accreditations: { 2026: anAccreditation('2026-01-01') }
+      accreditations: { 2026: anAccreditation('2026-01-01') },
+      regAccStatusByDate: { 2026: { '2026-01-01': { status: 'accredited' } } }
     })
 
     const { body } = await visit(server, regulator)
@@ -479,6 +488,12 @@ describe('the registered-only period page', () => {
     msw
   }) => {
     backendHolds(msw, {
+      regAccStatusByDate: {
+        2025: {
+          '2025-01-01': { status: 'registeredOnly' },
+          '2025-06-01': { status: 'cancelled' }
+        }
+      },
       status: {
         current: 'cancelled',
         timeline: [
@@ -757,7 +772,8 @@ describe('the registered-only period page', () => {
       msw
     }) => {
       backendHolds(msw, {
-        accreditations: { 2026: anAccreditation('2026-01-01') }
+        accreditations: { 2026: anAccreditation('2026-01-01') },
+        regAccStatusByDate: { 2026: { '2026-01-01': { status: 'accredited' } } }
       })
 
       const { body } = await visit(server, regulator)

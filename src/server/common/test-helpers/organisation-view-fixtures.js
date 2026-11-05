@@ -1,3 +1,8 @@
+import {
+  ACCREDITATION_STATUS,
+  REG_ACC_STATUS,
+  REGISTRATION_STATUS
+} from '#domain/organisations/model.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 
@@ -14,8 +19,10 @@ export const buildAccreditationView = (overrides = {}) => ({
   accreditationNumber: toAccreditationNumber('A26EN0000000001PL'),
   prns: { open: true },
   status: {
-    current: 'approved',
-    timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
+    current: ACCREDITATION_STATUS.APPROVED,
+    timeline: [
+      { status: ACCREDITATION_STATUS.APPROVED, at: '2026-01-01T00:00:00.000Z' }
+    ]
   },
   ...overrides
 })
@@ -29,8 +36,13 @@ export const buildAccreditationView = (overrides = {}) => ({
 export const buildRegistrationView = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
     status: {
-      current: 'approved',
-      timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
+      current: REGISTRATION_STATUS.APPROVED,
+      timeline: [
+        { status: REGISTRATION_STATUS.APPROVED, at: '2026-01-01T00:00:00.000Z' }
+      ]
+    },
+    regAccStatusByDate: {
+      2026: { '2026-01-01': { status: REG_ACC_STATUS.ACCREDITED } }
     },
     validFrom: '2026-01-01',
     material: 'plastic',
