@@ -32,6 +32,12 @@ describe('#buildReapplyAccreditation', () => {
     expect(result).toBeNull()
   })
 
+  test('is not visible for a next-year page', () => {
+    const result = buildReapplyAccreditation({ ...baseParams, year: 2027 })
+
+    expect(result).toBeNull()
+  })
+
   test('links to the year after the current one', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
