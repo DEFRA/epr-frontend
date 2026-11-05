@@ -56,7 +56,7 @@ const defaultJwtPayload = {
   exp: Math.floor(Date.now() / 1000) + 3600,
   firstName: 'Test',
   lastName: 'User',
-  loa: '2',
+  loa: 1,
   relationships: ['rel-123'],
   roles: ['role1'],
   serviceId: 'test-service-id',
