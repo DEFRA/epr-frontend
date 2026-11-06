@@ -51,6 +51,7 @@ const defraIdCallbackController = {
    */
   handler: async (request, h) => {
     if (request.auth?.error) {
+      logSignInFailure(request, request.auth.error)
       await metrics.signIn.failure(OIDC_DEFRA_ID)
     }
 
@@ -122,6 +123,48 @@ async function applyBackendIdentity(session) {
   session.role = role
   session.scope = scopes
 }
+
+/**
+ * Bell attaches the parsed token response to the error only when it carries
+ * no access token; on its other failures the data is an error or raw bytes.
+ * @param {unknown} data
+ * @returns {data is Record<string, unknown>}
+ */
+const isParsedTokenResponse = (data) =>
+  typeof data === 'object' &&
+  data !== null &&
+  !(data instanceof Error) &&
+  !Buffer.isBuffer(data)
+
+/**
+ * @param {unknown} data
+ * @returns {{ reason?: string }}
+ */
+const missingAccessTokenIn = (data) =>
+  isParsedTokenResponse(data) && !data.access_token
+    ? {
+        reason: `no access_token in token response, keys: [${Object.keys(data)
+          .toSorted((a, b) => a.localeCompare(b))
+          .join(', ')}]`
+      }
+    : {}
+
+/**
+ * Logs why sign in failed and, when the token response lacked an access
+ * token, its key names: the error bell raises carries the tokens.
+ * @param {HapiRequest} request
+ * @param {Error & { data?: unknown }} error
+ */
+const logSignInFailure = (request, error) =>
+  request.logger.error({
+    message: 'User sign in failed',
+    error: { message: error.message },
+    event: {
+      action: 'signInFailure',
+      outcome: 'failure',
+      ...missingAccessTokenIn(error.data)
+    }
+  })
 
 /**
  * The referrer stash is a queue, and a sign in that ends without redirecting

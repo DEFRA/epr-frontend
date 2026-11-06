@@ -14,6 +14,7 @@ import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
 
 /**
  * @import { ServerInjectResponse } from '@hapi/hapi'
+ * @import { AzureB2CTokenParams } from '#server/auth/types/auth.js'
  */
 
 const mock = {
@@ -28,10 +29,37 @@ vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mock.cdpAuditing(...args)
 }))
 
+/**
+ * What Defra ID's Azure B2C returns when the client id is a requested scope.
+ * @param {string} idToken
+ * @returns {AzureB2CTokenParams}
+ */
+const azureB2CTokenResponse = (idToken) => ({
+  access_token: 'access-token',
+  expires_in: 3600,
+  expires_on: 1793900000,
+  id_token: idToken,
+  id_token_expires_in: 1200,
+  not_before: 1793896400,
+  profile_info: 'profile-info',
+  refresh_token: 'refresh-token',
+  refresh_token_expires_in: 86400,
+  resource: 'test-client-id',
+  scope: 'test-client-id offline_access openid',
+  token_type: 'Bearer'
+})
+
 const performSignInFlow = async (
   server,
   mswServer,
-  { idToken, publicKey, cookie = '' }
+  {
+    idToken,
+    publicKey,
+    cookie = '',
+    tokenResponse = azureB2CTokenResponse(idToken),
+    tokenStatus = statusCodes.ok,
+    tokenBody = JSON.stringify(tokenResponse)
+  }
 ) => {
   const signInResponse = await server.inject({
     method: 'GET',
@@ -47,7 +75,7 @@ const performSignInFlow = async (
 
   mswServer.use(
     http.post('http://defra-id.auth/token', () =>
-      HttpResponse.json({ id_token: idToken })
+      HttpResponse.text(tokenBody, { status: tokenStatus })
     )
   )
 
@@ -291,6 +319,14 @@ describe('/auth/callback - GET integration', async () => {
       expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
       expect(metrics.signIn.failure).toHaveBeenCalledWith('defra-id')
     })
+
+    it('logs why sign in failed, with no reason', ({ server }) => {
+      expect(server.loggerMocks.error).toHaveBeenCalledExactlyOnceWith({
+        message: 'User sign in failed',
+        error: { message: 'Missing defra-id request token cookie' },
+        event: { action: 'signInFailure', outcome: 'failure' }
+      })
+    })
   })
 
   describe('on unverified id token received from Defra ID', () => {
@@ -311,6 +347,81 @@ describe('/auth/callback - GET integration', async () => {
     it('records sign in failure metric', () => {
       expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
       expect(metrics.signIn.failure).toHaveBeenCalledWith('defra-id')
+    })
+  })
+
+  describe('on a token response without an access token', () => {
+    let response
+
+    beforeEach(async ({ server, msw }) => {
+      const { access_token: _, ...withoutAccessToken } = azureB2CTokenResponse(
+        idTokenAndPublicKey.idToken
+      )
+
+      response = await performSignInFlow(server, msw, {
+        ...idTokenAndPublicKey,
+        tokenResponse: withoutAccessToken
+      })
+    })
+
+    it('redirects user to start page', () => {
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/')
+    })
+
+    it('logs why sign in failed and the token response keys, without the tokens', ({
+      server
+    }) => {
+      expect(server.loggerMocks.error).toHaveBeenCalledExactlyOnceWith({
+        message: 'User sign in failed',
+        error: { message: 'Failed obtaining defra-id access token' },
+        event: {
+          action: 'signInFailure',
+          outcome: 'failure',
+          reason:
+            'no access_token in token response, keys: [expires_in, expires_on, id_token, id_token_expires_in, not_before, profile_info, refresh_token, refresh_token_expires_in, resource, scope, token_type]'
+        }
+      })
+    })
+  })
+
+  describe('on an error response from the token endpoint', () => {
+    it('logs why sign in failed, without the response body', async ({
+      server,
+      msw
+    }) => {
+      await performSignInFlow(server, msw, {
+        ...idTokenAndPublicKey,
+        tokenBody: JSON.stringify({ error: 'invalid_grant' }),
+        tokenStatus: statusCodes.badRequest
+      })
+
+      expect(server.loggerMocks.error).toHaveBeenCalledExactlyOnceWith({
+        message: 'User sign in failed',
+        error: { message: 'Failed obtaining defra-id access token' },
+        event: { action: 'signInFailure', outcome: 'failure' }
+      })
+    })
+  })
+
+  describe('on an invalid token response', () => {
+    it('logs why sign in failed, without the response body', async ({
+      server,
+      msw
+    }) => {
+      await performSignInFlow(server, msw, {
+        ...idTokenAndPublicKey,
+        tokenBody: '{"id_token":'
+      })
+
+      expect(server.loggerMocks.error).toHaveBeenCalledExactlyOnceWith({
+        message: 'User sign in failed',
+        error: {
+          message:
+            'Received invalid payload from defra-id access token endpoint'
+        },
+        event: { action: 'signInFailure', outcome: 'failure' }
+      })
     })
   })
 
