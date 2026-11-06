@@ -23,12 +23,9 @@ export const OIDC_DEFRA_ID = 'defra-id'
 /**
  * The client id is a resource scope: without it Azure B2C issues no access
  * token, which `@hapi/bell` requires.
+ * @param {string} clientId
  */
-const DEFRA_ID_SCOPES = [
-  'openid',
-  'offline_access',
-  config.get('defraId.clientId')
-]
+const defraIdScopes = (clientId) => ['openid', 'offline_access', clientId]
 
 /**
  * Describe what Defra ID does differently from the other OIDC providers.
@@ -38,23 +35,27 @@ const DEFRA_ID_SCOPES = [
  * @param {VerifyToken} verifyToken - Token verification function
  * @returns {AuthProvider}
  */
-const createDefraIdAuthProvider = (verifyToken) => ({
-  tokenRequestParams: {
-    client_id: config.get('defraId.clientId'),
-    client_secret: config.get('defraId.clientSecret'),
-    scope: DEFRA_ID_SCOPES.join(' '),
-    serviceId: config.get('defraId.serviceId')
-  },
-  selectBackendToken: (tokens) => toBackendToken(tokens.id_token),
-  verifyBackendToken: async (token) => {
-    const payload = await verifyToken(token)
+const createDefraIdAuthProvider = (verifyToken) => {
+  const clientId = config.get('defraId.clientId')
 
-    return {
-      profile: buildUserProfile(payload),
-      expiresAt: getTokenExpiresAt(payload)
+  return {
+    tokenRequestParams: {
+      client_id: clientId,
+      client_secret: config.get('defraId.clientSecret'),
+      scope: defraIdScopes(clientId).join(' '),
+      serviceId: config.get('defraId.serviceId')
+    },
+    selectBackendToken: (tokens) => toBackendToken(tokens.id_token),
+    verifyBackendToken: async (token) => {
+      const payload = await verifyToken(token)
+
+      return {
+        profile: buildUserProfile(payload),
+        expiresAt: getTokenExpiresAt(payload)
+      }
     }
   }
-})
+}
 
 /**
  * Create Defra ID OIDC authentication plugin
@@ -104,7 +105,7 @@ const createDefraId = (authProvider) => ({
           useParamsAuth: true,
           auth: authBaseUrl,
           token: oidcConf.token_endpoint,
-          scope: DEFRA_ID_SCOPES,
+          scope: defraIdScopes(clientId),
           /**
            * Extract user profile from OIDC ID token and populate credentials.
            * Bell gives us a plain `BellCredentials` object which we mutate
