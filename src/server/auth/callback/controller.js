@@ -143,7 +143,9 @@ const isParsedTokenResponse = (data) =>
 const missingAccessTokenIn = (data) =>
   isParsedTokenResponse(data) && !data.access_token
     ? {
-        reason: `no access_token in token response, keys: [${Object.keys(data).toSorted().join(', ')}]`
+        reason: `no access_token in token response, keys: [${Object.keys(data)
+          .toSorted((a, b) => a.localeCompare(b))
+          .join(', ')}]`
       }
     : {}
 
