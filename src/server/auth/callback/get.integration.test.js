@@ -47,7 +47,7 @@ const performSignInFlow = async (
 
   mswServer.use(
     http.post('http://defra-id.auth/token', () =>
-      HttpResponse.json({ id_token: idToken })
+      HttpResponse.json({ id_token: idToken, access_token: 'access-token' })
     )
   )
 
