@@ -23,9 +23,19 @@
  */
 
 /**
+ * A year as a JSON object key, such as `'2026'`.
+ * @typedef {`${number}`} YearKey
+ */
+
+/**
+ * A `YYYY-MM-DD` date as a JSON object key, such as `'2026-01-01'`.
+ * @typedef {`${number}-${number}-${number}`} DateKey
+ */
+
+/**
  * By year, the date each status starts. A status holds until the next date, or
  * the end of the year.
- * @typedef {Record<string, Record<string, { status: RegAccStatus }>>} RegAccStatusByDate
+ * @typedef {Record<YearKey, Record<DateKey, { status: RegAccStatus }>>} RegAccStatusByDate
  */
 
 /**

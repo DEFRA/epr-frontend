@@ -45,18 +45,17 @@ const registeredSince = (fromYear) => ({
 })
 
 /**
+ * Registered-only from 1 January of each year, `fromYear` to this year.
  * @param {number} fromYear
  */
-const regAccStatusSince = (fromYear) =>
-  Object.fromEntries(
-    Array.from(
-      { length: Math.max(thisYear - fromYear + 1, 0) },
-      (_, offset) => [
-        fromYear + offset,
-        { [`${fromYear + offset}-01-01`]: { status: 'registeredOnly' } }
-      ]
-    )
-  )
+const regAccStatusSince = (fromYear) => {
+  /** @type {Record<number, Record<string, { status: string }>>} */
+  const byYear = {}
+  for (let year = fromYear; year <= thisYear; year++) {
+    byYear[year] = { [`${year}-01-01`]: { status: 'registeredOnly' } }
+  }
+  return byYear
+}
 
 /**
  * @param {string} current
