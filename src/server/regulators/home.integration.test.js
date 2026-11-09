@@ -490,12 +490,21 @@ describe('/regulators/home - GET integration', () => {
     expect(headers.location).toBeUndefined()
   })
 
-  it('redirects an unauthenticated request to sign in', async ({ server }) => {
-    const { statusCode } = await server.inject({
-      method: 'GET',
-      url: '/regulators/home'
-    })
+  it.for([
+    ['no signInProvider cookie', undefined],
+    ['the regulator signInProvider cookie', `signInProvider=${OIDC_ENTRA_ID}`],
+    ['an operator signInProvider cookie', 'signInProvider=defra-id']
+  ])(
+    'sends a request with no session to the regulators start page given %s',
+    async ([, cookie], { server }) => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: '/regulators/home',
+        ...(cookie && { headers: { cookie } })
+      })
 
-    expect(statusCode).toBe(statusCodes.found)
-  })
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/regulators/start')
+    }
+  )
 })

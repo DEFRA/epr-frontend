@@ -30,7 +30,7 @@ export const regulators = {
           path: paths.regulators.home,
           options: {
             ...controller.options,
-            auth: { scope: [SCOPES.organisationSearch] }
+            auth: { mode: 'try', scope: [SCOPES.organisationSearch] }
           }
         },
         {
