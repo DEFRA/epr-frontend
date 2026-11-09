@@ -490,12 +490,49 @@ describe('/regulators/home - GET integration', () => {
     expect(headers.location).toBeUndefined()
   })
 
-  it('redirects an unauthenticated request to sign in', async ({ server }) => {
-    const { statusCode } = await server.inject({
+  it.for(
+    /** @type {[string, string, string?][]} */ ([
+      ['no signInProvider cookie', '/regulators/home'],
+      [
+        'the regulator signInProvider cookie',
+        '/regulators/home',
+        `signInProvider=${OIDC_ENTRA_ID}`
+      ],
+      [
+        'an operator signInProvider cookie',
+        '/regulators/home',
+        'signInProvider=defra-id'
+      ],
+      [
+        'a session cookie with no session behind it',
+        '/regulators/home',
+        `userSession=expired; signInProvider=${OIDC_ENTRA_ID}`
+      ],
+      ['a query the search would refuse', '/regulators/home?page=0']
+    ])
+  )(
+    'sends a request with no session to the regulators start page given %s',
+    async ([, url, cookie], { server }) => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url,
+        ...(cookie && { headers: { cookie } })
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/regulators/start')
+    }
+  )
+
+  it('keeps a Welsh visitor with no session on the Welsh start page', async ({
+    server
+  }) => {
+    const { statusCode, headers } = await server.inject({
       method: 'GET',
-      url: '/regulators/home'
+      url: '/cy/regulators/home'
     })
 
     expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe('/cy/regulators/start')
   })
 })
