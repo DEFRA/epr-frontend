@@ -7,7 +7,10 @@ import {
   forgetSignInProvider,
   rememberSignInProvider
 } from '#server/auth/helpers/sign-in-provider.js'
-import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
+import {
+  DEFRA_ID_SIGN_IN_COOKIE,
+  OIDC_DEFRA_ID
+} from '#server/auth/plugins/defra-id.js'
 import {
   OIDC_ENTRA_ID,
   SELECT_ACCOUNT_QUERY
@@ -150,13 +153,25 @@ const missingAccessTokenIn = (data) =>
     : {}
 
 /**
+ * The user cancelled at Defra ID, or the browser no longer holds the sign in
+ * cookie, as after the back button or from a bot.
+ * @param {HapiRequest} request
+ */
+const isRoutineSignInFailure = (request) =>
+  Boolean(request.query.error) || !request.state[DEFRA_ID_SIGN_IN_COOKIE]
+
+/**
  * Logs why sign in failed and, when the token response lacked an access
  * token, its key names: the error bell raises carries the tokens.
  * @param {HapiRequest} request
  * @param {Error & { data?: unknown }} error
  */
-const logSignInFailure = (request, error) =>
-  request.logger.error({
+const logSignInFailure = (request, error) => {
+  const log = isRoutineSignInFailure(request)
+    ? request.logger.warn
+    : request.logger.error
+
+  log.call(request.logger, {
     message: 'User sign in failed',
     error: { message: error.message },
     event: {
@@ -165,6 +180,7 @@ const logSignInFailure = (request, error) =>
       ...missingAccessTokenIn(error.data)
     }
   })
+}
 
 /**
  * The referrer stash is a queue, and a sign in that ends without redirecting

@@ -19,6 +19,7 @@ import { recordSignInReferrer } from '../helpers/record-sign-in-referrer.js'
  */
 
 export const OIDC_DEFRA_ID = 'defra-id'
+export const DEFRA_ID_SIGN_IN_COOKIE = 'bell-defra-id'
 
 /**
  * The client id is a resource scope: without it Azure B2C issues no access
@@ -88,7 +89,7 @@ const createDefraId = (authProvider) => ({
       server.auth.strategy(OIDC_DEFRA_ID, 'bell', {
         clientId,
         clientSecret,
-        cookie: 'bell-defra-id',
+        cookie: DEFRA_ID_SIGN_IN_COOKIE,
         isSecure: config.get('session.cookie.secure'),
         location: (request) => {
           recordSignInReferrer(request)

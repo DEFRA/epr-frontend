@@ -5,7 +5,10 @@ import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { findSetCookie } from '#server/common/test-helpers/cookie-helper.js'
+import {
+  extractCookieValues,
+  findSetCookie
+} from '#server/common/test-helpers/cookie-helper.js'
 import { identityHandler } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -320,12 +323,41 @@ describe('/auth/callback - GET integration', async () => {
       expect(metrics.signIn.failure).toHaveBeenCalledWith('defra-id')
     })
 
-    it('logs why sign in failed, with no reason', ({ server }) => {
-      expect(server.loggerMocks.error).toHaveBeenCalledExactlyOnceWith({
+    it('warns why sign in failed, as the browser lost its sign in cookie', ({
+      server
+    }) => {
+      expect(server.loggerMocks.warn).toHaveBeenCalledExactlyOnceWith({
         message: 'User sign in failed',
         error: { message: 'Missing defra-id request token cookie' },
         event: { action: 'signInFailure', outcome: 'failure' }
       })
+      expect(server.loggerMocks.error).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('on the user cancelling sign in at Defra ID', () => {
+    it('warns why sign in failed', async ({ server }) => {
+      const signInResponse = await server.inject({
+        method: 'GET',
+        url: '/login'
+      })
+
+      await server.inject({
+        method: 'GET',
+        url: '/auth/callback?error=access_denied&error_description=AADB2C90091',
+        headers: {
+          cookie: extractCookieValues(
+            signInResponse.headers['set-cookie']
+          ).join('; ')
+        }
+      })
+
+      expect(server.loggerMocks.warn).toHaveBeenCalledExactlyOnceWith({
+        message: 'User sign in failed',
+        error: { message: 'App rejected: AADB2C90091' },
+        event: { action: 'signInFailure', outcome: 'failure' }
+      })
+      expect(server.loggerMocks.error).not.toHaveBeenCalled()
     })
   })
 
