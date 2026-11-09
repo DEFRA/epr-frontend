@@ -30,7 +30,19 @@ export const regulators = {
           path: paths.regulators.home,
           options: {
             ...controller.options,
-            auth: { mode: 'try', scope: [SCOPES.organisationSearch] }
+            // `try` lets a visitor with no session reach the redirect to the
+            // start page, which runs before the query is validated.
+            auth: { mode: 'try', scope: [SCOPES.organisationSearch] },
+            ext: {
+              onPostAuth: {
+                method: (request, h) =>
+                  request.auth.isAuthenticated
+                    ? h.continue
+                    : h
+                        .redirect(request.localiseUrl(paths.regulators.start))
+                        .takeover()
+              }
+            }
           }
         },
         {

@@ -29,10 +29,6 @@ export const controller = {
     }
   },
   async handler(request, h) {
-    if (!request.auth.isAuthenticated) {
-      return h.redirect(request.localiseUrl(paths.regulators.start))
-    }
-
     const { page, search } = request.query
     const credentials = request.auth.credentials
     const { backendToken } = credentials
