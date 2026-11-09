@@ -1,4 +1,4 @@
-import { REG_ACC_STATUS } from '#domain/organisations/model.js'
+import { REG_ACC_STATUS } from '#domain/registration.js'
 import {
   dayBefore,
   toCalendarDate,
@@ -7,7 +7,7 @@ import {
 import { toYear } from '#server/common/helpers/year.js'
 
 /**
- * @import { RegAccStatus } from '#domain/organisations/model.js'
+ * @import { RegAccStatus } from '#domain/registration.js'
  * @import { Accreditation, RegistrationView } from './organisation-view.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { DateRange } from './registration-resource.js'

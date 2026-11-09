@@ -2,11 +2,11 @@
  * @import {
  *   AccreditationStatus,
  *   Material,
- *   RegAccStatus,
  *   RegistrationStatus,
  *   RegulatorValue,
  *   ReprocessingType
  * } from '#domain/organisations/model.js'
+ * @import { RegAccStatus } from '#domain/registration.js'
  * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'

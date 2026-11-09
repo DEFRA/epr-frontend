@@ -1,8 +1,8 @@
 import {
   ACCREDITATION_STATUS,
-  REG_ACC_STATUS,
   REGISTRATION_STATUS
 } from '#domain/organisations/model.js'
+import { REG_ACC_STATUS } from '#domain/registration.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 

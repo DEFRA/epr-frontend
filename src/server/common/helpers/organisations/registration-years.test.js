@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { REG_ACC_STATUS } from '#domain/organisations/model.js'
+import { REG_ACC_STATUS } from '#domain/registration.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toYear } from '#server/common/helpers/year.js'
 import { buildAccreditationView } from '#server/common/test-helpers/organisation-view-fixtures.js'

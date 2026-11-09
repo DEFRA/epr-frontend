@@ -1,6 +1,6 @@
 /** @import { ReportsTable } from '../helpers/report-rows.js'; */
 /** @import { TableRow } from '../helpers/report-rows.js'; */
-import { REG_ACC_STATUS } from '#domain/organisations/model.js'
+import { REG_ACC_STATUS } from '#domain/registration.js'
 import { offersWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
