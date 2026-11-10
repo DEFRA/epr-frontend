@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { REG_ACC_STATUS } from '#domain/registration.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -27,7 +27,6 @@ const accredited = { status: REG_ACC_STATUS.ACCREDITED }
 const cancelled = { status: REG_ACC_STATUS.CANCELLED }
 
 const YEAR = toYear(2026)
-const NOW = new Date('2026-06-15T10:00:00.000Z')
 
 /**
  * @param {string} accreditationNumber
@@ -52,14 +51,6 @@ describe(accreditationEntries, () => {
 })
 
 describe(registeredYears, () => {
-  beforeEach(() => {
-    vi.useFakeTimers({ now: NOW })
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
   it('names the years holding an approved day, most recent first', () => {
     expect(
       registeredYears(
@@ -86,7 +77,7 @@ describe(registeredYears, () => {
     ).toStrictEqual([2025])
   })
 
-  it('leaves out a year that has not started yet', () => {
+  it('names a year that has not started yet, as the backend serves it', () => {
     expect(
       registeredYears(
         served({
@@ -94,16 +85,7 @@ describe(registeredYears, () => {
           2027: { '2027-01-01': accredited }
         })
       )
-    ).toStrictEqual([2026])
-  })
-
-  it('counts today and leaves out tomorrow', () => {
-    expect(
-      registeredYears(served({ 2026: { '2026-06-15': accredited } }))
-    ).toStrictEqual([2026])
-    expect(
-      registeredYears(served({ 2026: { '2026-06-16': accredited } }))
-    ).toStrictEqual([])
+    ).toStrictEqual([2027, 2026])
   })
 
   it('names only the years holding a day in the statuses asked for', () => {
@@ -116,17 +98,6 @@ describe(registeredYears, () => {
         [REG_ACC_STATUS.REGISTERED_ONLY]
       )
     ).toStrictEqual([2026])
-  })
-
-  it('leaves out a year whose day in the status asked for is still to come', () => {
-    expect(
-      registeredYears(
-        served({
-          2026: { '2026-01-01': accredited, '2026-06-16': registeredOnly }
-        }),
-        [REG_ACC_STATUS.REGISTERED_ONLY]
-      )
-    ).toStrictEqual([])
   })
 })
 

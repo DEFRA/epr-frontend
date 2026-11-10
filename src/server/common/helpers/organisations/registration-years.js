@@ -1,8 +1,7 @@
 import { REG_ACC_STATUS } from '#domain/registration.js'
 import {
   dayBefore,
-  toCalendarDate,
-  utcCalendarDate
+  toCalendarDate
 } from '#server/common/helpers/calendar-date.js'
 import { toYear } from '#server/common/helpers/year.js'
 
@@ -36,8 +35,8 @@ export const accreditationEntries = (accreditations) =>
   yearEntries(accreditations)
 
 /**
- * The years holding at least one day in the given statuses up to today, most
- * recent first. By default, every year with a day on which it was approved.
+ * The years holding at least one day in the given statuses, most recent first.
+ * By default, every year with a day on which it was approved.
  * @param {RegistrationView} registration
  * @param {readonly RegAccStatus[]} [statuses]
  * @returns {Year[]}
@@ -45,19 +44,13 @@ export const accreditationEntries = (accreditations) =>
 export const registeredYears = (
   { regAccStatusByDate },
   statuses = REGISTERED_STATUSES
-) => {
-  const today = utcCalendarDate(new Date())
-
-  return yearEntries(regAccStatusByDate)
+) =>
+  yearEntries(regAccStatusByDate)
     .filter(([, byDate]) =>
-      Object.entries(byDate).some(
-        ([date, { status }]) =>
-          statuses.includes(status) && date.localeCompare(today) <= 0
-      )
+      Object.values(byDate).some(({ status }) => statuses.includes(status))
     )
     .map(([year]) => year)
     .sort((one, other) => other - one)
-}
 
 /**
  * @param {[string, { status: RegAccStatus }]} entry
