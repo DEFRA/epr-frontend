@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom/vitest'
 import { toYear } from '#server/common/helpers/year.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'

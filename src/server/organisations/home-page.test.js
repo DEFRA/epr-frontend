@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom/vitest'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'

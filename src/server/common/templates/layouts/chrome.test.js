@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom/vitest'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
