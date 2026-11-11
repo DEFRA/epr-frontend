@@ -14,12 +14,12 @@ expect.extend(matchers)
 process.env.AWS_EMF_ENVIRONMENT = 'Local'
 process.env.DEFRA_ID_CLIENT_ID = 'test-client-id'
 process.env.DEFRA_ID_CLIENT_SECRET = 'test-secret'
-process.env.DEFRA_ID_OIDC_CONFIGURATION_URL =
+process.env.DEFRA_ID_OIDC_WELL_KNOWN_URL =
   'http://defra-id.auth/.well-known/openid-configuration'
 process.env.DEFRA_ID_SERVICE_ID = 'test-service-id'
 process.env.ENTRA_CLIENT_ID = 'test-entra-client-id'
 process.env.ENTRA_CLIENT_SECRET = 'test-entra-secret'
-process.env.ENTRA_OIDC_WELL_KNOWN_CONFIGURATION_URL =
+process.env.ENTRA_OIDC_WELL_KNOWN_URL =
   'http://entra-id.auth/.well-known/openid-configuration'
 process.env.EPR_BACKEND_URL = 'http://epr-backend.test'
 process.env.LOG_FORMAT = 'ecs'

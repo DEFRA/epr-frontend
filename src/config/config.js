@@ -320,7 +320,7 @@ export const config = convict({
     oidcConfigurationUrl: {
       doc: 'DEFRA ID OIDC Configuration URL',
       format: String,
-      env: 'DEFRA_ID_OIDC_CONFIGURATION_URL',
+      env: 'DEFRA_ID_OIDC_WELL_KNOWN_URL',
       default: ''
     },
     serviceId: {
@@ -353,7 +353,7 @@ export const config = convict({
     oidcWellKnownConfigurationUrl: {
       doc: 'Entra ID OIDC .well-known configuration URL',
       format: String,
-      env: 'ENTRA_OIDC_WELL_KNOWN_CONFIGURATION_URL',
+      env: 'ENTRA_OIDC_WELL_KNOWN_URL',
       default:
         'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration'
     },
