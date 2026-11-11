@@ -1888,6 +1888,27 @@ describe('#listReportsController', () => {
         })
       })
 
+      it('sends the address to the current year ahead of a later one', async ({
+        server
+      }) => {
+        backendServesRegistrationWith(
+          'approved',
+          [{ status: 'approved', at: '2027-01-01T00:00:00.000Z' }],
+          {
+            2027: { '2027-01-01': { standing: 'registeredOnly' } },
+            2028: { '2028-01-01': { standing: 'registeredOnly' } }
+          }
+        )
+
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: `${registrationUrl}/reports`,
+          auth: mockAuth
+        })
+
+        expect(headers.location).toBe(`${registrationUrl}/reports/2027`)
+      })
+
       it("sends the address to the current year's list for a registration never approved", async ({
         server
       }) => {
