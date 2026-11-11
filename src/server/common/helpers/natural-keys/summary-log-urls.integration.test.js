@@ -52,6 +52,9 @@ const organisationView = {
   registrations: {
     [registrationNumber]: {
       status: approvedThisYear,
+      standingByDate: {
+        [thisYear]: { [`${thisYear}-01-01`]: { standing: 'registeredOnly' } }
+      },
       validFrom: '2026-01-01',
       material: 'plastic',
       submittedToRegulator: { code: 'ea' },

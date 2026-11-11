@@ -61,6 +61,9 @@ const organisation = {
         current: 'approved',
         timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
       },
+      standingByDate: {
+        2025: { '2025-01-01': { standing: 'registeredOnly' } }
+      },
       validFrom: '2025-01-01',
       material: 'glass_re_melt',
       submittedToRegulator: { code: 'ea' },
@@ -99,6 +102,9 @@ const organisation = {
           { status: 'cancelled', at: '2025-06-01T09:00:00.000Z' }
         ]
       },
+      standingByDate: {
+        2025: { '2025-01-01': { standing: 'registeredOnly' } }
+      },
       validFrom: '2025-01-01',
       material: 'aluminium',
       submittedToRegulator: { code: 'sepa' },
@@ -113,6 +119,9 @@ const organisation = {
       status: {
         current: 'approved',
         timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
+      },
+      standingByDate: {
+        2025: { '2025-01-01': { standing: 'registeredOnly' } }
       },
       validFrom: '2025-01-01',
       material: 'paper',

@@ -60,6 +60,10 @@ const regulator = buildMockAuth({
 const reprocessor = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
     status: registeredSince2025,
+    standingByDate: {
+      2025: { '2025-01-01': { standing: 'registeredOnly' } },
+      2026: { '2026-01-01': { standing: 'registeredOnly' } }
+    },
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'reprocessor',
@@ -75,6 +79,10 @@ const reprocessor = (overrides = {}) =>
 const exporter = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
     status: registeredSince2025,
+    standingByDate: {
+      2025: { '2025-01-01': { standing: 'registeredOnly' } },
+      2026: { '2026-01-01': { standing: 'registeredOnly' } }
+    },
     material: 'paper',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'exporter',
@@ -384,7 +392,10 @@ describe('the organisation home page', () => {
       server
     }) => {
       serve({
-        R26ER1: reprocessor({ status: { current: 'approved', timeline: [] } })
+        R26ER1: reprocessor({
+          status: { current: 'approved', timeline: [] },
+          standingByDate: {}
+        })
       })
 
       const { payload } = await visit(server)
