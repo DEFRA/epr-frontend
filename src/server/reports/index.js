@@ -4,8 +4,8 @@ import Joi from 'joi'
 import { asHapiRequest } from '#server/common/hapi-types.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
-import { currentYear } from '#server/common/helpers/year.js'
-import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
+import { currentYear, defaultYear } from '#server/common/helpers/year.js'
+import { registeredYears } from '#server/common/helpers/organisations/registration-years.js'
 
 import { checkGetController, checkPostController } from './check-controller.js'
 import { createController } from './create-controller.js'
@@ -270,11 +270,9 @@ const monthlyToAccreditedRoute = {
 }
 
 /**
- * Sends the yearless report list address to the latest year the registration
- * was approved in, as the organisation home does, or the current year if none.
  * @type {ServerRoute}
  */
-const latestYearListRoute = {
+const yearlessListRoute = {
   method: 'GET',
   path: listPath,
   async handler(rawRequest, h) {
@@ -285,12 +283,12 @@ const latestYearListRoute = {
       ...keys,
       backendToken: request.auth.credentials.backendToken
     })
-    const [latestYear] = registeredYears(registration)
+    const year = defaultYear(registeredYears(registration)) ?? currentYear()
 
     return redirectPreservingMethod(
       request,
       h,
-      reportsListPath({ ...keys, year: latestYear ?? currentYear() })
+      reportsListPath({ ...keys, year })
     )
   }
 }
@@ -305,7 +303,7 @@ export const reports = {
           method: 'GET',
           path: `${listPath}/{year}`
         },
-        latestYearListRoute,
+        yearlessListRoute,
         ...submissionRoutes(),
         monthlyToAccreditedRoute
       ])

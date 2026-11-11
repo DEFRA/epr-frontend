@@ -1,15 +1,14 @@
 import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
-import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildViewModel } from './build-view-model.js'
 
 /**
- * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
@@ -54,34 +53,21 @@ const anOrganisation = (overrides) => ({
 })
 
 /**
- * @param {Record<string, string>} timeline - status by ISO datetime
- * @returns {Accreditation}
- */
-const anAccreditation = (timeline) => ({
-  accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
-  prns: { open: true },
-  status: {
-    current: 'approved',
-    timeline: Object.entries(timeline).map(([at, status]) => ({ status, at }))
-  }
-})
-
-/**
- * @param {Record<string, Accreditation>} [accreditations]
  * @returns {RegistrationView}
  */
-const aRegistration = (accreditations = {}) => ({
+const aRegistration = () => ({
   status: {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
+  standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'reprocessor',
   reprocessingType: 'input',
   site: { address: { fullAddress: 'North Road, Leeds' } },
-  accreditations
+  accreditations: {}
 })
 
 /**
@@ -141,17 +127,6 @@ const cellsOf = (row) => {
 }
 
 describe(buildViewModel, () => {
-  // The page runs a year up to today, so the clock decides whether it holds
-  // anything.
-  beforeEach(() => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2026-06-15T00:00:00Z'))
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
   it('names the year it covers', () => {
     expect(build().heading).toBe('2026 Registered-only periods')
   })
@@ -185,74 +160,62 @@ describe(buildViewModel, () => {
     ])
   })
 
-  it('holds data where the year ran without an accreditation', () => {
+  /**
+   * @param {RegistrationView['standingByDate'][`${number}`]} byDate
+   * @returns {RegistrationView}
+   */
+  const servedIn2026 = (byDate) => ({
+    ...aRegistration(),
+    standingByDate: { 2026: byDate }
+  })
+
+  it('holds data in a year served as registered-only', () => {
     expect(build().hasData).toBe(true)
   })
 
-  it('holds data where an accreditation started after the registration', () => {
+  it('holds data where registered-only gives way to accredited', () => {
     expect(
       build({
-        registration: aRegistration({
-          2026: anAccreditation({ '2026-03-01T09:00:00.000Z': 'approved' })
+        registration: servedIn2026({
+          '2026-01-01': { standing: 'registeredOnly' },
+          '2026-03-01': { standing: 'accredited' }
         })
       }).hasData
     ).toBe(true)
   })
 
-  it('holds none where the accreditation ran from the registration start', () => {
+  it('holds data where accredited gives way to registered-only', () => {
     expect(
       build({
-        registration: aRegistration({
-          2026: anAccreditation({ '2026-01-01T09:00:00.000Z': 'approved' })
-        })
-      }).hasData
-    ).toBe(false)
-  })
-
-  it('holds data for the gap a cancelled accreditation left', () => {
-    expect(
-      build({
-        registration: aRegistration({
-          2026: anAccreditation({
-            '2026-01-01T09:00:00.000Z': 'approved',
-            '2026-03-10T09:00:00.000Z': 'cancelled',
-            '2026-03-30T09:00:00.000Z': 'approved'
-          })
+        registration: servedIn2026({
+          '2026-01-01': { standing: 'accredited' },
+          '2026-03-10': { standing: 'registeredOnly' }
         })
       }).hasData
     ).toBe(true)
   })
 
-  it('holds none where the accreditation was only suspended', () => {
+  it('holds none in a year served only as accredited', () => {
     expect(
       build({
-        registration: aRegistration({
-          2026: anAccreditation({
-            '2026-01-01T09:00:00.000Z': 'approved',
-            '2026-03-10T09:00:00.000Z': 'suspended'
-          })
+        registration: servedIn2026({ '2026-01-01': { standing: 'accredited' } })
+      }).hasData
+    ).toBe(false)
+  })
+
+  it('holds none where accredited gives way to cancelled', () => {
+    expect(
+      build({
+        registration: servedIn2026({
+          '2026-01-01': { standing: 'accredited' },
+          '2026-03-01': { standing: 'cancelled' }
         })
       }).hasData
     ).toBe(false)
   })
 
-  it('holds none where the registration was cancelled when the accreditation was', () => {
-    const cancelledOn = {
-      '2026-01-01T09:00:00.000Z': 'approved',
-      '2026-03-01T09:00:00.000Z': 'cancelled'
-    }
-
-    expect(
-      build({
-        registration: {
-          ...aRegistration({ 2026: anAccreditation(cancelledOn) }),
-          status: {
-            current: 'cancelled',
-            timeline: anAccreditation(cancelledOn).status.timeline
-          }
-        }
-      }).hasData
-    ).toBe(false)
+  it('holds none in a year not served', () => {
+    expect(build({ year: toYear(2027) }).hasData).toBe(false)
   })
 
   describe('the reports table', () => {

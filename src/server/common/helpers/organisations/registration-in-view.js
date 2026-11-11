@@ -2,14 +2,14 @@ import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
-import { currentYear } from '#server/common/helpers/year.js'
-import { registeredYears } from '#server/registrations/details/helpers/timeline-dates.js'
+import { currentYear, defaultYear } from '#server/common/helpers/year.js'
 import {
   accreditationPath,
   registeredOnlyPath
 } from '#server/reports/helpers/report-paths.js'
 
 import { isAccreditationActive } from './accreditation-helpers.js'
+import { registeredYears } from './registration-years.js'
 
 /**
  * @import { LedgerKind } from '#domain/ledger-kinds.js'
@@ -131,17 +131,13 @@ export const materialsHomepage = (keys, registration, year) => {
 }
 
 /**
- * The materials homepage for the latest registered year, or the current
- * year's registered-only address for a registration never registered.
  * @param {RegistrationKeys} keys
  * @param {RegistrationView} registration
  * @returns {string}
  */
 export const defaultMaterialsHomepagePath = (keys, registration) => {
-  const [latestYear] = registeredYears(registration)
-  const homepage = latestYear
-    ? materialsHomepage(keys, registration, latestYear)
-    : null
+  const year = defaultYear(registeredYears(registration))
+  const homepage = year ? materialsHomepage(keys, registration, year) : null
 
   return homepage?.path ?? registeredOnlyPath({ ...keys, year: currentYear() })
 }

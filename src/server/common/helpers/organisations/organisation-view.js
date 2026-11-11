@@ -6,6 +6,7 @@
  *   RegulatorValue,
  *   ReprocessingType
  * } from '#domain/organisations/model.js'
+ * @import { Standing } from '#domain/registration.js'
  * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
@@ -19,6 +20,22 @@
 /**
  * @template {string} S
  * @typedef {{ current: S, timeline: StatusTimeline }} Status
+ */
+
+/**
+ * A year as a JSON object key, such as `'2026'`.
+ * @typedef {`${number}`} YearKey
+ */
+
+/**
+ * A `YYYY-MM-DD` date as a JSON object key, such as `'2026-01-01'`.
+ * @typedef {`${number}-${number}-${number}`} DateKey
+ */
+
+/**
+ * By year, the date each standing starts. A standing holds until the next date,
+ * or the end of the year.
+ * @typedef {Record<YearKey, Record<DateKey, { standing: Standing }>>} StandingByDate
  */
 
 /**
@@ -53,6 +70,7 @@
 /**
  * @typedef {{
  *   status: Status<RegistrationStatus>,
+ *   standingByDate: StandingByDate,
  *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },

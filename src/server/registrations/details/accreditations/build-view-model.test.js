@@ -95,6 +95,12 @@ const aRegistration = (overrides) =>
   /** @type {RegistrationView} */ (
     /** @type {unknown} */ ({
       status: { current: 'approved', timeline: [] },
+      standingByDate: {
+        2026: {
+          '2026-01-01': { standing: 'registeredOnly' },
+          '2026-07-01': { standing: 'accredited' }
+        }
+      },
       validFrom: '2026-01-01',
       material: 'plastic',
       wasteProcessingType: 'reprocessor',
@@ -270,48 +276,53 @@ describe('the accreditation details view model', () => {
     expect(build().heading).toBe('Accreditation')
   })
 
-  it('starts the period on the date it was first approved in its year, ending it on 31 December', () => {
+  it('starts the period on its first accredited day, ending it on 31 December', () => {
     expect(build().period).toBe('1 July to 31 December 2026')
   })
 
-  it('starts the period on 1 January when it was approved the year before', () => {
+  it('starts the period on 1 January when accredited going into the year', () => {
     expect(
-      build({
-        status: {
-          current: 'approved',
-          timeline: [{ status: 'approved', at: '2025-12-15T09:00:00.000Z' }]
+      build(
+        {},
+        {
+          standingByDate: {
+            2026: { '2026-01-01': { standing: 'accredited' } }
+          }
         }
-      }).period
+      ).period
     ).toBe('1 January to 31 December 2026')
   })
 
-  it('ends the period on the cancellation date when it was last cancelled', () => {
+  it('ends the period the day before the accreditation was last cancelled', () => {
     expect(
-      build({
-        status: {
-          current: 'cancelled',
-          timeline: [
-            { status: 'approved', at: '2026-07-01T09:00:00.000Z' },
-            { status: 'cancelled', at: '2026-09-10T09:00:00.000Z' }
-          ]
+      build(
+        {},
+        {
+          standingByDate: {
+            2026: {
+              '2026-07-01': { standing: 'accredited' },
+              '2026-09-10': { standing: 'registeredOnly' }
+            }
+          }
         }
-      }).period
-    ).toBe('1 July to 10 September 2026')
+      ).period
+    ).toBe('1 July to 9 September 2026')
   })
 
   it('ends the period on 31 December when reinstated after a cancellation', () => {
     expect(
-      build({
-        status: {
-          current: 'suspended',
-          timeline: [
-            { status: 'approved', at: '2026-03-01T09:00:00.000Z' },
-            { status: 'cancelled', at: '2026-05-10T09:00:00.000Z' },
-            { status: 'approved', at: '2026-06-01T09:00:00.000Z' },
-            { status: 'suspended', at: '2026-08-01T09:00:00.000Z' }
-          ]
+      build(
+        {},
+        {
+          standingByDate: {
+            2026: {
+              '2026-03-01': { standing: 'accredited' },
+              '2026-05-10': { standing: 'registeredOnly' },
+              '2026-06-01': { standing: 'accredited' }
+            }
+          }
         }
-      }).period
+      ).period
     ).toBe('1 March to 31 December 2026')
   })
 

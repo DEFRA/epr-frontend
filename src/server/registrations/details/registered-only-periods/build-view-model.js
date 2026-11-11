@@ -12,12 +12,11 @@ import {
 } from '#server/reports/helpers/report-paths.js'
 
 import { toCaption } from '../helpers/caption.js'
-import { registeredOnlyStretches } from '../helpers/registered-only.js'
-import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
 import {
-  registeredStretches,
-  registrationAccreditedStretches
-} from '../helpers/timeline-dates.js'
+  REGISTERED_ONLY,
+  registeredYears
+} from '#server/common/helpers/organisations/registration-years.js'
+import { toReportRows, toReportsHead } from '../helpers/report-rows.js'
 
 /**
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
@@ -154,11 +153,6 @@ export const buildViewModel = ({
     }
   )
 
-  const stretches = registeredOnlyStretches({
-    registered: registeredStretches(registration, year),
-    accredited: registrationAccreditedStretches(registration)
-  })
-
   return {
     breadcrumbs: toBreadcrumbs({
       keys,
@@ -169,9 +163,7 @@ export const buildViewModel = ({
       localiseUrl
     }),
     caption: toCaption([name, keys.registrationNumber]),
-    // A year holding no registered-only time is the page's whole subject, so
-    // the answer is carried rather than the stretches that produced it.
-    hasData: stretches.length > 0,
+    hasData: registeredYears(registration, REGISTERED_ONLY).includes(year),
     heading,
     ledger: toLedger({
       ledgerEvents,

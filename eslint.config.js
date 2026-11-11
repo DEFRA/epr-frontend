@@ -51,8 +51,7 @@ const brandConstructors = [
     mintedIn: [
       'src/server/common/helpers/route-params.js',
       'src/server/common/helpers/organisations/fetch-organisation-years.js',
-      'src/server/common/helpers/organisations/accreditation-entries.js',
-      'src/server/registrations/details/helpers/timeline-dates.js',
+      'src/server/common/helpers/organisations/registration-years.js',
       'src/server/common/helpers/natural-keys/swap-keys.js'
     ],
     message:

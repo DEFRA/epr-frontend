@@ -2,7 +2,6 @@ import { capitalize } from 'lodash-es'
 
 import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
-import { accreditationEntries } from '#server/common/helpers/organisations/accreditation-entries.js'
 import { siteLineOf } from '#server/common/helpers/organisations/site-name.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
@@ -15,9 +14,10 @@ import {
 import { toCaption } from './helpers/caption.js'
 import { toDateRange } from './helpers/date-range.js'
 import {
+  accreditationEntries,
   accreditedDateRange,
   registeredYears
-} from './helpers/timeline-dates.js'
+} from '#server/common/helpers/organisations/registration-years.js'
 
 /**
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
@@ -135,10 +135,7 @@ const toAccreditedPeriods = ({ keys, registration, localise, localiseUrl }) =>
     .sort(([year], [other]) => other - year)
     .map(([year, accreditation]) => ({
       number: accreditation.accreditationNumber,
-      dateRange: toDateRange(
-        accreditedDateRange(accreditation, year),
-        localise
-      ),
+      dateRange: toDateRange(accreditedDateRange(registration, year), localise),
       status: toStatusTag(accreditation.status.current),
       href: localiseUrl(accreditationPath({ ...keys, year }))
     }))

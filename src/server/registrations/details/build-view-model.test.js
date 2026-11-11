@@ -51,6 +51,7 @@ const aReprocessorAt = (address) => ({
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
+  standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
@@ -66,6 +67,7 @@ const anExporter = {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
+  standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
@@ -208,6 +210,16 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...anExporter,
+          standingByDate: {
+            2025: {
+              '2025-01-01': { standing: 'registeredOnly' },
+              '2025-03-01': { standing: 'accredited' }
+            },
+            2026: {
+              '2026-01-01': { standing: 'registeredOnly' },
+              '2026-07-01': { standing: 'accredited' }
+            }
+          },
           validFrom: '2025-01-01',
           accreditations: {
             2025: anAccreditation({
@@ -244,6 +256,9 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...anExporter,
+          standingByDate: {
+            2026: { '2026-01-01': { standing: 'accredited' } }
+          },
           accreditations: {
             2026: anAccreditation({
               status: {
@@ -262,10 +277,16 @@ describe(buildViewModel, () => {
       )
     })
 
-    it('end on the cancellation date for a cancelled accreditation', () => {
+    it('end the day before the cancellation for a cancelled accreditation', () => {
       const viewModel = build({
         registration: {
           ...anExporter,
+          standingByDate: {
+            2026: {
+              '2026-02-15': { standing: 'accredited' },
+              '2026-03-31': { standing: 'registeredOnly' }
+            }
+          },
           accreditations: {
             2026: anAccreditation({
               status: {
@@ -283,7 +304,7 @@ describe(buildViewModel, () => {
       expect(viewModel.accreditedPeriods).toStrictEqual([
         {
           number: 'A26ER5001180114PL',
-          dateRange: '15 February to 31 March 2026',
+          dateRange: '15 February to 30 March 2026',
           status: toStatusTag('cancelled'),
           href: `${registrationPath}/accreditations/2026`
         }
@@ -311,6 +332,11 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...anExporter,
+          standingByDate: {
+            2024: { '2024-06-01': { standing: 'registeredOnly' } },
+            2025: { '2025-01-01': { standing: 'registeredOnly' } },
+            2026: { '2026-01-01': { standing: 'registeredOnly' } }
+          },
           status: {
             current: 'approved',
             timeline: [{ status: 'approved', at: '2024-06-01T00:00:00.000Z' }]
@@ -360,6 +386,12 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...anExporter,
+          standingByDate: {
+            2025: {
+              '2025-01-01': { standing: 'registeredOnly' },
+              '2025-06-01': { standing: 'cancelled' }
+            }
+          },
           status: {
             current: 'cancelled',
             timeline: [

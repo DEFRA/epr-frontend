@@ -1,3 +1,4 @@
+/** @import { StandingByDate } from '#server/common/helpers/organisations/organisation-view.js'; */
 import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
@@ -122,6 +123,9 @@ const registeredOnlyFrom2025 = buildRegistrationWithAccreditation({
     status: {
       current: 'approved',
       timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
+    },
+    standingByDate: {
+      2025: { '2025-01-01': { standing: 'registeredOnly' } }
     },
     accreditations: {}
   })
@@ -1829,12 +1833,18 @@ describe('#listReportsController', () => {
       /**
        * @param {RegistrationStatus} current
        * @param {StatusTimeline} timeline
+       * @param {StandingByDate} standingByDate
        */
-      const backendServesRegistrationWith = (current, timeline) =>
+      const backendServesRegistrationWith = (
+        current,
+        timeline,
+        standingByDate
+      ) =>
         vi.mocked(fetchRegistration).mockResolvedValue({
           organisation: accreditedRegistration.organisation,
           registration: buildRegistrationView({
-            status: { current, timeline }
+            status: { current, timeline },
+            standingByDate
           })
         })
 
@@ -1848,10 +1858,20 @@ describe('#listReportsController', () => {
       it('sends the address to the latest year the registration was approved in', async ({
         server
       }) => {
-        backendServesRegistrationWith('cancelled', [
-          { status: 'approved', at: '2024-01-01T00:00:00.000Z' },
-          { status: 'cancelled', at: '2025-06-30T00:00:00.000Z' }
-        ])
+        backendServesRegistrationWith(
+          'cancelled',
+          [
+            { status: 'approved', at: '2024-01-01T00:00:00.000Z' },
+            { status: 'cancelled', at: '2025-06-30T00:00:00.000Z' }
+          ],
+          {
+            2024: { '2024-01-01': { standing: 'registeredOnly' } },
+            2025: {
+              '2025-01-01': { standing: 'registeredOnly' },
+              '2025-06-30': { standing: 'cancelled' }
+            }
+          }
+        )
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',
@@ -1868,12 +1888,35 @@ describe('#listReportsController', () => {
         })
       })
 
+      it('sends the address to the current year ahead of a later one', async ({
+        server
+      }) => {
+        backendServesRegistrationWith(
+          'approved',
+          [{ status: 'approved', at: '2027-01-01T00:00:00.000Z' }],
+          {
+            2027: { '2027-01-01': { standing: 'registeredOnly' } },
+            2028: { '2028-01-01': { standing: 'registeredOnly' } }
+          }
+        )
+
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: `${registrationUrl}/reports`,
+          auth: mockAuth
+        })
+
+        expect(headers.location).toBe(`${registrationUrl}/reports/2027`)
+      })
+
       it("sends the address to the current year's list for a registration never approved", async ({
         server
       }) => {
-        backendServesRegistrationWith('created', [
-          { status: 'created', at: '2026-03-01T00:00:00.000Z' }
-        ])
+        backendServesRegistrationWith(
+          'created',
+          [{ status: 'created', at: '2026-03-01T00:00:00.000Z' }],
+          {}
+        )
 
         const { headers } = await server.inject({
           method: 'GET',
@@ -1887,9 +1930,14 @@ describe('#listReportsController', () => {
       it('keeps the language when sending the address on', async ({
         server
       }) => {
-        backendServesRegistrationWith('approved', [
-          { status: 'approved', at: '2026-01-01T00:00:00.000Z' }
-        ])
+        backendServesRegistrationWith(
+          'approved',
+          [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }],
+          {
+            2026: { '2026-01-01': { standing: 'registeredOnly' } },
+            2027: { '2027-01-01': { standing: 'registeredOnly' } }
+          }
+        )
 
         const { headers } = await server.inject({
           method: 'GET',

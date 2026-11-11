@@ -22,6 +22,16 @@ export const toYear = (value) => /** @type {Year} */ (value)
  */
 export const currentYear = () => toYear(new Date().getUTCFullYear())
 
+/**
+ * @param {Year[]} years
+ * @returns {Year | undefined}
+ */
+export const defaultYear = (years) => {
+  const thisYear = currentYear()
+  const [latestYear] = years.toSorted((one, other) => other - one)
+  return years.includes(thisYear) ? thisYear : latestYear
+}
+
 const FIXED_YEAR = 2026
 
 /**

@@ -1,0 +1,168 @@
+import { describe, expect, it } from 'vitest'
+
+import { STANDING } from '#domain/registration.js'
+import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toYear } from '#server/common/helpers/year.js'
+import { buildAccreditationView } from '#server/common/test-helpers/organisation-view-fixtures.js'
+
+import {
+  REGISTERED_ONLY,
+  accreditationEntries,
+  accreditedDateRange,
+  registeredYears
+} from './registration-years.js'
+
+/** @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
+
+/**
+ * @param {RegistrationView['standingByDate']} standingByDate
+ * @returns {RegistrationView}
+ */
+const served = (standingByDate) =>
+  /** @type {RegistrationView} */ (/** @type {unknown} */ ({ standingByDate }))
+
+const registeredOnly = { standing: STANDING.REGISTERED_ONLY }
+const accredited = { standing: STANDING.ACCREDITED }
+const cancelled = { standing: STANDING.CANCELLED }
+
+const YEAR = toYear(2026)
+
+/**
+ * @param {string} accreditationNumber
+ */
+const accreditationNumbered = (accreditationNumber) =>
+  buildAccreditationView({
+    accreditationNumber: toAccreditationNumber(accreditationNumber)
+  })
+
+describe(accreditationEntries, () => {
+  it('pairs each accreditation with the year it is keyed by, as a number', () => {
+    const accreditation2025 = accreditationNumbered('A25ER5001180114PL')
+    const accreditation2026 = accreditationNumbered('A26ER5001180114PL')
+
+    expect(
+      accreditationEntries({ 2026: accreditation2026, 2025: accreditation2025 })
+    ).toStrictEqual([
+      [2025, accreditation2025],
+      [2026, accreditation2026]
+    ])
+  })
+})
+
+describe(registeredYears, () => {
+  it('names the years holding an approved day, most recent first', () => {
+    expect(
+      registeredYears(
+        served({
+          2025: { '2025-02-01': registeredOnly },
+          2026: { '2026-01-01': accredited }
+        })
+      )
+    ).toStrictEqual([2026, 2025])
+  })
+
+  it('names no year for a registration never approved', () => {
+    expect(registeredYears(served({}))).toStrictEqual([])
+  })
+
+  it('leaves out a year spent wholly cancelled', () => {
+    expect(
+      registeredYears(
+        served({
+          2025: { '2025-01-01': registeredOnly },
+          2026: { '2026-01-01': cancelled }
+        })
+      )
+    ).toStrictEqual([2025])
+  })
+
+  it('names a year that has not started yet, as the backend serves it', () => {
+    expect(
+      registeredYears(
+        served({
+          2026: { '2026-01-01': registeredOnly },
+          2027: { '2027-01-01': accredited }
+        })
+      )
+    ).toStrictEqual([2027, 2026])
+  })
+
+  it('names only the years holding a day in the statuses asked for', () => {
+    expect(
+      registeredYears(
+        served({
+          2025: { '2025-01-01': accredited },
+          2026: { '2026-06-15': registeredOnly }
+        }),
+        REGISTERED_ONLY
+      )
+    ).toStrictEqual([2026])
+  })
+})
+
+describe(accreditedDateRange, () => {
+  it('runs from the first accredited day to 31 December', () => {
+    expect(
+      accreditedDateRange(
+        served({
+          2026: { '2026-02-01': registeredOnly, '2026-07-01': accredited }
+        }),
+        YEAR
+      )
+    ).toStrictEqual({ validFrom: '2026-07-01', validTo: '2026-12-31' })
+  })
+
+  it('ends the day before the status that follows the last accredited day', () => {
+    expect(
+      accreditedDateRange(
+        served({
+          2026: { '2026-07-01': accredited, '2026-10-15': registeredOnly }
+        }),
+        YEAR
+      )
+    ).toStrictEqual({ validFrom: '2026-07-01', validTo: '2026-10-14' })
+  })
+
+  it('spans a gap between two accredited stretches', () => {
+    expect(
+      accreditedDateRange(
+        served({
+          2026: {
+            '2026-03-01': accredited,
+            '2026-05-10': registeredOnly,
+            '2026-06-01': accredited,
+            '2026-09-01': cancelled
+          }
+        }),
+        YEAR
+      )
+    ).toStrictEqual({ validFrom: '2026-03-01', validTo: '2026-08-31' })
+  })
+
+  it('reads the dates in date order, whatever order they arrive in', () => {
+    expect(
+      accreditedDateRange(
+        served({
+          2026: { '2026-10-15': registeredOnly, '2026-07-01': accredited }
+        }),
+        YEAR
+      )
+    ).toStrictEqual({ validFrom: '2026-07-01', validTo: '2026-10-14' })
+  })
+
+  it('leaves no period for a year with no accredited day', () => {
+    expect(
+      accreditedDateRange(
+        served({ 2026: { '2026-01-01': registeredOnly } }),
+        YEAR
+      )
+    ).toStrictEqual({ validFrom: null, validTo: null })
+  })
+
+  it('leaves no period for a year not served', () => {
+    expect(accreditedDateRange(served({}), YEAR)).toStrictEqual({
+      validFrom: null,
+      validTo: null
+    })
+  })
+})

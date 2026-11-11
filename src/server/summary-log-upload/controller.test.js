@@ -230,6 +230,35 @@ describe('#summaryLogUploadController', () => {
       )
     })
 
+    it('sends an operator to the current year ahead of a later one', async ({
+      server
+    }) => {
+      vi.useFakeTimers({
+        now: new Date('2027-01-05T10:00:00.000Z'),
+        toFake: ['Date']
+      })
+      holdsRegistration({
+        standingByDate: {
+          2027: { '2027-01-01': { standing: 'registeredOnly' } },
+          2028: { '2028-01-01': { standing: 'registeredOnly' } }
+        }
+      })
+
+      try {
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: yearless,
+          auth: mockAuth
+        })
+
+        expect(headers.location).toBe(
+          `${registrationPath}/2027/summary-logs/upload`
+        )
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
     it('keeps Welsh and the query string', async ({ server }) => {
       const { headers } = await server.inject({
         method: 'GET',

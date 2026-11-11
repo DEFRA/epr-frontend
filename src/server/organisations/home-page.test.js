@@ -60,6 +60,10 @@ const regulator = buildMockAuth({
 const reprocessor = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
     status: registeredSince2025,
+    standingByDate: {
+      2025: { '2025-01-01': { standing: 'registeredOnly' } },
+      2026: { '2026-01-01': { standing: 'registeredOnly' } }
+    },
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'reprocessor',
@@ -75,6 +79,10 @@ const reprocessor = (overrides = {}) =>
 const exporter = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
     status: registeredSince2025,
+    standingByDate: {
+      2025: { '2025-01-01': { standing: 'registeredOnly' } },
+      2026: { '2026-01-01': { standing: 'registeredOnly' } }
+    },
     material: 'paper',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'exporter',
@@ -384,7 +392,10 @@ describe('the organisation home page', () => {
       server
     }) => {
       serve({
-        R26ER1: reprocessor({ status: { current: 'approved', timeline: [] } })
+        R26ER1: reprocessor({
+          status: { current: 'approved', timeline: [] },
+          standingByDate: {}
+        })
       })
 
       const { payload } = await visit(server)
@@ -618,6 +629,63 @@ describe('the organisation home page', () => {
         expect(fetchOrganisation).not.toHaveBeenCalled()
       }
     )
+
+    describe('in 2026', () => {
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(new Date('2026-06-15T00:00:00Z'))
+      })
+
+      afterEach(() => {
+        vi.useRealTimers()
+      })
+
+      it.for(
+        /** @type {const} */ ([
+          ['', '/2026'],
+          ['/exporting', '/2026/exporting']
+        ])
+      )(
+        'sends the organisation address at "%s" to the current year ahead of a later one',
+        async ([page, expected], { server }) => {
+          vi.mocked(fetchOrganisationYears).mockResolvedValue([
+            toYear(2027),
+            toYear(2026),
+            toYear(2025)
+          ])
+
+          const { headers } = await visit(server, `${BARE_PATH}${page}`)
+
+          expect(headers.location).toBe(`${BARE_PATH}${expected}`)
+        }
+      )
+
+      it('sends the organisation address to its latest year when it has none this year', async ({
+        server
+      }) => {
+        vi.mocked(fetchOrganisationYears).mockResolvedValue([
+          toYear(2025),
+          toYear(2024)
+        ])
+
+        const { headers } = await visit(server, BARE_PATH)
+
+        expect(headers.location).toBe(`${BARE_PATH}/2025`)
+      })
+
+      it('sends the organisation address to its latest year whatever order the years come in', async ({
+        server
+      }) => {
+        vi.mocked(fetchOrganisationYears).mockResolvedValue([
+          toYear(2024),
+          toYear(2025)
+        ])
+
+        const { headers } = await visit(server, BARE_PATH)
+
+        expect(headers.location).toBe(`${BARE_PATH}/2025`)
+      })
+    })
 
     it.for(['/2026', '/2026/exporting'])(
       'is not found for a regulator at "%s"',
