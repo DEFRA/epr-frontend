@@ -28,7 +28,8 @@ export const currentYear = () => toYear(new Date().getUTCFullYear())
  */
 export const defaultYear = (years) => {
   const thisYear = currentYear()
-  return years.includes(thisYear) ? thisYear : years[0]
+  const [latestYear] = years.toSorted((one, other) => other - one)
+  return years.includes(thisYear) ? thisYear : latestYear
 }
 
 const FIXED_YEAR = 2026

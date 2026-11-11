@@ -672,6 +672,19 @@ describe('the organisation home page', () => {
 
         expect(headers.location).toBe(`${BARE_PATH}/2025`)
       })
+
+      it('sends the organisation address to its latest year whatever order the years come in', async ({
+        server
+      }) => {
+        vi.mocked(fetchOrganisationYears).mockResolvedValue([
+          toYear(2024),
+          toYear(2025)
+        ])
+
+        const { headers } = await visit(server, BARE_PATH)
+
+        expect(headers.location).toBe(`${BARE_PATH}/2025`)
+      })
     })
 
     it.for(['/2026', '/2026/exporting'])(
