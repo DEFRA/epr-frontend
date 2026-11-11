@@ -630,6 +630,50 @@ describe('the organisation home page', () => {
       }
     )
 
+    describe('in 2026', () => {
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(new Date('2026-06-15T00:00:00Z'))
+      })
+
+      afterEach(() => {
+        vi.useRealTimers()
+      })
+
+      it.for(
+        /** @type {const} */ ([
+          ['', '/2026'],
+          ['/exporting', '/2026/exporting']
+        ])
+      )(
+        'sends the organisation address at "%s" to the current year ahead of a later one',
+        async ([page, expected], { server }) => {
+          vi.mocked(fetchOrganisationYears).mockResolvedValue([
+            toYear(2027),
+            toYear(2026),
+            toYear(2025)
+          ])
+
+          const { headers } = await visit(server, `${BARE_PATH}${page}`)
+
+          expect(headers.location).toBe(`${BARE_PATH}${expected}`)
+        }
+      )
+
+      it('sends the organisation address to its latest year when it has none this year', async ({
+        server
+      }) => {
+        vi.mocked(fetchOrganisationYears).mockResolvedValue([
+          toYear(2025),
+          toYear(2024)
+        ])
+
+        const { headers } = await visit(server, BARE_PATH)
+
+        expect(headers.location).toBe(`${BARE_PATH}/2025`)
+      })
+    })
+
     it.for(['/2026', '/2026/exporting'])(
       'is not found for a regulator at "%s"',
       async (page, { server }) => {

@@ -1,5 +1,6 @@
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
+import { currentYear } from '#server/common/helpers/year.js'
 import { homePath, renderHome } from './home-page.js'
 
 /**
@@ -10,8 +11,8 @@ import { homePath, renderHome } from './home-page.js'
 
 /**
  * The organisation's home page with no year in the address. Operators are
- * sent to their latest year, or shown an organisation with no active year its
- * empty page.
+ * sent to the current year, else their latest, or shown an organisation with
+ * no active year its empty page.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const homeController = {
@@ -23,13 +24,15 @@ export const homeController = {
     const orgNumber = request.params.organisationNumber
     const { backendToken } = request.auth.credentials
 
-    const [latestYear] = await fetchOrganisationYears(orgNumber, backendToken)
+    const years = await fetchOrganisationYears(orgNumber, backendToken)
+    const [latestYear] = years
+    const year = years.includes(currentYear()) ? currentYear() : latestYear
 
-    if (latestYear) {
+    if (year) {
       return h.redirect(
         request.localiseUrl(
           homePath(orgNumber, {
-            year: latestYear,
+            year,
             exporting: request.path.endsWith('/exporting')
           })
         )
