@@ -2,7 +2,7 @@ import {
   ACCREDITATION_STATUS,
   REGISTRATION_STATUS
 } from '#domain/organisations/model.js'
-import { REG_ACC_STATUS } from '#domain/registration.js'
+import { STANDING } from '#domain/registration.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 
@@ -41,8 +41,8 @@ export const buildRegistrationView = (overrides = {}) =>
         { status: REGISTRATION_STATUS.APPROVED, at: '2026-01-01T00:00:00.000Z' }
       ]
     },
-    regAccStatusByDate: {
-      2026: { '2026-01-01': { status: REG_ACC_STATUS.ACCREDITED } }
+    standingByDate: {
+      2026: { '2026-01-01': { standing: STANDING.ACCREDITED } }
     },
     validFrom: '2026-01-01',
     material: 'plastic',

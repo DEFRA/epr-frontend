@@ -48,11 +48,11 @@ const registeredSince = (fromYear) => ({
  * Registered-only from 1 January of each year, `fromYear` to this year.
  * @param {number} fromYear
  */
-const regAccStatusSince = (fromYear) => {
-  /** @type {Record<number, Record<string, { status: string }>>} */
+const standingSince = (fromYear) => {
+  /** @type {Record<number, Record<string, { standing: string }>>} */
   const byYear = {}
   for (let year = fromYear; year <= thisYear; year++) {
-    byYear[year] = { [`${year}-01-01`]: { status: 'registeredOnly' } }
+    byYear[year] = { [`${year}-01-01`]: { standing: 'registeredOnly' } }
   }
   return byYear
 }
@@ -76,7 +76,7 @@ const accreditationWith = (current, statuses, forYear = thisYear) => ({
 /** @type {Record<string, unknown>} */
 const reprocessor = {
   status: registeredSince(thisYear),
-  regAccStatusByDate: regAccStatusSince(thisYear),
+  standingByDate: standingSince(thisYear),
   validFrom: `${year}-01-01`,
   material: 'glass_re_melt',
   submittedToRegulator: { code: 'ea' },
@@ -604,7 +604,7 @@ describe("the operator's registered-only page for a year", () => {
       registration: {
         ...registeredOnly,
         status: registeredSince(thisYear - 1),
-        regAccStatusByDate: regAccStatusSince(thisYear - 1)
+        standingByDate: standingSince(thisYear - 1)
       }
     })
 
@@ -627,7 +627,7 @@ describe("the operator's registered-only page for a year", () => {
       registration: {
         ...registeredOnly,
         status: registeredSince(thisYear - 1),
-        regAccStatusByDate: regAccStatusSince(thisYear - 1)
+        standingByDate: standingSince(thisYear - 1)
       }
     })
 
@@ -888,7 +888,7 @@ describe("the operator's registration page with no year", () => {
       registration: {
         ...reprocessor,
         status: registeredSince(thisYear - 1),
-        regAccStatusByDate: regAccStatusSince(thisYear - 1),
+        standingByDate: standingSince(thisYear - 1),
         accreditations: {
           [thisYear - 1]: accreditationWith(
             'approved',
@@ -918,7 +918,7 @@ describe("the operator's registration page with no year", () => {
       registration: {
         ...reprocessor,
         status: registeredSince(thisYear - 1),
-        regAccStatusByDate: regAccStatusSince(thisYear - 1),
+        standingByDate: standingSince(thisYear - 1),
         accreditations: {
           [thisYear - 1]: accreditationWith(
             'approved',
@@ -1015,7 +1015,7 @@ describe("the operator's registration page with no year", () => {
       registration: {
         ...registeredOnly,
         status: registeredSince(thisYear + 1),
-        regAccStatusByDate: regAccStatusSince(thisYear + 1)
+        standingByDate: standingSince(thisYear + 1)
       }
     })
 

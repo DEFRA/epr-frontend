@@ -60,9 +60,9 @@ const regulator = buildMockAuth({
 const reprocessor = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
     status: registeredSince2025,
-    regAccStatusByDate: {
-      2025: { '2025-01-01': { status: 'registeredOnly' } },
-      2026: { '2026-01-01': { status: 'registeredOnly' } }
+    standingByDate: {
+      2025: { '2025-01-01': { standing: 'registeredOnly' } },
+      2026: { '2026-01-01': { standing: 'registeredOnly' } }
     },
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
@@ -79,9 +79,9 @@ const reprocessor = (overrides = {}) =>
 const exporter = (overrides = {}) =>
   /** @type {RegistrationView} */ ({
     status: registeredSince2025,
-    regAccStatusByDate: {
-      2025: { '2025-01-01': { status: 'registeredOnly' } },
-      2026: { '2026-01-01': { status: 'registeredOnly' } }
+    standingByDate: {
+      2025: { '2025-01-01': { standing: 'registeredOnly' } },
+      2026: { '2026-01-01': { standing: 'registeredOnly' } }
     },
     material: 'paper',
     submittedToRegulator: { code: 'ea' },
@@ -394,7 +394,7 @@ describe('the organisation home page', () => {
       serve({
         R26ER1: reprocessor({
           status: { current: 'approved', timeline: [] },
-          regAccStatusByDate: {}
+          standingByDate: {}
         })
       })
 

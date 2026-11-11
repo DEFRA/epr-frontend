@@ -95,10 +95,10 @@ const aRegistration = (overrides) =>
   /** @type {RegistrationView} */ (
     /** @type {unknown} */ ({
       status: { current: 'approved', timeline: [] },
-      regAccStatusByDate: {
+      standingByDate: {
         2026: {
-          '2026-01-01': { status: 'registeredOnly' },
-          '2026-07-01': { status: 'accredited' }
+          '2026-01-01': { standing: 'registeredOnly' },
+          '2026-07-01': { standing: 'accredited' }
         }
       },
       validFrom: '2026-01-01',
@@ -285,8 +285,8 @@ describe('the accreditation details view model', () => {
       build(
         {},
         {
-          regAccStatusByDate: {
-            2026: { '2026-01-01': { status: 'accredited' } }
+          standingByDate: {
+            2026: { '2026-01-01': { standing: 'accredited' } }
           }
         }
       ).period
@@ -298,10 +298,10 @@ describe('the accreditation details view model', () => {
       build(
         {},
         {
-          regAccStatusByDate: {
+          standingByDate: {
             2026: {
-              '2026-07-01': { status: 'accredited' },
-              '2026-09-10': { status: 'registeredOnly' }
+              '2026-07-01': { standing: 'accredited' },
+              '2026-09-10': { standing: 'registeredOnly' }
             }
           }
         }
@@ -314,11 +314,11 @@ describe('the accreditation details view model', () => {
       build(
         {},
         {
-          regAccStatusByDate: {
+          standingByDate: {
             2026: {
-              '2026-03-01': { status: 'accredited' },
-              '2026-05-10': { status: 'registeredOnly' },
-              '2026-06-01': { status: 'accredited' }
+              '2026-03-01': { standing: 'accredited' },
+              '2026-05-10': { standing: 'registeredOnly' },
+              '2026-06-01': { standing: 'accredited' }
             }
           }
         }

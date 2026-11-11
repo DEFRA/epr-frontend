@@ -6,7 +6,7 @@ import { siteLineOf, siteNameOf } from './site-name.js'
 
 const common = {
   status: { current: 'approved', timeline: [] },
-  regAccStatusByDate: { 2025: { '2025-01-01': { status: 'registeredOnly' } } },
+  standingByDate: { 2025: { '2025-01-01': { standing: 'registeredOnly' } } },
   validFrom: '2025-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },

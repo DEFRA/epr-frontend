@@ -42,7 +42,7 @@ const registration = {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
-  regAccStatusByDate: { 2026: { '2026-01-01': { status: 'registeredOnly' } } },
+  standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
@@ -60,7 +60,7 @@ const exporterRegistration = {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
-  regAccStatusByDate: { 2026: { '2026-01-01': { status: 'registeredOnly' } } },
+  standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
@@ -242,12 +242,12 @@ describe('the registration details page a regulator reads', () => {
     backendHolds(msw, {
       registration: {
         ...registration,
-        regAccStatusByDate: {
+        standingByDate: {
           2025: {
-            '2025-02-15': { status: 'accredited' },
-            '2025-03-31': { status: 'registeredOnly' }
+            '2025-02-15': { standing: 'accredited' },
+            '2025-03-31': { standing: 'registeredOnly' }
           },
-          2026: { '2026-01-01': { status: 'accredited' } }
+          2026: { '2026-01-01': { standing: 'accredited' } }
         },
         validFrom: '2025-01-01',
         accreditations: {
@@ -322,9 +322,9 @@ describe('the registration details page a regulator reads', () => {
       backendHolds(msw, {
         registration: {
           ...registration,
-          regAccStatusByDate: {
-            2025: { '2025-03-01': { status: 'registeredOnly' } },
-            2026: { '2026-01-01': { status: 'registeredOnly' } }
+          standingByDate: {
+            2025: { '2025-03-01': { standing: 'registeredOnly' } },
+            2026: { '2026-01-01': { standing: 'registeredOnly' } }
           },
           status: {
             current: 'approved',

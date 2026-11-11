@@ -6,7 +6,7 @@
  *   RegulatorValue,
  *   ReprocessingType
  * } from '#domain/organisations/model.js'
- * @import { RegAccStatus } from '#domain/registration.js'
+ * @import { Standing } from '#domain/registration.js'
  * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
@@ -33,9 +33,9 @@
  */
 
 /**
- * By year, the date each status starts. A status holds until the next date, or
- * the end of the year.
- * @typedef {Record<YearKey, Record<DateKey, { status: RegAccStatus }>>} RegAccStatusByDate
+ * By year, the date each standing starts. A standing holds until the next date,
+ * or the end of the year.
+ * @typedef {Record<YearKey, Record<DateKey, { standing: Standing }>>} StandingByDate
  */
 
 /**
@@ -70,7 +70,7 @@
 /**
  * @typedef {{
  *   status: Status<RegistrationStatus>,
- *   regAccStatusByDate: RegAccStatusByDate,
+ *   standingByDate: StandingByDate,
  *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },

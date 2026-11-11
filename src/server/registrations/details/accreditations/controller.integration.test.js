@@ -162,10 +162,10 @@ const accreditationDetails = {
   registration: /** @type {AccreditationDetails['registration']} */ (
     /** @type {unknown} */ ({
       status: { current: 'approved', timeline: [] },
-      regAccStatusByDate: {
+      standingByDate: {
         2026: {
-          '2026-01-01': { status: 'registeredOnly' },
-          '2026-07-01': { status: 'accredited' }
+          '2026-01-01': { standing: 'registeredOnly' },
+          '2026-07-01': { standing: 'accredited' }
         }
       },
       validFrom: '2026-01-01',

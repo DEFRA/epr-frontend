@@ -1,8 +1,8 @@
 /**
- * What a registration holds on a date, as `regAccStatusByDate` serves it.
- * @typedef {typeof REG_ACC_STATUS[keyof typeof REG_ACC_STATUS]} RegAccStatus
+ * What a registration holds on a date, as `standingByDate` serves it.
+ * @typedef {typeof STANDING[keyof typeof STANDING]} Standing
  */
-export const REG_ACC_STATUS = Object.freeze({
+export const STANDING = Object.freeze({
   REGISTERED_ONLY: 'registeredOnly',
   ACCREDITED: 'accredited',
   CANCELLED: 'cancelled'

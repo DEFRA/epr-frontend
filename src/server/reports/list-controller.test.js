@@ -1,4 +1,4 @@
-/** @import { RegAccStatusByDate } from '#server/common/helpers/organisations/organisation-view.js'; */
+/** @import { StandingByDate } from '#server/common/helpers/organisations/organisation-view.js'; */
 import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
@@ -124,8 +124,8 @@ const registeredOnlyFrom2025 = buildRegistrationWithAccreditation({
       current: 'approved',
       timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
     },
-    regAccStatusByDate: {
-      2025: { '2025-01-01': { status: 'registeredOnly' } }
+    standingByDate: {
+      2025: { '2025-01-01': { standing: 'registeredOnly' } }
     },
     accreditations: {}
   })
@@ -1833,18 +1833,18 @@ describe('#listReportsController', () => {
       /**
        * @param {RegistrationStatus} current
        * @param {StatusTimeline} timeline
-       * @param {RegAccStatusByDate} regAccStatusByDate
+       * @param {StandingByDate} standingByDate
        */
       const backendServesRegistrationWith = (
         current,
         timeline,
-        regAccStatusByDate
+        standingByDate
       ) =>
         vi.mocked(fetchRegistration).mockResolvedValue({
           organisation: accreditedRegistration.organisation,
           registration: buildRegistrationView({
             status: { current, timeline },
-            regAccStatusByDate
+            standingByDate
           })
         })
 
@@ -1865,10 +1865,10 @@ describe('#listReportsController', () => {
             { status: 'cancelled', at: '2025-06-30T00:00:00.000Z' }
           ],
           {
-            2024: { '2024-01-01': { status: 'registeredOnly' } },
+            2024: { '2024-01-01': { standing: 'registeredOnly' } },
             2025: {
-              '2025-01-01': { status: 'registeredOnly' },
-              '2025-06-30': { status: 'cancelled' }
+              '2025-01-01': { standing: 'registeredOnly' },
+              '2025-06-30': { standing: 'cancelled' }
             }
           }
         )
@@ -1913,8 +1913,8 @@ describe('#listReportsController', () => {
           'approved',
           [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }],
           {
-            2026: { '2026-01-01': { status: 'registeredOnly' } },
-            2027: { '2027-01-01': { status: 'registeredOnly' } }
+            2026: { '2026-01-01': { standing: 'registeredOnly' } },
+            2027: { '2027-01-01': { standing: 'registeredOnly' } }
           }
         )
 

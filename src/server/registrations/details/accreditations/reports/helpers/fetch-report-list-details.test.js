@@ -48,8 +48,8 @@ describe(fetchReportListDetails, () => {
           current: 'approved',
           timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
         },
-        regAccStatusByDate: {
-          2026: { '2026-01-01': { status: 'registeredOnly' } }
+        standingByDate: {
+          2026: { '2026-01-01': { standing: 'registeredOnly' } }
         },
         validFrom: '2026-01-01',
         material: 'plastic',

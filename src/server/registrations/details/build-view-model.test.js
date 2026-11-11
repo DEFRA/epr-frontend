@@ -51,7 +51,7 @@ const aReprocessorAt = (address) => ({
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
-  regAccStatusByDate: { 2026: { '2026-01-01': { status: 'registeredOnly' } } },
+  standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
@@ -67,7 +67,7 @@ const anExporter = {
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
-  regAccStatusByDate: { 2026: { '2026-01-01': { status: 'registeredOnly' } } },
+  standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
@@ -210,14 +210,14 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...anExporter,
-          regAccStatusByDate: {
+          standingByDate: {
             2025: {
-              '2025-01-01': { status: 'registeredOnly' },
-              '2025-03-01': { status: 'accredited' }
+              '2025-01-01': { standing: 'registeredOnly' },
+              '2025-03-01': { standing: 'accredited' }
             },
             2026: {
-              '2026-01-01': { status: 'registeredOnly' },
-              '2026-07-01': { status: 'accredited' }
+              '2026-01-01': { standing: 'registeredOnly' },
+              '2026-07-01': { standing: 'accredited' }
             }
           },
           validFrom: '2025-01-01',
@@ -256,8 +256,8 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...anExporter,
-          regAccStatusByDate: {
-            2026: { '2026-01-01': { status: 'accredited' } }
+          standingByDate: {
+            2026: { '2026-01-01': { standing: 'accredited' } }
           },
           accreditations: {
             2026: anAccreditation({
@@ -281,10 +281,10 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...anExporter,
-          regAccStatusByDate: {
+          standingByDate: {
             2026: {
-              '2026-02-15': { status: 'accredited' },
-              '2026-03-31': { status: 'registeredOnly' }
+              '2026-02-15': { standing: 'accredited' },
+              '2026-03-31': { standing: 'registeredOnly' }
             }
           },
           accreditations: {
@@ -332,10 +332,10 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...anExporter,
-          regAccStatusByDate: {
-            2024: { '2024-06-01': { status: 'registeredOnly' } },
-            2025: { '2025-01-01': { status: 'registeredOnly' } },
-            2026: { '2026-01-01': { status: 'registeredOnly' } }
+          standingByDate: {
+            2024: { '2024-06-01': { standing: 'registeredOnly' } },
+            2025: { '2025-01-01': { standing: 'registeredOnly' } },
+            2026: { '2026-01-01': { standing: 'registeredOnly' } }
           },
           status: {
             current: 'approved',
@@ -386,10 +386,10 @@ describe(buildViewModel, () => {
       const viewModel = build({
         registration: {
           ...anExporter,
-          regAccStatusByDate: {
+          standingByDate: {
             2025: {
-              '2025-01-01': { status: 'registeredOnly' },
-              '2025-06-01': { status: 'cancelled' }
+              '2025-01-01': { standing: 'registeredOnly' },
+              '2025-06-01': { standing: 'cancelled' }
             }
           },
           status: {

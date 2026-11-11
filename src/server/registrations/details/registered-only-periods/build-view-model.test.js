@@ -60,7 +60,7 @@ const aRegistration = () => ({
     current: 'approved',
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
-  regAccStatusByDate: { 2026: { '2026-01-01': { status: 'registeredOnly' } } },
+  standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
   validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
@@ -161,12 +161,12 @@ describe(buildViewModel, () => {
   })
 
   /**
-   * @param {RegistrationView['regAccStatusByDate'][`${number}`]} byDate
+   * @param {RegistrationView['standingByDate'][`${number}`]} byDate
    * @returns {RegistrationView}
    */
   const servedIn2026 = (byDate) => ({
     ...aRegistration(),
-    regAccStatusByDate: { 2026: byDate }
+    standingByDate: { 2026: byDate }
   })
 
   it('holds data in a year served as registered-only', () => {
@@ -177,8 +177,8 @@ describe(buildViewModel, () => {
     expect(
       build({
         registration: servedIn2026({
-          '2026-01-01': { status: 'registeredOnly' },
-          '2026-03-01': { status: 'accredited' }
+          '2026-01-01': { standing: 'registeredOnly' },
+          '2026-03-01': { standing: 'accredited' }
         })
       }).hasData
     ).toBe(true)
@@ -188,8 +188,8 @@ describe(buildViewModel, () => {
     expect(
       build({
         registration: servedIn2026({
-          '2026-01-01': { status: 'accredited' },
-          '2026-03-10': { status: 'registeredOnly' }
+          '2026-01-01': { standing: 'accredited' },
+          '2026-03-10': { standing: 'registeredOnly' }
         })
       }).hasData
     ).toBe(true)
@@ -198,7 +198,7 @@ describe(buildViewModel, () => {
   it('holds none in a year served only as accredited', () => {
     expect(
       build({
-        registration: servedIn2026({ '2026-01-01': { status: 'accredited' } })
+        registration: servedIn2026({ '2026-01-01': { standing: 'accredited' } })
       }).hasData
     ).toBe(false)
   })
@@ -207,8 +207,8 @@ describe(buildViewModel, () => {
     expect(
       build({
         registration: servedIn2026({
-          '2026-01-01': { status: 'accredited' },
-          '2026-03-01': { status: 'cancelled' }
+          '2026-01-01': { standing: 'accredited' },
+          '2026-03-01': { standing: 'cancelled' }
         })
       }).hasData
     ).toBe(false)

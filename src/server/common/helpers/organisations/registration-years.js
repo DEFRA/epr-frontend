@@ -1,4 +1,4 @@
-import { REG_ACC_STATUS } from '#domain/registration.js'
+import { STANDING } from '#domain/registration.js'
 import {
   dayBefore,
   toCalendarDate
@@ -6,37 +6,37 @@ import {
 import { toYear } from '#server/common/helpers/year.js'
 
 /**
- * @import { RegAccStatus } from '#domain/registration.js'
+ * @import { Standing } from '#domain/registration.js'
  * @import { Accreditation, RegistrationView } from './organisation-view.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { DateRange } from './registration-resource.js'
  */
 
 /**
- * Which statuses a check counts. Keyed by every status, so a status the
+ * Which standings a check counts. Keyed by every standing, so a standing the
  * backend adds must be classified here before this compiles.
- * @typedef {Readonly<Record<RegAccStatus, boolean>>} StatusCheck
+ * @typedef {Readonly<Record<Standing, boolean>>} StandingCheck
  */
 
-/** @type {StatusCheck} */
+/** @type {StandingCheck} */
 export const REGISTERED = Object.freeze({
-  [REG_ACC_STATUS.REGISTERED_ONLY]: true,
-  [REG_ACC_STATUS.ACCREDITED]: true,
-  [REG_ACC_STATUS.CANCELLED]: false
+  [STANDING.REGISTERED_ONLY]: true,
+  [STANDING.ACCREDITED]: true,
+  [STANDING.CANCELLED]: false
 })
 
-/** @type {StatusCheck} */
+/** @type {StandingCheck} */
 export const REGISTERED_ONLY = Object.freeze({
-  [REG_ACC_STATUS.REGISTERED_ONLY]: true,
-  [REG_ACC_STATUS.ACCREDITED]: false,
-  [REG_ACC_STATUS.CANCELLED]: false
+  [STANDING.REGISTERED_ONLY]: true,
+  [STANDING.ACCREDITED]: false,
+  [STANDING.CANCELLED]: false
 })
 
-/** @type {StatusCheck} */
+/** @type {StandingCheck} */
 const ACCREDITED = Object.freeze({
-  [REG_ACC_STATUS.REGISTERED_ONLY]: false,
-  [REG_ACC_STATUS.ACCREDITED]: true,
-  [REG_ACC_STATUS.CANCELLED]: false
+  [STANDING.REGISTERED_ONLY]: false,
+  [STANDING.ACCREDITED]: true,
+  [STANDING.CANCELLED]: false
 })
 
 /**
@@ -56,25 +56,25 @@ export const accreditationEntries = (accreditations) =>
   yearEntries(accreditations)
 
 /**
- * The years holding at least one day in a status the check counts, most
+ * The years holding at least one day in a standing the check counts, most
  * recent first. By default, every year with a day on which it was approved.
  * @param {RegistrationView} registration
- * @param {StatusCheck} [counts]
+ * @param {StandingCheck} [counts]
  * @returns {Year[]}
  */
-export const registeredYears = ({ regAccStatusByDate }, counts = REGISTERED) =>
-  yearEntries(regAccStatusByDate)
+export const registeredYears = ({ standingByDate }, counts = REGISTERED) =>
+  yearEntries(standingByDate)
     .filter(([, byDate]) =>
-      Object.values(byDate).some(({ status }) => counts[status])
+      Object.values(byDate).some(({ standing }) => counts[standing])
     )
     .map(([year]) => year)
     .sort((one, other) => other - one)
 
 /**
- * @param {[string, { status: RegAccStatus }]} entry
+ * @param {[string, { standing: Standing }]} entry
  * @returns {boolean}
  */
-const isAccredited = ([, { status }]) => ACCREDITED[status]
+const isAccredited = ([, { standing }]) => ACCREDITED[standing]
 
 /**
  * The period an accreditation is shown as covering within its year, from its
@@ -83,8 +83,8 @@ const isAccredited = ([, { status }]) => ACCREDITED[status]
  * @param {Year} year
  * @returns {DateRange}
  */
-export const accreditedDateRange = ({ regAccStatusByDate }, year) => {
-  const dates = Object.entries(regAccStatusByDate[year] ?? {}).sort(
+export const accreditedDateRange = ({ standingByDate }, year) => {
+  const dates = Object.entries(standingByDate[year] ?? {}).sort(
     ([date], [other]) => date.localeCompare(other)
   )
   const first = dates.findIndex(isAccredited)

@@ -40,7 +40,7 @@ const registration = /** @type {RegistrationView} */ ({
     current: 'approved',
     timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
   },
-  regAccStatusByDate: { 2025: { '2025-01-01': { status: 'registeredOnly' } } },
+  standingByDate: { 2025: { '2025-01-01': { standing: 'registeredOnly' } } },
   validFrom: '2025-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },

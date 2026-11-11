@@ -61,8 +61,8 @@ const organisation = {
         current: 'approved',
         timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
       },
-      regAccStatusByDate: {
-        2025: { '2025-01-01': { status: 'registeredOnly' } }
+      standingByDate: {
+        2025: { '2025-01-01': { standing: 'registeredOnly' } }
       },
       validFrom: '2025-01-01',
       material: 'glass_re_melt',
@@ -102,8 +102,8 @@ const organisation = {
           { status: 'cancelled', at: '2025-06-01T09:00:00.000Z' }
         ]
       },
-      regAccStatusByDate: {
-        2025: { '2025-01-01': { status: 'registeredOnly' } }
+      standingByDate: {
+        2025: { '2025-01-01': { standing: 'registeredOnly' } }
       },
       validFrom: '2025-01-01',
       material: 'aluminium',
@@ -120,8 +120,8 @@ const organisation = {
         current: 'approved',
         timeline: [{ status: 'approved', at: '2025-01-01T00:00:00.000Z' }]
       },
-      regAccStatusByDate: {
-        2025: { '2025-01-01': { status: 'registeredOnly' } }
+      standingByDate: {
+        2025: { '2025-01-01': { standing: 'registeredOnly' } }
       },
       validFrom: '2025-01-01',
       material: 'paper',

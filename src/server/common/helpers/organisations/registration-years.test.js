@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { REG_ACC_STATUS } from '#domain/registration.js'
+import { STANDING } from '#domain/registration.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toYear } from '#server/common/helpers/year.js'
 import { buildAccreditationView } from '#server/common/test-helpers/organisation-view-fixtures.js'
@@ -15,17 +15,15 @@ import {
 /** @import { RegistrationView } from '#server/common/helpers/organisations/organisation-view.js' */
 
 /**
- * @param {RegistrationView['regAccStatusByDate']} regAccStatusByDate
+ * @param {RegistrationView['standingByDate']} standingByDate
  * @returns {RegistrationView}
  */
-const served = (regAccStatusByDate) =>
-  /** @type {RegistrationView} */ (
-    /** @type {unknown} */ ({ regAccStatusByDate })
-  )
+const served = (standingByDate) =>
+  /** @type {RegistrationView} */ (/** @type {unknown} */ ({ standingByDate }))
 
-const registeredOnly = { status: REG_ACC_STATUS.REGISTERED_ONLY }
-const accredited = { status: REG_ACC_STATUS.ACCREDITED }
-const cancelled = { status: REG_ACC_STATUS.CANCELLED }
+const registeredOnly = { standing: STANDING.REGISTERED_ONLY }
+const accredited = { standing: STANDING.ACCREDITED }
+const cancelled = { standing: STANDING.CANCELLED }
 
 const YEAR = toYear(2026)
 
