@@ -22,6 +22,17 @@ export const toYear = (value) => /** @type {Year} */ (value)
  */
 export const currentYear = () => toYear(new Date().getUTCFullYear())
 
+/**
+ * The year an address with no year in it opens on. A later year can be
+ * listed before it has started, so the current year wins over it.
+ * @param {Year[]} years - newest first
+ * @returns {Year | undefined}
+ */
+export const defaultYear = (years) => {
+  const thisYear = currentYear()
+  return years.includes(thisYear) ? thisYear : years[0]
+}
+
 const FIXED_YEAR = 2026
 
 /**
