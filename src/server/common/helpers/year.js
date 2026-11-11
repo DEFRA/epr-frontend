@@ -23,9 +23,7 @@ export const toYear = (value) => /** @type {Year} */ (value)
 export const currentYear = () => toYear(new Date().getUTCFullYear())
 
 /**
- * The year an address with no year in it opens on. A later year can be
- * listed before it has started, so the current year wins over it.
- * @param {Year[]} years - newest first
+ * @param {Year[]} years
  * @returns {Year | undefined}
  */
 export const defaultYear = (years) => {
