@@ -7,7 +7,10 @@ import {
   forgetSignInProvider,
   rememberSignInProvider
 } from '#server/auth/helpers/sign-in-provider.js'
-import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
+import {
+  DEFRA_ID_SIGN_IN_COOKIE,
+  OIDC_DEFRA_ID
+} from '#server/auth/plugins/defra-id.js'
 import {
   OIDC_ENTRA_ID,
   SELECT_ACCOUNT_QUERY
@@ -51,6 +54,7 @@ const defraIdCallbackController = {
    */
   handler: async (request, h) => {
     if (request.auth?.error) {
+      logSignInFailure(request, request.auth.error)
       await metrics.signIn.failure(OIDC_DEFRA_ID)
     }
 
@@ -121,6 +125,61 @@ async function applyBackendIdentity(session) {
 
   session.role = role
   session.scope = scopes
+}
+
+/**
+ * Bell attaches the parsed token response to the error only when it carries
+ * no access token; on its other failures the data is an error or raw bytes.
+ * @param {unknown} data
+ * @returns {data is Record<string, unknown>}
+ */
+const isParsedTokenResponse = (data) =>
+  typeof data === 'object' &&
+  data !== null &&
+  !(data instanceof Error) &&
+  !Buffer.isBuffer(data)
+
+/**
+ * @param {unknown} data
+ * @returns {{ reason?: string }}
+ */
+const missingAccessTokenIn = (data) =>
+  isParsedTokenResponse(data) && !data.access_token
+    ? {
+        reason: `no access_token in token response, keys: [${Object.keys(data)
+          .toSorted((a, b) => a.localeCompare(b))
+          .join(', ')}]`
+      }
+    : {}
+
+/**
+ * The user cancelled at Defra ID, or the browser no longer holds the sign in
+ * cookie, as after the back button or from a bot.
+ * @param {HapiRequest} request
+ */
+const isRoutineSignInFailure = (request) =>
+  Boolean(request.query.error) || !request.state[DEFRA_ID_SIGN_IN_COOKIE]
+
+/**
+ * Logs why sign in failed and, when the token response lacked an access
+ * token, its key names: the error bell raises carries the tokens.
+ * @param {HapiRequest} request
+ * @param {Error & { data?: unknown }} error
+ */
+const logSignInFailure = (request, error) => {
+  const log = isRoutineSignInFailure(request)
+    ? request.logger.warn
+    : request.logger.error
+
+  log.call(request.logger, {
+    message: 'User sign in failed',
+    error: { message: error.message },
+    event: {
+      action: 'signInFailure',
+      outcome: 'failure',
+      ...missingAccessTokenIn(error.data)
+    }
+  })
 }
 
 /**

@@ -15,13 +15,14 @@
 
 /**
  * Bell credentials from Azure B2C (Defra ID production/test)
- * Azure B2C doesn't return an access_token, so token and expiresIn are undefined
+ * Azure B2C only returns an access_token when a resource scope is requested,
+ * so token and expiresIn may be undefined
  * @typedef {{
+ *   expiresIn?: number
  *   provider: string
  *   query: Record<string, string>
- *   token: undefined
  *   refreshToken: string
- *   expiresIn: undefined
+ *   token?: string
  * }} AzureB2CBellCredentials
  */
 
@@ -38,13 +39,20 @@
 
 /**
  * Token response from Azure B2C (Defra ID production/test)
+ *
+ * `access_token`, `expires_in`, `expires_on` and `resource` are only present
+ * when the request scope includes a resource (such as the client id).
  * @typedef {{
+ *   access_token?: string
+ *   expires_in?: number
+ *   expires_on?: number
  *   id_token: string
  *   id_token_expires_in: number
  *   not_before: number
  *   profile_info: string
  *   refresh_token: string
  *   refresh_token_expires_in: number
+ *   resource?: string
  *   scope: string
  *   token_type: string
  * }} AzureB2CTokenParams
@@ -68,7 +76,7 @@
  * https://github.com/DEFRA/cdp-defra-id-stub/blob/main/src/server/oidc/helpers/generate-defraid-token.js
  *
  * `email` is optional because the OIDC scope we request (`openid`,
- * `offline_access` — see src/server/auth/plugins/defra-id.js) does not include
+ * `offline_access`, the client id — see src/server/auth/plugins/defra-id.js) does not include
  * `email`. Defra ID's B2C policy currently maps it into the id_token by
  * default, but that's a policy decision; downstream consumers handle absence.
  * @typedef {{
