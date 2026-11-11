@@ -12,11 +12,32 @@ import { toYear } from '#server/common/helpers/year.js'
  * @import { DateRange } from './registration-resource.js'
  */
 
-/** @type {readonly RegAccStatus[]} */
-const REGISTERED_STATUSES = [
-  REG_ACC_STATUS.REGISTERED_ONLY,
-  REG_ACC_STATUS.ACCREDITED
-]
+/**
+ * Which statuses a check counts. Keyed by every status, so a status the
+ * backend adds must be classified here before this compiles.
+ * @typedef {Readonly<Record<RegAccStatus, boolean>>} StatusCheck
+ */
+
+/** @type {StatusCheck} */
+export const REGISTERED = Object.freeze({
+  [REG_ACC_STATUS.REGISTERED_ONLY]: true,
+  [REG_ACC_STATUS.ACCREDITED]: true,
+  [REG_ACC_STATUS.CANCELLED]: false
+})
+
+/** @type {StatusCheck} */
+export const REGISTERED_ONLY = Object.freeze({
+  [REG_ACC_STATUS.REGISTERED_ONLY]: true,
+  [REG_ACC_STATUS.ACCREDITED]: false,
+  [REG_ACC_STATUS.CANCELLED]: false
+})
+
+/** @type {StatusCheck} */
+const ACCREDITED = Object.freeze({
+  [REG_ACC_STATUS.REGISTERED_ONLY]: false,
+  [REG_ACC_STATUS.ACCREDITED]: true,
+  [REG_ACC_STATUS.CANCELLED]: false
+})
 
 /**
  * @template T
@@ -35,19 +56,16 @@ export const accreditationEntries = (accreditations) =>
   yearEntries(accreditations)
 
 /**
- * The years holding at least one day in the given statuses, most recent first.
- * By default, every year with a day on which it was approved.
+ * The years holding at least one day in a status the check counts, most
+ * recent first. By default, every year with a day on which it was approved.
  * @param {RegistrationView} registration
- * @param {readonly RegAccStatus[]} [statuses]
+ * @param {StatusCheck} [counts]
  * @returns {Year[]}
  */
-export const registeredYears = (
-  { regAccStatusByDate },
-  statuses = REGISTERED_STATUSES
-) =>
+export const registeredYears = ({ regAccStatusByDate }, counts = REGISTERED) =>
   yearEntries(regAccStatusByDate)
     .filter(([, byDate]) =>
-      Object.values(byDate).some(({ status }) => statuses.includes(status))
+      Object.values(byDate).some(({ status }) => counts[status])
     )
     .map(([year]) => year)
     .sort((one, other) => other - one)
@@ -56,7 +74,7 @@ export const registeredYears = (
  * @param {[string, { status: RegAccStatus }]} entry
  * @returns {boolean}
  */
-const isAccredited = ([, { status }]) => status === REG_ACC_STATUS.ACCREDITED
+const isAccredited = ([, { status }]) => ACCREDITED[status]
 
 /**
  * The period an accreditation is shown as covering within its year, from its
@@ -66,7 +84,9 @@ const isAccredited = ([, { status }]) => status === REG_ACC_STATUS.ACCREDITED
  * @returns {DateRange}
  */
 export const accreditedDateRange = ({ regAccStatusByDate }, year) => {
-  const dates = Object.entries(regAccStatusByDate[year] ?? {})
+  const dates = Object.entries(regAccStatusByDate[year] ?? {}).sort(
+    ([date], [other]) => date.localeCompare(other)
+  )
   const first = dates.findIndex(isAccredited)
 
   if (first === -1) {
@@ -76,7 +96,7 @@ export const accreditedDateRange = ({ regAccStatusByDate }, year) => {
   const next = dates[dates.findLastIndex(isAccredited) + 1]
 
   return {
-    validFrom: dates[first][0],
+    validFrom: toCalendarDate(dates[first][0]),
     validTo: next
       ? dayBefore(toCalendarDate(next[0]))
       : toCalendarDate(`${year}-12-31`)

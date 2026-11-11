@@ -6,6 +6,7 @@ import { toYear } from '#server/common/helpers/year.js'
 import { buildAccreditationView } from '#server/common/test-helpers/organisation-view-fixtures.js'
 
 import {
+  REGISTERED_ONLY,
   accreditationEntries,
   accreditedDateRange,
   registeredYears
@@ -95,7 +96,7 @@ describe(registeredYears, () => {
           2025: { '2025-01-01': accredited },
           2026: { '2026-06-15': registeredOnly }
         }),
-        [REG_ACC_STATUS.REGISTERED_ONLY]
+        REGISTERED_ONLY
       )
     ).toStrictEqual([2026])
   })
@@ -138,6 +139,17 @@ describe(accreditedDateRange, () => {
         YEAR
       )
     ).toStrictEqual({ validFrom: '2026-03-01', validTo: '2026-08-31' })
+  })
+
+  it('reads the dates in date order, whatever order they arrive in', () => {
+    expect(
+      accreditedDateRange(
+        served({
+          2026: { '2026-10-15': registeredOnly, '2026-07-01': accredited }
+        }),
+        YEAR
+      )
+    ).toStrictEqual({ validFrom: '2026-07-01', validTo: '2026-10-14' })
   })
 
   it('leaves no period for a year with no accredited day', () => {
