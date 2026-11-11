@@ -272,7 +272,7 @@ const monthlyToAccreditedRoute = {
 /**
  * @type {ServerRoute}
  */
-const latestYearListRoute = {
+const yearlessListRoute = {
   method: 'GET',
   path: listPath,
   async handler(rawRequest, h) {
@@ -303,7 +303,7 @@ export const reports = {
           method: 'GET',
           path: `${listPath}/{year}`
         },
-        latestYearListRoute,
+        yearlessListRoute,
         ...submissionRoutes(),
         monthlyToAccreditedRoute
       ])
