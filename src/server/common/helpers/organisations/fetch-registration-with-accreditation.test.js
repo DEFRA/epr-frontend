@@ -26,6 +26,7 @@ const registrationKeys = {
   organisationNumber: toOrganisationNumber('500123'),
   registrationNumber: toRegistrationNumber('R26EN0000000001PL')
 }
+const keys = { ...registrationKeys, year: toYear(2026) }
 
 /** @param {RegistrationView} registration */
 const resolveRegistration = (registration) => {
@@ -45,10 +46,7 @@ describe(fetchRegistrationWithAccreditation, () => {
     const registration = buildRegistrationView()
     const organisation = resolveRegistration(registration)
 
-    const result = await fetchRegistrationWithAccreditation(
-      { ...registrationKeys, year: toYear(2026) },
-      backendToken
-    )
+    const result = await fetchRegistrationWithAccreditation(keys, backendToken)
 
     expect(result).toStrictEqual({
       organisation,
@@ -73,7 +71,7 @@ describe(fetchRegistrationWithAccreditation, () => {
     )
 
     const { accreditation } = await fetchRegistrationWithAccreditation(
-      { ...registrationKeys, year: toYear(2026) },
+      keys,
       backendToken
     )
 
@@ -127,8 +125,6 @@ describe(fetchRegistrationWithAccreditation, () => {
 })
 
 describe(fetchRequiredAccreditation, () => {
-  const keys = { ...registrationKeys, year: toYear(2026) }
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -189,8 +185,6 @@ describe(fetchRequiredAccreditation, () => {
 })
 
 describe(fetchRequiredAnyAccreditation, () => {
-  const keys = { ...registrationKeys, year: toYear(2026) }
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
