@@ -7,7 +7,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { extractCookieValues } from '#server/common/test-helpers/cookie-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
-import { it } from '#vite/fixtures/server.js'
+import { it } from '#vite/fixtures/fresh-server.js'
 import { load } from 'cheerio'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 

@@ -8,7 +8,7 @@ import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { it } from '#vite/fixtures/server.js'
+import { it } from '#vite/fixtures/fresh-server.js'
 
 describe('#catchAll - server errors', () => {
   it('renders the generic error page and logs for an unhandled 5xx', async ({

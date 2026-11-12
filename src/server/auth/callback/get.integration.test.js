@@ -10,7 +10,7 @@ import {
   findSetCookie
 } from '#server/common/test-helpers/cookie-helper.js'
 import { identityHandler } from '#server/common/test-helpers/identity-helper.js'
-import { beforeEach, it } from '#vite/fixtures/server.js'
+import { beforeEach, it } from '#vite/fixtures/fresh-server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
 import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
