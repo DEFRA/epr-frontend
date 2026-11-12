@@ -2,7 +2,7 @@ import {
   getDisplayCodeFromErrorCode,
   TECHNICAL_ERROR_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
-import { partition } from 'lodash-es'
+import partition from 'lodash-es/partition.js'
 
 /**
  * @import {

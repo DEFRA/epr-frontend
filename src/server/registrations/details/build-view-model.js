@@ -1,4 +1,4 @@
-import { capitalize } from 'lodash-es'
+import capitalize from 'lodash-es/capitalize.js'
 
 import { WASTE_PROCESSING_TYPE } from '#domain/organisations/model.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'

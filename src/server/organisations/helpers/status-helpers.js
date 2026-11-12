@@ -1,4 +1,4 @@
-import { capitalize } from 'lodash-es'
+import capitalize from 'lodash-es/capitalize.js'
 
 /**
  * @typedef {{ text: string, classes: string }} StatusTag
