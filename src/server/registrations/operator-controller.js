@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
-import { hasLedgerReadScope, hasWriteScope } from '#server/auth/scopes.js'
+import { hasWriteScope } from '#server/auth/scopes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
@@ -82,7 +82,6 @@ const VIEW = 'registrations/index'
  *     noteTypePlural: 'PRNs' | 'PERNs';
  *     breakdown: DecemberBalanceBreakdown | null;
  *   };
- *   wasteBalanceLedgerUrl: string | null;
  * }} RegistrationViewModel
  */
 
@@ -159,17 +158,6 @@ const toSiteName = (registration, localise) => {
 }
 
 /**
- * The ledger link under a record's path, for a session that may read it.
- * @param {HapiRequest} request
- * @param {string} path
- * @returns {string | null}
- */
-const toLedgerUrl = (request, path) =>
-  hasLedgerReadScope(request.auth.credentials)
-    ? request.localiseUrl(`${path}/waste-balance-ledger`)
-    : null
-
-/**
  * @param {HapiRequest} request
  * @param {{ noteType: 'PRN' | 'PERN', noteTypePlural: 'PRNs' | 'PERNs' }} noteTypes
  * @param {string} notesPath
@@ -206,7 +194,7 @@ const toPrns = (request, { noteType, noteTypePlural }, notesPath) => {
  *   year: Year,
  *   homepagePath: string
  * }} params
- * @returns {Omit<RegistrationViewModel, 'accreditation' | 'prns' | 'reapplyAccreditation' | 'wasteBalanceLedgerUrl'>}
+ * @returns {Omit<RegistrationViewModel, 'accreditation' | 'prns' | 'reapplyAccreditation'>}
  */
 const buildRegistrationViewModel = ({
   request,
@@ -300,8 +288,7 @@ const buildViewModel = ({
       availableAmount: wasteBalance?.availableAmount ?? null,
       noteTypePlural,
       breakdown: showsDecember ? toDecemberBalanceBreakdown(wasteBalance) : null
-    },
-    wasteBalanceLedgerUrl: toLedgerUrl(request, path)
+    }
   }
 }
 
@@ -330,8 +317,7 @@ const buildRegisteredOnlyViewModel = ({
   }),
   accreditation: { exists: false },
   prns: null,
-  reapplyAccreditation: null,
-  wasteBalanceLedgerUrl: null
+  reapplyAccreditation: null
 })
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */

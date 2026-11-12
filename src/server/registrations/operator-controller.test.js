@@ -326,24 +326,6 @@ describe("the operator's registration page for a year", () => {
     )
   })
 
-  it('links the ledger by number for a session that may read it', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw)
-
-    const { body } = await visit(server, {
-      auth: buildMockAuth({
-        linkedOrganisationId: organisationId,
-        scope: [SCOPES.organisationLinkedWrite, SCOPES.wasteBalanceLedgerRead]
-      })
-    })
-
-    expect(hrefOf(body, 'View waste balance ledger')).toBe(
-      `${accreditationPath}/waste-balance-ledger`
-    )
-  })
-
   it('offers a session holding no write scope only the lists', async ({
     server,
     msw
@@ -361,19 +343,6 @@ describe("the operator's registration page for a year", () => {
       `${registrationPath}/reports/${year}`
     )
     expect(queryByRole(body, 'link', { name: 'Create new PRN' })).toBeNull()
-  })
-
-  it('offers no ledger link to a session that may not read it', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw)
-
-    const { body } = await visit(server)
-
-    expect(
-      queryByRole(body, 'link', { name: 'View waste balance ledger' })
-    ).toBeNull()
   })
 
   it('renders without a balance where the balance could not be read', async ({
@@ -699,25 +668,6 @@ describe("the operator's registered-only page for a year", () => {
     expect(hrefOf(body, 'Manage reports')).toBe(
       `${registrationPath}/reports/${year}`
     )
-  })
-
-  it('offers no ledger link, even to a session that may read it', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw, { registration: registeredOnly })
-
-    const { body } = await visit(server, {
-      url: registeredOnlyPath,
-      auth: buildMockAuth({
-        linkedOrganisationId: organisationId,
-        scope: [SCOPES.organisationLinkedWrite, SCOPES.wasteBalanceLedgerRead]
-      })
-    })
-
-    expect(
-      queryByRole(body, 'link', { name: 'View waste balance ledger' })
-    ).toBeNull()
   })
 
   it('offers a registered-only operator no reapply link', async ({
