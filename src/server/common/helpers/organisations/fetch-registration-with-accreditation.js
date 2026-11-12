@@ -9,7 +9,7 @@ import { fetchRegistration } from './fetch-registration.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
  * @import { Year } from '#server/common/helpers/year.js'
- * @import { AccreditationKeys, RegistrationKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from './organisation-view.js'
  */
 
