@@ -66,7 +66,6 @@ export const controller = {
         localiseUrl: request.localiseUrl,
         noteType,
         offersCsvDownloads: readsWasteRecordsDownloads(session),
-        // An operator reaches this page too, and may not fetch the file.
         offersDownloads: readsAsARegulator(session),
         registrationPath: ledgerRegistrationPath
       })
