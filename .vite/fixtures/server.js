@@ -132,60 +132,64 @@ const attachLoggerMocks = (server) => {
   })
 }
 
-const it = /** @type {TestAPI<ServerFixtures>} */ (
-  test.extend({
-    msw: [
-      // eslint-disable-next-line no-empty-pattern
-      async ({}, use) => {
-        const server = setupServer(
-          awsEc2MetadataHandler,
-          ...createOidcHandlers('http://defra-id.auth'),
-          ...createOidcHandlers(ENTRA_ID_BASE_URL)
-        )
-        let unhandledFrames = 0
-        server.listen({
-          onUnhandledFrame: ({ defaults }) => {
-            unhandledFrames++
-            defaults.error()
+/** @param {'file' | 'test'} serverScope */
+const createServerTest = (serverScope) =>
+  /** @type {TestAPI<ServerFixtures>} */ (
+    test.extend({
+      msw: [
+        // eslint-disable-next-line no-empty-pattern
+        async ({}, use) => {
+          const server = setupServer(
+            awsEc2MetadataHandler,
+            ...createOidcHandlers('http://defra-id.auth'),
+            ...createOidcHandlers(ENTRA_ID_BASE_URL)
+          )
+          let unhandledFrames = 0
+          server.listen({
+            onUnhandledFrame: ({ defaults }) => {
+              unhandledFrames++
+              defaults.error()
+            }
+          })
+
+          await use(server)
+
+          server.resetHandlers()
+          server.close()
+
+          if (unhandledFrames > 0) {
+            throw new Error(
+              `${unhandledFrames} request(s) had no msw handler, see the [MSW] errors above`
+            )
           }
-        })
+        },
+        { auto: true }
+      ],
+      server: [
+        // eslint-disable-next-line no-empty-pattern
+        async ({}, use) => {
+          const { createServer } = await import('#server/index.js')
+          const server = await createServer({
+            wasteOrganisations: /** @type {WasteOrganisation[]} */ (
+              organisationsFixture.organisations
+            )
+          })
 
-        await use(server)
+          attachLoggerMocks(server)
 
-        server.resetHandlers()
-        server.close()
+          await server.initialize()
 
-        if (unhandledFrames > 0) {
-          throw new Error(
-            `${unhandledFrames} request(s) had no msw handler, see the [MSW] errors above`
-          )
-        }
-      },
-      { auto: true }
-    ],
-    server: [
-      // eslint-disable-next-line no-empty-pattern
-      async ({}, use) => {
-        const { createServer } = await import('#server/index.js')
-        const server = await createServer({
-          wasteOrganisations: /** @type {WasteOrganisation[]} */ (
-            organisationsFixture.organisations
-          )
-        })
+          await use(server)
 
-        attachLoggerMocks(server)
+          await server.stop()
+        },
+        { scope: serverScope }
+      ]
+    })
+  )
 
-        await server.initialize()
-
-        await use(server)
-
-        await server.stop()
-      },
-      { scope: 'test' }
-    ]
-  })
-)
+const it = createServerTest('file')
 
 const beforeEach = it.beforeEach
 
-export { ENTRA_ID_BASE_URL, beforeEach, it, it as test }
+export { ENTRA_ID_BASE_URL, beforeEach, createServerTest, it, it as test }

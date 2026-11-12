@@ -257,7 +257,10 @@ export default [
     },
     settings: {
       vitest: {
-        vitestImports: ['#vite/fixtures/server.js']
+        vitestImports: [
+          '#vite/fixtures/server.js',
+          '#vite/fixtures/fresh-server.js'
+        ]
       }
     },
     rules: {

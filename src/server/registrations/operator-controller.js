@@ -29,7 +29,7 @@ import {
   reportsListPath,
   summaryLogUploadPathUnder
 } from '#server/reports/helpers/report-paths.js'
-import { capitalize } from 'lodash-es'
+import capitalize from 'lodash-es/capitalize.js'
 
 /**
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'

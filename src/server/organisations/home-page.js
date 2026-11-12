@@ -1,4 +1,4 @@
-import { capitalize } from 'lodash-es'
+import capitalize from 'lodash-es/capitalize.js'
 
 import { config } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'

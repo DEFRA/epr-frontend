@@ -1,6 +1,8 @@
 import { fileURLToPath } from 'node:url'
 import { configDefaults, defineConfig } from 'vitest/config'
 
+import { sharedTestFiles, testFilePatterns } from './.vite/split-test-files.js'
+
 export default defineConfig({
   test: {
     environment: 'node',
@@ -8,10 +10,29 @@ export default defineConfig({
     testTimeout: 10000,
     hookTimeout: 60000,
     fileParallelism: true,
+    maxWorkers: process.env.CI ? 4 : undefined,
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'isolated',
+          include: testFilePatterns,
+          exclude: [...configDefaults.exclude, ...sharedTestFiles]
+        }
+      },
+      {
+        extends: true,
+        test: { name: 'shared', isolate: false, include: sharedTestFiles }
+      }
+    ],
     reporters: process.env.CI
       ? ['default', ['json', { outputFile: 'coverage/test-results.json' }]]
       : ['default'],
-    setupFiles: ['.vite/setup-auditing.js', '.vite/setup-files.js'],
+    setupFiles: [
+      '.vite/setup-auditing.js',
+      '.vite/setup-files.js',
+      '.vite/setup-real-timers.js'
+    ],
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',

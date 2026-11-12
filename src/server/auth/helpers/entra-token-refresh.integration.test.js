@@ -10,7 +10,11 @@ import {
   identityHandler
 } from '#server/common/test-helpers/identity-helper.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { ENTRA_ID_BASE_URL, beforeEach, it } from '#vite/fixtures/server.js'
+import {
+  ENTRA_ID_BASE_URL,
+  beforeEach,
+  it
+} from '#vite/fixtures/fresh-server.js'
 import Iron from '@hapi/iron'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'

@@ -7,7 +7,7 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
-import { it } from '#vite/fixtures/server.js'
+import { it } from '#vite/fixtures/fresh-server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
