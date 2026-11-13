@@ -1,4 +1,5 @@
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
+import '@testing-library/jest-dom/vitest'
 import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'

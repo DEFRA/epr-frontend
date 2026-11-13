@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom/vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getByRole, within } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'

@@ -1,4 +1,4 @@
-import { getYear } from 'date-fns'
+import { getYear } from 'date-fns/getYear'
 
 import { REGISTRATION_STATUS } from '#domain/organisations/model.js'
 import { isWithinReapplyWindow } from '#server/common/helpers/reapply-accreditation/is-within-reapply-window.js'
