@@ -604,6 +604,21 @@ describe('the organisation home page', () => {
       )
       expect($('tbody td').first().text()).toBe('Paper and board')
     })
+
+    it.for([
+      { description: 'reprocessing', tab: '', name: /Reprocessing/ },
+      { description: 'exporting', tab: '/exporting', name: /Exporting/ }
+    ])(
+      'tells assistive technology the $description tab is the current page',
+      async ({ tab, name }, { server }) => {
+        const { payload } = await visit(server, `${PATH}${tab}`)
+        const $ = load(payload)
+        const current = $('.govuk-tabs__tab[aria-current="page"]')
+
+        expect(current).toHaveLength(1)
+        expect(current.text()).toMatch(name)
+      }
+    )
   })
 
   describe('the year in the address', () => {
@@ -774,17 +789,21 @@ describe('the organisation home page', () => {
       )
     })
 
-    it('links the year line to choosing a different year while the flag is on', async ({
-      server
-    }) => {
-      config.set('featureFlags.navigateAcrossYears', true)
+    it.for([
+      { description: 'reprocessing', tab: '' },
+      { description: 'exporting', tab: '/exporting' }
+    ])(
+      'links the year line on the $description tab to choosing a different year for that tab while the flag is on',
+      async ({ tab }, { server }) => {
+        config.set('featureFlags.navigateAcrossYears', true)
 
-      const { payload } = await visit(server)
+        const { payload } = await visit(server, `${PATH}${tab}`)
 
-      expect(
-        load(payload)('a:contains("Choose a different year")').attr('href')
-      ).toBe(`${PATH}/choose-year`)
-    })
+        expect(
+          load(payload)('a:contains("Choose a different year")').attr('href')
+        ).toBe(`${PATH}${tab}/choose-year`)
+      }
+    )
 
     it('offers no link while the flag is off', async ({ server }) => {
       config.set('featureFlags.navigateAcrossYears', false)

@@ -25,6 +25,7 @@ export const chooseYearController = {
     const { year: chosen, continue: pressedContinue } = request.query
     const orgNumber = request.params.organisationNumber
     const addressYear = request.params.year
+    const exporting = request.path.endsWith('/exporting/choose-year')
     const years = await fetchOrganisationYears(
       orgNumber,
       request.auth.credentials.backendToken
@@ -40,14 +41,18 @@ export const chooseYearController = {
 
     if (chosenYear) {
       return h.redirect(
-        request.localiseUrl(homePath(orgNumber, { year: chosenYear }))
+        request.localiseUrl(
+          homePath(orgNumber, { year: chosenYear, exporting })
+        )
       )
     }
 
     // A valid year has redirected above, so a submission reaching here chose none
     return h.view('organisations/choose-year', {
       pageTitle: localise('organisations:chooseYear:heading'),
-      backUrl: request.localiseUrl(homePath(orgNumber, { year: addressYear })),
+      backUrl: request.localiseUrl(
+        homePath(orgNumber, { year: addressYear, exporting })
+      ),
       items: buildYearChoices(years),
       error: submitted
     })
