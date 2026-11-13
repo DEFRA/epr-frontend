@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -6,7 +7,7 @@ import { JSDOM } from 'jsdom'
 import { describe, expect } from 'vitest'
 
 const organisationNumber = '500123'
-const errorUrl = `/organisations/${organisationNumber}/error`
+const errorUrl = `/organisations/${organisationNumber}/2025/error`
 
 const mockAuth = buildMockAuth()
 
@@ -27,7 +28,7 @@ describe('#errorController', () => {
     expect(getByText(main, /Something has gone wrong/i)).toBeDefined()
   })
 
-  it('displays home page link with correct URL', async ({ server }) => {
+  it('links home to the year the failed action was in', async ({ server }) => {
     const { result } = await server.inject({
       method: 'GET',
       url: errorUrl,
@@ -40,8 +41,25 @@ describe('#errorController', () => {
     const homeLink = getByText(main, /home page/i)
 
     expect(homeLink.closest('a').getAttribute('href')).toBe(
-      `/organisations/${organisationNumber}`
+      `/organisations/${organisationNumber}/2025`
     )
+  })
+
+  it('keeps the year on the header home link', async ({ server }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url: errorUrl,
+      auth: buildMockAuth({
+        linkedOrganisationNumber: toOrganisationNumber(organisationNumber)
+      })
+    })
+
+    const { body } = new JSDOM(result).window.document
+    const header = getByRole(body, 'banner')
+
+    expect(
+      getByRole(header, 'link', { name: 'Home' }).getAttribute('href')
+    ).toBe(`/organisations/${organisationNumber}/2025`)
   })
 
   it('displays contact details with mailto link', async ({ server }) => {
