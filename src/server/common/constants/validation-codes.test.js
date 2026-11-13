@@ -396,6 +396,18 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('TEMPLATE_INVALID')
   })
 
+  test('returns TEMPLATE_VERSION_INVALID for TEMPLATE_YEAR_INVALID', () => {
+    expect(
+      getDisplayCodeFromErrorCode('TEMPLATE_YEAR_INVALID', undefined)
+    ).toBe('TEMPLATE_VERSION_INVALID')
+  })
+
+  test('returns TEMPLATE_INVALID for TEMPLATE_YEAR_MISMATCH', () => {
+    expect(
+      getDisplayCodeFromErrorCode('TEMPLATE_YEAR_MISMATCH', undefined)
+    ).toBe('TEMPLATE_INVALID')
+  })
+
   test('returns TEMPLATE_INVALID for SPREADSHEET_MALFORMED_MARKERS', () => {
     expect(
       getDisplayCodeFromErrorCode('SPREADSHEET_MALFORMED_MARKERS', undefined)
