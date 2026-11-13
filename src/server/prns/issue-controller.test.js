@@ -51,7 +51,7 @@ const issueUrl = `/organisations/${organisationNumber}/registrations/${registrat
 const actionUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}`
 const viewUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/view`
 const issuedUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/accreditations/${year}/packaging-recycling-notes/${prnId}/issued`
-const errorUrl = `/organisations/${organisationNumber}/error`
+const errorUrl = `/organisations/${organisationNumber}/${year}/error`
 
 const mockPrnIssued = asUpdatePrnStatusResponse({
   id: 'prn-789',
