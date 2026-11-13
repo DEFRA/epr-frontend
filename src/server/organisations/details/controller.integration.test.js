@@ -290,6 +290,22 @@ describe('the organisation homepage a regulator reads', () => {
       'R26EX5001180041PA'
     ])
   })
+
+  it.for([
+    { description: 'reprocessor', tab: '', name: 'Reprocessor' },
+    { description: 'exporter', tab: '/exporting', name: 'Exporter' }
+  ])(
+    'tells assistive technology the $description tab is the current page',
+    async ({ tab, name }, { server }) => {
+      const { body } = await visit(server, regulator, `${path}${tab}`)
+
+      expect(
+        getAllByRole(documentOf(body), 'link', { current: 'page' }).map(
+          (link) => link.textContent?.trim()
+        )
+      ).toStrictEqual([name])
+    }
+  )
 })
 
 describe('an old bookmark to the organisation page', () => {
