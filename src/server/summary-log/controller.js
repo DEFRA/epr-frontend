@@ -8,8 +8,8 @@ import { materialsHomepagePath } from '#server/common/helpers/organisations/regi
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/fetch-accreditation-balance.js'
+import { homePath } from '#server/organisations/home-page.js'
 import {
-  organisationPath as toOrganisationPath,
   registrationPath as toRegistrationPath,
   summaryLogUploadPathUnder
 } from '#server/reports/helpers/report-paths.js'
@@ -23,6 +23,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
  * @import { TypedLogger } from '#server/common/helpers/logging/logger.js'
+ * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { RegistrationKeys } from '#server/reports/helpers/report-paths.js'
  */
@@ -51,7 +52,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   ledgerAccreditation?: LedgerAccreditation,
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType,
- *   organisationPath: string,
+ *   organisationNumber: OrganisationNumber,
  *   registrationPath: string,
  *   summaryLogId: string,
  *   pollUrl: string,
@@ -220,7 +221,7 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
  * Renders the success page after successful submission
  * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {(key: string, params?: object) => string} localise - i18n localisation function
- * @param {ValidatedRenderContext} context - View context
+ * @param {ValidatedRenderContext & { organisationPath: string }} context - View context
  * @returns {ResponseObject} Hapi view response
  */
 const renderSuccessView = (
@@ -257,11 +258,13 @@ const renderSuccessView = (
 const renderSupersededView = (
   h,
   localise,
-  { organisationPath, registrationPath, year }
+  { organisationNumber, registrationPath, year }
 ) => {
   return h.view(SUPERSEDED_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),
-    organisationPath: `${organisationPath}/${requiredYear(year)}`,
+    organisationPath: homePath(organisationNumber, {
+      year: requiredYear(year)
+    }),
     registrationPath
   })
 }
@@ -388,7 +391,9 @@ const renderPassedValidationView = async (
 
   const pageContext = {
     ...context,
-    organisationPath: `${context.organisationPath}/${context.year}`,
+    organisationPath: homePath(context.organisationNumber, {
+      year: context.year
+    }),
     wasteBalance
   }
 
@@ -511,7 +516,7 @@ export const summaryLogUploadProgressController = {
       ledgerAccreditation,
       loadsByReportingPeriod,
       processingType,
-      organisationPath: toOrganisationPath(keys),
+      organisationNumber: keys.organisationNumber,
       registrationPath,
       summaryLogId,
       pollUrl,

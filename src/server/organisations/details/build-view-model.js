@@ -2,11 +2,9 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 import { registrationEntries } from '#server/common/helpers/organisations/registration-in-view.js'
 import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
+import { homePath } from '#server/organisations/home-page.js'
 import { paths } from '#server/paths.js'
-import {
-  organisationPath,
-  registrationPath
-} from '#server/reports/helpers/report-paths.js'
+import { registrationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
  * @import { OrganisationNumber } from '#server/common/helpers/organisation-number.js'
@@ -160,7 +158,6 @@ export const buildViewModel = ({
   const { name } = organisation
   const heading = localise('organisations:details:heading')
   const { organisationNumber } = organisation
-  const homePath = organisationPath({ organisationNumber })
   const registrations = registrationEntries(organisation.registrations)
 
   const tablesOf = (
@@ -195,9 +192,9 @@ export const buildViewModel = ({
       { text: name }
     ],
     caption: name,
-    exporterUrl: localiseUrl(`${homePath}/exporting`),
+    exporterUrl: localiseUrl(homePath(organisationNumber, { exporting: true })),
     pageTitle: `${name}: ${heading}`,
-    reprocessorUrl: localiseUrl(homePath),
+    reprocessorUrl: localiseUrl(homePath(organisationNumber)),
     shouldRenderTabs: holdsBoth,
     siteTables: tab === 'EXPORTER' ? exporterTables : reprocessorTables
   }
