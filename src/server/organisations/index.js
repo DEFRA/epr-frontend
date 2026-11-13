@@ -90,6 +90,11 @@ export const organisations = {
           method: 'GET',
           path: '/organisations/{organisationNumber}/{year}/choose-year'
         }),
+        yearAddressed({
+          ...operatorOnly(chooseYearController),
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/{year}/exporting/choose-year'
+        }),
         {
           ...errorController,
           method: 'GET',

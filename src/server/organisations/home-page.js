@@ -36,11 +36,11 @@ export const homePath = (orgNumber, { year, exporting } = {}) => {
 
 /**
  * @param {OrganisationNumber} orgNumber
- * @param {Year} year
+ * @param {{ year: Year, exporting?: boolean }} options
  * @returns {string}
  */
-export const chooseYearPath = (orgNumber, year) =>
-  `${homePath(orgNumber, { year })}/choose-year`
+export const chooseYearPath = (orgNumber, { year, exporting }) =>
+  `${homePath(orgNumber, { year, exporting })}/choose-year`
 
 /**
  * @typedef {{ text: string, classes?: string, format?: string } | { html: string, classes?: string }} TableCell
@@ -354,7 +354,9 @@ export function renderHome(
     selectedYear: config.get('featureFlags.navigateAcrossYears') ? year : null,
     chooseYearUrl:
       config.get('featureFlags.navigateAcrossYears') && year && hasOtherYears
-        ? request.localiseUrl(chooseYearPath(orgNumber, year))
+        ? request.localiseUrl(
+            chooseYearPath(orgNumber, { year, exporting: isExporterTab })
+          )
         : null,
     sites,
     tableTitle,
