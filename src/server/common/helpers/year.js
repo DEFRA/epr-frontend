@@ -31,10 +31,3 @@ export const defaultYear = (years) => {
   const [latestYear] = years.toSorted((one, other) => other - one)
   return years.includes(thisYear) ? thisYear : latestYear
 }
-
-const FIXED_YEAR = 2026
-
-/**
- * The year a page uses until it has a year of its own in its URL.
- */
-export const fixedYear = toYear(FIXED_YEAR)

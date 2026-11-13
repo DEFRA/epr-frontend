@@ -26,6 +26,7 @@ const registrationKeys = {
   organisationNumber: toOrganisationNumber('500123'),
   registrationNumber: toRegistrationNumber('R26EN0000000001PL')
 }
+const keys = { ...registrationKeys, year: toYear(2026) }
 
 /** @param {RegistrationView} registration */
 const resolveRegistration = (registration) => {
@@ -41,14 +42,11 @@ describe(fetchRegistrationWithAccreditation, () => {
     vi.clearAllMocks()
   })
 
-  it('returns the registration with its live 2026 accreditation', async () => {
+  it('returns the registration with its live accreditation for the year', async () => {
     const registration = buildRegistrationView()
     const organisation = resolveRegistration(registration)
 
-    const result = await fetchRegistrationWithAccreditation(
-      registrationKeys,
-      backendToken
-    )
+    const result = await fetchRegistrationWithAccreditation(keys, backendToken)
 
     expect(result).toStrictEqual({
       organisation,
@@ -61,7 +59,7 @@ describe(fetchRegistrationWithAccreditation, () => {
     })
   })
 
-  it('reads 2026 even when another year is accredited', async () => {
+  it('leaves out the accreditation when only another year is accredited', async () => {
     resolveRegistration(
       buildRegistrationView({
         accreditations: {
@@ -73,26 +71,7 @@ describe(fetchRegistrationWithAccreditation, () => {
     )
 
     const { accreditation } = await fetchRegistrationWithAccreditation(
-      registrationKeys,
-      backendToken
-    )
-
-    expect(accreditation).toBeUndefined()
-  })
-
-  it('leaves out a 2026 accreditation that is not live', async () => {
-    resolveRegistration(
-      buildRegistrationView({
-        accreditations: {
-          2026: buildAccreditationView({
-            status: { current: 'cancelled', timeline: [] }
-          })
-        }
-      })
-    )
-
-    const { accreditation } = await fetchRegistrationWithAccreditation(
-      registrationKeys,
+      keys,
       backendToken
     )
 
@@ -146,8 +125,6 @@ describe(fetchRegistrationWithAccreditation, () => {
 })
 
 describe(fetchRequiredAccreditation, () => {
-  const keys = { ...registrationKeys, year: toYear(2026) }
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -208,8 +185,6 @@ describe(fetchRequiredAccreditation, () => {
 })
 
 describe(fetchRequiredAnyAccreditation, () => {
-  const keys = { ...registrationKeys, year: toYear(2026) }
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
