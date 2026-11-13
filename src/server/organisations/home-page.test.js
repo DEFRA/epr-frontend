@@ -604,6 +604,21 @@ describe('the organisation home page', () => {
       )
       expect($('tbody td').first().text()).toBe('Paper and board')
     })
+
+    it.for([
+      { description: 'reprocessing', tab: '', name: /Reprocessing/ },
+      { description: 'exporting', tab: '/exporting', name: /Exporting/ }
+    ])(
+      'tells assistive technology the $description tab is the current page',
+      async ({ tab, name }, { server }) => {
+        const { payload } = await visit(server, `${PATH}${tab}`)
+        const $ = load(payload)
+        const current = $('.govuk-tabs__tab[aria-current="page"]')
+
+        expect(current).toHaveLength(1)
+        expect(current.text()).toMatch(name)
+      }
+    )
   })
 
   describe('the year in the address', () => {
