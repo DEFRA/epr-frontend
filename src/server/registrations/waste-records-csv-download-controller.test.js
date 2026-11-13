@@ -59,8 +59,8 @@ const backendStreams = (
  * @param {HapiServer} server
  * @param {ReturnType<typeof buildMockAuth>} auth
  */
-const visit = (server, auth) =>
-  server.inject({ method: 'GET', url: path, auth })
+const visit = (server, auth, url = path) =>
+  server.inject({ method: 'GET', url, auth })
 
 describe('the waste records CSV download', () => {
   beforeAll(() => {
@@ -130,6 +130,28 @@ describe('the waste records CSV download', () => {
       `${config.get('eprBackendUrl')}${backendPath}`
     ])
   })
+
+  it("asks the backend for the year's export", async ({ server, msw }) => {
+    const requests = backendStreams(msw)
+
+    await visit(server, regulator, `${path}?year=2027`)
+
+    expect(requests).toStrictEqual([
+      `${config.get('eprBackendUrl')}${backendPath}?year=2027`
+    ])
+  })
+
+  it.for(['2023', 'next'])(
+    'refuses year %s without asking the backend',
+    async (year, { server, msw }) => {
+      const requests = backendStreams(msw)
+
+      const response = await visit(server, regulator, `${path}?year=${year}`)
+
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+      expect(requests).toStrictEqual([])
+    }
+  )
 
   it('does not exist for an operator', async ({ server, msw }) => {
     const requests = backendStreams(msw)

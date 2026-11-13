@@ -394,7 +394,7 @@ describe('the accreditation details page', () => {
 
     expect(
       within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
-    ).toBe(`${registrationPath}/waste-records/download.csv`)
+    ).toBe(`${registrationPath}/waste-records/download.csv?year=2026`)
   })
 
   it('offers the latest summary log workbook in the summary', async ({
