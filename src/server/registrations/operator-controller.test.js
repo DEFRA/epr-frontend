@@ -234,6 +234,47 @@ describe("the operator's registration page for a year", () => {
     expect(title).toContain(year)
   })
 
+  it('shows the year in the address in the heading and page title', async ({
+    server,
+    msw
+  }) => {
+    const lastYear = String(thisYear - 1)
+    const lastYearPath = `${registrationPath}/accreditations/${lastYear}`
+    backendHolds(msw, {
+      registration: {
+        ...reprocessor,
+        status: registeredSince(thisYear - 1),
+        standingByDate: standingSince(thisYear - 1),
+        accreditations: {
+          [lastYear]: accreditationWith('approved', ['approved'], thisYear - 1)
+        }
+      }
+    })
+    msw.use(
+      http.get(
+        `${backendUrl}/organisations/500118/waste-balances/${lastYear}`,
+        () =>
+          HttpResponse.json({
+            [accreditationNumber]: { amount: 1500, availableAmount: 1234.5 }
+          })
+      ),
+      http.get(
+        `${backendUrl}${lastYearPath}/packaging-recycling-notes/december-prn-eligibility`,
+        () => HttpResponse.json({ mode: 'pool', windowOpen: false })
+      )
+    )
+
+    const { statusCode, body, title } = await visit(server, {
+      url: lastYearPath
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(
+      lastYear
+    )
+    expect(title).toContain(lastYear)
+  })
+
   it("shows the year's balance", async ({ server, msw }) => {
     backendHolds(msw)
 
