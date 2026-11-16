@@ -71,7 +71,6 @@
  * @typedef {{
  *   status: Status<RegistrationStatus>,
  *   standingByDate: StandingByDate,
- *   validFrom: string,
  *   material: Material,
  *   submittedToRegulator: { code: RegulatorValue },
  *   accreditations: Record<string, Accreditation>,

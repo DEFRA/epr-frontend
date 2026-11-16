@@ -139,7 +139,6 @@ const anOrganisation = ({
     [registrationNumber]: {
       status,
       standingByDate,
-      validFrom: '2026-01-01',
       material: 'plastic',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'reprocessor',
