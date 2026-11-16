@@ -43,6 +43,14 @@ const organisation = buildOrganisationView({
         })
       }
     }),
+    REG004567: buildRegistrationView({
+      wasteProcessingType: 'exporter',
+      accreditations: {
+        2026: buildAccreditationView({
+          accreditationNumber: toAccreditationNumber('ACC004567')
+        })
+      }
+    }),
     REG006789: registeredOnlyRegistration
   }
 })
@@ -388,6 +396,28 @@ describe('the waste balance ledger page', () => {
       expect(
         documentOf(asHtml(result)).querySelector('.govuk-phase-banner')
       ).not.toBeNull()
+    })
+
+    it("names an exporter's notes PERNs, as its registration requires", async ({
+      msw,
+      server
+    }) => {
+      const exporterAccreditationPath = `${organisationPath}/registrations/REG004567/accreditations/2026`
+      msw.use(
+        http.get(`${backendUrl}${exporterAccreditationPath}/ledger`, () =>
+          HttpResponse.json(ledgerOf([prnIssued]))
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `${exporterAccreditationPath}/waste-balance-ledger`,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+
+      expect(rowsOf(body).at(0)?.at(1)).toBe('PERN issued\n240000123')
     })
 
     it('says so where nothing has moved the balance yet', async ({
