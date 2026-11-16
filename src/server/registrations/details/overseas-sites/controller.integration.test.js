@@ -73,7 +73,6 @@ const overseasSitesDetails = ({ sites = { '007': bahiaPlasticos } } = {}) => {
     standingByDate: {
       2026: { '2026-01-01': { standing: 'registeredOnly' } }
     },
-    validFrom: '2026-01-01',
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
     accreditations: {},
