@@ -44,7 +44,6 @@ export const buildRegistrationView = (overrides = {}) =>
     standingByDate: {
       2026: { '2026-01-01': { standing: STANDING.ACCREDITED } }
     },
-    validFrom: '2026-01-01',
     material: 'plastic',
     submittedToRegulator: { code: 'ea' },
     wasteProcessingType: 'exporter',
