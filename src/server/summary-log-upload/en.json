@@ -8,5 +8,8 @@
   "heading": "Upload your summary log ({{ year }})",
   "helperText": "Your chosen file will be checked for errors, new data and data changes when you continue.",
   "introText": "You can upload the latest version of your summary log whenever you need to add or adjust waste records.",
-  "pageTitle": "Summary log: upload ({{ year }})"
+  "pageTitle": "Summary log: upload ({{ year }})",
+  "yearClosedHeading": "You cannot upload a summary log for {{ year }}",
+  "yearClosedMessage": "This registration is not open for summary log uploads in {{ year }}.",
+  "yearClosedPageTitle": "Summary log: upload not available ({{ year }})"
 }

@@ -1,4 +1,7 @@
+import Boom from '@hapi/boom'
+
 import { hasWriteScope } from '#server/auth/scopes.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { defaultMaterialsHomepagePath } from '#server/common/helpers/organisations/registration-in-view.js'
@@ -79,13 +82,36 @@ const summaryLogUploadController = ({ accredited }) => ({
         backUrl: request.localiseUrl(homepagePath)
       })
     } catch (err) {
+      const reference = `organisationNumber=${organisationNumber}, registrationNumber=${registrationNumber}`
+
+      if (Boom.isBoom(err, statusCodes.unprocessableEntity)) {
+        request.logger.info({
+          message: 'Summary log upload refused for the year',
+          event: {
+            category: 'upload',
+            action: 'summary-log-upload-refused',
+            reason: err.output.payload.message,
+            reference
+          }
+        })
+
+        return h.view('summary-log-upload/year-closed', {
+          pageTitle: localise('summary-log-upload:yearClosedPageTitle', {
+            year
+          }),
+          heading: localise('summary-log-upload:yearClosedHeading', { year }),
+          message: localise('summary-log-upload:yearClosedMessage', { year }),
+          backUrl: request.localiseUrl(homepagePath)
+        })
+      }
+
       request.logger.error({
         message: 'Failed to initiate summary log upload',
         err,
         event: {
           category: 'upload',
           action: 'summary-log-upload-failed',
-          reference: `organisationNumber=${organisationNumber}, registrationNumber=${registrationNumber}`
+          reference
         }
       })
 

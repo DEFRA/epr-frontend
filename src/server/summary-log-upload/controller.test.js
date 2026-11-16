@@ -373,6 +373,93 @@ describe('#summaryLogUploadController', () => {
     })
   })
 
+  describe('when the backend refuses an upload for the year', () => {
+    const reason = 'Registration is not approved and active in 2027'
+
+    const refusal = () => {
+      const error = Boom.boomify(new Error('Failed to fetch from url'), {
+        statusCode: 422
+      })
+      error.output.payload = {
+        statusCode: 422,
+        error: 'Unprocessable Entity',
+        message: reason
+      }
+      return error
+    }
+
+    beforeEach(() => {
+      vi.mocked(initiateSummaryLogUpload).mockRejectedValueOnce(refusal())
+    })
+
+    it.for(kinds)(
+      'says the $kind year is not open for uploads',
+      async ({ homepage }, { server }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: `${homepage}/summary-logs/upload`,
+          auth: mockAuth
+        })
+
+        const $ = cheerio.load(
+          /** @type {string} */ (/** @type {unknown} */ (result))
+        )
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect($('title').text()).toContain(
+          'Summary log: upload not available (2027)'
+        )
+        expect($('main h1').text().trim()).toBe(
+          'You cannot upload a summary log for 2027'
+        )
+        expect($('main p').text().trim()).toBe(
+          'This registration is not open for summary log uploads in 2027.'
+        )
+      }
+    )
+
+    it.for(kinds)(
+      'offers no upload form on the $kind page, only a link back to its homepage',
+      async ({ homepage }, { server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `${homepage}/summary-logs/upload`,
+          auth: mockAuth
+        })
+
+        const $ = cheerio.load(
+          /** @type {string} */ (/** @type {unknown} */ (result))
+        )
+
+        expect($('main form')).toHaveLength(0)
+        expect($('.govuk-back-link').attr('href')).toBe(homepage)
+      }
+    )
+
+    it('logs the refusal and its reason without an error', async ({
+      server
+    }) => {
+      await server.inject({ method: 'GET', url, auth: mockAuth })
+
+      expect(server.loggerMocks.error).not.toHaveBeenCalled()
+      expect(server.loggerMocks.info).toHaveBeenCalledWith({
+        message: 'Summary log upload refused for the year',
+        event: {
+          category: 'upload',
+          action: 'summary-log-upload-refused',
+          reason,
+          reference: `organisationNumber=${organisationNumber}, registrationNumber=${registrationNumber}`
+        }
+      })
+    })
+
+    it('does not record a journey start', async ({ server }) => {
+      await server.inject({ method: 'GET', url, auth: mockAuth })
+
+      expect(metrics.journey.start).not.toHaveBeenCalled()
+    })
+  })
+
   it('looks the registration up by its numbers', async ({ server }) => {
     await server.inject({ method: 'GET', url, auth: mockAuth })
 
