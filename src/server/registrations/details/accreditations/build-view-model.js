@@ -38,6 +38,7 @@ import { accreditedDateRange } from '#server/common/helpers/organisations/regist
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Localise } from '../helpers/types.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  */
 
 /**
@@ -100,19 +101,26 @@ const toTonnage = (amount) =>
   amount === undefined ? '' : formatTonnage(amount)
 
 /**
- * The registration's waste records, offered as a file rather than stated. The
- * records belong to the registration, not to the accreditation the page names.
+ * The registration's waste records for the page's year, offered as a file
+ * rather than stated. The records belong to the registration, not to the
+ * accreditation the page names.
  * @param {{
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   registrationPath: string
+ *   registrationPath: string,
+ *   year: Year
  * }} params
  * @returns {SummaryRow}
  */
-const toWasteRecordsRow = ({ localise, localiseUrl, registrationPath }) => ({
+const toWasteRecordsRow = ({
+  localise,
+  localiseUrl,
+  registrationPath,
+  year
+}) => ({
   key: localise('registrations:details:accreditation:summary:wasteRecords'),
   html: `<a href="${localiseUrl(
-    buildWasteRecordsCsvDownloadPath(registrationPath)
+    buildWasteRecordsCsvDownloadPath(registrationPath, year)
   )}" class="govuk-link">${escapeHtml(
     localise('registrations:details:accreditation:summary:download')
   )}</a>`
@@ -164,7 +172,8 @@ const toLatestSummaryLogRow = ({
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   registrationPath: string,
- *   wasteBalance: WasteBalance | null
+ *   wasteBalance: WasteBalance | null,
+ *   year: Year
  * }} params
  * @returns {SummaryRow[]}
  */
@@ -174,7 +183,8 @@ const toSummaryRows = ({
   localise,
   localiseUrl,
   registrationPath,
-  wasteBalance
+  wasteBalance,
+  year
 }) => [
   {
     key: localise('registrations:details:accreditation:summary:status'),
@@ -198,7 +208,7 @@ const toSummaryRows = ({
   }),
   // The page is regulator-only, so the flag is the whole question here.
   ...(offersWasteRecordsDownloads()
-    ? [toWasteRecordsRow({ localise, localiseUrl, registrationPath })]
+    ? [toWasteRecordsRow({ localise, localiseUrl, registrationPath, year })]
     : [])
 ]
 
@@ -446,7 +456,8 @@ export const buildViewModel = ({
       localise,
       localiseUrl,
       registrationPath: paths.registration,
-      wasteBalance
+      wasteBalance,
+      year: keys.year
     })
   }
 }
