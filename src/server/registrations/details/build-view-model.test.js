@@ -52,7 +52,6 @@ const aReprocessorAt = (address) => ({
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
-  validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'reprocessor',
@@ -68,7 +67,6 @@ const anExporter = {
     timeline: [{ status: 'approved', at: '2026-01-01T00:00:00.000Z' }]
   },
   standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
-  validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   wasteProcessingType: 'exporter',
@@ -220,7 +218,6 @@ describe(buildViewModel, () => {
               '2026-07-01': { standing: 'accredited' }
             }
           },
-          validFrom: '2025-01-01',
           accreditations: {
             2025: anAccreditation({
               accreditationNumber: toAccreditationNumber('A25ER5001180114PL'),
