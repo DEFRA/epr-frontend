@@ -148,10 +148,47 @@ describe('the waste records CSV download', () => {
 
       const response = await visit(server, regulator, `${path}?year=${year}`)
 
-      expect(response.statusCode).toBe(statusCodes.badRequest)
+      expect(response.statusCode).toBe(statusCodes.notFound)
       expect(requests).toStrictEqual([])
     }
   )
+
+  it('ignores a query parameter it does not know', async ({ server, msw }) => {
+    const requests = backendStreams(msw)
+
+    const response = await visit(server, regulator, `${path}?year=2027&lang=cy`)
+
+    expect(response.statusCode).toBe(statusCodes.ok)
+    expect(requests).toStrictEqual([
+      `${config.get('eprBackendUrl')}${backendPath}?year=2027`
+    ])
+  })
+
+  it('does not exist for an operator asking for a year it does not serve', async ({
+    server,
+    msw
+  }) => {
+    const requests = backendStreams(msw)
+
+    const response = await visit(server, operator, `${path}?year=next`)
+
+    expect(response.statusCode).toBe(statusCodes.notFound)
+    expect(requests).toStrictEqual([])
+  })
+
+  it('does not exist while the records download is dark, whatever the year', async ({
+    server,
+    msw
+  }) => {
+    const requests = backendStreams(msw)
+
+    config.set('featureFlags.wasteRecordsDownload', false)
+    const response = await visit(server, regulator, `${path}?year=next`)
+    config.set('featureFlags.wasteRecordsDownload', true)
+
+    expect(response.statusCode).toBe(statusCodes.notFound)
+    expect(requests).toStrictEqual([])
+  })
 
   it('does not exist for an operator', async ({ server, msw }) => {
     const requests = backendStreams(msw)

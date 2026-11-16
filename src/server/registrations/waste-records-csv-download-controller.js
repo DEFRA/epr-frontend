@@ -29,16 +29,24 @@ export const buildWasteRecordsCsvDownloadPath = (registrationPath, year) =>
 const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
 
 /**
- * @param {Year} [year]
- * @returns {string}
+ * The not found a caller gets for records it is not offered, or a year the
+ * address does not serve, so neither confirms the address exists.
+ * @param {HapiRequest} request
+ * @param {string} reason
  */
-const yearQuery = (year) => (year === undefined ? '' : `?year=${year}`)
+const recordsNotFound = (request, reason) =>
+  notFound('Waste records not found', errorCodes.registrationNotFound, {
+    event: {
+      action: 'download_waste_records_csv',
+      reason: `${reason} registrationNumber=${request.params.registrationNumber}`
+    }
+  })
 
 /**
  * Serves a registration's latest waste records for a year as CSV. The backend
  * generates it, so the body is passed straight through rather than held: an
  * export can be arbitrarily large. Without a year the backend picks one, until
- * it requires it (PAE-2277).
+ * it requires it.
  *
  * The registrations plugin is registered unconditionally, so this route guards
  * itself on both the flag and the role rather than inheriting a gate.
@@ -46,7 +54,13 @@ const yearQuery = (year) => (year === undefined ? '' : `?year=${year}`)
  */
 export const wasteRecordsCsvDownloadController = {
   options: {
-    validate: { query: Joi.object({ year: yearParam }) }
+    validate: {
+      query: Joi.object({ year: yearParam }).unknown(),
+      /** @param {HapiRequest} request */
+      failAction: (request) => {
+        throw recordsNotFound(request, 'year not served')
+      }
+    }
   },
   /**
    * @param {HapiRequest & { params: RegistrationKeys, query: { year?: Year } }} request
@@ -56,23 +70,14 @@ export const wasteRecordsCsvDownloadController = {
     const { backendToken } = request.auth.credentials
 
     if (!readsWasteRecordsDownloads(request.auth.credentials)) {
-      throw notFound(
-        'Waste records not found',
-        errorCodes.registrationNotFound,
-        {
-          event: {
-            action: 'download_waste_records_csv',
-            reason: `records not offered to this caller registrationNumber=${request.params.registrationNumber}`
-          }
-        }
-      )
+      throw recordsNotFound(request, 'records not offered to this caller')
     }
 
     const { body, contentDisposition, contentType } = await backend(
       backendToken
-    ).stream(
-      `${toRegistrationPath(request.params)}/waste-records/export.csv${yearQuery(request.query.year)}`
-    )
+    ).stream(`${toRegistrationPath(request.params)}/waste-records/export.csv`, {
+      query: { year: request.query.year }
+    })
 
     const response = h.response(body).type(contentType ?? DEFAULT_CONTENT_TYPE)
 

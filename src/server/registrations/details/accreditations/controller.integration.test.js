@@ -217,8 +217,8 @@ const accreditationDetails = {
  * @param {HapiServer} server
  * @param {ReturnType<typeof buildMockAuth>} auth
  */
-const visit = async (server, auth) => {
-  const response = await server.inject({ method: 'GET', url: path, auth })
+const visit = async (server, auth, url = path) => {
+  const response = await server.inject({ method: 'GET', url, auth })
 
   return { statusCode: response.statusCode, body: asHtml(response.result) }
 }
@@ -395,6 +395,21 @@ describe('the accreditation details page', () => {
     expect(
       within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
     ).toBe(`${registrationPath}/waste-records/download.csv?year=2026`)
+  })
+
+  it("offers the page year's waste records", async ({ server }) => {
+    config.set('featureFlags.wasteRecordsDownload', true)
+    const { body } = await visit(
+      server,
+      regulator,
+      `${registrationPath}/accreditations/2027`
+    )
+    config.set('featureFlags.wasteRecordsDownload', false)
+    const row = summaryRow(documentOf(body), 'Latest waste record CSV')
+
+    expect(
+      within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
+    ).toBe(`${registrationPath}/waste-records/download.csv?year=2027`)
   })
 
   it('offers the latest summary log workbook in the summary', async ({
