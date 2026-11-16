@@ -128,6 +128,7 @@ const operator = buildMockAuth({ linkedOrganisationId: organisationId })
  * @param {SetupServer} msw
  * @param {{
  *   registration?: Record<string, unknown>,
+ *   forYear?: string,
  *   balances?: () => Response,
  *   ids?: () => Response,
  *   eligibility?: Record<string, unknown>
@@ -137,6 +138,7 @@ const backendHolds = (
   msw,
   {
     registration = reprocessor,
+    forYear = year,
     balances = () =>
       HttpResponse.json({
         [accreditationNumber]: { amount: 1500, availableAmount: 1234.5 }
@@ -150,12 +152,12 @@ const backendHolds = (
       HttpResponse.json(organisationView(registration))
     ),
     http.get(
-      `${backendUrl}/organisations/500118/waste-balances/${year}`,
+      `${backendUrl}/organisations/500118/waste-balances/${forYear}`,
       balances
     ),
     http.get(`${backendUrl}/v1/organisations/${organisationId}`, ids),
     http.get(
-      `${backendUrl}${accreditationPath}/packaging-recycling-notes/december-prn-eligibility`,
+      `${backendUrl}${registrationPath}/accreditations/${forYear}/packaging-recycling-notes/december-prn-eligibility`,
       () => HttpResponse.json(eligibility)
     )
   )
@@ -222,25 +224,13 @@ describe("the operator's registration page for a year", () => {
     expect(body.textContent).toContain(accreditationNumber)
   })
 
-  it('shows the year in the heading and page title', async ({
-    server,
-    msw
-  }) => {
-    backendHolds(msw)
-
-    const { body, title } = await visit(server)
-
-    expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(year)
-    expect(title).toContain(year)
-  })
-
   it('shows the year in the address in the heading and page title', async ({
     server,
     msw
   }) => {
     const lastYear = String(thisYear - 1)
-    const lastYearPath = `${registrationPath}/accreditations/${lastYear}`
     backendHolds(msw, {
+      forYear: lastYear,
       registration: {
         ...reprocessor,
         status: registeredSince(thisYear - 1),
@@ -250,22 +240,9 @@ describe("the operator's registration page for a year", () => {
         }
       }
     })
-    msw.use(
-      http.get(
-        `${backendUrl}/organisations/500118/waste-balances/${lastYear}`,
-        () =>
-          HttpResponse.json({
-            [accreditationNumber]: { amount: 1500, availableAmount: 1234.5 }
-          })
-      ),
-      http.get(
-        `${backendUrl}${lastYearPath}/packaging-recycling-notes/december-prn-eligibility`,
-        () => HttpResponse.json({ mode: 'pool', windowOpen: false })
-      )
-    )
 
     const { statusCode, body, title } = await visit(server, {
-      url: lastYearPath
+      url: `${registrationPath}/accreditations/${lastYear}`
     })
 
     expect(statusCode).toBe(statusCodes.ok)
