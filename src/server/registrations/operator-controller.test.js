@@ -252,6 +252,44 @@ describe("the operator's registration page for a year", () => {
     expect(title).toContain(lastYear)
   })
 
+  it.for([
+    { operator: 'a reprocessor', wasteProcessingType: 'reprocessor', tab: '' },
+    {
+      operator: 'an exporter',
+      wasteProcessingType: 'exporter',
+      tab: '/exporting'
+    }
+  ])(
+    'sends $operator back to the organisation home for the year in the address, not the latest',
+    async ({ wasteProcessingType, tab }, { server, msw }) => {
+      const lastYear = String(thisYear - 1)
+      backendHolds(msw, {
+        forYear: lastYear,
+        registration: {
+          ...reprocessor,
+          wasteProcessingType,
+          status: registeredSince(thisYear - 1),
+          standingByDate: standingSince(thisYear - 1),
+          accreditations: {
+            [lastYear]: accreditationWith(
+              'approved',
+              ['approved'],
+              thisYear - 1
+            )
+          }
+        }
+      })
+
+      const { body } = await visit(server, {
+        url: `${registrationPath}/accreditations/${lastYear}`
+      })
+
+      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+        `/organisations/500118/${lastYear}${tab}`
+      )
+    }
+  )
+
   it("shows the year's balance", async ({ server, msw }) => {
     backendHolds(msw)
 
