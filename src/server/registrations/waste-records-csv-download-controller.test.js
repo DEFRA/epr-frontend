@@ -12,6 +12,7 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { it } from '#vite/fixtures/server.js'
+import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 const registrationPath = '/organisations/500002/registrations/R26ER5000000002PA'
@@ -47,19 +48,26 @@ const backendStreams = (
     contentType = 'text/csv; charset=utf-8',
     status = statusCodes.ok
   } = {}
-) =>
-  serveDownload(msw, `${config.get('eprBackendUrl')}${backendPath}`, {
+) => {
+  msw.use(
+    http.get(`${config.get('eprBackendUrl')}/waste-records/years`, () =>
+      HttpResponse.json({ years: [{ year: 2027 }, { year: 2026 }] })
+    )
+  )
+
+  return serveDownload(msw, `${config.get('eprBackendUrl')}${backendPath}`, {
     body: csv,
     contentDisposition,
     contentType,
     status
   })
+}
 
 /**
  * @param {HapiServer} server
  * @param {ReturnType<typeof buildMockAuth>} auth
  */
-const visit = (server, auth, url = path) =>
+const visit = (server, auth, url = `${path}?year=2026`) =>
   server.inject({ method: 'GET', url, auth })
 
 describe('the waste records CSV download', () => {
@@ -121,14 +129,14 @@ describe('the waste records CSV download', () => {
     expect(response.headers['content-type']).toContain('text/csv')
   })
 
-  it('asks the backend for the export', async ({ server, msw }) => {
+  it('sends a link that names no year to 2026', async ({ server, msw }) => {
     const requests = backendStreams(msw)
 
-    await visit(server, regulator)
+    const response = await visit(server, regulator, path)
 
-    expect(requests).toStrictEqual([
-      `${config.get('eprBackendUrl')}${backendPath}`
-    ])
+    expect(response.statusCode).toBe(statusCodes.found)
+    expect(response.headers.location).toBe(`${path}?year=2026`)
+    expect(requests).toStrictEqual([])
   })
 
   it("asks the backend for the year's export", async ({ server, msw }) => {
@@ -143,6 +151,18 @@ describe('the waste records CSV download', () => {
 
   it.for(['2023', 'next'])(
     'refuses year %s without asking the backend',
+    async (year, { server, msw }) => {
+      const requests = backendStreams(msw)
+
+      const response = await visit(server, regulator, `${path}?year=${year}`)
+
+      expect(response.statusCode).toBe(statusCodes.notFound)
+      expect(requests).toStrictEqual([])
+    }
+  )
+
+  it.for(['2024', '2025', '2028'])(
+    'does not exist for year %s, which the backend does not export',
     async (year, { server, msw }) => {
       const requests = backendStreams(msw)
 
