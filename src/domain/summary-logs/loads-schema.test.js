@@ -180,12 +180,12 @@ describe('summaryLogStatusResponseSchema validation', () => {
       expect(value.loadsByReportingPeriod).toStrictEqual(loadsByReportingPeriod)
     })
 
-    it('should leave periodsRequiringResubmission absent when the backend omits it', () => {
+    it('should default periodsRequiringResubmission to empty for a log stored before the field existed', () => {
       const { openPeriodLoads, closedPeriodLoads } = loadsByReportingPeriod
 
       const { error, value } = summaryLogStatusResponseSchema.validate(
         {
-          status: 'validated',
+          status: 'submitted',
           year: 2026,
           loadsByReportingPeriod: { openPeriodLoads, closedPeriodLoads }
         },
@@ -195,7 +195,7 @@ describe('summaryLogStatusResponseSchema validation', () => {
       expect(error).toBeUndefined()
       expect(
         value.loadsByReportingPeriod.periodsRequiringResubmission
-      ).toBeUndefined()
+      ).toStrictEqual([])
     })
 
     it('should reject a payload missing a required bucket', () => {

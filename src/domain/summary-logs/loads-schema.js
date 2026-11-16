@@ -73,12 +73,6 @@ const periodStatusByChangeSchema = Joi.object({
   adjusted: periodStatusGroupSchema.required()
 })
 
-// periodsRequiringResubmission lists only the closed periods whose reported
-// figures changed, so it drives the resubmission messaging. It is optional and
-// left absent (rather than defaulted) when the backend omits it, so callers can
-// tell "backend has not shipped this field yet" (undefined -> fall back to the
-// raw closed-period counts) apart from "backend shipped it and no figures
-// changed" (empty array -> no resubmission needed).
 const periodRefSchema = Joi.object({
   year: Joi.number().integer().required(),
   cadence: Joi.string()
@@ -90,7 +84,9 @@ const periodRefSchema = Joi.object({
 export const loadsByReportingPeriodSchema = Joi.object({
   openPeriodLoads: periodStatusByChangeSchema.required(),
   closedPeriodLoads: periodStatusByChangeSchema.required(),
-  periodsRequiringResubmission: Joi.array().items(periodRefSchema)
+  // Submitted logs never expire, and those stored before this field existed
+  // still come back without it.
+  periodsRequiringResubmission: Joi.array().items(periodRefSchema).default([])
 })
 
 const storedSummaryLogSchema = Joi.object({

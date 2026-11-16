@@ -429,7 +429,8 @@ describe('#summaryLogUploadProgressController', () => {
           processingType: 'EXPORTER',
           loadsByReportingPeriod: {
             openPeriodLoads: emptyPeriod(),
-            closedPeriodLoads: emptyPeriod()
+            closedPeriodLoads: emptyPeriod(),
+            periodsRequiringResubmission: []
           }
         })
 
@@ -470,7 +471,8 @@ describe('#summaryLogUploadProgressController', () => {
           processingType: 'REPROCESSOR_REGISTERED_ONLY',
           loadsByReportingPeriod: {
             openPeriodLoads: emptyPeriod(),
-            closedPeriodLoads: emptyPeriod()
+            closedPeriodLoads: emptyPeriod(),
+            periodsRequiringResubmission: []
           }
         })
         mockFetchRegistrationWithAccreditation.mockResolvedValue(accredited2026)
@@ -752,7 +754,8 @@ describe('#summaryLogUploadProgressController', () => {
               },
               adjusted: ZERO_CHANGE
             },
-            closedPeriodLoads: emptyPeriod()
+            closedPeriodLoads: emptyPeriod(),
+            periodsRequiringResubmission: []
           }
         })
 
@@ -788,29 +791,6 @@ describe('#summaryLogUploadProgressController', () => {
         expect(
           queryByRole(main, 'button', { name: 'Go to reports' })
         ).toBeNull()
-      })
-
-      it('shows the section from closed-period counts when the backend omits periodsRequiringResubmission', async ({
-        server
-      }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.submitted,
-          processingType: 'EXPORTER',
-          year: 2026,
-          loadsByReportingPeriod: {
-            openPeriodLoads: emptyPeriod(),
-            closedPeriodLoads: closedAdjustmentRows()
-          }
-        })
-
-        const main = await getMain(server)
-
-        expect(
-          queryByRole(main, 'heading', { name: 'Further action needed' })
-        ).not.toBeNull()
-        expect(
-          queryByRole(main, 'button', { name: 'Go to reports' })
-        ).not.toBeNull()
       })
     })
 
@@ -2936,7 +2916,8 @@ describe('summary log check view', () => {
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
   }
@@ -2973,7 +2954,8 @@ describe('summary log check view', () => {
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -2994,7 +2976,8 @@ describe('summary log check view', () => {
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3033,7 +3016,8 @@ describe('summary log check view', () => {
             balanceAffecting: { count: 2, tonnageDelta: -4 },
             nonBalanceAffecting: { count: 1 }
           }
-        }
+        },
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3117,7 +3101,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3150,7 +3135,8 @@ describe('summary log check view', () => {
             nonBalanceAffecting: { count: 2 }
           }
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3189,7 +3175,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3222,7 +3209,8 @@ describe('summary log check view', () => {
             nonBalanceAffecting: { count: 0 }
           },
           adjusted: ZERO_CHANGE
-        }
+        },
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3249,7 +3237,8 @@ describe('summary log check view', () => {
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3307,7 +3296,8 @@ describe('summary log check view', () => {
       ledgerAccreditation: registeredOnlyLedger,
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3332,7 +3322,8 @@ describe('summary log check view', () => {
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3375,7 +3366,8 @@ describe('summary log check view', () => {
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3415,7 +3407,8 @@ describe('summary log check view', () => {
       processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3448,7 +3441,8 @@ describe('summary log check view', () => {
         processingType: 'EXPORTER_REGISTERED_ONLY',
         loadsByReportingPeriod: {
           openPeriodLoads: emptyPeriod(),
-          closedPeriodLoads: emptyPeriod()
+          closedPeriodLoads: emptyPeriod(),
+          periodsRequiringResubmission: []
         }
       })
 
@@ -3473,7 +3467,8 @@ describe('summary log check view', () => {
       processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByReportingPeriod: {
         openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3510,7 +3505,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3545,7 +3541,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3576,7 +3573,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3623,7 +3621,8 @@ describe('summary log check view', () => {
             balanceAffecting: { count: 1, tonnageDelta: -0.3 },
             nonBalanceAffecting: { count: 0 }
           }
-        }
+        },
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3657,7 +3656,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3687,7 +3687,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3736,7 +3737,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3805,7 +3807,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3877,7 +3880,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -3953,7 +3957,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4021,7 +4026,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4077,7 +4083,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4139,7 +4146,8 @@ describe('summary log check view', () => {
             }
           }
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4204,7 +4212,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4254,7 +4263,8 @@ describe('summary log check view', () => {
             nonBalanceAffecting: { count: 0, rows: [] }
           }
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4313,7 +4323,8 @@ describe('summary log check view', () => {
             nonBalanceAffecting: { count: 0, rows: [] }
           }
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4363,7 +4374,8 @@ describe('summary log check view', () => {
             nonBalanceAffecting: { count: 0, rows: [] }
           }
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4413,7 +4425,8 @@ describe('summary log check view', () => {
             nonBalanceAffecting: { count: 0, rows: [] }
           }
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4458,7 +4471,8 @@ describe('summary log check view', () => {
             }
           }
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4511,7 +4525,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4554,7 +4569,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4599,7 +4615,8 @@ describe('summary log check view', () => {
             nonBalanceAffecting: { count: 0, rows: [] }
           }
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4641,7 +4658,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4699,7 +4717,8 @@ describe('summary log check view', () => {
           },
           adjusted: ZERO_CHANGE
         },
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     })
 
@@ -4759,7 +4778,8 @@ describe('summary log check view', () => {
       processingType: 'EXPORTER',
       loadsByReportingPeriod: {
         openPeriodLoads,
-        closedPeriodLoads: emptyPeriod()
+        closedPeriodLoads: emptyPeriod(),
+        periodsRequiringResubmission: []
       }
     }
   }
@@ -4827,7 +4847,8 @@ describe('summary log check view', () => {
         },
         adjusted: ZERO_CHANGE
       },
-      closedPeriodLoads: emptyPeriod()
+      closedPeriodLoads: emptyPeriod(),
+      periodsRequiringResubmission: []
     }
   })
 
@@ -5096,7 +5117,8 @@ describe('summary log check view', () => {
             },
             adjusted: ZERO_CHANGE
           },
-          closedPeriodLoads: emptyPeriod()
+          closedPeriodLoads: emptyPeriod(),
+          periodsRequiringResubmission: []
         }
       })
 
@@ -5132,25 +5154,6 @@ describe('summary log check view', () => {
           'The adjusted loads will remove 4.00 tonnes from your waste balance.'
         )
       ).not.toBeNull()
-    })
-
-    it('shows the banner from closed-period counts when the backend omits periodsRequiringResubmission', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        year: 2026,
-        ledgerAccreditation: accreditedLedger,
-        processingType: 'EXPORTER',
-        loadsByReportingPeriod: {
-          openPeriodLoads: emptyPeriod(),
-          closedPeriodLoads: closedAdjustmentRows()
-        }
-      })
-
-      const { main } = await renderMain(server)
-
-      expect(queryByText(main, BANNER_BODY)).not.toBeNull()
     })
   })
 })

@@ -239,7 +239,7 @@
  * @typedef {{
  *   openPeriodLoads: PeriodStatus,
  *   closedPeriodLoads: PeriodStatus,
- *   periodsRequiringResubmission?: PeriodRef[]
+ *   periodsRequiringResubmission: PeriodRef[]
  * }} LoadsByReportingPeriod
  */
 
