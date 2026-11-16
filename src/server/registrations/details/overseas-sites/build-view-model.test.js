@@ -21,7 +21,6 @@ const registrationNumber = toRegistrationNumber('R26ER5001180041PL')
 const aRegistration = {
   status: { current: 'approved', timeline: [] },
   standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
-  validFrom: '2026-01-01',
   material: 'plastic',
   submittedToRegulator: { code: 'ea' },
   accreditations: {},
