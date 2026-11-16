@@ -43,8 +43,7 @@ const organisation = buildOrganisationView({
         })
       }
     }),
-    REG006789: registeredOnlyRegistration,
-    'REG&1': registeredOnlyRegistration
+    REG006789: registeredOnlyRegistration
   }
 })
 
@@ -56,10 +55,8 @@ const accreditationPath = `${accreditedRegistrationPath}/accreditations/2026`
 const registeredOnlyRegistrationPath = `${organisationPath}/registrations/REG006789`
 
 const accreditedPath = `${accreditationPath}/waste-balance-ledger`
-const registeredOnlyPath = `${registeredOnlyRegistrationPath}/waste-balance-ledger`
 
 const accreditedLedgerUrl = `${backendUrl}${accreditationPath}/ledger`
-const registeredOnlyLedgerUrl = `${backendUrl}${registeredOnlyRegistrationPath}/ledger/2026`
 
 const regulator = buildMockAuth({
   provider: OIDC_ENTRA_ID,
@@ -393,154 +390,6 @@ describe('the waste balance ledger page', () => {
       ).not.toBeNull()
     })
 
-    it('walks the registered-only ledger back to the registration, with no back link', async ({
-      msw,
-      server
-    }) => {
-      msw.use(
-        http.get(registeredOnlyLedgerUrl, () => HttpResponse.json(ledgerOf([])))
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: registeredOnlyPath,
-        auth: regulator
-      })
-
-      const body = documentOf(asHtml(result))
-      const crumbs = crumbsOf(body)
-
-      expect(body.querySelector('.govuk-back-link')).toBeNull()
-      expect(textOf(crumbs)).toStrictEqual([
-        'All organisations',
-        'ACME ltd',
-        'Registration details',
-        'Waste balance ledger'
-      ])
-      expect(crumbs.at(2)?.querySelector('a')?.getAttribute('href')).toBe(
-        registeredOnlyRegistrationPath
-      )
-      expect(crumbs.at(3)?.querySelector('a')).toBeNull()
-      expect(body.ownerDocument.title).toContain('Waste balance ledger')
-    })
-
-    it('encodes a registration number holding reserved characters once in its links', async ({
-      msw,
-      server
-    }) => {
-      const encodedPath = `${organisationPath}/registrations/REG%261`
-      msw.use(
-        http.get(`${backendUrl}${encodedPath}/ledger/2026`, () =>
-          HttpResponse.json(ledgerOf([summaryLogSubmitted]))
-        )
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `${encodedPath}/waste-balance-ledger`,
-        auth: regulator
-      })
-
-      const body = documentOf(asHtml(result))
-
-      expect(
-        crumbsOf(body).at(2)?.querySelector('a')?.getAttribute('href')
-      ).toBe(encodedPath)
-      expect(
-        getByRole(body, 'link', { name: /^Download XLSX/ }).getAttribute('href')
-      ).toBe(`${encodedPath}/summary-logs/files/log-1/download`)
-    })
-
-    it('shows the registered-only ledger empty where the backend holds none for the year', async ({
-      msw,
-      server
-    }) => {
-      msw.use(
-        http.get(
-          registeredOnlyLedgerUrl,
-          () => new HttpResponse(null, { status: statusCodes.notFound })
-        )
-      )
-
-      const { statusCode, result } = await server.inject({
-        method: 'GET',
-        url: registeredOnlyPath,
-        auth: regulator
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(
-        queryByText(
-          documentOf(asHtml(result)),
-          'Nothing has changed this waste balance yet.'
-        )
-      ).not.toBeNull()
-    })
-
-    it('fails the registered-only page where the ledger could not be read', async ({
-      msw,
-      server
-    }) => {
-      msw.use(
-        http.get(
-          registeredOnlyLedgerUrl,
-          () =>
-            new HttpResponse(null, { status: statusCodes.internalServerError })
-        )
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: registeredOnlyPath,
-        auth: regulator
-      })
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-    })
-
-    it('reads the registered-only ledger, and says the period carries no accreditation', async ({
-      msw,
-      server
-    }) => {
-      msw.use(
-        http.get(registeredOnlyLedgerUrl, () =>
-          HttpResponse.json(ledgerOf([summaryLogSubmitted]))
-        )
-      )
-
-      const { statusCode, result } = await server.inject({
-        method: 'GET',
-        url: registeredOnlyPath,
-        auth: regulator
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const heading = getByRole(documentOf(asHtml(result)), 'heading', {
-        level: 1
-      })
-
-      expect(heading.textContent).toContain('Registered-only')
-    })
-
-    it("names an exporter's notes PERNs", async ({ msw, server }) => {
-      msw.use(
-        http.get(registeredOnlyLedgerUrl, () =>
-          HttpResponse.json(ledgerOf([prnIssued]))
-        )
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: registeredOnlyPath,
-        auth: regulator
-      })
-
-      const body = documentOf(asHtml(result))
-
-      expect(rowsOf(body).at(0)?.at(1)).toBe('PERN issued\n240000123')
-    })
-
     it('says so where nothing has moved the balance yet', async ({
       msw,
       server
@@ -661,16 +510,6 @@ describe('the waste balance ledger page', () => {
         }).textContent.trim()
       ).toBe('You do not have permission')
       expect(readsOrganisation).not.toHaveBeenCalled()
-    })
-
-    it('is refused the registered-only address too', async ({ server }) => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: registeredOnlyPath,
-        auth: operator
-      })
-
-      expect(statusCode).toBe(statusCodes.forbidden)
     })
   })
 

@@ -64,7 +64,6 @@ const organisation = {
       standingByDate: {
         2025: { '2025-01-01': { standing: 'registeredOnly' } }
       },
-      validFrom: '2025-01-01',
       material: 'glass_re_melt',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'reprocessor',
@@ -105,7 +104,6 @@ const organisation = {
       standingByDate: {
         2025: { '2025-01-01': { standing: 'registeredOnly' } }
       },
-      validFrom: '2025-01-01',
       material: 'aluminium',
       submittedToRegulator: { code: 'sepa' },
       wasteProcessingType: 'reprocessor',
@@ -123,7 +121,6 @@ const organisation = {
       standingByDate: {
         2025: { '2025-01-01': { standing: 'registeredOnly' } }
       },
-      validFrom: '2025-01-01',
       material: 'paper',
       submittedToRegulator: { code: 'ea' },
       wasteProcessingType: 'exporter',

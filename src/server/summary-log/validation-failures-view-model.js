@@ -44,6 +44,35 @@ const buildRowRemovedIssue = (rowRemovedFailures, localise) => {
   ]
 }
 
+/**
+ * @param {ValidationFailure} failure
+ * @returns {boolean}
+ */
+const isTemplateYearMismatch = ({ errorCode, expected, actual }) =>
+  errorCode === 'TEMPLATE_YEAR_MISMATCH' &&
+  typeof expected === 'number' &&
+  typeof actual === 'number'
+
+const buildTemplateYearMismatchIssue = (yearMismatchFailures, localise) => {
+  if (yearMismatchFailures.length === 0) {
+    return []
+  }
+
+  const [{ expected: expectedYear, actual: actualYear }] = yearMismatchFailures
+
+  return [
+    {
+      type: 'templateYearMismatch',
+      lines: [
+        localise('summary-log:failure.TEMPLATE_YEAR_MISMATCH', { actualYear }),
+        localise('summary-log:failure.TEMPLATE_YEAR_MISMATCH_ACTION', {
+          expectedYear
+        })
+      ]
+    }
+  ]
+}
+
 const buildOtherIssueMessages = (otherFailures, localise, fallbackMessage) => {
   if (otherFailures.length === 0) {
     return []
@@ -241,13 +270,19 @@ export const buildValidationFailuresViewModel = (localise, validation) => {
     isLocatedCellError
   )
 
-  const [rowRemovedFailures, otherFailures] = partition(
+  const [rowRemovedFailures, nonRowRemovedFailures] = partition(
     nonLocatedFailures,
     isSequentialRowRemoved
   )
 
+  const [yearMismatchFailures, otherFailures] = partition(
+    nonRowRemovedFailures,
+    isTemplateYearMismatch
+  )
+
   const combinedIssues = [
     ...buildRowRemovedIssue(rowRemovedFailures, localise),
+    ...buildTemplateYearMismatchIssue(yearMismatchFailures, localise),
     ...buildOtherIssueMessages(otherFailures, localise, fallbackMessage)
   ]
 

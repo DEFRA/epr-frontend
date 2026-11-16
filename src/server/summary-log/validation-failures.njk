@@ -69,6 +69,10 @@
               {% endfor %}
             </ul>
             <p class="govuk-body govuk-!-font-weight-bold">{{ issue.closing }}</p>
+          {% elif issue.type == 'templateYearMismatch' %}
+            <p class="govuk-body govuk-!-font-weight-bold">
+              {% for line in issue.lines %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+            </p>
           {% else %}
             <p class="govuk-body govuk-!-font-weight-bold">{{ issue }}</p>
           {% endif %}

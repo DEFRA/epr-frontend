@@ -1503,6 +1503,16 @@ describe('#summaryLogUploadProgressController', () => {
         errorCode: 'TEMPLATE_VERSION_INVALID',
         status: summaryLogStatuses.invalid,
         copy: 'The template version is not recognised'
+      },
+      {
+        errorCode: 'TEMPLATE_YEAR_INVALID',
+        status: summaryLogStatuses.invalid,
+        copy: 'The template version is not recognised'
+      },
+      {
+        errorCode: 'TEMPLATE_YEAR_MISMATCH',
+        status: summaryLogStatuses.invalid,
+        copy: "The summary log template you're uploading is incorrect - make sure you download the correct template for your registration or accreditation"
       }
     ])(
       'status: $status with $errorCode - should render its tailored failure copy, not the technical-error fallback',
@@ -1527,6 +1537,39 @@ describe('#summaryLogUploadProgressController', () => {
         expect(queryByText(body, technicalErrorCopy)).toBeNull()
       }
     )
+
+    it('status: invalid with TEMPLATE_YEAR_MISMATCH - should name the selected and expected years', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        failedStatus({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'TEMPLATE_YEAR_MISMATCH',
+                expected: 2027,
+                actual: 2026
+              }
+            ]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const message = getByText(body, /The file you selected is your 2026/)
+
+      expect(message.innerHTML).toMatch(
+        /The file you selected is your 2026 summary log\.<br>You need to update and upload your 2027 summary log\./
+      )
+      expect(queryByText(body, technicalErrorCopy)).toBeNull()
+    })
 
     it('status: rejected - should initiate upload with pre-signed URL', async ({
       server
