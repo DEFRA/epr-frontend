@@ -19,6 +19,7 @@ vi.mock(
 )
 
 const PATH = '/organisations/500123/2025/choose-year'
+const EXPORTING_PATH = '/organisations/500123/2025/exporting/choose-year'
 
 const mockAuth = buildMockAuth({
   idToken: 'test-id-token',
@@ -78,6 +79,16 @@ describe('choosing a different year', () => {
 
       expect(load(payload)('.govuk-back-link').attr('href')).toBe(
         '/organisations/500123/2025'
+      )
+    })
+
+    it('goes back to the exporting tab when chosen from it', async ({
+      server
+    }) => {
+      const { payload } = await choose(server, '', EXPORTING_PATH)
+
+      expect(load(payload)('.govuk-back-link').attr('href')).toBe(
+        '/organisations/500123/2025/exporting'
       )
     })
 
@@ -146,6 +157,24 @@ describe('choosing a different year', () => {
 
       expect(headers.location).toBe('/cy/organisations/500123/2026')
     })
+
+    it.for([
+      { description: 'English', prefix: '' },
+      { description: 'Welsh', prefix: '/cy' }
+    ])(
+      'opens the exporting tab of the chosen year when chosen from it, in $description',
+      async ({ prefix }, { server }) => {
+        const { headers } = await choose(
+          server,
+          '?year=2026',
+          `${prefix}${EXPORTING_PATH}`
+        )
+
+        expect(headers.location).toBe(
+          `${prefix}/organisations/500123/2026/exporting`
+        )
+      }
+    )
 
     it('asks for a year when none is chosen', async ({ server }) => {
       const { payload, statusCode } = await choose(server, '?continue=1')

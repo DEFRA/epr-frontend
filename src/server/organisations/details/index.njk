@@ -65,12 +65,12 @@
           <div class="govuk-tabs">
             <ul class="govuk-tabs__list">
               <li class="govuk-tabs__list-item{% if activeTab == 'REPROCESSOR' %} govuk-tabs__list-item--selected{% endif %}">
-                <a class="govuk-tabs__tab" href="{{ reprocessorUrl }}">
+                <a class="govuk-tabs__tab" href="{{ reprocessorUrl }}"{% if activeTab == 'REPROCESSOR' %} aria-current="page"{% endif %}>
                   {{ localise('organisations:details:tabs:reprocessor') }}
                 </a>
               </li>
               <li class="govuk-tabs__list-item{% if activeTab == 'EXPORTER' %} govuk-tabs__list-item--selected{% endif %}">
-                <a class="govuk-tabs__tab" href="{{ exporterUrl }}">
+                <a class="govuk-tabs__tab" href="{{ exporterUrl }}"{% if activeTab == 'EXPORTER' %} aria-current="page"{% endif %}>
                   {{ localise('organisations:details:tabs:exporter') }}
                 </a>
               </li>
