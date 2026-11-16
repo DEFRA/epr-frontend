@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
  * @param {{
  *   auth?: { credentials: Record<string, unknown> | null, strategy?: string },
  *   localiseUrl?: (url: string) => string,
+ *   params?: Record<string, unknown>,
  *   path?: string
  * }} [options]
  */
@@ -173,6 +174,40 @@ describe('#buildNavigation', () => {
         text: 'Home'
       })
     })
+
+    it.for([
+      {
+        description: 'a year the route has parsed',
+        year: 2025,
+        href: '/organisations/500123/2025'
+      },
+      {
+        description: 'a year left as the path segment',
+        year: '2025',
+        href: '/organisations/500123/2025'
+      },
+      {
+        description: 'a segment that is not a year',
+        year: 'abcd',
+        href: '/organisations/500123'
+      },
+      {
+        description: 'a year the service does not answer for',
+        year: '2023',
+        href: '/organisations/500123'
+      }
+    ])(
+      'should link home for the year in the address given $description',
+      ({ year, href }) => {
+        const request = mockRequest({
+          auth: { credentials: credentials.authedWithLinkedOrg },
+          params: { year }
+        })
+        const [home] = buildNavigation(request)
+
+        expect(home).toStrictEqual({ href, text: 'Home' })
+      }
+    )
 
     it('should not include home link when the session holds no organisation number', () => {
       const request = mockRequest({

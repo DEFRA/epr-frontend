@@ -4,10 +4,8 @@ import { sessionNames } from '#server/common/constants/session-names.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import {
-  organisationPath,
-  registrationPath
-} from '#server/reports/helpers/report-paths.js'
+import { homePath } from '#server/organisations/home-page.js'
+import { registrationPath } from '#server/reports/helpers/report-paths.js'
 
 const UPLOAD_CONFLICT_VIEW = 'summary-log/upload-conflict'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
@@ -71,10 +69,9 @@ export const submitSummaryLogController = {
 
         return h.view(UPLOAD_CONFLICT_VIEW, {
           pageTitle: localise(PAGE_TITLE_KEY),
-          organisationPath:
-            'year' in summaryLog
-              ? `${organisationPath(keys)}/${summaryLog.year}`
-              : organisationPath(keys)
+          organisationPath: homePath(keys.organisationNumber, {
+            year: 'year' in summaryLog ? summaryLog.year : undefined
+          })
         })
       }
 
