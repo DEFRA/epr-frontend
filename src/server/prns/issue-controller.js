@@ -8,7 +8,7 @@ import {
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
 import { prnsPath } from './helpers/prn-resource.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
-import { organisationPath } from '#server/reports/helpers/report-paths.js'
+import { homePath } from '#server/organisations/home-page.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const issueController = {
@@ -49,7 +49,9 @@ export const issueController = {
       request.logger.error({ message: 'Failed to issue PRN', err: error })
 
       if (error.isBoom && error.output.statusCode === statusCodes.conflict) {
-        return h.redirect(`${organisationPath(keys)}/error`)
+        return h.redirect(
+          `${homePath(keys.organisationNumber, { year: keys.year })}/error`
+        )
       }
 
       // All other errors (including WB calculation failures) redirect to action page

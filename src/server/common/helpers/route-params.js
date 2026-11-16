@@ -5,6 +5,7 @@ import { toYear } from './year.js'
 
 /**
  * @import { Lifecycle, RouteOptionsValidate } from '@hapi/hapi'
+ * @import { Year } from './year.js'
  */
 
 /**
@@ -29,6 +30,17 @@ export const yearParam = Joi.string()
       ? toYear(year)
       : helpers.error('any.invalid')
   })
+
+/**
+ * The year in a request's address, whether or not its route has parsed it,
+ * or `undefined` where the address has no year the service answers for.
+ * @param {Record<string, unknown> | undefined} params
+ * @returns {Year | undefined}
+ */
+export const addressYear = (params) => {
+  const { error, value } = yearParam.validate(String(params?.year))
+  return error ? undefined : toYear(Number(value))
+}
 
 /**
  * Hapi tags each validation failure with the part of the request it is in.

@@ -2,8 +2,9 @@ import { config } from '#config/config.js'
 import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { seesRegulatorView } from '#server/auth/roles.js'
+import { addressYear } from '#server/common/helpers/route-params.js'
+import { homePath } from '#server/organisations/home-page.js'
 import { paths } from '#server/paths.js'
-import { organisationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
  * Navigation item
@@ -11,19 +12,20 @@ import { organisationPath } from '#server/reports/helpers/report-paths.js'
  */
 
 /**
+ * Home for the year in the page's address, or the latest year where it has none.
  * @param {HapiRequest} request
  * @param {UserSession} session
  * @returns {NavigationItem[]}
  */
-const home = ({ localiseUrl, t: localise }, session) => {
+const home = ({ localiseUrl, params, t: localise }, session) => {
   if (!session.linkedOrganisationNumber) {
     return []
   }
   return [
     {
       href: localiseUrl(
-        organisationPath({
-          organisationNumber: session.linkedOrganisationNumber
+        homePath(session.linkedOrganisationNumber, {
+          year: addressYear(params)
         })
       ),
       text: localise('common:navigation:home')
