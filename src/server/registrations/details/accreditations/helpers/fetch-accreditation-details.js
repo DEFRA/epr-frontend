@@ -5,6 +5,7 @@ import { fetchAccreditationLedgerEvents } from '#server/common/helpers/waste-bal
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
 import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { fetchWasteRecordYears } from '#server/common/helpers/waste-records/fetch-waste-record-years.js'
+import { offersWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
@@ -116,11 +117,15 @@ const fetchNotes = async ({ keys, backendToken, logger }) => {
 
 /**
  * The years the backend exports waste records for, or none where they could
- * not be read.
+ * not be read or the download is not offered.
  * @param {{ backendToken: BackendToken, logger: TypedLogger }} params
  * @returns {Promise<Year[]>}
  */
 const fetchWasteRecordYearsOrNone = async ({ backendToken, logger }) => {
+  if (!offersWasteRecordsDownloads()) {
+    return []
+  }
+
   try {
     return await fetchWasteRecordYears(backendToken)
   } catch (error) {

@@ -1,7 +1,7 @@
 import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -211,8 +211,16 @@ describe(fetchAccreditationDetails, () => {
       ...overrides
     })
 
+  beforeAll(() => {
+    config.set('featureFlags.wasteRecordsDownload', true)
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.wasteRecordsDownload', false)
   })
 
   test('reads the organisation by number, without a year', async ({ msw }) => {
@@ -366,6 +374,26 @@ describe(fetchAccreditationDetails, () => {
       message: 'Failed to fetch waste record years',
       err: backendFailure
     })
+  })
+
+  test('does not read the waste record years while the records download is dark', async ({
+    msw
+  }) => {
+    let requested = false
+    backendHolds(
+      msw,
+      http.get(wasteRecordYearsUrl, () => {
+        requested = true
+        return HttpResponse.json({ years: [{ year: 2026 }] })
+      })
+    )
+
+    config.set('featureFlags.wasteRecordsDownload', false)
+    const result = await fetchDetails()
+    config.set('featureFlags.wasteRecordsDownload', true)
+
+    expect(result.wasteRecordYears).toStrictEqual([])
+    expect(requested).toBe(false)
   })
 
   describe('the packaging recycling notes', () => {

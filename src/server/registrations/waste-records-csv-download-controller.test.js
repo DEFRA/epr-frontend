@@ -12,7 +12,6 @@ import {
 } from '#server/common/test-helpers/auth-helper.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { it } from '#vite/fixtures/server.js'
-import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
 const registrationPath = '/organisations/500002/registrations/R26ER5000000002PA'
@@ -49,12 +48,6 @@ const backendStreams = (
     status = statusCodes.ok
   } = {}
 ) => {
-  msw.use(
-    http.get(`${config.get('eprBackendUrl')}/waste-records/years`, () =>
-      HttpResponse.json({ years: [{ year: 2027 }, { year: 2026 }] })
-    )
-  )
-
   return serveDownload(msw, `${config.get('eprBackendUrl')}${backendPath}`, {
     body: csv,
     contentDisposition,
@@ -139,6 +132,28 @@ describe('the waste records CSV download', () => {
     expect(requests).toStrictEqual([])
   })
 
+  it('keeps a Welsh link that names no year in Welsh', async ({
+    server,
+    msw
+  }) => {
+    backendStreams(msw)
+
+    const response = await visit(server, regulator, `/cy${path}`)
+
+    expect(response.headers.location).toBe(`/cy${path}?year=2026`)
+  })
+
+  it('keeps the rest of the query of a link that names no year', async ({
+    server,
+    msw
+  }) => {
+    backendStreams(msw)
+
+    const response = await visit(server, regulator, `${path}?from=email`)
+
+    expect(response.headers.location).toBe(`${path}?from=email&year=2026`)
+  })
+
   it("asks the backend for the year's export", async ({ server, msw }) => {
     const requests = backendStreams(msw)
 
@@ -161,17 +176,16 @@ describe('the waste records CSV download', () => {
     }
   )
 
-  it.for(['2024', '2025', '2028'])(
-    'does not exist for year %s, which the backend does not export',
-    async (year, { server, msw }) => {
-      const requests = backendStreams(msw)
+  it('does not exist for a year the backend refuses to export', async ({
+    server,
+    msw
+  }) => {
+    backendStreams(msw, { status: statusCodes.unprocessableEntity })
 
-      const response = await visit(server, regulator, `${path}?year=${year}`)
+    const response = await visit(server, regulator, `${path}?year=2025`)
 
-      expect(response.statusCode).toBe(statusCodes.notFound)
-      expect(requests).toStrictEqual([])
-    }
-  )
+    expect(response.statusCode).toBe(statusCodes.notFound)
+  })
 
   it('ignores a query parameter it does not know', async ({ server, msw }) => {
     const requests = backendStreams(msw)

@@ -1,9 +1,10 @@
+import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { backend } from '#server/common/helpers/backend-client.js'
-import { fetchWasteRecordYears } from '#server/common/helpers/waste-records/fetch-waste-record-years.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { yearParam } from '#server/common/helpers/route-params.js'
 import { registrationPath as toRegistrationPath } from '#server/reports/helpers/report-paths.js'
@@ -52,8 +53,8 @@ const recordsNotFound = (request, reason) =>
 /**
  * Serves a registration's latest waste records for a year as CSV. The backend
  * generates it, so the body is passed straight through rather than held: an
- * export can be arbitrarily large. A year the backend holds no waste records
- * for is not found.
+ * export can be arbitrarily large. A year the backend refuses to export is not
+ * found.
  *
  * The registrations plugin is registered unconditionally, so this route guards
  * itself on both the flag and the role rather than inheriting a gate.
@@ -83,20 +84,25 @@ export const wasteRecordsCsvDownloadController = {
     const { year } = request.query
 
     if (year === undefined) {
-      return h.redirect(`${request.path}?year=${UNNAMED_YEAR}`)
+      const query = new URLSearchParams(request.url.search)
+      query.set('year', UNNAMED_YEAR)
+
+      return h.redirect(request.localiseUrl(`${request.path}?${query}`))
     }
 
-    const years = await fetchWasteRecordYears(backendToken)
-
-    if (!years.includes(year)) {
-      throw recordsNotFound(request, 'year not served')
-    }
+    const exportPath = `${toRegistrationPath(request.params)}/waste-records/export.csv`
 
     const { body, contentDisposition, contentType } = await backend(
       backendToken
-    ).stream(`${toRegistrationPath(request.params)}/waste-records/export.csv`, {
-      query: { year }
-    })
+    )
+      .stream(exportPath, { query: { year } })
+      .catch((error) => {
+        if (!Boom.isBoom(error, statusCodes.unprocessableEntity)) {
+          throw error
+        }
+
+        throw recordsNotFound(request, 'year not served')
+      })
 
     const response = h.response(body).type(contentType ?? DEFAULT_CONTENT_TYPE)
 
