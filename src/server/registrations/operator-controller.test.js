@@ -249,7 +249,9 @@ describe("the operator's registration page for a year", () => {
     expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(
       lastYear
     )
-    expect(title).toContain(lastYear)
+    expect(title).toBe(
+      `Unit 4 Mill Road: Glass remelt (${lastYear}) | Record reprocessed or exported packaging waste`
+    )
   })
 
   it.for([
