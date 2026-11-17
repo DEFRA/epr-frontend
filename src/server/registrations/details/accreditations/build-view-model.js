@@ -38,6 +38,7 @@ import { accreditedDateRange } from '#server/common/helpers/organisations/regist
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { Localise } from '../helpers/types.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  */
 
 /**
@@ -100,19 +101,26 @@ const toTonnage = (amount) =>
   amount === undefined ? '' : formatTonnage(amount)
 
 /**
- * The registration's waste records, offered as a file rather than stated. The
- * records belong to the registration, not to the accreditation the page names.
+ * The registration's waste records for the page's year, offered as a file
+ * rather than stated, for a year the backend exports. The records belong to
+ * the registration, not to the accreditation the page names.
  * @param {{
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
- *   registrationPath: string
+ *   registrationPath: string,
+ *   year: Year
  * }} params
  * @returns {SummaryRow}
  */
-const toWasteRecordsRow = ({ localise, localiseUrl, registrationPath }) => ({
+const toWasteRecordsRow = ({
+  localise,
+  localiseUrl,
+  registrationPath,
+  year
+}) => ({
   key: localise('registrations:details:accreditation:summary:wasteRecords'),
   html: `<a href="${localiseUrl(
-    buildWasteRecordsCsvDownloadPath(registrationPath)
+    buildWasteRecordsCsvDownloadPath(registrationPath, year)
   )}" class="govuk-link">${escapeHtml(
     localise('registrations:details:accreditation:summary:download')
   )}</a>`
@@ -164,7 +172,9 @@ const toLatestSummaryLogRow = ({
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   registrationPath: string,
- *   wasteBalance: WasteBalance | null
+ *   wasteBalance: WasteBalance | null,
+ *   wasteRecordYears: Year[],
+ *   year: Year
  * }} params
  * @returns {SummaryRow[]}
  */
@@ -174,7 +184,9 @@ const toSummaryRows = ({
   localise,
   localiseUrl,
   registrationPath,
-  wasteBalance
+  wasteBalance,
+  wasteRecordYears,
+  year
 }) => [
   {
     key: localise('registrations:details:accreditation:summary:status'),
@@ -197,8 +209,8 @@ const toSummaryRows = ({
     registrationPath
   }),
   // The page is regulator-only, so the flag is the whole question here.
-  ...(offersWasteRecordsDownloads()
-    ? [toWasteRecordsRow({ localise, localiseUrl, registrationPath })]
+  ...(offersWasteRecordsDownloads() && wasteRecordYears.includes(year)
+    ? [toWasteRecordsRow({ localise, localiseUrl, registrationPath, year })]
     : [])
 ]
 
@@ -376,6 +388,7 @@ const toLedger = ({
  *   reportingPeriods: ReportingPeriod[],
  *   ledgerEvents: LedgerEvent[] | null,
  *   packagingRecyclingNotes: PackagingRecyclingNote[],
+ *   wasteRecordYears: Year[],
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
@@ -390,6 +403,7 @@ export const buildViewModel = ({
   reportingPeriods,
   ledgerEvents,
   packagingRecyclingNotes,
+  wasteRecordYears,
   localise,
   localiseUrl
 }) => {
@@ -446,7 +460,9 @@ export const buildViewModel = ({
       localise,
       localiseUrl,
       registrationPath: paths.registration,
-      wasteBalance
+      wasteBalance,
+      wasteRecordYears,
+      year: keys.year
     })
   }
 }

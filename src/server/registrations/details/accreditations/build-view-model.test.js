@@ -15,6 +15,7 @@ import { buildViewModel } from './build-view-model.js'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
  * @import { TableRow } from './build-view-model.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  */
 
 const localise = createMockLocalise({
@@ -178,6 +179,7 @@ const summaryLogSubmitted = {
  * @param {ReportingPeriod[]} [reportingPeriods]
  * @param {LedgerEvent[] | null} [ledgerEvents]
  * @param {PackagingRecyclingNote[]} [packagingRecyclingNotes]
+ * @param {Year[]} [wasteRecordYears]
  */
 const build = (
   accreditationOverrides,
@@ -185,7 +187,8 @@ const build = (
   wasteBalance = aWasteBalance,
   reportingPeriods = noPeriods,
   ledgerEvents = null,
-  packagingRecyclingNotes = []
+  packagingRecyclingNotes = [],
+  wasteRecordYears = [toYear(2026)]
 ) =>
   buildViewModel({
     keys,
@@ -196,6 +199,7 @@ const build = (
     reportingPeriods,
     ledgerEvents,
     packagingRecyclingNotes,
+    wasteRecordYears,
     localise,
     localiseUrl
   })
@@ -265,6 +269,7 @@ describe('the accreditation details view model', () => {
       reportingPeriods: [],
       ledgerEvents: null,
       packagingRecyclingNotes: [],
+      wasteRecordYears: [],
       localise,
       localiseUrl
     })
@@ -396,8 +401,22 @@ describe('the accreditation details view model', () => {
     it('offers the latest waste records beneath the latest summary log', () => {
       expect(build().summaryRows.at(4)).toStrictEqual({
         key: 'Latest waste record CSV',
-        html: `<a href="${registrationPath}/waste-records/download.csv" class="govuk-link">Download</a>`
+        html: `<a href="${registrationPath}/waste-records/download.csv?year=2026" class="govuk-link">Download</a>`
       })
+    })
+
+    it('holds no waste records row for a year the backend does not export', () => {
+      expect(
+        build(
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          [toYear(2027)]
+        ).summaryRows.map((row) => row.key)
+      ).not.toContain('Latest waste record CSV')
     })
 
     it('leaves the four rows above it as they were', () => {
@@ -547,6 +566,7 @@ describe('the reports table on the accreditation details view model', () => {
       reportingPeriods: [],
       ledgerEvents: null,
       packagingRecyclingNotes: [],
+      wasteRecordYears: [],
       localise,
       localiseUrl: (path) => `/cy${path}`
     })
@@ -618,6 +638,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
       reportingPeriods: [],
       ledgerEvents: [],
       packagingRecyclingNotes: [],
+      wasteRecordYears: [],
       localise,
       localiseUrl: (path) => `/cy${path}`
     })
