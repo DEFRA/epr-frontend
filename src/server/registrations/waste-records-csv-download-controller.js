@@ -1,6 +1,8 @@
+import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { readsWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { backend } from '#server/common/helpers/backend-client.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
@@ -29,6 +31,12 @@ export const buildWasteRecordsCsvDownloadPath = (registrationPath, year) =>
 const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
 
 /**
+ * The year of a link from before downloads named one, such as an old-id
+ * address redirected here: every waste record then was 2026's.
+ */
+const UNNAMED_YEAR = '2026'
+
+/**
  * The not found a caller gets for records it is not offered, or a year the
  * address does not serve, so neither confirms the address exists.
  * @param {HapiRequest} request
@@ -45,8 +53,8 @@ const recordsNotFound = (request, reason) =>
 /**
  * Serves a registration's latest waste records for a year as CSV. The backend
  * generates it, so the body is passed straight through rather than held: an
- * export can be arbitrarily large. Without a year the backend picks one, until
- * it requires it.
+ * export can be arbitrarily large. A year the backend refuses to export is not
+ * found.
  *
  * The registrations plugin is registered unconditionally, so this route guards
  * itself on both the flag and the role rather than inheriting a gate.
@@ -73,11 +81,28 @@ export const wasteRecordsCsvDownloadController = {
       throw recordsNotFound(request, 'records not offered to this caller')
     }
 
+    const { year } = request.query
+
+    if (year === undefined) {
+      const query = new URLSearchParams(request.url.search)
+      query.set('year', UNNAMED_YEAR)
+
+      return h.redirect(request.localiseUrl(`${request.path}?${query}`))
+    }
+
+    const exportPath = `${toRegistrationPath(request.params)}/waste-records/export.csv`
+
     const { body, contentDisposition, contentType } = await backend(
       backendToken
-    ).stream(`${toRegistrationPath(request.params)}/waste-records/export.csv`, {
-      query: { year: request.query.year }
-    })
+    )
+      .stream(exportPath, { query: { year } })
+      .catch((error) => {
+        if (!Boom.isBoom(error, statusCodes.unprocessableEntity)) {
+          throw error
+        }
+
+        throw recordsNotFound(request, 'year not served')
+      })
 
     const response = h.response(body).type(contentType ?? DEFAULT_CONTENT_TYPE)
 

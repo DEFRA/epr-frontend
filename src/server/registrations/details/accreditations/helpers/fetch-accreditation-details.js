@@ -4,6 +4,8 @@ import { fetchAccreditationBalance } from '#server/common/helpers/waste-balance/
 import { fetchAccreditationLedgerEvents } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
 import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { fetchWasteRecordYears } from '#server/common/helpers/waste-records/fetch-waste-record-years.js'
+import { offersWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
@@ -15,6 +17,7 @@ import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-perio
  * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
  * @import { ReportingPeriod } from '#server/reports/helpers/fetch-reporting-periods.js'
  * @import { AccreditationKeys, RegistrationYearKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  */
 
 /**
@@ -29,7 +32,8 @@ import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-perio
  *   wasteBalance: WasteBalance | null,
  *   reportingPeriods: ReportingPeriod[],
  *   ledgerEvents: LedgerEvent[] | null,
- *   packagingRecyclingNotes: PackagingRecyclingNote[]
+ *   packagingRecyclingNotes: PackagingRecyclingNote[],
+ *   wasteRecordYears: Year[]
  * }} AccreditationDetails
  */
 
@@ -112,8 +116,32 @@ const fetchNotes = async ({ keys, backendToken, logger }) => {
 }
 
 /**
+ * The years the backend exports waste records for, or none where they could
+ * not be read or the download is not offered.
+ * @param {{ backendToken: BackendToken, logger: TypedLogger }} params
+ * @returns {Promise<Year[]>}
+ */
+const fetchWasteRecordYearsOrNone = async ({ backendToken, logger }) => {
+  if (!offersWasteRecordsDownloads()) {
+    return []
+  }
+
+  try {
+    return await fetchWasteRecordYears(backendToken)
+  } catch (error) {
+    logger.error({
+      message: 'Failed to fetch waste record years',
+      err: error
+    })
+
+    return []
+  }
+}
+
+/**
  * Everything the regulator's accreditation page shows. A failed balance,
- * calendar or notes read degrades its section; any other failure fails the page.
+ * calendar, notes or waste record years read degrades its section; any other
+ * failure fails the page.
  * @param {AccreditationDetailsRequest} params
  * @returns {Promise<AccreditationDetails>}
  */
@@ -125,26 +153,33 @@ export const fetchAccreditationDetails = async ({
 }) => {
   const { backendToken } = credentials
 
-  const [accreditation, calendar, ledgerEvents, packagingRecyclingNotes] =
-    await Promise.all([
-      fetchAccreditation({ keys, backendToken, logger }),
-      fetchReportingCalendar({
-        keys: {
-          organisationNumber: keys.organisationNumber,
-          registrationNumber: keys.registrationNumber,
-          year: keys.year
-        },
-        backendToken,
-        logger
-      }),
-      fetchLedger({ keys, backendToken, canReadLedger }),
-      fetchNotes({ keys, backendToken, logger })
-    ])
+  const [
+    accreditation,
+    calendar,
+    ledgerEvents,
+    packagingRecyclingNotes,
+    wasteRecordYears
+  ] = await Promise.all([
+    fetchAccreditation({ keys, backendToken, logger }),
+    fetchReportingCalendar({
+      keys: {
+        organisationNumber: keys.organisationNumber,
+        registrationNumber: keys.registrationNumber,
+        year: keys.year
+      },
+      backendToken,
+      logger
+    }),
+    fetchLedger({ keys, backendToken, canReadLedger }),
+    fetchNotes({ keys, backendToken, logger }),
+    fetchWasteRecordYearsOrNone({ backendToken, logger })
+  ])
 
   return {
     ...accreditation,
     reportingPeriods: calendar.reportingPeriods,
     ledgerEvents,
-    packagingRecyclingNotes
+    packagingRecyclingNotes,
+    wasteRecordYears
   }
 }

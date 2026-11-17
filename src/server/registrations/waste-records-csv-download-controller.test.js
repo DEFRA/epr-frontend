@@ -47,19 +47,20 @@ const backendStreams = (
     contentType = 'text/csv; charset=utf-8',
     status = statusCodes.ok
   } = {}
-) =>
-  serveDownload(msw, `${config.get('eprBackendUrl')}${backendPath}`, {
+) => {
+  return serveDownload(msw, `${config.get('eprBackendUrl')}${backendPath}`, {
     body: csv,
     contentDisposition,
     contentType,
     status
   })
+}
 
 /**
  * @param {HapiServer} server
  * @param {ReturnType<typeof buildMockAuth>} auth
  */
-const visit = (server, auth, url = path) =>
+const visit = (server, auth, url = `${path}?year=2026`) =>
   server.inject({ method: 'GET', url, auth })
 
 describe('the waste records CSV download', () => {
@@ -121,14 +122,36 @@ describe('the waste records CSV download', () => {
     expect(response.headers['content-type']).toContain('text/csv')
   })
 
-  it('asks the backend for the export', async ({ server, msw }) => {
+  it('sends a link that names no year to 2026', async ({ server, msw }) => {
     const requests = backendStreams(msw)
 
-    await visit(server, regulator)
+    const response = await visit(server, regulator, path)
 
-    expect(requests).toStrictEqual([
-      `${config.get('eprBackendUrl')}${backendPath}`
-    ])
+    expect(response.statusCode).toBe(statusCodes.found)
+    expect(response.headers.location).toBe(`${path}?year=2026`)
+    expect(requests).toStrictEqual([])
+  })
+
+  it('keeps a Welsh link that names no year in Welsh', async ({
+    server,
+    msw
+  }) => {
+    backendStreams(msw)
+
+    const response = await visit(server, regulator, `/cy${path}`)
+
+    expect(response.headers.location).toBe(`/cy${path}?year=2026`)
+  })
+
+  it('keeps the rest of the query of a link that names no year', async ({
+    server,
+    msw
+  }) => {
+    backendStreams(msw)
+
+    const response = await visit(server, regulator, `${path}?from=email`)
+
+    expect(response.headers.location).toBe(`${path}?from=email&year=2026`)
   })
 
   it("asks the backend for the year's export", async ({ server, msw }) => {
@@ -152,6 +175,17 @@ describe('the waste records CSV download', () => {
       expect(requests).toStrictEqual([])
     }
   )
+
+  it('does not exist for a year the backend refuses to export', async ({
+    server,
+    msw
+  }) => {
+    backendStreams(msw, { status: statusCodes.unprocessableEntity })
+
+    const response = await visit(server, regulator, `${path}?year=2025`)
+
+    expect(response.statusCode).toBe(statusCodes.notFound)
+  })
 
   it('ignores a query parameter it does not know', async ({ server, msw }) => {
     const requests = backendStreams(msw)

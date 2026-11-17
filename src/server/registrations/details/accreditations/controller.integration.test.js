@@ -210,7 +210,8 @@ const accreditationDetails = {
     )
   ],
   ledgerEvents,
-  packagingRecyclingNotes
+  packagingRecyclingNotes,
+  wasteRecordYears: [toYear(2027), toYear(2026)]
 }
 
 /**
@@ -410,6 +411,25 @@ describe('the accreditation details page', () => {
     expect(
       within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
     ).toBe(`${registrationPath}/waste-records/download.csv?year=2027`)
+  })
+
+  it('offers no waste records for a year the backend does not export', async ({
+    server
+  }) => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+      ...accreditationDetails,
+      wasteRecordYears: [toYear(2026)]
+    })
+    config.set('featureFlags.wasteRecordsDownload', true)
+    const { body } = await visit(
+      server,
+      regulator,
+      `${registrationPath}/accreditations/2027`
+    )
+    config.set('featureFlags.wasteRecordsDownload', false)
+
+    expect(body).not.toContain('Latest waste record CSV')
+    expect(body).not.toContain('/waste-records/download.csv')
   })
 
   it('offers the latest summary log workbook in the summary', async ({

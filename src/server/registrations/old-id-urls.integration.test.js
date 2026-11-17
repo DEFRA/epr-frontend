@@ -116,6 +116,9 @@ const backendHolds = (msw, held = organisation) =>
     http.get(`${backendUrl}${byNumbers}/accreditations/2026/ledger`, () =>
       HttpResponse.json({ events: [] })
     ),
+    http.get(`${backendUrl}/waste-records/years`, () =>
+      HttpResponse.json({ years: [{ year: 2026 }] })
+    ),
     http.get(`${backendUrl}${byNumbers}/waste-records/export.csv`, () =>
       HttpResponse.text('Row Id\n', {
         headers: { 'content-type': 'text/csv; charset=utf-8' }
@@ -300,15 +303,23 @@ describe('old registration and accreditation page URLs', () => {
         `${byIds}/waste-records/download.csv`,
         regulator
       )
-      const download = await visit(
+      const yearRedirect = await visit(
         server,
         /** @type {string} */ (redirect.headers.location),
+        regulator
+      )
+      const download = await visit(
+        server,
+        /** @type {string} */ (yearRedirect.headers.location),
         regulator
       )
 
       expect(redirect.statusCode).toBe(statusCodes.found)
       expect(redirect.headers.location).toBe(
         `${byNumbers}/waste-records/download.csv`
+      )
+      expect(yearRedirect.headers.location).toBe(
+        `${byNumbers}/waste-records/download.csv?year=2026`
       )
       expect(download.statusCode).toBe(statusCodes.ok)
     })

@@ -102,8 +102,8 @@ const toTonnage = (amount) =>
 
 /**
  * The registration's waste records for the page's year, offered as a file
- * rather than stated. The records belong to the registration, not to the
- * accreditation the page names.
+ * rather than stated, for a year the backend exports. The records belong to
+ * the registration, not to the accreditation the page names.
  * @param {{
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
@@ -173,6 +173,7 @@ const toLatestSummaryLogRow = ({
  *   localiseUrl: (path: string) => string,
  *   registrationPath: string,
  *   wasteBalance: WasteBalance | null,
+ *   wasteRecordYears: Year[],
  *   year: Year
  * }} params
  * @returns {SummaryRow[]}
@@ -184,6 +185,7 @@ const toSummaryRows = ({
   localiseUrl,
   registrationPath,
   wasteBalance,
+  wasteRecordYears,
   year
 }) => [
   {
@@ -207,7 +209,7 @@ const toSummaryRows = ({
     registrationPath
   }),
   // The page is regulator-only, so the flag is the whole question here.
-  ...(offersWasteRecordsDownloads()
+  ...(offersWasteRecordsDownloads() && wasteRecordYears.includes(year)
     ? [toWasteRecordsRow({ localise, localiseUrl, registrationPath, year })]
     : [])
 ]
@@ -386,6 +388,7 @@ const toLedger = ({
  *   reportingPeriods: ReportingPeriod[],
  *   ledgerEvents: LedgerEvent[] | null,
  *   packagingRecyclingNotes: PackagingRecyclingNote[],
+ *   wasteRecordYears: Year[],
  *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
@@ -400,6 +403,7 @@ export const buildViewModel = ({
   reportingPeriods,
   ledgerEvents,
   packagingRecyclingNotes,
+  wasteRecordYears,
   localise,
   localiseUrl
 }) => {
@@ -457,6 +461,7 @@ export const buildViewModel = ({
       localiseUrl,
       registrationPath: paths.registration,
       wasteBalance,
+      wasteRecordYears,
       year: keys.year
     })
   }

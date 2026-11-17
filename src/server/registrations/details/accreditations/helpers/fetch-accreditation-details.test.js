@@ -1,7 +1,7 @@
 import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { http, HttpResponse } from 'msw'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -40,6 +40,7 @@ describe(fetchAccreditationDetails, () => {
   const calendarUrl = `${registrationUrl}/reports/2026/calendar`
   const ledgerUrl = `${registrationUrl}/accreditations/2026/ledger`
   const notesUrl = `${registrationUrl}/accreditations/2026/packaging-recycling-notes`
+  const wasteRecordYearsUrl = `${backendUrl}/waste-records/years`
 
   const accreditation = {
     accreditationNumber: toAccreditationNumber('A26ER5001180114PL'),
@@ -192,6 +193,9 @@ describe(fetchAccreditationDetails, () => {
       http.get(
         `${organisationUrl}/registrations/:registrationNumber/accreditations/:year/packaging-recycling-notes`,
         () => HttpResponse.json({ items: [prnResource] })
+      ),
+      http.get(wasteRecordYearsUrl, () =>
+        HttpResponse.json({ years: [{ year: 2026 }] })
       )
     )
 
@@ -207,8 +211,16 @@ describe(fetchAccreditationDetails, () => {
       ...overrides
     })
 
+  beforeAll(() => {
+    config.set('featureFlags.wasteRecordsDownload', true)
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.wasteRecordsDownload', false)
   })
 
   test('reads the organisation by number, without a year', async ({ msw }) => {
@@ -227,7 +239,7 @@ describe(fetchAccreditationDetails, () => {
     expect(requested).toBe(organisationUrl)
   })
 
-  test('combines the records, the balance, the calendar, the ledger and the notes', async ({
+  test('combines the records, the balance, the calendar, the ledger, the notes and the waste record years', async ({
     msw
   }) => {
     backendHolds(msw)
@@ -241,7 +253,8 @@ describe(fetchAccreditationDetails, () => {
       wasteBalance,
       reportingPeriods,
       ledgerEvents,
-      packagingRecyclingNotes
+      packagingRecyclingNotes,
+      wasteRecordYears: [toYear(2026)]
     })
   })
 
@@ -347,6 +360,40 @@ describe(fetchAccreditationDetails, () => {
         'Failed to fetch reporting periods for organisation 500118 registration R26ER5001180041PL',
       err: backendFailure
     })
+  })
+
+  test('reports waste record years it could not read as none rather than failing the page', async ({
+    msw
+  }) => {
+    backendHolds(msw, failing(wasteRecordYearsUrl))
+
+    const result = await fetchDetails()
+
+    expect(result.wasteRecordYears).toStrictEqual([])
+    expect(logger.error).toHaveBeenCalledWith({
+      message: 'Failed to fetch waste record years',
+      err: backendFailure
+    })
+  })
+
+  test('does not read the waste record years while the records download is dark', async ({
+    msw
+  }) => {
+    let requested = false
+    backendHolds(
+      msw,
+      http.get(wasteRecordYearsUrl, () => {
+        requested = true
+        return HttpResponse.json({ years: [{ year: 2026 }] })
+      })
+    )
+
+    config.set('featureFlags.wasteRecordsDownload', false)
+    const result = await fetchDetails()
+    config.set('featureFlags.wasteRecordsDownload', true)
+
+    expect(result.wasteRecordYears).toStrictEqual([])
+    expect(requested).toBe(false)
   })
 
   describe('the packaging recycling notes', () => {
