@@ -272,7 +272,7 @@ describe.each(NATIONS)(
         ).toBe(paths.regulators.marketInsights)
       })
 
-      it('says how the tables are compiled in the words agreed for a nation, and nothing is still being built', async ({
+      it('says how the tables are compiled in the words agreed for a nation, without claiming a workbook tab it lacks, and nothing is still being built', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -285,6 +285,7 @@ describe.each(NATIONS)(
 
         expect(body.textContent).not.toContain(NOTICE)
         expect(getByText(body, NATION_WORDING.description)).not.toBeNull()
+        expect(body.textContent).not.toContain('workbook')
         expect(getByText(body, NATION_WORDING.rounding)).not.toBeNull()
         expect(
           getByRole(body, 'heading', { name: 'How the tables are compiled' })

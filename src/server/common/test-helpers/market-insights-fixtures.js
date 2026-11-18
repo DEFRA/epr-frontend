@@ -45,10 +45,13 @@ export const LANDING_HEADING =
 
 /**
  * The two sentences the agreed content words differently for a nation's
- * figures than for the UK's.
+ * figures than for the UK's. Only England's figures are in the workbook, so
+ * only England's description says so.
  */
 export const NATION_WORDING = {
   description:
+    'For each month, the tables show what accredited reprocessors and exporters reported by material (tonnage received, recycled or exported, and sent on). They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price for each tonne.',
+  englandDescription:
     'For each month, the tables show what accredited reprocessors and exporters reported by material (tonnage received, recycled or exported, and sent on). They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price for each tonne. These figures are included in the monthly redacted data workbook (XLSX).',
   rounding:
     'Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.'

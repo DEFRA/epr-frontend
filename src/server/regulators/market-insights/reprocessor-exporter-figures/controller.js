@@ -32,6 +32,9 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
   const tabNames = `regulators:marketInsights:figures:${nation ?? UK}`
   // The agreed content words the UK page and the nations' pages differently.
   const wording = nation ? 'nation' : UK
+  // The workbook has a tab for England but none for the other nations, so
+  // only England's description says its figures are in it.
+  const described = nation === 'england' ? nation : wording
 
   return {
     /**
@@ -58,7 +61,7 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
           heading,
           caption: describeReportingPeriod(period, localise),
           description: localise(
-            `regulators:marketInsights:figures:description:${wording}`
+            `regulators:marketInsights:figures:description:${described}`
           ),
           rounding: localise(
             `regulators:marketInsights:figures:calculation:rounding:${wording}`
