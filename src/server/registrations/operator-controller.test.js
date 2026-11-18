@@ -128,6 +128,7 @@ const operator = buildMockAuth({ linkedOrganisationId: organisationId })
  * @param {SetupServer} msw
  * @param {{
  *   registration?: Record<string, unknown>,
+ *   forYear?: string,
  *   balances?: () => Response,
  *   ids?: () => Response,
  *   eligibility?: Record<string, unknown>
@@ -137,6 +138,7 @@ const backendHolds = (
   msw,
   {
     registration = reprocessor,
+    forYear = year,
     balances = () =>
       HttpResponse.json({
         [accreditationNumber]: { amount: 1500, availableAmount: 1234.5 }
@@ -150,12 +152,12 @@ const backendHolds = (
       HttpResponse.json(organisationView(registration))
     ),
     http.get(
-      `${backendUrl}/organisations/500118/waste-balances/${year}`,
+      `${backendUrl}/organisations/500118/waste-balances/${forYear}`,
       balances
     ),
     http.get(`${backendUrl}/v1/organisations/${organisationId}`, ids),
     http.get(
-      `${backendUrl}${accreditationPath}/packaging-recycling-notes/december-prn-eligibility`,
+      `${backendUrl}${registrationPath}/accreditations/${forYear}/packaging-recycling-notes/december-prn-eligibility`,
       () => HttpResponse.json(eligibility)
     )
   )
@@ -222,17 +224,73 @@ describe("the operator's registration page for a year", () => {
     expect(body.textContent).toContain(accreditationNumber)
   })
 
-  it('shows the year in the heading and page title', async ({
+  it('shows the year in the address in the heading and page title', async ({
     server,
     msw
   }) => {
-    backendHolds(msw)
+    const lastYear = String(thisYear - 1)
+    backendHolds(msw, {
+      forYear: lastYear,
+      registration: {
+        ...reprocessor,
+        status: registeredSince(thisYear - 1),
+        standingByDate: standingSince(thisYear - 1),
+        accreditations: {
+          [lastYear]: accreditationWith('approved', ['approved'], thisYear - 1)
+        }
+      }
+    })
 
-    const { body, title } = await visit(server)
+    const { statusCode, body, title } = await visit(server, {
+      url: `${registrationPath}/accreditations/${lastYear}`
+    })
 
-    expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(year)
-    expect(title).toContain(year)
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(
+      lastYear
+    )
+    expect(title).toBe(
+      `Unit 4 Mill Road: Glass remelt (${lastYear}) | Record reprocessed or exported packaging waste`
+    )
   })
+
+  it.for([
+    { operator: 'a reprocessor', wasteProcessingType: 'reprocessor', tab: '' },
+    {
+      operator: 'an exporter',
+      wasteProcessingType: 'exporter',
+      tab: '/exporting'
+    }
+  ])(
+    'sends $operator back to the organisation home for the year in the address, not the latest',
+    async ({ wasteProcessingType, tab }, { server, msw }) => {
+      const lastYear = String(thisYear - 1)
+      backendHolds(msw, {
+        forYear: lastYear,
+        registration: {
+          ...reprocessor,
+          wasteProcessingType,
+          status: registeredSince(thisYear - 1),
+          standingByDate: standingSince(thisYear - 1),
+          accreditations: {
+            [lastYear]: accreditationWith(
+              'approved',
+              ['approved'],
+              thisYear - 1
+            )
+          }
+        }
+      })
+
+      const { body } = await visit(server, {
+        url: `${registrationPath}/accreditations/${lastYear}`
+      })
+
+      expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
+        `/organisations/500118/${lastYear}${tab}`
+      )
+    }
+  )
 
   it("shows the year's balance", async ({ server, msw }) => {
     backendHolds(msw)
