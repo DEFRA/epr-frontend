@@ -66,6 +66,7 @@
  * @typedef {{
  *   errorCode: string,
  *   actual?: string | number | boolean | null,
+ *   expected?: unknown,
  *   location: {
  *     sheet: string,
  *     table: string,

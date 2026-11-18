@@ -2,6 +2,7 @@ import {
   getDisplayCodeFromErrorCode,
   TECHNICAL_ERROR_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
+import { VALIDATION_CODE } from '#server/common/enums/validation.js'
 import partition from 'lodash-es/partition.js'
 
 /**
@@ -163,19 +164,44 @@ const formatCellValue = (actual, localise) => {
 }
 
 /**
+ * The backend sends a later-year date as the ISO timestamp it parsed, so show
+ * it the way the operator typed it.
+ * @param {LocatedCellFailure['actual']} actual
+ * @param {Localise} localise
+ * @returns {string}
+ */
+const formatDateEntered = (actual, localise) => {
+  const date = new Date(String(actual))
+
+  return Number.isNaN(date.getTime())
+    ? formatCellValue(actual, localise)
+    : date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'UTC'
+      })
+}
+
+/**
  * @param {LocatedCellFailure} failure
  * @param {Localise} localise
  * @returns {CellErrorCell}
  */
 const buildCellErrorCell = (failure, localise) => {
-  const { location, errorCode, actual } = failure
+  const { location, errorCode, actual, expected } = failure
   const displayCode = getDisplayCodeFromErrorCode(errorCode, location.header)
+  const isLaterYearDate =
+    errorCode === VALIDATION_CODE.DATE_AFTER_SUMMARY_LOG_YEAR
 
   return {
     columnLabel: buildColumnLabel(location.header, localise),
     cellRef: `${location.column}${location.row}`,
-    value: formatCellValue(actual, localise),
+    value: isLaterYearDate
+      ? formatDateEntered(actual, localise)
+      : formatCellValue(actual, localise),
     problem: localise(`summary-log:cellReason.${errorCode}`, {
+      year: expected,
       defaultValue: localise(`summary-log:cellReason.${displayCode}`, {
         defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
       })

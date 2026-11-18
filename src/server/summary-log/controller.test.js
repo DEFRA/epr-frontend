@@ -1340,6 +1340,53 @@ describe('#summaryLogUploadProgressController', () => {
         }
       )
 
+      it.for([
+        ['2028-01-03T00:00:00.000Z', '03/01/2028'],
+        ['2028-01-01', '01/01/2028'],
+        ['not a date', 'not a date']
+      ])(
+        'should show a later-year date %s as %s with the summary log year in the problem',
+        async ([actual, expectedValue], { server }) => {
+          mockFetchSummaryLogStatus.mockResolvedValueOnce(
+            failedStatus({
+              status: summaryLogStatuses.invalid,
+              validation: {
+                failures: [
+                  {
+                    code: 'INVALID_DATE',
+                    errorCode: 'DATE_AFTER_SUMMARY_LOG_YEAR',
+                    actual,
+                    expected: 2027,
+                    location: {
+                      sheet: 'Exported (sections 1, 2 and 3)',
+                      table: 'RECEIVED_LOADS_FOR_EXPORT',
+                      row: 8,
+                      rowId: '1001',
+                      column: 'U',
+                      header: 'DATE_OF_EXPORT'
+                    }
+                  }
+                ]
+              }
+            })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
+
+          const table = getByRole(pageBody(result), 'table')
+          const [, , , , value, problem] = rowCells(dataRows(table)[0])
+
+          expect(value).toBe(expectedValue)
+          expect(problem).toBe(
+            'The year you entered is in a later year than 2027. Check the date.'
+          )
+        }
+      )
+
       it('should show a human-readable column label, not the raw header code', async ({
         server
       }) => {
