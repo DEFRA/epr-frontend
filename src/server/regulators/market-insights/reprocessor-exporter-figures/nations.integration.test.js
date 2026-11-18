@@ -4,6 +4,7 @@ import { asHtml, documentOf, rowsOf } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
   LANDING_HEADING,
+  NATION_WORDING,
   NOTICE,
   exporterOf,
   operator,
@@ -283,12 +284,8 @@ describe.each(NATIONS)(
         const body = documentOf(asHtml(result))
 
         expect(body.textContent).not.toContain(NOTICE)
-        expect(
-          getByText(
-            body,
-            /These figures are included in the monthly redacted data workbook \(XLSX\)\.$/
-          )
-        ).not.toBeNull()
+        expect(getByText(body, NATION_WORDING.description)).not.toBeNull()
+        expect(getByText(body, NATION_WORDING.rounding)).not.toBeNull()
         expect(
           getByRole(body, 'heading', { name: 'How the tables are compiled' })
         ).not.toBeNull()

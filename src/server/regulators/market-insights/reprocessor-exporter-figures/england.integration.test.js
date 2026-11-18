@@ -4,6 +4,7 @@ import { asHtml, documentOf, rowsOf } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
   LANDING_HEADING,
+  NATION_WORDING,
   NOTICE,
   exporterOf,
   operator,
@@ -256,18 +257,8 @@ describe('the England reprocessor and exporter figures page', () => {
       const body = documentOf(asHtml(result))
 
       expect(body.textContent).not.toContain(NOTICE)
-      expect(
-        getByText(
-          body,
-          'For each month, the tables show what accredited reprocessors and exporters reported by material (tonnage received, recycled or exported, and sent on). They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price for each tonne. These figures are included in the monthly redacted data workbook (XLSX).'
-        )
-      ).not.toBeNull()
-      expect(
-        getByText(
-          body,
-          'Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.'
-        )
-      ).not.toBeNull()
+      expect(getByText(body, NATION_WORDING.description)).not.toBeNull()
+      expect(getByText(body, NATION_WORDING.rounding)).not.toBeNull()
       expect(
         getByRole(body, 'heading', { name: 'How the tables are compiled' })
       ).not.toBeNull()
