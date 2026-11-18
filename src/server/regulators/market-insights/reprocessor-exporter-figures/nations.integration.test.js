@@ -3,6 +3,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHtml, documentOf, rowsOf } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
+  LANDING_HEADING,
   NOTICE,
   exporterOf,
   operator,
@@ -86,21 +87,21 @@ const NATIONS = [
     path: paths.regulators.marketInsightsWales,
     segment: 'wales',
     scope:
-      'These figures cover operators registered with Natural Resources Wales, the regulator for Wales.'
+      'These figures relate to operators registered with Natural Resources Wales, the regulator for Wales.'
   },
   {
     nation: 'Scotland',
     path: paths.regulators.marketInsightsScotland,
     segment: 'scotland',
     scope:
-      'These figures cover operators registered with the Scottish Environment Protection Agency, the regulator for Scotland.'
+      'These figures relate to operators registered with the Scottish Environment Protection Agency, the regulator for Scotland.'
   },
   {
     nation: 'Northern Ireland',
     path: paths.regulators.marketInsightsNorthernIreland,
     segment: 'northern-ireland',
     scope:
-      'These figures cover operators registered with the Northern Ireland Environment Agency, the regulator for Northern Ireland.'
+      'These figures relate to operators registered with the Northern Ireland Environment Agency, the regulator for Northern Ireland.'
   }
 ]
 
@@ -260,17 +261,17 @@ describe.each(NATIONS)(
             (crumb.textContent ?? '').trim()
           )
         ).toStrictEqual([
-          'Market insights',
+          LANDING_HEADING,
           `Reprocessor and exporter figures: ${nation}`
         ])
         expect(
-          getByRole(trail, 'link', { name: 'Market insights' }).getAttribute(
+          getByRole(trail, 'link', { name: LANDING_HEADING }).getAttribute(
             'href'
           )
         ).toBe(paths.regulators.marketInsights)
       })
 
-      it('says the page is still being built, and how the figures are calculated', async ({
+      it('says how the tables are compiled in the words agreed for a nation, and nothing is still being built', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -281,12 +282,18 @@ describe.each(NATIONS)(
 
         const body = documentOf(asHtml(result))
 
-        expect(getByText(body, NOTICE)).not.toBeNull()
+        expect(body.textContent).not.toContain(NOTICE)
         expect(
-          getByRole(body, 'heading', { name: 'How the figures are calculated' })
+          getByText(
+            body,
+            /These figures are included in the monthly redacted data workbook \(XLSX\)\.$/
+          )
         ).not.toBeNull()
         expect(
-          getByRole(body, 'heading', { name: 'Figures from few operators' })
+          getByRole(body, 'heading', { name: 'How the tables are compiled' })
+        ).not.toBeNull()
+        expect(
+          getByRole(body, 'heading', { name: 'Figures marked ‘c’' })
         ).not.toBeNull()
       })
     })

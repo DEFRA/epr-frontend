@@ -30,6 +30,8 @@ const UK = 'uk'
  */
 export const reprocessorExporterFiguresController = ({ nation } = {}) => {
   const tabNames = `regulators:marketInsights:figures:${nation ?? UK}`
+  // The agreed content words the UK page and the nations' pages differently.
+  const wording = nation ? 'nation' : UK
 
   return {
     /**
@@ -56,7 +58,10 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
           heading,
           caption: describeReportingPeriod(period, localise),
           description: localise(
-            'regulators:marketInsights:figures:description'
+            `regulators:marketInsights:figures:description:${wording}`
+          ),
+          rounding: localise(
+            `regulators:marketInsights:figures:calculation:rounding:${wording}`
           ),
           // The UK figures cover every operator, so only a nation has a scope
           // to state.
@@ -70,12 +75,15 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
           ],
           // Stated beside the figures because the publication states it too, so a
           // regulator comparing the two can tell whether they were cut together.
-          dataTakenAt: localise('regulators:marketInsights:dataTakenAt', {
-            date: formatDate(figures.meta.generatedAt, {
-              timeZone: UK_TIME_ZONE
-            }),
-            time: formatTime(figures.meta.generatedAt)
-          }),
+          dataAggregatedAt: localise(
+            'regulators:marketInsights:figures:dataAggregatedAt',
+            {
+              date: formatDate(figures.meta.generatedAt, {
+                timeZone: UK_TIME_ZONE
+              }),
+              time: formatTime(figures.meta.generatedAt)
+            }
+          ),
           figures: toReprocessorExporterTables(
             figures.data,
             period.months,

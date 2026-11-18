@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHtml, documentOf } from '#server/common/test-helpers/dom.js'
 import {
+  LANDING_HEADING,
   NOTICE,
   operator,
   regulator,
@@ -58,7 +59,7 @@ const FIGURE_SETS = [
     href: paths.regulators.marketInsightsNorthernIreland
   },
   {
-    name: 'Outstanding monthly reports: UK',
+    name: 'Missing monthly reports: UK',
     href: paths.regulators.marketInsightsOutstandingReturns
   }
 ]
@@ -135,7 +136,7 @@ describe('the market insights page', () => {
 
       expect(
         getByRole(documentOf(asHtml(result)), 'link', {
-          name: 'Download the market insights workbook (XLSX)'
+          name: 'Download the published (redacted) data workbook (XLSX)'
         }).getAttribute('href')
       ).toBe(paths.regulators.marketInsightsWorkbook)
     })
@@ -151,7 +152,7 @@ describe('the market insights page', () => {
 
       expect(
         getByRole(documentOf(asHtml(result)), 'link', {
-          name: 'Download the unredacted market insights workbook (XLSX)'
+          name: 'Download the unredacted data workbook (XLSX)'
         }).getAttribute('href')
       ).toBe(paths.regulators.marketInsightsUnredactedWorkbook)
     })
@@ -172,7 +173,24 @@ describe('the market insights page', () => {
       ).toBe(paths.regulators.marketInsightsExport)
     })
 
-    it('says the page is still being built, above the description', async ({
+    it('names the page for the data it holds', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      const body = documentOf(asHtml(result))
+
+      expect(getByRole(body, 'heading', { level: 1 }).textContent.trim()).toBe(
+        LANDING_HEADING
+      )
+      expect(body.ownerDocument.title).toMatch(
+        new RegExp(`^${LANDING_HEADING} \\|`)
+      )
+    })
+
+    it('offers the downloads before the pages for each set of figures, and says nothing is still being built', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -181,11 +199,21 @@ describe('the market insights page', () => {
         auth: regulator
       })
 
-      const heading = getByRole(documentOf(asHtml(result)), 'heading', {
-        level: 1
-      })
+      const main = getByRole(documentOf(asHtml(result)), 'main')
 
-      expect(heading.nextElementSibling?.textContent.trim()).toBe(NOTICE)
+      expect(
+        getAllByRole(main, 'heading', { level: 2 }).map((heading) =>
+          heading.textContent.trim()
+        )
+      ).toStrictEqual([
+        'Download aggregated data',
+        'Data specific pages',
+        'Download the figures'
+      ])
+      expect(main.textContent).toContain(
+        'Files can take up to a minute to prepare before the download starts.'
+      )
+      expect(main.textContent).not.toContain(NOTICE)
     })
 
     it('reaches the page from the regulator area', async ({ msw, server }) => {
@@ -199,7 +227,7 @@ describe('the market insights page', () => {
 
       expect(
         getByRole(documentOf(asHtml(result)), 'link', {
-          name: 'Market insights'
+          name: 'View reported reprocessor and exporter packaging waste data'
         }).getAttribute('href')
       ).toBe(paths.regulators.marketInsights)
     })
@@ -247,7 +275,7 @@ describe('the market insights page', () => {
 
       expect(
         queryByRole(documentOf(asHtml(result)), 'link', {
-          name: 'Market insights'
+          name: 'View reported reprocessor and exporter packaging waste data'
         })
       ).toBeNull()
     })
@@ -303,7 +331,7 @@ describe('the market insights page with the flag off', () => {
 
     expect(
       queryByRole(documentOf(asHtml(result)), 'link', {
-        name: 'Market insights'
+        name: 'View reported reprocessor and exporter packaging waste data'
       })
     ).toBeNull()
   })

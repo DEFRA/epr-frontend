@@ -32,9 +32,16 @@ export const regulatorWithoutMarketScope = buildMockAuth({
   scope: [SCOPES.organisationSearch]
 })
 
-/** The words every market insights page carries while it is being built. */
+/** The notice the market insights pages carried while they were being built. */
 export const NOTICE =
   'This page is still being built. Some figures may be missing or wrong.'
+
+/**
+ * The heading of the page that lists the market insights figures, which every
+ * page of them leads back to.
+ */
+export const LANDING_HEADING =
+  'Reported reprocessor and exporter packaging waste data'
 
 /**
  * The key a table carries, as its description, when a figure in it is marked
