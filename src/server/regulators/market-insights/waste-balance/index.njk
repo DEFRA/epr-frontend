@@ -11,23 +11,6 @@
         {{ heading }}
       </h1>
       {{ govukInsetText({ text: dataAggregatedAt }) }}
-      <p class="govuk-body">{{ description }}</p>
-
-      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:wasteBalance:calculation:heading') }}</h2>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:source') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:leadIn') }}</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:received') }}</li>
-        <li>{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:product') }}</li>
-        <li>{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:exported') }}</li>
-      </ul>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:deductions') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:columns') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:accredited') }} {{ localise('regulators:marketInsights:wasteBalance:fewOperators:noTonnage') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:total') }}</p>
-
-      <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:marked') }}</p>
 
       <div class="govuk-body" data-testid="app-page-body">
         {% set tableHead = [
@@ -77,6 +60,24 @@
           rows: tableRows
         }) }}
       </div>
+
+      <p class="govuk-body">{{ description }}</p>
+
+      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:wasteBalance:calculation:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:source') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:leadIn') }}</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:received') }}</li>
+        <li>{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:product') }}</li>
+        <li>{{ localise('regulators:marketInsights:wasteBalance:calculation:counted:exported') }}</li>
+      </ul>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:deductions') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:columns') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:accredited') }} {{ localise('regulators:marketInsights:wasteBalance:fewOperators:noTonnage') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:total') }}</p>
+
+      <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:marked') }}</p>
     </div>
   </div>
 {% endblock %}

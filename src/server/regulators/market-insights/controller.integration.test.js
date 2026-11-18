@@ -31,11 +31,11 @@ const anEmptyPageOfOrganisations = http.get(`${backendUrl}/organisations`, () =>
   })
 )
 
-// The sets of figures the page offers, in the order the workbook's tabs run,
-// with the nations the workbook does not publish after England.
 // The link from the regulator area to this page.
 const HOME_LINK = 'View reported reprocessor and exporter packaging waste data'
 
+// The sets of figures the page offers, in the order the workbook's tabs run,
+// with the nations the workbook does not publish after England.
 const FIGURE_SETS = [
   {
     name: 'UK waste balance',

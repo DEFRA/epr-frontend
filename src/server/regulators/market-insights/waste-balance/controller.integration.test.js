@@ -199,7 +199,7 @@ describe('the UK waste balance page', () => {
       ).not.toBeNull()
     })
 
-    it('says when the figures were aggregated in place of saying the page is still being built, above the description', async ({
+    it('says when the figures were aggregated in place of saying the page is still being built, above the table and its description', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -211,8 +211,11 @@ describe('the UK waste balance page', () => {
       const body = documentOf(asHtml(result))
       const inset = getByRole(body, 'heading', { level: 1 }).nextElementSibling
 
+      const table = inset?.nextElementSibling
+
       expect(inset?.textContent.trim()).toMatch(/^Data aggregated at /)
-      expect(inset?.nextElementSibling?.textContent.trim()).toBe(
+      expect(table?.querySelector('table')).not.toBeNull()
+      expect(table?.nextElementSibling?.textContent.trim()).toBe(
         'The table shows the tonnage included in accredited operator or exporter waste balances by material and accreditation type, less any tonnage that has been sent on. These figures are included in the monthly published (redacted) data workbook (XLSX).'
       )
       expect(body.textContent).not.toContain(NOTICE)
@@ -420,7 +423,7 @@ describe('the UK waste balance page', () => {
       ])
     })
 
-    it('says how the figures are calculated, before the table', async ({
+    it('says how the figures are calculated, after the table', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -435,8 +438,7 @@ describe('the UK waste balance page', () => {
         name: 'How the table is compiled'
       })
 
-      // The wording sits between its heading and the table, so a regulator
-      // reads it before the figures it explains.
+      // The wording runs from its heading to the end of the page.
       /** @type {(string | string[])[]} */
       const wording = []
       let element = heading.nextElementSibling
@@ -451,7 +453,7 @@ describe('the UK waste balance page', () => {
         element = element.nextElementSibling
       }
 
-      expect(element?.querySelector('table')).not.toBeNull()
+      expect(element).toBeNull()
       expect(wording).toStrictEqual([
         'The figures come from the most recent summary logs submitted for each accreditation, they do not come from monthly reports. To show how complete the data is, the last row reveals how many operators submitted a monthly report against how many reports were due.',
         'The same rules apply to counted loads as apply to the operator’s own waste balance. An accreditation must be valid on the date that the load is counted. A load counts for the month that:',
