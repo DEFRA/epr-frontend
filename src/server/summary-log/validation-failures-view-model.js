@@ -230,21 +230,37 @@ const formatValueEntered = (header, actual, localise) => {
   return formatCellValue(actual, localise)
 }
 
+const EXPORTED_TAB_TABLES = new Set([
+  'RECEIVED_LOADS_FOR_EXPORT',
+  'LOADS_EXPORTED'
+])
+
 /**
  * @param {LocatedCellFailure} failure
  * @param {string} displayCode
  * @param {Localise} localise
  * @returns {string}
  */
-const buildProblem = ({ errorCode, expected }, displayCode, localise) => {
+const buildProblem = (
+  { errorCode, expected, actual, location },
+  displayCode,
+  localise
+) => {
   const fallback = localise(`summary-log:cellReason.${displayCode}`, {
     defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
   })
 
   if (errorCode === VALIDATION_CODE.DATE_AFTER_SUMMARY_LOG_YEAR) {
-    return typeof expected === 'number'
-      ? localise(`summary-log:cellReason.${errorCode}`, { year: expected })
-      : fallback
+    if (typeof expected !== 'number' || !isCalendarDate(actual)) {
+      return fallback
+    }
+    const key = EXPORTED_TAB_TABLES.has(location.table)
+      ? `${errorCode}_EXPORTED`
+      : errorCode
+    return localise(`summary-log:cellReason.${key}`, {
+      year: expected,
+      loadYear: actual.slice(0, 4)
+    })
   }
 
   return localise(`summary-log:cellReason.${errorCode}`, {

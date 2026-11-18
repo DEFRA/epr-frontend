@@ -1340,13 +1340,58 @@ describe('#summaryLogUploadProgressController', () => {
         }
       )
 
+      const generic = (year, loadYear) =>
+        `Year cannot be later than ${year}. If it’s a ${loadYear} load, record it in your ${loadYear} summary log instead.`
+      const exported = (year, loadYear) =>
+        `${generic(year, loadYear)} If it was received for export in ${year}, use the ‘Previous year Row ID’ to link your 2 summary logs.`
+
       it.for([
-        ['2028-01-03', '03/01/2028'],
-        ['2028-01-03T00:00:00.000Z', '2028-01-03T00:00:00.000Z'],
-        ['not a date', 'not a date']
+        [
+          'Exported (sections 1, 2 and 3)',
+          'RECEIVED_LOADS_FOR_EXPORT',
+          'DATE_OF_EXPORT',
+          '2028-01-03',
+          '03/01/2028',
+          exported(2027, 2028)
+        ],
+        [
+          'Exported (sections 2 and 3)',
+          'LOADS_EXPORTED',
+          'DATE_OF_EXPORT',
+          '2029-02-01',
+          '01/02/2029',
+          exported(2027, 2029)
+        ],
+        [
+          'Sent on (sections 4 and 5)',
+          'SENT_ON_LOADS',
+          'DATE_LOAD_LEFT_SITE',
+          '2028-01-03',
+          '03/01/2028',
+          generic(2027, 2028)
+        ],
+        [
+          'Received',
+          'RECEIVED_LOADS_FOR_REPROCESSING',
+          'DATE_RECEIVED_FOR_REPROCESSING',
+          '2028-03-15',
+          '15/03/2028',
+          generic(2027, 2028)
+        ],
+        [
+          'Exported (sections 1, 2 and 3)',
+          'RECEIVED_LOADS_FOR_EXPORT',
+          'DATE_OF_EXPORT',
+          '2028-01-03T00:00:00.000Z',
+          '2028-01-03T00:00:00.000Z',
+          'Check this value'
+        ]
       ])(
-        'should show a later-year date %s as %s with the summary log year in the problem',
-        async ([actual, expectedValue], { server }) => {
+        'should show a later-year date on %s (%s) with the problem for that tab',
+        async (
+          [sheet, table, header, actual, expectedValue, expectedProblem],
+          { server }
+        ) => {
           mockFetchSummaryLogStatus.mockResolvedValueOnce(
             failedStatus({
               status: summaryLogStatuses.invalid,
@@ -1358,12 +1403,12 @@ describe('#summaryLogUploadProgressController', () => {
                     actual,
                     expected: 2027,
                     location: {
-                      sheet: 'Exported (sections 1, 2 and 3)',
-                      table: 'RECEIVED_LOADS_FOR_EXPORT',
+                      sheet,
+                      table,
                       row: 8,
                       rowId: '1001',
                       column: 'U',
-                      header: 'DATE_OF_EXPORT'
+                      header
                     }
                   }
                 ]
@@ -1377,13 +1422,11 @@ describe('#summaryLogUploadProgressController', () => {
             auth: mockAuth
           })
 
-          const table = getByRole(pageBody(result), 'table')
-          const [, , , , value, problem] = rowCells(dataRows(table)[0])
+          const cellTable = getByRole(pageBody(result), 'table')
+          const [, , , , value, problem] = rowCells(dataRows(cellTable)[0])
 
           expect(value).toBe(expectedValue)
-          expect(problem).toBe(
-            'The year you entered is in a later year than 2027. Check the date.'
-          )
+          expect(problem).toBe(expectedProblem)
         }
       )
 
