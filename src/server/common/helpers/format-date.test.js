@@ -25,6 +25,12 @@ describe(formatDate, () => {
     )
   })
 
+  it('should format as dd/mm/yyyy with two-digit day and month styles', () => {
+    expect(
+      formatDate('2028-01-03', { dayStyle: '2-digit', monthStyle: '2-digit' })
+    ).toBe('03/01/2028')
+  })
+
   it('should read a date in the zone the caller names', () => {
     expect(
       formatDate('2026-08-18T23:30:00.000Z', { timeZone: 'Europe/London' })

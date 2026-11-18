@@ -1341,8 +1341,8 @@ describe('#summaryLogUploadProgressController', () => {
       )
 
       it.for([
-        ['2028-01-03T00:00:00.000Z', '03/01/2028'],
-        ['2028-01-01', '01/01/2028'],
+        ['2028-01-03', '03/01/2028'],
+        ['2028-01-03T00:00:00.000Z', '2028-01-03T00:00:00.000Z'],
         ['not a date', 'not a date']
       ])(
         'should show a later-year date %s as %s with the summary log year in the problem',
@@ -1384,6 +1384,106 @@ describe('#summaryLogUploadProgressController', () => {
           expect(problem).toBe(
             'The year you entered is in a later year than 2027. Check the date.'
           )
+        }
+      )
+
+      it('should fall back to the generic problem when a later-year date has no summary log year', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  code: 'INVALID_DATE',
+                  errorCode: 'DATE_AFTER_SUMMARY_LOG_YEAR',
+                  actual: '2028-01-03',
+                  location: {
+                    sheet: 'Exported (sections 1, 2 and 3)',
+                    table: 'RECEIVED_LOADS_FOR_EXPORT',
+                    row: 8,
+                    rowId: '1001',
+                    column: 'U',
+                    header: 'DATE_OF_EXPORT'
+                  }
+                }
+              ]
+            }
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const table = getByRole(pageBody(result), 'table')
+        const [, , , , , problem] = rowCells(dataRows(table)[0])
+
+        expect(problem).toBe('Check this value')
+      })
+
+      it.for([
+        [
+          'DATE_RECEIVED_BY_OSR',
+          'Date received by OSR',
+          '1999-03-01',
+          '01/03/1999'
+        ],
+        ['DATE_OF_EXPORT', 'Date of export', '2024-02-30', '2024-02-30'],
+        ['DATE_OF_EXPORT', 'Date of export', '03/01/2028', '03/01/2028'],
+        [
+          'MONTH_RECEIVED_FOR_EXPORT',
+          'Month received for export',
+          '2027-01-01',
+          'Jan-27'
+        ],
+        [
+          'MONTH_RECEIVED_FOR_REPROCESSING',
+          'Month received for reprocessing',
+          '2027-09-15',
+          'Sep-27'
+        ],
+        ['NET_WEIGHT', 'Net weight', '2027-01-01', '2027-01-01']
+      ])(
+        'should show %s %s entered as %s as it appears in the template (%s)',
+        async ([header, columnLabel, actual, expectedValue], { server }) => {
+          mockFetchSummaryLogStatus.mockResolvedValueOnce(
+            failedStatus({
+              status: summaryLogStatuses.invalid,
+              validation: {
+                failures: [
+                  {
+                    code: 'INVALID_DATE',
+                    errorCode: 'MUST_BE_A_VALID_DATE',
+                    actual,
+                    location: {
+                      sheet: 'Received',
+                      table: 'RECEIVED_LOADS_FOR_EXPORT',
+                      row: 8,
+                      rowId: '1001',
+                      column: 'G',
+                      header
+                    }
+                  }
+                ]
+              }
+            })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
+
+          const table = getByRole(pageBody(result), 'table')
+          const [, , label, , value] = rowCells(dataRows(table)[0])
+
+          expect(label).toBe(columnLabel)
+          expect(value).toBe(expectedValue)
         }
       )
 

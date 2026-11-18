@@ -3,6 +3,7 @@ import {
   TECHNICAL_ERROR_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
 import { VALIDATION_CODE } from '#server/common/enums/validation.js'
+import { formatDate } from '#server/common/helpers/format-date.js'
 import partition from 'lodash-es/partition.js'
 
 /**
@@ -163,24 +164,92 @@ const formatCellValue = (actual, localise) => {
   return String(actual)
 }
 
+const DAY_DATE_HEADERS = new Set([
+  'DATE_LOAD_LEFT_SITE',
+  'DATE_OF_EXPORT',
+  'DATE_RECEIVED_BY_OSR',
+  'DATE_RECEIVED_FOR_EXPORT',
+  'DATE_RECEIVED_FOR_REPROCESSING',
+  'DATE_THE_REFUSED_STOPPED_WASTE_REPATRIATED'
+])
+
+const MONTH_HEADERS = new Set([
+  'MONTH_RECEIVED_FOR_EXPORT',
+  'MONTH_RECEIVED_FOR_REPROCESSING'
+])
+
+const CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/
+
 /**
- * The backend sends a later-year date as the ISO timestamp it parsed, so show
- * it the way the operator typed it.
+ * @param {LocatedCellFailure['actual']} actual
+ * @returns {actual is string}
+ */
+const isCalendarDate = (actual) => {
+  if (typeof actual !== 'string' || !CALENDAR_DATE.test(actual)) {
+    return false
+  }
+  const date = new Date(actual)
+  return (
+    !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === actual
+  )
+}
+
+/**
+ * Matches the template's mmm-yy month cells. en-US, because en-GB abbreviates
+ * September as "Sept" where Excel shows "Sep".
+ * @param {string} calendarDate
+ * @returns {string}
+ */
+const formatMonth = (calendarDate) => {
+  const month = new Date(calendarDate).toLocaleDateString('en-US', {
+    month: 'short',
+    timeZone: 'UTC'
+  })
+  return `${month}-${calendarDate.slice(2, 4)}`
+}
+
+/**
+ * Shows a date or month cell as the template displays it, so the operator can
+ * match it to their spreadsheet. Anything that is not a real calendar date is
+ * shown as entered.
+ * @param {string} header
  * @param {LocatedCellFailure['actual']} actual
  * @param {Localise} localise
  * @returns {string}
  */
-const formatDateEntered = (actual, localise) => {
-  const date = new Date(String(actual))
+const formatValueEntered = (header, actual, localise) => {
+  if (isCalendarDate(actual)) {
+    if (DAY_DATE_HEADERS.has(header)) {
+      return formatDate(actual, { dayStyle: '2-digit', monthStyle: '2-digit' })
+    }
+    if (MONTH_HEADERS.has(header)) {
+      return formatMonth(actual)
+    }
+  }
 
-  return Number.isNaN(date.getTime())
-    ? formatCellValue(actual, localise)
-    : date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        timeZone: 'UTC'
-      })
+  return formatCellValue(actual, localise)
+}
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @param {string} displayCode
+ * @param {Localise} localise
+ * @returns {string}
+ */
+const buildProblem = ({ errorCode, expected }, displayCode, localise) => {
+  const fallback = localise(`summary-log:cellReason.${displayCode}`, {
+    defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
+  })
+
+  if (errorCode === VALIDATION_CODE.DATE_AFTER_SUMMARY_LOG_YEAR) {
+    return typeof expected === 'number'
+      ? localise(`summary-log:cellReason.${errorCode}`, { year: expected })
+      : fallback
+  }
+
+  return localise(`summary-log:cellReason.${errorCode}`, {
+    defaultValue: fallback
+  })
 }
 
 /**
@@ -189,23 +258,14 @@ const formatDateEntered = (actual, localise) => {
  * @returns {CellErrorCell}
  */
 const buildCellErrorCell = (failure, localise) => {
-  const { location, errorCode, actual, expected } = failure
+  const { location, errorCode, actual } = failure
   const displayCode = getDisplayCodeFromErrorCode(errorCode, location.header)
-  const isLaterYearDate =
-    errorCode === VALIDATION_CODE.DATE_AFTER_SUMMARY_LOG_YEAR
 
   return {
     columnLabel: buildColumnLabel(location.header, localise),
     cellRef: `${location.column}${location.row}`,
-    value: isLaterYearDate
-      ? formatDateEntered(actual, localise)
-      : formatCellValue(actual, localise),
-    problem: localise(`summary-log:cellReason.${errorCode}`, {
-      year: expected,
-      defaultValue: localise(`summary-log:cellReason.${displayCode}`, {
-        defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
-      })
-    })
+    value: formatValueEntered(location.header, actual, localise),
+    problem: buildProblem(failure, displayCode, localise)
   }
 }
 

@@ -154,6 +154,8 @@
     "GROSS_WEIGHT": "Gross weight",
     "HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION": "How did you calculate recyclable proportion",
     "INTERIM_SITE_ID": "Interim site ID",
+    "MONTH_RECEIVED_FOR_EXPORT": "Month received for export",
+    "MONTH_RECEIVED_FOR_REPROCESSING": "Month received for reprocessing",
     "NET_WEIGHT": "Net weight",
     "OSR_ID": "OSR ID",
     "PALLET_WEIGHT": "Pallet weight",
