@@ -12,7 +12,7 @@ import {
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
-import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-years.js')
@@ -42,15 +42,10 @@ const choose = (server, query = '', url = PATH) =>
 
 describe('choosing a different year', () => {
   beforeEach(() => {
-    config.set('featureFlags.navigateAcrossYears', true)
     vi.mocked(fetchOrganisationYears).mockResolvedValue([
       toYear(2026),
       toYear(2025)
     ])
-  })
-
-  afterEach(() => {
-    config.set('featureFlags.navigateAcrossYears', false)
   })
 
   describe('the page', () => {
@@ -130,14 +125,6 @@ describe('choosing a different year', () => {
         expect(fetchOrganisationYears).not.toHaveBeenCalled()
       }
     )
-
-    it('is not found while the flag is off', async ({ server }) => {
-      config.set('featureFlags.navigateAcrossYears', false)
-
-      const { statusCode } = await choose(server)
-
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
   })
 
   describe('continuing', () => {
@@ -198,14 +185,6 @@ describe('choosing a different year', () => {
       expect(load(payload)('.govuk-error-summary').text()).toContain(
         'Select a year'
       )
-    })
-
-    it('is not found while the flag is off', async ({ server }) => {
-      config.set('featureFlags.navigateAcrossYears', false)
-
-      const { statusCode } = await choose(server, '?year=2026')
-
-      expect(statusCode).toBe(statusCodes.notFound)
     })
   })
 })
