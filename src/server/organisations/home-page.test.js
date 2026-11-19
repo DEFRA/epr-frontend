@@ -767,21 +767,7 @@ describe('the organisation home page', () => {
       serve({})
     })
 
-    afterEach(() => {
-      config.set('featureFlags.navigateAcrossYears', false)
-    })
-
-    it('hides the year line while the flag is off', async ({ server }) => {
-      config.set('featureFlags.navigateAcrossYears', false)
-
-      const { payload } = await visit(server)
-
-      expect(payload).not.toMatch(/This is \d+ data/)
-    })
-
-    it('shows the year line while the flag is on', async ({ server }) => {
-      config.set('featureFlags.navigateAcrossYears', true)
-
+    it('shows the year line', async ({ server }) => {
       const { payload } = await visit(server)
 
       expect(load(payload)('h2.govuk-heading-m').text()).toBe(
@@ -793,10 +779,8 @@ describe('the organisation home page', () => {
       { description: 'reprocessing', tab: '' },
       { description: 'exporting', tab: '/exporting' }
     ])(
-      'links the year line on the $description tab to choosing a different year for that tab while the flag is on',
+      'links the year line on the $description tab to choosing a different year for that tab',
       async ({ tab }, { server }) => {
-        config.set('featureFlags.navigateAcrossYears', true)
-
         const { payload } = await visit(server, `${PATH}${tab}`)
 
         expect(
@@ -805,18 +789,9 @@ describe('the organisation home page', () => {
       }
     )
 
-    it('offers no link while the flag is off', async ({ server }) => {
-      config.set('featureFlags.navigateAcrossYears', false)
-
-      const { payload } = await visit(server)
-
-      expect(payload).not.toContain('Choose a different year')
-    })
-
     it('offers no other year when the organisation has only one', async ({
       server
     }) => {
-      config.set('featureFlags.navigateAcrossYears', true)
       vi.mocked(fetchOrganisationYears).mockResolvedValue([toYear(2026)])
 
       const { payload } = await visit(server)
@@ -830,7 +805,6 @@ describe('the organisation home page', () => {
     it('hides the year line when the organisation has no active year', async ({
       server
     }) => {
-      config.set('featureFlags.navigateAcrossYears', true)
       vi.mocked(fetchOrganisationYears).mockResolvedValue([])
 
       const { payload } = await visit(server, BARE_PATH)

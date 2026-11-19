@@ -1,6 +1,5 @@
 import capitalize from 'lodash-es/capitalize.js'
 
-import { config } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { materialsHomepage } from '#server/common/helpers/organisations/registration-in-view.js'
@@ -351,9 +350,9 @@ export function renderHome(
       homePath(orgNumber, { year, exporting: true })
     ),
     shouldRenderTabs,
-    selectedYear: config.get('featureFlags.navigateAcrossYears') ? year : null,
+    selectedYear: year,
     chooseYearUrl:
-      config.get('featureFlags.navigateAcrossYears') && year && hasOtherYears
+      year && hasOtherYears
         ? request.localiseUrl(
             chooseYearPath(orgNumber, { year, exporting: isExporterTab })
           )
