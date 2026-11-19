@@ -10,3 +10,5 @@ export const summaryLogStatuses = {
   validationFailed: 'validation_failed',
   submissionFailed: 'submission_failed'
 }
+
+export const knipCanary = 'unused'
