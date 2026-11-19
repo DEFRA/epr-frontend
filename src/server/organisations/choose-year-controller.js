@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import Boom from '@hapi/boom'
 import { homePath } from './home-page.js'
@@ -17,10 +16,6 @@ export const chooseYearController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    if (!config.get('featureFlags.navigateAcrossYears')) {
-      throw Boom.notFound()
-    }
-
     const { t: localise } = request
     const { year: chosen, continue: pressedContinue } = request.query
     const orgNumber = request.params.organisationNumber
