@@ -114,8 +114,9 @@ const emitJourneyMetric = (metricName, journeyName, year) =>
  * rate above 100%.
  *
  * Both phases carry the year from the start's address, held in the marker, as
- * not every end's address names one. A marker set before years were recorded
- * holds `true`, and its end goes out without a year.
+ * not every end's address names one. A start in another year is a new attempt,
+ * as some attempts are named without their year. A marker set before years
+ * were recorded holds `true`, and its end goes out without a year.
  */
 const journeyMetrics = {
   /**
@@ -126,12 +127,12 @@ const journeyMetrics = {
    */
   async start(request, journey, attempt) {
     const key = journeyKey(journey, attempt)
+    const year = addressYear(request.params)
+    const marker = /** @type {Year | true | undefined} */ (request.yar.get(key))
 
-    if (request.yar.get(key)) {
+    if (marker === true || (marker !== undefined && marker === year)) {
       return
     }
-
-    const year = addressYear(request.params)
 
     request.yar.set(key, year ?? true)
 

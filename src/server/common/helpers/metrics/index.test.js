@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { JOURNEY } from './constants.js'
 
 /**
@@ -87,7 +88,7 @@ const createYar = (session = new Map()) =>
  * @param {Record<string, string>} [params]
  */
 const createRequest = (yar = createYar(), params = { year: '2026' }) =>
-  /** @type {never} */ (/** @type {unknown} */ ({ yar, params }))
+  mockHapiRequest({ yar, params })
 
 describe('#metrics', () => {
   /** @type {typeof MetricsModule.metrics} */
@@ -261,6 +262,46 @@ describe('#metrics', () => {
           { journey: 'UploadSummaryLogEnd', year: '2027' },
           false
         )
+      })
+
+      it('should record a fresh start, and end in its year, when the same attempt starts in another year', async () => {
+        const yar = createYar()
+        await metrics.journey.start(
+          createRequest(yar, { year: '2026' }),
+          JOURNEY.uploadSummaryLog,
+          attempt
+        )
+        await metrics.journey.start(
+          createRequest(yar, { year: '2027' }),
+          JOURNEY.uploadSummaryLog,
+          attempt
+        )
+
+        await metrics.journey.end(
+          createRequest(yar, {}),
+          JOURNEY.uploadSummaryLog,
+          attempt
+        )
+
+        expect(mockSetDimensions.mock.calls).toStrictEqual([
+          [{ journey: 'UploadSummaryLogStart', year: '2026' }, false],
+          [{ journey: 'UploadSummaryLogStart', year: '2027' }, false],
+          [{ journey: 'UploadSummaryLogEnd', year: '2027' }, false]
+        ])
+      })
+
+      it('should not record a second start for an attempt started before years were recorded', async () => {
+        const session = new Map([
+          [`journey:${JOURNEY.issuePrn.start}:${attempt}`, true]
+        ])
+
+        await metrics.journey.start(
+          createRequest(createYar(session)),
+          JOURNEY.issuePrn,
+          attempt
+        )
+
+        expect(mockPutMetric).not.toHaveBeenCalled()
       })
 
       it('should record a start with only the journey when its address names no year', async () => {
