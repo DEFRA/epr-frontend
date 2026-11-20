@@ -3,6 +3,8 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHtml, documentOf, rowsOf } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
+  LANDING_HEADING,
+  NATION_WORDING,
   NOTICE,
   exporterOf,
   operator,
@@ -141,7 +143,7 @@ describe('the England reprocessor and exporter figures page', () => {
       expect(
         getByText(
           body,
-          'These figures cover operators registered with the Environment Agency, the regulator for England.'
+          'These figures relate to operators registered with the Environment Agency, the regulator for England.'
         )
       ).not.toBeNull()
 
@@ -235,17 +237,15 @@ describe('the England reprocessor and exporter figures page', () => {
           (crumb.textContent ?? '').trim()
         )
       ).toStrictEqual([
-        'Market insights',
+        LANDING_HEADING,
         'Reprocessor and exporter figures: England'
       ])
       expect(
-        getByRole(trail, 'link', { name: 'Market insights' }).getAttribute(
-          'href'
-        )
+        getByRole(trail, 'link', { name: LANDING_HEADING }).getAttribute('href')
       ).toBe(paths.regulators.marketInsights)
     })
 
-    it('says the page is still being built, and how the figures are calculated', async ({
+    it('says how the tables are compiled in the words agreed for a nation, and nothing is still being built', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -256,12 +256,14 @@ describe('the England reprocessor and exporter figures page', () => {
 
       const body = documentOf(asHtml(result))
 
-      expect(getByText(body, NOTICE)).not.toBeNull()
+      expect(body.textContent).not.toContain(NOTICE)
+      expect(getByText(body, NATION_WORDING.englandDescription)).not.toBeNull()
+      expect(getByText(body, NATION_WORDING.rounding)).not.toBeNull()
       expect(
-        getByRole(body, 'heading', { name: 'How the figures are calculated' })
+        getByRole(body, 'heading', { name: 'How the tables are compiled' })
       ).not.toBeNull()
       expect(
-        getByRole(body, 'heading', { name: 'Figures from few operators' })
+        getByRole(body, 'heading', { name: 'Figures marked ‘c’' })
       ).not.toBeNull()
     })
   })

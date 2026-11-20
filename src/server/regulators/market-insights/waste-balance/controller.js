@@ -55,12 +55,15 @@ export const controller = {
       ],
       // Stated beside the figures because the publication states it too, so a
       // regulator comparing the two can tell whether they were cut together.
-      dataTakenAt: localise('regulators:marketInsights:dataTakenAt', {
-        date: formatDate(wasteBalance.meta.generatedAt, {
-          timeZone: UK_TIME_ZONE
-        }),
-        time: formatTime(wasteBalance.meta.generatedAt)
-      }),
+      dataAggregatedAt: localise(
+        'regulators:marketInsights:wasteBalance:dataAggregatedAt',
+        {
+          date: formatDate(wasteBalance.meta.generatedAt, {
+            timeZone: UK_TIME_ZONE
+          }),
+          time: formatTime(wasteBalance.meta.generatedAt)
+        }
+      ),
       wasteBalance: toWasteBalanceTable(
         wasteBalance.data,
         period.months,

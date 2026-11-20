@@ -8,6 +8,7 @@ import {
 } from '#server/common/test-helpers/dom.js'
 import {
   CONFIDENTIAL_KEY,
+  LANDING_HEADING,
   NOTICE,
   exporterOf,
   operator,
@@ -645,11 +646,14 @@ describe('the UK reprocessor and exporter figures page', () => {
       // The moment is served in UTC and read in UK time, which is an hour ahead
       // in April, so a page showing 9:30am would be showing the wrong zone.
       expect(
-        getByText(body, 'Data taken at 10:30am on 10 April 2026')
+        getByText(
+          body,
+          'Data aggregated at 10:30am, 10 April 2026. The figures do not come from a record of what has been published and may change if an operator resubmits a month.'
+        )
       ).not.toBeNull()
     })
 
-    it('says the page is still being built, above the description', async ({
+    it('says when the figures were aggregated in place of saying the page is still being built, above the description', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -658,11 +662,13 @@ describe('the UK reprocessor and exporter figures page', () => {
         auth: regulator
       })
 
-      const heading = getByRole(documentOf(asHtml(result)), 'heading', {
-        level: 1
-      })
+      const body = documentOf(asHtml(result))
+      const heading = getByRole(body, 'heading', { level: 1 })
 
-      expect(heading.nextElementSibling?.textContent.trim()).toBe(NOTICE)
+      expect(heading.nextElementSibling?.textContent.trim()).toMatch(
+        /^Data aggregated at /
+      )
+      expect(body.textContent).not.toContain(NOTICE)
     })
 
     it('leads back to the page listing the sets of figures', async ({
@@ -682,14 +688,9 @@ describe('the UK reprocessor and exporter figures page', () => {
         getAllByRole(trail, 'listitem').map((crumb) =>
           (crumb.textContent ?? '').trim()
         )
-      ).toStrictEqual([
-        'Market insights',
-        'Reprocessor and exporter figures: UK'
-      ])
+      ).toStrictEqual([LANDING_HEADING, 'Reprocessor and exporter figures: UK'])
       expect(
-        getByRole(trail, 'link', { name: 'Market insights' }).getAttribute(
-          'href'
-        )
+        getByRole(trail, 'link', { name: LANDING_HEADING }).getAttribute('href')
       ).toBe(paths.regulators.marketInsights)
     })
 
@@ -704,11 +705,14 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       const body = documentOf(asHtml(result))
 
-      // The wording runs from the notice to the first month's tables, so a
-      // regulator reads it before the figures it explains.
+      // The wording runs from the line saying when the figures were aggregated
+      // to the first month's tables, so a regulator reads it before the
+      // figures it explains.
       /** @type {(string | string[])[]} */
       const wording = []
-      let element = getByText(body, NOTICE).nextElementSibling
+      let element =
+        getByRole(body, 'heading', { level: 1 }).nextElementSibling
+          ?.nextElementSibling ?? null
       while (element !== null && element.matches('p, h2, ul')) {
         wording.push(
           element.matches('ul')
@@ -722,24 +726,21 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       expect(element?.querySelector('table')).not.toBeNull()
       expect(wording).toStrictEqual([
-        'For each month, the tables show what accredited reprocessors and exporters reported by material: tonnage received, recycled or exported, and sent on. They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price per tonne. The monthly market insights workbook uses these figures.',
-        'Data taken at 10:30am on 10 April 2026',
-        'These figures are only as good as the reports operators have submitted. An operator that has not submitted a month adds nothing to it. The newest months are the least complete, because returns are still arriving. Each month says how many of the monthly reports it was owed have been submitted.',
-        'How the figures are calculated',
-        'The figures come from the monthly reports operators submit, not from the summary logs the UK waste balance uses. Quarterly reports do not count. Where an operator has submitted a month more than once, only the latest submission counts.',
-        'A report counts only if the accreditation it was submitted under is currently approved or suspended. An accreditation that has since been cancelled loses every month it reported.',
-        'Operators report notes issued free of charge separately, and that tonnage is excluded. Revenue and tonnage are each added up across all operators, then total revenue is divided by total tonnage to give the average price per tonne. Where no tonnage was issued, the average is 0.',
-        'Revenue is what operators reported receiving, or expecting to receive, for their notes, excluding VAT.',
-        'Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.',
-        'Each table ends in a Grand Total row, which adds up every material. No average price is calculated for it, so that cell shows a dash.',
-        'Each month shows a reprocessor table and an exporter table, and every material appears in both. A figure shows 0 where no operator reported activity, where operators reported but left that figure blank, and where a month has not been submitted.',
-        'The figures are live. They come from the monthly reports held at the time shown above, not from a record of what was published. If an operator resubmits a month, its figures change.',
-        'Figures from few operators',
-        'A figure is marked [c] if one or two operators were accredited for it, whether or not they reported. With three or more, nobody can tell which of them reported. A figure is also marked if no operator was accredited for it, but another figure in the same row does hold data, for example a late report from an operator cancelled for the whole month. A row with no accredited operators and nothing in it is not marked.',
-        'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material for a reprocessor figure, or to export it for an exporter figure. A suspended operator counts. An operator whose accreditation was cancelled for the whole month does not.',
-        'An accredited operator counts even if it has not submitted its report, or its report put nothing into the figure.',
-        'A Grand Total is counted across all the materials in its table, so an operator accredited for more than one material counts once.',
-        'An operator is a business. It counts once however many sites it has.',
+        'For each month, the tables show what accredited reprocessors and exporters reported by material (tonnage received, recycled or exported, or sent on). They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price for each tonne. These figures are included in the monthly published (redacted) data workbook (XLSX).',
+        'The figures shown are only as good as the reports submitted by the operators. Operators that have not submitted a month add nothing to the figures. The most recent months are the least complete because reports are still arriving. Each month shows how many of the monthly reports have been received.',
+        'How the tables are compiled',
+        'The figures come from the monthly reports that operators submit, not from the summary logs that the UK waste balance uses. Where an operator has submitted a month more than once, only the latest submission counts. Quarterly reports do not count.',
+        'A report counts only if the accreditation it was submitted for is currently approved or suspended. Where an accreditation has been cancelled, it is counted as a non-submission for the relevant period. Any tonnage associated with a cancelled accreditation will remain in the waste balance so as not to distort the overall picture of packaging waste reprocessing and export.',
+        'Operators report notes issued ‘free of charge’ separately, and that tonnage is not included. Revenue and tonnage are each added up across all operators, then total revenue is divided by total tonnage to give the average price of each tonne. Where no tonnage was issued, the average is 0.',
+        'Revenue is what operators reported as received, or are expecting to receive, for their notes (excluding VAT).',
+        'Each figure is rounded to two decimal places as it is added up. The total can differ by a few pence from the same figures added first and rounded once.',
+        'Each table ends with a Grand Total row, which adds up the figures for every material. No average price is calculated for it, so that cell shows a dash (-).',
+        'Each month shows a reprocessor table and an exporter table, with every material appearing in both. A 0.00 figure displays where there’s no reported operator activity, where operators have reported, but left a figure out, and where a month has not been submitted.',
+        'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material (reprocessor figures) or to export it (exporter figures). Suspended operators count, but operators whose accreditations were cancelled for the whole month do not.',
+        'Accredited operators count even if they have not submitted their reports or their reports add nothing to the figure.',
+        'A Grand Total is calculated for all the materials in a table column, operators accredited for more than one material still only count once. Also, an operator is a business, so only counts once regardless of however many sites it has.',
+        'Figures marked ‘c’',
+        'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Figures are also marked ‘c’ when no operators were accredited for it, but another figure in the same row holds data (for example, a late report from an operator cancelled for the whole month). Rows with no accredited operators and nothing in them are not marked ‘c’.',
         'January 2026',
         'Monthly reports submitted: 1 of 2'
       ])
