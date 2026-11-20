@@ -90,18 +90,33 @@ const signOut = {
 const journeyKey = (journey, attempt) => `journey:${journey.start}:${attempt}`
 
 /**
+ * What a session holds for a started attempt: the year it was started in, or
+ * `true` where its address named no year or it began before years were held.
+ * @typedef {Year | true} JourneyMarker
+ */
+
+/**
+ * @param {HapiRequest} request
+ * @param {string} key
+ * @param {boolean} [clear]
+ */
+const heldMarker = (request, key, clear) =>
+  /** @type {JourneyMarker | undefined} */ (request.yar.get(key, clear))
+
+/**
  * @param {JourneyMetricName} metricName
  * @param {string} journeyName
- * @param {Year | undefined} year
+ * @param {JourneyMarker} marker
  */
-const emitJourneyMetric = (metricName, journeyName, year) =>
-  void writeMetric(
-    metricName,
-    year === undefined
+const emitJourneyMetric = (metricName, journeyName, marker) => {
+  /** @type {Record<string, string>} */
+  const dimensions =
+    marker === true
       ? { journey: journeyName }
-      : { journey: journeyName, year: String(year) },
-    { replaceDefaults: true }
-  )
+      : { journey: journeyName, year: String(marker) }
+
+  void writeMetric(metricName, dimensions, { replaceDefaults: true })
+}
 
 /**
  * Journey start and end events feeding the mandatory GDS KPIs. Both phases share
@@ -113,10 +128,9 @@ const emitJourneyMetric = (metricName, journeyName, year) =>
  * same session, so a lost marker under-reports rather than putting completion
  * rate above 100%.
  *
- * Both phases carry the year from the start's address, held in the marker, as
+ * Both phases carry the year in the start's address, held in the marker, as
  * not every end's address names one. A start in another year is a new attempt,
- * as some attempts are named without their year. A marker set before years
- * were recorded holds `true`, and its end goes out without a year.
+ * as some attempts are named without their year.
  */
 const journeyMetrics = {
   /**
@@ -127,16 +141,16 @@ const journeyMetrics = {
    */
   async start(request, journey, attempt) {
     const key = journeyKey(journey, attempt)
-    const year = addressYear(request.params)
-    const marker = /** @type {Year | true | undefined} */ (request.yar.get(key))
+    const marker = addressYear(request.params) ?? true
+    const held = heldMarker(request, key)
 
-    if (marker === true || (marker !== undefined && marker === year)) {
+    if (held === true || held === marker) {
       return
     }
 
-    request.yar.set(key, year ?? true)
+    request.yar.set(key, marker)
 
-    emitJourneyMetric('TransactionStart', journey.start, year)
+    emitJourneyMetric('TransactionStart', journey.start, marker)
   },
   /**
    * @param {HapiRequest} request
@@ -145,21 +159,11 @@ const journeyMetrics = {
    * @returns {Promise<void>}
    */
   async end(request, journey, attempt) {
-    const key = journeyKey(journey, attempt)
+    const marker = heldMarker(request, journeyKey(journey, attempt), true)
 
-    const marker = /** @type {Year | true | undefined} */ (
-      request.yar.get(key, true)
-    )
-
-    if (!marker) {
-      return
+    if (marker) {
+      emitJourneyMetric('TransactionEnd', journey.end, marker)
     }
-
-    emitJourneyMetric(
-      'TransactionEnd',
-      journey.end,
-      marker === true ? undefined : marker
-    )
   }
 }
 
