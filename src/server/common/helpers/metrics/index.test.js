@@ -225,7 +225,7 @@ describe('#metrics', () => {
         expect(mockPutDimensions).not.toHaveBeenCalled()
       })
 
-      it('should record an end under a single metric name, carrying the journey and the year its start was recorded with', async () => {
+      it('should record an end under a single metric name, carrying the journey and the year its attempt started in', async () => {
         const request = createRequest()
         await metrics.journey.start(request, JOURNEY.issuePrn, attempt)
 
@@ -244,7 +244,7 @@ describe('#metrics', () => {
         expect(mockPutDimensions).not.toHaveBeenCalled()
       })
 
-      it('should record an end with its start year when the end address names no year', async () => {
+      it('should record an end in its start year when the end address names no year', async () => {
         const yar = createYar()
         await metrics.journey.start(
           createRequest(yar, { year: '2027' }),
@@ -290,34 +290,17 @@ describe('#metrics', () => {
         ])
       })
 
-      it('should not record a second start for an attempt started before years were recorded', async () => {
-        const session = new Map([
-          [`journey:${JOURNEY.issuePrn.start}:${attempt}`, true]
-        ])
-
-        await metrics.journey.start(
-          createRequest(createYar(session)),
-          JOURNEY.issuePrn,
-          attempt
-        )
-
-        expect(mockPutMetric).not.toHaveBeenCalled()
-      })
-
-      it('should record a start with only the journey when its address names no year', async () => {
+      it('should not record a start whose address names no year', async () => {
         await metrics.journey.start(
           createRequest(createYar(), {}),
           JOURNEY.createPrn,
           attempt
         )
 
-        expect(mockSetDimensions).toHaveBeenCalledWith(
-          { journey: 'SaveDraftPRNStart' },
-          false
-        )
+        expect(mockPutMetric).not.toHaveBeenCalled()
       })
 
-      it('should record an end with only the journey for a start recorded before years were', async () => {
+      it('should not record an end for an attempt started before years were held', async () => {
         const session = new Map([
           [`journey:${JOURNEY.issuePrn.start}:${attempt}`, true]
         ])
@@ -328,10 +311,7 @@ describe('#metrics', () => {
           attempt
         )
 
-        expect(mockSetDimensions).toHaveBeenCalledWith(
-          { journey: 'IssuePRNEnd' },
-          false
-        )
+        expect(mockPutMetric).not.toHaveBeenCalled()
       })
 
       it('should record a start only once per attempt', async () => {
