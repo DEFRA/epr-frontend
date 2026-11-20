@@ -6,10 +6,12 @@ import {
 
 import { config } from '#config/config.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { addressYear } from '#server/common/helpers/route-params.js'
 
 /**
  * @import { JourneyEntry, JourneyMetricName, MetricName } from './constants.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  */
 
 const isMetricsEnabled = config.get('isMetricsEnabled')
@@ -90,11 +92,14 @@ const journeyKey = (journey, attempt) => `journey:${journey.start}:${attempt}`
 /**
  * @param {JourneyMetricName} metricName
  * @param {string} journeyName
+ * @param {Year | undefined} year
  */
-const emitJourneyMetric = (metricName, journeyName) =>
+const emitJourneyMetric = (metricName, journeyName, year) =>
   void writeMetric(
     metricName,
-    { journey: journeyName },
+    year === undefined
+      ? { journey: journeyName }
+      : { journey: journeyName, year: String(year) },
     { replaceDefaults: true }
   )
 
@@ -107,6 +112,10 @@ const emitJourneyMetric = (metricName, journeyName) =>
  * attempts at a journey at once. Ends only count against a start held in the
  * same session, so a lost marker under-reports rather than putting completion
  * rate above 100%.
+ *
+ * Both phases carry the year from the start's address, held in the marker, as
+ * not every end's address names one. A marker set before years were recorded
+ * holds `true`, and its end goes out without a year.
  */
 const journeyMetrics = {
   /**
@@ -122,9 +131,11 @@ const journeyMetrics = {
       return
     }
 
-    request.yar.set(key, true)
+    const year = addressYear(request.params)
 
-    emitJourneyMetric('TransactionStart', journey.start)
+    request.yar.set(key, year ?? true)
+
+    emitJourneyMetric('TransactionStart', journey.start, year)
   },
   /**
    * @param {HapiRequest} request
@@ -135,11 +146,19 @@ const journeyMetrics = {
   async end(request, journey, attempt) {
     const key = journeyKey(journey, attempt)
 
-    if (!request.yar.get(key, true)) {
+    const marker = /** @type {Year | true | undefined} */ (
+      request.yar.get(key, true)
+    )
+
+    if (!marker) {
       return
     }
 
-    emitJourneyMetric('TransactionEnd', journey.end)
+    emitJourneyMetric(
+      'TransactionEnd',
+      journey.end,
+      marker === true ? undefined : marker
+    )
   }
 }
 

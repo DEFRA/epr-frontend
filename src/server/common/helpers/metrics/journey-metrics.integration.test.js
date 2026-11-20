@@ -155,7 +155,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
         StorageResolution.Standard
       )
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'UploadSummaryLogStart' },
+        { journey: 'UploadSummaryLogStart', year: '2026' },
         false
       )
     })
@@ -189,7 +189,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
       )
       expect(endCalls).toHaveLength(1)
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'UploadSummaryLogEnd' },
+        { journey: 'UploadSummaryLogEnd', year: '2026' },
         false
       )
     })
@@ -263,7 +263,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
 
       expect(mockPutMetric).toHaveBeenCalledTimes(1)
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'DeletePRNStart' },
+        { journey: 'DeletePRNStart', year: '2026' },
         false
       )
     })
@@ -297,7 +297,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
       )
       expect(endCalls).toHaveLength(1)
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'DeletePRNEnd' },
+        { journey: 'DeletePRNEnd', year: '2026' },
         false
       )
     })
