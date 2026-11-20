@@ -6,10 +6,12 @@ import {
 
 import { config } from '#config/config.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { addressYear } from '#server/common/helpers/route-params.js'
 
 /**
  * @import { JourneyEntry, JourneyMetricName, MetricName } from './constants.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  */
 
 const isMetricsEnabled = config.get('isMetricsEnabled')
@@ -90,11 +92,12 @@ const journeyKey = (journey, attempt) => `journey:${journey.start}:${attempt}`
 /**
  * @param {JourneyMetricName} metricName
  * @param {string} journeyName
+ * @param {Year} year
  */
-const emitJourneyMetric = (metricName, journeyName) =>
+const emitJourneyMetric = (metricName, journeyName, year) =>
   void writeMetric(
     metricName,
-    { journey: journeyName },
+    { journey: journeyName, year: String(year) },
     { replaceDefaults: true }
   )
 
@@ -107,6 +110,10 @@ const emitJourneyMetric = (metricName, journeyName) =>
  * attempts at a journey at once. Ends only count against a start held in the
  * same session, so a lost marker under-reports rather than putting completion
  * rate above 100%.
+ *
+ * The session holds the year the attempt started in, as not every end's
+ * address names one. An attempt has to identify its year too, or a start in
+ * one year and an end in another share a marker.
  */
 const journeyMetrics = {
   /**
@@ -117,14 +124,15 @@ const journeyMetrics = {
    */
   async start(request, journey, attempt) {
     const key = journeyKey(journey, attempt)
+    const year = addressYear(request.params)
 
-    if (request.yar.get(key)) {
+    if (year === undefined || request.yar.get(key)) {
       return
     }
 
-    request.yar.set(key, true)
+    request.yar.set(key, year)
 
-    emitJourneyMetric('TransactionStart', journey.start)
+    emitJourneyMetric('TransactionStart', journey.start, year)
   },
   /**
    * @param {HapiRequest} request
@@ -133,13 +141,15 @@ const journeyMetrics = {
    * @returns {Promise<void>}
    */
   async end(request, journey, attempt) {
-    const key = journeyKey(journey, attempt)
+    const year = /** @type {Year | true | undefined} */ (
+      request.yar.get(journeyKey(journey, attempt), true)
+    )
 
-    if (!request.yar.get(key, true)) {
+    if (typeof year !== 'number') {
       return
     }
 
-    emitJourneyMetric('TransactionEnd', journey.end)
+    emitJourneyMetric('TransactionEnd', journey.end, year)
   }
 }
 

@@ -6,6 +6,7 @@ import { toOrganisationNumber } from '#server/common/helpers/organisation-number
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
+import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
@@ -155,7 +156,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
         StorageResolution.Standard
       )
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'UploadSummaryLogStart' },
+        { journey: 'UploadSummaryLogStart', year: '2026' },
         false
       )
     })
@@ -189,7 +190,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
       )
       expect(endCalls).toHaveLength(1)
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'UploadSummaryLogEnd' },
+        { journey: 'UploadSummaryLogEnd', year: '2026' },
         false
       )
     })
@@ -221,6 +222,49 @@ describe('journey metrics emit-once, driven through a real session', () => {
         ([metricName]) => metricName === 'TransactionStart'
       )
       expect(startCalls).toHaveLength(2)
+    })
+
+    it('should record the end in the year of the upload submitted, with another year open in the same session', async ({
+      server
+    }) => {
+      vi.mocked(initiateSummaryLogUpload)
+        .mockResolvedValueOnce({
+          uploadUrl: 'http://cdp/upload',
+          uploadId: 'cdp-upload-123',
+          statusUrl: 'http://cdp/status',
+          summaryLogId
+        })
+        .mockResolvedValueOnce({
+          uploadUrl: 'http://cdp/upload',
+          uploadId: 'cdp-upload-124',
+          statusUrl: 'http://cdp/status',
+          summaryLogId: '790'
+        })
+      const { cookie: startCookie, crumb } = await getCsrfToken(
+        server,
+        uploadUrl,
+        { auth: operatorAuth }
+      )
+      const laterYearStart = await server.inject({
+        method: 'GET',
+        url: uploadUrl.replace('/2026/', '/2027/'),
+        auth: operatorAuth,
+        headers: { cookie: startCookie }
+      })
+
+      await server.inject({
+        method: 'POST',
+        url: submitUrl,
+        auth: operatorAuth,
+        headers: { cookie: nextSessionCookie(startCookie, laterYearStart) },
+        payload: { crumb }
+      })
+
+      expect(mockSetDimensions.mock.calls).toStrictEqual([
+        [{ journey: 'UploadSummaryLogStart', year: '2026' }, false],
+        [{ journey: 'UploadSummaryLogStart', year: '2027' }, false],
+        [{ journey: 'UploadSummaryLogEnd', year: '2026' }, false]
+      ])
     })
   })
 
@@ -263,7 +307,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
 
       expect(mockPutMetric).toHaveBeenCalledTimes(1)
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'DeletePRNStart' },
+        { journey: 'DeletePRNStart', year: '2026' },
         false
       )
     })
@@ -297,7 +341,7 @@ describe('journey metrics emit-once, driven through a real session', () => {
       )
       expect(endCalls).toHaveLength(1)
       expect(mockSetDimensions).toHaveBeenCalledWith(
-        { journey: 'DeletePRNEnd' },
+        { journey: 'DeletePRNEnd', year: '2026' },
         false
       )
     })

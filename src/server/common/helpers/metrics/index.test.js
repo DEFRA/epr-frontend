@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { JOURNEY } from './constants.js'
 
 /**
@@ -82,8 +83,12 @@ const createYar = (session = new Map()) =>
     })
   )
 
-const createRequest = (yar = createYar()) =>
-  /** @type {never} */ (/** @type {unknown} */ ({ yar }))
+/**
+ * @param {ReturnType<typeof createYar>} [yar]
+ * @param {Record<string, string>} [params]
+ */
+const createRequest = (yar = createYar(), params = { year: '2026' }) =>
+  mockHapiRequest({ yar, params })
 
 describe('#metrics', () => {
   /** @type {typeof MetricsModule.metrics} */
@@ -204,7 +209,7 @@ describe('#metrics', () => {
     })
 
     describe('journey', () => {
-      it('should record a start under a single metric name, carrying the journey as its only dimension', async () => {
+      it('should record a start under a single metric name, carrying the journey and the year in its address', async () => {
         await metrics.journey.start(createRequest(), JOURNEY.createPrn, attempt)
 
         expect(mockPutMetric).toHaveBeenCalledWith(
@@ -214,13 +219,13 @@ describe('#metrics', () => {
           StorageResolution.Standard
         )
         expect(mockSetDimensions).toHaveBeenCalledWith(
-          { journey: 'SaveDraftPRNStart' },
+          { journey: 'SaveDraftPRNStart', year: '2026' },
           false
         )
         expect(mockPutDimensions).not.toHaveBeenCalled()
       })
 
-      it('should record an end under a single metric name, carrying the journey as its only dimension', async () => {
+      it('should record an end under a single metric name, carrying the journey and the year its attempt started in', async () => {
         const request = createRequest()
         await metrics.journey.start(request, JOURNEY.issuePrn, attempt)
 
@@ -233,10 +238,54 @@ describe('#metrics', () => {
           StorageResolution.Standard
         )
         expect(mockSetDimensions).toHaveBeenCalledWith(
-          { journey: 'IssuePRNEnd' },
+          { journey: 'IssuePRNEnd', year: '2026' },
           false
         )
         expect(mockPutDimensions).not.toHaveBeenCalled()
+      })
+
+      it('should record an end in its start year when the end address names no year', async () => {
+        const yar = createYar()
+        await metrics.journey.start(
+          createRequest(yar, { year: '2027' }),
+          JOURNEY.uploadSummaryLog,
+          attempt
+        )
+
+        await metrics.journey.end(
+          createRequest(yar, {}),
+          JOURNEY.uploadSummaryLog,
+          attempt
+        )
+
+        expect(mockSetDimensions).toHaveBeenLastCalledWith(
+          { journey: 'UploadSummaryLogEnd', year: '2027' },
+          false
+        )
+      })
+
+      it('should not record a start whose address names no year', async () => {
+        await metrics.journey.start(
+          createRequest(createYar(), {}),
+          JOURNEY.createPrn,
+          attempt
+        )
+
+        expect(mockPutMetric).not.toHaveBeenCalled()
+      })
+
+      it('should not record an end for an attempt started before years were held', async () => {
+        const session = new Map([
+          [`journey:${JOURNEY.issuePrn.start}:${attempt}`, true]
+        ])
+
+        await metrics.journey.end(
+          createRequest(createYar(session)),
+          JOURNEY.issuePrn,
+          attempt
+        )
+
+        expect(mockPutMetric).not.toHaveBeenCalled()
       })
 
       it('should record a start only once per attempt', async () => {

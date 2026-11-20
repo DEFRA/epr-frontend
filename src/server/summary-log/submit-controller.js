@@ -6,6 +6,7 @@ import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { homePath } from '#server/organisations/home-page.js'
 import { registrationPath } from '#server/reports/helpers/report-paths.js'
+import { summaryLogUploadAttempt } from './summary-log-upload-attempt.js'
 
 const UPLOAD_CONFLICT_VIEW = 'summary-log/upload-conflict'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
@@ -39,19 +40,28 @@ export const submitSummaryLogController = {
         session.backendToken
       )
 
+      const { [summaryLogId]: year, ...yearBySummaryLogId } =
+        summaryLogsSession.yearBySummaryLogId ?? {}
+
       request.yar.set(sessionNames.summaryLogs, {
         ...summaryLogsSession,
         freshDataMap: {
           ...summaryLogsSession.freshDataMap,
           [summaryLogId]: responseData
-        }
+        },
+        yearBySummaryLogId
       })
 
-      await metrics.journey.end(
-        request,
-        JOURNEY.uploadSummaryLog,
-        keys.registrationNumber
-      )
+      if (year !== undefined) {
+        await metrics.journey.end(
+          request,
+          JOURNEY.uploadSummaryLog,
+          summaryLogUploadAttempt({
+            registrationNumber: keys.registrationNumber,
+            year
+          })
+        )
+      }
 
       return h.redirect(redirectUrl)
     } catch (err) {
