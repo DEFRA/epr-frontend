@@ -84,15 +84,15 @@
     "hapi-pulse": "4.0.0",
     "http-status-codes": "2.3.0",
     "i18next": "26.7.2",
-    "i18next-fs-backend": "2.6.10",
+    "i18next-fs-backend": "2.6.12",
     "i18next-http-middleware": "3.10.0",
     "ioredis": "6.0.0",
-    "jose": "6.2.15",
+    "jose": "6.2.17",
     "lodash-es": "4.18.1",
     "nunjucks": "3.2.4",
     "pino": "10.4.0",
     "pino-pretty": "13.2.0",
-    "to-words": "7.4.1"
+    "to-words": "7.5.0"
   },
   "devDependencies": {
     "@babel/cli": "8.1.0",
