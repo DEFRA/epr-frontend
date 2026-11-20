@@ -315,7 +315,7 @@
  * was started for, as the submit address names no year.
  * @typedef {{
  *   freshDataMap?: Record<string, SummaryLogSubmitResponse>,
- *   yearBySummaryLogId?: Record<string, Year>
+ *   yearBySummaryLogId?: Partial<Record<string, Year>>
  * }} SummaryLogsSession
  */
 
