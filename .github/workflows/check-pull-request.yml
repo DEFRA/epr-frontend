@@ -34,8 +34,8 @@ jobs:
         with:
           fail-on-severity: moderate
 
-  pr-validator:
-    name: Run Pull Request Checks
+  test-and-scan:
+    name: Test and Scan
     runs-on: ubuntu-latest
     needs: pr-prep
     steps:
@@ -54,6 +54,57 @@ jobs:
       - name: Run translations check (non-blocking for now)
         run: npm run check:i18n
         continue-on-error: true #FIXME: 🚨 Make this a blocking step after translations are available
+
+  knip:
+    name: Knip
+    runs-on: ubuntu-latest
+    needs: pr-prep
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci --ignore-scripts --no-audit
+
+      - run: npm run knip
+
+  # The one context the branch ruleset requires from this workflow, so every
+  # blocking job must appear in `needs` below.
+  pr-checks:
+    name: Run Pull Request Checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs:
+      - pr-prep
+      - test-and-scan
+      - knip
+    if: always()
+    steps:
+      - name: Check results
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          EXPECTED: 3
+        run: |
+          echo "$RESULTS"
+          COUNT=$(echo "$RESULTS" | jq -r 'length')
+          if [ "$COUNT" -ne "$EXPECTED" ]; then
+            echo "Expected $EXPECTED jobs in needs, found $COUNT: update EXPECTED when you add a job"
+            exit 1
+          fi
+          NOT_PASSED=$(echo "$RESULTS" | jq -r 'to_entries
+            | map(select(.value.result != "success" and .value.result != "skipped"))
+            | .[] | "\(.key)=\(.value.result)"')
+          if [ -n "$NOT_PASSED" ]; then
+            echo "Did not pass: $(echo "$NOT_PASSED" | tr '\n' ' ')"
+            exit 1
+          fi
+          echo "Every pull request check passed"
 
   type-check-prod:
     name: Lint Types - Prod

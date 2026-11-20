@@ -8,4 +8,4 @@ const it = createServerTest('test')
 
 const beforeEach = it.beforeEach
 
-export { ENTRA_ID_BASE_URL, beforeEach, it, it as test }
+export { ENTRA_ID_BASE_URL, beforeEach, it }

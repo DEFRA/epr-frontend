@@ -36,7 +36,7 @@ export const ORGANISATION_STATUS = Object.freeze({
 /**
  * @typedef {typeof REGULATOR[keyof typeof REGULATOR]} RegulatorValue
  */
-export const REGULATOR = Object.freeze({
+const REGULATOR = Object.freeze({
   EA: 'ea',
   NRW: 'nrw',
   SEPA: 'sepa',
@@ -48,7 +48,7 @@ export const REGULATOR = Object.freeze({
  * seven the form offers and so includes plain `glass`.
  * @typedef {typeof MATERIAL[keyof typeof MATERIAL]} AppliedForMaterial
  */
-export const MATERIAL = Object.freeze({
+const MATERIAL = Object.freeze({
   ALUMINIUM: 'aluminium',
   FIBRE: 'fibre',
   GLASS: 'glass',
@@ -66,7 +66,7 @@ export const WASTE_PROCESSING_TYPE = Object.freeze({
 /**
  * @typedef {typeof REPROCESSING_TYPE[keyof typeof REPROCESSING_TYPE]} ReprocessingType
  */
-export const REPROCESSING_TYPE = Object.freeze({
+const REPROCESSING_TYPE = Object.freeze({
   INPUT: 'input',
   OUTPUT: 'output'
 })
@@ -74,7 +74,7 @@ export const REPROCESSING_TYPE = Object.freeze({
 /**
  * @typedef {typeof GLASS_RECYCLING_PROCESS[keyof typeof GLASS_RECYCLING_PROCESS]} GlassRecyclingProcess
  */
-export const GLASS_RECYCLING_PROCESS = Object.freeze({
+const GLASS_RECYCLING_PROCESS = Object.freeze({
   GLASS_RE_MELT: 'glass_re_melt',
   GLASS_OTHER: 'glass_other'
 })

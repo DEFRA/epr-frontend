@@ -1,0 +1,27 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  // postcss-loader loads it by name, and postcss is not a direct dependency,
+  // so knip does not turn on its postcss plugin by itself.
+  "postcss": true,
+  // i18next-cli loads it by name, and knip has no plugin for i18next-cli.
+  "entry": ["i18next.config.ts"],
+  "ignoreIssues": { "i18next.config.ts": ["exports"] },
+  // Knip's Sass compiler cannot resolve a partial by its unprefixed name or a
+  // folder by its _index, so it would report every partial unused.
+  "ignoreFiles": ["src/**/_*.scss"],
+  "ignoreDependencies": [
+    // pino loads it by name as a transport target.
+    "pino-pretty",
+    // setup:husky imports it inside a `node -e` string, which knip cannot read.
+    "husky"
+  ],
+  // lint-staged runs it, and it comes from the system rather than npm.
+  "ignoreBinaries": ["gitleaks"],
+  // Knip makes every file reached through a package.json import alias an
+  // entry, so without this it reports no unused export in most of the code.
+  "includeEntryExports": true,
+  // A stale ignore fails the build, so it is removed as soon as it is stale.
+  "treatConfigHintsAsErrors": true,
+  // An export used in its own file is live code, not dead code.
+  "ignoreExportsUsedInFile": true
+}
