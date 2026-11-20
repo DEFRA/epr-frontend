@@ -6,7 +6,7 @@ import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { homePath } from '#server/organisations/home-page.js'
 import { registrationPath } from '#server/reports/helpers/report-paths.js'
-import { summaryLogAttempt } from './summary-log-attempt.js'
+import { summaryLogUploadAttempt } from './summary-log-upload-attempt.js'
 
 const UPLOAD_CONFLICT_VIEW = 'summary-log/upload-conflict'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
@@ -56,7 +56,7 @@ export const submitSummaryLogController = {
         await metrics.journey.end(
           request,
           JOURNEY.uploadSummaryLog,
-          summaryLogAttempt({
+          summaryLogUploadAttempt({
             registrationNumber: keys.registrationNumber,
             year
           })

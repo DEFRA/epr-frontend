@@ -4,9 +4,9 @@
  */
 
 /**
- * Identifies the summary log upload a journey is acting on, so uploads for
- * different years in one session count and clear independently.
+ * Identifies the upload a journey is acting on for a registration's year, so
+ * uploads for different years in one session count and clear independently.
  * @param {{ registrationNumber: RegistrationNumber, year: Year }} keys
  */
-export const summaryLogAttempt = ({ registrationNumber, year }) =>
+export const summaryLogUploadAttempt = ({ registrationNumber, year }) =>
   `${registrationNumber}/${year}`

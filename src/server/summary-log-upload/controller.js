@@ -17,7 +17,7 @@ import {
   registrationPath as toRegistrationPath,
   summaryLogUploadPathUnder
 } from '#server/reports/helpers/report-paths.js'
-import { summaryLogAttempt } from '#server/summary-log/summary-log-attempt.js'
+import { summaryLogUploadAttempt } from '#server/summary-log/summary-log-upload-attempt.js'
 
 const yearOrNotFound = paramsOrNotFound(yearParamsSchema, {
   message: 'Summary log upload not found',
@@ -84,7 +84,7 @@ const summaryLogUploadController = ({ accredited }) => ({
         await metrics.journey.start(
           request,
           JOURNEY.uploadSummaryLog,
-          summaryLogAttempt({ registrationNumber, year })
+          summaryLogUploadAttempt({ registrationNumber, year })
         )
       }
 
