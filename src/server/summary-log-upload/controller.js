@@ -1,4 +1,5 @@
 import { hasWriteScope } from '#server/auth/scopes.js'
+import { sessionNames } from '#server/common/constants/session-names.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchRegistration } from '#server/common/helpers/organisations/fetch-registration.js'
 import { defaultMaterialsHomepagePath } from '#server/common/helpers/organisations/registration-in-view.js'
@@ -16,6 +17,7 @@ import {
   registrationPath as toRegistrationPath,
   summaryLogUploadPathUnder
 } from '#server/reports/helpers/report-paths.js'
+import { summaryLogUploadAttempt } from '#server/summary-log/summary-log-upload-attempt.js'
 
 const yearOrNotFound = paramsOrNotFound(yearParamsSchema, {
   message: 'Summary log upload not found',
@@ -23,6 +25,21 @@ const yearOrNotFound = paramsOrNotFound(yearParamsSchema, {
   action: 'start_summary_log_upload',
   reason: 'the address holds no such organisation number or year'
 })
+
+/**
+ * @param {HapiRequest} request
+ * @param {string} summaryLogId
+ * @param {Year} year
+ */
+const rememberUploadYear = (request, summaryLogId, year) => {
+  /** @type {SummaryLogsSession} */
+  const stored = request.yar.get(sessionNames.summaryLogs) ?? {}
+
+  request.yar.set(sessionNames.summaryLogs, {
+    ...stored,
+    yearBySummaryLogId: { ...stored.yearBySummaryLogId, [summaryLogId]: year }
+  })
+}
 
 /**
  * The upload page under one kind of materials homepage, which it links back to.
@@ -52,7 +69,7 @@ const summaryLogUploadController = ({ accredited }) => ({
       // holding no write scope reads the page without one; the form is hidden.
       const canUpload = hasWriteScope(session)
 
-      const { uploadUrl } = canUpload
+      const upload = canUpload
         ? await initiateSummaryLogUpload({
             keys,
             year,
@@ -60,13 +77,14 @@ const summaryLogUploadController = ({ accredited }) => ({
             redirectUrl: `${toRegistrationPath(keys)}/summary-logs/{summaryLogId}`,
             backendToken: session.backendToken
           })
-        : {}
+        : undefined
 
-      if (canUpload) {
+      if (upload) {
+        rememberUploadYear(request, upload.summaryLogId, year)
         await metrics.journey.start(
           request,
           JOURNEY.uploadSummaryLog,
-          registrationNumber
+          summaryLogUploadAttempt({ registrationNumber, year })
         )
       }
 
@@ -75,7 +93,7 @@ const summaryLogUploadController = ({ accredited }) => ({
         heading: localise('summary-log-upload:heading', { year }),
         caption: localise('summary-log-upload:caption'),
         introText: localise('summary-log-upload:introText'),
-        uploadUrl,
+        uploadUrl: upload?.uploadUrl,
         backUrl: request.localiseUrl(homepagePath)
       })
     } catch (err) {
@@ -131,4 +149,6 @@ export { summaryLogUploadController, summaryLogUploadRedirectController }
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { RegistrationKeys, RegistrationYearKeys } from '#server/reports/helpers/report-paths.js'
+ * @import { Year } from '#server/common/helpers/year.js'
+ * @import { SummaryLogsSession } from '#server/summary-log/types.js'
  */

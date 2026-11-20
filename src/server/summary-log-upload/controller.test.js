@@ -329,7 +329,7 @@ describe('#summaryLogUploadController', () => {
     expect(metrics.journey.start).toHaveBeenCalledWith(
       expect.anything(),
       JOURNEY.uploadSummaryLog,
-      registrationNumber
+      `${registrationNumber}/2027`
     )
   })
 
