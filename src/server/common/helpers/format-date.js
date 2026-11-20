@@ -7,6 +7,7 @@
 /**
  * @typedef {{
  *   includeYear?: boolean,
+ *   dayStyle?: Intl.DateTimeFormatOptions['day'],
  *   monthStyle?: Intl.DateTimeFormatOptions['month'],
  *   timeZone?: SupportedTimeZone
  * }} FormatDateOptions
@@ -16,6 +17,7 @@
  * Format an ISO timestamp to a human-readable date.
  * e.g. "2026-02-15T15:09:00.000Z" → "15 February 2026" (default)
  * e.g. "2026-02-15T15:09:00.000Z" → "15 February" (includeYear: false)
+ * e.g. "2026-02-05" → "05/02/2026" (dayStyle: '2-digit', monthStyle: '2-digit')
  *
  * The default is UTC because that is what every caller read before the zone
  * became a choice, and moving them is a decision of its own. A caller that
@@ -29,14 +31,19 @@
  */
 export function formatDate(
   isoString,
-  { includeYear = true, monthStyle = 'long', timeZone = 'UTC' } = {}
+  {
+    includeYear = true,
+    dayStyle = 'numeric',
+    monthStyle = 'long',
+    timeZone = 'UTC'
+  } = {}
 ) {
   if (!isoString || Number.isNaN(new Date(isoString).getTime())) {
     return ''
   }
 
   /** @type {Intl.DateTimeFormatOptions} */
-  const dateOptions = { day: 'numeric', month: monthStyle, timeZone }
+  const dateOptions = { day: dayStyle, month: monthStyle, timeZone }
 
   if (includeYear) {
     dateOptions.year = 'numeric'

@@ -246,6 +246,15 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('DATA_ENTRY_INVALID')
   })
 
+  test('returns DATA_ENTRY_INVALID for DATE_AFTER_SUMMARY_LOG_YEAR on a date header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'DATE_AFTER_SUMMARY_LOG_YEAR',
+        'DATE_OF_EXPORT'
+      )
+    ).toBe('DATA_ENTRY_INVALID')
+  })
+
   test('returns PERCENTAGE_FORMAT_INVALID for MUST_BE_AT_LEAST_ZERO with UK_PACKAGING_WEIGHT_PERCENTAGE header', () => {
     expect(
       getDisplayCodeFromErrorCode(

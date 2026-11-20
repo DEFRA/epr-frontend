@@ -2,6 +2,8 @@ import {
   getDisplayCodeFromErrorCode,
   TECHNICAL_ERROR_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
+import { VALIDATION_CODE } from '#server/common/enums/validation.js'
+import { formatDate } from '#server/common/helpers/format-date.js'
 import partition from 'lodash-es/partition.js'
 
 /**
@@ -162,6 +164,110 @@ const formatCellValue = (actual, localise) => {
   return String(actual)
 }
 
+const DAY_DATE_HEADERS = new Set([
+  'DATE_LOAD_LEFT_SITE',
+  'DATE_OF_EXPORT',
+  'DATE_RECEIVED_BY_OSR',
+  'DATE_RECEIVED_FOR_EXPORT',
+  'DATE_RECEIVED_FOR_REPROCESSING',
+  'DATE_THE_REFUSED_STOPPED_WASTE_REPATRIATED'
+])
+
+const MONTH_HEADERS = new Set([
+  'MONTH_RECEIVED_FOR_EXPORT',
+  'MONTH_RECEIVED_FOR_REPROCESSING'
+])
+
+const CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * @param {LocatedCellFailure['actual']} actual
+ * @returns {actual is string}
+ */
+const isCalendarDate = (actual) => {
+  if (typeof actual !== 'string' || !CALENDAR_DATE.test(actual)) {
+    return false
+  }
+  const date = new Date(actual)
+  return (
+    !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === actual
+  )
+}
+
+/**
+ * Matches the template's mmm-yy month cells. en-US, because en-GB abbreviates
+ * September as "Sept" where Excel shows "Sep".
+ * @param {string} calendarDate
+ * @returns {string}
+ */
+const formatMonth = (calendarDate) => {
+  const month = new Date(calendarDate).toLocaleDateString('en-US', {
+    month: 'short',
+    timeZone: 'UTC'
+  })
+  return `${month}-${calendarDate.slice(2, 4)}`
+}
+
+/**
+ * Shows a date or month cell as the template displays it, so the operator can
+ * match it to their spreadsheet. Anything that is not a real calendar date is
+ * shown as entered.
+ * @param {string} header
+ * @param {LocatedCellFailure['actual']} actual
+ * @param {Localise} localise
+ * @returns {string}
+ */
+const formatValueEntered = (header, actual, localise) => {
+  if (isCalendarDate(actual)) {
+    if (DAY_DATE_HEADERS.has(header)) {
+      return formatDate(actual, { dayStyle: '2-digit', monthStyle: '2-digit' })
+    }
+    if (MONTH_HEADERS.has(header)) {
+      return formatMonth(actual)
+    }
+  }
+
+  return formatCellValue(actual, localise)
+}
+
+const EXPORTED_TAB_TABLES = new Set([
+  'RECEIVED_LOADS_FOR_EXPORT',
+  'LOADS_EXPORTED'
+])
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @param {string} displayCode
+ * @param {Localise} localise
+ * @returns {string}
+ */
+const buildProblem = (
+  { errorCode, expected, actual, location },
+  displayCode,
+  localise
+) => {
+  const fallback = localise(`summary-log:cellReason.${displayCode}`, {
+    defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
+  })
+
+  if (errorCode === VALIDATION_CODE.DATE_AFTER_SUMMARY_LOG_YEAR) {
+    if (typeof expected !== 'number' || !isCalendarDate(actual)) {
+      return fallback
+    }
+    const key = EXPORTED_TAB_TABLES.has(location.table)
+      ? `${errorCode}_EXPORTED`
+      : errorCode
+    return localise(`summary-log:cellReason.${key}`, {
+      year: expected,
+      loadYear: actual.slice(0, 4)
+    })
+  }
+
+  return localise(`summary-log:cellReason.${errorCode}`, {
+    defaultValue: fallback
+  })
+}
+
 /**
  * @param {LocatedCellFailure} failure
  * @param {Localise} localise
@@ -174,12 +280,8 @@ const buildCellErrorCell = (failure, localise) => {
   return {
     columnLabel: buildColumnLabel(location.header, localise),
     cellRef: `${location.column}${location.row}`,
-    value: formatCellValue(actual, localise),
-    problem: localise(`summary-log:cellReason.${errorCode}`, {
-      defaultValue: localise(`summary-log:cellReason.${displayCode}`, {
-        defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
-      })
-    })
+    value: formatValueEntered(location.header, actual, localise),
+    problem: buildProblem(failure, displayCode, localise)
   }
 }
 
