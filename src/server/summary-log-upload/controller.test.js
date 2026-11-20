@@ -1,3 +1,4 @@
+import { STANDING } from '#domain/registration.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { toBackendToken } from '#server/common/helpers/backend-token.js'
@@ -54,6 +55,9 @@ const holdsRegistration = (overrides = {}) => {
     status: {
       current: 'approved',
       timeline: [{ status: 'approved', at: `${thisYear}-01-01T00:00:00.000Z` }]
+    },
+    standingByDate: {
+      [thisYear]: { [`${thisYear}-01-01`]: { standing: STANDING.ACCREDITED } }
     },
     accreditations: {},
     ...overrides
