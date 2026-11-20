@@ -14,7 +14,6 @@ import {
   buildOrganisationView,
   buildRegistrationView
 } from '#server/common/test-helpers/organisation-view-fixtures.js'
-import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
@@ -133,7 +132,7 @@ describe('#submitSummaryLogController', () => {
     ).toContain('session=')
   })
 
-  it('should record the journey end when the summary log is submitted', async ({
+  it('should not record the journey end for an upload this session did not start', async ({
     server
   }) => {
     vi.mocked(submitSummaryLog).mockResolvedValueOnce({
@@ -153,11 +152,7 @@ describe('#submitSummaryLogController', () => {
       payload: { crumb }
     })
 
-    expect(metrics.journey.end).toHaveBeenCalledWith(
-      expect.anything(),
-      JOURNEY.uploadSummaryLog,
-      registrationNumber
-    )
+    expect(metrics.journey.end).not.toHaveBeenCalled()
   })
 
   it('should not record the journey end when the backend rejects the submission', async ({

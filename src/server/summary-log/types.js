@@ -311,9 +311,11 @@
  * Session data persisted under `sessionNames.summaryLogs`. `freshDataMap`
  * holds status responses written by submitSummaryLogController that
  * summaryLogUploadProgressController reads on the next request to bridge
- * backend replication lag.
+ * backend replication lag. `yearBySummaryLogId` holds the year each upload
+ * was started for, as the submit address names no year.
  * @typedef {{
- *   freshDataMap?: Record<string, SummaryLogSubmitResponse>
+ *   freshDataMap?: Record<string, SummaryLogSubmitResponse>,
+ *   yearBySummaryLogId?: Record<string, Year>
  * }} SummaryLogsSession
  */
 

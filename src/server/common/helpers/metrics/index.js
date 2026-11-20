@@ -112,7 +112,8 @@ const emitJourneyMetric = (metricName, journeyName, year) =>
  * rate above 100%.
  *
  * The session holds the year the attempt started in, as not every end's
- * address names one.
+ * address names one. An attempt has to identify its year too, or a start in
+ * one year and an end in another share a marker.
  */
 const journeyMetrics = {
   /**
@@ -125,7 +126,7 @@ const journeyMetrics = {
     const key = journeyKey(journey, attempt)
     const year = addressYear(request.params)
 
-    if (year === undefined || request.yar.get(key) === year) {
+    if (year === undefined || request.yar.get(key)) {
       return
     }
 

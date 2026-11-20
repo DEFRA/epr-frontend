@@ -264,32 +264,6 @@ describe('#metrics', () => {
         )
       })
 
-      it('should record a fresh start, and end in its year, when the same attempt starts in another year', async () => {
-        const yar = createYar()
-        await metrics.journey.start(
-          createRequest(yar, { year: '2026' }),
-          JOURNEY.uploadSummaryLog,
-          attempt
-        )
-        await metrics.journey.start(
-          createRequest(yar, { year: '2027' }),
-          JOURNEY.uploadSummaryLog,
-          attempt
-        )
-
-        await metrics.journey.end(
-          createRequest(yar, {}),
-          JOURNEY.uploadSummaryLog,
-          attempt
-        )
-
-        expect(mockSetDimensions.mock.calls).toStrictEqual([
-          [{ journey: 'UploadSummaryLogStart', year: '2026' }, false],
-          [{ journey: 'UploadSummaryLogStart', year: '2027' }, false],
-          [{ journey: 'UploadSummaryLogEnd', year: '2027' }, false]
-        ])
-      })
-
       it('should not record a start whose address names no year', async () => {
         await metrics.journey.start(
           createRequest(createYar(), {}),
