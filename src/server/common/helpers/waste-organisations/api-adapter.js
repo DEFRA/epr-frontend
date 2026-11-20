@@ -1,4 +1,4 @@
-import { getYear } from 'date-fns'
+import { getYear } from 'date-fns/getYear'
 
 import { config } from '#config/config.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
