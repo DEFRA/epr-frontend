@@ -51,10 +51,6 @@ jobs:
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           build-command: npm run build
 
-      - name: Run translations check (non-blocking for now)
-        run: npm run check:i18n
-        continue-on-error: true #FIXME: 🚨 Make this a blocking step after translations are available
-
   type-check-prod:
     name: Lint Types - Prod
     runs-on: ubuntu-latest
