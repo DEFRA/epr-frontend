@@ -83,7 +83,7 @@
     "hapi-pino": "13.0.0",
     "hapi-pulse": "4.0.0",
     "http-status-codes": "2.3.0",
-    "i18next": "26.7.2",
+    "i18next": "27.1.1",
     "i18next-fs-backend": "2.6.12",
     "i18next-http-middleware": "3.10.0",
     "ioredis": "6.0.0",
