@@ -13,6 +13,7 @@ import {
   materialsHomepage
 } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { buildManageLink } from '#server/common/helpers/manage-link/build-manage-link.js'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
 import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
 import {
@@ -37,6 +38,7 @@ import capitalize from 'lodash-es/capitalize.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Year } from '#server/common/helpers/year.js'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
+ * @import { ManageLink } from '#server/common/helpers/manage-link/build-manage-link.js'
  * @import { ReapplyLink } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
  * @import { DecemberBalanceBreakdown } from '#server/common/helpers/waste-balance/december-balance.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
@@ -70,6 +72,7 @@ const VIEW = 'registrations/index'
  *   hasSiteName: boolean;
  *   heading: string;
  *   isExporter: boolean;
+ *   manageLink: ManageLink | null;
  *   pageTitle: string;
  *   prns: { description: string; link: Link; manageLink: Link; title: string } | null;
  *   reapplyAccreditation: ReapplyLink | null;
@@ -186,6 +189,25 @@ const toPrns = (request, { noteType, noteTypePlural }, notesPath) => {
 }
 
 /**
+ * @param {{ keys: RegistrationKeys, registration: RegistrationView, year: Year }} params
+ * @returns {ManageLink | null}
+ */
+const toManageLink = ({ keys, registration, year }) => {
+  const { windowStart, windowEnd, baseUrl } = config.get('reapplyAccreditation')
+
+  return buildManageLink({
+    now: new Date(),
+    window: { windowStart, windowEnd },
+    baseUrl,
+    organisationNumber: keys.organisationNumber,
+    registrationNumber: keys.registrationNumber,
+    material: registration.material,
+    registrationStatus: registration.status.current,
+    year
+  })
+}
+
+/**
  * The page's registration content, the same with or without an accreditation.
  * @param {{
  *   request: HapiRequest,
@@ -217,6 +239,7 @@ const buildRegistrationViewModel = ({
     ),
     contactRegulatorUrl: localiseUrl('/contact'),
     hasSiteName: !!siteName,
+    manageLink: toManageLink({ keys, registration, year }),
     heading: localise('registrations:heading', { material, year }),
     isExporter,
     pageTitle: localise('registrations:pageTitle', {

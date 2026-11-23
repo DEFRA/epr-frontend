@@ -168,7 +168,11 @@
                 {# Applying is the operator's to do, and the invitation reads as
                    one sentence, so a session holding no write scope gets the
                    other branch rather than a lead-in with nothing to follow it. #}
-                {% if reapplyAccreditation and hasWriteScope %}
+                {% if manageLink and hasWriteScope %}
+                <p class="govuk-body">
+                  <a href="{{ manageLink.href }}" class="govuk-link">{{ localise("registrations:manageRegistrationAndAccreditationLink") }}</a>
+                </p>
+                {% elif reapplyAccreditation and hasWriteScope %}
                 <p class="govuk-body">
                   {{ localise("registrations:reapplyAccreditationLead") }} <a href="{{ reapplyAccreditation.href }}" class="govuk-link">{{ localise("registrations:reapplyAccreditationLink", { year: reapplyAccreditation.year }) }}</a>.
                 </p>

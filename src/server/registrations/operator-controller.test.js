@@ -36,6 +36,11 @@ const registrationPath = `/organisations/500118/registrations/${registrationNumb
 const accreditationPath = `${registrationPath}/accreditations/${year}`
 const registeredOnlyPath = `${registrationPath}/${year}`
 
+const manageLinkName = 'Manage your registration and accreditation'
+const manageHref = `https://ws2.example/manage/500118/${registrationNumber}/glass_re_melt`
+const notYetAvailable =
+  'Registration and accreditation management is not yet available.'
+
 /**
  * @param {number} fromYear
  */
@@ -194,6 +199,16 @@ const openTheReapplyWindow = () => {
   config.set('reapplyAccreditation.windowStart', '01-01T00:00')
   config.set('reapplyAccreditation.windowEnd', '12-31T23:59')
   config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
+}
+
+const closeTheReapplyWindow = () => {
+  openTheReapplyWindow()
+  const sixMonthsAway = String(((new Date().getMonth() + 6) % 12) + 1).padStart(
+    2,
+    '0'
+  )
+  config.set('reapplyAccreditation.windowStart', `${sixMonthsAway}-01T00:00`)
+  config.set('reapplyAccreditation.windowEnd', `${sixMonthsAway}-01T00:01`)
 }
 
 const restoreTheReapplyWindow = () => {
@@ -887,6 +902,171 @@ describe("the operator's registered-only page for a year", () => {
     })
 
     expect(statusCode).toBe(statusCodes.notFound)
+  })
+})
+
+describe('the manage registration and accreditation link', () => {
+  beforeEach(closeTheReapplyWindow)
+
+  afterEach(restoreTheReapplyWindow)
+
+  /** @param {InstanceType<DOMWindow['HTMLElement']>} body */
+  const manageLinkIn = (body) =>
+    queryByRole(body, 'link', { name: manageLinkName })
+
+  it.for([
+    {
+      page: 'accreditation',
+      url: accreditationPath,
+      registration: reprocessor
+    },
+    {
+      page: 'registered-only',
+      url: registeredOnlyPath,
+      registration: registeredOnly
+    }
+  ])(
+    'replaces the not-yet-available text on the $page page outside the reapply window',
+    async ({ url, registration }, { server, msw }) => {
+      backendHolds(msw, { registration })
+
+      const { body } = await visit(server, { url })
+
+      expect(hrefOf(body, manageLinkName)).toBe(manageHref)
+      expect(body.textContent).not.toContain(notYetAvailable)
+    }
+  )
+
+  it('replaces the reapply link on the accreditation page', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
+    const { body } = await visit(server)
+
+    expect(
+      queryByRole(body, 'link', {
+        name: `apply for ${thisYear + 1} accreditation`
+      })
+    ).toBeNull()
+  })
+
+  it.for([
+    {
+      page: 'accreditation',
+      url: accreditationPath,
+      registration: reprocessor
+    },
+    {
+      page: 'registered-only',
+      url: registeredOnlyPath,
+      registration: registeredOnly
+    }
+  ])(
+    'is not offered on the $page page inside the reapply window',
+    async ({ url, registration }, { server, msw }) => {
+      openTheReapplyWindow()
+      backendHolds(msw, { registration })
+
+      const { body } = await visit(server, { url })
+
+      expect(manageLinkIn(body)).toBeNull()
+    }
+  )
+
+  it('keeps the not-yet-available text on the registered-only page inside the reapply window', async ({
+    server,
+    msw
+  }) => {
+    openTheReapplyWindow()
+    backendHolds(msw, { registration: registeredOnly })
+
+    const { body } = await visit(server, { url: registeredOnlyPath })
+
+    expect(body.textContent).toContain(notYetAvailable)
+  })
+
+  it('is offered once the accreditation is cancelled while the registration stands', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      registration: {
+        ...reprocessor,
+        accreditations: {
+          [year]: accreditationWith('cancelled', ['approved', 'cancelled'])
+        }
+      }
+    })
+
+    const { body } = await visit(server)
+
+    expect(hrefOf(body, manageLinkName)).toBe(manageHref)
+  })
+
+  it('is not offered once the registration is suspended', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw, {
+      registration: {
+        ...registeredOnly,
+        status: {
+          current: 'suspended',
+          timeline: [
+            { status: 'approved', at: `${year}-01-01T09:00:00.000Z` },
+            { status: 'suspended', at: `${year}-03-01T09:00:00.000Z` }
+          ]
+        }
+      }
+    })
+
+    const { statusCode, body } = await visit(server, {
+      url: registeredOnlyPath
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(manageLinkIn(body)).toBeNull()
+  })
+
+  it('is not offered on a past year', async ({ server, msw }) => {
+    backendHolds(msw, {
+      registration: {
+        ...registeredOnly,
+        status: registeredSince(thisYear - 1),
+        standingByDate: standingSince(thisYear - 1)
+      }
+    })
+
+    const { body } = await visit(server, {
+      url: `${registrationPath}/${thisYear - 1}`
+    })
+
+    expect(manageLinkIn(body)).toBeNull()
+  })
+
+  it('is not offered to a session holding no write scope', async ({
+    server,
+    msw
+  }) => {
+    backendHolds(msw)
+
+    const { body } = await visit(server, {
+      auth: buildMockAuth({ linkedOrganisationId: organisationId, scope: [] })
+    })
+
+    expect(manageLinkIn(body)).toBeNull()
+  })
+
+  it('is not offered where WS2 is not configured', async ({ server, msw }) => {
+    config.set('reapplyAccreditation.baseUrl', '')
+    backendHolds(msw)
+
+    const { statusCode, body } = await visit(server)
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(manageLinkIn(body)).toBeNull()
   })
 })
 
