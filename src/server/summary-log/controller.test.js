@@ -1468,6 +1468,99 @@ describe('#summaryLogUploadProgressController', () => {
         expect(problem).toBe('Check this value')
       })
 
+      const earlierYear = (deadline) =>
+        `Year cannot be earlier than 2027. You’ll need to add it in your 2026 summary log by ${deadline}.`
+
+      it.for([
+        [
+          'Exported (sections 1, 2 and 3)',
+          'RECEIVED_LOADS_FOR_EXPORT',
+          'DATE_OF_EXPORT',
+          '2026-12-30',
+          '2027-02-27',
+          '30/12/2026',
+          earlierYear('27 February 2027')
+        ],
+        [
+          'Received',
+          'RECEIVED_LOADS_FOR_EXPORT',
+          'MONTH_RECEIVED_FOR_EXPORT',
+          '2026-12-01',
+          '2027-03-20',
+          'Dec-26',
+          earlierYear('20 March 2027')
+        ],
+        [
+          'Exported (sections 1, 2 and 3)',
+          'RECEIVED_LOADS_FOR_EXPORT',
+          'DATE_OF_EXPORT',
+          '2026-12-30T00:00:00.000Z',
+          '2027-02-27',
+          '2026-12-30T00:00:00.000Z',
+          'Check this value'
+        ],
+        [
+          'Exported (sections 1, 2 and 3)',
+          'RECEIVED_LOADS_FOR_EXPORT',
+          'DATE_OF_EXPORT',
+          '2026-12-30',
+          undefined,
+          '30/12/2026',
+          'Check this value'
+        ]
+      ])(
+        'should show an earlier-year date on %s (%s %s %s) with deadline %s',
+        async (
+          [
+            sheet,
+            table,
+            header,
+            actual,
+            deadline,
+            expectedValue,
+            expectedProblem
+          ],
+          { server }
+        ) => {
+          mockFetchSummaryLogStatus.mockResolvedValueOnce(
+            failedStatus({
+              status: summaryLogStatuses.invalid,
+              validation: {
+                failures: [
+                  {
+                    code: 'INVALID_DATE',
+                    errorCode: 'DATE_BEFORE_SUMMARY_LOG_YEAR',
+                    actual,
+                    expected: 2027,
+                    deadline,
+                    location: {
+                      sheet,
+                      table,
+                      row: 8,
+                      rowId: '1001',
+                      column: 'U',
+                      header
+                    }
+                  }
+                ]
+              }
+            })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
+
+          const cellTable = getByRole(pageBody(result), 'table')
+          const [, , , , value, problem] = rowCells(dataRows(cellTable)[0])
+
+          expect(value).toBe(expectedValue)
+          expect(problem).toBe(expectedProblem)
+        }
+      )
+
       it.for([
         [
           'DATE_RECEIVED_BY_OSR',

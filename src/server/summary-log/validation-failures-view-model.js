@@ -237,33 +237,70 @@ const EXPORTED_TAB_TABLES = new Set([
 
 /**
  * @param {LocatedCellFailure} failure
+ * @param {Localise} localise
+ * @returns {string | undefined}
+ */
+const laterYearProblem = (
+  { errorCode, expected, actual, location },
+  localise
+) => {
+  if (typeof expected !== 'number' || !isCalendarDate(actual)) {
+    return undefined
+  }
+  const key = EXPORTED_TAB_TABLES.has(location.table)
+    ? `${errorCode}_EXPORTED`
+    : errorCode
+  return localise(`summary-log:cellReason.${key}`, {
+    year: expected,
+    loadYear: actual.slice(0, 4)
+  })
+}
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @param {Localise} localise
+ * @returns {string | undefined}
+ */
+const earlierYearProblem = (
+  { errorCode, expected, actual, deadline },
+  localise
+) => {
+  if (
+    typeof expected !== 'number' ||
+    !isCalendarDate(actual) ||
+    !isCalendarDate(deadline)
+  ) {
+    return undefined
+  }
+  return localise(`summary-log:cellReason.${errorCode}`, {
+    year: expected,
+    loadYear: actual.slice(0, 4),
+    deadline: formatDate(deadline)
+  })
+}
+
+const YEAR_PROBLEMS = {
+  [VALIDATION_CODE.DATE_AFTER_SUMMARY_LOG_YEAR]: laterYearProblem,
+  [VALIDATION_CODE.DATE_BEFORE_SUMMARY_LOG_YEAR]: earlierYearProblem
+}
+
+/**
+ * @param {LocatedCellFailure} failure
  * @param {string} displayCode
  * @param {Localise} localise
  * @returns {string}
  */
-const buildProblem = (
-  { errorCode, expected, actual, location },
-  displayCode,
-  localise
-) => {
+const buildProblem = (failure, displayCode, localise) => {
   const fallback = localise(`summary-log:cellReason.${displayCode}`, {
     defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
   })
 
-  if (errorCode === VALIDATION_CODE.DATE_AFTER_SUMMARY_LOG_YEAR) {
-    if (typeof expected !== 'number' || !isCalendarDate(actual)) {
-      return fallback
-    }
-    const key = EXPORTED_TAB_TABLES.has(location.table)
-      ? `${errorCode}_EXPORTED`
-      : errorCode
-    return localise(`summary-log:cellReason.${key}`, {
-      year: expected,
-      loadYear: actual.slice(0, 4)
-    })
+  const yearProblem = YEAR_PROBLEMS[failure.errorCode]
+  if (yearProblem) {
+    return yearProblem(failure, localise) ?? fallback
   }
 
-  return localise(`summary-log:cellReason.${errorCode}`, {
+  return localise(`summary-log:cellReason.${failure.errorCode}`, {
     defaultValue: fallback
   })
 }
