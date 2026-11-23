@@ -38,11 +38,6 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
  */
 
 /** @type {Record<'PRN' | 'PERN', string>} */
-const COMPLIANCE_YEAR_TEXT_KEY = {
-  PRN: 'prns:view:complianceYearTextPrn',
-  PERN: 'prns:view:complianceYearTextPern'
-}
-
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
   /**
@@ -385,13 +380,6 @@ function buildExistingPrnViewData({
     heading: noteTypeFull,
     showRegulatorLogos: isNotDraft,
     noteSummary: isNotDraft ? buildNoteSummary(prn, noteType, localise) : null,
-    complianceYear: isNotDraft
-      ? {
-          textKey: COMPLIANCE_YEAR_TEXT_KEY[noteType],
-          accreditationYear: prn.accreditationYear,
-          obligationYear: prn.obligationYear
-        }
-      : null,
     prnDetailsHeading: isNotDraft
       ? null
       : localise('prns:details:heading', { noteType }),
@@ -477,7 +465,18 @@ const buildNoteSummary = (prn, noteType, localise) => ({
     : null,
   yearOfIssue: localise('prns:view:yearOfIssue', {
     year: prn.accreditationYear
-  })
+  }),
+  decemberWasteTag:
+    prn.status === 'awaiting_acceptance' && prn.isDecemberWaste
+      ? localise('prns:view:decemberWasteTag', {
+          year: prn.accreditationYear,
+          nextYear: prn.accreditationYear + 1
+        })
+      : null,
+  acceptedTowards:
+    prn.status === 'accepted'
+      ? localise('prns:view:acceptedTowards', { year: prn.obligationYear })
+      : null
 })
 
 /**

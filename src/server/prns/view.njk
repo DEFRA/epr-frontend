@@ -38,6 +38,15 @@
           <p class="govuk-body-l govuk-!-font-weight-bold">{{ noteSummary.number }}</p>
         {% endif %}
         <p class="govuk-body-l govuk-!-font-weight-bold">{{ noteSummary.yearOfIssue }}</p>
+        {% if noteSummary.decemberWasteTag %}
+          {{ govukTag({
+            text: noteSummary.decemberWasteTag,
+            classes: "govuk-tag--blue epr-tag--no-max-width"
+          }) }}
+        {% endif %}
+        {% if noteSummary.acceptedTowards %}
+          <p class="govuk-body-l govuk-!-font-weight-bold">{{ noteSummary.acceptedTowards }}</p>
+        {% endif %}
       </div>
     {% endif %}
 
@@ -62,13 +71,6 @@
 
     {% if prnDetailsHeading %}
       <h2 class="govuk-heading-m">{{ prnDetailsHeading }}</h2>
-    {% endif %}
-
-    {% if complianceYear %}
-      <p class="govuk-body">{{ localise(complianceYear.textKey, {
-        accreditationYear: "<strong>" ~ complianceYear.accreditationYear ~ "</strong>",
-        obligationYear: "<strong>" ~ complianceYear.obligationYear ~ "</strong>"
-      }) | safe }}</p>
     {% endif %}
 
     {{ govukSummaryList({

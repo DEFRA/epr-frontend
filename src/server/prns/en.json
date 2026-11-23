@@ -197,8 +197,8 @@
     "dateCreated": "Date created",
     "numberLine": "{{noteType}} number: {{number}}",
     "yearOfIssue": "Year of issue: {{year}}",
-    "complianceYearTextPrn": "This PRN relates to waste received at a reprocessing site subject to the accreditation in {{- accreditationYear}} and can count towards {{- obligationYear}} obligations.",
-    "complianceYearTextPern": "This PERN relates to waste received at an overseas reprocessing site subject to the accreditation in {{- accreditationYear}} and can count towards {{- obligationYear}} obligations.",
+    "decemberWasteTag": "Can be accepted towards {{year}} or {{nextYear}}",
+    "acceptedTowards": "Accepted towards {{year}} recycling obligations",
     "returnLink": "Return to {{noteType}} list",
     "returnLinkAccreditation": "Return to accreditation",
     "returnLinkLedger": "Return to waste balance ledger"

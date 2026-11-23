@@ -1169,84 +1169,89 @@ describe('#viewController', () => {
         expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
       })
 
-      it('should display compliance year text with year in strong tags', async ({
-        server
-      }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-          asPackagingRecyclingNote({
-            ...mockPrnFromBackend,
-            accreditationYear: 2026,
-            obligationYear: 2026
+      it.for([
+        {
+          status: 'awaiting_acceptance',
+          isDecemberWaste: true,
+          obligationYear: 2026,
+          tag: 'Can be accepted towards 2026 or 2027',
+          line: null
+        },
+        {
+          status: 'awaiting_acceptance',
+          isDecemberWaste: false,
+          obligationYear: 2026,
+          tag: null,
+          line: null
+        },
+        {
+          status: 'accepted',
+          isDecemberWaste: true,
+          obligationYear: 2027,
+          tag: null,
+          line: 'Accepted towards 2027 recycling obligations'
+        },
+        {
+          status: 'accepted',
+          isDecemberWaste: false,
+          obligationYear: 2026,
+          tag: null,
+          line: 'Accepted towards 2026 recycling obligations'
+        },
+        {
+          status: 'cancelled',
+          isDecemberWaste: true,
+          obligationYear: 2026,
+          tag: null,
+          line: null
+        },
+        {
+          status: 'awaiting_authorisation',
+          isDecemberWaste: true,
+          obligationYear: 2026,
+          tag: null,
+          line: null
+        },
+        {
+          status: 'awaiting_cancellation',
+          isDecemberWaste: true,
+          obligationYear: 2026,
+          tag: null,
+          line: null
+        }
+      ])(
+        'shows the right acceptance copy for a $status prn when december waste is $isDecemberWaste',
+        async (
+          { status, isDecemberWaste, obligationYear, tag, line },
+          { server }
+        ) => {
+          vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+            asPackagingRecyclingNote({
+              ...mockPrnFromBackend,
+              status,
+              isDecemberWaste,
+              accreditationYear: 2026,
+              obligationYear
+            })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: viewUrl,
+            auth: mockAuth
           })
-        )
 
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
+          const main = getByRole(new JSDOM(result).window.document.body, 'main')
+          const textOf = (pattern) =>
+            queryByText(main, pattern)?.textContent.trim() ?? null
 
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        const complianceText = main.querySelector('.govuk-body')
-        expect(complianceText.innerHTML).toBe(
-          'This PRN relates to waste received at a reprocessing site subject to the accreditation in <strong>2026</strong> and can count towards <strong>2026</strong> obligations.'
-        )
-      })
-
-      it('should display PERN compliance year text referencing the overseas reprocessing site', async ({
-        server
-      }) => {
-        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixtureExporter)
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-          asPackagingRecyclingNote({
-            ...mockPernFromBackend,
-            accreditationYear: 2026,
-            obligationYear: 2027
-          })
-        )
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: pernViewUrl,
-          auth: mockAuth
-        })
-
-        const main = getByRole(new JSDOM(result).window.document.body, 'main')
-
-        expect(main.querySelector('.govuk-body').innerHTML).toBe(
-          'This PERN relates to waste received at an overseas reprocessing site subject to the accreditation in <strong>2026</strong> and can count towards <strong>2027</strong> obligations.'
-        )
-      })
-
-      it('should display the obligation year when it differs from the accreditation year', async ({
-        server
-      }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-          asPackagingRecyclingNote({
-            ...mockPrnFromBackend,
-            status: 'accepted',
-            accreditationYear: 2026,
-            obligationYear: 2027
-          })
-        )
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        const main = getByRole(new JSDOM(result).window.document.body, 'main')
-
-        expect(main.querySelector('.govuk-body').innerHTML).toBe(
-          'This PRN relates to waste received at a reprocessing site subject to the accreditation in <strong>2026</strong> and can count towards <strong>2027</strong> obligations.'
-        )
-      })
+          expect({
+            tag: textOf(/^Can be accepted towards/),
+            line: textOf(/^Accepted towards/),
+            sentence: textOf(/can count towards/)
+          }).toStrictEqual({ tag, line, sentence: null })
+        }
+      )
 
       it('does not display error summary on certificate page (errors shown on action page)', async ({
         server
