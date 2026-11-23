@@ -109,7 +109,7 @@ export default [
       sourceType: 'module',
       parser: tseslint.parser,
       parserOptions: {
-        project: ['./tsconfig.json']
+        project: ['./tsconfig.json', './src/client/tsconfig.json']
       },
       globals: {
         ...globals.node
