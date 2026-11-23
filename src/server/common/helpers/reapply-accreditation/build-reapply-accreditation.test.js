@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
 
 /**
- * @import { AppliedForMaterial, RegistrationStatus } from '#domain/organisations/model.js'
+ * @import { AppliedForMaterial, Material, RegistrationStatus } from '#domain/organisations/model.js'
  */
 
 const baseParams = {
@@ -12,6 +12,9 @@ const baseParams = {
   organisationId: 'org1',
   registrationId: 'reg1',
   material: /** @type {AppliedForMaterial} */ ('plastic'),
+  organisationNumber: '500118',
+  registrationNumber: 'R26ER5001180041PL',
+  registrationMaterial: /** @type {Material} */ ('plastic'),
   registrationStatus: /** @type {RegistrationStatus} */ ('approved'),
   year: 2026
 }
@@ -21,6 +24,7 @@ describe('#buildReapplyAccreditation', () => {
     const result = buildReapplyAccreditation(baseParams)
 
     expect(result).toStrictEqual({
+      kind: 'reapply',
       href: 'https://ws2.example/operator-accreditation/org1/reg1/plastic/2027',
       year: 2027
     })
@@ -78,19 +82,32 @@ describe('#buildReapplyAccreditation', () => {
     expect(result).toBeNull()
   })
 
-  test('is not visible when outside the window', () => {
+  test('offers the manage link by number and material outside the window', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
       now: new Date('2026-08-31T12:00:00')
     })
 
-    expect(result).toBeNull()
+    expect(result).toStrictEqual({
+      kind: 'manage',
+      href: 'https://ws2.example/manage/500118/R26ER5001180041PL/plastic'
+    })
   })
 
-  test('is not visible before the configured window opening time', () => {
+  test('offers the manage link before the configured window opening time', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
       now: new Date('2026-09-01T07:00:00Z')
+    })
+
+    expect(result?.kind).toBe('manage')
+  })
+
+  test('offers no manage link outside the window for a prior year', () => {
+    const result = buildReapplyAccreditation({
+      ...baseParams,
+      now: new Date('2026-08-31T12:00:00'),
+      year: 2025
     })
 
     expect(result).toBeNull()

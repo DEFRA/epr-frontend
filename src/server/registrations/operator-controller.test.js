@@ -196,6 +196,15 @@ const openTheReapplyWindow = () => {
   config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
 }
 
+const closeTheReapplyWindow = () => {
+  const sixMonthsAway = String(((new Date().getMonth() + 6) % 12) + 1).padStart(
+    2,
+    '0'
+  )
+  config.set('reapplyAccreditation.windowStart', `${sixMonthsAway}-01T00:00`)
+  config.set('reapplyAccreditation.windowEnd', `${sixMonthsAway}-01T00:01`)
+}
+
 const restoreTheReapplyWindow = () => {
   config.set('reapplyAccreditation.windowStart', configuredWindow.windowStart)
   config.set('reapplyAccreditation.windowEnd', configuredWindow.windowEnd)
@@ -497,6 +506,46 @@ describe("the operator's registration page for a year", () => {
     )
   })
 
+  it('offers the manage link by number and material instead of the reapply link outside the window', async ({
+    server,
+    msw
+  }) => {
+    closeTheReapplyWindow()
+    backendHolds(msw)
+
+    const { body } = await visit(server)
+
+    expect(hrefOf(body, 'Manage your registration and accreditation')).toBe(
+      `https://ws2.example/manage/500118/${registrationNumber}/glass_re_melt`
+    )
+    expect(
+      queryByRole(body, 'link', {
+        name: `apply for ${thisYear + 1} accreditation`
+      })
+    ).toBeNull()
+    expect(body.textContent).not.toContain(
+      'Registration and accreditation management is not yet available.'
+    )
+  })
+
+  it('offers a session holding no write scope no manage link', async ({
+    server,
+    msw
+  }) => {
+    closeTheReapplyWindow()
+    backendHolds(msw)
+
+    const { body } = await visit(server, {
+      auth: buildMockAuth({ linkedOrganisationId: organisationId, scope: [] })
+    })
+
+    expect(
+      queryByRole(body, 'link', {
+        name: 'Manage your registration and accreditation'
+      })
+    ).toBeNull()
+  })
+
   it('is not found for an organisation number the backend does not know', async ({
     server,
     msw
@@ -742,6 +791,26 @@ describe("the operator's registered-only page for a year", () => {
       })
     ).toBeNull()
   })
+
+  it.for([
+    { window: 'inside', setWindow: openTheReapplyWindow },
+    { window: 'outside', setWindow: closeTheReapplyWindow }
+  ])(
+    'offers a registered-only operator the manage link $window the window',
+    async ({ setWindow }, { server, msw }) => {
+      setWindow()
+      backendHolds(msw, { registration: registeredOnly })
+
+      const { body } = await visit(server, { url: registeredOnlyPath })
+
+      expect(hrefOf(body, 'Manage your registration and accreditation')).toBe(
+        `https://ws2.example/manage/500118/${registrationNumber}/glass_re_melt`
+      )
+      expect(body.textContent).not.toContain(
+        'Registration and accreditation management is not yet available.'
+      )
+    }
+  )
 
   it('reads no ids, balance or December eligibility for a registered-only operator', async ({
     server,

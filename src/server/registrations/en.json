@@ -110,6 +110,7 @@
     }
   },
   "heading": "{{ material }} ({{ year }})",
+  "manageRegistrationAndAccreditationLink": "Manage your registration and accreditation",
   "manageReports": "Manage reports",
   "manageReportsReadOnly": "View reports",
   "notes": {

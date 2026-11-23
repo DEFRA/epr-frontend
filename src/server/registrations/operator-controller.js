@@ -13,7 +13,10 @@ import {
   materialsHomepage
 } from '#server/common/helpers/organisations/registration-in-view.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
+import {
+  buildManageLink,
+  buildReapplyAccreditation
+} from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
 import { redirectPreservingMethod } from '#server/common/helpers/redirect-preserving-method.js'
 import {
   showsDecemberBalance,
@@ -317,7 +320,15 @@ const buildRegisteredOnlyViewModel = ({
   }),
   accreditation: { exists: false },
   prns: null,
-  reapplyAccreditation: null
+  reapplyAccreditation: buildManageLink({
+    now: new Date(),
+    baseUrl: config.get('reapplyAccreditation').baseUrl,
+    organisationNumber: keys.organisationNumber,
+    registrationNumber: keys.registrationNumber,
+    registrationMaterial: registration.material,
+    registrationStatus: registration.status.current,
+    year
+  })
 })
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -430,6 +441,9 @@ export const controller = {
       organisationId: ids.organisationId,
       registrationId: ids.registrationId,
       material: ids.material,
+      organisationNumber: number,
+      registrationNumber,
+      registrationMaterial: registration.material,
       registrationStatus: registration.status.current,
       year
     })
