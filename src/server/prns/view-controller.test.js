@@ -909,6 +909,30 @@ describe('#viewController', () => {
         }
       )
 
+      it.for([
+        { status: 'draft', expected: true },
+        { status: 'awaiting_acceptance', expected: false }
+      ])(
+        'shows the prn details heading for a $status prn: $expected',
+        async ({ status, expected }, { server }) => {
+          vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+            asPackagingRecyclingNote({ ...mockPrnFromBackend, status })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: viewUrl,
+            auth: mockAuth
+          })
+
+          const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+          expect(
+            queryByRole(main, 'heading', { name: 'PRN details' }) !== null
+          ).toBe(expected)
+        }
+      )
+
       it('returns 404 when registration not found', async ({ server }) => {
         const Boom = await import('@hapi/boom')
         vi.mocked(fetchRequiredAccreditation).mockRejectedValue(

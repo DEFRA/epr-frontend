@@ -392,7 +392,9 @@ function buildExistingPrnViewData({
           obligationYear: prn.obligationYear
         }
       : null,
-    prnDetailsHeading: localise('prns:details:heading', { noteType }),
+    prnDetailsHeading: isNotDraft
+      ? null
+      : localise('prns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
     accreditationRows,

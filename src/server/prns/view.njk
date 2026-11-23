@@ -60,7 +60,9 @@
       }) }}
     {% endif %}
 
-    <h2 class="govuk-heading-m">{{ prnDetailsHeading }}</h2>
+    {% if prnDetailsHeading %}
+      <h2 class="govuk-heading-m">{{ prnDetailsHeading }}</h2>
+    {% endif %}
 
     {% if complianceYear %}
       <p class="govuk-body">{{ localise(complianceYear.textKey, {
