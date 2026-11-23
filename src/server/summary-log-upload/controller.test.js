@@ -57,7 +57,9 @@ const holdsRegistration = (overrides = {}) => {
       timeline: [{ status: 'approved', at: `${thisYear}-01-01T00:00:00.000Z` }]
     },
     standingByDate: {
-      [thisYear]: { [`${thisYear}-01-01`]: { standing: STANDING.ACCREDITED } }
+      [thisYear]: {
+        [`${thisYear}-01-01`]: { standing: STANDING.REGISTERED_ONLY }
+      }
     },
     accreditations: {},
     ...overrides
@@ -220,6 +222,11 @@ describe('#summaryLogUploadController', () => {
       server
     }) => {
       holdsRegistration({
+        standingByDate: {
+          [thisYear]: {
+            [`${thisYear}-01-01`]: { standing: STANDING.ACCREDITED }
+          }
+        },
         accreditations: { [thisYear]: buildAccreditationView() }
       })
 
