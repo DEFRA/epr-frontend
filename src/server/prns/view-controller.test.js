@@ -30,6 +30,7 @@ import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
+  getAllByRole,
   getByRole,
   getByText,
   queryByRole,
@@ -828,6 +829,47 @@ describe('#viewController', () => {
         const heading = main.querySelector('.govuk-heading-xl')
         expect(heading.textContent).toBe('Packaging Waste Recycling Note')
       })
+
+      it.for([true, false])(
+        'shows regulator logos above the heading in agency order when december waste is %s',
+        async (isDecemberWaste, { server }) => {
+          vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+            asPackagingRecyclingNote({
+              ...mockPrnFromBackend,
+              status: 'awaiting_acceptance',
+              isDecemberWaste
+            })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: viewUrl,
+            auth: mockAuth
+          })
+
+          const { window } = new JSDOM(result)
+          const main = getByRole(window.document.body, 'main')
+          const logos = getAllByRole(main, 'img')
+          const heading = getByRole(main, 'heading', { level: 1 })
+
+          expect({
+            order: logos.map((logo) => logo.getAttribute('alt')),
+            aboveHeading: logos.every(
+              (logo) =>
+                logo.compareDocumentPosition(heading) &
+                window.Node.DOCUMENT_POSITION_FOLLOWING
+            )
+          }).toStrictEqual({
+            order: [
+              'Environment Agency',
+              'Northern Ireland Environment Agency (NIEA)',
+              'Scottish Environment Protection Agency (SEPA)',
+              'Natural Resources Wales'
+            ],
+            aboveHeading: true
+          })
+        }
+      )
 
       it('returns 404 when registration not found', async ({ server }) => {
         const Boom = await import('@hapi/boom')
