@@ -12,7 +12,7 @@ import {
 import { beforeEach, it } from '#vite/fixtures/fresh-server.js'
 import { Metrics } from '@defra/cdp-metrics'
 import Iron from '@hapi/iron'
-import { addSeconds } from 'date-fns'
+import { addSeconds } from 'date-fns/addSeconds'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import { afterEach, describe, expect, vi } from 'vitest'

@@ -5,7 +5,10 @@ import {
   updateUserSession
 } from '#server/auth/helpers/user-session.js'
 import authCookie from '@hapi/cookie'
-import { isPast, parseISO, subMinutes, subSeconds } from 'date-fns'
+import { isPast } from 'date-fns/isPast'
+import { parseISO } from 'date-fns/parseISO'
+import { subMinutes } from 'date-fns/subMinutes'
+import { subSeconds } from 'date-fns/subSeconds'
 import { getUserSession } from './get-user-session.js'
 import { refreshIdToken } from './refresh-token.js'
 import { validateRefreshedTokens } from './refreshed-tokens-schema.js'
