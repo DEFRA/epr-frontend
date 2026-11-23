@@ -320,7 +320,6 @@ async function handleExistingView(
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
     localise,
-    noteType,
     statusConfig,
     isNotDraft,
     recipientDisplayName,
@@ -385,6 +384,7 @@ function buildExistingPrnViewData({
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
     heading: noteTypeFull,
     showRegulatorLogos: isNotDraft,
+    noteSummary: isNotDraft ? buildNoteSummary(prn, noteType, localise) : null,
     complianceYear: isNotDraft
       ? {
           textKey: COMPLIANCE_YEAR_TEXT_KEY[noteType],
@@ -465,36 +465,37 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisation }) {
 }
 
 /**
+ * @param {PackagingRecyclingNote} prn
+ * @param {'PRN' | 'PERN'} noteType
+ * @param {TFunction} localise
+ */
+const buildNoteSummary = (prn, noteType, localise) => ({
+  number: prn.prnNumber
+    ? localise('prns:view:numberLine', { noteType, number: prn.prnNumber })
+    : null,
+  yearOfIssue: localise('prns:view:yearOfIssue', {
+    year: prn.accreditationYear
+  })
+})
+
+/**
  * Builds the PRN/PERN details rows for an existing PRN (from backend)
  */
 function buildExistingPrnDetailRows({
   prn,
   localise,
-  noteType,
   statusConfig,
   isNotDraft,
   recipientDisplayName,
   organisation
 }) {
-  const rows = [
-    {
-      key: { text: localise('prns:details:numberLabel', { noteType }) },
-      value: { text: prn.prnNumber || '' }
-    }
-  ]
-
-  if (isNotDraft) {
-    rows.push(buildStatusRow(localise, statusConfig))
-  }
-
-  rows.push(
+  return [
+    ...(isNotDraft ? [buildStatusRow(localise, statusConfig)] : []),
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
       issuerName: organisation.displayName
     })
-  )
-
-  return rows
+  ]
 }
 
 /**

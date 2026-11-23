@@ -32,6 +32,15 @@
     <span class="govuk-caption-xl">{{ caption }}</span>
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
+    {% if noteSummary %}
+      <div class="govuk-inset-text">
+        {% if noteSummary.number %}
+          <p class="govuk-body-l govuk-!-font-weight-bold">{{ noteSummary.number }}</p>
+        {% endif %}
+        <p class="govuk-body-l govuk-!-font-weight-bold">{{ noteSummary.yearOfIssue }}</p>
+      </div>
+    {% endif %}
+
     {% if statusRows %}
       {{ govukSummaryList({
         rows: statusRows

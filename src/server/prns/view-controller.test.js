@@ -288,26 +288,64 @@ describe('#viewController', () => {
         expect(body.innerHTML).not.toContain('>Legal Reprocessor Ltd<')
       })
 
-      it('displays PRN number when provided', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-          asPackagingRecyclingNote({
-            ...mockPrnFromBackend,
-            prnNumber: 'ER2625001A'
-          })
-        )
-
-        const { result } = await server.inject({
-          method: 'GET',
+      it.for([
+        {
+          description: 'a numbered prn',
           url: viewUrl,
-          auth: mockAuth
-        })
+          note: {
+            ...mockPrnFromBackend,
+            status: 'awaiting_acceptance',
+            prnNumber: 'ER2625001A'
+          },
+          accreditation: fixtureReprocessor,
+          expected: { number: 'PRN number: ER2625001A', numberRow: null }
+        },
+        {
+          description: 'a numbered pern',
+          url: pernViewUrl,
+          note: {
+            ...mockPernFromBackend,
+            status: 'accepted',
+            prnNumber: 'EX2625001A'
+          },
+          accreditation: fixtureExporter,
+          expected: { number: 'PERN number: EX2625001A', numberRow: null }
+        },
+        {
+          description: 'a prn awaiting authorisation, which has no number yet',
+          url: viewUrl,
+          note: {
+            ...mockPrnFromBackend,
+            status: 'awaiting_authorisation',
+            prnNumber: null
+          },
+          accreditation: fixtureReprocessor,
+          expected: { number: null, numberRow: null }
+        }
+      ])(
+        'shows the number and year of issue, not a number row, for $description',
+        async ({ url, note, accreditation, expected }, { server }) => {
+          vi.mocked(fetchRequiredAccreditation).mockResolvedValue(accreditation)
+          vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+            asPackagingRecyclingNote({ ...note, accreditationYear: 2026 })
+          )
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
 
-        expect(getByText(main, 'ER2625001A')).toBeDefined()
-      })
+          const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+          expect({
+            number: queryByText(main, /^PE?RN number: /)?.textContent ?? null,
+            yearOfIssue:
+              queryByText(main, /^Year of issue: /)?.textContent ?? null,
+            numberRow: queryByText(main, /^PE?RN number$/, { selector: 'dt' })
+          }).toStrictEqual({ ...expected, yearOfIssue: 'Year of issue: 2026' })
+        }
+      )
 
       it('displays recipient name from PRN data', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
