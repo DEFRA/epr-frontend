@@ -753,6 +753,14 @@ describe('the organisation home page', () => {
       }
     )
 
+    it('keeps a Welsh reader in Welsh when it sends a year the organisation does not hold to its default year', async ({
+      server
+    }) => {
+      const { headers } = await visit(server, `/cy${BARE_PATH}/2024`)
+
+      expect(headers.location).toBe(`/cy${BARE_PATH}/2026`)
+    })
+
     it('sends a year to the organisation address when the organisation holds no years', async ({
       server
     }) => {

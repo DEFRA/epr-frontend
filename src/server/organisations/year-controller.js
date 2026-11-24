@@ -4,7 +4,7 @@ import { fetchOrganisationYears } from '#server/common/helpers/organisations/fet
 import { registrationEntries } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
 import { defaultYear } from '#server/common/helpers/year.js'
-import { homePath, renderHome } from './home-page.js'
+import { redirectHome, renderHome } from './home-page.js'
 
 /** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
 
@@ -85,14 +85,7 @@ export const yearController = {
     // Every page's header Home and Back link lead here with the page's own
     // year, so a 404 would leave an operator on an unheld year with no way out.
     if (!years.includes(year)) {
-      return h.redirect(
-        request.localiseUrl(
-          homePath(orgNumber, {
-            year: defaultYear(years),
-            exporting: request.path.endsWith('/exporting')
-          })
-        )
-      )
+      return redirectHome(request, h, orgNumber, defaultYear(years))
     }
 
     const [organisation, wasteBalanceMap] = await Promise.all([

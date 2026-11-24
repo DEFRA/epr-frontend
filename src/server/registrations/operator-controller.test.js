@@ -155,6 +155,9 @@ const backendHolds = (
   } = {}
 ) =>
   msw.use(
+    http.get(`${backendUrl}/organisations/500118/years`, () =>
+      HttpResponse.json({ years: [thisYear] })
+    ),
     http.get(`${backendUrl}/organisations/500118`, () =>
       HttpResponse.json(organisationView(registration))
     ),
@@ -313,11 +316,6 @@ describe("the operator's registration page for a year", () => {
         }
       }
     })
-    msw.use(
-      http.get(`${backendUrl}/organisations/500118/years`, () =>
-        HttpResponse.json({ years: [thisYear] })
-      )
-    )
 
     const { body } = await visit(server, {
       url: `${registrationPath}/accreditations/${lastYear}`
@@ -338,19 +336,12 @@ describe("the operator's registration page for a year", () => {
     async ({ path }, { server, msw }) => {
       const unheldYear = String(thisYear + 2)
       backendHolds(msw)
-      msw.use(
-        http.get(`${backendUrl}/organisations/500118/years`, () =>
-          HttpResponse.json({ years: [thisYear] })
-        )
-      )
 
       const notFound = await visit(server, {
         url: `${registrationPath}/${path}/${unheldYear}`,
         auth: operatorWithHome
       })
-      const home = getByRole(notFound.body, 'link', {
-        name: 'Home'
-      }).getAttribute('href')
+      const home = hrefOf(notFound.body, 'Home')
       const { statusCode, location } = await visit(server, { url: home })
 
       expect(notFound.statusCode).toBe(statusCodes.notFound)
