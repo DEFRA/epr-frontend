@@ -37,7 +37,6 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
  * @typedef {{ keys: AccreditationKeys, prnId: string, prnDraft: PrnDraftSession }} DraftParams
  */
 
-/** @type {Record<'PRN' | 'PERN', string>} */
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
   /**
@@ -458,14 +457,13 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisation }) {
  * @param {PackagingRecyclingNote} prn
  * @param {'PRN' | 'PERN'} noteType
  * @param {TFunction} localise
+ * @returns {{ acceptedTowards: string | null, decemberWasteTag: string | null, number: string | null, yearOfIssue: string }}
  */
 const buildNoteSummary = (prn, noteType, localise) => ({
-  number: prn.prnNumber
-    ? localise('prns:view:numberLine', { noteType, number: prn.prnNumber })
-    : null,
-  yearOfIssue: localise('prns:view:yearOfIssue', {
-    year: prn.accreditationYear
-  }),
+  acceptedTowards:
+    prn.status === 'accepted'
+      ? localise('prns:view:acceptedTowards', { year: prn.obligationYear })
+      : null,
   decemberWasteTag:
     prn.status === 'awaiting_acceptance' && prn.isDecemberWaste
       ? localise('prns:view:decemberWasteTag', {
@@ -473,10 +471,12 @@ const buildNoteSummary = (prn, noteType, localise) => ({
           nextYear: prn.accreditationYear + 1
         })
       : null,
-  acceptedTowards:
-    prn.status === 'accepted'
-      ? localise('prns:view:acceptedTowards', { year: prn.obligationYear })
-      : null
+  number: prn.prnNumber
+    ? localise('prns:view:numberLine', { noteType, number: prn.prnNumber })
+    : null,
+  yearOfIssue: localise('prns:view:yearOfIssue', {
+    year: prn.accreditationYear
+  })
 })
 
 /**
