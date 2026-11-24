@@ -41,7 +41,7 @@ import { reportPath } from './helpers/report-paths.js'
  *   accreditation: Accreditation | undefined,
  *   canWrite: boolean,
  *   label: string,
- *   localise: TFunction,
+ *   localise: Localise,
  *   localiseUrl: (url: string) => string,
  *   period: ReportingPeriod,
  *   periodPath: string,
@@ -90,7 +90,7 @@ const buildActionCell = ({
  * @param {{
  *   accreditation: Accreditation | undefined,
  *   canWrite: boolean,
- *   localise: TFunction,
+ *   localise: Localise,
  *   localiseUrl: (url: string) => string,
  *   keys: RegistrationKeys,
  *   registration: RegistrationView,
@@ -168,7 +168,7 @@ function buildRows({
 /**
  * Submitted-table columns keep fixed quarter-widths, in contrast to the
  * action-required columns which hug their content.
- * @param {TFunction} localise
+ * @param {Localise} localise
  * @param {string} textKey
  * @returns {TableCell}
  */
@@ -181,7 +181,7 @@ const submittedHeaderCol = (localise, textKey) => ({
  * Action-required columns hug their content so the trailing right-aligned
  * action link sits hard right, matching the design. The submitted table keeps
  * its fixed column widths.
- * @param {TFunction} localise
+ * @param {Localise} localise
  * @param {string} textKey
  * @returns {TableCell}
  */
@@ -193,7 +193,7 @@ const activeHeaderCol = (localise, textKey) => ({
 const actionHeaderCol = { text: '', classes: cssClasses.textAlign.right }
 
 /**
- * @param {TFunction} localise
+ * @param {Localise} localise
  * @returns {{ activeHeader: TableRow, submittedHeader: TableRow }}
  */
 const buildHeaders = (localise) => ({
@@ -214,7 +214,7 @@ const buildHeaders = (localise) => ({
 
 /**
  * @param {ReportingPeriod[]} reportingPeriods
- * @param {TFunction} localise
+ * @param {Localise} localise
  * @returns {string | null}
  */
 const buildApprovedPersonBanner = (reportingPeriods, localise) => {
@@ -228,7 +228,7 @@ const buildApprovedPersonBanner = (reportingPeriods, localise) => {
 /**
  * The page's heading and title, each naming the year. A regulator reads
  * "Reports"; an operator "Manage reports".
- * @param {{ session: UserSession, localise: TFunction, material: string, year: Year }} options
+ * @param {{ session: UserSession, localise: Localise, material: string, year: Year }} options
  * @returns {{ heading: string, pageTitle: string }}
  */
 const buildTitles = ({ session, localise, material, year }) =>
@@ -331,7 +331,7 @@ export const listController = {
 }
 
 /**
- * @import { TFunction } from 'i18next'
+ * @import { Localise } from '../common/hapi-types.js'
  * @import { UserSession } from '#server/auth/types/session.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'

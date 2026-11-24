@@ -9,7 +9,7 @@ import {
 
 /**
  * @import { Year } from '#server/common/helpers/year.js'
- * @import { TFunction } from 'i18next'
+ * @import { Localise } from '../../common/hapi-types.js'
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { CadenceValue } from '../constants.js'
  * @import { RegistrationKeys } from './report-paths.js'
@@ -30,7 +30,7 @@ import {
  *   accreditationUrl: string | undefined,
  *   year: Year | undefined,
  *   cadence: CadenceValue | undefined,
- *   localise: TFunction,
+ *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {Crumb[]} empty where no page lists the period
@@ -81,7 +81,7 @@ const periodCrumb = ({
  *   pageName: string,
  *   year?: Year,
  *   cadence?: CadenceValue,
- *   localise: TFunction,
+ *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {Crumb[]}

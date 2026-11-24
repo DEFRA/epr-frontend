@@ -26,7 +26,7 @@ import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /**
  * @param {ReportDetailResponse} reportDetail
- * @param {TFunction} localise
+ * @param {Localise} localise
  * @returns {string}
  */
 function getSupportingInformation(reportDetail, localise) {
@@ -38,7 +38,7 @@ function getSupportingInformation(reportDetail, localise) {
 
 /**
  * @param {Pick<RegistrationView, 'wasteProcessingType'>} registration
- * @param {TFunction} localise
+ * @param {Localise} localise
  * @returns {{
  *   freeLabel: string,
  *   freeNote: string,
@@ -73,7 +73,7 @@ function buildNoteTypeLabels(registration, localise) {
  *   accreditation: Accreditation | undefined,
  *   basePath: string,
  *   cadenceLabel: string,
- *   localise: TFunction,
+ *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   material: string,
  *   periodLabel: string,
@@ -244,7 +244,7 @@ export const checkPostController = {
 
 /**
  * @import { RegistrationNumber } from '#server/common/helpers/registration-number.js'
- * @import { TFunction } from 'i18next'
+ * @import { Localise } from '../common/hapi-types.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'

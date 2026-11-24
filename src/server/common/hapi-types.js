@@ -2,7 +2,7 @@
  * @import {Request, ResponseToolkit, Server} from '@hapi/hapi'
  * @import {Yar} from '@hapi/yar'
  * @import {Policy, PolicyOptions} from '@hapi/catbox'
- * @import {TFunction, i18n} from 'i18next'
+ * @import {i18n} from 'i18next'
  * @import {Metrics} from '@defra/cdp-metrics'
  * @import {AnalyticsConsent} from './analytics/consent.js'
  * @import {TypedLogger} from './helpers/logging/logger.js'
@@ -76,6 +76,11 @@
  */
 
 /**
+ * The calling shape of i18next's `request.t`, without its overload set.
+ * @typedef {(key: string, params?: object) => string} Localise
+ */
+
+/**
  * Hapi request extended with the decorations contributed by the app's
  * registered plugins:
  *   - `t`, `i18n` from i18next-http-middleware
@@ -100,7 +105,7 @@
  *   server: HapiServer,
  *   state: Request['state'] & { userSession?: SessionCookieState },
  *   yar: HapiYar,
- *   t: TFunction,
+ *   t: Localise,
  *   i18n: i18n,
  *   localiseUrl: (url: string) => string,
  *   wasteOrganisationsService: WasteOrganisationsService,
