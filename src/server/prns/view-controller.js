@@ -461,10 +461,10 @@ const buildNoteSummary = (prn, noteType, localise) => ({
       ? localise('prns:view:acceptedTowards', { year: prn.obligation.year })
       : null,
   decemberWasteTag:
-    prn.status === 'awaiting_acceptance' && prn.isDecemberWaste
+    prn.status === 'awaiting_acceptance' &&
+    prn.obligation.allowedYears.length > 1
       ? localise('prns:view:decemberWasteTag', {
-          year: prn.accreditationYear,
-          nextYear: prn.accreditationYear + 1
+          years: prn.obligation.allowedYears.map(String)
         })
       : null,
   number: prn.prnNumber

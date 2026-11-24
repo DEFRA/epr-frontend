@@ -201,7 +201,7 @@
     "dateCreated": "Date created",
     "numberLine": "{{noteType}} number: {{number}}",
     "yearOfIssue": "Year of issue: {{year}}",
-    "decemberWasteTag": "Can be accepted towards {{year}} or {{nextYear}}",
+    "decemberWasteTag": "Can be accepted towards {{years, list(type: disjunction)}}",
     "acceptedTowards": "Accepted towards {{year}} recycling obligations",
     "returnLink": "Return to {{noteType}} list",
     "returnLinkAccreditation": "Return to accreditation",
