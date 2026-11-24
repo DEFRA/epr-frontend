@@ -9,7 +9,10 @@ import { toBackendToken } from '#server/common/helpers/backend-token.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { buildPrnResource } from '#server/common/test-helpers/prn-fixtures.js'
+import {
+  buildPackagingRecyclingNote,
+  buildPrnResource
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { test } from '#vite/fixtures/server.js'
 
@@ -19,7 +22,6 @@ import { fetchAccreditationDetails } from './fetch-accreditation-details.js'
  * @import { HttpHandler } from 'msw'
  * @import { SetupServer } from 'msw/node'
  * @import { LedgerEvent } from '#server/common/helpers/waste-balance-ledger/fetch-ledger-events.js'
- * @import { PackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
  * @import { ReportingPeriod, YearCalendarResponse } from '#server/reports/helpers/fetch-reporting-periods.js'
  */
 
@@ -118,25 +120,15 @@ describe(fetchAccreditationDetails, () => {
     tonnage: 12.5,
     issued: { at: '2026-02-15T15:09:00.000Z', by: { name: 'Ada Lovelace' } }
   })
-  /** @type {PackagingRecyclingNote[]} */
   const packagingRecyclingNotes = [
-    {
+    buildPackagingRecyclingNote({
       id: 'prn-001',
       prnNumber: '240000123',
-      issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
-      tonnage: 12.5,
-      material: 'plastic',
       status: 'accepted',
-      createdAt: '2026-01-15T10:00:00.000Z',
-      notes: null,
-      isDecemberWaste: false,
-      wasteProcessingType: 'reprocessor',
-      processToBeUsed: 'R3',
-      accreditationYear: 2026,
-      obligation: { year: 2026, allowedYears: [2026] },
+      tonnage: 12.5,
       issuedAt: '2026-02-15T15:09:00.000Z',
       issuedBy: { name: 'Ada Lovelace' }
-    }
+    })
   ]
 
   const backendFailure = expect.objectContaining({
