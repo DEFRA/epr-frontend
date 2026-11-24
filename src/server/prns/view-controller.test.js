@@ -288,46 +288,228 @@ describe('#viewController', () => {
         expect(body.innerHTML).not.toContain('>Legal Reprocessor Ltd<')
       })
 
+      const issuedPrn = {
+        ...mockPrnFromBackend,
+        prnNumber: 'ER2625001A',
+        accreditationYear: 2026,
+        obligationYear: 2026,
+        issuedAt: '2026-10-14T10:00:00.000Z'
+      }
+      const issuedPrnSummary = {
+        number: 'PRN number: ER2625001A',
+        detailsHeading: false
+      }
+
       it.for([
         {
-          description: 'a numbered prn',
-          url: viewUrl,
+          description: 'a draft prn',
           note: {
-            ...mockPrnFromBackend,
-            status: 'awaiting_acceptance',
-            prnNumber: 'ER2625001A'
+            ...issuedPrn,
+            status: 'draft',
+            prnNumber: null,
+            issuedAt: null
           },
-          accreditation: fixtureReprocessor,
-          expected: { number: 'PRN number: ER2625001A', numberRow: null }
-        },
-        {
-          description: 'a numbered pern',
-          url: pernViewUrl,
-          note: {
-            ...mockPernFromBackend,
-            status: 'accepted',
-            prnNumber: 'EX2625001A'
-          },
-          accreditation: fixtureExporter,
-          expected: { number: 'PERN number: EX2625001A', numberRow: null }
+          expected: {
+            number: null,
+            yearOfIssue: null,
+            issuedDate: '',
+            tag: null,
+            line: null,
+            detailsHeading: true
+          }
         },
         {
           description: 'a prn awaiting authorisation, which has no number yet',
-          url: viewUrl,
           note: {
-            ...mockPrnFromBackend,
+            ...issuedPrn,
             status: 'awaiting_authorisation',
-            prnNumber: null
+            prnNumber: null,
+            issuedAt: null
           },
-          accreditation: fixtureReprocessor,
-          expected: { number: null, numberRow: null }
+          expected: {
+            ...issuedPrnSummary,
+            number: null,
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '',
+            tag: null,
+            line: null
+          }
+        },
+        {
+          description: 'an accepted pern',
+          url: pernViewUrl,
+          accreditation: fixtureExporter,
+          note: {
+            ...mockPernFromBackend,
+            status: 'accepted',
+            prnNumber: 'EX2625001A',
+            issuedAt: '2026-10-14T10:00:00.000Z'
+          },
+          expected: {
+            ...issuedPrnSummary,
+            number: 'PERN number: EX2625001A',
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '14 October 2026',
+            tag: null,
+            line: 'Accepted towards 2026 recycling obligations'
+          }
+        },
+        {
+          description: 'a prn awaiting acceptance',
+          note: {
+            ...issuedPrn,
+            status: 'awaiting_acceptance',
+            isDecemberWaste: false
+          },
+          expected: {
+            ...issuedPrnSummary,
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '14 October 2026',
+            tag: null,
+            line: null
+          }
+        },
+        {
+          description: 'a prn accepted in its accreditation year',
+          note: { ...issuedPrn, status: 'accepted', isDecemberWaste: false },
+          expected: {
+            ...issuedPrnSummary,
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '14 October 2026',
+            tag: null,
+            line: 'Accepted towards 2026 recycling obligations'
+          }
+        },
+        {
+          description:
+            'a prn issued in january against the previous accreditation year',
+          note: {
+            ...issuedPrn,
+            status: 'accepted',
+            isDecemberWaste: false,
+            issuedAt: '2027-01-20T10:00:00.000Z'
+          },
+          expected: {
+            ...issuedPrnSummary,
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '20 January 2027',
+            tag: null,
+            line: 'Accepted towards 2026 recycling obligations'
+          }
+        },
+        {
+          description:
+            'a prn issued the same january day against the new accreditation year',
+          note: {
+            ...issuedPrn,
+            status: 'accepted',
+            isDecemberWaste: false,
+            accreditationYear: 2027,
+            obligationYear: 2027,
+            issuedAt: '2027-01-20T10:00:00.000Z'
+          },
+          expected: {
+            ...issuedPrnSummary,
+            yearOfIssue: 'Year of issue: 2027',
+            issuedDate: '20 January 2027',
+            tag: null,
+            line: 'Accepted towards 2027 recycling obligations'
+          }
+        },
+        {
+          description: 'a december prn issued in december',
+          note: {
+            ...issuedPrn,
+            status: 'awaiting_acceptance',
+            issuedAt: '2026-12-10T10:00:00.000Z'
+          },
+          expected: {
+            ...issuedPrnSummary,
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '10 December 2026',
+            tag: 'Can be accepted towards 2026 or 2027',
+            line: null
+          }
+        },
+        {
+          description: 'a december prn issued in january',
+          note: {
+            ...issuedPrn,
+            status: 'awaiting_acceptance',
+            issuedAt: '2027-01-15T10:00:00.000Z'
+          },
+          expected: {
+            ...issuedPrnSummary,
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '15 January 2027',
+            tag: 'Can be accepted towards 2026 or 2027',
+            line: null
+          }
+        },
+        {
+          description:
+            'a december prn issued in january and accepted towards the next year',
+          note: {
+            ...issuedPrn,
+            status: 'accepted',
+            obligationYear: 2027,
+            issuedAt: '2027-01-15T10:00:00.000Z'
+          },
+          expected: {
+            ...issuedPrnSummary,
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '15 January 2027',
+            tag: null,
+            line: 'Accepted towards 2027 recycling obligations'
+          }
+        },
+        {
+          description:
+            'a december prn issued in january and accepted towards its accreditation year',
+          note: {
+            ...issuedPrn,
+            status: 'accepted',
+            issuedAt: '2027-01-15T10:00:00.000Z'
+          },
+          expected: {
+            ...issuedPrnSummary,
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '15 January 2027',
+            tag: null,
+            line: 'Accepted towards 2026 recycling obligations'
+          }
+        },
+        {
+          description: 'a cancelled december prn',
+          note: { ...issuedPrn, status: 'cancelled' },
+          expected: {
+            ...issuedPrnSummary,
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '14 October 2026',
+            tag: null,
+            line: null
+          }
+        },
+        {
+          description: 'a december prn awaiting cancellation',
+          note: { ...issuedPrn, status: 'awaiting_cancellation' },
+          expected: {
+            ...issuedPrnSummary,
+            yearOfIssue: 'Year of issue: 2026',
+            issuedDate: '14 October 2026',
+            tag: null,
+            line: null
+          }
         }
       ])(
-        'shows the number and year of issue, not a number row, for $description',
-        async ({ url, note, accreditation, expected }, { server }) => {
+        'shows the note summary for $description',
+        async (
+          { url = viewUrl, accreditation = fixtureReprocessor, note, expected },
+          { server }
+        ) => {
           vi.mocked(fetchRequiredAccreditation).mockResolvedValue(accreditation)
           vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-            asPackagingRecyclingNote({ ...note, accreditationYear: 2026 })
+            asPackagingRecyclingNote(note)
           )
 
           const { result } = await server.inject({
@@ -337,13 +519,21 @@ describe('#viewController', () => {
           })
 
           const main = getByRole(new JSDOM(result).window.document.body, 'main')
+          const textOf = (pattern) =>
+            queryByText(main, pattern)?.textContent.trim() ?? null
 
           expect({
-            number: queryByText(main, /^PE?RN number: /)?.textContent ?? null,
-            yearOfIssue:
-              queryByText(main, /^Year of issue: /)?.textContent ?? null,
-            numberRow: queryByText(main, /^PE?RN number$/, { selector: 'dt' })
-          }).toStrictEqual({ ...expected, yearOfIssue: 'Year of issue: 2026' })
+            number: textOf(/^PE?RN number: /),
+            yearOfIssue: textOf(/^Year of issue: /),
+            issuedDate:
+              queryByText(main, 'Issued date', {
+                selector: 'dt'
+              })?.nextElementSibling?.textContent.trim() ?? null,
+            tag: textOf(/^Can be accepted towards/),
+            line: textOf(/^Accepted towards/),
+            detailsHeading:
+              queryByRole(main, 'heading', { name: /^PE?RN details$/ }) !== null
+          }).toStrictEqual(expected)
         }
       )
 
@@ -868,70 +1058,44 @@ describe('#viewController', () => {
         expect(heading.textContent).toBe('Packaging Waste Recycling Note')
       })
 
-      it.for([true, false])(
-        'shows regulator logos above the heading in agency order when december waste is %s',
-        async (isDecemberWaste, { server }) => {
-          vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-            asPackagingRecyclingNote({
-              ...mockPrnFromBackend,
-              status: 'awaiting_acceptance',
-              isDecemberWaste
-            })
+      it('shows regulator logos above the heading in agency order', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            status: 'awaiting_acceptance'
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const { window } = new JSDOM(result)
+        const main = getByRole(window.document.body, 'main')
+        const logos = getAllByRole(main, 'img')
+        const heading = getByRole(main, 'heading', { level: 1 })
+
+        expect({
+          order: logos.map((logo) => logo.getAttribute('alt')),
+          aboveHeading: logos.every(
+            (logo) =>
+              logo.compareDocumentPosition(heading) &
+              window.Node.DOCUMENT_POSITION_FOLLOWING
           )
-
-          const { result } = await server.inject({
-            method: 'GET',
-            url: viewUrl,
-            auth: mockAuth
-          })
-
-          const { window } = new JSDOM(result)
-          const main = getByRole(window.document.body, 'main')
-          const logos = getAllByRole(main, 'img')
-          const heading = getByRole(main, 'heading', { level: 1 })
-
-          expect({
-            order: logos.map((logo) => logo.getAttribute('alt')),
-            aboveHeading: logos.every(
-              (logo) =>
-                logo.compareDocumentPosition(heading) &
-                window.Node.DOCUMENT_POSITION_FOLLOWING
-            )
-          }).toStrictEqual({
-            order: [
-              'Environment Agency',
-              'Northern Ireland Environment Agency (NIEA)',
-              'Scottish Environment Protection Agency (SEPA)',
-              'Natural Resources Wales'
-            ],
-            aboveHeading: true
-          })
-        }
-      )
-
-      it.for([
-        { status: 'draft', expected: true },
-        { status: 'awaiting_acceptance', expected: false }
-      ])(
-        'shows the prn details heading for a $status prn: $expected',
-        async ({ status, expected }, { server }) => {
-          vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-            asPackagingRecyclingNote({ ...mockPrnFromBackend, status })
-          )
-
-          const { result } = await server.inject({
-            method: 'GET',
-            url: viewUrl,
-            auth: mockAuth
-          })
-
-          const main = getByRole(new JSDOM(result).window.document.body, 'main')
-
-          expect(
-            queryByRole(main, 'heading', { name: 'PRN details' }) !== null
-          ).toBe(expected)
-        }
-      )
+        }).toStrictEqual({
+          order: [
+            'Environment Agency',
+            'Northern Ireland Environment Agency (NIEA)',
+            'Scottish Environment Protection Agency (SEPA)',
+            'Natural Resources Wales'
+          ],
+          aboveHeading: true
+        })
+      })
 
       it('returns 404 when registration not found', async ({ server }) => {
         const Boom = await import('@hapi/boom')
@@ -1168,90 +1332,6 @@ describe('#viewController', () => {
 
         expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
       })
-
-      it.for([
-        {
-          status: 'awaiting_acceptance',
-          isDecemberWaste: true,
-          obligationYear: 2026,
-          tag: 'Can be accepted towards 2026 or 2027',
-          line: null
-        },
-        {
-          status: 'awaiting_acceptance',
-          isDecemberWaste: false,
-          obligationYear: 2026,
-          tag: null,
-          line: null
-        },
-        {
-          status: 'accepted',
-          isDecemberWaste: true,
-          obligationYear: 2027,
-          tag: null,
-          line: 'Accepted towards 2027 recycling obligations'
-        },
-        {
-          status: 'accepted',
-          isDecemberWaste: false,
-          obligationYear: 2026,
-          tag: null,
-          line: 'Accepted towards 2026 recycling obligations'
-        },
-        {
-          status: 'cancelled',
-          isDecemberWaste: true,
-          obligationYear: 2026,
-          tag: null,
-          line: null
-        },
-        {
-          status: 'awaiting_authorisation',
-          isDecemberWaste: true,
-          obligationYear: 2026,
-          tag: null,
-          line: null
-        },
-        {
-          status: 'awaiting_cancellation',
-          isDecemberWaste: true,
-          obligationYear: 2026,
-          tag: null,
-          line: null
-        }
-      ])(
-        'shows the right acceptance copy for a $status prn when december waste is $isDecemberWaste',
-        async (
-          { status, isDecemberWaste, obligationYear, tag, line },
-          { server }
-        ) => {
-          vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-            asPackagingRecyclingNote({
-              ...mockPrnFromBackend,
-              status,
-              isDecemberWaste,
-              accreditationYear: 2026,
-              obligationYear
-            })
-          )
-
-          const { result } = await server.inject({
-            method: 'GET',
-            url: viewUrl,
-            auth: mockAuth
-          })
-
-          const main = getByRole(new JSDOM(result).window.document.body, 'main')
-          const textOf = (pattern) =>
-            queryByText(main, pattern)?.textContent.trim() ?? null
-
-          expect({
-            tag: textOf(/^Can be accepted towards/),
-            line: textOf(/^Accepted towards/),
-            sentence: textOf(/can count towards/)
-          }).toStrictEqual({ tag, line, sentence: null })
-        }
-      )
 
       it('does not display error summary on certificate page (errors shown on action page)', async ({
         server
