@@ -244,7 +244,13 @@ describe('#createPrnController', () => {
           name: /Who will this PRN be issued to\?/i
         })
 
-        expect(recipientSelect.options.length).toBeGreaterThan(1)
+        const [placeholder, ...recipients] = recipientSelect.options
+
+        expect({
+          text: placeholder.text,
+          value: placeholder.value
+        }).toStrictEqual({ text: 'Select an option', value: '' })
+        expect(recipients.length).toBeGreaterThan(0)
       })
 
       it('should render help text details component with bullet list', async ({
@@ -605,6 +611,38 @@ describe('#createPrnController', () => {
 
         const insetText = main.querySelector('.govuk-inset-text')
         expect(insetText).toBeNull()
+      })
+    })
+
+    describe('declare December waste manually', () => {
+      it('asks whether the note is December waste in place of the balance inset text', async ({
+        server
+      }) => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'manual',
+          windowOpen: true
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+        const question = getByRole(main, 'group', {
+          name: 'Is this December waste?'
+        })
+
+        expect(
+          within(question)
+            .getAllByRole('radio')
+            .map((radio) => radio.labels?.[0]?.textContent?.trim())
+        ).toStrictEqual(['No', 'Yes'])
+        expect(main.querySelector('.govuk-inset-text')).toBeNull()
       })
     })
 
