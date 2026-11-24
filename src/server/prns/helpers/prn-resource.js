@@ -37,6 +37,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  *   processToBeUsed: string,
  *   isDecemberWaste: boolean,
  *   obligationYear: number,
+ *   allowedObligationYears: number[],
  *   notes?: string,
  *   createdAt: string,
  *   issued?: { at: string, by?: { name: string } }
@@ -59,6 +60,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  *   processToBeUsed: string,
  *   accreditationYear: number,
  *   obligationYear: number,
+ *   allowedObligationYears: number[],
  *   issuedAt: string | null,
  *   issuedBy: { name?: string, position?: string } | null
  * }} PackagingRecyclingNote
@@ -92,6 +94,7 @@ export const toPackagingRecyclingNote = (prn) => {
     processToBeUsed: prn.processToBeUsed,
     accreditationYear: accreditation.accreditationYear,
     obligationYear: prn.obligationYear,
+    allowedObligationYears: prn.allowedObligationYears,
     issuedAt: prn.issued?.at ?? null,
     issuedBy: prn.issued?.by ?? null
   }

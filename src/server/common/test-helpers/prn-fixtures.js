@@ -82,6 +82,7 @@ export const buildPrnResource = (overrides = {}) => ({
   processToBeUsed: 'R3',
   isDecemberWaste: false,
   obligationYear: 2026,
+  allowedObligationYears: [2026],
   createdAt: '2026-01-15T10:00:00.000Z',
   ...overrides
 })
