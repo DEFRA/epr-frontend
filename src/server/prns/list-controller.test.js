@@ -358,6 +358,31 @@ describe('#listPrnsController', () => {
         expect(getByText(table, /Status/i)).toBeDefined()
       })
 
+      it('should label the action column for screen readers only', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const awaitingPanel = getByRole(body, 'main').querySelector(
+          '#awaiting-action'
+        )
+        const headers = getAllByRole(
+          getByRole(awaitingPanel, 'table'),
+          'columnheader'
+        )
+        const actionHeader = headers.at(-1)
+
+        expect(actionHeader?.innerHTML.trim()).toBe(
+          '<span class="govuk-visually-hidden">Action</span>'
+        )
+      })
+
       it('should render select heading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',

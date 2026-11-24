@@ -29,7 +29,7 @@ const createMockRequest = (scope = [SCOPES.organisationLinkedWrite]) => ({
       'prns:list:table:dateHeading': 'Date created',
       'prns:list:table:tonnageHeading': 'Tonnage',
       'prns:list:table:statusHeading': 'Status',
-      'prns:list:table:actionHeading': '',
+      'prns:list:table:actionHeading': 'Action',
       'prns:list:table:selectText': 'Select',
       'prns:list:table:viewText': 'View',
       'prns:list:table:totalLabel': 'Total',
