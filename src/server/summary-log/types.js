@@ -38,7 +38,8 @@
  *   code?: string,
  *   location?: CellLocation,
  *   actual?: unknown,
- *   expected?: unknown
+ *   expected?: unknown,
+ *   deadline?: string
  * }} ValidationFailure
  */
 
@@ -67,6 +68,7 @@
  *   errorCode: string,
  *   actual?: string | number | boolean | null,
  *   expected?: unknown,
+ *   deadline?: string,
  *   location: {
  *     sheet: string,
  *     table: string,
