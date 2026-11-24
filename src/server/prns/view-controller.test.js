@@ -330,12 +330,12 @@ describe('#viewController', () => {
             issuedAt: null
           },
           expected: {
-            ...issuedPrnSummary,
             number: null,
-            yearOfIssue: 'Year of issue: 2026',
+            yearOfIssue: null,
             issuedDate: '',
             tag: null,
-            line: null
+            line: null,
+            detailsHeading: true
           }
         },
         {

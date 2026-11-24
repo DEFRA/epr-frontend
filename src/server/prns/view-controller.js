@@ -375,8 +375,10 @@ function buildExistingPrnViewData({
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
     heading: localise(`prns:noteName:${noteType}`),
     showRegulatorLogos: isNotDraft,
-    noteSummary: isNotDraft ? buildNoteSummary(prn, noteType, localise) : null,
-    prnDetailsHeading: isNotDraft
+    noteSummary: prn.issuedAt
+      ? buildNoteSummary(prn, noteType, localise)
+      : null,
+    prnDetailsHeading: prn.issuedAt
       ? null
       : localise('prns:details:heading', { noteType }),
     prnDetailRows,
