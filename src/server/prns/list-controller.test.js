@@ -1485,7 +1485,7 @@ describe('#listPrnsController', () => {
     ])
 
     /**
-     * @param {string} html
+     * @param {ConstructorParameters<typeof JSDOM>[0]} html
      * @returns {string[][]}
      */
     const headerRows = (html) =>
@@ -1548,6 +1548,63 @@ describe('#listPrnsController', () => {
         ])
       }
     )
+  })
+
+  describe('table body rows', () => {
+    /**
+     * @param {ConstructorParameters<typeof JSDOM>[0]} html
+     * @param {string} panelId
+     * @returns {string[][]}
+     */
+    const bodyRows = (html, panelId) => {
+      const panel = new JSDOM(html).window.document.getElementById(panelId)
+      const [, ...rows] = getAllByRole(getByRole(panel, 'table'), 'row')
+      return rows.map((row) =>
+        Array.from(row.children, (cell) =>
+          (cell.textContent ?? '').replaceAll(/\s+/g, ' ').trim()
+        )
+      )
+    }
+
+    it('should list each note with whether it is December waste, then the total tonnage', async ({
+      server
+    }) => {
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+      vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+        asPackagingRecyclingNotes([
+          { ...mockPrns[0], isDecemberWaste: true },
+          { ...mockPrns[1], isDecemberWaste: false }
+        ])
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorListUrl,
+        auth: mockAuth
+      })
+
+      expect(bodyRows(result, 'awaiting-action')).toStrictEqual([
+        [
+          'Acme Packaging Ltd',
+          '15 January 2026',
+          '50',
+          'Yes',
+          'Awaiting authorisation',
+          'Select'
+        ],
+        [
+          'BigCo Waste Solutions',
+          '18 January 2026',
+          '120',
+          'No',
+          'Awaiting authorisation',
+          'Select'
+        ],
+        ['Total', '', '170', '', '', '']
+      ])
+    })
   })
 
   describe('December available balance panel', () => {

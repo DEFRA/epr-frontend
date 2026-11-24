@@ -135,7 +135,7 @@ function buildListLabels(localise, { noteType, noteTypePlural, year }) {
  *     id: string,
  *     recipient: string,
  *     createdAt: string,
- *     tonnage?: number | null,
+ *     tonnage: number,
  *     status: string,
  *     isDecemberWaste: boolean
  *   }>,
@@ -178,7 +178,7 @@ function buildAwaitingTable(request, { keys, prns, localise, canWrite }) {
     return { headings, rows: [] }
   }
 
-  const totalTonnage = prns.reduce((sum, prn) => sum + (prn.tonnage ?? 0), 0)
+  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),
@@ -218,7 +218,7 @@ function buildDetailTable(
       { text: prn.prnNumber },
       { text: prn.recipient, classes: cssClasses.wrap.breakWord },
       { text: formatDate(prn.issuedAt) },
-      { text: prn.tonnage ?? 0 },
+      { text: prn.tonnage },
       { text: buildDecemberWasteText(prn.isDecemberWaste, localise) },
       { html: buildStatusTagHtml(prn.status, localise) },
       {
@@ -231,7 +231,7 @@ function buildDetailTable(
     return { headings, rows: [] }
   }
 
-  const totalTonnage = prns.reduce((sum, prn) => sum + (prn.tonnage ?? 0), 0)
+  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),
