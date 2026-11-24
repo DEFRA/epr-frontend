@@ -121,7 +121,7 @@ async function fetchGuardedAccreditedData(
  */
 
 /**
- * @typedef {(ctx: PageFieldsCtx) => (localise: TFunction) => PageFieldsResult} PageFieldsBuilder
+ * @typedef {(ctx: PageFieldsCtx) => (localise: Localise) => PageFieldsResult} PageFieldsBuilder
  */
 
 /**
@@ -229,7 +229,7 @@ export function createPageGuards({ isMatchingRegistration, reportType }) {
 }
 
 /**
- * @import { TFunction } from 'i18next'
+ * @import { Localise } from '../../common/hapi-types.js'
  * @import { Accreditation, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './period-params-schema.js'

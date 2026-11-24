@@ -11,10 +11,10 @@ import { CADENCE } from '../constants.js'
 import { buildReportBreadcrumbs } from './build-report-breadcrumbs.js'
 
 /**
- * @import { TFunction } from 'i18next'
+ * @import { Localise } from '../../common/hapi-types.js'
  */
 
-const localise = /** @type {TFunction} */ (
+const localise = /** @type {Localise} */ (
   /** @type {unknown} */ (
     (key, options) => (options?.year ? `${key}:${options.year}` : key)
   )
