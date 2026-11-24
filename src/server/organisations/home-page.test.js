@@ -733,12 +733,43 @@ describe('the organisation home page', () => {
       ).toStrictEqual([`${BARE_PATH}/2025`, `${BARE_PATH}/2025/exporting`])
     })
 
-    it('finds no page for a year the organisation has no approved registrations in', async ({
+    it.for(
+      /** @type {const} */ ([
+        ['/2024', '/2026'],
+        ['/2024/exporting', '/2026/exporting'],
+        ['/2028', '/2026']
+      ])
+    )(
+      'sends "%s", a year the organisation has no approved registrations in, to its default year',
+      async ([page, expected], { server }) => {
+        const { statusCode, headers } = await visit(
+          server,
+          `${BARE_PATH}${page}`
+        )
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(`${BARE_PATH}${expected}`)
+        expect(fetchOrganisation).not.toHaveBeenCalled()
+      }
+    )
+
+    it('keeps a Welsh reader in Welsh when it sends a year the organisation does not hold to its default year', async ({
       server
     }) => {
-      const { statusCode } = await visit(server, `${BARE_PATH}/2024`)
+      const { headers } = await visit(server, `/cy${BARE_PATH}/2024`)
 
-      expect(statusCode).toBe(statusCodes.notFound)
+      expect(headers.location).toBe(`/cy${BARE_PATH}/2026`)
+    })
+
+    it('sends a year to the organisation address when the organisation holds no years', async ({
+      server
+    }) => {
+      vi.mocked(fetchOrganisationYears).mockResolvedValue([])
+
+      const { statusCode, headers } = await visit(server, `${BARE_PATH}/2026`)
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(BARE_PATH)
     })
 
     it.for(['20x6', '202', '20266', '2023'])(
