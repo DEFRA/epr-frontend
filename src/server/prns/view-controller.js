@@ -161,7 +161,7 @@ const discardDraftOverBalance = async (
   await updatePrnStatus(
     keys,
     prnId,
-    { status: 'discarded' },
+    { status: prnStatuses.discarded },
     request.auth.credentials.backendToken
   )
 
