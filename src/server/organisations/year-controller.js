@@ -3,8 +3,8 @@ import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-or
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { registrationEntries } from '#server/common/helpers/organisations/registration-in-view.js'
 import { fetchOrganisationWasteBalances } from '#server/common/helpers/waste-balance/fetch-organisation-waste-balances.js'
-import Boom from '@hapi/boom'
-import { renderHome } from './home-page.js'
+import { defaultYear } from '#server/common/helpers/year.js'
+import { homePath, renderHome } from './home-page.js'
 
 /** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
 
@@ -66,7 +66,8 @@ async function getWasteBalanceMap(
 }
 
 /**
- * The organisation's home page for one of its active years.
+ * The organisation's home page for one of its active years. Any other year
+ * goes to the year the organisation address would choose.
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const yearController = {
@@ -81,8 +82,17 @@ export const yearController = {
 
     const years = await fetchOrganisationYears(orgNumber, backendToken)
 
+    // Every page's header Home and Back link lead here with the page's own
+    // year, so a 404 would leave an operator on an unheld year with no way out.
     if (!years.includes(year)) {
-      throw Boom.notFound()
+      return h.redirect(
+        request.localiseUrl(
+          homePath(orgNumber, {
+            year: defaultYear(years),
+            exporting: request.path.endsWith('/exporting')
+          })
+        )
+      )
     }
 
     const [organisation, wasteBalanceMap] = await Promise.all([

@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
@@ -123,6 +124,12 @@ const organisation = {
 }
 
 const operator = buildMockAuth({ linkedOrganisationId: organisationId })
+
+/** The header offers Home only to an operator whose session names their organisation. */
+const operatorWithHome = buildMockAuth({
+  linkedOrganisationId: organisationId,
+  linkedOrganisationNumber: toOrganisationNumber('500118')
+})
 
 /**
  * @param {SetupServer} msw
@@ -289,6 +296,67 @@ describe("the operator's registration page for a year", () => {
       expect(body.querySelector('.govuk-back-link')?.getAttribute('href')).toBe(
         `/organisations/500118/${lastYear}${tab}`
       )
+    }
+  )
+
+  it('leads Back to a page the operator can use when the registration was not approved in the accreditation year', async ({
+    server,
+    msw
+  }) => {
+    const lastYear = String(thisYear - 1)
+    backendHolds(msw, {
+      forYear: lastYear,
+      registration: {
+        ...reprocessor,
+        accreditations: {
+          [lastYear]: accreditationWith('approved', ['approved'], thisYear - 1)
+        }
+      }
+    })
+    msw.use(
+      http.get(`${backendUrl}/organisations/500118/years`, () =>
+        HttpResponse.json({ years: [thisYear] })
+      )
+    )
+
+    const { body } = await visit(server, {
+      url: `${registrationPath}/accreditations/${lastYear}`
+    })
+    const back = body.querySelector('.govuk-back-link')?.getAttribute('href')
+    const { statusCode, location } = await visit(server, { url: back })
+
+    expect(back).toBe(`/organisations/500118/${lastYear}`)
+    expect(statusCode).toBe(statusCodes.found)
+    expect(location).toBe(`/organisations/500118/${year}`)
+  })
+
+  it.for([
+    { page: 'an accreditation page', path: 'accreditations' },
+    { page: 'a registered-only page', path: 'registered-only-periods' }
+  ])(
+    'leads header Home off $page not found for a year the organisation does not hold',
+    async ({ path }, { server, msw }) => {
+      const unheldYear = String(thisYear + 2)
+      backendHolds(msw)
+      msw.use(
+        http.get(`${backendUrl}/organisations/500118/years`, () =>
+          HttpResponse.json({ years: [thisYear] })
+        )
+      )
+
+      const notFound = await visit(server, {
+        url: `${registrationPath}/${path}/${unheldYear}`,
+        auth: operatorWithHome
+      })
+      const home = getByRole(notFound.body, 'link', {
+        name: 'Home'
+      }).getAttribute('href')
+      const { statusCode, location } = await visit(server, { url: home })
+
+      expect(notFound.statusCode).toBe(statusCodes.notFound)
+      expect(home).toBe(`/organisations/500118/${unheldYear}`)
+      expect(statusCode).toBe(statusCodes.found)
+      expect(location).toBe(`/organisations/500118/${year}`)
     }
   )
 
