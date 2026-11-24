@@ -161,6 +161,87 @@ describe('the UK waste balance page', () => {
       ])
     })
 
+    it('labels a material whose exporter and reprocessor figures are served merged as one "Exp & Rep" row', async ({
+      msw,
+      server
+    }) => {
+      /**
+       * @param {{ glass: number, aluminium: number }} netCredits
+       * @param {PublishedMonth['reports']} reports
+       * @returns {PublishedMonth}
+       */
+      const mergedAluminiumMonthOf = (netCredits, reports) => {
+        const month = monthOf(netCredits, reports)
+        return {
+          ...month,
+          figures: {
+            ...month.figures,
+            aluminium: {
+              exporterAndReprocessor: figuresOf(netCredits.aluminium)
+            }
+          }
+        }
+      }
+
+      /** @type {WasteBalanceAggregate} */
+      const mergedAluminium = {
+        ...januaryToMarch,
+        data: {
+          months: {
+            '2026-01': mergedAluminiumMonthOf(
+              { glass: 90, aluminium: 0 },
+              { expected: 2, submitted: 1 }
+            ),
+            '2026-02': mergedAluminiumMonthOf(
+              { glass: 42.5, aluminium: 8 },
+              { expected: 2, submitted: 2 }
+            ),
+            '2026-03': mergedAluminiumMonthOf(
+              { glass: 0, aluminium: 0 },
+              { expected: 3, submitted: 0 }
+            )
+          },
+          period: {
+            ...januaryToMarch.data.period,
+            operatorCounts: {
+              ...januaryToMarch.data.period.operatorCounts,
+              aluminium: {
+                exporterAndReprocessor: {
+                  operatorCount: 6,
+                  submittingOperatorCount: 4
+                }
+              }
+            },
+            figures: {
+              ...januaryToMarch.data.period.figures,
+              aluminium: { exporterAndReprocessor: { netCredit: 8 } }
+            }
+          }
+        }
+      }
+
+      msw.use(
+        http.get(wasteBalanceUrl, () => HttpResponse.json(mergedAluminium))
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsightsWasteBalance,
+        auth: regulator
+      })
+
+      const table = getByRole(documentOf(asHtml(result)), 'table', {
+        name: 'Waste balance'
+      })
+
+      expect(rowsOf(table)).toStrictEqual([
+        ['Aluminium', 'Exp & Rep', '0.00', '8.00', '0.00', '8.00'],
+        ['Glass remelt', 'Exporter', '0.00', '0.00', '0.00', '0.00'],
+        ['Glass remelt', 'Reprocessor', '90.00', '42.50', '0.00', '132.50'],
+        ['Monthly reports submitted', '1 of 2', '2 of 2', '0 of 3', '4 of 9']
+      ])
+    })
+
     it('heads the reports row across the two columns that name every other row, so its counts sit under the months', async ({
       server
     }) => {
