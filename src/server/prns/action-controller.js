@@ -53,7 +53,7 @@ export const actionController = {
  * @param {{
  *   accreditation: Accreditation,
  *   basePath: string,
- *   localise: TFunction,
+ *   localise: Localise,
  *   organisation: OrganisationView,
  *   prn: PackagingRecyclingNote,
  *   prnId: string,
@@ -218,7 +218,7 @@ function buildActionPrnDetailRows({
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { TFunction } from 'i18next'
+ * @import { Localise } from '../common/hapi-types.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation, OrganisationView, RegistrationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'

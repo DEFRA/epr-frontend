@@ -8,12 +8,10 @@ import { buildOrganisationView } from '#server/common/test-helpers/organisation-
 import { buildNoteBreadcrumbs } from './build-note-breadcrumbs.js'
 
 /**
- * @import { TFunction } from 'i18next'
+ * @import { Localise } from '../../common/hapi-types.js'
  */
 
-const localise = /** @type {TFunction} */ (
-  /** @type {unknown} */ ((key) => key)
-)
+const localise = /** @type {Localise} */ (/** @type {unknown} */ ((key) => key))
 
 /** @param {string} path */
 const localiseUrl = (path) => `/en${path}`
@@ -65,7 +63,7 @@ describe(buildNoteBreadcrumbs, () => {
   it('names the notes list by its note type and year, as the list heads itself', () => {
     const crumbs = buildNoteBreadcrumbs({
       ...context,
-      localise: /** @type {TFunction} */ (
+      localise: /** @type {Localise} */ (
         /** @type {unknown} */ (
           (/** @type {string} */ key, /** @type {object} */ params) =>
             `${key} ${JSON.stringify(params)}`
