@@ -81,8 +81,7 @@ export const buildPrnResource = (overrides = {}) => ({
   tonnage: 100,
   processToBeUsed: 'R3',
   isDecemberWaste: false,
-  obligationYear: 2026,
-  allowedObligationYears: [2026],
+  obligation: { year: 2026, allowedYears: [2026] },
   createdAt: '2026-01-15T10:00:00.000Z',
   ...overrides
 })

@@ -1,11 +1,11 @@
-@use "govuk-frontend" as *;
-@use "variables/colours" as *;
+@use 'govuk-frontend' as *;
+@use 'variables/colours' as *;
 
 $navigation-height: 60px;
 $border-bottom-width: 4px;
 
 .app-navigation {
-  border-bottom: 1px solid govuk-colour("black", $variant: "tint-80");
+  border-bottom: 1px solid govuk-colour('black', $variant: 'tint-80');
   background-color: $app-light-grey;
 }
 
@@ -26,7 +26,7 @@ $border-bottom-width: 4px;
 
   > a:focus {
     box-shadow: none;
-    border-bottom: $border-bottom-width solid govuk-colour("black");
+    border-bottom: $border-bottom-width solid govuk-colour('black');
   }
 }
 
@@ -39,7 +39,7 @@ $border-bottom-width: 4px;
   border-bottom: 4px solid transparent;
 
   @include govuk-link-style-no-visited-state;
-  @include govuk-font(24, "bold");
+  @include govuk-font(24, 'bold');
 
   @include govuk-media-query($from: tablet) {
     padding-bottom: 0;
@@ -51,16 +51,17 @@ $border-bottom-width: 4px;
   }
 
   &:hover {
-    color: govuk-colour("black");
-    border-bottom: $border-bottom-width solid govuk-colour("black");
+    color: govuk-colour('black');
+    border-bottom: $border-bottom-width solid govuk-colour('black');
   }
 }
 
 .app-navigation__link--active {
-  border-bottom: $border-bottom-width solid govuk-colour("blue");
+  border-bottom: $border-bottom-width solid govuk-colour('blue');
 
   &:hover {
-    color: govuk-colour("blue", $variant: "shade-50");
-    border-bottom: $border-bottom-width solid govuk-colour("blue", $variant: "shade-50");
+    color: govuk-colour('blue', $variant: 'shade-50');
+    border-bottom: $border-bottom-width solid
+      govuk-colour('blue', $variant: 'shade-50');
   }
 }

@@ -36,8 +36,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  *   tonnage: number,
  *   processToBeUsed: string,
  *   isDecemberWaste: boolean,
- *   obligationYear: number,
- *   allowedObligationYears: number[],
+ *   obligation: { allowedYears: number[], year: number },
  *   notes?: string,
  *   createdAt: string,
  *   issued?: { at: string, by?: { name: string } }
@@ -59,8 +58,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  *   wasteProcessingType: string,
  *   processToBeUsed: string,
  *   accreditationYear: number,
- *   obligationYear: number,
- *   allowedObligationYears: number[],
+ *   obligation: { allowedYears: number[], year: number },
  *   issuedAt: string | null,
  *   issuedBy: { name?: string, position?: string } | null
  * }} PackagingRecyclingNote
@@ -93,8 +91,10 @@ export const toPackagingRecyclingNote = (prn) => {
     wasteProcessingType: accreditation.wasteProcessingType,
     processToBeUsed: prn.processToBeUsed,
     accreditationYear: accreditation.accreditationYear,
-    obligationYear: prn.obligationYear,
-    allowedObligationYears: prn.allowedObligationYears,
+    obligation: {
+      allowedYears: prn.obligation.allowedYears,
+      year: prn.obligation.year
+    },
     issuedAt: prn.issued?.at ?? null,
     issuedBy: prn.issued?.by ?? null
   }

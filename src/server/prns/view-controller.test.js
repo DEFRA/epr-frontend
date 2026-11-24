@@ -154,7 +154,7 @@ const mockPrnFromBackend = asPackagingRecyclingNote({
   notes: 'Additional notes for this PRN',
   isDecemberWaste: true,
   accreditationYear: 2026,
-  obligationYear: 2026,
+  obligation: { year: 2026, allowedYears: [2026, 2027] },
   issuedAt: '2026-01-16T14:30:00.000Z',
   issuedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
@@ -170,7 +170,7 @@ const mockPernFromBackend = asPackagingRecyclingNote({
   notes: null,
   isDecemberWaste: false,
   accreditationYear: 2026,
-  obligationYear: 2026,
+  obligation: { year: 2026, allowedYears: [2026] },
   issuedAt: '2026-01-21T09:00:00.000Z',
   issuedBy: { name: 'Jane Doe', position: 'Operations Manager' },
   wasteProcessingType: 'exporter'
@@ -292,8 +292,11 @@ describe('#viewController', () => {
         ...mockPrnFromBackend,
         prnNumber: 'ER2625001A',
         accreditationYear: 2026,
-        obligationYear: 2026,
         issuedAt: '2026-10-14T10:00:00.000Z'
+      }
+      const ordinary = {
+        isDecemberWaste: false,
+        obligation: { year: 2026, allowedYears: [2026] }
       }
       const issuedPrnSummary = {
         number: 'PRN number: ER2625001A',
@@ -359,7 +362,7 @@ describe('#viewController', () => {
           note: {
             ...issuedPrn,
             status: 'awaiting_acceptance',
-            isDecemberWaste: false
+            ...ordinary
           },
           expected: {
             ...issuedPrnSummary,
@@ -371,7 +374,7 @@ describe('#viewController', () => {
         },
         {
           description: 'a prn accepted in its accreditation year',
-          note: { ...issuedPrn, status: 'accepted', isDecemberWaste: false },
+          note: { ...issuedPrn, status: 'accepted', ...ordinary },
           expected: {
             ...issuedPrnSummary,
             yearOfIssue: 'Year of issue: 2026',
@@ -386,7 +389,7 @@ describe('#viewController', () => {
           note: {
             ...issuedPrn,
             status: 'accepted',
-            isDecemberWaste: false,
+            ...ordinary,
             issuedAt: '2027-01-20T10:00:00.000Z'
           },
           expected: {
@@ -403,9 +406,9 @@ describe('#viewController', () => {
           note: {
             ...issuedPrn,
             status: 'accepted',
-            isDecemberWaste: false,
+            ...ordinary,
             accreditationYear: 2027,
-            obligationYear: 2027,
+            obligation: { year: 2027, allowedYears: [2027] },
             issuedAt: '2027-01-20T10:00:00.000Z'
           },
           expected: {
@@ -452,7 +455,7 @@ describe('#viewController', () => {
           note: {
             ...issuedPrn,
             status: 'accepted',
-            obligationYear: 2027,
+            obligation: { year: 2027, allowedYears: [2026, 2027] },
             issuedAt: '2027-01-15T10:00:00.000Z'
           },
           expected: {

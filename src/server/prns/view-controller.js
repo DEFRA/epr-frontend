@@ -458,7 +458,7 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisation }) {
 const buildNoteSummary = (prn, noteType, localise) => ({
   acceptedTowards:
     prn.status === 'accepted'
-      ? localise('prns:view:acceptedTowards', { year: prn.obligationYear })
+      ? localise('prns:view:acceptedTowards', { year: prn.obligation.year })
       : null,
   decemberWasteTag:
     prn.status === 'awaiting_acceptance' && prn.isDecemberWaste
