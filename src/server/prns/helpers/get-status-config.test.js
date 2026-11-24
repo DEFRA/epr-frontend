@@ -36,9 +36,9 @@ describe('#getStatusConfig', () => {
   )
 
   it('returns default tag with raw status text for a status it has no tag for', () => {
-    const config = getStatusConfig('draft', localise)
+    const config = getStatusConfig('discarded', localise)
 
-    expect(config.text).toBe('draft')
+    expect(config.text).toBe('discarded')
     expect(config.class).toBe('epr-tag--no-max-width')
   })
 })
