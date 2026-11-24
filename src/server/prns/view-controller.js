@@ -452,7 +452,7 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisation }) {
 /**
  * @param {PackagingRecyclingNote} prn
  * @param {'PRN' | 'PERN'} noteType
- * @param {TFunction} localise
+ * @param {Localise} localise
  * @returns {{ acceptedTowards: string | null, decemberWasteTag: string | null, number: string | null, yearOfIssue: string }}
  */
 const buildNoteSummary = (prn, noteType, localise) => ({
