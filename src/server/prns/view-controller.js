@@ -1,4 +1,5 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { prnStatuses } from '#server/common/constants/statuses.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
   badImplementation,
@@ -457,11 +458,11 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisation }) {
  */
 const buildNoteSummary = (prn, noteType, localise) => ({
   acceptedTowards:
-    prn.status === 'accepted'
+    prn.status === prnStatuses.accepted
       ? localise('prns:view:acceptedTowards', { year: prn.obligation.year })
       : null,
   decemberWasteTag:
-    prn.status === 'awaiting_acceptance' &&
+    prn.status === prnStatuses.awaitingAcceptance &&
     prn.obligation.allowedYears.length > 1
       ? localise('prns:view:decemberWasteTag', {
           years: prn.obligation.allowedYears.map(String)
