@@ -1478,6 +1478,10 @@ describe('#listPrnsController', () => {
     })
   })
 
+  /** @param {{ textContent: string | null } | null} element */
+  const textOf = (element) =>
+    (element?.textContent ?? '').replaceAll(/\s+/g, ' ').trim()
+
   describe('table header rows', () => {
     const notesInEveryTable = asPackagingRecyclingNotes([
       ...mockPrnsWithCancellation,
@@ -1486,12 +1490,15 @@ describe('#listPrnsController', () => {
 
     /**
      * @param {ConstructorParameters<typeof JSDOM>[0]} html
-     * @returns {string[][]}
+     * @returns {Record<string, string[]>}
      */
-    const headerRows = (html) =>
-      getAllByRole(new JSDOM(html).window.document.body, 'table').map((table) =>
-        getAllByRole(table, 'columnheader').map((header) =>
-          (header.textContent ?? '').replaceAll(/\s+/g, ' ').trim()
+    const headerRowsByTableHeading = (html) =>
+      Object.fromEntries(
+        getAllByRole(new JSDOM(html).window.document.body, 'table').map(
+          (table) => [
+            textOf(table.previousElementSibling),
+            getAllByRole(table, 'columnheader').map(textOf)
+          ]
         )
       )
 
@@ -1500,17 +1507,19 @@ describe('#listPrnsController', () => {
         description: 'reprocessor',
         fixture: fixtureReprocessor,
         url: reprocessorListUrl,
-        noteType: 'PRN'
+        noteType: 'PRN',
+        noteTypePlural: 'PRNs'
       },
       {
         description: 'exporter',
         fixture: fixtureExporter,
         url: exporterListUrl,
-        noteType: 'PERN'
+        noteType: 'PERN',
+        noteTypePlural: 'PERNs'
       }
     ])(
       'should head every $description table with its full set of columns',
-      async ({ fixture, url, noteType }, { server }) => {
+      async ({ fixture, url, noteType, noteTypePlural }, { server }) => {
         vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixture)
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           notesInEveryTable
@@ -1540,28 +1549,36 @@ describe('#listPrnsController', () => {
           'View in new tab'
         ]
 
-        expect(headerRows(result)).toStrictEqual([
-          awaiting,
-          awaiting,
-          issuedOrCancelled,
-          issuedOrCancelled
-        ])
+        expect(headerRowsByTableHeading(result)).toStrictEqual({
+          [`${noteTypePlural} awaiting authorisation`]: awaiting,
+          [`${noteTypePlural} awaiting cancellation`]: awaiting,
+          [`Issued ${noteTypePlural}`]: issuedOrCancelled,
+          [`Cancelled ${noteTypePlural}`]: issuedOrCancelled
+        })
       }
     )
   })
 
   describe('table body rows', () => {
     /**
+     * Each body row keyed by its column headers, leaving out empty cells.
      * @param {ConstructorParameters<typeof JSDOM>[0]} html
      * @param {string} panelId
-     * @returns {string[][]}
+     * @returns {Array<Record<string, string>>}
      */
     const bodyRows = (html, panelId) => {
       const panel = new JSDOM(html).window.document.getElementById(panelId)
-      const [, ...rows] = getAllByRole(getByRole(panel, 'table'), 'row')
+      const [headerRow, ...rows] = getAllByRole(
+        getByRole(panel, 'table'),
+        'row'
+      )
+      const headers = Array.from(headerRow.children, textOf)
       return rows.map((row) =>
-        Array.from(row.children, (cell) =>
-          (cell.textContent ?? '').replaceAll(/\s+/g, ' ').trim()
+        Object.fromEntries(
+          Array.from(row.children, (cell, column) => [
+            headers[column],
+            textOf(cell)
+          ]).filter(([, text]) => text !== '')
         )
       )
     }
@@ -1586,23 +1603,23 @@ describe('#listPrnsController', () => {
       })
 
       expect(bodyRows(result, 'awaiting-action')).toStrictEqual([
-        [
-          'Acme Packaging Ltd',
-          '15 January 2026',
-          '50',
-          'Yes',
-          'Awaiting authorisation',
-          'Select'
-        ],
-        [
-          'BigCo Waste Solutions',
-          '18 January 2026',
-          '120',
-          'No',
-          'Awaiting authorisation',
-          'Select'
-        ],
-        ['Total', '', '170', '', '', '']
+        {
+          'Producer or compliance scheme': 'Acme Packaging Ltd',
+          'Date created': '15 January 2026',
+          Tonnage: '50',
+          'December waste?': 'Yes',
+          Status: 'Awaiting authorisation',
+          Action: 'Select'
+        },
+        {
+          'Producer or compliance scheme': 'BigCo Waste Solutions',
+          'Date created': '18 January 2026',
+          Tonnage: '120',
+          'December waste?': 'No',
+          Status: 'Awaiting authorisation',
+          Action: 'Select'
+        },
+        { 'Producer or compliance scheme': 'Total', Tonnage: '170' }
       ])
     })
 
@@ -1627,37 +1644,37 @@ describe('#listPrnsController', () => {
         cancelled: bodyRows(result, 'cancelled')
       }).toStrictEqual({
         issued: [
-          [
-            'ER2612345',
-            'Green Compliance Scheme',
-            '22 January 2026',
-            '75',
-            'No',
-            'Awaiting acceptance',
-            'Select'
-          ],
-          ['Total', '', '', '75', '', '', '']
+          {
+            'PRN number': 'ER2612345',
+            'Producer or compliance scheme': 'Green Compliance Scheme',
+            'Date issued': '22 January 2026',
+            Tonnage: '75',
+            'December waste?': 'No',
+            Status: 'Awaiting acceptance',
+            'View in new tab': 'Select'
+          },
+          { 'PRN number': 'Total', Tonnage: '75' }
         ],
         cancelled: [
-          [
-            'ER2688001',
-            'Cancelled Corp',
-            '6 January 2026',
-            '30',
-            'No',
-            'Cancelled',
-            'Select'
-          ],
-          [
-            'ER2688002',
-            'Revoked Ltd',
-            '9 January 2026',
-            '15',
-            'No',
-            'Cancelled',
-            'Select'
-          ],
-          ['Total', '', '', '45', '', '', '']
+          {
+            'PRN number': 'ER2688001',
+            'Producer or compliance scheme': 'Cancelled Corp',
+            'Date issued': '6 January 2026',
+            Tonnage: '30',
+            'December waste?': 'No',
+            Status: 'Cancelled',
+            'View in new tab': 'Select'
+          },
+          {
+            'PRN number': 'ER2688002',
+            'Producer or compliance scheme': 'Revoked Ltd',
+            'Date issued': '9 January 2026',
+            Tonnage: '15',
+            'December waste?': 'No',
+            Status: 'Cancelled',
+            'View in new tab': 'Select'
+          },
+          { 'PRN number': 'Total', Tonnage: '45' }
         ]
       })
     })
@@ -1697,12 +1714,7 @@ describe('#listPrnsController', () => {
      * @param {string} panelId
      */
     const panelText = (html, panelId) =>
-      (
-        new JSDOM(html).window.document.getElementById(panelId)?.textContent ??
-        ''
-      )
-        .replaceAll(/\s+/g, ' ')
-        .trim()
+      textOf(new JSDOM(html).window.document.getElementById(panelId))
 
     it('should name the three tabs', async ({ server }) => {
       vi.mocked(fetchRequiredAccreditation).mockResolvedValue(

@@ -659,7 +659,7 @@ describe('#createPrnController', () => {
 
     describe('December waste control', () => {
       it.for(
-        /** @type {Array<{ description: string, eligibility: DecemberPrnEligibility, wasteBalance: WasteBalance | null, radios: Array<[string, string]> }>} */ ([
+        /** @satisfies {Array<{ description: string, eligibility: DecemberPrnEligibility, wasteBalance: WasteBalance | null, radios: Array<[string, string]> }>} */ ([
           {
             description:
               'offers a zero December balance when the balance holds no December pool',

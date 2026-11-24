@@ -178,18 +178,10 @@ function buildAwaitingTable(request, { keys, prns, localise, canWrite }) {
     return { headings, rows: [] }
   }
 
-  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
-  const totalRow = [
-    {
-      text: localise('prns:list:table:totalLabel'),
-      classes: cssClasses.fontWeight.bold
-    },
-    { text: '' },
-    { text: totalTonnage, classes: cssClasses.fontWeight.bold },
-    { text: '' },
-    { text: '' },
-    { text: '' }
-  ]
+  const totalRow = buildTotalRow(prns, localise, {
+    tonnageColumn: 2,
+    columns: 6
+  })
 
   return { headings, rows: [...dataRows, totalRow] }
 }
@@ -231,22 +223,35 @@ function buildDetailTable(
     return { headings, rows: [] }
   }
 
-  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
-  const totalRow = [
-    {
-      text: localise('prns:list:table:totalLabel'),
-      classes: cssClasses.fontWeight.bold
-    },
-    { text: '' },
-    { text: '' },
-    { text: totalTonnage, classes: cssClasses.fontWeight.bold },
-    { text: '' },
-    { text: '' },
-    { text: '' }
-  ]
+  const totalRow = buildTotalRow(prns, localise, {
+    tonnageColumn: 3,
+    columns: 7
+  })
 
   return { headings, rows: [...rows, totalRow] }
 }
+
+/**
+ * @param {Array<{ tonnage: number }>} prns
+ * @param {(key: string) => string} localise
+ * @param {{ tonnageColumn: number, columns: number }} layout
+ */
+const buildTotalRow = (prns, localise, { tonnageColumn, columns }) =>
+  Array.from({ length: columns }, (_, column) => {
+    if (column === 0) {
+      return {
+        text: localise('prns:list:table:totalLabel'),
+        classes: cssClasses.fontWeight.bold
+      }
+    }
+    if (column === tonnageColumn) {
+      return {
+        text: prns.reduce((sum, prn) => sum + prn.tonnage, 0),
+        classes: cssClasses.fontWeight.bold
+      }
+    }
+    return { text: '' }
+  })
 
 /**
  * @param {boolean} isDecemberWaste
