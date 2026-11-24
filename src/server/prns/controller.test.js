@@ -25,6 +25,11 @@ import Boom from '@hapi/boom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
+/**
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
+ * @import { DecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
 )
@@ -644,6 +649,69 @@ describe('#createPrnController', () => {
         ).toStrictEqual(['No', 'Yes'])
         expect(main.querySelector('.govuk-inset-text')).toBeNull()
       })
+    })
+
+    describe('December waste control', () => {
+      it.for(
+        /** @type {Array<{ description: string, eligibility: DecemberPrnEligibility, wasteBalance: WasteBalance | null, radios: string[] }>} */ ([
+          {
+            description:
+              'offers a zero December balance when the balance holds no December pool',
+            eligibility: { mode: 'pool', windowOpen: true },
+            wasteBalance: { amount: 60, availableAmount: 60 },
+            radios: [
+              'December waste balance (0.00 tonnes)',
+              'Non-December waste balance (60.00 tonnes)'
+            ]
+          },
+          {
+            description:
+              'offers both balances at zero when the balance could not be read',
+            eligibility: { mode: 'pool', windowOpen: true },
+            wasteBalance: null,
+            radios: [
+              'December waste balance (0.00 tonnes)',
+              'Non-December waste balance (0.00 tonnes)'
+            ]
+          },
+          {
+            description: 'offers no choice outside the December window',
+            eligibility: { mode: 'pool', windowOpen: false },
+            wasteBalance: { amount: 60, availableAmount: 60 },
+            radios: []
+          },
+          {
+            description:
+              'offers no choice to an accreditation that takes no December waste',
+            eligibility: { mode: 'none', windowOpen: true },
+            wasteBalance: { amount: 60, availableAmount: 60 },
+            radios: []
+          }
+        ])
+      )(
+        '$description',
+        async ({ eligibility, wasteBalance, radios }, { server }) => {
+          vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+            fixtureReprocessor
+          )
+          vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue(eligibility)
+          vi.mocked(fetchPrnWasteBalance).mockResolvedValue(wasteBalance)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: reprocessorUrl,
+            auth: mockAuth
+          })
+
+          const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+          expect(
+            within(main)
+              .queryAllByRole('radio')
+              .map((radio) => radio.labels?.[0]?.textContent?.trim())
+          ).toStrictEqual(radios)
+        }
+      )
     })
 
     describe('select waste balance pool', () => {
