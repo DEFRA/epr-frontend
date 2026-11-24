@@ -61,8 +61,14 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
           heading,
           caption: describeReportingPeriod(period, localise),
           description: localise(
-            `regulators:marketInsights:figures:description:${described}`
+            `regulators:marketInsights:figures:description:${described}`,
+            {
+              workbookHref: request.localiseUrl(
+                paths.regulators.marketInsightsWorkbook
+              )
+            }
           ),
+          wording,
           rounding: localise(
             `regulators:marketInsights:figures:calculation:rounding:${wording}`
           ),

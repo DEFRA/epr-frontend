@@ -207,11 +207,10 @@ describe('the England reprocessor and exporter figures page', () => {
       })
 
       expect(
-        getAllByRole(documentOf(asHtml(result)), 'heading', { level: 2 })
-          .filter((heading) => (heading.textContent ?? '').endsWith('2026'))
-          .map((heading) =>
-            (heading.nextElementSibling?.textContent ?? '').trim()
-          )
+        getAllByRole(
+          getByRole(documentOf(asHtml(result)), 'main'),
+          'region'
+        ).map((region) => (region.nextElementSibling?.textContent ?? '').trim())
       ).toStrictEqual([
         'Monthly reports submitted: 3 of 4',
         'Monthly reports submitted: 1 of 4',
@@ -257,8 +256,25 @@ describe('the England reprocessor and exporter figures page', () => {
       const body = documentOf(asHtml(result))
 
       expect(body.textContent).not.toContain(NOTICE)
-      expect(getByText(body, NATION_WORDING.englandDescription)).not.toBeNull()
-      expect(getByText(body, NATION_WORDING.rounding)).not.toBeNull()
+      expect(
+        Array.from(body.querySelectorAll('p'), (paragraph) =>
+          (paragraph.textContent ?? '').trim()
+        )
+      ).toStrictEqual(
+        expect.arrayContaining([
+          NATION_WORDING.englandDescription,
+          NATION_WORDING.completeness,
+          NATION_WORDING.accreditations,
+          NATION_WORDING.average,
+          NATION_WORDING.rounding,
+          NATION_WORDING.marked
+        ])
+      )
+      expect(
+        getByRole(body, 'link', {
+          name: 'redacted data workbook (XLSX)'
+        }).getAttribute('href')
+      ).toBe(paths.regulators.marketInsightsWorkbook)
       expect(
         getByRole(body, 'heading', { name: 'How the tables are compiled' })
       ).not.toBeNull()

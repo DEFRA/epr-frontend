@@ -148,7 +148,7 @@ describe('the UK reprocessor and exporter figures page', () => {
       msw.use(servesJanuaryToMarch)
     })
 
-    it('gives every month served a heading, and a region the keyboard can scroll sideways', async ({
+    it('gives every month served a region the keyboard can scroll sideways', async ({
       server
     }) => {
       const { statusCode, result } = await server.inject({
@@ -162,9 +162,9 @@ describe('the UK reprocessor and exporter figures page', () => {
       const body = documentOf(asHtml(result))
 
       expect(
-        getAllByRole(body, 'heading', { level: 2 })
-          .map((heading) => (heading.textContent ?? '').trim())
-          .filter((name) => name.endsWith('2026'))
+        getAllByRole(getByRole(body, 'main'), 'region').map((region) =>
+          region.getAttribute('aria-label')
+        )
       ).toStrictEqual(['January 2026', 'February 2026', 'March 2026'])
 
       // The tables are wider than the page, so they scroll sideways.
@@ -175,7 +175,7 @@ describe('the UK reprocessor and exporter figures page', () => {
       ).toBe('0')
     })
 
-    it('says beneath each month how many of the monthly reports it was owed have been submitted, before its tables', async ({
+    it('says beneath each month how many of the monthly reports it was owed have been submitted, after its tables', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -184,30 +184,15 @@ describe('the UK reprocessor and exporter figures page', () => {
         auth: regulator
       })
 
-      const body = documentOf(asHtml(result))
-
-      // Whatever sits between a month's heading and the region holding its
-      // tables is what a regulator reads about that month before its figures.
       expect(
-        getAllByRole(body, 'heading', { level: 2 })
-          .filter((heading) => (heading.textContent ?? '').endsWith('2026'))
-          .map((heading) => {
-            /** @type {string[]} */
-            const wording = []
-            let element = heading.nextElementSibling
-            while (
-              element !== null &&
-              element.getAttribute('role') !== 'region'
-            ) {
-              wording.push((element.textContent ?? '').trim())
-              element = element.nextElementSibling
-            }
-            return wording
-          })
+        getAllByRole(
+          getByRole(documentOf(asHtml(result)), 'main'),
+          'region'
+        ).map((region) => (region.nextElementSibling?.textContent ?? '').trim())
       ).toStrictEqual([
-        ['Monthly reports submitted: 1 of 2'],
-        ['Monthly reports submitted: 2 of 2'],
-        ['Monthly reports submitted: 0 of 3']
+        'Monthly reports submitted: 1 of 2',
+        'Monthly reports submitted: 2 of 2',
+        'Monthly reports submitted: 0 of 3'
       ])
     })
 
@@ -694,7 +679,7 @@ describe('the UK reprocessor and exporter figures page', () => {
       ).toBe(paths.regulators.marketInsights)
     })
 
-    it('says what the figures are made of, and how they are calculated, before the tables', async ({
+    it('says what the figures are made of, and how they are calculated, after the tables', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -705,26 +690,18 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       const body = documentOf(asHtml(result))
 
-      // The wording runs from the line saying when the figures were aggregated
-      // to the first month's tables, so a regulator reads it before the
-      // figures it explains.
-      /** @type {(string | string[])[]} */
+      // The wording runs from the last month's count of reports to the end of
+      // the page, so a regulator reads the figures before what explains them.
+      const regions = getAllByRole(getByRole(body, 'main'), 'region')
+      /** @type {string[]} */
       const wording = []
       let element =
-        getByRole(body, 'heading', { level: 1 }).nextElementSibling
-          ?.nextElementSibling ?? null
-      while (element !== null && element.matches('p, h2, ul')) {
-        wording.push(
-          element.matches('ul')
-            ? Array.from(element.querySelectorAll('li')).map((item) =>
-                (item.textContent ?? '').trim()
-              )
-            : (element.textContent ?? '').trim()
-        )
+        regions.at(-1)?.nextElementSibling?.nextElementSibling ?? null
+      while (element !== null) {
+        wording.push((element.textContent ?? '').trim())
         element = element.nextElementSibling
       }
 
-      expect(element?.querySelector('table')).not.toBeNull()
       expect(wording).toStrictEqual([
         'For each month, the tables show what accredited reprocessors and exporters reported by material (tonnage received, recycled or exported, or sent on). They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price for each tonne. These figures are included in the monthly published (redacted) data workbook (XLSX).',
         'The figures shown are only as good as the reports submitted by the operators. Operators that have not submitted a month add nothing to the figures. The most recent months are the least complete because reports are still arriving. Each month shows how many of the monthly reports have been received.',
@@ -740,10 +717,13 @@ describe('the UK reprocessor and exporter figures page', () => {
         'Accredited operators count even if they have not submitted their reports or their reports add nothing to the figure.',
         'A Grand Total is calculated for all the materials in a table column, operators accredited for more than one material still only count once. Also, an operator is a business, so only counts once regardless of however many sites it has.',
         'Figures marked ‘c’',
-        'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Figures are also marked ‘c’ when no operators were accredited for it, but another figure in the same row holds data (for example, a late report from an operator cancelled for the whole month). Rows with no accredited operators and nothing in them are not marked ‘c’.',
-        'January 2026',
-        'Monthly reports submitted: 1 of 2'
+        'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Rows with no accredited operators and nothing in them are not marked ‘c’.'
       ])
+      expect(
+        getByRole(body, 'link', {
+          name: 'published (redacted) data workbook (XLSX)'
+        }).getAttribute('href')
+      ).toBe(paths.regulators.marketInsightsWorkbook)
     })
 
     it('asks for the reporting period through the last complete month, and for nothing else', async ({

@@ -232,11 +232,12 @@ describe.each(NATIONS)(
         })
 
         expect(
-          getAllByRole(documentOf(asHtml(result)), 'heading', { level: 2 })
-            .filter((heading) => (heading.textContent ?? '').endsWith('2026'))
-            .map((heading) =>
-              (heading.nextElementSibling?.textContent ?? '').trim()
-            )
+          getAllByRole(
+            getByRole(documentOf(asHtml(result)), 'main'),
+            'region'
+          ).map((region) =>
+            (region.nextElementSibling?.textContent ?? '').trim()
+          )
         ).toStrictEqual([
           'Monthly reports submitted: 2 of 2',
           'Monthly reports submitted: 1 of 2',
@@ -284,8 +285,20 @@ describe.each(NATIONS)(
         const body = documentOf(asHtml(result))
 
         expect(body.textContent).not.toContain(NOTICE)
-        expect(getByText(body, NATION_WORDING.description)).not.toBeNull()
-        expect(getByText(body, NATION_WORDING.rounding)).not.toBeNull()
+        expect(
+          Array.from(body.querySelectorAll('p'), (paragraph) =>
+            (paragraph.textContent ?? '').trim()
+          )
+        ).toStrictEqual(
+          expect.arrayContaining([
+            NATION_WORDING.description,
+            NATION_WORDING.completeness,
+            NATION_WORDING.accreditations,
+            NATION_WORDING.average,
+            NATION_WORDING.rounding,
+            NATION_WORDING.marked
+          ])
+        )
         expect(
           getByRole(body, 'heading', { name: 'How the tables are compiled' })
         ).not.toBeNull()

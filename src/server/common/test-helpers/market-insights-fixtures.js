@@ -44,7 +44,7 @@ export const LANDING_HEADING =
   'Reported reprocessor and exporter packaging waste data'
 
 /**
- * The two sentences the agreed content words differently for a nation's
+ * The paragraphs the agreed content words differently for a nation's
  * figures than for the UK's. Only England's figures are in the workbook, so
  * only England's description says so.
  */
@@ -54,7 +54,15 @@ export const NATION_WORDING = {
   englandDescription:
     'For each month, the tables show what accredited reprocessors and exporters reported by material (tonnage received, recycled or exported, and sent on). They also show the tonnage PRNs and PERNs were issued for, the revenue from those notes and the average price for each tonne. These figures are included in the monthly redacted data workbook (XLSX).',
   rounding:
-    'Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.'
+    'Each figure is rounded to two decimal places as it is added up. A total can differ by a few pence from the same figures added first and rounded once.',
+  completeness:
+    'The figures shown are only as good as the reports submitted by the operators. Operators who have not submitted a monthly report do not contribute to the reported figures. The most recent months are less complete as reports are still being submitted. Each month shows how many of the monthly reports have been received.',
+  accreditations:
+    'A report is only counted if the accreditation it relates to is currently approved or suspended. Where an accreditation has been cancelled, it is counted as a non-submission for the relevant period. Any tonnage associated with a cancelled accreditation will remain in the waste balance so as not to distort the overall picture of packaging waste reprocessing and export.',
+  average:
+    'An operator who issues a PRN to themselves is not included here, this is recorded separately. Revenue and tonnage are each added up across all operators, then total revenue is divided by total tonnage to give the average price of each tonne. Where no tonnage was issued, the average is 0.',
+  marked:
+    'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Figures are also marked ‘c’ when no operators were accredited for it, but another figure in the same row holds data (for example, a late report from an operator cancelled for the whole month). Rows with no accredited operators and nothing in them are not marked ‘c’.'
 }
 
 /**

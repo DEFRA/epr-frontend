@@ -44,7 +44,12 @@ export const controller = {
       heading,
       caption: describeReportingPeriod(period, localise),
       description: localise(
-        'regulators:marketInsights:wasteBalance:description'
+        'regulators:marketInsights:wasteBalance:description',
+        {
+          workbookHref: request.localiseUrl(
+            paths.regulators.marketInsightsWorkbook
+          )
+        }
       ),
       breadcrumbs: [
         {

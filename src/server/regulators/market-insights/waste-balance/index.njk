@@ -61,7 +61,7 @@
         }) }}
       </div>
 
-      <p class="govuk-body">{{ description }}</p>
+      <p class="govuk-body">{{ description | safe }}</p>
 
       <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:wasteBalance:calculation:heading') }}</h2>
       <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:calculation:source') }}</p>
@@ -77,7 +77,7 @@
       <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:total') }}</p>
 
       <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:marked') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:marked') }}</p>
     </div>
   </div>
 {% endblock %}

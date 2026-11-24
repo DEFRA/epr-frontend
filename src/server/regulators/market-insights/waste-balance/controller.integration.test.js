@@ -467,8 +467,24 @@ describe('the UK waste balance page', () => {
         'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material (reprocessor figures) or to export it (exporter figures). Suspended operators count, but operators whose accreditations were cancelled for the whole month do not. Accredited operators count towards the number of operators, even if none of their tonnage is included in a figure.',
         'Row totals are counted across each month, so operators accredited across more than one month still only count once towards the number of operators. Also, an operator is a business, so only counts once regardless of however many sites it has.',
         'Figures marked ‘c’',
-        'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Figures are also marked ‘c’ when no operators were accredited for it, but another figure in the same row holds data (for example, a late report from an operator cancelled for the whole month). Rows with no accredited operators and nothing in them are not marked ‘c’.'
+        'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Figures are also marked ‘c’ when 2 accreditation types (Exp and Rep) are combined to denote that commercial confidentiality exists within a row. Rows with no accredited operators and nothing in them are not marked ‘c’.'
       ])
+    })
+
+    it('links the workbook its figures are published in', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsightsWasteBalance,
+        auth: regulator
+      })
+
+      expect(
+        getByRole(documentOf(asHtml(result)), 'link', {
+          name: 'published (redacted) data workbook (XLSX)'
+        }).getAttribute('href')
+      ).toBe(paths.regulators.marketInsightsWorkbook)
     })
 
     it('asks for the reporting period through the last complete month, and for nothing else', async ({

@@ -9,13 +9,13 @@
 
       <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:workbook:heading') }}</h2>
       <p class="govuk-body">{{ workbookDescription }}</p>
+      {{ govukInsetText({ text: localise('regulators:marketInsights:downloadWait') }) }}
       <p class="govuk-body">
         <a class="govuk-link govuk-link--no-visited-state" href="{{ workbookHref }}">{{ workbookText }}</a>
       </p>
       <p class="govuk-body">
         <a class="govuk-link govuk-link--no-visited-state" href="{{ unredactedWorkbookHref }}">{{ unredactedWorkbookText }}</a>
       </p>
-      {{ govukInsetText({ text: localise('regulators:marketInsights:downloadWait') }) }}
 
       <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:figureSetsHeading') }}</h2>
       <ul class="govuk-list">
