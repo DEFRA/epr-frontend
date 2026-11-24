@@ -208,7 +208,7 @@ const confirmDraft = async (request, h, { keys, prnId, prnDraft }) => {
  * @param {{
  *   keys: AccreditationKeys,
  *   prnDraft: PrnDraftSession,
- *   localise: TFunction,
+ *   localise: Localise,
  *   session: UserSession
  * }} params
  */
@@ -263,7 +263,7 @@ async function handleDraftView(h, { keys, prnDraft, localise, session }) {
  * @param {{
  *   keys: AccreditationKeys,
  *   prnId: string,
- *   localise: TFunction,
+ *   localise: Localise,
  *   session: UserSession
  * }} params
  */
@@ -353,7 +353,7 @@ async function handleExistingView(
  *   backUrl: string | null,
  *   back: { path: string, textKey: string },
  *   isRegulator: boolean,
- *   localise: TFunction,
+ *   localise: Localise,
  *   request: HapiRequest
  * }} params
  * @returns {object} View data object
@@ -395,7 +395,7 @@ function buildExistingPrnViewData({
  * Builds the PRN/PERN details rows for a draft PRN (creation flow)
  * @param {{
  *   prnDraft: PrnDraftSession,
- *   localise: TFunction,
+ *   localise: Localise,
  *   organisation: OrganisationView
  * }} params
  * @returns {Array} Summary list rows
@@ -497,7 +497,7 @@ function buildExistingPrnDetailRows({
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
- * @import { TFunction } from 'i18next'
+ * @import { Localise } from '../common/hapi-types.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { UserSession } from '#server/auth/types/session.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'

@@ -7,7 +7,7 @@ import {
 import { prnsPath } from './prn-resource.js'
 
 /**
- * @import { TFunction } from 'i18next'
+ * @import { Localise } from '../../common/hapi-types.js'
  * @import { OrganisationView } from '#server/common/helpers/organisations/organisation-view.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
@@ -29,7 +29,7 @@ import { prnsPath } from './prn-resource.js'
  *   keys: AccreditationKeys,
  *   noteTypePlural: string,
  *   prn: { id: string, prnNumber?: string | null },
- *   localise: TFunction,
+ *   localise: Localise,
  *   localiseUrl: (path: string) => string
  * }} params
  * @returns {Crumb[]}

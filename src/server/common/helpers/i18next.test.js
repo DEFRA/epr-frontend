@@ -7,7 +7,8 @@ import { describe, expect, it as vitestIt } from 'vitest'
 import { it } from '#vite/fixtures/server.js'
 
 /**
- * @import { TFunction, i18n } from 'i18next'
+ * @import { i18n } from 'i18next'
+ * @import { Localise } from '../hapi-types.js'
  */
 
 describe('#i18nPlugin - integration', () => {
@@ -120,7 +121,7 @@ describe('#i18nPlugin - integration', () => {
           handler: async (request, h) => {
             const typedRequest = asHapiRequest(request)
             typedRequest.i18n = /** @type {i18n} */ ({ language: 'en' })
-            typedRequest.t = /** @type {TFunction} */ (() => 'translated')
+            typedRequest.t = /** @type {Localise} */ (() => 'translated')
 
             const bufferContent = Buffer.from(content)
             const response = h
