@@ -33,6 +33,23 @@ export const homePath = (orgNumber, { year, exporting } = {}) => {
   return `${organisationPath({ organisationNumber: orgNumber })}${yearSegment}${exportingSegment}`
 }
 
+/** @param {HapiRequest} request */
+const isExportingTab = (request) => request.path.endsWith('/exporting')
+
+/**
+ * The organisation's home page for a year, on the tab the request is for.
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {OrganisationNumber} orgNumber
+ * @param {Year | undefined} year
+ */
+export const redirectHome = (request, h, orgNumber, year) =>
+  h.redirect(
+    request.localiseUrl(
+      homePath(orgNumber, { year, exporting: isExportingTab(request) })
+    )
+  )
+
 /**
  * @param {OrganisationNumber} orgNumber
  * @param {{ year: Year, exporting?: boolean }} options
@@ -311,7 +328,7 @@ export function renderHome(
 ) {
   const { t: localise } = request
 
-  const isExporterTab = request.path.endsWith('/exporting')
+  const isExporterTab = isExportingTab(request)
   const activeTab = isExporterTab ? tabTypes.EXPORTER : tabTypes.REPROCESSOR
 
   /** @param {string} wasteProcessingType */

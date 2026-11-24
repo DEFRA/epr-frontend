@@ -1,7 +1,7 @@
 import { fetchOrganisation } from '#server/common/helpers/organisations/fetch-organisation.js'
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import { defaultYear } from '#server/common/helpers/year.js'
-import { homePath, renderHome } from './home-page.js'
+import { redirectHome, renderHome } from './home-page.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -27,14 +27,7 @@ export const homeController = {
     )
 
     if (year) {
-      return h.redirect(
-        request.localiseUrl(
-          homePath(orgNumber, {
-            year,
-            exporting: request.path.endsWith('/exporting')
-          })
-        )
-      )
+      return redirectHome(request, h, orgNumber, year)
     }
 
     return renderHome(request, h, {
