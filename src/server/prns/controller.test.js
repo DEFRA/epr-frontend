@@ -645,23 +645,29 @@ describe('#createPrnController', () => {
         expect(
           within(question)
             .getAllByRole('radio')
-            .map((radio) => radio.labels?.[0]?.textContent?.trim())
-        ).toStrictEqual(['No', 'Yes'])
+            .map((radio) => [
+              radio.labels?.[0]?.textContent?.trim(),
+              radio.value
+            ])
+        ).toStrictEqual([
+          ['No', 'false'],
+          ['Yes', 'true']
+        ])
         expect(main.querySelector('.govuk-inset-text')).toBeNull()
       })
     })
 
     describe('December waste control', () => {
       it.for(
-        /** @type {Array<{ description: string, eligibility: DecemberPrnEligibility, wasteBalance: WasteBalance | null, radios: string[] }>} */ ([
+        /** @type {Array<{ description: string, eligibility: DecemberPrnEligibility, wasteBalance: WasteBalance | null, radios: Array<[string, string]> }>} */ ([
           {
             description:
               'offers a zero December balance when the balance holds no December pool',
             eligibility: { mode: 'pool', windowOpen: true },
             wasteBalance: { amount: 60, availableAmount: 60 },
             radios: [
-              'December waste balance (0.00 tonnes)',
-              'Non-December waste balance (60.00 tonnes)'
+              ['December waste balance (0.00 tonnes)', 'true'],
+              ['Non-December waste balance (60.00 tonnes)', 'false']
             ]
           },
           {
@@ -670,8 +676,8 @@ describe('#createPrnController', () => {
             eligibility: { mode: 'pool', windowOpen: true },
             wasteBalance: null,
             radios: [
-              'December waste balance (0.00 tonnes)',
-              'Non-December waste balance (0.00 tonnes)'
+              ['December waste balance (0.00 tonnes)', 'true'],
+              ['Non-December waste balance (0.00 tonnes)', 'false']
             ]
           },
           {
@@ -708,7 +714,10 @@ describe('#createPrnController', () => {
           expect(
             within(main)
               .queryAllByRole('radio')
-              .map((radio) => radio.labels?.[0]?.textContent?.trim())
+              .map((radio) => [
+                radio.labels?.[0]?.textContent?.trim(),
+                radio.value
+              ])
           ).toStrictEqual(radios)
         }
       )
