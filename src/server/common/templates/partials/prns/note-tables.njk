@@ -38,7 +38,7 @@
             { text: table.headings.tonnage },
             { text: table.headings.decemberWaste },
             { text: table.headings.status },
-            { text: table.headings.action }
+            { html: '<span class="govuk-visually-hidden">' ~ (table.headings.action | escape) ~ '</span>' }
           ],
           rows: table.rows
         }) }}
@@ -53,7 +53,7 @@
             { text: cancellationTable.headings.tonnage },
             { text: cancellationTable.headings.decemberWaste },
             { text: cancellationTable.headings.status },
-            { text: cancellationTable.headings.action }
+            { html: '<span class="govuk-visually-hidden">' ~ (cancellationTable.headings.action | escape) ~ '</span>' }
           ],
           rows: cancellationTable.rows
         }) }}
