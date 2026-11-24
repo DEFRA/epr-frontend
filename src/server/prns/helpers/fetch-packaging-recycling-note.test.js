@@ -51,6 +51,28 @@ describe(fetchPackagingRecyclingNote, () => {
     ])
   })
 
+  it('should read the allowed obligation years in ascending order', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get(/packaging-recycling-notes\/[^/]+$/, () =>
+        HttpResponse.json(
+          buildPrnResource({
+            obligation: { year: 2026, allowedYears: [2027, 2026] }
+          })
+        )
+      )
+    )
+
+    const note = await fetchPackagingRecyclingNote(
+      keys,
+      'prn-4',
+      toBackendToken('a-token')
+    )
+
+    expect(note.obligation.allowedYears).toStrictEqual([2026, 2027])
+  })
+
   it.for([
     {
       description: 'offers the same obligation year twice',

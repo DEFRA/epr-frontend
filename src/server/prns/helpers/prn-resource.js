@@ -98,6 +98,7 @@ export const prnResourceSchema = Joi.object({
     allowedYears: Joi.array()
       .items(Joi.number().integer())
       .unique()
+      .sort()
       .min(1)
       .required()
   }).required(),
