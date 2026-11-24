@@ -57,12 +57,7 @@ export const deletePostController = {
     }
 
     try {
-      await updatePrnStatus(
-        keys,
-        prnId,
-        { status: prnStatuses.deleted },
-        backendToken
-      )
+      await updatePrnStatus(keys, prnId, { status: 'deleted' }, backendToken)
 
       await metrics.journey.end(request, JOURNEY.deletePrn, prnId)
 

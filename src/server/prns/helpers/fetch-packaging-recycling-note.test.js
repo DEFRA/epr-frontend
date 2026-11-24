@@ -100,6 +100,10 @@ describe(fetchPackagingRecyclingNote, () => {
     {
       description: 'is in a status the service does not know',
       overrides: { status: { current: 'mislaid', timeline: [] } }
+    },
+    {
+      description: 'is deleted, which the backend never serves',
+      overrides: { status: { current: 'deleted', timeline: [] } }
     }
   ])(
     'should refuse a note that $description',

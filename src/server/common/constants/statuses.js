@@ -5,8 +5,7 @@ export const prnStatuses = Object.freeze({
   accepted: 'accepted',
   cancelled: 'cancelled',
   awaitingCancellation: 'awaiting_cancellation',
-  discarded: 'discarded',
-  deleted: 'deleted'
+  discarded: 'discarded'
 })
 
 /** @typedef {typeof prnStatuses[keyof typeof prnStatuses]} PrnStatus */

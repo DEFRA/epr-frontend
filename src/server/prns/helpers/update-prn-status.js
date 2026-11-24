@@ -3,7 +3,7 @@ import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
 
 /**
  * @typedef {object} UpdatePrnStatusPayload
- * @property {PrnStatus} status - The new status
+ * @property {PrnStatus | 'deleted'} status - The new status; a deleted note is never served back
  */
 
 /**
