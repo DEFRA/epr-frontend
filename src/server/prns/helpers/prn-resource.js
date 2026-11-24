@@ -1,3 +1,5 @@
+import Joi from 'joi'
+
 import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
@@ -63,6 +65,54 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  *   issuedBy: { name?: string, position?: string } | null
  * }} PackagingRecyclingNote
  */
+
+/**
+ * The fields of a backend PRN that the pages read. Anything else the backend
+ * serves is allowed and ignored.
+ * @type {Joi.ObjectSchema<PrnResource>}
+ */
+export const prnResourceSchema = Joi.object({
+  id: Joi.string().required(),
+  prnNumber: Joi.string(),
+  status: Joi.object({ current: Joi.string().required() }).required(),
+  issuedToOrganisation: Joi.object({
+    id: Joi.string().required(),
+    name: Joi.string().required(),
+    tradingName: Joi.string().allow(null),
+    registrationType: Joi.string()
+  }).required(),
+  issuer: Joi.object({
+    registration: Joi.object({
+      accreditation: Joi.object({
+        accreditationYear: Joi.number().integer().required(),
+        wasteProcessingType: Joi.string().required(),
+        material: Joi.string().required()
+      }).required()
+    }).required()
+  }).required(),
+  tonnage: Joi.number().required(),
+  processToBeUsed: Joi.string().allow('').required(),
+  isDecemberWaste: Joi.boolean().required(),
+  obligation: Joi.object({
+    year: Joi.number().integer().required(),
+    allowedYears: Joi.array()
+      .items(Joi.number().integer())
+      .unique()
+      .min(1)
+      .required()
+  }).required(),
+  notes: Joi.string(),
+  createdAt: Joi.string().required(),
+  issued: Joi.object({
+    at: Joi.string().required(),
+    by: Joi.object({ name: Joi.string().required(), position: Joi.string() })
+  })
+}).prefs({ allowUnknown: true })
+
+/** @type {Joi.ObjectSchema<{ items: PrnResource[] }>} */
+export const prnResourceListSchema = Joi.object({
+  items: Joi.array().items(prnResourceSchema).required()
+}).prefs({ allowUnknown: true })
 
 /**
  * The accreditation's PRN collection, the same address for page and backend.
