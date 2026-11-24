@@ -151,6 +151,7 @@
     "wasteBalance": {
       "accreditationTypes": {
         "exporter": "Exporter",
+        "exporterAndReprocessor": "Exp & Rep",
         "reprocessor": "Reprocessor"
       },
       "calculation": {
