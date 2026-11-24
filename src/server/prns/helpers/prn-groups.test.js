@@ -44,9 +44,7 @@ describe(toPrnGroups, () => {
     })
 
     it('drops a status it has no group for rather than raising', () => {
-      const groups = toPrnGroups([
-        aNote({ id: 'invented', status: 'invented_by_a_later_release' })
-      ])
+      const groups = toPrnGroups([aNote({ id: 'gone', status: 'discarded' })])
 
       expect(groups.isEmpty).toBe(true)
     })
