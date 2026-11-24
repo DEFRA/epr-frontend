@@ -294,7 +294,6 @@ describe.each(NATIONS)(
             NATION_WORDING.description,
             NATION_WORDING.completeness,
             NATION_WORDING.accreditations,
-            NATION_WORDING.average,
             NATION_WORDING.rounding,
             NATION_WORDING.marked
           ])

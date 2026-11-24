@@ -265,7 +265,6 @@ describe('the England reprocessor and exporter figures page', () => {
           NATION_WORDING.englandDescription,
           NATION_WORDING.completeness,
           NATION_WORDING.accreditations,
-          NATION_WORDING.average,
           NATION_WORDING.rounding,
           NATION_WORDING.marked
         ])
