@@ -73,7 +73,7 @@ function buildActionViewData({
   registration,
   request
 }) {
-  const { noteType, noteTypeFull } = getNoteTypeDisplayNames(registration)
+  const { noteType } = getNoteTypeDisplayNames(registration)
   const displayMaterial = getMaterialDisplayName(registration.material)
   const isNotDraft = prn.status !== 'draft'
   const statusConfig = getStatusConfig(prn.status, localise)
@@ -97,7 +97,7 @@ function buildActionViewData({
 
   const viewData = {
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
-    heading: noteTypeFull,
+    heading: localise(`prns:noteName:${noteType}`),
     insetText: localise('prns:action:insetText', { noteType }),
     viewLink: {
       text: localise('prns:action:viewLink', { noteType }),

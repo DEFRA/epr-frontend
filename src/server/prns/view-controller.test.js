@@ -210,7 +210,7 @@ describe('#viewController', () => {
 
         // Check PRN ID is displayed (appears in caption and PRN number field)
         const heading = main.querySelector('.govuk-heading-xl')
-        expect(heading.textContent).toBe('Packaging Waste Recycling Note')
+        expect(heading.textContent).toBe('Packaging Recycling Note')
         // Check issued to
         expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
         // Check tonnage
@@ -864,9 +864,7 @@ describe('#viewController', () => {
 
         // Check heading shows PERN long form
         const heading = main.querySelector('.govuk-heading-xl')
-        expect(heading.textContent).toBe(
-          'Packaging Waste Export Recycling Note'
-        )
+        expect(heading.textContent).toBe('Packaging Export Recycling Note')
 
         // Check return link text
         expect(getByText(main, /Return to PERN list/i)).toBeDefined()
@@ -1055,7 +1053,7 @@ describe('#viewController', () => {
 
         // Heading shows long form for draft
         const heading = main.querySelector('.govuk-heading-xl')
-        expect(heading.textContent).toBe('Packaging Waste Recycling Note')
+        expect(heading.textContent).toBe('Packaging Recycling Note')
       })
 
       it('shows regulator logos above the heading in agency order', async ({

@@ -176,6 +176,10 @@
   },
   "materialLabel": "Material",
   "notProvided": "Not provided",
+  "noteName": {
+    "PERN": "Packaging Export Recycling Note",
+    "PRN": "Packaging Recycling Note"
+  },
   "notesLabel": "Add issuer notes (optional)",
   "positionLabel": "Position",
   "processToBeUsedLabel": "Process to be used",

@@ -283,8 +283,7 @@ async function handleExistingView(
     prn.issuedToOrganisation
   )
 
-  const { noteType, noteTypeFull, noteTypePlural } =
-    getNoteTypeDisplayNames(registration)
+  const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
   const isRegulator = readsAsARegulator(session)
 
@@ -330,7 +329,6 @@ async function handleExistingView(
   const viewData = buildExistingPrnViewData({
     prn,
     noteType,
-    noteTypeFull,
     isNotDraft,
     prnDetailRows,
     accreditationRows,
@@ -349,7 +347,6 @@ async function handleExistingView(
  * @param {{
  *   prn: PackagingRecyclingNote,
  *   noteType: 'PRN' | 'PERN',
- *   noteTypeFull: string,
  *   isNotDraft: boolean,
  *   prnDetailRows: Array<object>,
  *   accreditationRows: Array<object>,
@@ -364,7 +361,6 @@ async function handleExistingView(
 function buildExistingPrnViewData({
   prn,
   noteType,
-  noteTypeFull,
   isNotDraft,
   prnDetailRows,
   accreditationRows,
@@ -376,7 +372,7 @@ function buildExistingPrnViewData({
 }) {
   return {
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
-    heading: noteTypeFull,
+    heading: localise(`prns:noteName:${noteType}`),
     showRegulatorLogos: isNotDraft,
     noteSummary: isNotDraft ? buildNoteSummary(prn, noteType, localise) : null,
     prnDetailsHeading: isNotDraft
