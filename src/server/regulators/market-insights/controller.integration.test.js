@@ -11,7 +11,12 @@ import {
 import { toYear } from '#server/common/helpers/year.js'
 import { paths } from '#server/paths.js'
 import { it } from '#vite/fixtures/server.js'
-import { getAllByRole, getByRole, queryByRole } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByRole
+} from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
@@ -231,7 +236,6 @@ describe('the market insights page', () => {
           heading.textContent.trim()
         )
       ).toStrictEqual([
-        'This is 2026 data',
         'Download aggregated data',
         'Data specific pages',
         'Download the figures'
@@ -242,7 +246,7 @@ describe('the market insights page', () => {
       expect(main.textContent).not.toContain(NOTICE)
     })
 
-    it('says which year the data is for, above the page heading', async ({
+    it('says which year the data is for, as text above the page heading', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -252,10 +256,11 @@ describe('the market insights page', () => {
       })
 
       const body = documentOf(asHtml(result))
-      const yearLine = getByRole(body, 'heading', {
-        level: 2,
-        name: 'This is 2026 data'
-      })
+      const yearLine = getByText(body, 'This is 2026 data')
+
+      expect(
+        queryByRole(body, 'heading', { name: 'This is 2026 data' })
+      ).toBeNull()
 
       expect(
         yearLine.compareDocumentPosition(

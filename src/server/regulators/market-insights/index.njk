@@ -5,7 +5,12 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {% include "partials/year-data/year-data.njk" %}
+      <p class="govuk-body">
+        <span class="govuk-heading-m govuk-!-display-inline">{{ yearDataText }}</span>
+        {% if chooseYearUrl %}
+          <a class="govuk-link govuk-!-margin-left-2" href="{{ chooseYearUrl }}">{{ chooseYearLinkText }}</a>
+        {% endif %}
+      </p>
 
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
