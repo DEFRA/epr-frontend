@@ -16,8 +16,8 @@
     <div class="govuk-grid-column-two-thirds">
       {% if error %}
         {{ govukErrorSummary({
-          titleText: localise('organisations:chooseYear:errorSummaryTitle'),
-          errorList: [{ text: localise('organisations:chooseYear:error'), href: '#year' }]
+          titleText: errorSummaryTitle,
+          errorList: [{ text: errorText, href: '#year' }]
         }) }}
       {% endif %}
 
@@ -27,16 +27,16 @@
           idPrefix: "year",
           fieldset: {
             legend: {
-              text: localise('organisations:chooseYear:heading'),
+              text: heading,
               isPageHeading: true,
               classes: "govuk-fieldset__legend--l"
             }
           },
-          hint: { text: localise('organisations:chooseYear:hint') },
-          errorMessage: { text: localise('organisations:chooseYear:error') } if error,
+          hint: { text: hint },
+          errorMessage: { text: errorText } if error,
           items: items
         }) }}
-        {{ govukButton({ text: localise('organisations:chooseYear:continue'), name: 'continue', value: '1' }) }}
+        {{ govukButton({ text: continueText, name: 'continue', value: '1' }) }}
       </form>
     </div>
   </div>

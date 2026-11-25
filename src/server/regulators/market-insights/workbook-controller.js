@@ -1,9 +1,10 @@
 import { backend, path } from '#server/common/helpers/backend-client.js'
 
-import { reportingPeriodNow } from './helpers/reporting-period.js'
+import { offeredPeriod } from './helpers/offered-period.js'
 
 /**
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  */
 
@@ -26,12 +27,12 @@ export const marketInsightsWorkbookController = ({
   unredacted = false
 } = {}) => ({
   /**
-   * @param {HapiRequest} request
+   * @param {HapiRequest & { params: { year: Year } }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
     const { backendToken } = request.auth.credentials
-    const { year, month } = reportingPeriodNow()
+    const { year, month } = offeredPeriod(request)
 
     const { body, contentDisposition, contentType } = await backend(
       backendToken
