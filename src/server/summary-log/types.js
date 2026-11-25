@@ -39,7 +39,8 @@
  *   location?: CellLocation,
  *   actual?: unknown,
  *   expected?: unknown,
- *   deadline?: string
+ *   deadline?: string,
+ *   previousYearRowId?: string
  * }} ValidationFailure
  */
 
@@ -69,6 +70,7 @@
  *   actual?: string | number | boolean | null,
  *   expected?: unknown,
  *   deadline?: string,
+ *   previousYearRowId?: string,
  *   location: {
  *     sheet: string,
  *     table: string,

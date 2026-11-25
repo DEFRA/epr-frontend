@@ -285,6 +285,68 @@ const YEAR_PROBLEMS = {
 }
 
 /**
+ * @param {unknown} value
+ * @returns {value is string | number}
+ */
+const isRowId = (value) =>
+  (typeof value === 'string' && value.trim() !== '') ||
+  typeof value === 'number'
+
+/**
+ * @param {string} errorCode
+ * @param {string} table
+ */
+const finishedProblemKey = (errorCode, table) =>
+  errorCode === VALIDATION_CODE.PREVIOUS_YEAR_ROW_REPATRIATED &&
+  table === 'LOADS_EXPORTED'
+    ? `${errorCode}_REGISTERED_ONLY`
+    : errorCode
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @param {Localise} localise
+ * @returns {string | undefined}
+ */
+const previousYearRowNotFoundProblem = (
+  { errorCode, expected, actual },
+  localise
+) =>
+  typeof expected === 'number' && isRowId(actual)
+    ? localise(`summary-log:cellReason.${errorCode}`, {
+        previousYearRowId: actual,
+        previousYear: expected
+      })
+    : undefined
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @param {Localise} localise
+ * @returns {string | undefined}
+ */
+const previousYearRowFinishedProblem = (
+  { errorCode, expected, previousYearRowId, location },
+  localise
+) =>
+  typeof expected === 'number' && isRowId(previousYearRowId)
+    ? localise(
+        `summary-log:cellReason.${finishedProblemKey(errorCode, location.table)}`,
+        {
+          previousYearRowId,
+          previousYear: expected,
+          year: expected + 1
+        }
+      )
+    : undefined
+
+const LINK_PROBLEMS = {
+  [VALIDATION_CODE.PREVIOUS_YEAR_ROW_NOT_FOUND]: previousYearRowNotFoundProblem,
+  [VALIDATION_CODE.PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR]:
+    previousYearRowFinishedProblem,
+  [VALIDATION_CODE.PREVIOUS_YEAR_ROW_REPATRIATED]:
+    previousYearRowFinishedProblem
+}
+
+/**
  * @param {LocatedCellFailure} failure
  * @param {string} displayCode
  * @param {Localise} localise
@@ -295,9 +357,11 @@ const buildProblem = (failure, displayCode, localise) => {
     defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
   })
 
-  const yearProblem = YEAR_PROBLEMS[failure.errorCode]
-  if (yearProblem) {
-    return yearProblem(failure, localise) ?? fallback
+  const problemOf = [YEAR_PROBLEMS, LINK_PROBLEMS].find((problems) =>
+    Object.hasOwn(problems, failure.errorCode)
+  )?.[failure.errorCode]
+  if (problemOf) {
+    return problemOf(failure, localise) ?? fallback
   }
 
   return localise(`summary-log:cellReason.${failure.errorCode}`, {
