@@ -69,7 +69,7 @@ const aNote = (note) => ({
   wasteProcessingType: 'reprocessor',
   processToBeUsed: '',
   accreditationYear: 2026,
-  obligationYear: 2026,
+  obligation: { year: 2026, allowedYears: [2026] },
   isDecemberWaste: false,
   ...note
 })

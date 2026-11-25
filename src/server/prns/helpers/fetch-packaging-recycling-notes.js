@@ -1,5 +1,9 @@
-import { backend } from '#server/common/helpers/backend-client.js'
-import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
+import { backend, strictly } from '#server/common/helpers/backend-client.js'
+import {
+  prnResourceListSchema,
+  prnsPath,
+  toPackagingRecyclingNote
+} from './prn-resource.js'
 
 /**
  * Fetches packaging recycling notes for an accreditation from EPR Backend
@@ -8,8 +12,9 @@ import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
  * @returns {Promise<PackagingRecyclingNote[]>} List of packaging recycling notes
  */
 const fetchPackagingRecyclingNotes = async (keys, backendToken) => {
-  /** @type {{ items: PrnResource[] }} */
-  const { items } = await backend(backendToken).get(prnsPath(keys))
+  const { items } = await backend(backendToken).get(prnsPath(keys), {
+    parse: strictly(prnResourceListSchema)
+  })
 
   // The backend lists newest first; the pages show notes in the order raised.
   return items.map(toPackagingRecyclingNote).sort(oldestFirst)
@@ -28,5 +33,5 @@ export { fetchPackagingRecyclingNotes }
 /**
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
- * @import { PackagingRecyclingNote, PrnResource } from './prn-resource.js'
+ * @import { PackagingRecyclingNote } from './prn-resource.js'
  */
