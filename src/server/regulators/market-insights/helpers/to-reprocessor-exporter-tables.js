@@ -231,7 +231,7 @@ const toTable = (
  * Lays the served figures out the way the published UK tab is: for each
  * month, a reprocessor table and an exporter table, one row per material, the
  * tonnage columns in the tab's order, the served totals as the Grand Total,
- * and above them how many of the reports the month expected the figures
+ * and below them how many of the reports the month expected the figures
  * include. Every figure is the one the service served.
  *
  * The months are the page's period, so a served month outside it is not
