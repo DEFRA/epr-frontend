@@ -22,7 +22,6 @@ import { registrationPath } from '#server/reports/helpers/report-paths.js'
  *   status: StatusTag,
  *   material: string,
  *   regulator: string,
- *   accreditations: StatusTag[],
  *   href: string
  * }} RegistrationRow
  * @typedef {{ name: string | null, registrations: RegistrationRow[] }} SiteTable
@@ -37,19 +36,6 @@ import { registrationPath } from '#server/reports/helpers/report-paths.js'
  *   siteTables: SiteTable[]
  * }} OrganisationDetailsViewModel
  */
-
-/**
- * Every year's accreditation, newest first.
- * @param {RegistrationView['accreditations']} accreditations
- * @returns {StatusTag[]}
- */
-const toAccreditationTags = (accreditations) =>
-  Object.entries(accreditations)
-    .sort(([a], [b]) => b.localeCompare(a))
-    .map(([year, { status }]) => {
-      const tag = toStatusTag(status.current)
-      return { ...tag, text: `${year}: ${tag.text}` }
-    })
 
 /**
  * @param {{
@@ -70,7 +56,6 @@ const toRegistrationRow = ({
   status: toStatusTag(registration.status.current),
   material: getMaterialDisplayName(registration.material),
   regulator: registration.submittedToRegulator.code.toUpperCase(),
-  accreditations: toAccreditationTags(registration.accreditations),
   href: localiseUrl(
     registrationPath({ organisationNumber, registrationNumber: number })
   )
