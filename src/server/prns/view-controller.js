@@ -161,7 +161,7 @@ const discardDraftOverBalance = async (
   await updatePrnStatus(
     keys,
     prnId,
-    { status: 'discarded' },
+    { status: prnStatuses.discarded },
     request.auth.credentials.backendToken
   )
 
@@ -184,7 +184,7 @@ const confirmDraft = async (request, h, { keys, prnId, prnDraft }) => {
   const result = await updatePrnStatus(
     keys,
     prnId,
-    { status: 'awaiting_authorisation' },
+    { status: prnStatuses.awaitingAuthorisation },
     request.auth.credentials.backendToken
   )
 
@@ -309,7 +309,7 @@ async function handleExistingView(
   const displayMaterial = getMaterialDisplayName(registration.material)
 
   const statusConfig = getStatusConfig(prn.status, localise)
-  const isNotDraft = prn.status !== 'draft'
+  const isNotDraft = prn.status !== prnStatuses.draft
 
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,

@@ -73,18 +73,44 @@ describe(fetchPackagingRecyclingNote, () => {
     expect(note.obligation.allowedYears).toStrictEqual([2026, 2027])
   })
 
+  it('should read a discarded note', async ({ msw }) => {
+    msw.use(
+      http.get(/packaging-recycling-notes\/[^/]+$/, () =>
+        HttpResponse.json(
+          buildPrnResource({ status: { current: 'discarded', timeline: [] } })
+        )
+      )
+    )
+
+    const note = await fetchPackagingRecyclingNote(
+      keys,
+      'prn-4',
+      toBackendToken('a-token')
+    )
+
+    expect(note.status).toBe('discarded')
+  })
+
   it.for([
     {
       description: 'offers the same obligation year twice',
-      obligation: { year: 2026, allowedYears: [2026, 2026] }
+      overrides: { obligation: { year: 2026, allowedYears: [2026, 2026] } }
     },
-    { description: 'has no obligation', obligation: undefined }
+    { description: 'has no obligation', overrides: { obligation: undefined } },
+    {
+      description: 'is in a status the service does not know',
+      overrides: { status: { current: 'mislaid', timeline: [] } }
+    },
+    {
+      description: 'is deleted, which the backend never serves',
+      overrides: { status: { current: 'deleted', timeline: [] } }
+    }
   ])(
     'should refuse a note that $description',
-    async ({ obligation }, { msw }) => {
+    async ({ overrides }, { msw }) => {
       msw.use(
         http.get(/packaging-recycling-notes\/[^/]+$/, () =>
-          HttpResponse.json(buildPrnResource({ obligation }))
+          HttpResponse.json({ ...buildPrnResource(), ...overrides })
         )
       )
 

@@ -1,8 +1,10 @@
 import Joi from 'joi'
 
+import { prnStatuses } from '#server/common/constants/statuses.js'
 import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 
 /**
+ * @import { PrnStatus } from '#server/common/constants/statuses.js'
  * @import { AccreditationNumber } from '#server/common/helpers/accreditation-number.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  */
@@ -21,7 +23,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  *   id: string,
  *   prnNumber?: string,
  *   status: {
- *     current: string,
+ *     current: PrnStatus,
  *     timeline: { status: string, at: string, by?: { name: string } }[]
  *   },
  *   issuedToOrganisation: IssuedToOrganisation,
@@ -53,7 +55,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
  *   issuedToOrganisation: IssuedToOrganisation,
  *   tonnage: number,
  *   material: string,
- *   status: string,
+ *   status: PrnStatus,
  *   createdAt: string,
  *   notes: string | null,
  *   isDecemberWaste: boolean,
@@ -74,7 +76,9 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 export const prnResourceSchema = Joi.object({
   id: Joi.string().required(),
   prnNumber: Joi.string(),
-  status: Joi.object({ current: Joi.string().required() }).required(),
+  status: Joi.object({
+    current: Joi.valid(...Object.values(prnStatuses)).required()
+  }).required(),
   issuedToOrganisation: Joi.object({
     id: Joi.string().required(),
     name: Joi.string().required(),

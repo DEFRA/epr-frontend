@@ -1,4 +1,5 @@
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
+import { toPackagingRecyclingNote } from '#server/prns/helpers/prn-resource.js'
 
 /**
  * @import { IssuedToOrganisation, PackagingRecyclingNote, PrnResource } from '#server/prns/helpers/prn-resource.js'
@@ -83,6 +84,17 @@ export const buildPrnResource = (overrides = {}) => ({
   isDecemberWaste: false,
   obligation: { year: 2026, allowedYears: [2026] },
   createdAt: '2026-01-15T10:00:00.000Z',
+  ...overrides
+})
+
+/**
+ * A draft PRN as the pages read it: `buildPrnResource` read through
+ * `toPackagingRecyclingNote`.
+ * @param {Partial<PackagingRecyclingNote>} [overrides]
+ * @returns {PackagingRecyclingNote}
+ */
+export const buildPackagingRecyclingNote = (overrides = {}) => ({
+  ...toPackagingRecyclingNote(buildPrnResource()),
   ...overrides
 })
 
