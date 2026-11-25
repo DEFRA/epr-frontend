@@ -14,11 +14,19 @@ import {
   regulator,
   regulatorWithoutMarketScope
 } from '#server/common/test-helpers/market-insights-fixtures.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+
+import { yearPath } from '../helpers/year-path.js'
+
+const pageUrl = yearPath(
+  paths.regulators.marketInsightsOutstandingReturns,
+  toYear(2026)
+)
 
 /** @import { OutstandingReturnsAggregate } from '../helpers/fetch-outstanding-returns.js' */
 /**
@@ -87,7 +95,7 @@ describe('the outstanding monthly reports page', () => {
     }) => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsOutstandingReturns,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -116,7 +124,7 @@ describe('the outstanding monthly reports page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsOutstandingReturns,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -135,7 +143,7 @@ describe('the outstanding monthly reports page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsOutstandingReturns,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -154,7 +162,7 @@ describe('the outstanding monthly reports page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsOutstandingReturns,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -174,7 +182,7 @@ describe('the outstanding monthly reports page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsOutstandingReturns,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -189,7 +197,7 @@ describe('the outstanding monthly reports page', () => {
       ).toStrictEqual([LANDING_HEADING, 'Missing monthly reports: UK'])
       expect(
         getByRole(trail, 'link', { name: LANDING_HEADING }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsights)
+      ).toBe('/regulators/market-insights/2026')
     })
 
     it('says how the figures are calculated, before the tables', async ({
@@ -197,7 +205,7 @@ describe('the outstanding monthly reports page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsOutstandingReturns,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -246,7 +254,7 @@ describe('the outstanding monthly reports page', () => {
 
       await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsOutstandingReturns,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -272,7 +280,7 @@ describe('the outstanding monthly reports page', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsOutstandingReturns,
+        url: pageUrl,
         auth: operator
       })
 
@@ -290,7 +298,7 @@ describe('the outstanding monthly reports page', () => {
     it('is refused the page, whatever role it carries', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsOutstandingReturns,
+        url: pageUrl,
         auth: regulatorWithoutMarketScope
       })
 
@@ -317,7 +325,7 @@ describe('the outstanding monthly reports page with the flag off', () => {
 
     const { statusCode, result } = await server.inject({
       method: 'GET',
-      url: paths.regulators.marketInsightsOutstandingReturns,
+      url: pageUrl,
       auth: regulator
     })
 
@@ -334,7 +342,7 @@ describe('the outstanding monthly reports page with the flag off', () => {
   }) => {
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: paths.regulators.marketInsightsOutstandingReturns,
+      url: pageUrl,
       auth: regulatorWithoutMarketScope
     })
 

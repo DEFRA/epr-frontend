@@ -1,4 +1,3 @@
-import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
 import { toOrganisationNumber } from '#server/common/helpers/organisation-number.js'
 import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { describe, expect, it } from 'vitest'
@@ -129,48 +128,6 @@ describe(buildViewModel, () => {
       text: 'Approved',
       classes: 'govuk-tag--green'
     })
-  })
-
-  it('tags every year’s accreditation, newest first', () => {
-    const model = build({
-      registrations: {
-        R26ER1: aReprocessor({
-          accreditations: {
-            2025: {
-              accreditationNumber: toAccreditationNumber('A25ER1'),
-              prns: { open: true },
-              status: {
-                current: 'cancelled',
-                timeline: [
-                  { status: 'approved', at: '2025-01-01T09:00:00.000Z' },
-                  { status: 'cancelled', at: '2025-06-01T09:00:00.000Z' }
-                ]
-              }
-            },
-            2026: {
-              accreditationNumber: toAccreditationNumber('A26ER1'),
-              prns: { open: true },
-              status: {
-                current: 'suspended',
-                timeline: [
-                  { status: 'approved', at: '2026-01-01T09:00:00.000Z' },
-                  { status: 'suspended', at: '2026-06-01T09:00:00.000Z' }
-                ]
-              }
-            }
-          }
-        })
-      }
-    })
-
-    expect(firstRow(model).accreditations).toStrictEqual([
-      { text: '2026: Suspended', classes: 'govuk-tag--yellow' },
-      { text: '2025: Cancelled', classes: 'govuk-tag--red' }
-    ])
-  })
-
-  it('tags none where the registration holds none', () => {
-    expect(firstRow(build()).accreditations).toStrictEqual([])
   })
 
   it('keeps the order the organisation lists its registrations in', () => {

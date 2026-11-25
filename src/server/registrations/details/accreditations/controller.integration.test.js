@@ -1,3 +1,4 @@
+import { buildPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
 import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
@@ -111,42 +112,22 @@ const fourLedgerEvents = [1, 2, 3, 4].map((day) => ({
   }
 }))
 
-/** @type {AccreditationDetails['packagingRecyclingNotes']} */
 const packagingRecyclingNotes = [
-  {
+  buildPackagingRecyclingNote({
     id: 'prn-issued',
     prnNumber: '240000123',
     issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
     tonnage: 20,
-    material: 'plastic',
     status: 'accepted',
     createdAt: '2026-01-27T09:00:00.000Z',
-    notes: null,
-    issuedAt: '2026-01-28T09:00:00.000Z',
-    issuedBy: null,
-    wasteProcessingType: 'reprocessor',
-    processToBeUsed: '',
-    accreditationYear: 2026,
-    obligationYear: 2026,
-    isDecemberWaste: false
-  },
-  {
+    issuedAt: '2026-01-28T09:00:00.000Z'
+  }),
+  buildPackagingRecyclingNote({
     id: 'prn-draft',
-    prnNumber: null,
     issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
     tonnage: 5,
-    material: 'plastic',
-    status: 'draft',
-    createdAt: '2026-02-02T09:00:00.000Z',
-    notes: null,
-    issuedAt: null,
-    issuedBy: null,
-    wasteProcessingType: 'reprocessor',
-    processToBeUsed: '',
-    accreditationYear: 2026,
-    obligationYear: 2026,
-    isDecemberWaste: false
-  }
+    createdAt: '2026-02-02T09:00:00.000Z'
+  })
 ]
 
 /** @type {AccreditationDetails} */

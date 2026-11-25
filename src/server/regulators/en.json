@@ -6,6 +6,14 @@
     "signInAgain": "Sign in again"
   },
   "marketInsights": {
+    "chooseYear": {
+      "heading": "Choose a different year",
+      "hint": "Choose a different year for your reported reprocessor and exporter packaging waste data.",
+      "continue": "Continue",
+      "errorSummaryTitle": "There is a problem",
+      "error": "Select a year"
+    },
+    "chooseYearLink": "Choose a different year",
     "dataTakenAt": "Data taken at {{ time }} on {{ date }}",
     "downloadWait": "Files can take up to a minute to prepare before the download starts.",
     "export": {
@@ -125,7 +133,9 @@
       }
     },
     "heading": "Reported reprocessor and exporter packaging waste data",
+    "yearHeading": "{{year}} Reported reprocessor and exporter packaging waste data",
     "linkText": "View reported reprocessor and exporter packaging waste data",
+    "yearData": "This is {{year}} data",
     "outstandingReturns": {
       "bands": {
         "up_to_500": "Up to 500 tonnes",
@@ -153,7 +163,6 @@
         "caption": "Reports not submitted for {{ material }}"
       }
     },
-    "pageTitle": "Reported reprocessor and exporter packaging waste data",
     "period": {
       "month": "{{ month }} {{ year }}",
       "months": "{{ from }} to {{ to }} {{ year }}"

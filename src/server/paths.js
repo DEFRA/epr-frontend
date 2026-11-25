@@ -17,19 +17,22 @@ export const paths = Object.freeze({
     home: '/regulators/home',
     loggedOut: '/regulators/logged-out',
     marketInsights: '/regulators/market-insights',
-    marketInsightsEngland: '/regulators/market-insights/england',
-    marketInsightsExport: '/regulators/market-insights/export.zip',
+    marketInsightsYear: '/regulators/market-insights/{year}',
+    marketInsightsChooseYear: '/regulators/market-insights/{year}/choose-year',
+    marketInsightsEngland: '/regulators/market-insights/{year}/england',
+    marketInsightsExport: '/regulators/market-insights/{year}/export.zip',
     marketInsightsNorthernIreland:
-      '/regulators/market-insights/northern-ireland',
+      '/regulators/market-insights/{year}/northern-ireland',
     marketInsightsOutstandingReturns:
-      '/regulators/market-insights/outstanding-returns',
-    marketInsightsScotland: '/regulators/market-insights/scotland',
-    marketInsightsUk: '/regulators/market-insights/uk',
+      '/regulators/market-insights/{year}/outstanding-returns',
+    marketInsightsScotland: '/regulators/market-insights/{year}/scotland',
+    marketInsightsUk: '/regulators/market-insights/{year}/uk',
     marketInsightsUnredactedWorkbook:
-      '/regulators/market-insights/unredacted-workbook.xlsx',
-    marketInsightsWales: '/regulators/market-insights/wales',
-    marketInsightsWasteBalance: '/regulators/market-insights/waste-balance',
-    marketInsightsWorkbook: '/regulators/market-insights/workbook.xlsx',
+      '/regulators/market-insights/{year}/unredacted-workbook.xlsx',
+    marketInsightsWales: '/regulators/market-insights/{year}/wales',
+    marketInsightsWasteBalance:
+      '/regulators/market-insights/{year}/waste-balance',
+    marketInsightsWorkbook: '/regulators/market-insights/{year}/workbook.xlsx',
     start: '/regulators/start'
   }),
   start: '/start'

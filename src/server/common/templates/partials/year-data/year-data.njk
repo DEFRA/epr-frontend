@@ -1,0 +1,8 @@
+{% if yearDataText %}
+  <div class="govuk-body">
+    <h2 class="govuk-heading-m govuk-!-display-inline">{{ yearDataText }}</h2>
+    {% if chooseYearUrl %}
+      <a class="govuk-link govuk-!-margin-left-2" href="{{ chooseYearUrl }}">{{ chooseYearLinkText }}</a>
+    {% endif %}
+  </div>
+{% endif %}

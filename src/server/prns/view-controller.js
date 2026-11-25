@@ -1,4 +1,5 @@
 import { readsAsARegulator } from '#server/auth/reads-as-a-regulator.js'
+import { prnStatuses } from '#server/common/constants/statuses.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
   badImplementation,
@@ -36,12 +37,6 @@ import { getMaterialDisplayName } from '#server/common/helpers/materials/get-dis
 /**
  * @typedef {{ keys: AccreditationKeys, prnId: string, prnDraft: PrnDraftSession }} DraftParams
  */
-
-/** @type {Record<'PRN' | 'PERN', string>} */
-const COMPLIANCE_YEAR_TEXT_KEY = {
-  PRN: 'prns:view:complianceYearTextPrn',
-  PERN: 'prns:view:complianceYearTextPern'
-}
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
@@ -166,7 +161,7 @@ const discardDraftOverBalance = async (
   await updatePrnStatus(
     keys,
     prnId,
-    { status: 'discarded' },
+    { status: prnStatuses.discarded },
     request.auth.credentials.backendToken
   )
 
@@ -189,7 +184,7 @@ const confirmDraft = async (request, h, { keys, prnId, prnDraft }) => {
   const result = await updatePrnStatus(
     keys,
     prnId,
-    { status: 'awaiting_authorisation' },
+    { status: prnStatuses.awaitingAuthorisation },
     request.auth.credentials.backendToken
   )
 
@@ -289,8 +284,7 @@ async function handleExistingView(
     prn.issuedToOrganisation
   )
 
-  const { noteType, noteTypeFull, noteTypePlural } =
-    getNoteTypeDisplayNames(registration)
+  const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
   const isRegulator = readsAsARegulator(session)
 
@@ -315,12 +309,11 @@ async function handleExistingView(
   const displayMaterial = getMaterialDisplayName(registration.material)
 
   const statusConfig = getStatusConfig(prn.status, localise)
-  const isNotDraft = prn.status !== 'draft'
+  const isNotDraft = prn.status !== prnStatuses.draft
 
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
     localise,
-    noteType,
     statusConfig,
     isNotDraft,
     recipientDisplayName,
@@ -337,7 +330,6 @@ async function handleExistingView(
   const viewData = buildExistingPrnViewData({
     prn,
     noteType,
-    noteTypeFull,
     isNotDraft,
     prnDetailRows,
     accreditationRows,
@@ -356,7 +348,6 @@ async function handleExistingView(
  * @param {{
  *   prn: PackagingRecyclingNote,
  *   noteType: 'PRN' | 'PERN',
- *   noteTypeFull: string,
  *   isNotDraft: boolean,
  *   prnDetailRows: Array<object>,
  *   accreditationRows: Array<object>,
@@ -371,7 +362,6 @@ async function handleExistingView(
 function buildExistingPrnViewData({
   prn,
   noteType,
-  noteTypeFull,
   isNotDraft,
   prnDetailRows,
   accreditationRows,
@@ -383,16 +373,14 @@ function buildExistingPrnViewData({
 }) {
   return {
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
-    heading: noteTypeFull,
+    heading: localise(`prns:noteName:${noteType}`),
     showRegulatorLogos: isNotDraft,
-    complianceYear: isNotDraft
-      ? {
-          textKey: COMPLIANCE_YEAR_TEXT_KEY[noteType],
-          accreditationYear: prn.accreditationYear,
-          obligationYear: prn.obligationYear
-        }
+    noteSummary: prn.issuedAt
+      ? buildNoteSummary(prn, noteType, localise)
       : null,
-    prnDetailsHeading: localise('prns:details:heading', { noteType }),
+    prnDetailsHeading: prn.issuedAt
+      ? null
+      : localise('prns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
     accreditationRows,
@@ -465,36 +453,49 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisation }) {
 }
 
 /**
+ * @param {PackagingRecyclingNote} prn
+ * @param {'PRN' | 'PERN'} noteType
+ * @param {Localise} localise
+ * @returns {{ acceptedTowards: string | null, decemberWasteTag: string | null, number: string | null, yearOfIssue: string }}
+ */
+const buildNoteSummary = (prn, noteType, localise) => ({
+  acceptedTowards:
+    prn.status === prnStatuses.accepted
+      ? localise('prns:view:acceptedTowards', { year: prn.obligation.year })
+      : null,
+  decemberWasteTag:
+    prn.status === prnStatuses.awaitingAcceptance &&
+    prn.obligation.allowedYears.length > 1
+      ? localise('prns:view:decemberWasteTag', {
+          years: prn.obligation.allowedYears.map(String)
+        })
+      : null,
+  number: prn.prnNumber
+    ? localise('prns:view:numberLine', { noteType, number: prn.prnNumber })
+    : null,
+  yearOfIssue: localise('prns:view:yearOfIssue', {
+    year: prn.accreditationYear
+  })
+})
+
+/**
  * Builds the PRN/PERN details rows for an existing PRN (from backend)
  */
 function buildExistingPrnDetailRows({
   prn,
   localise,
-  noteType,
   statusConfig,
   isNotDraft,
   recipientDisplayName,
   organisation
 }) {
-  const rows = [
-    {
-      key: { text: localise('prns:details:numberLabel', { noteType }) },
-      value: { text: prn.prnNumber || '' }
-    }
-  ]
-
-  if (isNotDraft) {
-    rows.push(buildStatusRow(localise, statusConfig))
-  }
-
-  rows.push(
+  return [
+    ...(isNotDraft ? [buildStatusRow(localise, statusConfig)] : []),
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
       issuerName: organisation.displayName
     })
-  )
-
-  return rows
+  ]
 }
 
 /**

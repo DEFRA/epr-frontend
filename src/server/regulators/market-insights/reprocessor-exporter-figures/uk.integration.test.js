@@ -16,6 +16,7 @@ import {
   reprocessorOf,
   totalsOf
 } from '#server/common/test-helpers/market-insights-fixtures.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
@@ -26,6 +27,10 @@ import {
 } from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+
+import { yearPath } from '../helpers/year-path.js'
+
+const pageUrl = yearPath(paths.regulators.marketInsightsUk, toYear(2026))
 
 /**
  * @import { ReprocessorExporterAggregate } from '../helpers/fetch-reprocessor-exporter-figures.js'
@@ -156,12 +161,26 @@ describe('the UK reprocessor and exporter figures page', () => {
       msw.use(servesJanuaryToMarch)
     })
 
+    it('has no page for a year with no finished month', async ({ server }) => {
+      vi.setSystemTime(new Date('2027-01-15T09:00:00.000Z'))
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: yearPath(paths.regulators.marketInsightsUk, toYear(2027)),
+        auth: regulator
+      })
+
+      vi.setSystemTime(new Date('2026-04-10T09:00:00.000Z'))
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
     it('gives every month served a region the keyboard can scroll sideways', async ({
       server
     }) => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -188,7 +207,7 @@ describe('the UK reprocessor and exporter figures page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -209,7 +228,7 @@ describe('the UK reprocessor and exporter figures page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -290,7 +309,7 @@ describe('the UK reprocessor and exporter figures page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -440,7 +459,7 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -546,7 +565,7 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -605,7 +624,7 @@ describe('the UK reprocessor and exporter figures page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -627,7 +646,7 @@ describe('the UK reprocessor and exporter figures page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -645,7 +664,7 @@ describe('the UK reprocessor and exporter figures page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -660,7 +679,7 @@ describe('the UK reprocessor and exporter figures page', () => {
       ).toStrictEqual([LANDING_HEADING, 'Reprocessor and exporter figures: UK'])
       expect(
         getByRole(trail, 'link', { name: LANDING_HEADING }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsights)
+      ).toBe('/regulators/market-insights/2026')
     })
 
     it('says what the figures are made of, and how they are calculated, after the tables', async ({
@@ -668,7 +687,7 @@ describe('the UK reprocessor and exporter figures page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -707,7 +726,7 @@ describe('the UK reprocessor and exporter figures page', () => {
         getByRole(body, 'link', {
           name: 'published (redacted) data workbook (XLSX)'
         }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsightsWorkbook)
+      ).toBe('/regulators/market-insights/2026/workbook.xlsx')
     })
 
     it('asks for the reporting period through the last complete month, and for nothing else', async ({
@@ -726,7 +745,7 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -752,7 +771,7 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: operator
       })
 
@@ -770,7 +789,7 @@ describe('the UK reprocessor and exporter figures page', () => {
     it('is refused the page, whatever role it carries', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsUk,
+        url: pageUrl,
         auth: regulatorWithoutMarketScope
       })
 
@@ -797,7 +816,7 @@ describe('the UK reprocessor and exporter figures page with the flag off', () =>
 
     const { statusCode, result } = await server.inject({
       method: 'GET',
-      url: paths.regulators.marketInsightsUk,
+      url: pageUrl,
       auth: regulator
     })
 
@@ -814,7 +833,7 @@ describe('the UK reprocessor and exporter figures page with the flag off', () =>
   }) => {
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: paths.regulators.marketInsightsUk,
+      url: pageUrl,
       auth: regulatorWithoutMarketScope
     })
 
