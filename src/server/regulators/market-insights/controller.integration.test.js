@@ -8,11 +8,19 @@ import {
   regulator,
   regulatorWithoutMarketScope
 } from '#server/common/test-helpers/market-insights-fixtures.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { paths } from '#server/paths.js'
 import { it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole, queryByRole } from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+
+import { offeredYears } from './helpers/offered-years.js'
+import { yearPath } from './helpers/year-path.js'
+
+vi.mock(import('./helpers/offered-years.js'))
+
+const landingUrl = yearPath(paths.regulators.marketInsightsYear, toYear(2026))
 
 const backendUrl = config.get('eprBackendUrl')
 const marketInsightsUrl = `${backendUrl}/v1/market-insights/*`
@@ -39,31 +47,34 @@ const HOME_LINK = 'View reported reprocessor and exporter packaging waste data'
 const FIGURE_SETS = [
   {
     name: 'UK waste balance',
-    href: paths.regulators.marketInsightsWasteBalance
+    href: yearPath(paths.regulators.marketInsightsWasteBalance, toYear(2026))
   },
   {
     name: 'Reprocessor and exporter figures: UK',
-    href: paths.regulators.marketInsightsUk
+    href: yearPath(paths.regulators.marketInsightsUk, toYear(2026))
   },
   {
     name: 'Reprocessor and exporter figures: England',
-    href: paths.regulators.marketInsightsEngland
+    href: yearPath(paths.regulators.marketInsightsEngland, toYear(2026))
   },
   {
     name: 'Reprocessor and exporter figures: Wales',
-    href: paths.regulators.marketInsightsWales
+    href: yearPath(paths.regulators.marketInsightsWales, toYear(2026))
   },
   {
     name: 'Reprocessor and exporter figures: Scotland',
-    href: paths.regulators.marketInsightsScotland
+    href: yearPath(paths.regulators.marketInsightsScotland, toYear(2026))
   },
   {
     name: 'Reprocessor and exporter figures: Northern Ireland',
-    href: paths.regulators.marketInsightsNorthernIreland
+    href: yearPath(paths.regulators.marketInsightsNorthernIreland, toYear(2026))
   },
   {
     name: 'Missing monthly reports: UK',
-    href: paths.regulators.marketInsightsOutstandingReturns
+    href: yearPath(
+      paths.regulators.marketInsightsOutstandingReturns,
+      toYear(2026)
+    )
   }
 ]
 
@@ -83,11 +94,15 @@ const figureSetLinksOf = (body) =>
 
 describe('the market insights page', () => {
   beforeAll(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-04-10T09:00:00.000Z'))
+    vi.mocked(offeredYears).mockReturnValue([toYear(2026)])
     config.set('featureFlags.regulatorAccess', true)
     config.set('featureFlags.marketInsights', true)
   })
 
   afterAll(() => {
+    vi.useRealTimers()
     config.set('featureFlags.regulatorAccess', false)
     config.set('featureFlags.marketInsights', false)
   })
@@ -96,7 +111,7 @@ describe('the market insights page', () => {
     it('is offered a page for each set of figures', async ({ server }) => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: landingUrl,
         auth: regulator
       })
 
@@ -121,7 +136,7 @@ describe('the market insights page', () => {
 
       await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: landingUrl,
         auth: regulator
       })
 
@@ -133,7 +148,7 @@ describe('the market insights page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: landingUrl,
         auth: regulator
       })
 
@@ -141,7 +156,7 @@ describe('the market insights page', () => {
         getByRole(documentOf(asHtml(result)), 'link', {
           name: 'Download the published (redacted) data workbook (XLSX)'
         }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsightsWorkbook)
+      ).toBe(yearPath(paths.regulators.marketInsightsWorkbook, toYear(2026)))
     })
 
     it('is offered the unredacted workbook as a download of its own', async ({
@@ -149,7 +164,7 @@ describe('the market insights page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: landingUrl,
         auth: regulator
       })
 
@@ -157,7 +172,12 @@ describe('the market insights page', () => {
         getByRole(documentOf(asHtml(result)), 'link', {
           name: 'Download the unredacted data workbook (XLSX)'
         }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsightsUnredactedWorkbook)
+      ).toBe(
+        yearPath(
+          paths.regulators.marketInsightsUnredactedWorkbook,
+          toYear(2026)
+        )
+      )
     })
 
     it('is offered every figure behind those pages as one download', async ({
@@ -165,7 +185,7 @@ describe('the market insights page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: landingUrl,
         auth: regulator
       })
 
@@ -173,13 +193,13 @@ describe('the market insights page', () => {
         getByRole(documentOf(asHtml(result)), 'link', {
           name: 'Download all the figures (ZIP)'
         }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsightsExport)
+      ).toBe(yearPath(paths.regulators.marketInsightsExport, toYear(2026)))
     })
 
     it('names the page for the data it holds', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: landingUrl,
         auth: regulator
       })
 
@@ -198,7 +218,7 @@ describe('the market insights page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: landingUrl,
         auth: regulator
       })
 
@@ -209,6 +229,7 @@ describe('the market insights page', () => {
           heading.textContent.trim()
         )
       ).toStrictEqual([
+        'This is 2026 data',
         'Download aggregated data',
         'Data specific pages',
         'Download the figures'
@@ -217,6 +238,78 @@ describe('the market insights page', () => {
         'Files can take up to a minute to prepare before the download starts.'
       )
       expect(main.textContent).not.toContain(NOTICE)
+    })
+
+    it('says which year the data is for', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: landingUrl,
+        auth: regulator
+      })
+
+      expect(
+        getByRole(documentOf(asHtml(result)), 'heading', {
+          level: 2,
+          name: 'This is 2026 data'
+        })
+      ).not.toBeNull()
+    })
+
+    it('offers no other year while only one is offered', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: landingUrl,
+        auth: regulator
+      })
+
+      expect(
+        queryByRole(documentOf(asHtml(result)), 'link', {
+          name: 'Choose a different year'
+        })
+      ).toBeNull()
+    })
+
+    it('offers a choice of year once more than one is offered', async ({
+      server
+    }) => {
+      vi.mocked(offeredYears).mockReturnValue([toYear(2027), toYear(2026)])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: landingUrl,
+        auth: regulator
+      })
+
+      vi.mocked(offeredYears).mockReturnValue([toYear(2026)])
+
+      expect(
+        getByRole(documentOf(asHtml(result)), 'link', {
+          name: 'Choose a different year'
+        }).getAttribute('href')
+      ).toBe('/regulators/market-insights/2026/choose-year')
+    })
+
+    it('has no page for a year not offered', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: yearPath(paths.regulators.marketInsightsYear, toYear(2025)),
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('is sent from the year-less address to the current reporting year', async ({
+      server
+    }) => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/regulators/market-insights/2026')
     })
 
     it('reaches the page from the regulator area', async ({ msw, server }) => {
@@ -240,7 +333,7 @@ describe('the market insights page', () => {
     it('is refused the page', async ({ server }) => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: landingUrl,
         auth: operator
       })
 
@@ -257,7 +350,7 @@ describe('the market insights page', () => {
     it('is refused the page, whatever role it carries', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsights,
+        url: landingUrl,
         auth: regulatorWithoutMarketScope
       })
 
@@ -283,22 +376,45 @@ describe('the market insights page', () => {
       ).toBeNull()
     })
   })
+
+  it.for([
+    { description: 'an operator', auth: operator },
+    {
+      description: 'a session with no market data scope',
+      auth: regulatorWithoutMarketScope
+    }
+  ])(
+    'refuses $description the year-less address',
+    async ({ auth }, { server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: paths.regulators.marketInsights,
+        auth
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    }
+  )
 })
 
 describe('the market insights page with the flag off', () => {
   beforeAll(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-04-10T09:00:00.000Z'))
+    vi.mocked(offeredYears).mockReturnValue([toYear(2026)])
     config.set('featureFlags.regulatorAccess', true)
     config.set('featureFlags.marketInsights', false)
   })
 
   afterAll(() => {
+    vi.useRealTimers()
     config.set('featureFlags.regulatorAccess', false)
   })
 
   it('still answers a regulator who types the URL', async ({ server }) => {
     const { statusCode, result } = await server.inject({
       method: 'GET',
-      url: paths.regulators.marketInsights,
+      url: landingUrl,
       auth: regulator
     })
 
@@ -316,7 +432,7 @@ describe('the market insights page with the flag off', () => {
   }) => {
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: paths.regulators.marketInsights,
+      url: landingUrl,
       auth: regulatorWithoutMarketScope
     })
 

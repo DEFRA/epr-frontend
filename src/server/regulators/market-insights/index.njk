@@ -7,6 +7,8 @@
     <div class="govuk-grid-column-two-thirds">
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
+      {% include "partials/year-data/year-data.njk" %}
+
       <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:workbook:heading') }}</h2>
       <p class="govuk-body">{{ workbookDescription }}</p>
       {{ govukInsetText({ text: localise('regulators:marketInsights:downloadWait') }) }}
