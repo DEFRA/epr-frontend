@@ -5,18 +5,39 @@ import { formatDate } from '#server/common/helpers/format-date.js'
  */
 
 /**
- * The period an accreditation covers within its year, as a reader sees it,
- * naming the year once at the end. One with no accredited day names no period.
- * Shared by the registration and accreditation pages so a period reads the
- * same wherever it appears.
+ * @param {string} from
+ * @param {string} to
+ * @returns {boolean}
+ */
+const inSameYear = (from, to) =>
+  new Date(from).getUTCFullYear() === new Date(to).getUTCFullYear()
+
+/**
+ * The period a record is valid over, as a reader sees it. A record that has
+ * not started names no period at all; one that has started and has no end is
+ * current. A period that starts and ends in one year names that year once, at
+ * the end. Shared by the registration and accreditation pages so a period
+ * reads the same wherever it appears.
  * @param {DateRange} dateRange
  * @param {Localise} localise
  * @returns {string}
  */
-export const toDateRange = ({ validFrom, validTo }, localise) =>
-  validFrom && validTo
-    ? localise('registrations:details:period', {
-        from: formatDate(validFrom, { includeYear: false }),
-        to: formatDate(validTo)
-      })
-    : ''
+export const toDateRange = ({ validFrom, validTo }, localise) => {
+  if (!validFrom) {
+    return ''
+  }
+
+  if (!validTo) {
+    return localise('registrations:details:period', {
+      from: formatDate(validFrom),
+      to: localise('registrations:details:current')
+    })
+  }
+
+  return localise('registrations:details:period', {
+    from: formatDate(validFrom, {
+      includeYear: !inSameYear(validFrom, validTo)
+    }),
+    to: formatDate(validTo)
+  })
+}

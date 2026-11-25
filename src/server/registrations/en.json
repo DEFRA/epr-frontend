@@ -97,6 +97,7 @@
       "view": "View reg-only period"
     },
     "allOrganisations": "All organisations",
+    "current": "Current",
     "period": "{{from}} to {{to}}",
     "heading": "Registration details",
     "summary": {
