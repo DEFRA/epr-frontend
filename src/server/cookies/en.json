@@ -29,7 +29,7 @@
   },
   "heading": "Cookies",
   "intro1": "Cookies are small files saved on your phone, tablet or computer when you visit a website.",
-  "intro2": "We use cookies to make '{{ serviceName }}' work and collect information about how you use our service.",
+  "intro2": "We use cookies to make '{{serviceName}}' work and collect information about how you use our service.",
   "pageTitle": "Cookies",
   "table": {
     "name": "Name",

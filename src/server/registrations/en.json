@@ -109,7 +109,7 @@
       "status": "Status"
     }
   },
-  "heading": "{{ material }} ({{ year }})",
+  "heading": "{{material}} ({{year}})",
   "manageReports": "Manage reports",
   "manageReportsReadOnly": "View reports",
   "notes": {
@@ -120,9 +120,9 @@
     "manage": "Manage {{noteTypePlural}}",
     "manageReadOnly": "View {{noteTypePlural}}"
   },
-  "pageTitle": "{{ siteName }}: {{ material }} ({{ year }})",
+  "pageTitle": "{{siteName}}: {{material}} ({{year}})",
   "reapplyAccreditationLead": "You can now",
-  "reapplyAccreditationLink": "apply for {{ year }} accreditation",
+  "reapplyAccreditationLink": "apply for {{year}} accreditation",
   "registration": "Registration",
   "registrationAndAccreditation": "Registration and accreditation",
   "registrationAndAccreditationDescription": "View and manage your applications.",
