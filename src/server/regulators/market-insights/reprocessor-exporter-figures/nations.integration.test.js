@@ -12,11 +12,14 @@ import {
   reprocessorOf,
   totalsOf
 } from '#server/common/test-helpers/market-insights-fixtures.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+
+import { yearPath } from '../helpers/year-path.js'
 
 /** @import { Nation, ReprocessorExporterAggregate } from '../helpers/fetch-reprocessor-exporter-figures.js' */
 
@@ -84,21 +87,24 @@ const servesNation = http.get(nationFiguresUrl, () =>
 const NATIONS = [
   {
     nation: 'Wales',
-    path: paths.regulators.marketInsightsWales,
+    path: yearPath(paths.regulators.marketInsightsWales, toYear(2026)),
     segment: 'wales',
     scope:
       'These figures relate to operators registered with Natural Resources Wales, the regulator for Wales.'
   },
   {
     nation: 'Scotland',
-    path: paths.regulators.marketInsightsScotland,
+    path: yearPath(paths.regulators.marketInsightsScotland, toYear(2026)),
     segment: 'scotland',
     scope:
       'These figures relate to operators registered with the Scottish Environment Protection Agency, the regulator for Scotland.'
   },
   {
     nation: 'Northern Ireland',
-    path: paths.regulators.marketInsightsNorthernIreland,
+    path: yearPath(
+      paths.regulators.marketInsightsNorthernIreland,
+      toYear(2026)
+    ),
     segment: 'northern-ireland',
     scope:
       'These figures relate to operators registered with the Northern Ireland Environment Agency, the regulator for Northern Ireland.'
@@ -256,7 +262,7 @@ describe.each(NATIONS)(
           getByRole(trail, 'link', { name: LANDING_HEADING }).getAttribute(
             'href'
           )
-        ).toBe(paths.regulators.marketInsights)
+        ).toBe('/regulators/market-insights/2026')
       })
 
       it('says how the tables are compiled in the words agreed for a nation, and nothing is still being built', async ({
