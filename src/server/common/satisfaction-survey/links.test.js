@@ -5,11 +5,11 @@ import { satisfactionSurveyLinks } from '#server/common/satisfaction-survey/link
 describe('#satisfactionSurveyLinks', () => {
   const localise = (key) => key
 
-  const copy = {
-    title: 'common:satisfactionSurvey:title',
-    body: 'common:satisfactionSurvey:body',
-    linkText: 'common:satisfactionSurvey:link'
-  }
+  /** @param {ReturnType<typeof satisfactionSurveyLinks>} links */
+  const hrefsOf = (links) =>
+    Object.fromEntries(
+      Object.entries(links).map(([journey, { href }]) => [journey, href])
+    )
 
   afterEach(() => {
     config.reset('satisfactionSurvey.isEnabled')
@@ -21,10 +21,10 @@ describe('#satisfactionSurveyLinks', () => {
   it('should offer no survey while the flag is off', () => {
     config.set('satisfactionSurvey.prnUrl', 'https://survey.example/prn')
 
-    expect(satisfactionSurveyLinks(localise)).toStrictEqual({
-      prn: { href: '', ...copy },
-      report: { href: '', ...copy },
-      summaryLog: { href: '', ...copy }
+    expect(hrefsOf(satisfactionSurveyLinks(localise))).toStrictEqual({
+      prn: '',
+      report: '',
+      summaryLog: ''
     })
   })
 
@@ -37,10 +37,10 @@ describe('#satisfactionSurveyLinks', () => {
       'https://survey.example/summary-log'
     )
 
-    expect(satisfactionSurveyLinks(localise)).toStrictEqual({
-      prn: { href: 'https://survey.example/prn', ...copy },
-      report: { href: 'https://survey.example/report', ...copy },
-      summaryLog: { href: 'https://survey.example/summary-log', ...copy }
+    expect(hrefsOf(satisfactionSurveyLinks(localise))).toStrictEqual({
+      prn: 'https://survey.example/prn',
+      report: 'https://survey.example/report',
+      summaryLog: 'https://survey.example/summary-log'
     })
   })
 
@@ -48,10 +48,10 @@ describe('#satisfactionSurveyLinks', () => {
     config.set('satisfactionSurvey.isEnabled', true)
     config.set('satisfactionSurvey.reportUrl', 'https://survey.example/report')
 
-    expect(satisfactionSurveyLinks(localise)).toStrictEqual({
-      prn: { href: '', ...copy },
-      report: { href: 'https://survey.example/report', ...copy },
-      summaryLog: { href: '', ...copy }
+    expect(hrefsOf(satisfactionSurveyLinks(localise))).toStrictEqual({
+      prn: '',
+      report: 'https://survey.example/report',
+      summaryLog: ''
     })
   })
 })

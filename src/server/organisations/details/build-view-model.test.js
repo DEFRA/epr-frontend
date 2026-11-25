@@ -91,11 +91,8 @@ const numbersOf = (viewModel) =>
   )
 
 describe(buildViewModel, () => {
-  it('names the organisation in the caption and title', () => {
-    expect(build()).toMatchObject({
-      caption: 'Kirkby Plastics Ltd',
-      pageTitle: 'Kirkby Plastics Ltd: Organisation homepage'
-    })
+  it('names the organisation in the caption', () => {
+    expect(build().caption).toBe('Kirkby Plastics Ltd')
   })
 
   it('walks back to the organisation list', () => {

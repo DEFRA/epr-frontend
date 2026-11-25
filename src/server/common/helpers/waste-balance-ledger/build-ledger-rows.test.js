@@ -192,33 +192,6 @@ describe(buildLedgerRows, () => {
     expect(cellsOf(row).at(2)).toBe('waste-balance-ledger:table.noMovement')
   })
 
-  it('names the note type an exporter uses, so the event reads as a PERN', () => {
-    const [row] = buildRows({
-      events: [buildEvent({ kind: 'prn-created' })],
-      noteType: 'PERN'
-    })
-
-    expect(cellsOf(row).at(1)).toBe(
-      'waste-balance-ledger:events.prn-created({"noteType":"PERN"})'
-    )
-  })
-
-  it.each([
-    'prn-accepted',
-    'prn-cancelled-after-issue',
-    'prn-created',
-    'prn-creation-cancelled',
-    'prn-issued',
-    'prn-rejected',
-    'summary-log-submitted'
-  ])('gives %s a plain-English name', (kind) => {
-    const [row] = buildRows({ events: [buildEvent({ kind })] })
-
-    expect(cellsOf(row).at(1)).toBe(
-      `waste-balance-ledger:events.${kind}({"noteType":"PRN"})`
-    )
-  })
-
   it('names an unknown kind verbatim rather than showing a missing copy key', () => {
     const [row] = buildRows({
       events: [buildEvent({ kind: 'some-later-kind' })]

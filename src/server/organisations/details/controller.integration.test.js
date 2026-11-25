@@ -209,6 +209,14 @@ describe('the organisation homepage a regulator reads', () => {
     expect(documentOf(body).textContent).toContain('Kirkby Plastics Ltd')
   })
 
+  it('titles the page by the organisation', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(documentOf(body).ownerDocument.title).toContain(
+      'Kirkby Plastics Ltd: Organisation homepage'
+    )
+  })
+
   it('reads the whole organisation, not one year of it', async ({ server }) => {
     await visit(server, regulator)
 
