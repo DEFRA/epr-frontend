@@ -8,6 +8,7 @@ import {
 } from '#server/common/test-helpers/dom.js'
 import {
   bandsOf,
+  LANDING_HEADING,
   NOTICE,
   operator,
   regulator,
@@ -148,7 +149,7 @@ describe('the outstanding monthly reports page', () => {
       ).not.toBeNull()
     })
 
-    it('says the page is still being built, above the description', async ({
+    it('is named for the reports that are missing, and says nothing is still being built', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -157,11 +158,15 @@ describe('the outstanding monthly reports page', () => {
         auth: regulator
       })
 
-      const heading = getByRole(documentOf(asHtml(result)), 'heading', {
-        level: 1
-      })
+      const body = documentOf(asHtml(result))
 
-      expect(heading.nextElementSibling?.textContent.trim()).toBe(NOTICE)
+      expect(getByRole(body, 'heading', { level: 1 }).textContent).toContain(
+        'Missing monthly reports: UK'
+      )
+      expect(body.ownerDocument.title).toMatch(
+        /^Missing monthly reports: UK \|/
+      )
+      expect(body.textContent).not.toContain(NOTICE)
     })
 
     it('leads back to the page listing the sets of figures', async ({
@@ -181,11 +186,9 @@ describe('the outstanding monthly reports page', () => {
         getAllByRole(trail, 'listitem').map((crumb) =>
           (crumb.textContent ?? '').trim()
         )
-      ).toStrictEqual(['Market insights', 'Outstanding monthly reports: UK'])
+      ).toStrictEqual([LANDING_HEADING, 'Missing monthly reports: UK'])
       expect(
-        getByRole(trail, 'link', { name: 'Market insights' }).getAttribute(
-          'href'
-        )
+        getByRole(trail, 'link', { name: LANDING_HEADING }).getAttribute('href')
       ).toBe(paths.regulators.marketInsights)
     })
 
