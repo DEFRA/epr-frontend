@@ -48,7 +48,10 @@ export const chooseYearController = {
       ),
       errorText: localise('regulators:marketInsights:chooseYear:error'),
       backUrl: landingFor(addressYear),
-      items: buildYearChoices(years),
+      items: buildYearChoices(years).map((item) => ({
+        ...item,
+        checked: item.value === String(addressYear)
+      })),
       // An unchecked radio sends no `year`, so only Continue's `continue` shows a submission
       error: pressedContinue !== undefined
     })

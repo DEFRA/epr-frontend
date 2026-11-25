@@ -34,9 +34,11 @@ export const controller = {
     /** @param {string} path */
     const hrefFor = (path) => request.localiseUrl(yearPath(path, year))
 
+    const heading = localise('regulators:marketInsights:yearHeading', { year })
+
     return h.view('regulators/market-insights/index', {
-      pageTitle: localise('regulators:marketInsights:pageTitle'),
-      heading: localise('regulators:marketInsights:heading'),
+      pageTitle: heading,
+      heading,
       yearDataText: localise('regulators:marketInsights:yearData', { year }),
       ...(years.length > 1 && {
         chooseYearUrl: hrefFor(paths.regulators.marketInsightsChooseYear),

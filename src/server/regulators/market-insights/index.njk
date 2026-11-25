@@ -5,9 +5,9 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-xl">{{ heading }}</h1>
-
       {% include "partials/year-data/year-data.njk" %}
+
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
       <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:workbook:heading') }}</h2>
       <p class="govuk-body">{{ workbookDescription }}</p>

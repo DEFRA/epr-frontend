@@ -39,7 +39,7 @@ describe('choosing a different year of market insights', () => {
   })
 
   describe('the page', () => {
-    it('offers each year offered, newest first, none selected', async ({
+    it('offers each year offered, newest first, with the year being viewed selected', async ({
       server
     }) => {
       const { payload } = await choose(server)
@@ -50,7 +50,15 @@ describe('choosing a different year of market insights', () => {
           .map((_, input) => $(input).val())
           .get()
       ).toStrictEqual(['2027', '2026'])
-      expect($('input[name=year]:checked')).toHaveLength(0)
+      expect($('input[name=year]:checked').val()).toBe('2026')
+    })
+
+    it('says what choosing a year is for', async ({ server }) => {
+      const { payload } = await choose(server)
+
+      expect(load(payload)('.govuk-hint').text().trim()).toBe(
+        'Choose a different year for your reported reprocessor and exporter packaging waste data.'
+      )
     })
 
     it('goes back to the market insights page of the year in the address', async ({

@@ -196,7 +196,9 @@ describe('the market insights page', () => {
       ).toBe(yearPath(paths.regulators.marketInsightsExport, toYear(2026)))
     })
 
-    it('names the page for the data it holds', async ({ server }) => {
+    it('names the page for the data it holds and its year', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: landingUrl,
@@ -206,10 +208,10 @@ describe('the market insights page', () => {
       const body = documentOf(asHtml(result))
 
       expect(getByRole(body, 'heading', { level: 1 }).textContent.trim()).toBe(
-        LANDING_HEADING
+        `2026 ${LANDING_HEADING}`
       )
       expect(body.ownerDocument.title).toMatch(
-        new RegExp(`^${LANDING_HEADING} \\|`)
+        new RegExp(`^2026 ${LANDING_HEADING} \\|`)
       )
     })
 
@@ -240,19 +242,26 @@ describe('the market insights page', () => {
       expect(main.textContent).not.toContain(NOTICE)
     })
 
-    it('says which year the data is for', async ({ server }) => {
+    it('says which year the data is for, above the page heading', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: landingUrl,
         auth: regulator
       })
 
+      const body = documentOf(asHtml(result))
+      const yearLine = getByRole(body, 'heading', {
+        level: 2,
+        name: 'This is 2026 data'
+      })
+
       expect(
-        getByRole(documentOf(asHtml(result)), 'heading', {
-          level: 2,
-          name: 'This is 2026 data'
-        })
-      ).not.toBeNull()
+        yearLine.compareDocumentPosition(
+          getByRole(body, 'heading', { level: 1 })
+        )
+      ).toBe(yearLine.DOCUMENT_POSITION_FOLLOWING)
     })
 
     it('offers no other year while only one is offered', async ({ server }) => {
