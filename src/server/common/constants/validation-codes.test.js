@@ -264,6 +264,19 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('DATA_ENTRY_INVALID')
   })
 
+  test.each([
+    ['PREVIOUS_YEAR_ROW_NOT_FOUND', 'PREVIOUS_YEAR_ROW_ID'],
+    ['PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR', 'DATE_RECEIVED_BY_OSR'],
+    [
+      'PREVIOUS_YEAR_ROW_REPATRIATED',
+      'DATE_THE_REFUSED_STOPPED_WASTE_REPATRIATED'
+    ]
+  ])('returns DATA_ENTRY_INVALID for %s on %s', (errorCode, header) => {
+    expect(getDisplayCodeFromErrorCode(errorCode, header)).toBe(
+      'DATA_ENTRY_INVALID'
+    )
+  })
+
   test('returns PERCENTAGE_FORMAT_INVALID for MUST_BE_AT_LEAST_ZERO with UK_PACKAGING_WEIGHT_PERCENTAGE header', () => {
     expect(
       getDisplayCodeFromErrorCode(

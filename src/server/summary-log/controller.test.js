@@ -1468,6 +1468,168 @@ describe('#summaryLogUploadProgressController', () => {
         expect(problem).toBe('Check this value')
       })
 
+      const REPATRIATED_LOAD_PROBLEM =
+        'Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation date in ‘Date received for export’.'
+
+      const REGISTERED_ONLY_REPATRIATED_LOAD_PROBLEM =
+        'Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation month in ‘Month received for export’.'
+
+      const REGISTERED_ONLY_LOCATION = {
+        sheet: 'Exported (sections 2 and 3)',
+        table: 'LOADS_EXPORTED'
+      }
+
+      const COMPLETE_ROW_PROBLEM =
+        'Row 1000 in your 2026 summary log is complete, so cannot be linked to your 2027 log'
+
+      it.for([
+        {
+          name: 'a previous year row ID that names no 2026 row',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
+            actual: 1888,
+            header: 'PREVIOUS_YEAR_ROW_ID'
+          },
+          expected: [
+            'Previous year Row ID',
+            '1888',
+            'Previous year Row ID (1888) not found in your 2026 summary log'
+          ]
+        },
+        {
+          name: 'a link to a complete 2026 row',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR',
+            actual: '2026-12-14',
+            previousYearRowId: '1000',
+            header: 'DATE_RECEIVED_BY_OSR'
+          },
+          expected: ['Date received by OSR', '14/12/2026', COMPLETE_ROW_PROBLEM]
+        },
+        {
+          name: 'a link to a repatriated 2026 row',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_REPATRIATED',
+            actual: '2026-12-20',
+            previousYearRowId: '1000',
+            header: 'DATE_THE_REFUSED_STOPPED_WASTE_REPATRIATED'
+          },
+          expected: [
+            'Date that the stopped or refused waste was repatriated',
+            '20/12/2026',
+            REPATRIATED_LOAD_PROBLEM
+          ]
+        },
+        {
+          name: 'a registered-only link to a 2026 load neither refused nor stopped',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR',
+            actual: 'No',
+            previousYearRowId: '1000',
+            header: 'WAS_THE_WASTE_STOPPED'
+          },
+          location: REGISTERED_ONLY_LOCATION,
+          expected: ['Was the waste stopped', 'No', COMPLETE_ROW_PROBLEM]
+        },
+        {
+          name: 'a registered-only link to a repatriated 2026 load',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_REPATRIATED',
+            actual: '2026-12-20',
+            previousYearRowId: '1000',
+            header: 'DATE_THE_REFUSED_STOPPED_WASTE_REPATRIATED'
+          },
+          location: REGISTERED_ONLY_LOCATION,
+          expected: [
+            'Date that the stopped or refused waste was repatriated',
+            '20/12/2026',
+            REGISTERED_ONLY_REPATRIATED_LOAD_PROBLEM
+          ]
+        },
+        {
+          name: 'a previous year row ID that names no row, without the row ID',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
+            actual: undefined,
+            header: 'PREVIOUS_YEAR_ROW_ID'
+          },
+          expected: ['Previous year Row ID', '(empty)', 'Check this value']
+        },
+        {
+          name: 'a link to a complete 2026 row with a blank row it names',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR',
+            actual: '2026-12-14',
+            previousYearRowId: ' ',
+            header: 'DATE_RECEIVED_BY_OSR'
+          },
+          expected: ['Date received by OSR', '14/12/2026', 'Check this value']
+        },
+        {
+          name: 'a previous year row ID that names no row, without the year',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
+            actual: 1888,
+            expected: undefined,
+            header: 'PREVIOUS_YEAR_ROW_ID'
+          },
+          expected: ['Previous year Row ID', '1888', 'Check this value']
+        },
+        {
+          name: 'a link to a complete 2026 row without the row it names',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR',
+            actual: '2026-12-14',
+            previousYearRowId: undefined,
+            header: 'DATE_RECEIVED_BY_OSR'
+          },
+          expected: ['Date received by OSR', '14/12/2026', 'Check this value']
+        }
+      ])(
+        'should show $name',
+        async (
+          { failure: { header, ...failure }, location, expected },
+          { server }
+        ) => {
+          mockFetchSummaryLogStatus.mockResolvedValueOnce(
+            failedStatus({
+              status: summaryLogStatuses.invalid,
+              validation: {
+                failures: [
+                  {
+                    code: 'PREVIOUS_YEAR_LINK',
+                    expected: 2026,
+                    ...failure,
+                    location: {
+                      sheet: 'Exported (sections 1, 2 and 3)',
+                      table: 'RECEIVED_LOADS_FOR_EXPORT',
+                      row: 12,
+                      rowId: '1001',
+                      column: 'C',
+                      header,
+                      ...location
+                    }
+                  }
+                ]
+              }
+            })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
+
+          const cellTable = getByRole(pageBody(result), 'table')
+          const [, , columnLabel, , value, problem] = rowCells(
+            dataRows(cellTable)[0]
+          )
+
+          expect([columnLabel, value, problem]).toStrictEqual(expected)
+        }
+      )
+
       const earlierYear = (deadline) =>
         `Year cannot be earlier than 2027. You’ll need to add it in your 2026 summary log by ${deadline}.`
 
