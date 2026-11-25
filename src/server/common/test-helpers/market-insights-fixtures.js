@@ -60,15 +60,8 @@ export const NATION_WORDING = {
   accreditations:
     'A report is only counted if the accreditation it relates to is currently approved or suspended. Where an accreditation has been cancelled, it counts neither as a submission nor as a non-submission for the relevant period. Any tonnage associated with a cancelled accreditation will remain in the waste balance so as not to distort the overall picture of packaging waste reprocessing and export.',
   marked:
-    'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Figures are also marked ‘c’ when no operators were accredited for it, but another figure in the same row holds data (for example, a late report from an operator cancelled for the whole month). Rows with no accredited operators and nothing in them are not marked ‘c’.'
+    'Figures are marked [c] to show that the data came from only 1 or 2 operators. Figures are also marked [c] when no operators were accredited for it, but another figure in the same row holds data (for example, a late report from an operator cancelled for the whole month). Rows with no accredited operators and nothing in them are not marked [c].'
 }
-
-/**
- * The key a table carries, as its description, when a figure in it is marked
- * as coming from few operators.
- */
-export const CONFIDENTIAL_KEY =
-  'Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because fewer than three operators were accredited for it.'
 
 /** @returns {ReprocessorFigures} */
 const noReprocessorFigures = () => ({

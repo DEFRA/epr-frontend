@@ -2,7 +2,6 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHtml, documentOf, rowsOf } from '#server/common/test-helpers/dom.js'
 import {
-  CONFIDENTIAL_KEY,
   LANDING_HEADING,
   NATION_WORDING,
   NOTICE,
@@ -172,11 +171,11 @@ describe.each(NATIONS)(
         // nation means here.
         expect(getByText(body, scope)).not.toBeNull()
 
-        // A figure few operators contributed to is marked, and the key is the
-        // description of the table it sits in.
+        // A figure few operators contributed to is marked, and the paragraph
+        // explaining the marks describes the table it sits in.
         const januaryReprocessors = getByRole(body, 'table', {
           name: 'Reprocessor data for January 2026',
-          description: CONFIDENTIAL_KEY
+          description: NATION_WORDING.marked
         })
 
         expect(rowsOf(januaryReprocessors)).toStrictEqual([
@@ -196,19 +195,6 @@ describe.each(NATIONS)(
           [
             'Grand Total',
             '350.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '0.00',
-            '£0.00',
-            '- No average price is calculated'
-          ],
-          [
-            'Published total, without the figures marked [c]',
-            '0.00',
             '0.00',
             '0.00',
             '0.00',
@@ -302,7 +288,7 @@ describe.each(NATIONS)(
           getByRole(body, 'heading', { name: 'How the tables are compiled' })
         ).not.toBeNull()
         expect(
-          getByRole(body, 'heading', { name: 'Figures marked ‘c’' })
+          getByRole(body, 'heading', { name: 'Figures marked [c]' })
         ).not.toBeNull()
       })
 
