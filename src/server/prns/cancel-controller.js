@@ -11,6 +11,7 @@ import {
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
+import { prnStatuses } from '#server/common/constants/statuses.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const cancelGetController = {
@@ -23,7 +24,7 @@ export const cancelGetController = {
       await fetchPrnContext(request)
     const { t: localise } = request
 
-    if (prn.status !== 'awaiting_cancellation') {
+    if (prn.status !== prnStatuses.awaitingCancellation) {
       return h.redirect(basePath)
     }
 
@@ -52,12 +53,17 @@ export const cancelPostController = {
     const { keys, prnId, prn, basePath, backendToken } =
       await fetchPrnForUpdate(request)
 
-    if (prn.status !== 'awaiting_cancellation') {
+    if (prn.status !== prnStatuses.awaitingCancellation) {
       return h.redirect(basePath)
     }
 
     try {
-      await updatePrnStatus(keys, prnId, { status: 'cancelled' }, backendToken)
+      await updatePrnStatus(
+        keys,
+        prnId,
+        { status: prnStatuses.cancelled },
+        backendToken
+      )
 
       await metrics.journey.end(request, JOURNEY.cancelPrn, prnId)
 

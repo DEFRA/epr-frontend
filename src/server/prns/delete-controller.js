@@ -11,6 +11,7 @@ import {
 import { JOURNEY } from '#server/common/helpers/metrics/constants.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
+import { prnStatuses } from '#server/common/constants/statuses.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const deleteGetController = {
@@ -23,7 +24,7 @@ export const deleteGetController = {
       await fetchPrnContext(request)
     const { t: localise } = request
 
-    if (prn.status !== 'awaiting_authorisation') {
+    if (prn.status !== prnStatuses.awaitingAuthorisation) {
       return h.redirect(basePath)
     }
 
@@ -51,7 +52,7 @@ export const deletePostController = {
     const { keys, prnId, prn, basePath, backendToken } =
       await fetchPrnForUpdate(request)
 
-    if (prn.status !== 'awaiting_authorisation') {
+    if (prn.status !== prnStatuses.awaitingAuthorisation) {
       return h.redirect(basePath)
     }
 

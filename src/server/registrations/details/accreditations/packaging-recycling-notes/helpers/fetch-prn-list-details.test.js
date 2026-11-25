@@ -6,14 +6,11 @@ import { toOrganisationNumber } from '#server/common/helpers/organisation-number
 import { fetchRequiredAnyAccreditation } from '#server/common/helpers/organisations/fetch-registration-with-accreditation.js'
 import { toRegistrationNumber } from '#server/common/helpers/registration-number.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { buildPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 import { buildRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-view-fixtures.js'
 import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
 
 import { fetchPrnListDetails } from './fetch-prn-list-details.js'
-
-/**
- * @import { PrnListDetails } from './fetch-prn-list-details.js'
- */
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-with-accreditation.js')
@@ -35,26 +32,7 @@ describe(fetchPrnListDetails, () => {
       registrationNumber: keys.registrationNumber
     })
 
-  /** @type {PrnListDetails['packagingRecyclingNotes']} */
-  const notes = [
-    {
-      id: 'prn-001',
-      prnNumber: '240000123',
-      issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
-      tonnage: 20,
-      material: 'plastic',
-      status: 'accepted',
-      createdAt: '2026-01-27T09:00:00.000Z',
-      notes: null,
-      isDecemberWaste: false,
-      wasteProcessingType: 'reprocessor',
-      processToBeUsed: '',
-      accreditationYear: 2026,
-      obligation: { year: 2026, allowedYears: [2026] },
-      issuedAt: '2026-01-28T09:00:00.000Z',
-      issuedBy: null
-    }
-  ]
+  const notes = [buildPackagingRecyclingNote()]
 
   beforeEach(() => {
     vi.clearAllMocks()

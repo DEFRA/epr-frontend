@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { buildPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 
 import { toPrnGroups } from './prn-groups.js'
 
@@ -6,23 +7,8 @@ import { toPrnGroups } from './prn-groups.js'
  * @param {Partial<PackagingRecyclingNote> & { status: string }} note
  * @returns {PackagingRecyclingNote}
  */
-const aNote = (note) => ({
-  id: note.id ?? `id-${note.status}`,
-  prnNumber: null,
-  issuedToOrganisation: { id: 'org-1', name: 'Radar Compliance PLC' },
-  tonnage: 10,
-  material: 'paper',
-  createdAt: '2026-01-01T00:00:00.000Z',
-  notes: null,
-  accreditationYear: 2026,
-  obligation: { year: 2026, allowedYears: [2026] },
-  issuedAt: null,
-  issuedBy: null,
-  wasteProcessingType: 'reprocessor',
-  processToBeUsed: '',
-  isDecemberWaste: false,
-  ...note
-})
+const aNote = (note) =>
+  buildPackagingRecyclingNote({ id: `id-${note.status}`, ...note })
 
 const ids = (/** @type {PackagingRecyclingNote[]} */ notes) =>
   notes.map((note) => note.id)
@@ -58,9 +44,7 @@ describe(toPrnGroups, () => {
     })
 
     it('drops a status it has no group for rather than raising', () => {
-      const groups = toPrnGroups([
-        aNote({ id: 'invented', status: 'invented_by_a_later_release' })
-      ])
+      const groups = toPrnGroups([aNote({ id: 'gone', status: 'discarded' })])
 
       expect(groups.isEmpty).toBe(true)
     })

@@ -3,7 +3,7 @@ import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
 
 /**
  * @typedef {object} UpdatePrnStatusPayload
- * @property {string} status - The new status (e.g. 'awaiting_authorisation')
+ * @property {PrnStatus | 'deleted'} status - The new status; a deleted note is never served back
  */
 
 /**
@@ -27,6 +27,7 @@ const updatePrnStatus = async (keys, prnId, payload, backendToken) => {
 export { updatePrnStatus }
 
 /**
+ * @import { PrnStatus } from '#server/common/constants/statuses.js'
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
  * @import { PackagingRecyclingNote, PrnResource } from './prn-resource.js'

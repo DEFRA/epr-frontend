@@ -13,7 +13,8 @@ import {
 import {
   asCreatePrnResponse,
   asPackagingRecyclingNote,
-  asUpdatePrnStatusResponse
+  asUpdatePrnStatusResponse,
+  buildPackagingRecyclingNote
 } from '#server/common/test-helpers/prn-fixtures.js'
 import {
   extractCookieValues,
@@ -144,33 +145,22 @@ const mockPrnStatusUpdated = asUpdatePrnStatusResponse({
   status: 'awaiting_authorisation'
 })
 
-const mockPrnFromBackend = asPackagingRecyclingNote({
-  id: 'prn-789',
-  issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
-  tonnage: 100,
-  material: 'plastic',
+const mockPrnFromBackend = buildPackagingRecyclingNote({
   status: 'awaiting_authorisation',
-  createdAt: '2026-01-15T10:00:00.000Z',
   notes: 'Additional notes for this PRN',
   isDecemberWaste: true,
-  accreditationYear: 2026,
   obligation: { year: 2026, allowedYears: [2026, 2027] },
   issuedAt: '2026-01-16T14:30:00.000Z',
-  issuedBy: { name: 'John Smith', position: 'Director' },
-  wasteProcessingType: 'reprocessor'
+  issuedBy: { name: 'John Smith', position: 'Director' }
 })
 
-const mockPernFromBackend = asPackagingRecyclingNote({
+const mockPernFromBackend = buildPackagingRecyclingNote({
   id: 'pern-123',
   issuedToOrganisation: { id: 'export-1', name: 'Export Solutions Ltd' },
   tonnage: 50,
   material: 'glass',
   status: 'awaiting_acceptance',
   createdAt: '2026-01-20T14:30:00.000Z',
-  notes: null,
-  isDecemberWaste: false,
-  accreditationYear: 2026,
-  obligation: { year: 2026, allowedYears: [2026] },
   issuedAt: '2026-01-21T09:00:00.000Z',
   issuedBy: { name: 'Jane Doe', position: 'Operations Manager' },
   wasteProcessingType: 'exporter'
