@@ -72,7 +72,6 @@ function buildNoteTypeLabels(registration, localise) {
  * @param {{
  *   accreditation: Accreditation | undefined,
  *   basePath: string,
- *   cadenceLabel: string,
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   material: string,
@@ -86,7 +85,6 @@ function buildNoteTypeLabels(registration, localise) {
 function buildCheckViewData({
   accreditation,
   basePath,
-  cadenceLabel,
   localise,
   localiseUrl,
   material,
@@ -105,7 +103,6 @@ function buildCheckViewData({
   return {
     accreditationNumber: accreditation?.accreditationNumber,
     backUrl: localiseUrl(`${basePath}/supporting-information`),
-    cadenceLabel,
     caption: localise('reports:createDraftReportCaption'),
     changeText: localise('reports:supportingInformationChange'),
     changeUrl: localiseUrl(`${basePath}/supporting-information`),
@@ -188,7 +185,6 @@ export const checkGetController = {
       cadence,
       localise
     )
-    const cadenceLabel = localise(`reports:${cadence}Heading`)
 
     const viewData = buildCheckViewData({
       registration,
@@ -199,8 +195,7 @@ export const checkGetController = {
       localise,
       localiseUrl: request.localiseUrl.bind(request),
       material,
-      periodLabel,
-      cadenceLabel
+      periodLabel
     })
 
     return h.view('reports/check-your-answers', viewData)

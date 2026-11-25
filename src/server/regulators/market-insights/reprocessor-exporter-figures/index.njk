@@ -10,30 +10,7 @@
         <span class="govuk-caption-xl">{{ caption }}</span>
         {{ heading }}
       </h1>
-      {{ govukInsetText({ text: localise('regulators:marketInsights:notice') }) }}
-      <p class="govuk-body">{{ description }}</p>
-      {% if scope %}
-        <p class="govuk-body">{{ scope }}</p>
-      {% endif %}
-      <p class="govuk-body-s">{{ dataTakenAt }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:completeness') }}</p>
-
-      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:figures:calculation:heading') }}</h2>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:source') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:accreditations') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:average') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:revenue') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:rounding') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:total') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:zero') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:live') }}</p>
-
-      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:marked') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:accredited') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:noReport') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:total') }}</p>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:business') }}</p>
+      {{ govukInsetText({ text: dataAggregatedAt }) }}
 
       {% macro figuresTable(table, caption, id) %}
         {% set head = [{ text: localise('regulators:marketInsights:table:material') }] %}
@@ -78,13 +55,33 @@
       {% endmacro %}
 
       {% for month in figures.months %}
-        <h2 class="govuk-heading-l" id="figures-month-{{ loop.index }}">{{ month.name }}</h2>
-        <p class="govuk-body">{{ localise('regulators:marketInsights:figures:reports', { count: month.reports }) }}</p>
-        <div class="govuk-body epr-wide-table" role="region" aria-labelledby="figures-month-{{ loop.index }}" tabindex="0">
+        <div class="govuk-body epr-wide-table" role="region" aria-label="{{ month.name }}" tabindex="0">
           {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor', { month: month.name }), 'figures-month-' ~ loop.index ~ '-reprocessor') }}
           {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter', { month: month.name }), 'figures-month-' ~ loop.index ~ '-exporter') }}
         </div>
+        <p class="govuk-body">{{ localise('regulators:marketInsights:figures:reports', { count: month.reports }) }}</p>
       {% endfor %}
+
+      <p class="govuk-body">{{ description | safe }}</p>
+      {% if scope %}
+        <p class="govuk-body">{{ scope }}</p>
+      {% endif %}
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:completeness:' ~ wording) }}</p>
+
+      <h2 class="govuk-heading-l">{{ localise('regulators:marketInsights:figures:calculation:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:source') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:accreditations:' ~ wording) }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:average') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:revenue') }}</p>
+      <p class="govuk-body">{{ rounding }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:total') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:calculation:zero') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:fewOperators:accredited') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:noReport') }}</p>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:total') }}</p>
+
+      <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
+      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:marked:' ~ wording) }}</p>
     </div>
   </div>
 {% endblock %}

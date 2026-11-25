@@ -22,7 +22,6 @@ export const controller = {
     return h.view('regulators/market-insights/index', {
       pageTitle: localise('regulators:marketInsights:pageTitle'),
       heading: localise('regulators:marketInsights:heading'),
-      description: localise('regulators:marketInsights:description'),
       figureSets: [
         {
           text: localise('regulators:marketInsights:wasteBalance:linkText'),
