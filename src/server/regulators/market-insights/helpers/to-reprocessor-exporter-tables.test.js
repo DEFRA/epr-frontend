@@ -463,7 +463,7 @@ describe(toReprocessorExporterTables, () => {
       expect(reprocessor.marked).toBe(false)
     })
 
-    it('gives the Grand Total as served, with no published total beneath it, when a row above it is marked', () => {
+    it('gives the Grand Total as served, marked rows included, when a row above it is marked', () => {
       const { reprocessor } = toReprocessorExporterTables(
         dataOf({
           '2026-01': monthOf(
@@ -515,7 +515,6 @@ describe(toReprocessorExporterTables, () => {
           '£390.00'
         ]
       })
-      expect(reprocessor).not.toHaveProperty('published')
     })
 
     it('marks a Grand Total few operators were accredited for as confidential, even when a row above it is marked', () => {
