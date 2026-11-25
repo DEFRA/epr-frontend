@@ -60,7 +60,7 @@ export const NATION_WORDING = {
   accreditations:
     'A report is only counted if the accreditation it relates to is currently approved or suspended. Where an accreditation has been cancelled, it counts neither as a submission nor as a non-submission for the relevant period. Any tonnage associated with a cancelled accreditation will remain in the waste balance so as not to distort the overall picture of packaging waste reprocessing and export.',
   marked:
-    'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Figures are also marked ‘c’ when no operators were accredited for it, but another figure in the same row holds data (for example, a late report from an operator cancelled for the whole month). Rows with no accredited operators and nothing in them are not marked ‘c’.'
+    'Figures are marked [c] to show that the data came from only 1 or 2 operators. Figures are also marked [c] when no operators were accredited for it, but another figure in the same row holds data (for example, a late report from an operator cancelled for the whole month). Rows with no accredited operators and nothing in them are not marked [c].'
 }
 
 /** @returns {ReprocessorFigures} */

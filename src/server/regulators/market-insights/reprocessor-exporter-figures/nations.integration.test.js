@@ -288,7 +288,7 @@ describe.each(NATIONS)(
           getByRole(body, 'heading', { name: 'How the tables are compiled' })
         ).not.toBeNull()
         expect(
-          getByRole(body, 'heading', { name: 'Figures marked ‘c’' })
+          getByRole(body, 'heading', { name: 'Figures marked [c]' })
         ).not.toBeNull()
       })
 

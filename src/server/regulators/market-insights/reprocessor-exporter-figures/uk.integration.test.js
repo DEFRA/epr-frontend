@@ -37,7 +37,7 @@ const figuresUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/repr
 
 /** The paragraph a table holding a marked figure is described by. */
 const MARKED =
-  'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Rows with no accredited operators and nothing in them are not marked ‘c’.'
+  'Figures are marked [c] to show that the data came from only 1 or 2 operators. Rows with no accredited operators and nothing in them are not marked [c].'
 
 /**
  * A month in which plastic was reprocessed and aluminium exported, every
@@ -700,8 +700,8 @@ describe('the UK reprocessor and exporter figures page', () => {
         'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material (reprocessor figures) or to export it (exporter figures). Suspended operators count, but operators whose accreditations were cancelled for the whole month do not.',
         'Accredited operators count even if they have not submitted their reports or their reports add nothing to the figure.',
         'A Grand Total is calculated for all the materials in a table column, operators accredited for more than one material still only count once. Also, an operator is a business, so only counts once regardless of however many sites it has.',
-        'Figures marked ‘c’',
-        'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Rows with no accredited operators and nothing in them are not marked ‘c’.'
+        'Figures marked [c]',
+        'Figures are marked [c] to show that the data came from only 1 or 2 operators. Rows with no accredited operators and nothing in them are not marked [c].'
       ])
       expect(
         getByRole(body, 'link', {

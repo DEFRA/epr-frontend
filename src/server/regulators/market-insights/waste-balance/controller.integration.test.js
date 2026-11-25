@@ -30,7 +30,7 @@ const wasteBalanceUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period
 
 /** The paragraph a table holding a marked figure is described by. */
 const MARKED =
-  'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Figures are also marked ‘c’ when 2 accreditation types (Exp and Rep) are combined to denote that commercial confidentiality exists within a row. Rows with no accredited operators and nothing in them are not marked ‘c’.'
+  'Figures are marked [c] to show that the data came from only 1 or 2 operators. Figures are also marked [c] when 2 accreditation types (Exp and Rep) are combined to denote that commercial confidentiality exists within a row. Rows with no accredited operators and nothing in them are not marked [c].'
 
 /**
  * @param {number} netCredit
@@ -550,8 +550,8 @@ describe('the UK waste balance page', () => {
         'The columns run from January in the reporting year to the last complete month and the totals add the monthly data together.',
         'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material (reprocessor figures) or to export it (exporter figures). Suspended operators count, but operators whose accreditations were cancelled for the whole month do not. Accredited operators count towards the number of operators, even if none of their tonnage is included in a figure.',
         'Row totals are counted across each month, so operators accredited across more than one month still only count once towards the number of operators. Also, an operator is a business, so only counts once regardless of however many sites it has.',
-        'Figures marked ‘c’',
-        'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Figures are also marked ‘c’ when 2 accreditation types (Exp and Rep) are combined to denote that commercial confidentiality exists within a row. Rows with no accredited operators and nothing in them are not marked ‘c’.'
+        'Figures marked [c]',
+        'Figures are marked [c] to show that the data came from only 1 or 2 operators. Figures are also marked [c] when 2 accreditation types (Exp and Rep) are combined to denote that commercial confidentiality exists within a row. Rows with no accredited operators and nothing in them are not marked [c].'
       ])
     })
 
