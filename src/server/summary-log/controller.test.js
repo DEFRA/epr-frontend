@@ -1651,6 +1651,18 @@ describe('#summaryLogUploadProgressController', () => {
           expected: ['Supplier name', 'No data entered', 'Check this value']
         },
         {
+          name: 'a link to a 2026 row missing data, without the year',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            actual: null,
+            expected: undefined,
+            previousYearRowId: '1000',
+            deadline: '2027-02-27',
+            header: 'SUPPLIER_NAME'
+          },
+          expected: ['Supplier name', 'No data entered', 'Check this value']
+        },
+        {
           name: 'a previous year row ID that names no row, without the row ID',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
