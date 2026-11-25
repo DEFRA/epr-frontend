@@ -1482,6 +1482,10 @@ describe('#summaryLogUploadProgressController', () => {
       const COMPLETE_ROW_PROBLEM =
         'Row 1000 in your 2026 summary log is complete, so cannot be linked to your 2027 log'
 
+      /** @param {string} deadline */
+      const missingDataProblem = (deadline) =>
+        `Row 1000 in your 2026 summary log is missing data. You’ll need to add it in your 2026 log by ${deadline}.`
+
       /**
        * @type {Array<{
        *   name: string,
@@ -1594,6 +1598,57 @@ describe('#summaryLogUploadProgressController', () => {
             '(empty)',
             REGISTERED_ONLY_REPATRIATED_LOAD_PROBLEM
           ]
+        },
+        {
+          name: 'a link to a 2026 row with no supplier name',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            actual: null,
+            previousYearRowId: '1000',
+            deadline: '2027-02-27',
+            header: 'SUPPLIER_NAME'
+          },
+          expected: [
+            'Supplier name',
+            'No data entered',
+            missingDataProblem('27 February 2027')
+          ]
+        },
+        {
+          name: 'a registered-only link to a 2026 export with no OSR ID',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            previousYearRowId: '1000',
+            deadline: '2027-03-20',
+            header: 'OSR_ID'
+          },
+          ledgerAccreditation: registeredOnlyLedger,
+          location: REGISTERED_ONLY_LOCATION,
+          expected: [
+            'OSR ID',
+            'No data entered',
+            missingDataProblem('20 March 2027')
+          ]
+        },
+        {
+          name: 'a link to a 2026 row missing data, without the deadline',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            actual: null,
+            previousYearRowId: '1000',
+            header: 'SUPPLIER_NAME'
+          },
+          expected: ['Supplier name', 'No data entered', 'Check this value']
+        },
+        {
+          name: 'a link to a 2026 row missing data, without the row it names',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            actual: null,
+            deadline: '2027-02-27',
+            header: 'SUPPLIER_NAME'
+          },
+          expected: ['Supplier name', 'No data entered', 'Check this value']
         },
         {
           name: 'a previous year row ID that names no row, without the row ID',
