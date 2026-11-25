@@ -484,19 +484,6 @@ describe('the UK reprocessor and exporter figures page', () => {
           '10.00',
           '£1,200.00',
           '- No average price is calculated'
-        ],
-        [
-          'Published total, without the figures marked [c]',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '£0.00',
-          '- No average price is calculated'
         ]
       ])
 
@@ -589,19 +576,6 @@ describe('the UK reprocessor and exporter figures page', () => {
         ],
         [
           'Grand Total',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '£0.00',
-          '- No average price is calculated'
-        ],
-        [
-          'Published total, without the figures marked [c]',
           '0.00',
           '0.00',
           '0.00',

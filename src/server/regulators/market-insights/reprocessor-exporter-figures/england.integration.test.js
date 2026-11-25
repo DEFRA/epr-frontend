@@ -180,19 +180,6 @@ describe('the England reprocessor and exporter figures page', () => {
           '0.00',
           '£0.00',
           '- No average price is calculated'
-        ],
-        [
-          'Published total, without the figures marked [c]',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '£0.00',
-          '- No average price is calculated'
         ]
       ])
     })

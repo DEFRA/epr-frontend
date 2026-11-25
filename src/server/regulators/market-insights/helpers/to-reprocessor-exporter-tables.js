@@ -2,12 +2,7 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 
-import {
-  fromFewOperators,
-  leavesOutConfidential,
-  markedFigureOf,
-  sumOf
-} from './few-operators.js'
+import { fromFewOperators, markedFigureOf } from './few-operators.js'
 import { nameOf } from './reporting-period.js'
 
 /**
@@ -96,14 +91,11 @@ import { nameOf } from './reporting-period.js'
  * one row per material with a formatted figure under each heading, and the
  * Grand Total, whose figures stop before the average price column because
  * the served totals carry none. Each figure few operators were accredited
- * for is marked confidential, and the table says whether any is. Where the
- * published workbook shows the Grand Total without its confidential rows,
- * the published total beneath it sums the rest.
+ * for is marked confidential, and the table says whether any is.
  * @typedef {{
  *   columns: string[],
  *   rows: FiguresRow[],
  *   total: FiguresRow,
- *   published: FiguresRow | null,
  *   marked: boolean
  * }} FiguresTable
  */
@@ -213,14 +205,12 @@ const toTable = (
   const rows = Object.entries(byMaterial)
     .map(([material, served]) => ({
       label: getMaterialDisplayName(material),
-      served,
       ...figuresOf(served, columns)
     }))
     .sort((one, other) => one.label.localeCompare(other.label))
 
   const total = figuresOf(totals, totalledColumns)
   const rowMarked = rows.some(({ marked }) => marked)
-  const unmarked = rows.filter(({ marked }) => !marked)
 
   return {
     columns: columns.map(([measure]) =>
@@ -233,14 +223,6 @@ const toTable = (
       label: localise('regulators:marketInsights:figures:total:label'),
       figures: total.figures
     },
-    published: leavesOutConfidential(rowMarked, total.marked)
-      ? {
-          label: localise('regulators:marketInsights:figures:total:published'),
-          figures: totalledColumns.map(([measure, format]) =>
-            format(sumOf(unmarked.map(({ served }) => served[measure])))
-          )
-        }
-      : null,
     marked: rowMarked || total.marked
   }
 }
@@ -250,9 +232,7 @@ const toTable = (
  * month, a reprocessor table and an exporter table, one row per material, the
  * tonnage columns in the tab's order, the served totals as the Grand Total,
  * and above them how many of the reports the month expected the figures
- * include.
- * Every figure is the one the service served, except a published total,
- * which sums the rows the workbook publishes.
+ * include. Every figure is the one the service served.
  *
  * The months are the page's period, so a served month outside it is not
  * shown.
