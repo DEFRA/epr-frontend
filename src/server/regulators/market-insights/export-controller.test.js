@@ -6,9 +6,12 @@ import {
   regulator,
   regulatorWithoutMarketScope
 } from '#server/common/test-helpers/market-insights-fixtures.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { paths } from '#server/paths.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+
+import { yearPath } from './helpers/year-path.js'
 
 /**
  * @import { SetupServer } from 'msw/node'
@@ -45,13 +48,13 @@ const backendStreams = (
 /**
  * @param {HapiServer} server
  * @param {typeof regulator} auth
+ * @param {string} [url]
  */
-const visit = (server, auth) =>
-  server.inject({
-    method: 'GET',
-    url: paths.regulators.marketInsightsExport,
-    auth
-  })
+const visit = (
+  server,
+  auth,
+  url = yearPath(paths.regulators.marketInsightsExport, toYear(2026))
+) => server.inject({ method: 'GET', url, auth })
 
 describe('the market insights export', () => {
   beforeAll(() => {
@@ -85,6 +88,22 @@ describe('the market insights export', () => {
     expect(requests).toStrictEqual([
       'http://epr-backend.test/v1/market-insights/2026/monthly/3/export.zip'
     ])
+  })
+
+  it('has no zip for a year not offered, and asks the backend for nothing', async ({
+    server,
+    msw
+  }) => {
+    const requests = backendStreams(msw)
+
+    const response = await visit(
+      server,
+      regulator,
+      yearPath(paths.regulators.marketInsightsExport, toYear(2025))
+    )
+
+    expect(response.statusCode).toBe(statusCodes.notFound)
+    expect(requests).toStrictEqual([])
   })
 
   it('names the file as the backend named it', async ({ server, msw }) => {

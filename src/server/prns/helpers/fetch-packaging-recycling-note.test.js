@@ -50,4 +50,76 @@ describe(fetchPackagingRecyclingNote, () => {
       '/organisations/500123/registrations/R26EN0000000001PL/accreditations/2026/packaging-recycling-notes/prn%404'
     ])
   })
+
+  it('should read the allowed obligation years in ascending order', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get(/packaging-recycling-notes\/[^/]+$/, () =>
+        HttpResponse.json(
+          buildPrnResource({
+            obligation: { year: 2026, allowedYears: [2027, 2026] }
+          })
+        )
+      )
+    )
+
+    const note = await fetchPackagingRecyclingNote(
+      keys,
+      'prn-4',
+      toBackendToken('a-token')
+    )
+
+    expect(note.obligation.allowedYears).toStrictEqual([2026, 2027])
+  })
+
+  it('should read a discarded note', async ({ msw }) => {
+    msw.use(
+      http.get(/packaging-recycling-notes\/[^/]+$/, () =>
+        HttpResponse.json(
+          buildPrnResource({ status: { current: 'discarded', timeline: [] } })
+        )
+      )
+    )
+
+    const note = await fetchPackagingRecyclingNote(
+      keys,
+      'prn-4',
+      toBackendToken('a-token')
+    )
+
+    expect(note.status).toBe('discarded')
+  })
+
+  it.for([
+    {
+      description: 'offers the same obligation year twice',
+      overrides: { obligation: { year: 2026, allowedYears: [2026, 2026] } }
+    },
+    { description: 'has no obligation', overrides: { obligation: undefined } },
+    {
+      description: 'is in a status the service does not know',
+      overrides: { status: { current: 'mislaid', timeline: [] } }
+    },
+    {
+      description: 'is deleted, which the backend never serves',
+      overrides: { status: { current: 'deleted', timeline: [] } }
+    }
+  ])(
+    'should refuse a note that $description',
+    async ({ overrides }, { msw }) => {
+      msw.use(
+        http.get(/packaging-recycling-notes\/[^/]+$/, () =>
+          HttpResponse.json({ ...buildPrnResource(), ...overrides })
+        )
+      )
+
+      await expect(
+        fetchPackagingRecyclingNote(keys, 'prn-4', toBackendToken('a-token'))
+      ).rejects.toMatchObject({
+        output: { statusCode: 502 },
+        code: 'backend_response_invalid'
+      })
+    }
+  )
 })

@@ -34,7 +34,7 @@ describe(toPackagingRecyclingNote, () => {
       wasteProcessingType: 'reprocessor',
       processToBeUsed: 'R3',
       accreditationYear: 2026,
-      obligationYear: 2026,
+      obligation: { year: 2026, allowedYears: [2026] },
       issuedAt: null,
       issuedBy: null
     })
@@ -71,12 +71,18 @@ describe(toPackagingRecyclingNote, () => {
 
     const note = toPackagingRecyclingNote({
       ...resource,
-      obligationYear: accreditationYear + 1
+      obligation: {
+        year: accreditationYear + 1,
+        allowedYears: [accreditationYear, accreditationYear + 1]
+      }
     })
 
     expect(note).toMatchObject({
       accreditationYear,
-      obligationYear: accreditationYear + 1
+      obligation: {
+        year: accreditationYear + 1,
+        allowedYears: [accreditationYear, accreditationYear + 1]
+      }
     })
   })
 })

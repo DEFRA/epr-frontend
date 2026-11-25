@@ -2,7 +2,6 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHtml, documentOf, rowsOf } from '#server/common/test-helpers/dom.js'
 import {
-  CONFIDENTIAL_KEY,
   LANDING_HEADING,
   NATION_WORDING,
   NOTICE,
@@ -13,11 +12,16 @@ import {
   reprocessorOf,
   totalsOf
 } from '#server/common/test-helpers/market-insights-fixtures.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+
+import { yearPath } from '../helpers/year-path.js'
+
+const pageUrl = yearPath(paths.regulators.marketInsightsEngland, toYear(2026))
 
 /** @import { ReprocessorExporterAggregate } from '../helpers/fetch-reprocessor-exporter-figures.js' */
 
@@ -111,7 +115,7 @@ describe('the England reprocessor and exporter figures page', () => {
 
       await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsEngland,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -125,7 +129,7 @@ describe('the England reprocessor and exporter figures page', () => {
     }) => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsEngland,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -147,11 +151,11 @@ describe('the England reprocessor and exporter figures page', () => {
         )
       ).not.toBeNull()
 
-      // A figure few operators contributed to is marked, and the key is the
-      // description of the table it sits in.
+      // A figure few operators contributed to is marked, and the paragraph
+      // explaining the marks describes the table it sits in.
       const januaryReprocessors = getByRole(body, 'table', {
         name: 'Reprocessor data for January 2026',
-        description: CONFIDENTIAL_KEY
+        description: NATION_WORDING.marked
       })
 
       expect(rowsOf(januaryReprocessors)).toStrictEqual([
@@ -180,19 +184,6 @@ describe('the England reprocessor and exporter figures page', () => {
           '0.00',
           '£0.00',
           '- No average price is calculated'
-        ],
-        [
-          'Published total, without the figures marked [c]',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '0.00',
-          '£0.00',
-          '- No average price is calculated'
         ]
       ])
     })
@@ -202,7 +193,7 @@ describe('the England reprocessor and exporter figures page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsEngland,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -223,7 +214,7 @@ describe('the England reprocessor and exporter figures page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsEngland,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -241,7 +232,7 @@ describe('the England reprocessor and exporter figures page', () => {
       ])
       expect(
         getByRole(trail, 'link', { name: LANDING_HEADING }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsights)
+      ).toBe('/regulators/market-insights/2026')
     })
 
     it('says how the tables are compiled in the words agreed for a nation, and nothing is still being built', async ({
@@ -249,7 +240,7 @@ describe('the England reprocessor and exporter figures page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsEngland,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -273,12 +264,12 @@ describe('the England reprocessor and exporter figures page', () => {
         getByRole(body, 'link', {
           name: 'redacted data workbook (XLSX)'
         }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsightsWorkbook)
+      ).toBe('/regulators/market-insights/2026/workbook.xlsx')
       expect(
         getByRole(body, 'heading', { name: 'How the tables are compiled' })
       ).not.toBeNull()
       expect(
-        getByRole(body, 'heading', { name: 'Figures marked ‘c’' })
+        getByRole(body, 'heading', { name: 'Figures marked [c]' })
       ).not.toBeNull()
     })
   })
@@ -299,7 +290,7 @@ describe('the England reprocessor and exporter figures page', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsEngland,
+        url: pageUrl,
         auth: operator
       })
 
@@ -312,7 +303,7 @@ describe('the England reprocessor and exporter figures page', () => {
     it('is refused the page, whatever role it carries', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsEngland,
+        url: pageUrl,
         auth: regulatorWithoutMarketScope
       })
 

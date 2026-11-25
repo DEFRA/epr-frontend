@@ -48,11 +48,8 @@
         {% endif %}
         {% set tableRows = tableRows.concat([reportCells]) %}
 
-        {% if wasteBalance.marked %}
-          <p class="govuk-body" id="waste-balance-key">{{ localise('regulators:marketInsights:fewOperators:key') }}</p>
-        {% endif %}
         {{ govukTable({
-          attributes: { 'aria-describedby': 'waste-balance-key' } if wasteBalance.marked else {},
+          attributes: { 'aria-describedby': 'waste-balance-marked' } if wasteBalance.marked else {},
           caption: localise('regulators:marketInsights:wasteBalance:table:caption'),
           captionClasses: "govuk-table__caption--m",
           firstCellIsHeader: true,
@@ -77,7 +74,7 @@
       <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:total') }}</p>
 
       <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:marked') }}</p>
+      <p class="govuk-body" id="waste-balance-marked">{{ localise('regulators:marketInsights:wasteBalance:fewOperators:marked') }}</p>
     </div>
   </div>
 {% endblock %}

@@ -79,4 +79,27 @@ describe(fetchPackagingRecyclingNotes, () => {
 
     expect(result.map(({ id }) => id)).toStrictEqual(['older', 'newer'])
   })
+
+  it('should refuse a list holding a note that offers the same obligation year twice', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get(/packaging-recycling-notes$/, () =>
+        HttpResponse.json({
+          items: [
+            buildPrnResource({
+              obligation: { year: 2026, allowedYears: [2026, 2026] }
+            })
+          ]
+        })
+      )
+    )
+
+    await expect(
+      fetchPackagingRecyclingNotes(keys, backendToken)
+    ).rejects.toMatchObject({
+      output: { statusCode: 502 },
+      code: 'backend_response_invalid'
+    })
+  })
 })

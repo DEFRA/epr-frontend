@@ -199,6 +199,24 @@ describe('#buildListViewData', () => {
       expect(totalRow).toHaveLength(6)
     })
 
+    it('should treat undefined tonnage as zero in total row', () => {
+      const prnsWithMissingTonnage = [
+        { ...stubPrns[0], tonnage: undefined },
+        stubPrns[1]
+      ]
+
+      const result = buildListViewData(createMockRequest(), {
+        yearOpen: true,
+        keys: reprocessorKeys,
+        registration: reprocessorRegistration,
+        prns: prnsWithMissingTonnage,
+        wasteBalance: mockWasteBalance
+      })
+
+      const totalRow = result.table.rows[2]
+      expect(totalRow[2].text).toBe(120)
+    })
+
     it('should return status as govukTag HTML', () => {
       const result = buildListViewData(createMockRequest(), {
         yearOpen: true,

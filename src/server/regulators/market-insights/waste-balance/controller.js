@@ -3,14 +3,14 @@ import { formatTime, UK_TIME_ZONE } from '#server/common/helpers/format-time.js'
 import { paths } from '#server/paths.js'
 
 import { fetchWasteBalance } from '../helpers/fetch-waste-balance.js'
-import {
-  describeReportingPeriod,
-  reportingPeriodNow
-} from '../helpers/reporting-period.js'
+import { offeredPeriod } from '../helpers/offered-period.js'
+import { describeReportingPeriod } from '../helpers/reporting-period.js'
 import { toWasteBalanceTable } from '../helpers/to-waste-balance-table.js'
+import { yearPath } from '../helpers/year-path.js'
 
 /**
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  */
 
@@ -24,7 +24,7 @@ import { toWasteBalanceTable } from '../helpers/to-waste-balance-table.js'
  */
 export const controller = {
   /**
-   * @param {HapiRequest} request
+   * @param {HapiRequest & { params: { year: Year } }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
@@ -32,7 +32,7 @@ export const controller = {
     const { t: localise } = request
 
     const heading = localise('regulators:marketInsights:wasteBalance:heading')
-    const period = reportingPeriodNow()
+    const period = offeredPeriod(request)
     const wasteBalance = await fetchWasteBalance({
       year: period.year,
       month: period.month,
@@ -47,14 +47,16 @@ export const controller = {
         'regulators:marketInsights:wasteBalance:description',
         {
           workbookHref: request.localiseUrl(
-            paths.regulators.marketInsightsWorkbook
+            yearPath(paths.regulators.marketInsightsWorkbook, period.year)
           )
         }
       ),
       breadcrumbs: [
         {
           text: localise('regulators:marketInsights:heading'),
-          href: request.localiseUrl(paths.regulators.marketInsights)
+          href: request.localiseUrl(
+            yearPath(paths.regulators.marketInsightsYear, period.year)
+          )
         },
         { text: heading }
       ],

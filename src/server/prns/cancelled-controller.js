@@ -1,6 +1,7 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchPrnContext } from './helpers/fetch-prn-context.js'
 import { accreditationPath } from '#server/reports/helpers/report-paths.js'
+import { prnStatuses } from '#server/common/constants/statuses.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const cancelledController = {
@@ -12,7 +13,7 @@ export const cancelledController = {
     const { keys, registration, prn, basePath } = await fetchPrnContext(request)
     const { t: localise } = request
 
-    if (prn.status !== 'cancelled') {
+    if (prn.status !== prnStatuses.cancelled) {
       return h.redirect(basePath)
     }
 

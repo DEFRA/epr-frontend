@@ -5,6 +5,13 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body">
+        <span class="govuk-heading-m govuk-!-display-inline">{{ yearDataText }}</span>
+        {% if chooseYearUrl %}
+          <a class="govuk-link govuk-!-margin-left-2" href="{{ chooseYearUrl }}">{{ chooseYearLinkText }}</a>
+        {% endif %}
+      </p>
+
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
       <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:workbook:heading') }}</h2>

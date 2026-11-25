@@ -9,6 +9,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 import { prnsPath } from './helpers/prn-resource.js'
 
 /** @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js' */
+/** @import { PrnStatus } from '#server/common/constants/statuses.js' */
 
 /**
  * @param {{
@@ -135,8 +136,8 @@ function buildListLabels(localise, { noteType, noteTypePlural, year }) {
  *     id: string,
  *     recipient: string,
  *     createdAt: string,
- *     tonnage: number,
- *     status: string,
+ *     tonnage?: number | null,
+ *     status: PrnStatus,
  *     isDecemberWaste: boolean
  *   }>,
  *   localise: (key: string, params?: object) => string,
@@ -178,10 +179,18 @@ function buildAwaitingTable(request, { keys, prns, localise, canWrite }) {
     return { headings, rows: [] }
   }
 
-  const totalRow = buildTotalRow(prns, localise, {
-    tonnageColumn: 2,
-    columns: 6
-  })
+  const totalTonnage = prns.reduce((sum, prn) => sum + (prn.tonnage ?? 0), 0)
+  const totalRow = [
+    {
+      text: localise('prns:list:table:totalLabel'),
+      classes: cssClasses.fontWeight.bold
+    },
+    { text: '' },
+    { text: totalTonnage, classes: cssClasses.fontWeight.bold },
+    { text: '' },
+    { text: '' },
+    { text: '' }
+  ]
 
   return { headings, rows: [...dataRows, totalRow] }
 }
@@ -210,7 +219,7 @@ function buildDetailTable(
       { text: prn.prnNumber },
       { text: prn.recipient, classes: cssClasses.wrap.breakWord },
       { text: formatDate(prn.issuedAt) },
-      { text: prn.tonnage },
+      { text: prn.tonnage ?? 0 },
       { text: buildDecemberWasteText(prn.isDecemberWaste, localise) },
       { html: buildStatusTagHtml(prn.status, localise) },
       {
@@ -223,35 +232,22 @@ function buildDetailTable(
     return { headings, rows: [] }
   }
 
-  const totalRow = buildTotalRow(prns, localise, {
-    tonnageColumn: 3,
-    columns: 7
-  })
+  const totalTonnage = prns.reduce((sum, prn) => sum + (prn.tonnage ?? 0), 0)
+  const totalRow = [
+    {
+      text: localise('prns:list:table:totalLabel'),
+      classes: cssClasses.fontWeight.bold
+    },
+    { text: '' },
+    { text: '' },
+    { text: totalTonnage, classes: cssClasses.fontWeight.bold },
+    { text: '' },
+    { text: '' },
+    { text: '' }
+  ]
 
   return { headings, rows: [...rows, totalRow] }
 }
-
-/**
- * @param {Array<{ tonnage: number }>} prns
- * @param {(key: string) => string} localise
- * @param {{ tonnageColumn: number, columns: number }} layout
- */
-const buildTotalRow = (prns, localise, { tonnageColumn, columns }) =>
-  Array.from({ length: columns }, (_, column) => {
-    if (column === 0) {
-      return {
-        text: localise('prns:list:table:totalLabel'),
-        classes: cssClasses.fontWeight.bold
-      }
-    }
-    if (column === tonnageColumn) {
-      return {
-        text: prns.reduce((sum, prn) => sum + prn.tonnage, 0),
-        classes: cssClasses.fontWeight.bold
-      }
-    }
-    return { text: '' }
-  })
 
 /**
  * @param {boolean} isDecemberWaste
@@ -266,7 +262,7 @@ function buildDecemberWasteText(isDecemberWaste, localise) {
 
 /**
  * Build govukTag HTML for status display
- * @param {string} status
+ * @param {PrnStatus} status
  * @param {(key: string) => string} localise
  * @returns {string}
  */

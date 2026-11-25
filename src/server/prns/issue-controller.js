@@ -9,6 +9,7 @@ import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
 import { prnsPath } from './helpers/prn-resource.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 import { homePath } from '#server/organisations/home-page.js'
+import { prnStatuses } from '#server/common/constants/statuses.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const issueController = {
@@ -26,7 +27,7 @@ export const issueController = {
       const updatedPrn = await updatePrnStatus(
         keys,
         prnId,
-        { status: 'awaiting_acceptance' },
+        { status: prnStatuses.awaitingAcceptance },
         session.backendToken
       )
 

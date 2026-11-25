@@ -1,6 +1,7 @@
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 
 import { toPrnGroups } from './prn-groups.js'
+import { prnStatuses } from '#server/common/constants/statuses.js'
 
 /**
  * @import { PackagingRecyclingNote } from './prn-resource.js'
@@ -46,6 +47,6 @@ export const toNoteRows = (notes) => {
     cancellationPrns: groups.awaitingCancellation.map(toAwaitingRow),
     issuedPrns: groups.issued.map(toDetailRow),
     cancelledPrns: groups.cancelled.map(toDetailRow),
-    hasCreatedPrns: notes.some((prn) => prn.status !== 'draft')
+    hasCreatedPrns: notes.some((prn) => prn.status !== prnStatuses.draft)
   }
 }

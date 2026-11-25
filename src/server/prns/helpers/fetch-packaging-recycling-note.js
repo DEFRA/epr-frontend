@@ -1,10 +1,14 @@
-import { backend } from '#server/common/helpers/backend-client.js'
-import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
+import { backend, strictly } from '#server/common/helpers/backend-client.js'
+import {
+  prnResourceSchema,
+  prnsPath,
+  toPackagingRecyclingNote
+} from './prn-resource.js'
 
 /**
  * @import { BackendToken } from '#server/common/helpers/backend-token.js'
  * @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js'
- * @import { PackagingRecyclingNote, PrnResource } from './prn-resource.js'
+ * @import { PackagingRecyclingNote } from './prn-resource.js'
  */
 
 /**
@@ -16,10 +20,9 @@ import { prnsPath, toPackagingRecyclingNote } from './prn-resource.js'
  */
 const fetchPackagingRecyclingNote = async (keys, prnId, backendToken) =>
   toPackagingRecyclingNote(
-    /** @type {PrnResource} */ (
-      await backend(backendToken).get(
-        `${prnsPath(keys)}/${encodeURIComponent(prnId)}`
-      )
+    await backend(backendToken).get(
+      `${prnsPath(keys)}/${encodeURIComponent(prnId)}`,
+      { parse: strictly(prnResourceSchema) }
     )
   )
 
