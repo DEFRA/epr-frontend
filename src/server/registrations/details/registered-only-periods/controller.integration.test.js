@@ -10,7 +10,7 @@ import {
   buildMockAuth,
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
-import { asHtml } from '#server/common/test-helpers/dom.js'
+import { asHtml, breadcrumbsOf } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import {
@@ -333,6 +333,18 @@ describe('the registered-only period page', () => {
 
     const table = document.querySelector('[data-testid="reports-table"]')
 
+    expect(
+      Array.from(table?.querySelectorAll('thead th') ?? [], (cell) =>
+        cell.textContent?.trim()
+      )
+    ).toStrictEqual([
+      'Period',
+      'Due date',
+      'Submission date',
+      'Status',
+      'Actions'
+    ])
+
     expect(table?.textContent?.replace(/\s+/g, ' ')).toContain(
       'Quarter 1, 2026'
     )
@@ -440,7 +452,7 @@ describe('the registered-only period page', () => {
     ).toBeNull()
   })
 
-  it('offers a way back to the organisation and the registration, by number', async ({
+  it('walks back to the organisation and the registration by number, ending on this page unlinked', async ({
     server,
     msw
   }) => {
@@ -448,8 +460,12 @@ describe('the registered-only period page', () => {
 
     const { body } = await visit(server, regulator)
 
-    expect(body).toContain(`href="/organisations/${organisationNumber}"`)
-    expect(body).toContain(`href="${registrationPath}"`)
+    expect(breadcrumbsOf(documentOf(body))).toStrictEqual([
+      ['All organisations', '/regulators/home'],
+      ['Kirkby Plastics Ltd', `/organisations/${organisationNumber}`],
+      ['Registration details', registrationPath],
+      ['2026 Registered-only periods', undefined]
+    ])
   })
 
   it('offers a regulator no control that changes the registration', async ({
@@ -777,7 +793,9 @@ describe('the registered-only period page', () => {
 
       const { body } = await visit(server, regulator)
 
-      expect(body).not.toContain('Waste balance ledger')
+      expect(
+        queryByRole(documentOf(body), 'heading', { level: 2, name: 'Ledger' })
+      ).toBeNull()
       expect(body).not.toContain('data-testid="waste-balance-ledger-table"')
       expect(body).not.toContain('data-testid="no-events"')
     })
@@ -788,10 +806,17 @@ describe('the registered-only period page', () => {
     }) => {
       const { ledgerRequests } = backendHolds(msw)
 
-      const { body } = await visit(server, regulatorWithoutLedgerScope)
+      const { statusCode, body } = await visit(
+        server,
+        regulatorWithoutLedgerScope
+      )
 
+      expect(statusCode).toBe(statusCodes.ok)
       expect(ledgerRequests()).toBe(0)
-      expect(body).not.toContain('Waste balance ledger')
+      expect(
+        queryByRole(documentOf(body), 'heading', { level: 2, name: 'Ledger' })
+      ).toBeNull()
+      expect(body).not.toContain('Nothing has changed this waste balance yet.')
       expect(body).not.toContain('data-testid="waste-balance-ledger-table"')
     })
 

@@ -49,3 +49,14 @@ export const headingsOf = (table) =>
   Array.from(table.querySelectorAll('thead th')).map((cell) =>
     (cell.textContent ?? '').trim()
   )
+
+/**
+ * The breadcrumb trail as text and link pairs, the current page unlinked.
+ * @param {InstanceType<DOMWindow['Element']>} body
+ * @returns {Array<[string, string | undefined]>}
+ */
+export const breadcrumbsOf = (body) =>
+  Array.from(body.querySelectorAll('.govuk-breadcrumbs__list-item'), (item) => [
+    (item.textContent ?? '').trim(),
+    item.querySelector('a')?.getAttribute('href') ?? undefined
+  ])
