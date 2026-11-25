@@ -3,14 +3,14 @@ import { formatTime, UK_TIME_ZONE } from '#server/common/helpers/format-time.js'
 import { paths } from '#server/paths.js'
 
 import { fetchOutstandingReturns } from '../helpers/fetch-outstanding-returns.js'
-import {
-  describeReportingPeriod,
-  reportingPeriodNow
-} from '../helpers/reporting-period.js'
+import { offeredPeriod } from '../helpers/offered-period.js'
+import { describeReportingPeriod } from '../helpers/reporting-period.js'
 import { toOutstandingReturnsTables } from '../helpers/to-outstanding-returns-tables.js'
+import { yearPath } from '../helpers/year-path.js'
 
 /**
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  */
 
@@ -25,7 +25,7 @@ import { toOutstandingReturnsTables } from '../helpers/to-outstanding-returns-ta
  */
 export const controller = {
   /**
-   * @param {HapiRequest} request
+   * @param {HapiRequest & { params: { year: Year } }} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
@@ -35,7 +35,7 @@ export const controller = {
     const heading = localise(
       'regulators:marketInsights:outstandingReturns:heading'
     )
-    const period = reportingPeriodNow()
+    const period = offeredPeriod(request)
     const outstandingReturns = await fetchOutstandingReturns({
       year: period.year,
       month: period.month,
@@ -54,7 +54,9 @@ export const controller = {
       breadcrumbs: [
         {
           text: localise('regulators:marketInsights:heading'),
-          href: request.localiseUrl(paths.regulators.marketInsights)
+          href: request.localiseUrl(
+            yearPath(paths.regulators.marketInsightsYear, period.year)
+          )
         },
         { text: heading }
       ],

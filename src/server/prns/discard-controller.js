@@ -10,6 +10,7 @@ import { metrics } from '#server/common/helpers/metrics/index.js'
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
 import { prnsPath } from './helpers/prn-resource.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
+import { prnStatuses } from '#server/common/constants/statuses.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const discardGetController = {
@@ -74,7 +75,7 @@ export const discardPostController = {
       await updatePrnStatus(
         keys,
         prnId,
-        { status: 'discarded' },
+        { status: prnStatuses.discarded },
         session.backendToken
       )
 

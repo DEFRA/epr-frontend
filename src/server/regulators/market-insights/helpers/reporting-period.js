@@ -1,10 +1,13 @@
 import { UK_TIME_ZONE } from '#server/common/helpers/format-time.js'
+import { toYear } from '#server/common/helpers/year.js'
+
+/** @import { Year } from '#server/common/helpers/year.js' */
 
 /**
  * The span of reporting months a page shows: the year it belongs to, the last
  * month of the span as its number, and every month from January to it as
  * `YYYY-MM` keys in calendar order.
- * @typedef {{ year: number, month: number, months: string[] }} ReportingPeriod
+ * @typedef {{ year: Year, month: number, months: string[] }} ReportingPeriod
  */
 
 const ukYearMonth = new Intl.DateTimeFormat('en-GB', {
@@ -52,17 +55,34 @@ export const reportingPeriodNow = () => {
     .reduce((acc, { type, value }) => ({ ...acc, [type]: value }), {})
 
   const inJanuary = Number(parts.month) === 1
-  const year = inJanuary ? Number(parts.year) - 1 : Number(parts.year)
+  const year = toYear(inJanuary ? Number(parts.year) - 1 : Number(parts.year))
   const lastCompleteMonth = inJanuary ? DECEMBER : Number(parts.month) - 1
 
-  return {
-    year,
-    month: lastCompleteMonth,
-    months: Array.from(
-      { length: lastCompleteMonth },
-      (_, index) => `${year}-${String(index + 1).padStart(2, '0')}`
-    )
-  }
+  return periodThrough(year, lastCompleteMonth)
+}
+
+/**
+ * @param {Year} year
+ * @param {number} month
+ * @returns {ReportingPeriod}
+ */
+const periodThrough = (year, month) => ({
+  year,
+  month,
+  months: Array.from(
+    { length: month },
+    (_, index) => `${year}-${String(index + 1).padStart(2, '0')}`
+  )
+})
+
+/**
+ * A year's reporting period: the current one so far, or an earlier one whole.
+ * @param {Year} year
+ * @returns {ReportingPeriod}
+ */
+export const reportingPeriodOf = (year) => {
+  const now = reportingPeriodNow()
+  return year === now.year ? now : periodThrough(year, DECEMBER)
 }
 
 /**

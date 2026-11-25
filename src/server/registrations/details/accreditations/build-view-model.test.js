@@ -1,3 +1,4 @@
+import { buildPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
 import { toAccreditationNumber } from '#server/common/helpers/accreditation-number.js'
@@ -208,23 +209,13 @@ const build = (
  * @param {Partial<PackagingRecyclingNote> & { status: string }} note
  * @returns {PackagingRecyclingNote}
  */
-const aNote = (note) => ({
-  id: 'prn-001',
-  prnNumber: null,
-  issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
-  tonnage: 20,
-  material: 'plastic',
-  createdAt: '2026-01-26T09:00:00.000Z',
-  notes: null,
-  issuedAt: null,
-  issuedBy: null,
-  wasteProcessingType: 'reprocessor',
-  processToBeUsed: '',
-  accreditationYear: 2026,
-  obligationYear: 2026,
-  isDecemberWaste: false,
-  ...note
-})
+const aNote = (note) =>
+  buildPackagingRecyclingNote({
+    id: 'prn-001',
+    issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
+    createdAt: '2026-01-26T09:00:00.000Z',
+    ...note
+  })
 
 /**
  * @param {PackagingRecyclingNote[]} notes
