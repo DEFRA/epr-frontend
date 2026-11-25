@@ -12,7 +12,7 @@
       </h1>
       {{ govukInsetText({ text: dataAggregatedAt }) }}
 
-      {% macro figuresTable(table, caption, id) %}
+      {% macro figuresTable(table, caption) %}
         {% set head = [{ text: localise('regulators:marketInsights:table:material') }] %}
         {% for column in table.columns %}
           {% set head = head.concat([{ text: column, format: "numeric" }]) %}
@@ -37,11 +37,8 @@
         {% endfor %}
         {% set rows = rows.concat([cells.concat([noAverage])]) %}
 
-        {% if table.marked %}
-          <p class="govuk-body" id="{{ id }}-key">{{ localise('regulators:marketInsights:fewOperators:key') }}</p>
-        {% endif %}
         {{ govukTable({
-          attributes: { 'aria-describedby': id ~ '-key' } if table.marked else {},
+          attributes: { 'aria-describedby': 'figures-marked' } if table.marked else {},
           caption: caption,
           captionClasses: "govuk-table__caption--m",
           firstCellIsHeader: true,
@@ -52,8 +49,8 @@
 
       {% for month in figures.months %}
         <div class="govuk-body epr-wide-table" role="region" aria-label="{{ month.name }}" tabindex="0">
-          {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor', { month: month.name }), 'figures-month-' ~ loop.index ~ '-reprocessor') }}
-          {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter', { month: month.name }), 'figures-month-' ~ loop.index ~ '-exporter') }}
+          {{ figuresTable(month.reprocessor, localise('regulators:marketInsights:figures:table:reprocessor', { month: month.name })) }}
+          {{ figuresTable(month.exporter, localise('regulators:marketInsights:figures:table:exporter', { month: month.name })) }}
         </div>
         <p class="govuk-body">{{ localise('regulators:marketInsights:figures:reports', { count: month.reports }) }}</p>
       {% endfor %}
@@ -77,7 +74,7 @@
       <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:total') }}</p>
 
       <h2 class="govuk-heading-m">{{ localise('regulators:marketInsights:fewOperators:heading') }}</h2>
-      <p class="govuk-body">{{ localise('regulators:marketInsights:figures:fewOperators:marked:' ~ wording) }}</p>
+      <p class="govuk-body" id="figures-marked">{{ localise('regulators:marketInsights:figures:fewOperators:marked:' ~ wording) }}</p>
     </div>
   </div>
 {% endblock %}

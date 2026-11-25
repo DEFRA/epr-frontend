@@ -7,7 +7,6 @@ import {
   rowsOf
 } from '#server/common/test-helpers/dom.js'
 import {
-  CONFIDENTIAL_KEY,
   LANDING_HEADING,
   NOTICE,
   exporterOf,
@@ -19,7 +18,12 @@ import {
 } from '#server/common/test-helpers/market-insights-fixtures.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByText
+} from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
@@ -30,6 +34,10 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 const backendUrl = config.get('eprBackendUrl')
 const figuresUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/reprocessor-exporter-figures`
+
+/** The paragraph a table holding a marked figure is described by. */
+const MARKED =
+  'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Rows with no accredited operators and nothing in them are not marked ‘c’.'
 
 /**
  * A month in which plastic was reprocessed and aluminium exported, every
@@ -360,7 +368,7 @@ describe('the UK reprocessor and exporter figures page', () => {
       ])
     })
 
-    it('marks each figure few operators were accredited for as confidential, however many of them reported, and describes each table holding one by the key', async ({
+    it('marks each figure few operators were accredited for as confidential, however many of them reported, and describes each table holding one by the paragraph explaining the marks', async ({
       msw,
       server
     }) => {
@@ -438,11 +446,11 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       const body = documentOf(asHtml(result))
 
-      // The key is the table's description, so a screen reader announces
-      // what the shorthand means as it reaches the table.
+      // The paragraph explaining the marks is the table's description, so a
+      // screen reader announces what [c] means as it reaches the table.
       const februaryReprocessors = getByRole(body, 'table', {
         name: 'Reprocessor data for February 2026',
-        description: CONFIDENTIAL_KEY
+        description: MARKED
       })
 
       expect(rowsOf(februaryReprocessors)).toStrictEqual([
@@ -487,7 +495,7 @@ describe('the UK reprocessor and exporter figures page', () => {
         ]
       ])
 
-      // A table with no marked figure carries no key.
+      // A table with no marked figure carries no description.
       expect(
         getByRole(body, 'table', {
           name: 'Exporter data for February 2026'
@@ -495,12 +503,14 @@ describe('the UK reprocessor and exporter figures page', () => {
       ).toBeNull()
       expect(
         getAllByRole(body, 'table', {
-          description: CONFIDENTIAL_KEY
+          description: MARKED
         })
       ).toHaveLength(1)
+      // The [c] shorthand is explained only where the design explains it.
+      expect(queryByText(body, /Some shorthand/)).toBeNull()
     })
 
-    it('marks a row no operator was accredited for that still holds data, and describes its table by the key', async ({
+    it('marks a row no operator was accredited for that still holds data, and describes its table by the paragraph explaining the marks', async ({
       msw,
       server
     }) => {
@@ -544,7 +554,7 @@ describe('the UK reprocessor and exporter figures page', () => {
 
       const februaryReprocessors = getByRole(body, 'table', {
         name: 'Reprocessor data for February 2026',
-        description: CONFIDENTIAL_KEY
+        description: MARKED
       })
 
       expect(rowsOf(februaryReprocessors)).toStrictEqual([

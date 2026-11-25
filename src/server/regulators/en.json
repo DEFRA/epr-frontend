@@ -202,7 +202,6 @@
     },
     "fewOperators": {
       "heading": "Figures marked ‘c’",
-      "key": "Some shorthand is used in this table, [c] = confidential. This figure could reveal an individual operator’s own figures, because fewer than three operators were accredited for it.",
       "accredited": "An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material (reprocessor figures) or to export it (exporter figures). Suspended operators count, but operators whose accreditations were cancelled for the whole month do not."
     }
   },
