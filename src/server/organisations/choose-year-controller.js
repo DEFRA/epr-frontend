@@ -1,7 +1,7 @@
 import { fetchOrganisationYears } from '#server/common/helpers/organisations/fetch-organisation-years.js'
 import Boom from '@hapi/boom'
+import { buildYearChoices } from '#server/common/helpers/year-choices.js'
 import { homePath } from './home-page.js'
-import { buildYearChoices } from './year-choices.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -43,8 +43,13 @@ export const chooseYearController = {
     }
 
     // A valid year has redirected above, so a submission reaching here chose none
-    return h.view('organisations/choose-year', {
+    return h.view('common/templates/choose-year', {
       pageTitle: localise('organisations:chooseYear:heading'),
+      heading: localise('organisations:chooseYear:heading'),
+      hint: localise('organisations:chooseYear:hint'),
+      continueText: localise('organisations:chooseYear:continue'),
+      errorSummaryTitle: localise('organisations:chooseYear:errorSummaryTitle'),
+      errorText: localise('organisations:chooseYear:error'),
       backUrl: request.localiseUrl(
         homePath(orgNumber, { year: addressYear, exporting })
       ),

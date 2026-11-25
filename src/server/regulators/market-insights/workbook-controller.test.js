@@ -6,9 +6,12 @@ import {
   regulator,
   regulatorWithoutMarketScope
 } from '#server/common/test-helpers/market-insights-fixtures.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { paths } from '#server/paths.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+
+import { yearPath } from './helpers/year-path.js'
 
 /**
  * @import { SetupServer } from 'msw/node'
@@ -43,14 +46,14 @@ const backendStreams = (
 const DOWNLOADS = [
   {
     download: 'workbook',
-    url: paths.regulators.marketInsightsWorkbook,
+    path: paths.regulators.marketInsightsWorkbook,
     query: '',
     disposition:
       'attachment; filename="market-insights-2026-monthly-3-2026-04-10-090000.xlsx"'
   },
   {
     download: 'unredacted workbook',
-    url: paths.regulators.marketInsightsUnredactedWorkbook,
+    path: paths.regulators.marketInsightsUnredactedWorkbook,
     query: '?unredacted=true',
     disposition:
       'attachment; filename="market-insights-2026-monthly-3-unredacted-2026-04-10-090000.xlsx"'
@@ -59,12 +62,14 @@ const DOWNLOADS = [
 
 describe.each(DOWNLOADS)(
   'the market insights $download download',
-  ({ url, query, disposition }) => {
+  ({ path, query, disposition }) => {
     /**
      * @param {HapiServer} server
      * @param {typeof regulator} auth
+     * @param {string} [url]
      */
-    const visit = (server, auth) => server.inject({ method: 'GET', url, auth })
+    const visit = (server, auth, url = yearPath(path, toYear(2026))) =>
+      server.inject({ method: 'GET', url, auth })
 
     beforeAll(() => {
       vi.useFakeTimers({ toFake: ['Date'] })
@@ -97,6 +102,22 @@ describe.each(DOWNLOADS)(
       expect(requests).toStrictEqual([
         `http://epr-backend.test/v1/market-insights/2026/monthly/3/workbook.xlsx${query}`
       ])
+    })
+
+    it('has no workbook for a year not offered, and asks the backend for nothing', async ({
+      server,
+      msw
+    }) => {
+      const requests = backendStreams(msw, { contentDisposition: disposition })
+
+      const response = await visit(
+        server,
+        regulator,
+        yearPath(path, toYear(2025))
+      )
+
+      expect(response.statusCode).toBe(statusCodes.notFound)
+      expect(requests).toStrictEqual([])
     })
 
     it('names the file as the backend named it', async ({ server, msw }) => {
