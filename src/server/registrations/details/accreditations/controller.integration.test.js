@@ -319,7 +319,7 @@ describe('the accreditation details page', () => {
       ['Accreditation status', 'Approved'],
       ['Accreditation number', 'A26ER5001180114PL'],
       ['Waste balance available (tonnes)', '987.25'],
-      ['Latest summary log', 'Download']
+      ['Latest summary log', 'Download Latest summary log']
     ])
   })
 
