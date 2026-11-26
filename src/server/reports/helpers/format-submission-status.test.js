@@ -1,19 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  getStatusLabel,
-  getStatusTagClass
-} from './format-submission-status.js'
+import { getStatusTagClass } from './format-submission-status.js'
 
 /**
  * @import { SubmissionStatusValue } from '../constants.js'
  */
-
-/**
- * @param {string} key
- * @returns {string}
- */
-const localise = (key) => key
 
 describe('#format-submission-status', () => {
   describe('#getStatusTagClass', () => {
@@ -35,39 +26,5 @@ describe('#format-submission-status', () => {
         expect(getStatusTagClass(status)).toBe(expected)
       }
     )
-  })
-
-  describe('#getStatusLabel', () => {
-    it('returns localised label for "due" status', () => {
-      expect(getStatusLabel('due', localise)).toBe('reports:statusDue')
-    })
-
-    it('returns localised label for "overdue" status', () => {
-      expect(getStatusLabel('overdue', localise)).toBe('reports:statusOverdue')
-    })
-
-    it('returns localised label for "in_progress" status', () => {
-      expect(getStatusLabel('in_progress', localise)).toBe(
-        'reports:statusInProgress'
-      )
-    })
-
-    it('returns localised label for "ready_to_submit" status', () => {
-      expect(getStatusLabel('ready_to_submit', localise)).toBe(
-        'reports:statusReadyToSubmit'
-      )
-    })
-
-    it('returns localised label for "submitted" status', () => {
-      expect(getStatusLabel('submitted', localise)).toBe(
-        'reports:statusSubmitted'
-      )
-    })
-
-    it('returns localised label for "requires_resubmission" status', () => {
-      expect(getStatusLabel('requires_resubmission', localise)).toBe(
-        'reports:statusRequiresResubmission'
-      )
-    })
   })
 })
