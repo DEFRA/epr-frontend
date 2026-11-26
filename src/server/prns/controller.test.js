@@ -283,10 +283,22 @@ describe('#createPrnController', () => {
         expect(
           detailsContent.getByText(/PRNs can only be issued to/i)
         ).toBeDefined()
+        expect(
+          detailsContent.getByText(
+            "If the producer or compliance scheme you're looking for is not appearing, check that:"
+          )
+        ).toBeDefined()
 
         const bulletList = details.querySelector('.govuk-list--bullet')
-        expect(bulletList).not.toBeNull()
-        expect(bulletList.querySelectorAll('li')).toHaveLength(2)
+
+        expect(
+          Array.from(bulletList.querySelectorAll('li'), (item) =>
+            item.textContent?.trim()
+          )
+        ).toStrictEqual([
+          'you have spelled the name correctly',
+          'they are registered with a regulator'
+        ])
       })
 
       it('should render notes with character count component', async ({
