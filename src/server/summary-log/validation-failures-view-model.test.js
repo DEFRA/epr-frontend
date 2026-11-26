@@ -10,7 +10,7 @@ const messagesWithValues = Object.entries(en.cellReason)
   .filter(([, message]) => message.includes('{{'))
   .map(([key]) => key)
 
-describe('CELL_PROBLEMS', () => {
+describe('cell error messages with values', () => {
   it.each(messagesWithValues)(
     'fills in the values of the %s message',
     (key) => {
