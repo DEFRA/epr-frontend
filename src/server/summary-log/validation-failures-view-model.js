@@ -337,6 +337,21 @@ const previousYearRowFinishedProblem = (
     : undefined
 }
 
+/** @type {CellProblem} */
+const previousYearRowMissingDataProblem = (
+  { errorCode, expected, previousYearRowId, deadline },
+  localise
+) => {
+  const rowId = asRowId(previousYearRowId)
+  return typeof expected === 'number' && rowId && isCalendarDate(deadline)
+    ? localise(`summary-log:cellReason.${errorCode}`, {
+        previousYearRowId: rowId,
+        previousYear: expected,
+        deadline: formatDate(deadline)
+      })
+    : undefined
+}
+
 /**
  * Every cell error whose message has values to fill in; the rest show their
  * message as written.
@@ -349,7 +364,9 @@ export const CELL_PROBLEMS = Object.freeze({
   [VALIDATION_CODE.PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR]:
     previousYearRowFinishedProblem,
   [VALIDATION_CODE.PREVIOUS_YEAR_ROW_REPATRIATED]:
-    previousYearRowFinishedProblem
+    previousYearRowFinishedProblem,
+  [VALIDATION_CODE.PREVIOUS_YEAR_ROW_MISSING_DATA]:
+    previousYearRowMissingDataProblem
 })
 
 /**

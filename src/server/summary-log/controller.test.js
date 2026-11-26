@@ -1482,6 +1482,10 @@ describe('#summaryLogUploadProgressController', () => {
       const COMPLETE_ROW_PROBLEM =
         'Row 1000 in your 2026 summary log is complete, so cannot be linked to your 2027 log'
 
+      /** @param {string} deadline */
+      const missingDataProblem = (deadline) =>
+        `Row 1000 in your 2026 summary log is missing data. You’ll need to add it in your 2026 log by ${deadline}.`
+
       /**
        * @type {Array<{
        *   name: string,
@@ -1629,6 +1633,54 @@ describe('#summaryLogUploadProgressController', () => {
             header: 'DATE_RECEIVED_BY_OSR'
           },
           expected: ['Date received by OSR', '(empty)', 'Check this value']
+        })),
+        {
+          name: 'a link to a 2026 row missing data',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            actual: 1000,
+            previousYearRowId: '1000',
+            deadline: '2027-02-27',
+            header: 'PREVIOUS_YEAR_ROW_ID'
+          },
+          expected: [
+            'Previous year Row ID',
+            '1000',
+            missingDataProblem('27 February 2027')
+          ]
+        },
+        {
+          name: 'a registered-only link to a 2026 row missing data',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            actual: 1000,
+            previousYearRowId: '1000',
+            deadline: '2027-03-20',
+            header: 'PREVIOUS_YEAR_ROW_ID'
+          },
+          ledgerAccreditation: registeredOnlyLedger,
+          location: REGISTERED_ONLY_LOCATION,
+          expected: [
+            'Previous year Row ID',
+            '1000',
+            missingDataProblem('20 March 2027')
+          ]
+        },
+        .../** @type {Array<[string, { previousYearRowId: string, deadline?: string }]>} */ ([
+          ['without the deadline', { previousYearRowId: '1000' }],
+          [
+            'with the row it names as text',
+            { previousYearRowId: 'abc', deadline: '2027-02-27' }
+          ]
+        ]).map(([kind, link]) => ({
+          name: `a link to a 2026 row missing data, ${kind}`,
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            actual: 1000,
+            header: 'PREVIOUS_YEAR_ROW_ID',
+            ...link
+          },
+          expected: ['Previous year Row ID', '1000', 'Check this value']
         })),
         {
           name: 'a previous year row ID that names no row, without the year',

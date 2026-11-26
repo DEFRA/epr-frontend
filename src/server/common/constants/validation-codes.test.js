@@ -270,7 +270,8 @@ describe('#getDisplayCodeFromErrorCode', () => {
     [
       'PREVIOUS_YEAR_ROW_REPATRIATED',
       'DATE_THE_REFUSED_STOPPED_WASTE_REPATRIATED'
-    ]
+    ],
+    ['PREVIOUS_YEAR_ROW_MISSING_DATA', 'PREVIOUS_YEAR_ROW_ID']
   ])('returns DATA_ENTRY_INVALID for %s on %s', (errorCode, header) => {
     expect(getDisplayCodeFromErrorCode(errorCode, header)).toBe(
       'DATA_ENTRY_INVALID'
