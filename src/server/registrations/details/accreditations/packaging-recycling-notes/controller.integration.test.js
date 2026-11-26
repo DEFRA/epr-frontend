@@ -1,3 +1,4 @@
+import { buildPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
 import { toYear } from '#server/common/helpers/year.js'
 import { config } from '#config/config.js'
@@ -56,23 +57,8 @@ const regulator = buildMockAuth({
  * @param {Partial<PrnListDetails['packagingRecyclingNotes'][number]> & { status: string }} note
  * @returns {PrnListDetails['packagingRecyclingNotes'][number]}
  */
-const aNote = (note) => ({
-  id: `note-${note.status}`,
-  prnNumber: null,
-  issuedToOrganisation: { id: 'org-9', name: 'Radar Compliance PLC' },
-  tonnage: 20,
-  material: 'plastic',
-  createdAt: '2026-01-26T09:00:00.000Z',
-  notes: null,
-  issuedAt: null,
-  issuedBy: null,
-  wasteProcessingType: 'reprocessor',
-  processToBeUsed: '',
-  accreditationYear: 2026,
-  obligationYear: 2026,
-  isDecemberWaste: false,
-  ...note
-})
+const aNote = (note) =>
+  buildPackagingRecyclingNote({ id: `note-${note.status}`, ...note })
 
 const packagingRecyclingNotes = [
   aNote({ status: 'awaiting_authorisation' }),

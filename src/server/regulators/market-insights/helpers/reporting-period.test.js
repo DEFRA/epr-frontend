@@ -3,8 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   describeReportingPeriod,
   nameOf,
-  reportingPeriodNow
+  reportingPeriodNow,
+  reportingPeriodOf
 } from './reporting-period.js'
+import { toYear } from '#server/common/helpers/year.js'
 
 /** @param {string} iso */
 const at = (iso) => {
@@ -98,11 +100,41 @@ describe(reportingPeriodNow, () => {
   })
 })
 
+describe(reportingPeriodOf, () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('runs the current reporting year to its last complete month', () => {
+    at('2026-04-10T09:00:00.000Z')
+
+    expect(reportingPeriodOf(toYear(2026))).toStrictEqual({
+      year: 2026,
+      month: 3,
+      months: ['2026-01', '2026-02', '2026-03']
+    })
+  })
+
+  it('runs an earlier year from January to December', () => {
+    at('2027-03-10T09:00:00.000Z')
+
+    const period = reportingPeriodOf(toYear(2026))
+
+    expect(period.month).toBe(12)
+    expect(period.months).toHaveLength(12)
+    expect(period.months.at(-1)).toBe('2026-12')
+  })
+})
+
 describe(describeReportingPeriod, () => {
   it('names the first and last month of a period spanning several', () => {
     expect(
       describeReportingPeriod(
-        { year: 2026, month: 3, months: ['2026-01', '2026-02', '2026-03'] },
+        {
+          year: toYear(2026),
+          month: 3,
+          months: ['2026-01', '2026-02', '2026-03']
+        },
         asKey
       )
     ).toBe(
@@ -113,7 +145,7 @@ describe(describeReportingPeriod, () => {
   it('names the single month a period of one covers', () => {
     expect(
       describeReportingPeriod(
-        { year: 2026, month: 1, months: ['2026-01'] },
+        { year: toYear(2026), month: 1, months: ['2026-01'] },
         asKey
       )
     ).toBe(

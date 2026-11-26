@@ -48,7 +48,6 @@ describe('#getNoteTypeDisplayNames', () => {
     expect(result).toStrictEqual({
       isExporter: false,
       noteType: 'PRN',
-      noteTypeFull: 'Packaging Waste Recycling Note',
       noteTypePlural: 'PRNs',
       wasteActionGerund: 'reprocessing'
     })
@@ -62,7 +61,6 @@ describe('#getNoteTypeDisplayNames', () => {
     expect(result).toStrictEqual({
       isExporter: true,
       noteType: 'PERN',
-      noteTypeFull: 'Packaging Waste Export Recycling Note',
       noteTypePlural: 'PERNs',
       wasteActionGerund: 'exporting'
     })

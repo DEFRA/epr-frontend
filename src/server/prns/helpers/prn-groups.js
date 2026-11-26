@@ -1,4 +1,7 @@
+import { prnStatuses } from '#server/common/constants/statuses.js'
+
 /**
+ * @import { PrnStatus } from '#server/common/constants/statuses.js'
  * @import { PackagingRecyclingNote } from './prn-resource.js'
  */
 
@@ -17,14 +20,14 @@ const MOST_RECENT_COUNT = 3
 
 /**
  * The five statuses a regulator sees. A status absent here is not drawn.
- * @type {Record<string, keyof Omit<PrnGroups, 'mostRecent' | 'isEmpty'>>}
+ * @type {Partial<Record<PrnStatus, keyof Omit<PrnGroups, 'mostRecent' | 'isEmpty'>>>}
  */
 const GROUP_BY_STATUS = {
-  awaiting_authorisation: 'awaitingAuthorisation',
-  awaiting_cancellation: 'awaitingCancellation',
-  awaiting_acceptance: 'issued',
-  accepted: 'issued',
-  cancelled: 'cancelled'
+  [prnStatuses.awaitingAuthorisation]: 'awaitingAuthorisation',
+  [prnStatuses.awaitingCancellation]: 'awaitingCancellation',
+  [prnStatuses.awaitingAcceptance]: 'issued',
+  [prnStatuses.accepted]: 'issued',
+  [prnStatuses.cancelled]: 'cancelled'
 }
 
 /**

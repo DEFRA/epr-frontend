@@ -2,16 +2,6 @@
 
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 
-{% macro accreditationCell(accreditations) %}
-  {%- if accreditations.length -%}
-    {%- for accreditation in accreditations -%}
-      {{ govukTag({ text: accreditation.text, classes: accreditation.classes }) }}
-    {%- endfor -%}
-  {%- else -%}
-    {{ localise('organisations:details:table:notApplicable') }}
-  {%- endif -%}
-{% endmacro %}
-
 {% macro registrationsTable(site) %}
   {% set registrationRows = [] %}
   {% for registration in site.registrations %}
@@ -20,7 +10,6 @@
       { html: govukTag({ text: registration.status.text, classes: registration.status.classes }) },
       { text: registration.material },
       { text: registration.regulator },
-      { html: accreditationCell(registration.accreditations) },
       { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ (registration.href | escape) ~ '">' ~ localise('organisations:details:table:view') ~ '<span class="govuk-visually-hidden"> ' ~ (registration.number | escape) ~ '</span></a>' }
     ]]) %}
   {% endfor %}
@@ -34,7 +23,6 @@
       { text: localise('organisations:details:table:registrationStatus') },
       { text: localise('organisations:details:table:material') },
       { text: localise('organisations:details:table:regulator') },
-      { text: localise('organisations:details:table:accreditation') },
       { text: localise('organisations:details:table:actions') }
     ],
     rows: registrationRows

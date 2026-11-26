@@ -12,6 +12,7 @@ import { isYearOpen } from './helpers/closed-year.js'
 import { fetchPrnContext } from './helpers/fetch-prn-context.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
+import { prnStatuses } from '#server/common/constants/statuses.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const actionController = {
@@ -73,9 +74,9 @@ function buildActionViewData({
   registration,
   request
 }) {
-  const { noteType, noteTypeFull } = getNoteTypeDisplayNames(registration)
+  const { noteType } = getNoteTypeDisplayNames(registration)
   const displayMaterial = getMaterialDisplayName(registration.material)
-  const isNotDraft = prn.status !== 'draft'
+  const isNotDraft = prn.status !== prnStatuses.draft
   const statusConfig = getStatusConfig(prn.status, localise)
 
   const prnDetailRows = buildActionPrnDetailRows({
@@ -97,7 +98,7 @@ function buildActionViewData({
 
   const viewData = {
     pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
-    heading: noteTypeFull,
+    heading: localise(`prns:noteName:${noteType}`),
     insetText: localise('prns:action:insetText', { noteType }),
     viewLink: {
       text: localise('prns:action:viewLink', { noteType }),
@@ -140,8 +141,9 @@ function buildActionButtons({
   prnId,
   yearOpen
 }) {
-  const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
-  const isAwaitingCancellation = prn.status === 'awaiting_cancellation'
+  const isAwaitingAuthorisation =
+    prn.status === prnStatuses.awaitingAuthorisation
+  const isAwaitingCancellation = prn.status === prnStatuses.awaitingCancellation
 
   return {
     issueButton:

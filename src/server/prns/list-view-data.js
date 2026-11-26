@@ -9,6 +9,7 @@ import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 import { prnsPath } from './helpers/prn-resource.js'
 
 /** @import { AccreditationKeys } from '#server/reports/helpers/report-paths.js' */
+/** @import { PrnStatus } from '#server/common/constants/statuses.js' */
 
 /**
  * @param {{
@@ -136,7 +137,7 @@ function buildListLabels(localise, { noteType, noteTypePlural, year }) {
  *     recipient: string,
  *     createdAt: string,
  *     tonnage?: number | null,
- *     status: string,
+ *     status: PrnStatus,
  *     isDecemberWaste: boolean
  *   }>,
  *   localise: (key: string, params?: object) => string,
@@ -261,7 +262,7 @@ function buildDecemberWasteText(isDecemberWaste, localise) {
 
 /**
  * Build govukTag HTML for status display
- * @param {string} status
+ * @param {PrnStatus} status
  * @param {(key: string) => string} localise
  * @returns {string}
  */

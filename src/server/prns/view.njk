@@ -20,15 +20,33 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
+    {% if showRegulatorLogos %}
+      <div class="epr-regulator-logos govuk-!-margin-bottom-6">
+        <img src="/public/assets/images/logo-environment-agency.svg" alt="Environment Agency" class="epr-regulator-logo">
+        <img src="/public/assets/images/logo-niea.svg" alt="Northern Ireland Environment Agency (NIEA)" class="epr-regulator-logo">
+        <img src="/public/assets/images/logo-sepa.svg" alt="Scottish Environment Protection Agency (SEPA)" class="epr-regulator-logo">
+        <img src="/public/assets/images/logo-nrw.svg" alt="Natural Resources Wales" class="epr-regulator-logo">
+      </div>
+    {% endif %}
+
     <span class="govuk-caption-xl">{{ caption }}</span>
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-    {% if showRegulatorLogos %}
-      <div class="epr-regulator-logos govuk-!-margin-bottom-6">
-        <img src="/public/assets/images/logo-sepa.svg" alt="Scottish Environment Protection Agency (SEPA)" class="epr-regulator-logo">
-        <img src="/public/assets/images/logo-environment-agency.svg" alt="Environment Agency" class="epr-regulator-logo">
-        <img src="/public/assets/images/logo-niea.svg" alt="Northern Ireland Environment Agency (NIEA)" class="epr-regulator-logo">
-        <img src="/public/assets/images/logo-nrw.svg" alt="Natural Resources Wales" class="epr-regulator-logo">
+    {% if noteSummary %}
+      <div class="govuk-inset-text">
+        {% if noteSummary.number %}
+          <p class="govuk-body-l govuk-!-font-weight-bold">{{ noteSummary.number }}</p>
+        {% endif %}
+        <p class="govuk-body-l govuk-!-font-weight-bold">{{ noteSummary.yearOfIssue }}</p>
+        {% if noteSummary.decemberWasteTag %}
+          {{ govukTag({
+            text: noteSummary.decemberWasteTag,
+            classes: "govuk-tag--blue epr-tag--no-max-width"
+          }) }}
+        {% endif %}
+        {% if noteSummary.acceptedTowards %}
+          <p class="govuk-body-l govuk-!-font-weight-bold">{{ noteSummary.acceptedTowards }}</p>
+        {% endif %}
       </div>
     {% endif %}
 
@@ -51,13 +69,8 @@
       }) }}
     {% endif %}
 
-    <h2 class="govuk-heading-m">{{ prnDetailsHeading }}</h2>
-
-    {% if complianceYear %}
-      <p class="govuk-body">{{ localise(complianceYear.textKey, {
-        accreditationYear: "<strong>" ~ complianceYear.accreditationYear ~ "</strong>",
-        obligationYear: "<strong>" ~ complianceYear.obligationYear ~ "</strong>"
-      }) | safe }}</p>
+    {% if prnDetailsHeading %}
+      <h2 class="govuk-heading-m">{{ prnDetailsHeading }}</h2>
     {% endif %}
 
     {{ govukSummaryList({

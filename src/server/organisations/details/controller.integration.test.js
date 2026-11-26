@@ -209,6 +209,14 @@ describe('the organisation homepage a regulator reads', () => {
     expect(documentOf(body).textContent).toContain('Kirkby Plastics Ltd')
   })
 
+  it('titles the page by the organisation', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(documentOf(body).ownerDocument.title).toContain(
+      'Kirkby Plastics Ltd: Organisation homepage'
+    )
+  })
+
   it('reads the whole organisation, not one year of it', async ({ server }) => {
     await visit(server, regulator)
 
@@ -228,7 +236,6 @@ describe('the organisation homepage a regulator reads', () => {
       'Registration status',
       'Material',
       'Regulator',
-      'Accreditation',
       'Actions'
     ])
   })
@@ -242,7 +249,6 @@ describe('the organisation homepage a regulator reads', () => {
         'Approved',
         'Glass remelt',
         'EA',
-        '2026: Approved 2025: Cancelled',
         'View R26ER5001180041PL'
       ],
       [
@@ -250,7 +256,6 @@ describe('the organisation homepage a regulator reads', () => {
         'Cancelled',
         'Aluminium',
         'SEPA',
-        'Not applicable',
         'View R26ER5001180042AL'
       ]
     ])

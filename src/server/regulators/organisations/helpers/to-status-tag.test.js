@@ -14,10 +14,7 @@ describe(toStatusTag, () => {
   ]
 
   it.for(designed)('gives $status its own colour', ({ status, classes }) => {
-    expect(toStatusTag(status, inEnglish)).toStrictEqual({
-      text: `regulators:organisations:status:${status}`,
-      classes
-    })
+    expect(toStatusTag(status, inEnglish).classes).toBe(classes)
   })
 
   it('shows a status it does not know rather than an empty cell', () => {

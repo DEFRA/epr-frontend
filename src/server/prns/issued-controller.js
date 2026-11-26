@@ -2,6 +2,7 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { fetchPrnContext } from './helpers/fetch-prn-context.js'
 import { accreditationPath } from '#server/reports/helpers/report-paths.js'
+import { prnStatuses } from '#server/common/constants/statuses.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const issuedController = {
@@ -26,7 +27,7 @@ export const issuedController = {
     const viewUrl = `${basePath}/${prnId}/view`
 
     // Only show success page if PRN has been issued (status is awaiting_acceptance)
-    if (prn.status !== 'awaiting_acceptance') {
+    if (prn.status !== prnStatuses.awaitingAcceptance) {
       return h.redirect(viewUrl)
     }
 

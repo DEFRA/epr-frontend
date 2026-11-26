@@ -367,13 +367,14 @@ export function renderHome(
       homePath(orgNumber, { year, exporting: true })
     ),
     shouldRenderTabs,
-    selectedYear: year,
+    yearDataText: year ? localise('organisations:yearData', { year }) : null,
     chooseYearUrl:
       year && hasOtherYears
         ? request.localiseUrl(
             chooseYearPath(orgNumber, { year, exporting: isExporterTab })
           )
         : null,
+    chooseYearLinkText: localise('organisations:chooseYearLink'),
     sites,
     tableTitle,
     tabTypes

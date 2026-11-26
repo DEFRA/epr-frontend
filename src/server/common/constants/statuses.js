@@ -1,11 +1,14 @@
-export const prnStatuses = {
+export const prnStatuses = Object.freeze({
   draft: 'draft',
   awaitingAuthorisation: 'awaiting_authorisation',
   awaitingAcceptance: 'awaiting_acceptance',
   accepted: 'accepted',
   cancelled: 'cancelled',
-  awaitingCancellation: 'awaiting_cancellation'
-}
+  awaitingCancellation: 'awaiting_cancellation',
+  discarded: 'discarded'
+})
+
+/** @typedef {typeof prnStatuses[keyof typeof prnStatuses]} PrnStatus */
 
 export const summaryLogStatuses = {
   preprocessing: 'preprocessing',

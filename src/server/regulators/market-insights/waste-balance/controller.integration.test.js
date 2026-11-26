@@ -7,18 +7,25 @@ import {
   rowsOf
 } from '#server/common/test-helpers/dom.js'
 import {
-  CONFIDENTIAL_KEY,
   LANDING_HEADING,
   NOTICE,
   operator,
   regulator,
   regulatorWithoutMarketScope
 } from '#server/common/test-helpers/market-insights-fixtures.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+
+import { yearPath } from '../helpers/year-path.js'
+
+const pageUrl = yearPath(
+  paths.regulators.marketInsightsWasteBalance,
+  toYear(2026)
+)
 
 /**
  * @import { WasteBalanceAggregate } from '../helpers/fetch-waste-balance.js'
@@ -28,6 +35,10 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 const backendUrl = config.get('eprBackendUrl')
 const wasteBalanceUrl = `${backendUrl}/v1/market-insights/:year/:cadence/:period/waste-balance`
+
+/** The paragraph a table holding a marked figure is described by. */
+const MARKED =
+  'Figures are marked [c] to show that the data came from only 1 or 2 operators. Figures are also marked [c] when 2 accreditation types (Exp and Rep) are combined to denote that commercial confidentiality exists within a row. Rows with no accredited operators and nothing in them are not marked [c].'
 
 /**
  * @param {number} netCredit
@@ -134,7 +145,7 @@ describe('the UK waste balance page', () => {
     }) => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -226,7 +237,7 @@ describe('the UK waste balance page', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -247,7 +258,7 @@ describe('the UK waste balance page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -263,7 +274,7 @@ describe('the UK waste balance page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -285,7 +296,7 @@ describe('the UK waste balance page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -307,7 +318,7 @@ describe('the UK waste balance page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -322,7 +333,7 @@ describe('the UK waste balance page', () => {
       ).toStrictEqual([LANDING_HEADING, 'UK waste balance'])
       expect(
         getByRole(trail, 'link', { name: LANDING_HEADING }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsights)
+      ).toBe('/regulators/market-insights/2026')
     })
 
     it('marks each month and row total few operators were accredited for as confidential, however many of them reported', async ({
@@ -380,15 +391,15 @@ describe('the UK waste balance page', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
-      // The key is the table's description, so a screen reader announces
-      // what the shorthand means as it reaches the table.
+      // The paragraph explaining the marks is the table's description, so a
+      // screen reader announces what [c] means as it reaches the table.
       const table = getByRole(documentOf(asHtml(result)), 'table', {
         name: 'Waste balance',
-        description: CONFIDENTIAL_KEY
+        description: MARKED
       })
 
       // A row total that includes a marked month, but is not marked itself,
@@ -426,7 +437,7 @@ describe('the UK waste balance page', () => {
       ])
     })
 
-    it('marks a month no operator was accredited for that still holds a net credit, and describes the table by the key', async ({
+    it('marks a month no operator was accredited for that still holds a net credit, and describes the table by the paragraph explaining the marks', async ({
       msw,
       server
     }) => {
@@ -486,13 +497,13 @@ describe('the UK waste balance page', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
       const table = getByRole(documentOf(asHtml(result)), 'table', {
         name: 'Waste balance',
-        description: CONFIDENTIAL_KEY
+        description: MARKED
       })
 
       expect(rowsOf(table)).toStrictEqual([
@@ -509,7 +520,7 @@ describe('the UK waste balance page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -547,8 +558,8 @@ describe('the UK waste balance page', () => {
         'The columns run from January in the reporting year to the last complete month and the totals add the monthly data together.',
         'An operator counts as accredited for a figure if, on any day of the month, it was accredited to reprocess that material (reprocessor figures) or to export it (exporter figures). Suspended operators count, but operators whose accreditations were cancelled for the whole month do not. Accredited operators count towards the number of operators, even if none of their tonnage is included in a figure.',
         'Row totals are counted across each month, so operators accredited across more than one month still only count once towards the number of operators. Also, an operator is a business, so only counts once regardless of however many sites it has.',
-        'Figures marked ‘c’',
-        'Figures are marked ‘c’ to show that the data came from only 1 or 2 operators. Figures are also marked ‘c’ when 2 accreditation types (Exp and Rep) are combined to denote that commercial confidentiality exists within a row. Rows with no accredited operators and nothing in them are not marked ‘c’.'
+        'Figures marked [c]',
+        'Figures are marked [c] to show that the data came from only 1 or 2 operators. Figures are also marked [c] when 2 accreditation types (Exp and Rep) are combined to denote that commercial confidentiality exists within a row. Rows with no accredited operators and nothing in them are not marked [c].'
       ])
     })
 
@@ -557,7 +568,7 @@ describe('the UK waste balance page', () => {
     }) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
@@ -565,7 +576,7 @@ describe('the UK waste balance page', () => {
         getByRole(documentOf(asHtml(result)), 'link', {
           name: 'published (redacted) data workbook (XLSX)'
         }).getAttribute('href')
-      ).toBe(paths.regulators.marketInsightsWorkbook)
+      ).toBe('/regulators/market-insights/2026/workbook.xlsx')
     })
 
     it('asks for the reporting period through the last complete month, and for nothing else', async ({
@@ -584,13 +595,89 @@ describe('the UK waste balance page', () => {
 
       await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulator
       })
 
       expect(asked.map((url) => url.pathname)).toStrictEqual([
         '/v1/market-insights/2026/monthly/3/waste-balance'
       ])
+    })
+
+    it('has no page for a year not offered, and asks the backend for nothing', async ({
+      msw,
+      server
+    }) => {
+      const asked = vi.fn()
+      msw.use(
+        http.get(wasteBalanceUrl, () => {
+          asked()
+          return HttpResponse.json(januaryToMarch)
+        })
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: yearPath(
+          paths.regulators.marketInsightsWasteBalance,
+          toYear(2025)
+        ),
+        auth: regulator
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(asked).not.toHaveBeenCalled()
+    })
+
+    describe('once a later year has opened', () => {
+      beforeAll(() => {
+        vi.setSystemTime(new Date('2027-03-10T09:00:00.000Z'))
+      })
+
+      afterAll(() => {
+        vi.setSystemTime(new Date('2026-04-10T09:00:00.000Z'))
+      })
+
+      it('reads the whole of an earlier year, January to December', async ({
+        msw,
+        server
+      }) => {
+        /** @type {WasteBalanceAggregate} */
+        const januaryToDecember = {
+          ...januaryToMarch,
+          data: {
+            ...januaryToMarch.data,
+            months: Object.fromEntries(
+              Array.from({ length: 12 }, (_, index) => [
+                `2026-${String(index + 1).padStart(2, '0')}`,
+                monthOf(
+                  { glass: 0, aluminium: 0 },
+                  { expected: 0, submitted: 0 }
+                )
+              ])
+            )
+          }
+        }
+        /** @type {string[]} */
+        const asked = []
+        msw.use(
+          http.get(wasteBalanceUrl, ({ params }) => {
+            asked.push(`${params.year}/${params.period}`)
+            return HttpResponse.json(januaryToDecember)
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: pageUrl,
+          auth: regulator
+        })
+
+        expect(asked).toStrictEqual(['2026/12'])
+        expect(
+          getByText(documentOf(asHtml(result)), 'January to December 2026')
+        ).not.toBeNull()
+      })
     })
   })
 
@@ -610,7 +697,7 @@ describe('the UK waste balance page', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: operator
       })
 
@@ -628,7 +715,7 @@ describe('the UK waste balance page', () => {
     it('is refused the page, whatever role it carries', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: paths.regulators.marketInsightsWasteBalance,
+        url: pageUrl,
         auth: regulatorWithoutMarketScope
       })
 
@@ -655,7 +742,7 @@ describe('the UK waste balance page with the flag off', () => {
 
     const { statusCode, result } = await server.inject({
       method: 'GET',
-      url: paths.regulators.marketInsightsWasteBalance,
+      url: pageUrl,
       auth: regulator
     })
 
@@ -670,7 +757,7 @@ describe('the UK waste balance page with the flag off', () => {
   }) => {
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: paths.regulators.marketInsightsWasteBalance,
+      url: pageUrl,
       auth: regulatorWithoutMarketScope
     })
 

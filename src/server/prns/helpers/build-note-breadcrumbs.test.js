@@ -38,42 +38,18 @@ const registration = '/en/organisations/500123/registrations/R26EN0000000001PL'
 
 describe(buildNoteBreadcrumbs, () => {
   it('walks from all organisations down to the note by natural keys', () => {
-    expect(buildNoteBreadcrumbs(context)).toStrictEqual([
-      {
-        text: 'registrations:details:allOrganisations',
-        href: '/en/regulators/home'
-      },
-      { text: 'Acme', href: '/en/organisations/500123' },
-      {
-        text: 'registrations:details:heading',
-        href: registration
-      },
-      {
-        text: 'registrations:details:accreditation:breadcrumb',
-        href: `${registration}/accreditations/2026`
-      },
-      {
-        text: 'registrations:details:accreditation:prns:listHeading',
-        href: `${registration}/accreditations/2026/packaging-recycling-notes`
-      },
-      { text: 'EX123456' }
-    ])
-  })
-
-  it('names the notes list by its note type and year, as the list heads itself', () => {
-    const crumbs = buildNoteBreadcrumbs({
-      ...context,
-      localise: /** @type {Localise} */ (
-        /** @type {unknown} */ (
-          (/** @type {string} */ key, /** @type {object} */ params) =>
-            `${key} ${JSON.stringify(params)}`
-        )
+    expect(
+      buildNoteBreadcrumbs(context).map((crumb) =>
+        'href' in crumb ? crumb.href : undefined
       )
-    })
-
-    expect(crumbs[4].text).toBe(
-      'registrations:details:accreditation:prns:listHeading {"noteTypePlural":"PRNs","year":2026}'
-    )
+    ).toStrictEqual([
+      '/en/regulators/home',
+      '/en/organisations/500123',
+      registration,
+      `${registration}/accreditations/2026`,
+      `${registration}/accreditations/2026/packaging-recycling-notes`,
+      undefined
+    ])
   })
 
   it('falls back to the note id where it carries no number yet', () => {

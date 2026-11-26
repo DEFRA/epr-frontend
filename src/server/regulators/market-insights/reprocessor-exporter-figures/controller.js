@@ -3,14 +3,14 @@ import { formatTime, UK_TIME_ZONE } from '#server/common/helpers/format-time.js'
 import { paths } from '#server/paths.js'
 
 import { fetchReprocessorExporterFigures } from '../helpers/fetch-reprocessor-exporter-figures.js'
-import {
-  describeReportingPeriod,
-  reportingPeriodNow
-} from '../helpers/reporting-period.js'
+import { offeredPeriod } from '../helpers/offered-period.js'
+import { describeReportingPeriod } from '../helpers/reporting-period.js'
 import { toReprocessorExporterTables } from '../helpers/to-reprocessor-exporter-tables.js'
+import { yearPath } from '../helpers/year-path.js'
 
 /**
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { Year } from '#server/common/helpers/year.js'
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { Nation } from '../helpers/fetch-reprocessor-exporter-figures.js'
  */
@@ -38,7 +38,7 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
 
   return {
     /**
-     * @param {HapiRequest} request
+     * @param {HapiRequest & { params: { year: Year } }} request
      * @param {ResponseToolkit} h
      */
     async handler(request, h) {
@@ -46,7 +46,7 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
       const { t: localise } = request
 
       const heading = localise(`${tabNames}:heading`)
-      const period = reportingPeriodNow()
+      const period = offeredPeriod(request)
       const figures = await fetchReprocessorExporterFigures({
         year: period.year,
         month: period.month,
@@ -64,7 +64,7 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
             `regulators:marketInsights:figures:description:${described}`,
             {
               workbookHref: request.localiseUrl(
-                paths.regulators.marketInsightsWorkbook
+                yearPath(paths.regulators.marketInsightsWorkbook, period.year)
               )
             }
           ),
@@ -78,7 +78,9 @@ export const reprocessorExporterFiguresController = ({ nation } = {}) => {
           breadcrumbs: [
             {
               text: localise('regulators:marketInsights:heading'),
-              href: request.localiseUrl(paths.regulators.marketInsights)
+              href: request.localiseUrl(
+                yearPath(paths.regulators.marketInsightsYear, period.year)
+              )
             },
             { text: heading }
           ],

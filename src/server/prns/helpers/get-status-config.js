@@ -1,3 +1,9 @@
+import { prnStatuses } from '#server/common/constants/statuses.js'
+
+/**
+ * @import { PrnStatus } from '#server/common/constants/statuses.js'
+ */
+
 const TAG_CLASS_YELLOW = 'govuk-tag--yellow epr-tag--no-max-width'
 const TAG_CLASS_PURPLE = 'govuk-tag--purple epr-tag--no-max-width'
 const TAG_CLASS_BLUE = 'govuk-tag--blue epr-tag--no-max-width'
@@ -7,29 +13,29 @@ const TAG_CLASS_DEFAULT = 'epr-tag--no-max-width'
 
 /**
  * Get status display configuration
- * @param {string} status
+ * @param {PrnStatus} status
  * @param {(key: string) => string} localise
  * @returns {{text: string, class: string}}
  */
 function getStatusConfig(status, localise) {
   const statusMap = {
-    awaiting_authorisation: {
+    [prnStatuses.awaitingAuthorisation]: {
       text: localise('prns:list:status:awaitingAuthorisation'),
       class: TAG_CLASS_BLUE
     },
-    awaiting_acceptance: {
+    [prnStatuses.awaitingAcceptance]: {
       text: localise('prns:list:status:awaitingAcceptance'),
       class: TAG_CLASS_PURPLE
     },
-    awaiting_cancellation: {
+    [prnStatuses.awaitingCancellation]: {
       text: localise('prns:list:status:awaitingCancellation'),
       class: TAG_CLASS_YELLOW
     },
-    accepted: {
+    [prnStatuses.accepted]: {
       text: localise('prns:list:status:accepted'),
       class: TAG_CLASS_GREEN
     },
-    cancelled: {
+    [prnStatuses.cancelled]: {
       text: localise('prns:list:status:cancelled'),
       class: TAG_CLASS_RED
     }
