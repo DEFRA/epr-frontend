@@ -47,7 +47,7 @@ import { summaryLogStatuses } from '../common/constants/statuses.js'
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
- * @import { LedgerAccreditation, LoadRow, PeriodStatusByChange, SummaryLogStatusResponse } from './types.js'
+ * @import { LedgerAccreditation, LoadRow, PeriodStatusByChange, SummaryLogStatusResponse, ValidationFailure } from './types.js'
  */
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
@@ -1486,6 +1486,15 @@ describe('#summaryLogUploadProgressController', () => {
       const missingDataProblem = (deadline) =>
         `Row 1000 in your 2026 summary log is missing data. You’ll need to add it in your 2026 log by ${deadline}.`
 
+      /** @type {Array<[kind: string, link: Pick<ValidationFailure, 'previousYearRowId' | 'deadline'>]>} */
+      const unshowableMissingDataLinks = [
+        ['without the deadline', { previousYearRowId: '1000' }],
+        [
+          'with the row it names as text',
+          { previousYearRowId: 'abc', deadline: '2027-02-27' }
+        ]
+      ]
+
       /**
        * @type {Array<{
        *   name: string,
@@ -1666,13 +1675,7 @@ describe('#summaryLogUploadProgressController', () => {
             missingDataProblem('20 March 2027')
           ]
         },
-        .../** @type {Array<[string, { previousYearRowId: string, deadline?: string }]>} */ ([
-          ['without the deadline', { previousYearRowId: '1000' }],
-          [
-            'with the row it names as text',
-            { previousYearRowId: 'abc', deadline: '2027-02-27' }
-          ]
-        ]).map(([kind, link]) => ({
+        ...unshowableMissingDataLinks.map(([kind, link]) => ({
           name: `a link to a 2026 row missing data, ${kind}`,
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
