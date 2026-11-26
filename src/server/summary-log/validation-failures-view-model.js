@@ -4,6 +4,8 @@ import {
 } from '#server/common/constants/validation-codes.js'
 import { VALIDATION_CODE } from '#server/common/enums/validation.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
+import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
+import { rowIdSchema } from '#domain/summary-logs/loads-schema.js'
 import partition from 'lodash-es/partition.js'
 
 /**
@@ -15,6 +17,18 @@ import partition from 'lodash-es/partition.js'
  *   ValidationFailure,
  *   ValidationResponse
  * } from './types.js'
+ * @import { LedgerKind } from '#domain/ledger-kinds.js'
+ * @import { Year } from '#server/common/helpers/year.js'
+ */
+
+/** @typedef {{ year: Year, kind: LedgerKind }} SummaryLogLedger */
+
+/**
+ * @typedef {(
+ *   failure: LocatedCellFailure,
+ *   localise: Localise,
+ *   ledger: SummaryLogLedger
+ * ) => string | undefined} CellProblem
  */
 
 const MAX_FILE_SIZE_MB = 100
@@ -235,11 +249,7 @@ const EXPORTED_TAB_TABLES = new Set([
   'LOADS_EXPORTED'
 ])
 
-/**
- * @param {LocatedCellFailure} failure
- * @param {Localise} localise
- * @returns {string | undefined}
- */
+/** @type {CellProblem} */
 const laterYearProblem = (
   { errorCode, expected, actual, location },
   localise
@@ -256,11 +266,7 @@ const laterYearProblem = (
   })
 }
 
-/**
- * @param {LocatedCellFailure} failure
- * @param {Localise} localise
- * @returns {string | undefined}
- */
+/** @type {CellProblem} */
 const earlierYearProblem = (
   { errorCode, expected, actual, deadline },
   localise
@@ -279,25 +285,89 @@ const earlierYearProblem = (
   })
 }
 
-const YEAR_PROBLEMS = {
-  [VALIDATION_CODE.DATE_AFTER_SUMMARY_LOG_YEAR]: laterYearProblem,
-  [VALIDATION_CODE.DATE_BEFORE_SUMMARY_LOG_YEAR]: earlierYearProblem
+/**
+ * A Row ID cell can arrive as a number, as Excel stores it.
+ * @param {unknown} value
+ * @returns {string | undefined}
+ */
+const asRowId = (value) => {
+  const rowId = typeof value === 'number' ? String(value) : value
+  return typeof rowId === 'string' &&
+    rowIdSchema.validate(rowId).error === undefined
+    ? rowId
+    : undefined
 }
+
+/**
+ * @param {string} errorCode
+ * @param {LedgerKind} kind
+ */
+const finishedProblemKey = (errorCode, kind) =>
+  errorCode === VALIDATION_CODE.PREVIOUS_YEAR_ROW_REPATRIATED &&
+  kind === LEDGER_KINDS.REGISTERED_ONLY
+    ? `${errorCode}_REGISTERED_ONLY`
+    : errorCode
+
+/** @type {CellProblem} */
+const previousYearRowNotFoundProblem = (
+  { errorCode, expected, actual },
+  localise
+) => {
+  const previousYearRowId = asRowId(actual)
+  return typeof expected === 'number' && previousYearRowId
+    ? localise(`summary-log:cellReason.${errorCode}`, {
+        previousYearRowId,
+        previousYear: expected
+      })
+    : undefined
+}
+
+/** @type {CellProblem} */
+const previousYearRowFinishedProblem = (
+  { errorCode, expected, previousYearRowId },
+  localise,
+  { year, kind }
+) => {
+  const rowId = asRowId(previousYearRowId)
+  return typeof expected === 'number' && rowId
+    ? localise(
+        `summary-log:cellReason.${finishedProblemKey(errorCode, kind)}`,
+        { previousYearRowId: rowId, previousYear: expected, year }
+      )
+    : undefined
+}
+
+/**
+ * Every cell error whose message has values to fill in; the rest show their
+ * message as written.
+ * @type {Readonly<Record<string, CellProblem>>}
+ */
+export const CELL_PROBLEMS = Object.freeze({
+  [VALIDATION_CODE.DATE_AFTER_SUMMARY_LOG_YEAR]: laterYearProblem,
+  [VALIDATION_CODE.DATE_BEFORE_SUMMARY_LOG_YEAR]: earlierYearProblem,
+  [VALIDATION_CODE.PREVIOUS_YEAR_ROW_NOT_FOUND]: previousYearRowNotFoundProblem,
+  [VALIDATION_CODE.PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR]:
+    previousYearRowFinishedProblem,
+  [VALIDATION_CODE.PREVIOUS_YEAR_ROW_REPATRIATED]:
+    previousYearRowFinishedProblem
+})
 
 /**
  * @param {LocatedCellFailure} failure
  * @param {string} displayCode
  * @param {Localise} localise
+ * @param {SummaryLogLedger} ledger
  * @returns {string}
  */
-const buildProblem = (failure, displayCode, localise) => {
+const buildProblem = (failure, displayCode, localise, ledger) => {
   const fallback = localise(`summary-log:cellReason.${displayCode}`, {
     defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
   })
 
-  const yearProblem = YEAR_PROBLEMS[failure.errorCode]
-  if (yearProblem) {
-    return yearProblem(failure, localise) ?? fallback
+  if (Object.hasOwn(CELL_PROBLEMS, failure.errorCode)) {
+    return (
+      CELL_PROBLEMS[failure.errorCode](failure, localise, ledger) ?? fallback
+    )
   }
 
   return localise(`summary-log:cellReason.${failure.errorCode}`, {
@@ -308,9 +378,10 @@ const buildProblem = (failure, displayCode, localise) => {
 /**
  * @param {LocatedCellFailure} failure
  * @param {Localise} localise
+ * @param {SummaryLogLedger} ledger
  * @returns {CellErrorCell}
  */
-const buildCellErrorCell = (failure, localise) => {
+const buildCellErrorCell = (failure, localise, ledger) => {
   const { location, errorCode, actual } = failure
   const displayCode = getDisplayCodeFromErrorCode(errorCode, location.header)
 
@@ -318,7 +389,7 @@ const buildCellErrorCell = (failure, localise) => {
     columnLabel: buildColumnLabel(location.header, localise),
     cellRef: `${location.column}${location.row}`,
     value: formatValueEntered(location.header, actual, localise),
-    problem: buildProblem(failure, displayCode, localise)
+    problem: buildProblem(failure, displayCode, localise, ledger)
   }
 }
 
@@ -337,12 +408,15 @@ const rowIdOf = ({ location }) => location.rowId
  * @param {string} section
  * @param {LocatedCellFailure[]} failures - This record's failures
  * @param {Localise} localise
+ * @param {SummaryLogLedger} ledger
  * @returns {CellErrorRecord}
  */
-const buildCellErrorRecord = (rowId, section, failures, localise) => ({
+const buildCellErrorRecord = (rowId, section, failures, localise, ledger) => ({
   rowId,
   section,
-  cells: failures.map((failure) => buildCellErrorCell(failure, localise))
+  cells: failures.map((failure) =>
+    buildCellErrorCell(failure, localise, ledger)
+  )
 })
 
 /**
@@ -353,16 +427,17 @@ const buildCellErrorRecord = (rowId, section, failures, localise) => ({
  * @param {LocatedCellFailure[]} failures - This table's failures
  * @param {string} sheet - Section label fallback when the table is unmapped
  * @param {Localise} localise
+ * @param {SummaryLogLedger} ledger
  * @returns {CellErrorRecord[]}
  */
-const buildTableRecords = (table, failures, sheet, localise) => {
+const buildTableRecords = (table, failures, sheet, localise, ledger) => {
   const section = localise(`summary-log:tableLabel.${table}`, {
     defaultValue: sheet
   })
 
   return [...Map.groupBy(failures, rowIdOf)]
     .map(([rowId, recordFailures]) =>
-      buildCellErrorRecord(rowId, section, recordFailures, localise)
+      buildCellErrorRecord(rowId, section, recordFailures, localise, ledger)
     )
     .toSorted((a, b) => compareRowId(a.rowId, b.rowId))
 }
@@ -373,14 +448,15 @@ const buildTableRecords = (table, failures, sheet, localise) => {
  * sorted by ROW_ID within each table, each carrying its section label.
  * @param {LocatedCellFailure[]} locatedFailures
  * @param {Localise} localise
+ * @param {SummaryLogLedger} ledger
  * @returns {CellErrorRecord[]}
  */
-const buildCellErrorRecords = (locatedFailures, localise) =>
+const buildCellErrorRecords = (locatedFailures, localise, ledger) =>
   [...Map.groupBy(locatedFailures, ({ location }) => location.sheet)].flatMap(
     ([sheet, sheetFailures]) =>
       [...Map.groupBy(sheetFailures, ({ location }) => location.table)].flatMap(
         ([table, tableFailures]) =>
-          buildTableRecords(table, tableFailures, sheet, localise)
+          buildTableRecords(table, tableFailures, sheet, localise, ledger)
       )
   )
 
@@ -389,7 +465,8 @@ const buildCellErrorRecords = (locatedFailures, localise) =>
  * records (sliced to the display cap), the remaining meta/file-level issue
  * messages, and the count/cap-aware description lines.
  * @param {Localise} localise
- * @param {ValidationResponse} [validation]
+ * @param {ValidationResponse | undefined} validation
+ * @param {SummaryLogLedger} ledger - The summary log's year and ledger
  * @returns {{
  *   errorRecords: CellErrorRecord[],
  *   issues: Array<string | object>,
@@ -397,7 +474,11 @@ const buildCellErrorRecords = (locatedFailures, localise) =>
  *   description2: string
  * }}
  */
-export const buildValidationFailuresViewModel = (localise, validation) => {
+export const buildValidationFailuresViewModel = (
+  localise,
+  validation,
+  ledger
+) => {
   const failures = validation?.failures ?? []
 
   const fallbackMessage = localise(
@@ -441,7 +522,8 @@ export const buildValidationFailuresViewModel = (localise, validation) => {
   // Display only the first N located errors; the message names the true total.
   const errorRecords = buildCellErrorRecords(
     locatedFailures.slice(0, VALIDATION_ISSUE_DISPLAY_CAP),
-    localise
+    localise,
+    ledger
   )
 
   const description1 = capped

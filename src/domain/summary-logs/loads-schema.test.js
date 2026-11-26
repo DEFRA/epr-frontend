@@ -138,6 +138,35 @@ describe('summaryLogStatusResponseSchema validation', () => {
     })
   })
 
+  describe('validation.failures previousYearRowId', () => {
+    const failureWith = (previousYearRowId) => ({
+      status: 'invalid',
+      year: 2027,
+      validation: {
+        failures: [
+          { errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR', previousYearRowId }
+        ],
+        counts: { fatal: 1, error: 0, warning: 0, total: 1 }
+      }
+    })
+
+    it('accepts a numeric string previous year row ID', () => {
+      const { error } = summaryLogStatusResponseSchema.validate(
+        failureWith('1500')
+      )
+
+      expect(error).toBeUndefined()
+    })
+
+    it('rejects a non-numeric previous year row ID', () => {
+      const { error } = summaryLogStatusResponseSchema.validate(
+        failureWith('15a')
+      )
+
+      expect(error?.message).toContain('numeric pattern')
+    })
+  })
+
   describe('loadsByReportingPeriod', () => {
     // Mirrors the backend loadsByReportingPeriod contract: both periods, both
     // change types, and both buckets, with a negative tonnageDelta to represent
