@@ -338,7 +338,7 @@ const previousYearRowFinishedProblem = (
 }
 
 /** @type {CellProblem} */
-const previousYearValueDiffersProblem = (
+const previousYearRowValueDiffersProblem = (
   { errorCode, expected, deadline },
   localise
 ) =>
@@ -363,7 +363,7 @@ export const CELL_PROBLEMS = Object.freeze({
   [VALIDATION_CODE.PREVIOUS_YEAR_ROW_REPATRIATED]:
     previousYearRowFinishedProblem,
   [VALIDATION_CODE.PREVIOUS_YEAR_ROW_VALUE_DIFFERS]:
-    previousYearValueDiffersProblem
+    previousYearRowValueDiffersProblem
 })
 
 /**

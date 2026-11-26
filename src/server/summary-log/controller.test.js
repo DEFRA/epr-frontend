@@ -1646,7 +1646,7 @@ describe('#summaryLogUploadProgressController', () => {
           ]
         },
         {
-          name: 'a registered-only linked row value that differs from its 2026 row, with its later correction deadline',
+          name: 'a registered-only linked row value that differs from its 2026 row, with the correction deadline it is given',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
             actual: 'CONT-2027',
@@ -1665,20 +1665,24 @@ describe('#summaryLogUploadProgressController', () => {
         ...[
           {
             kind: 'without the correction deadline',
-            missing: { deadline: undefined }
+            overrides: { deadline: undefined }
+          },
+          {
+            kind: 'with a correction deadline that is not a calendar date',
+            overrides: { deadline: '2027-02-27T00:00:00.000Z' }
           },
           {
             kind: 'without the year',
-            missing: { deadline: '2027-02-27', expected: undefined }
+            overrides: { deadline: '2027-02-27', expected: undefined }
           }
-        ].map(({ kind, missing }) => ({
+        ].map(({ kind, overrides }) => ({
           name: `a linked row value that differs from its 2026 row, ${kind}`,
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
             actual: 'CONT-2027',
             previousYearRowId: '1000',
             header: 'CONTAINER_NUMBER',
-            ...missing
+            ...overrides
           },
           expected: ['Container number', 'CONT-2027', 'Check this value']
         })),
