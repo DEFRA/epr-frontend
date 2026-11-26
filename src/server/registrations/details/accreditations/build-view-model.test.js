@@ -342,7 +342,7 @@ describe('the accreditation details view model', () => {
         .summaryRows[3]
     ).toStrictEqual({
       key: 'Latest summary log',
-      html: `<a href="${registrationPath}/summary-logs/files/log-2/download" class="govuk-link">Download</a>`
+      html: `<a href="${registrationPath}/summary-logs/files/log-2/download" class="govuk-link">Download <span class="govuk-visually-hidden">Latest summary log</span></a>`
     })
   })
 
@@ -388,7 +388,7 @@ describe('the accreditation details view model', () => {
     it('offers the latest waste records beneath the latest summary log', () => {
       expect(build().summaryRows.at(4)).toStrictEqual({
         key: 'Latest waste record CSV',
-        html: `<a href="${registrationPath}/waste-records/download.csv?year=2026" class="govuk-link">Download</a>`
+        html: `<a href="${registrationPath}/waste-records/download.csv?year=2026" class="govuk-link">Download <span class="govuk-visually-hidden">Latest waste record CSV</span></a>`
       })
     })
 

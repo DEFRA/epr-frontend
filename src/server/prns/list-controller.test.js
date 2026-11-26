@@ -306,8 +306,14 @@ describe('#listPrnsController', () => {
           ])
 
           expect(links).toStrictEqual([
-            ['Select', `${reprocessorListUrl}/prn-001`],
-            ['Select', `${reprocessorListUrl}/prn-002`]
+            [
+              'Select Acme Packaging Ltd, 15 January 2026',
+              `${reprocessorListUrl}/prn-001`
+            ],
+            [
+              'Select BigCo Waste Solutions, 18 January 2026',
+              `${reprocessorListUrl}/prn-002`
+            ]
           ])
         })
       })
@@ -418,7 +424,9 @@ describe('#listPrnsController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Trading Name Ltd/i)).toBeDefined()
+        expect(
+          getByRole(main, 'cell', { name: 'Trading Name Ltd' })
+        ).toBeDefined()
         expect(body.innerHTML).not.toContain('>Legal Name Ltd<')
       })
 
@@ -447,7 +455,9 @@ describe('#listPrnsController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Legal Name Ltd/i)).toBeDefined()
+        expect(
+          getByRole(main, 'cell', { name: 'Legal Name Ltd' })
+        ).toBeDefined()
         expect(body.innerHTML).not.toContain('>Trading Name Ltd<')
       })
 
@@ -476,7 +486,9 @@ describe('#listPrnsController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Scheme Trading Name/i)).toBeDefined()
+        expect(
+          getByRole(main, 'cell', { name: 'Scheme Trading Name' })
+        ).toBeDefined()
         expect(body.innerHTML).not.toContain('>Scheme Legal Ltd<')
       })
 
@@ -566,8 +578,12 @@ describe('#listPrnsController', () => {
         const main = getByRole(body, 'main')
         const awaitingPanel = main.querySelector('#awaiting-action')
 
-        expect(getByText(awaitingPanel, /TFR Facilities/)).toBeDefined()
-        expect(getByText(awaitingPanel, /Linton Construction/)).toBeDefined()
+        expect(
+          getByRole(awaitingPanel, 'cell', { name: 'TFR Facilities' })
+        ).toBeDefined()
+        expect(
+          getByRole(awaitingPanel, 'cell', { name: 'Linton Construction' })
+        ).toBeDefined()
       })
 
       it('should render select links for cancellation PRN rows', async ({
@@ -732,10 +748,18 @@ describe('#listPrnsController', () => {
           '#cancelled'
         )
 
-        expect(getByText(cancelledPanel, /Cancelled Corp/)).toBeDefined()
-        expect(getByText(cancelledPanel, /Revoked Ltd/)).toBeDefined()
-        expect(getByText(cancelledPanel, /ER2688001/)).toBeDefined()
-        expect(getByText(cancelledPanel, /ER2688002/)).toBeDefined()
+        expect(
+          getByRole(cancelledPanel, 'cell', { name: 'Cancelled Corp' })
+        ).toBeDefined()
+        expect(
+          getByRole(cancelledPanel, 'cell', { name: 'Revoked Ltd' })
+        ).toBeDefined()
+        expect(
+          getByRole(cancelledPanel, 'cell', { name: 'ER2688001' })
+        ).toBeDefined()
+        expect(
+          getByRole(cancelledPanel, 'cell', { name: 'ER2688002' })
+        ).toBeDefined()
       })
 
       it('should render cancelled heading in cancelled panel', async ({
@@ -994,7 +1018,9 @@ describe('#listPrnsController', () => {
         const { body } = dom.window.document
         const issuedPanel = getByRole(body, 'main').querySelector('#issued')
 
-        expect(getByText(issuedPanel, /ER2612345/)).toBeDefined()
+        expect(
+          getByRole(issuedPanel, 'cell', { name: 'ER2612345' })
+        ).toBeDefined()
         expect(getByText(issuedPanel, /22 January 2026/)).toBeDefined()
       })
 
@@ -1031,8 +1057,12 @@ describe('#listPrnsController', () => {
         const issuedPanel = getByRole(body, 'main').querySelector('#issued')
         const issuedTable = getByRole(issuedPanel, 'table')
 
-        expect(getByText(issuedTable, /ER2699999/)).toBeDefined()
-        expect(getByText(issuedTable, /Accepted Corp/)).toBeDefined()
+        expect(
+          getByRole(issuedTable, 'cell', { name: 'ER2699999' })
+        ).toBeDefined()
+        expect(
+          getByRole(issuedTable, 'cell', { name: 'Accepted Corp' })
+        ).toBeDefined()
 
         const acceptedTag = issuedTable.querySelector('.govuk-tag--green')
         expect(acceptedTag).not.toBeNull()
@@ -1490,19 +1520,22 @@ describe('#listPrnsController', () => {
 
     /**
      * @param {ConstructorParameters<typeof JSDOM>[0]} html
+     * @param {string[]} names
      * @returns {Record<string, string[]>}
      */
-    const headerRowsByTableHeading = (html) =>
-      Object.fromEntries(
-        getAllByRole(new JSDOM(html).window.document.body, 'table').map(
-          (table) => [
-            textOf(table.previousElementSibling),
-            getAllByRole(table, 'columnheader').map(textOf)
-          ]
-        )
+    const headerRowsOfTablesNamed = (html, names) => {
+      const { body } = new JSDOM(html).window.document
+      return Object.fromEntries(
+        names.map((name) => [
+          name,
+          getAllByRole(getByRole(body, 'table', { name }), 'columnheader').map(
+            textOf
+          )
+        ])
       )
+    }
 
-    it.for([
+    const noteKinds = [
       {
         description: 'reprocessor',
         fixture: fixtureReprocessor,
@@ -1517,7 +1550,9 @@ describe('#listPrnsController', () => {
         noteType: 'PERN',
         noteTypePlural: 'PERNs'
       }
-    ])(
+    ]
+
+    it.for(noteKinds)(
       'should head every $description table with its full set of columns',
       async ({ fixture, url, noteType, noteTypePlural }, { server }) => {
         vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixture)
@@ -1549,12 +1584,45 @@ describe('#listPrnsController', () => {
           'View in new tab'
         ]
 
-        expect(headerRowsByTableHeading(result)).toStrictEqual({
+        const expected = {
           [`${noteTypePlural} awaiting authorisation`]: awaiting,
           [`${noteTypePlural} awaiting cancellation`]: awaiting,
           [`Issued ${noteTypePlural}`]: issuedOrCancelled,
           [`Cancelled ${noteTypePlural}`]: issuedOrCancelled
+        }
+
+        expect(
+          headerRowsOfTablesNamed(result, Object.keys(expected))
+        ).toStrictEqual(expected)
+      }
+    )
+
+    it.for(noteKinds)(
+      'should introduce every $description table with a heading of its name',
+      async ({ fixture, url, noteTypePlural }, { server }) => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixture)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          notesInEveryTable
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
         })
+
+        const { body } = new JSDOM(result).window.document
+
+        expect(
+          getAllByRole(body, 'heading', { level: 2 }).map(textOf)
+        ).toStrictEqual(
+          expect.arrayContaining([
+            `${noteTypePlural} awaiting authorisation`,
+            `${noteTypePlural} awaiting cancellation`,
+            `Issued ${noteTypePlural}`,
+            `Cancelled ${noteTypePlural}`
+          ])
+        )
       }
     )
   })
@@ -1609,7 +1677,7 @@ describe('#listPrnsController', () => {
           Tonnage: '50',
           'December waste?': 'Yes',
           Status: 'Awaiting authorisation',
-          Action: 'Select'
+          Action: 'Select Acme Packaging Ltd, 15 January 2026'
         },
         {
           'Producer or compliance scheme': 'BigCo Waste Solutions',
@@ -1617,7 +1685,7 @@ describe('#listPrnsController', () => {
           Tonnage: '120',
           'December waste?': 'No',
           Status: 'Awaiting authorisation',
-          Action: 'Select'
+          Action: 'Select BigCo Waste Solutions, 18 January 2026'
         },
         { 'Producer or compliance scheme': 'Total', Tonnage: '170' }
       ])
@@ -1651,7 +1719,7 @@ describe('#listPrnsController', () => {
             Tonnage: '75',
             'December waste?': 'No',
             Status: 'Awaiting acceptance',
-            'View in new tab': 'Select'
+            'View in new tab': 'Select ER2612345'
           },
           { 'PRN number': 'Total', Tonnage: '75' }
         ],
@@ -1663,7 +1731,7 @@ describe('#listPrnsController', () => {
             Tonnage: '30',
             'December waste?': 'No',
             Status: 'Cancelled',
-            'View in new tab': 'Select'
+            'View in new tab': 'Select ER2688001'
           },
           {
             'PRN number': 'ER2688002',
@@ -1672,7 +1740,7 @@ describe('#listPrnsController', () => {
             Tonnage: '15',
             'December waste?': 'No',
             Status: 'Cancelled',
-            'View in new tab': 'Select'
+            'View in new tab': 'Select ER2688002'
           },
           { 'PRN number': 'Total', Tonnage: '45' }
         ]
@@ -1702,9 +1770,106 @@ describe('#listPrnsController', () => {
           link.getAttribute('href')
         ])
       ).toStrictEqual([
-        ['View', `${reprocessorListUrl}/prn-001/view`],
-        ['View', `${reprocessorListUrl}/prn-002/view`]
+        [
+          'View Acme Packaging Ltd, 15 January 2026',
+          `${reprocessorListUrl}/prn-001/view`
+        ],
+        [
+          'View BigCo Waste Solutions, 18 January 2026',
+          `${reprocessorListUrl}/prn-002/view`
+        ]
       ])
+    })
+  })
+
+  describe('row link names', () => {
+    /**
+     * @param {ConstructorParameters<typeof JSDOM>[0]} html
+     * @param {string} name
+     */
+    const linkNamesInTable = (html, name) =>
+      getAllByRole(
+        getByRole(new JSDOM(html).window.document.body, 'table', { name }),
+        'link'
+      ).map(textOf)
+
+    beforeEach(() => {
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+    })
+
+    it('should name each awaiting note by its recipient and the day it was created', async ({
+      server
+    }) => {
+      vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+        mockPrnsWithCancellation
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorListUrl,
+        auth: mockAuth
+      })
+
+      expect({
+        authorisation: linkNamesInTable(result, 'PRNs awaiting authorisation'),
+        cancellation: linkNamesInTable(result, 'PRNs awaiting cancellation')
+      }).toStrictEqual({
+        authorisation: [
+          'Select Acme Packaging Ltd, 15 January 2026',
+          'Select BigCo Waste Solutions, 18 January 2026'
+        ],
+        cancellation: [
+          'Select TFR Facilities, 13 August 2025',
+          'Select Linton Construction, 7 August 2025'
+        ]
+      })
+    })
+
+    it('should name each issued and cancelled note by its number', async ({
+      server
+    }) => {
+      vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+        mockPrnsWithCancelled
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorListUrl,
+        auth: mockAuth
+      })
+
+      expect({
+        issued: linkNamesInTable(result, 'Issued PRNs'),
+        cancelled: linkNamesInTable(result, 'Cancelled PRNs')
+      }).toStrictEqual({
+        issued: ['Select ER2612345'],
+        cancelled: ['Select ER2688001', 'Select ER2688002']
+      })
+    })
+
+    it('cannot tell apart two notes to one recipient created on the same day', async ({
+      server
+    }) => {
+      vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+        asPackagingRecyclingNotes([
+          mockPrns[0],
+          { ...mockPrns[0], id: 'prn-004', tonnage: 10 }
+        ])
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorListUrl,
+        auth: mockAuth
+      })
+
+      expect(
+        getAllByRole(new JSDOM(result).window.document.body, 'link', {
+          name: 'Select Acme Packaging Ltd, 15 January 2026'
+        })
+      ).toHaveLength(2)
     })
   })
 

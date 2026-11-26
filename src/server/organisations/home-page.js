@@ -4,6 +4,7 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getMaterialDisplayName } from '#server/common/helpers/materials/get-display-material.js'
 import { materialsHomepage } from '#server/common/helpers/organisations/registration-in-view.js'
 import { siteNameOf } from '#server/common/helpers/organisations/site-name.js'
+import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
 import {
   organisationPath,
   registrationPath
@@ -132,10 +133,15 @@ function createRow(
     )
   )
 
+  const material = getMaterialDisplayName(registration.material)
+  const rowName = [material, siteNameOf(registration)]
+    .filter(Boolean)
+    .join(', ')
+
   /** @type {TableCell[]} */
   const cells = [
     {
-      text: getMaterialDisplayName(registration.material),
+      text: material,
       classes: 'govuk-!-width-one-quarter'
     },
     {
@@ -153,7 +159,11 @@ function createRow(
       format: 'numeric'
     },
     {
-      html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
+      html: buildActionLinkHtml(
+        localise('organisations:table:site:actions:select'),
+        registrationUrl,
+        rowName
+      ),
       classes: 'govuk-!-text-align-right govuk-!-padding-right-2'
     }
   ]

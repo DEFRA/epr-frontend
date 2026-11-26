@@ -4,7 +4,9 @@ import { cssClasses } from '#server/common/constants/css-classes.js'
 import { toDecemberBalanceBreakdown } from '#server/common/helpers/waste-balance/december-balance.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
+import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
+import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
 import { accreditationPath } from '#server/reports/helpers/report-paths.js'
 import { prnsPath } from './helpers/prn-resource.js'
 
@@ -161,17 +163,19 @@ function buildAwaitingTable(request, { keys, prns, localise, canWrite }) {
     const notePath = `${prnsPath(keys)}/${prn.id}`
     const actionUrl = request.localiseUrl(notePath)
     const viewUrl = request.localiseUrl(`${notePath}/view`)
+    const createdAt = formatDate(prn.createdAt)
+    const rowName = `${prn.recipient}, ${createdAt}`
     return [
       { text: prn.recipient, classes: cssClasses.wrap.breakWord },
-      { text: formatDate(prn.createdAt) },
+      { text: createdAt },
       { text: prn.tonnage },
       { text: buildDecemberWasteText(prn.isDecemberWaste, localise) },
       { html: buildStatusTagHtml(prn.status, localise) },
-      canWrite
-        ? {
-            html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>`
-          }
-        : { html: `<a href="${viewUrl}" class="govuk-link">${viewText}</a>` }
+      {
+        html: canWrite
+          ? buildActionLinkHtml(selectText, actionUrl, rowName)
+          : buildActionLinkHtml(viewText, viewUrl, rowName)
+      }
     ]
   })
 
@@ -223,7 +227,7 @@ function buildDetailTable(
       { text: buildDecemberWasteText(prn.isDecemberWaste, localise) },
       { html: buildStatusTagHtml(prn.status, localise) },
       {
-        html: `<a href="${viewUrl}" class="govuk-link" target="_blank" rel="noopener noreferrer">${selectText}</a>`
+        html: `<a href="${viewUrl}" class="govuk-link" target="_blank" rel="noopener noreferrer">${escapeHtml(selectText)} <span class="govuk-visually-hidden">${escapeHtml(prn.prnNumber)}</span></a>`
       }
     ]
   })

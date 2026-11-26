@@ -459,6 +459,44 @@ describe('the organisation home page', () => {
       expect($('.govuk-tabs')).toHaveLength(0)
     })
 
+    it('names each row link by its material and the site it is processed at', async ({
+      server
+    }) => {
+      serve({
+        R26ER1: reprocessor(),
+        R26ER2: reprocessor({
+          site: { address: { fullAddress: 'Site B, London' } }
+        }),
+        R26ER3: reprocessor({ material: 'wood' })
+      })
+
+      const { payload } = await visit(server)
+
+      expect(
+        getAllByRole(bodyOf(payload), 'link', { name: /^Select / }).map(
+          (link) => link.textContent?.replaceAll(/\s+/g, ' ').trim()
+        )
+      ).toStrictEqual([
+        'Select Plastic, Site A',
+        'Select Wood, Site A',
+        'Select Plastic, Site B, London'
+      ])
+    })
+
+    it('names each exporting row link by its material alone', async ({
+      server
+    }) => {
+      serve({ R26EX1: exporter(), R26EX2: exporter({ material: 'steel' }) })
+
+      const { payload } = await visit(server, `${PATH}/exporting`)
+
+      expect(
+        getAllByRole(bodyOf(payload), 'link', { name: /^Select / }).map(
+          (link) => link.textContent?.replaceAll(/\s+/g, ' ').trim()
+        )
+      ).toStrictEqual(['Select Paper and board', 'Select Steel'])
+    })
+
     it('says no sites were found when the year has no registrations', async ({
       server
     }) => {
