@@ -30,8 +30,9 @@
       {% endif %}
 
       {% if table.rows | length > 0 %}
-        <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
         {{ govukTable({
+          caption: awaitingAuthorisationHeading,
+          captionClasses: "govuk-table__caption--m",
           head: [
             { text: table.headings.recipient, classes: "epr-break-word" },
             { text: table.headings.createdAt },
@@ -45,8 +46,9 @@
       {% endif %}
 
       {% if cancellationTable.rows | length > 0 %}
-        <h2 class="govuk-heading-m">{{ awaitingCancellationHeading }}</h2>
         {{ govukTable({
+          caption: awaitingCancellationHeading,
+          captionClasses: "govuk-table__caption--m",
           head: [
             { text: cancellationTable.headings.recipient, classes: "epr-break-word" },
             { text: cancellationTable.headings.createdAt },
@@ -66,8 +68,9 @@
 
     <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="issued">
       {% if issuedTable.rows | length > 0 %}
-        <h2 class="govuk-heading-m">{{ issuedHeading }}</h2>
         {{ govukTable({
+          caption: issuedHeading,
+          captionClasses: "govuk-table__caption--m",
           head: [
             { text: issuedTable.headings.prnNumber },
             { text: issuedTable.headings.recipient, classes: "epr-break-word" },
@@ -86,8 +89,9 @@
 
     <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="cancelled">
       {% if cancelledTable.rows | length > 0 %}
-        <h2 class="govuk-heading-m">{{ cancelledHeading }}</h2>
         {{ govukTable({
+          caption: cancelledHeading,
+          captionClasses: "govuk-table__caption--m",
           head: [
             { text: cancelledTable.headings.prnNumber },
             { text: cancelledTable.headings.recipient, classes: "epr-break-word" },
