@@ -1553,16 +1553,16 @@ describe('#summaryLogUploadProgressController', () => {
           ]
         },
         {
-          name: 'a registered-only link to a 2026 load neither refused nor stopped',
+          name: 'a registered-only link to a 2026 load neither refused nor stopped, on the previous year Row ID entered',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR',
-            actual: null,
+            actual: 1000,
             previousYearRowId: '1000',
-            header: 'WAS_THE_WASTE_STOPPED'
+            header: 'PREVIOUS_YEAR_ROW_ID'
           },
           ledgerAccreditation: registeredOnlyLedger,
           location: REGISTERED_ONLY_LOCATION,
-          expected: ['Was the waste stopped', '(empty)', COMPLETE_ROW_PROBLEM]
+          expected: ['Previous year Row ID', '1000', COMPLETE_ROW_PROBLEM]
         },
         {
           name: 'a registered-only link to a repatriated 2026 load',
