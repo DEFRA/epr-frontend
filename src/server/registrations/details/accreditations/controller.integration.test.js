@@ -12,7 +12,7 @@ import {
   buildMockAuth,
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
-import { asHtml } from '#server/common/test-helpers/dom.js'
+import { asHtml, breadcrumbsOf } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { fetchAccreditationDetails } from './helpers/fetch-accreditation-details.js'
 import { it } from '#vite/fixtures/server.js'
@@ -220,6 +220,16 @@ const summaryRow = (body, key) =>
     getByText(body, key, { selector: 'dt' }).closest('.govuk-summary-list__row')
   )
 
+/**
+ * The summary list as key and value pairs, in order.
+ * @param {ReturnType<typeof documentOf>} body
+ */
+const summaryOf = (body) =>
+  Array.from(body.querySelectorAll('.govuk-summary-list__row'), (row) => [
+    row.querySelector('.govuk-summary-list__key')?.textContent?.trim(),
+    row.querySelector('.govuk-summary-list__value')?.textContent?.trim()
+  ])
+
 /** @param {ReturnType<typeof getAllByRole>} cells */
 const textOf = (cells) => cells.map((cell) => cell.textContent?.trim())
 
@@ -276,12 +286,57 @@ describe('the accreditation details page', () => {
     )
   })
 
-  it('shows the status and the number', async ({ server }) => {
+  it('names no period in the heading for a year the accreditation never ran', async ({
+    server
+  }) => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+      ...accreditationDetails,
+      registration: {
+        ...accreditationDetails.registration,
+        standingByDate: {
+          2026: { '2026-01-01': { standing: 'registeredOnly' } }
+        }
+      }
+    })
+
     const { body } = await visit(server, regulator)
 
-    expect(body).toContain('Accreditation status')
-    expect(body).toContain('Approved')
-    expect(body).toContain('A26ER5001180114PL')
+    expect(
+      getByRole(documentOf(body), 'heading', { level: 1 })
+        .textContent?.replace(/\s+/g, ' ')
+        .trim()
+    ).toBe(
+      'Kirkby Plastics Ltd - R26ER5001180041PL - A26ER5001180114PL Accreditation'
+    )
+  })
+
+  it('summarises the status, number, balance and latest summary log, in that order', async ({
+    server
+  }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(summaryOf(documentOf(body))).toStrictEqual([
+      ['Accreditation status', 'Approved'],
+      ['Accreditation number', 'A26ER5001180114PL'],
+      ['Waste balance available (tonnes)', '987.25'],
+      ['Latest summary log', 'Download']
+    ])
+  })
+
+  it('leaves the latest summary log blank where none has been submitted', async ({
+    server
+  }) => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+      ...accreditationDetails,
+      ledgerEvents: []
+    })
+
+    const { body } = await visit(server, regulator)
+
+    expect(summaryOf(documentOf(body)).at(-1)).toStrictEqual([
+      'Latest summary log',
+      ''
+    ])
   })
 
   it('reads the details by the numbers and year in the address', async ({
@@ -683,6 +738,34 @@ describe('the accreditation details page', () => {
       expect(heading?.className).toContain('govuk-!-display-inline-block')
     })
 
+    it('shows the three newest periods where more are due', async ({
+      server
+    }) => {
+      vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+        ...accreditationDetails,
+        reportingPeriods: [5, 8, 6, 7].map(
+          (period) =>
+            /** @type {AccreditationDetails['reportingPeriods'][number]} */ (
+              /** @type {unknown} */ ({
+                year: 2026,
+                period,
+                submissionNumber: 1,
+                dueDate: '2026-09-20',
+                periodStatus: 'due',
+                report: null
+              })
+            )
+        )
+      })
+
+      const { body } = await visit(server, regulator)
+      const table = getByTestId(documentOf(body), 'reports-table')
+
+      expect(
+        getAllByRole(table, 'rowheader').map((cell) => cell.textContent?.trim())
+      ).toStrictEqual(['August, 2026', 'July, 2026', 'June, 2026'])
+    })
+
     it('names how many periods it shows', async ({ server }) => {
       const { body } = await visit(server, regulator)
 
@@ -736,6 +819,60 @@ describe('the accreditation details page', () => {
       expect(body.indexOf('data-testid="prns-table"')).toBeLessThan(
         body.indexOf('data-testid="waste-balance-ledger-table"')
       )
+    })
+
+    it('heads the section with the note type', async ({ server }) => {
+      const { body } = await visit(server, regulator)
+
+      expect(
+        getByRole(documentOf(body), 'heading', { level: 2, name: 'PRNs' })
+      ).toBeDefined()
+    })
+
+    it('reads each note across its row, an unissued one by the day it was created', async ({
+      server
+    }) => {
+      vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+        ...accreditationDetails,
+        packagingRecyclingNotes: [
+          packagingRecyclingNotes[0],
+          {
+            ...packagingRecyclingNotes[1],
+            id: 'prn-awaiting',
+            status: 'awaiting_authorisation'
+          }
+        ]
+      })
+
+      const { body } = await visit(server, regulator)
+      const [, ...rows] = getAllByRole(
+        getByTestId(documentOf(body), 'prns-table'),
+        'row'
+      )
+
+      expect(
+        rows.map((row) => [
+          ...textOf(getAllByRole(row, 'cell')),
+          within(row).getByRole('link').getAttribute('href')
+        ])
+      ).toStrictEqual([
+        [
+          'Radar Compliance PLC',
+          'Awaiting authorisation',
+          '2 Feb 2026',
+          '5',
+          'View 2 Feb 2026',
+          `${path}/packaging-recycling-notes/prn-awaiting/view`
+        ],
+        [
+          'Radar Compliance PLC',
+          'Accepted',
+          '28 Jan 2026',
+          '20',
+          'View 240000123',
+          `${path}/packaging-recycling-notes/prn-issued/view`
+        ]
+      ])
     })
 
     it('shows a regulator no draft note among them', async ({ server }) => {
@@ -834,6 +971,20 @@ describe('the accreditation details page', () => {
       )
     })
 
+    it('offers the workbook a summary log event came from', async ({
+      server
+    }) => {
+      const { body } = await visit(server, regulator)
+      const [summaryLogRow] = getAllByRole(
+        ledgerTable(documentOf(body)),
+        'row'
+      ).slice(-1)
+
+      expect(within(summaryLogRow).getByRole('link').getAttribute('href')).toBe(
+        `${registrationPath}/summary-logs/files/log-1/download`
+      )
+    })
+
     it('names how many events it shows', async ({ server }) => {
       const { body } = await visit(server, regulator)
 
@@ -890,19 +1041,25 @@ describe('the accreditation details page', () => {
     })
   })
 
-  it('walks back to the organisation and the registration by number', async ({
+  it('walks back to the organisation and the registration by number, ending on this page unlinked', async ({
     server
   }) => {
     const { body } = await visit(server, regulator)
-    const crumbs = [
-      ...documentOf(body).querySelectorAll('.govuk-breadcrumbs__list-item a')
-    ]
 
-    expect(crumbs.map((crumb) => crumb.getAttribute('href'))).toStrictEqual([
-      '/regulators/home',
-      '/organisations/500118',
-      registrationPath
+    expect(breadcrumbsOf(documentOf(body))).toStrictEqual([
+      ['All organisations', '/regulators/home'],
+      ['Kirkby Plastics Ltd', '/organisations/500118'],
+      ['Registration details', registrationPath],
+      ['Accreditation details', undefined]
     ])
+  })
+
+  it('titles the page by the accreditation number', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(documentOf(body).ownerDocument.title).toContain(
+      'A26ER5001180114PL: Accreditation details'
+    )
   })
 
   /** @param {SetupServer} msw */

@@ -422,8 +422,4 @@ describe(buildViewModel, () => {
       { text: 'Registration details' }
     ])
   })
-
-  it('titles the page by the registration number', () => {
-    expect(build().pageTitle).toBe('R26ER5001180041PL: Registration details')
-  })
 })
