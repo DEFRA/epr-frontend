@@ -220,6 +220,38 @@ describe('the waste balance ledger page', () => {
       ])
     })
 
+    it.for([
+      { kind: 'prn-accepted', name: 'PRN accepted' },
+      { kind: 'prn-cancelled-after-issue', name: 'PRN cancelled after issue' },
+      { kind: 'prn-created', name: 'PRN created' },
+      { kind: 'prn-creation-cancelled', name: 'PRN cancelled before issue' },
+      { kind: 'prn-issued', name: 'PRN issued' },
+      { kind: 'prn-rejected', name: 'PRN rejected' },
+      { kind: 'summary-log-submitted', name: 'Summary log submitted' }
+    ])(
+      'names a $kind event "$name"',
+      async ({ kind, name }, { msw, server }) => {
+        const event =
+          kind === 'summary-log-submitted'
+            ? summaryLogSubmitted
+            : { ...prnIssued, kind }
+        msw.use(
+          http.get(accreditedLedgerUrl, () =>
+            HttpResponse.json(ledgerOf([event]))
+          )
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedPath,
+          auth: regulator
+        })
+        const [row] = rowsOf(documentOf(asHtml(result)))
+
+        expect(row[1].split('\n')[0]).toBe(name)
+      }
+    )
+
     it('offers the workbook alone while the records are dark', async ({
       msw,
       server

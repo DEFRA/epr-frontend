@@ -824,6 +824,27 @@ describe('#viewController', () => {
           ])
         })
 
+        it('names each step of the trail, ending on the note', async ({
+          server
+        }) => {
+          const { result } = await asRegulator(server)
+          const { body } = new JSDOM(result).window.document
+
+          expect(
+            Array.from(
+              body.querySelectorAll('.govuk-breadcrumbs__list-item'),
+              (item) => item.textContent?.trim()
+            )
+          ).toStrictEqual([
+            'All organisations',
+            'Reprocessor Organisation',
+            'Registration details',
+            'Accreditation details',
+            'PRNs (2026)',
+            'prn-789'
+          ])
+        })
+
         it('offers neither the back link nor the return link', async ({
           server
         }) => {
