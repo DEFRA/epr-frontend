@@ -279,10 +279,13 @@ const renderSupersededView = (
 const renderValidationFailuresView = (
   h,
   localise,
-  { validation, uploadUrl, cancelUrl }
+  { validation, uploadUrl, cancelUrl, year, ledgerAccreditation }
 ) => {
   const { errorRecords, issues, description1, description2 } =
-    buildValidationFailuresViewModel(localise, validation)
+    buildValidationFailuresViewModel(localise, validation, {
+      year: requiredYear(year),
+      kind: requiredLedgerKind(ledgerAccreditation)
+    })
 
   return h.view(VALIDATION_FAILURES_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),

@@ -1472,7 +1472,7 @@ describe('#summaryLogUploadProgressController', () => {
         'Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation date in ‘Date received for export’.'
 
       const REGISTERED_ONLY_REPATRIATED_LOAD_PROBLEM =
-        'Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation month in ‘Month received for export’.'
+        'Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation month in ‘Month received for export’ on the Received (section 1) tab.'
 
       const REGISTERED_ONLY_LOCATION = {
         sheet: 'Exported (sections 2 and 3)',
@@ -1482,7 +1482,16 @@ describe('#summaryLogUploadProgressController', () => {
       const COMPLETE_ROW_PROBLEM =
         'Row 1000 in your 2026 summary log is complete, so cannot be linked to your 2027 log'
 
-      it.for([
+      /**
+       * @type {Array<{
+       *   name: string,
+       *   failure: { header: string } & Record<string, unknown>,
+       *   ledgerAccreditation?: LedgerAccreditation,
+       *   location?: Record<string, string>,
+       *   expected: string[]
+       * }>}
+       */
+      const linkCases = [
         {
           name: 'a previous year row ID that names no 2026 row',
           failure: {
@@ -1497,26 +1506,49 @@ describe('#summaryLogUploadProgressController', () => {
           ]
         },
         {
-          name: 'a link to a complete 2026 row',
+          name: 'a previous year row ID entered as text that names no 2026 row',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
+            actual: '1888',
+            header: 'PREVIOUS_YEAR_ROW_ID'
+          },
+          expected: [
+            'Previous year Row ID',
+            '1888',
+            'Previous year Row ID (1888) not found in your 2026 summary log'
+          ]
+        },
+        {
+          name: 'a link to a complete 2026 row whose received date was left blank',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR',
-            actual: '2026-12-14',
+            actual: null,
             previousYearRowId: '1000',
             header: 'DATE_RECEIVED_BY_OSR'
           },
-          expected: ['Date received by OSR', '14/12/2026', COMPLETE_ROW_PROBLEM]
+          expected: ['Date received by OSR', '(empty)', COMPLETE_ROW_PROBLEM]
+        },
+        {
+          name: 'a link to a complete 2026 row with the received date entered',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR',
+            actual: '2027-01-05',
+            previousYearRowId: '1000',
+            header: 'DATE_RECEIVED_BY_OSR'
+          },
+          expected: ['Date received by OSR', '05/01/2027', COMPLETE_ROW_PROBLEM]
         },
         {
           name: 'a link to a repatriated 2026 row',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_REPATRIATED',
-            actual: '2026-12-20',
+            actual: null,
             previousYearRowId: '1000',
             header: 'DATE_THE_REFUSED_STOPPED_WASTE_REPATRIATED'
           },
           expected: [
             'Date that the stopped or refused waste was repatriated',
-            '20/12/2026',
+            '(empty)',
             REPATRIATED_LOAD_PROBLEM
           ]
         },
@@ -1524,25 +1556,42 @@ describe('#summaryLogUploadProgressController', () => {
           name: 'a registered-only link to a 2026 load neither refused nor stopped',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR',
-            actual: 'No',
+            actual: null,
             previousYearRowId: '1000',
             header: 'WAS_THE_WASTE_STOPPED'
           },
+          ledgerAccreditation: registeredOnlyLedger,
           location: REGISTERED_ONLY_LOCATION,
-          expected: ['Was the waste stopped', 'No', COMPLETE_ROW_PROBLEM]
+          expected: ['Was the waste stopped', '(empty)', COMPLETE_ROW_PROBLEM]
         },
         {
           name: 'a registered-only link to a repatriated 2026 load',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_REPATRIATED',
-            actual: '2026-12-20',
+            actual: null,
             previousYearRowId: '1000',
             header: 'DATE_THE_REFUSED_STOPPED_WASTE_REPATRIATED'
           },
+          ledgerAccreditation: registeredOnlyLedger,
           location: REGISTERED_ONLY_LOCATION,
           expected: [
             'Date that the stopped or refused waste was repatriated',
-            '20/12/2026',
+            '(empty)',
+            REGISTERED_ONLY_REPATRIATED_LOAD_PROBLEM
+          ]
+        },
+        {
+          name: 'the registered-only repatriated message for a registered-only log, whatever the table',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_REPATRIATED',
+            actual: null,
+            previousYearRowId: '1000',
+            header: 'DATE_THE_REFUSED_STOPPED_WASTE_REPATRIATED'
+          },
+          ledgerAccreditation: registeredOnlyLedger,
+          expected: [
+            'Date that the stopped or refused waste was repatriated',
+            '(empty)',
             REGISTERED_ONLY_REPATRIATED_LOAD_PROBLEM
           ]
         },
@@ -1555,16 +1604,32 @@ describe('#summaryLogUploadProgressController', () => {
           },
           expected: ['Previous year Row ID', '(empty)', 'Check this value']
         },
-        {
-          name: 'a link to a complete 2026 row with a blank row it names',
+        ...[
+          ['text', 'abc'],
+          ['a fraction', 1.5]
+        ].map(([kind, actual]) => ({
+          name: `a previous year row ID that names no row, as ${kind}`,
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
+            actual,
+            header: 'PREVIOUS_YEAR_ROW_ID'
+          },
+          expected: ['Previous year Row ID', String(actual), 'Check this value']
+        })),
+        ...[
+          ['blank', ' '],
+          ['text', 'abc'],
+          ['missing', undefined]
+        ].map(([kind, previousYearRowId]) => ({
+          name: `a link to a complete 2026 row with the row it names ${kind}`,
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR',
-            actual: '2026-12-14',
-            previousYearRowId: ' ',
+            actual: null,
+            previousYearRowId,
             header: 'DATE_RECEIVED_BY_OSR'
           },
-          expected: ['Date received by OSR', '14/12/2026', 'Check this value']
-        },
+          expected: ['Date received by OSR', '(empty)', 'Check this value']
+        })),
         {
           name: 'a previous year row ID that names no row, without the year',
           failure: {
@@ -1574,26 +1639,25 @@ describe('#summaryLogUploadProgressController', () => {
             header: 'PREVIOUS_YEAR_ROW_ID'
           },
           expected: ['Previous year Row ID', '1888', 'Check this value']
-        },
-        {
-          name: 'a link to a complete 2026 row without the row it names',
-          failure: {
-            errorCode: 'PREVIOUS_YEAR_ROW_RECEIVED_BY_OSR',
-            actual: '2026-12-14',
-            previousYearRowId: undefined,
-            header: 'DATE_RECEIVED_BY_OSR'
-          },
-          expected: ['Date received by OSR', '14/12/2026', 'Check this value']
         }
-      ])(
+      ]
+
+      it.for(linkCases)(
         'should show $name',
         async (
-          { failure: { header, ...failure }, location, expected },
+          {
+            failure: { header, ...failure },
+            ledgerAccreditation = accreditedLedger,
+            location,
+            expected
+          },
           { server }
         ) => {
           mockFetchSummaryLogStatus.mockResolvedValueOnce(
             failedStatus({
               status: summaryLogStatuses.invalid,
+              year: 2027,
+              ledgerAccreditation,
               validation: {
                 failures: [
                   {

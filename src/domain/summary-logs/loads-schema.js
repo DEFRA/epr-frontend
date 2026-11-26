@@ -17,7 +17,8 @@ export const loadCategorySchema = Joi.object({
 const validationFailureSchema = Joi.object({
   location: Joi.object({
     rowId: rowIdSchema
-  }).unknown(true)
+  }).unknown(true),
+  previousYearRowId: rowIdSchema
 }).unknown(true)
 
 export const loadValiditySchema = Joi.object({
