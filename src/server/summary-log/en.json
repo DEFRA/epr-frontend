@@ -23,6 +23,7 @@
     "PREVIOUS_YEAR_ROW_NOT_FOUND": "Previous year Row ID ({{previousYearRowId}}) not found in your {{previousYear}} summary log",
     "PREVIOUS_YEAR_ROW_REPATRIATED": "Row {{previousYearRowId}} in your {{previousYear}} summary log shows a repatriated load, so cannot be linked to your {{year}} log. If you export this load again, add it as a new row in your {{year}} log and enter the repatriation date in ‘Date received for export’.",
     "PREVIOUS_YEAR_ROW_REPATRIATED_REGISTERED_ONLY": "Row {{previousYearRowId}} in your {{previousYear}} summary log shows a repatriated load, so cannot be linked to your {{year}} log. If you export this load again, add it as a new row in your {{year}} log and enter the repatriation month in ‘Month received for export’ on the Received (section 1) tab.",
+    "PREVIOUS_YEAR_ROW_VALUE_DIFFERS": "This data does not match your {{previousYear}} summary log entry. You’ll need to change your {{previousYear}} entry by {{deadline}}.",
     "WEIGHT_FORMAT_INVALID": "Must be a number",
     "YES_NO_FORMAT_INVALID": "Must be Yes or No"
   },

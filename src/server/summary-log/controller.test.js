@@ -1631,6 +1631,58 @@ describe('#summaryLogUploadProgressController', () => {
           expected: ['Date received by OSR', '(empty)', 'Check this value']
         })),
         {
+          name: 'a linked row value that differs from its 2026 row, with the correction deadline',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
+            actual: 'CONT-2027',
+            previousYearRowId: '1000',
+            deadline: '2027-02-27',
+            header: 'CONTAINER_NUMBER'
+          },
+          expected: [
+            'Container number',
+            'CONT-2027',
+            'This data does not match your 2026 summary log entry. You’ll need to change your 2026 entry by 27 February 2027.'
+          ]
+        },
+        {
+          name: 'a registered-only linked row value that differs from its 2026 row, with its later correction deadline',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
+            actual: 'CONT-2027',
+            previousYearRowId: '1000',
+            deadline: '2027-03-20',
+            header: 'CONTAINER_NUMBER'
+          },
+          ledgerAccreditation: registeredOnlyLedger,
+          location: REGISTERED_ONLY_LOCATION,
+          expected: [
+            'Container number',
+            'CONT-2027',
+            'This data does not match your 2026 summary log entry. You’ll need to change your 2026 entry by 20 March 2027.'
+          ]
+        },
+        ...[
+          {
+            kind: 'without the correction deadline',
+            missing: { deadline: undefined }
+          },
+          {
+            kind: 'without the year',
+            missing: { deadline: '2027-02-27', expected: undefined }
+          }
+        ].map(({ kind, missing }) => ({
+          name: `a linked row value that differs from its 2026 row, ${kind}`,
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
+            actual: 'CONT-2027',
+            previousYearRowId: '1000',
+            header: 'CONTAINER_NUMBER',
+            ...missing
+          },
+          expected: ['Container number', 'CONT-2027', 'Check this value']
+        })),
+        {
           name: 'a previous year row ID that names no row, without the year',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
