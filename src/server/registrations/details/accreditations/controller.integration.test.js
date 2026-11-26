@@ -217,7 +217,7 @@ const ledgerTable = (body) => getByTestId(body, 'waste-balance-ledger-table')
  */
 const summaryRow = (body, key) =>
   /** @type {ReturnType<typeof documentOf>} */ (
-    getByText(body, key).closest('.govuk-summary-list__row')
+    getByText(body, key, { selector: 'dt' }).closest('.govuk-summary-list__row')
   )
 
 /** @param {ReturnType<typeof getAllByRole>} cells */
@@ -375,7 +375,11 @@ describe('the accreditation details page', () => {
     const row = summaryRow(documentOf(body), 'Latest waste record CSV')
 
     expect(
-      within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
+      within(row)
+        .getByRole('link', {
+          name: 'Download Latest waste record CSV'
+        })
+        .getAttribute('href')
     ).toBe(`${registrationPath}/waste-records/download.csv?year=2026`)
   })
 
@@ -390,7 +394,11 @@ describe('the accreditation details page', () => {
     const row = summaryRow(documentOf(body), 'Latest waste record CSV')
 
     expect(
-      within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
+      within(row)
+        .getByRole('link', {
+          name: 'Download Latest waste record CSV'
+        })
+        .getAttribute('href')
     ).toBe(`${registrationPath}/waste-records/download.csv?year=2027`)
   })
 
@@ -420,7 +428,11 @@ describe('the accreditation details page', () => {
     const row = summaryRow(documentOf(body), 'Latest summary log')
 
     expect(
-      within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
+      within(row)
+        .getByRole('link', {
+          name: 'Download Latest summary log'
+        })
+        .getAttribute('href')
     ).toBe(`${registrationPath}/summary-logs/files/log-1/download`)
   })
 
@@ -444,7 +456,9 @@ describe('the accreditation details page', () => {
       })
     )
     expect(
-      within(row).getByRole('link', { name: 'Download' }).getAttribute('href')
+      within(row)
+        .getByRole('link', { name: 'Download Latest summary log' })
+        .getAttribute('href')
     ).toBe(`${encodedPath}/summary-logs/files/log-1/download`)
   })
 

@@ -1,7 +1,6 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { offersWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
@@ -117,14 +116,20 @@ const toWasteRecordsRow = ({
   localiseUrl,
   registrationPath,
   year
-}) => ({
-  key: localise('registrations:details:accreditation:summary:wasteRecords'),
-  html: `<a href="${localiseUrl(
-    buildWasteRecordsCsvDownloadPath(registrationPath, year)
-  )}" class="govuk-link">${escapeHtml(
-    localise('registrations:details:accreditation:summary:download')
-  )}</a>`
-})
+}) => {
+  const key = localise(
+    'registrations:details:accreditation:summary:wasteRecords'
+  )
+
+  return {
+    key,
+    html: buildActionLinkHtml(
+      localise('registrations:details:accreditation:summary:download'),
+      localiseUrl(buildWasteRecordsCsvDownloadPath(registrationPath, year)),
+      key
+    )
+  }
+}
 
 /**
  * The workbook behind the ledger's newest summary log entry, blank where
@@ -154,14 +159,16 @@ const toLatestSummaryLogRow = ({
 
   return {
     key,
-    html: `<a href="${localiseUrl(
-      buildSummaryLogDownloadPath({
-        registrationPath,
-        fileId: latest.summaryLog.id
-      })
-    )}" class="govuk-link">${escapeHtml(
-      localise('registrations:details:accreditation:summary:download')
-    )}</a>`
+    html: buildActionLinkHtml(
+      localise('registrations:details:accreditation:summary:download'),
+      localiseUrl(
+        buildSummaryLogDownloadPath({
+          registrationPath,
+          fileId: latest.summaryLog.id
+        })
+      ),
+      key
+    )
   }
 }
 
