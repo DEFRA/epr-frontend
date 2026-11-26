@@ -1535,7 +1535,7 @@ describe('#listPrnsController', () => {
       )
     }
 
-    it.for([
+    const noteKinds = [
       {
         description: 'reprocessor',
         fixture: fixtureReprocessor,
@@ -1550,7 +1550,9 @@ describe('#listPrnsController', () => {
         noteType: 'PERN',
         noteTypePlural: 'PERNs'
       }
-    ])(
+    ]
+
+    it.for(noteKinds)(
       'should head every $description table with its full set of columns',
       async ({ fixture, url, noteType, noteTypePlural }, { server }) => {
         vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixture)
@@ -1592,6 +1594,35 @@ describe('#listPrnsController', () => {
         expect(
           headerRowsOfTablesNamed(result, Object.keys(expected))
         ).toStrictEqual(expected)
+      }
+    )
+
+    it.for(noteKinds)(
+      'should introduce every $description table with a heading of its name',
+      async ({ fixture, url, noteTypePlural }, { server }) => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixture)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          notesInEveryTable
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+
+        expect(
+          getAllByRole(body, 'heading', { level: 2 }).map(textOf)
+        ).toStrictEqual(
+          expect.arrayContaining([
+            `${noteTypePlural} awaiting authorisation`,
+            `${noteTypePlural} awaiting cancellation`,
+            `Issued ${noteTypePlural}`,
+            `Cancelled ${noteTypePlural}`
+          ])
+        )
       }
     )
   })
