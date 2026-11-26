@@ -9,7 +9,7 @@ import {
   buildMockAuth,
   sessionIdentity
 } from '#server/common/test-helpers/auth-helper.js'
-import { asHtml } from '#server/common/test-helpers/dom.js'
+import { asHtml, breadcrumbsOf } from '#server/common/test-helpers/dom.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import {
@@ -264,11 +264,27 @@ describe('the overseas reprocessing sites page', () => {
     ).not.toBeNull()
   })
 
-  it('offers a way back to the registration', async ({ server }) => {
+  it('walks back through the registration by number, ending on this page unlinked', async ({
+    server
+  }) => {
     const { body } = await visit(server, regulator)
 
-    expect(body).toContain(
-      `/organisations/${organisationNumber}/registrations/${registrationNumber}"`
+    expect(breadcrumbsOf(documentOf(body))).toStrictEqual([
+      ['All organisations', '/regulators/home'],
+      ['Kirkby Plastics Ltd', `/organisations/${organisationNumber}`],
+      [
+        'Registration details',
+        `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+      ],
+      ['Overseas reprocessing sites', undefined]
+    ])
+  })
+
+  it('titles the page by the registration number', async ({ server }) => {
+    const { body } = await visit(server, regulator)
+
+    expect(documentOf(body).ownerDocument.title).toContain(
+      `${registrationNumber}: Overseas reprocessing sites`
     )
   })
 

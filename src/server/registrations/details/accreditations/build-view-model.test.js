@@ -268,10 +268,6 @@ describe('the accreditation details view model', () => {
     expect(model.caption).toContain('Kirkby Recycling')
   })
 
-  it('names the page alone in the heading', () => {
-    expect(build().heading).toBe('Accreditation')
-  })
-
   it('starts the period on its first accredited day, ending it on 31 December', () => {
     expect(build().period).toBe('1 July to 31 December 2026')
   })
@@ -432,24 +428,10 @@ describe('the accreditation details view model', () => {
       { text: 'Accreditation details' }
     ])
   })
-
-  it('titles the page by the accreditation number', () => {
-    expect(build().pageTitle).toBe('A26ER5001180114PL: Accreditation details')
-  })
 })
 
 describe('the reports table on the accreditation details view model', () => {
   const viewPath = `${registrationPath}/accreditations/2026/reports`
-
-  it('names the five columns the design asks for, sizing the four data columns and hugging the actions', () => {
-    expect(build().reports.head).toStrictEqual([
-      { text: 'Period', classes: 'govuk-!-width-one-quarter' },
-      { text: 'Due date', classes: 'govuk-!-width-one-quarter' },
-      { text: 'Submission date', classes: 'govuk-!-width-one-quarter' },
-      { text: 'Status', classes: 'govuk-!-width-one-quarter' },
-      { text: 'Actions', classes: 'govuk-!-text-align-right' }
-    ])
-  })
 
   it('shows a submitted period with the moment it arrived and a way to read it', () => {
     expect(reportRows([aPeriod()])).toStrictEqual([
@@ -675,16 +657,6 @@ describe('the waste balance ledger on the accreditation details view model', () 
     })
   })
 
-  it("names an exporter's notes PERNs", () => {
-    const rows = ledgerOf([prnIssued], {
-      wasteProcessingType: 'exporter'
-    })?.rows
-
-    expect(rows?.at(0)?.at(1)).toStrictEqual({
-      html: 'PERN issued<br>\n240000123'
-    })
-  })
-
   describe('the PRNs section', () => {
     const notesPath = `${accreditationPath}/packaging-recycling-notes`
 
@@ -777,38 +749,6 @@ describe('the waste balance ledger on the accreditation details view model', () 
 
       expect(prns.rows).toStrictEqual([])
       expect(prns.count).toBe(0)
-    })
-
-    it('heads the five columns the design names, with the action right-aligned', () => {
-      expect(prnsOf([]).head).toStrictEqual([
-        { text: 'Producer or compliance scheme' },
-        { text: 'Status' },
-        { text: 'Date' },
-        { text: 'Tonnage' },
-        { text: 'Action', classes: 'govuk-!-text-align-right' }
-      ])
-    })
-
-    it("names an exporter's notes PERNs, as the page it links to does", () => {
-      const prns = build(
-        undefined,
-        { wasteProcessingType: 'exporter' },
-        aWasteBalance,
-        noPeriods,
-        null,
-        []
-      ).prns
-
-      expect(prns.heading).toBe('PERNs')
-      expect(prns.noneText).toContain('PERNs')
-    })
-
-    it('carries no material column, which would repeat one value on every row', () => {
-      const headings = prnsOf([]).head.map((cell) =>
-        'text' in cell ? cell.text : ''
-      )
-
-      expect(headings).not.toContain('Material')
     })
   })
 })

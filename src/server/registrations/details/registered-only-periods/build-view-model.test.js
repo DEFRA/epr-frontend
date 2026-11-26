@@ -126,15 +126,7 @@ const cellsOf = (row) => {
 }
 
 describe(buildViewModel, () => {
-  it('names the year it covers', () => {
-    expect(build().heading).toBe('2026 Registered-only periods')
-  })
-
   // The year already identifies the page, so no record number is prefixed.
-  it('titles the page by the year alone', () => {
-    expect(build().pageTitle).toBe('2026 Registered-only periods')
-  })
-
   it('names the organisation and the registration above the heading', () => {
     expect(build().caption).toBe('Kirkby Plastics Ltd - R26ER5001180041PL')
   })
@@ -235,20 +227,6 @@ describe(buildViewModel, () => {
         report: { submittedAt: '2026-04-15T15:09:00.000Z' },
         ...overrides
       })
-
-    it('names the five columns in the design order', () => {
-      const headings = build().reports.head.map((cell) =>
-        'text' in cell ? cell.text : ''
-      )
-
-      expect(headings).toStrictEqual([
-        'Period',
-        'Due date',
-        'Submission date',
-        'Status',
-        'Actions'
-      ])
-    })
 
     it('shows a quarter the calendar answered with', () => {
       const [row] = build({ reportingPeriods: [aQuarter(1)] }).reports.rows

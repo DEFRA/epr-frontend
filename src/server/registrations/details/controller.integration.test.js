@@ -344,6 +344,16 @@ describe('the registration details page a regulator reads', () => {
     }
   })
 
+  it('titles the page by the registration number', async ({ server, msw }) => {
+    backendHolds(msw)
+
+    const { body } = await visit(server)
+
+    expect(body.ownerDocument.title).toContain(
+      `${registrationNumber}: Registration details`
+    )
+  })
+
   it('names the organisation by its display name', async ({ server, msw }) => {
     backendHolds(msw, { displayName: 'Kirkby Recycling' })
 

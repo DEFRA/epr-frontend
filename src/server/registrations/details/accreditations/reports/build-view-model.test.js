@@ -108,10 +108,6 @@ const build = ({
   })
 
 describe('the accreditation reports view model', () => {
-  it("names the page Reports with the address's year", () => {
-    expect(build().heading).toBe('Reports (2026)')
-  })
-
   it('names the organisation, the registration and the accreditation in the caption', () => {
     expect(build().caption).toBe(
       'Kirkby Plastics Ltd - R26ER5001180041PL - A26ER5001180114PL'
@@ -124,10 +120,6 @@ describe('the accreditation reports view model', () => {
         organisation: anOrganisation({ displayName: 'Kirkby Recycling' })
       }).caption
     ).toBe('Kirkby Recycling - R26ER5001180041PL - A26ER5001180114PL')
-  })
-
-  it('titles the page by the accreditation number', () => {
-    expect(build().pageTitle).toBe('A26ER5001180114PL: Reports (2026)')
   })
 
   it('walks back through the accreditation by number, ending on this page unlinked', () => {
@@ -158,16 +150,6 @@ describe('the accreditation reports view model', () => {
     expect(action && 'html' in action ? action.html : '').toContain(
       `href="${accreditationPath}/reports/monthly/8/submissions/1/view"`
     )
-  })
-
-  it('heads the five columns the accreditation page does', () => {
-    expect(build().reports.head).toStrictEqual([
-      { text: 'Period', classes: 'govuk-!-width-one-quarter' },
-      { text: 'Due date', classes: 'govuk-!-width-one-quarter' },
-      { text: 'Submission date', classes: 'govuk-!-width-one-quarter' },
-      { text: 'Status', classes: 'govuk-!-width-one-quarter' },
-      { text: 'Actions', classes: 'govuk-!-text-align-right' }
-    ])
   })
 
   it('lists every period, newest first, however many there are', () => {

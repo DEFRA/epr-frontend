@@ -121,10 +121,4 @@ describe(buildViewModel, () => {
       { text: 'Overseas reprocessing sites' }
     ])
   })
-
-  it('names the page by its registration number', () => {
-    expect(viewModel().pageTitle).toBe(
-      'R26ER5001180041PL: Overseas reprocessing sites'
-    )
-  })
 })
