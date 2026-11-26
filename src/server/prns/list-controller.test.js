@@ -337,27 +337,6 @@ describe('#listPrnsController', () => {
         )
       })
 
-      it('should render PRN table with correct headings', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: reprocessorListUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-        const awaitingPanel = main.querySelector('#awaiting-action')
-        const table = getByRole(awaitingPanel, 'table')
-
-        expect(getByText(table, /Producer or compliance scheme/i)).toBeDefined()
-        expect(getByText(table, /Date created/i)).toBeDefined()
-        expect(getByText(table, /Tonnage/i)).toBeDefined()
-        expect(getByText(table, /Status/i)).toBeDefined()
-      })
-
       it('should label the action column for screen readers only', async ({
         server
       }) => {
@@ -1497,6 +1476,306 @@ describe('#listPrnsController', () => {
         })
       })
     })
+  })
+
+  /** @param {{ textContent: string | null } | null} element */
+  const textOf = (element) =>
+    (element?.textContent ?? '').replaceAll(/\s+/g, ' ').trim()
+
+  describe('table header rows', () => {
+    const notesInEveryTable = asPackagingRecyclingNotes([
+      ...mockPrnsWithCancellation,
+      ...mockPrnsWithCancelled.filter(({ status }) => status === 'cancelled')
+    ])
+
+    /**
+     * @param {ConstructorParameters<typeof JSDOM>[0]} html
+     * @returns {Record<string, string[]>}
+     */
+    const headerRowsByTableHeading = (html) =>
+      Object.fromEntries(
+        getAllByRole(new JSDOM(html).window.document.body, 'table').map(
+          (table) => [
+            textOf(table.previousElementSibling),
+            getAllByRole(table, 'columnheader').map(textOf)
+          ]
+        )
+      )
+
+    it.for([
+      {
+        description: 'reprocessor',
+        fixture: fixtureReprocessor,
+        url: reprocessorListUrl,
+        noteType: 'PRN',
+        noteTypePlural: 'PRNs'
+      },
+      {
+        description: 'exporter',
+        fixture: fixtureExporter,
+        url: exporterListUrl,
+        noteType: 'PERN',
+        noteTypePlural: 'PERNs'
+      }
+    ])(
+      'should head every $description table with its full set of columns',
+      async ({ fixture, url, noteType, noteTypePlural }, { server }) => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixture)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          notesInEveryTable
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const awaiting = [
+          'Producer or compliance scheme',
+          'Date created',
+          'Tonnage',
+          'December waste?',
+          'Status',
+          'Action'
+        ]
+        const issuedOrCancelled = [
+          `${noteType} number`,
+          'Producer or compliance scheme',
+          'Date issued',
+          'Tonnage',
+          'December waste?',
+          'Status',
+          'View in new tab'
+        ]
+
+        expect(headerRowsByTableHeading(result)).toStrictEqual({
+          [`${noteTypePlural} awaiting authorisation`]: awaiting,
+          [`${noteTypePlural} awaiting cancellation`]: awaiting,
+          [`Issued ${noteTypePlural}`]: issuedOrCancelled,
+          [`Cancelled ${noteTypePlural}`]: issuedOrCancelled
+        })
+      }
+    )
+  })
+
+  describe('table body rows', () => {
+    /**
+     * Each body row keyed by its column headers, leaving out empty cells.
+     * @param {ConstructorParameters<typeof JSDOM>[0]} html
+     * @param {string} panelId
+     * @returns {Array<Record<string, string>>}
+     */
+    const bodyRows = (html, panelId) => {
+      const panel = new JSDOM(html).window.document.getElementById(panelId)
+      const [headerRow, ...rows] = getAllByRole(
+        getByRole(panel, 'table'),
+        'row'
+      )
+      const headers = Array.from(headerRow.children, textOf)
+      return rows.map((row) =>
+        Object.fromEntries(
+          Array.from(row.children, (cell, column) => [
+            headers[column],
+            textOf(cell)
+          ]).filter(([, text]) => text !== '')
+        )
+      )
+    }
+
+    it('should list each note with whether it is December waste, then the total tonnage', async ({
+      server
+    }) => {
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+      vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+        asPackagingRecyclingNotes([
+          { ...mockPrns[0], isDecemberWaste: true },
+          { ...mockPrns[1], isDecemberWaste: false }
+        ])
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorListUrl,
+        auth: mockAuth
+      })
+
+      expect(bodyRows(result, 'awaiting-action')).toStrictEqual([
+        {
+          'Producer or compliance scheme': 'Acme Packaging Ltd',
+          'Date created': '15 January 2026',
+          Tonnage: '50',
+          'December waste?': 'Yes',
+          Status: 'Awaiting authorisation',
+          Action: 'Select'
+        },
+        {
+          'Producer or compliance scheme': 'BigCo Waste Solutions',
+          'Date created': '18 January 2026',
+          Tonnage: '120',
+          'December waste?': 'No',
+          Status: 'Awaiting authorisation',
+          Action: 'Select'
+        },
+        { 'Producer or compliance scheme': 'Total', Tonnage: '170' }
+      ])
+    })
+
+    it('should list issued and cancelled notes with their tonnage, then the total', async ({
+      server
+    }) => {
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+      vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+        mockPrnsWithCancelled
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorListUrl,
+        auth: mockAuth
+      })
+
+      expect({
+        issued: bodyRows(result, 'issued'),
+        cancelled: bodyRows(result, 'cancelled')
+      }).toStrictEqual({
+        issued: [
+          {
+            'PRN number': 'ER2612345',
+            'Producer or compliance scheme': 'Green Compliance Scheme',
+            'Date issued': '22 January 2026',
+            Tonnage: '75',
+            'December waste?': 'No',
+            Status: 'Awaiting acceptance',
+            'View in new tab': 'Select'
+          },
+          { 'PRN number': 'Total', Tonnage: '75' }
+        ],
+        cancelled: [
+          {
+            'PRN number': 'ER2688001',
+            'Producer or compliance scheme': 'Cancelled Corp',
+            'Date issued': '6 January 2026',
+            Tonnage: '30',
+            'December waste?': 'No',
+            Status: 'Cancelled',
+            'View in new tab': 'Select'
+          },
+          {
+            'PRN number': 'ER2688002',
+            'Producer or compliance scheme': 'Revoked Ltd',
+            'Date issued': '9 January 2026',
+            Tonnage: '15',
+            'December waste?': 'No',
+            Status: 'Cancelled',
+            'View in new tab': 'Select'
+          },
+          { 'PRN number': 'Total', Tonnage: '45' }
+        ]
+      })
+    })
+
+    it("should offer a session without write access a view link to each awaiting note's read page", async ({
+      server
+    }) => {
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorListUrl,
+        auth: buildMockAuth(sessionIdentity(IDENTITIES.operatorWithoutWrite))
+      })
+
+      const panel = new JSDOM(result).window.document.getElementById(
+        'awaiting-action'
+      )
+
+      expect(
+        getAllByRole(getByRole(panel, 'table'), 'link').map((link) => [
+          link.textContent?.trim(),
+          link.getAttribute('href')
+        ])
+      ).toStrictEqual([
+        ['View', `${reprocessorListUrl}/prn-001/view`],
+        ['View', `${reprocessorListUrl}/prn-002/view`]
+      ])
+    })
+  })
+
+  describe('tabs and empty states', () => {
+    /**
+     * @param {ConstructorParameters<typeof JSDOM>[0]} html
+     * @param {string} panelId
+     */
+    const panelText = (html, panelId) =>
+      textOf(new JSDOM(html).window.document.getElementById(panelId))
+
+    it('should name the three tabs', async ({ server }) => {
+      vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorListUrl,
+        auth: mockAuth
+      })
+
+      const tabs = new JSDOM(result).window.document.querySelectorAll(
+        '.govuk-tabs__tab'
+      )
+
+      expect(Array.from(tabs, (tab) => tab.textContent?.trim())).toStrictEqual([
+        'Awaiting action',
+        'Issued',
+        'Cancelled'
+      ])
+    })
+
+    it.for([
+      {
+        description: 'reprocessor',
+        fixture: fixtureReprocessor,
+        url: reprocessorListUrl,
+        noteType: 'PRN',
+        noIssued: 'No PRNs have been issued yet.'
+      },
+      {
+        description: 'exporter',
+        fixture: fixtureExporter,
+        url: exporterListUrl,
+        noteType: 'PERN',
+        noIssued: 'No PERNs have been issued yet.'
+      }
+    ])(
+      'should tell a $description when nothing awaits action or has been issued',
+      async ({ fixture, url, noteType, noIssued }, { server }) => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(fixture)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          mockPrnsWithCancelled.filter(({ status }) => status === 'cancelled')
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect({
+          awaiting: panelText(result, 'awaiting-action'),
+          issued: panelText(result, 'issued')
+        }).toStrictEqual({
+          awaiting: `If you delete or cancel a ${noteType}, its tonnage will be added to your available waste balance. No PRNs or PERNs have been created yet.`,
+          issued: noIssued
+        })
+      }
+    )
   })
 
   describe('December available balance panel', () => {

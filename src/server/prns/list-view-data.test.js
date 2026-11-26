@@ -5,64 +5,13 @@ import { describe, expect, it, vi } from 'vitest'
 import { SCOPES } from '#server/auth/scopes.js'
 import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
+import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { buildListViewData } from './list-view-data.js'
 
 /** @param {string[]} scope */
 const createMockRequest = (scope = [SCOPES.organisationLinkedWrite]) => ({
   auth: { credentials: { scope } },
-  t: vi.fn((key, params = {}) => {
-    const translations = {
-      'prns:list:pageTitle': `${params.noteTypePlural} (${params.year})`,
-      'prns:list:balanceHint': `This is the balance available for creating new ${params.noteTypePlural}`,
-      'prns:list:cancelHint': `If you delete or cancel a ${params.noteType}, its tonnage will be added to your available waste balance.`,
-      'prns:list:createLink': `Create a ${params.noteType}`,
-      'prns:list:awaitingAuthorisationHeading': `${params.noteTypePlural} awaiting authorisation`,
-      'prns:list:awaitingCancellationHeading': `${params.noteTypePlural} awaiting cancellation`,
-      'prns:list:noIssuedPrns': `No ${params.noteTypePlural} have been issued yet.`,
-      'prns:list:availableWasteBalance': 'Available waste balance',
-      'prns:list:noPrns': 'No PRNs or PERNs have been created yet.',
-      'prns:list:tabs:awaitingAction': 'Awaiting action',
-      'prns:list:tabs:issued': 'Issued',
-      'prns:list:tabs:cancelled': 'Cancelled',
-      'prns:list:selectHeading': `Select a ${params.noteType}`,
-      'prns:list:table:recipientHeading': 'Producer or compliance scheme',
-      'prns:list:table:dateHeading': 'Date created',
-      'prns:list:table:tonnageHeading': 'Tonnage',
-      'prns:list:table:statusHeading': 'Status',
-      'prns:list:table:actionHeading': 'Action',
-      'prns:list:table:selectText': 'Select',
-      'prns:list:table:viewText': 'View',
-      'prns:list:table:totalLabel': 'Total',
-      'prns:decemberWasteLabel': 'December waste?',
-      'prns:decemberWasteYes': 'Yes',
-      'prns:decemberWasteNo': 'No',
-      'prns:list:noPrnsCreated': `You have not created any ${params.noteTypePlural}.`,
-      'prns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
-      'prns:list:status:awaitingAcceptance': 'Awaiting acceptance',
-      'prns:list:status:accepted': 'Accepted',
-      'prns:list:status:awaitingCancellation': 'Awaiting cancellation',
-      'prns:list:status:cancelled': 'Cancelled',
-      'prns:list:issuedHeading': `Issued ${params.noteTypePlural}`,
-      'prns:list:cancelledHeading': `Cancelled ${params.noteTypePlural}`,
-      'prns:list:noCancelledPrns': `You have not cancelled any ${params.noteTypePlural}.`,
-      'prns:list:issuedTable:noteNumberHeading': `${params.noteType} number`,
-      'prns:list:issuedTable:recipientHeading': 'Producer or compliance scheme',
-      'prns:list:issuedTable:dateIssuedHeading': 'Date issued',
-      'prns:list:issuedTable:statusHeading': 'Status',
-      'prns:list:issuedTable:tonnageHeading': 'Tonnage',
-      'prns:list:issuedTable:actionHeading': 'View in new tab',
-      'prns:list:issuedTable:selectText': 'Select',
-      'prns:list:cancelledTable:noteNumberHeading': `${params.noteType} number`,
-      'prns:list:cancelledTable:recipientHeading':
-        'Producer or compliance scheme',
-      'prns:list:cancelledTable:dateIssuedHeading': 'Date issued',
-      'prns:list:cancelledTable:tonnageHeading': 'Tonnage',
-      'prns:list:cancelledTable:statusHeading': 'Status',
-      'prns:list:cancelledTable:actionHeading': 'View in new tab',
-      'prns:list:cancelledTable:selectText': 'Select'
-    }
-    return /** @type {Record<string, string>} */ (translations)[key] || key
-  }),
+  t: createMockLocalise(),
   localiseUrl: vi.fn((url) => url)
 })
 
@@ -149,11 +98,6 @@ const reprocessorRegistration = {
   wasteProcessingType: 'reprocessor-input'
 }
 
-const exporterRegistration = {
-  id: 'reg-002',
-  wasteProcessingType: 'exporter'
-}
-
 const mockWasteBalance = { availableAmount: 150.5 }
 
 const reprocessorKeys = {
@@ -162,27 +106,11 @@ const reprocessorKeys = {
   year: toYear(2026)
 }
 
-const exporterKeys = {
-  organisationNumber: toOrganisationNumber('500002'),
-  registrationNumber: toRegistrationNumber('R26EX2'),
-  year: toYear(2026)
-}
+/** @param {object} cell */
+const htmlOf = (cell) => ('html' in cell ? String(cell.html) : '')
 
 describe('#buildListViewData', () => {
   describe('for reprocessor (PRN)', () => {
-    it('should return page title with PRN text', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.pageTitle).toBe('PRNs (2026)')
-      expect(result.heading).toBe('PRNs (2026)')
-    })
-
     it('should return correct back URL', () => {
       const result = buildListViewData(createMockRequest(), {
         yearOpen: true,
@@ -209,7 +137,6 @@ describe('#buildListViewData', () => {
       expect(result.createLink?.href).toBe(
         '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/create'
       )
-      expect(result.createLink?.text).toBe('Create a PRN')
     })
 
     it('should offer no create link once the year has closed', () => {
@@ -234,64 +161,6 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.wasteBalance.amount).toBe(150.5)
-      expect(result.wasteBalance.label).toBe('Available waste balance')
-      expect(result.wasteBalance.hint).toBe(
-        'This is the balance available for creating new PRNs'
-      )
-    })
-
-    it('should return select heading and awaiting authorisation heading', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.selectHeading).toBe('Select a PRN')
-      expect(result.awaitingAuthorisationHeading).toBe(
-        'PRNs awaiting authorisation'
-      )
-    })
-
-    it('should return tab labels', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.tabs.awaitingAction).toBe('Awaiting action')
-      expect(result.tabs.issued).toBe('Issued')
-    })
-
-    it('should return cancel hint with delete wording', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.cancelHint).toBe(
-        'If you delete or cancel a PRN, its tonnage will be added to your available waste balance.'
-      )
-    })
-
-    it('should return no issued text for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.noIssuedText).toBe('No PRNs have been issued yet.')
     })
 
     it('should return table rows in govukTable format with total row', () => {
@@ -324,7 +193,6 @@ describe('#buildListViewData', () => {
       })
 
       const totalRow = result.table.rows[2]
-      expect(totalRow[0].text).toBe('Total')
       expect(totalRow[0].classes).toBe(cssClasses.fontWeight.bold)
       expect(totalRow[2].text).toBe(170) // 50 + 120
       expect(totalRow[2].classes).toBe(cssClasses.fontWeight.bold)
@@ -358,8 +226,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][4].html).toContain('govuk-tag--blue')
-      expect(result.table.rows[0][4].html).toContain('Awaiting authorisation')
+      expect(htmlOf(result.table.rows[0][4])).toContain('govuk-tag--blue')
     })
 
     it('should return select link pointing to action page', () => {
@@ -371,11 +238,11 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][5].html).toContain('govuk-link')
-      expect(result.table.rows[0][5].html).toContain(
+      expect(htmlOf(result.table.rows[0][5])).toContain('govuk-link')
+      expect(htmlOf(result.table.rows[0][5])).toContain(
         '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/prn-001'
       )
-      expect(result.table.rows[0][5].html).not.toContain('prn-001/view')
+      expect(htmlOf(result.table.rows[0][5])).not.toContain('prn-001/view')
     })
 
     it("sends a session holding no write scope to the note's read page, because Select issues or cancels it", () => {
@@ -390,10 +257,9 @@ describe('#buildListViewData', () => {
         }
       )
 
-      expect(result.table.rows[0][5].html).toContain(
+      expect(htmlOf(result.table.rows[0][5])).toContain(
         '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/prn-001/view'
       )
-      expect(result.table.rows[0][5].html).toContain('>View<')
     })
 
     it('keeps the view link on an issued note for a session holding no write scope, because it only reads', () => {
@@ -410,92 +276,6 @@ describe('#buildListViewData', () => {
       )
 
       expect(result.issuedTable.rows[0][6].html).toContain('prn-003/view')
-    })
-
-    it('should return table headings', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.table.headings.recipient).toBe(
-        'Producer or compliance scheme'
-      )
-      expect(result.table.headings.createdAt).toBe('Date created')
-      expect(result.table.headings.tonnage).toBe('Tonnage')
-      expect(result.table.headings.decemberWaste).toBe('December waste?')
-      expect(result.table.headings.status).toBe('Status')
-    })
-  })
-
-  describe('for exporter (PERN)', () => {
-    it('should return page title with PERN text', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: exporterKeys,
-        registration: exporterRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.pageTitle).toBe('PERNs (2026)')
-      expect(result.heading).toBe('PERNs (2026)')
-    })
-
-    it('should return create link with PERN text', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: exporterKeys,
-        registration: exporterRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.createLink?.text).toBe('Create a PERN')
-    })
-
-    it('should return select heading and awaiting authorisation heading with PERN text', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: exporterKeys,
-        registration: exporterRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.selectHeading).toBe('Select a PERN')
-      expect(result.awaitingAuthorisationHeading).toBe(
-        'PERNs awaiting authorisation'
-      )
-    })
-
-    it('should return cancel hint with PERN text and delete wording', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: exporterKeys,
-        registration: exporterRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.cancelHint).toBe(
-        'If you delete or cancel a PERN, its tonnage will be added to your available waste balance.'
-      )
-    })
-
-    it('should return no issued text for PERNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: exporterKeys,
-        registration: exporterRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.noIssuedText).toBe('No PERNs have been issued yet.')
     })
   })
 
@@ -524,32 +304,6 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.hasCreatedPrns).toBe(false)
-    })
-
-    it('should return type-specific noPrnsCreatedText for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: [],
-        hasCreatedPrns: false,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.noPrnsCreatedText).toBe('You have not created any PRNs.')
-    })
-
-    it('should return type-specific noPrnsCreatedText for PERNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: exporterKeys,
-        registration: exporterRegistration,
-        prns: [],
-        hasCreatedPrns: false,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.noPrnsCreatedText).toBe('You have not created any PERNs.')
     })
   })
 
@@ -591,56 +345,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows[0][5].html).toContain(
-        'Awaiting acceptance'
-      )
       expect(result.issuedTable.rows[0][5].html).toContain('govuk-tag')
-    })
-
-    it('should return issued table headings for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        issuedPrns: stubIssuedPrns,
-        hasCreatedPrns: true,
-
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.issuedTable.headings).toStrictEqual({
-        prnNumber: 'PRN number',
-        recipient: 'Producer or compliance scheme',
-        dateIssued: 'Date issued',
-        tonnage: 'Tonnage',
-        decemberWaste: 'December waste?',
-        status: 'Status',
-        action: 'View in new tab'
-      })
-    })
-
-    it('should return issued table headings for PERNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: exporterRegistration,
-        prns: stubPrns,
-        issuedPrns: stubIssuedPrns,
-        hasCreatedPrns: true,
-
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.issuedTable.headings).toStrictEqual({
-        prnNumber: 'PERN number',
-        recipient: 'Producer or compliance scheme',
-        dateIssued: 'Date issued',
-        tonnage: 'Tonnage',
-        decemberWaste: 'December waste?',
-        status: 'Status',
-        action: 'View in new tab'
-      })
     })
 
     it('should return view links for each issued PRN with target="_blank"', () => {
@@ -676,93 +381,9 @@ describe('#buildListViewData', () => {
 
       expect(result.issuedTable.rows).toHaveLength(0)
     })
-
-    it('should return issued heading for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        issuedPrns: stubIssuedPrns,
-        hasCreatedPrns: true,
-
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.issuedHeading).toBe('Issued PRNs')
-    })
-
-    it('should return issued heading for PERNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: exporterKeys,
-        registration: exporterRegistration,
-        prns: stubPrns,
-        issuedPrns: stubIssuedPrns,
-        hasCreatedPrns: true,
-
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.issuedHeading).toBe('Issued PERNs')
-    })
   })
 
   describe('cancellation table', () => {
-    it('should return awaiting cancellation heading for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        cancellationPrns: stubCancellationPrns,
-        hasCreatedPrns: true,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.awaitingCancellationHeading).toBe(
-        'PRNs awaiting cancellation'
-      )
-    })
-
-    it('should return awaiting cancellation heading for PERNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: exporterKeys,
-        registration: exporterRegistration,
-        prns: stubPrns,
-        cancellationPrns: stubCancellationPrns,
-        hasCreatedPrns: true,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.awaitingCancellationHeading).toBe(
-        'PERNs awaiting cancellation'
-      )
-    })
-
-    it('should return cancellation table with correct headings', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        cancellationPrns: stubCancellationPrns,
-        hasCreatedPrns: true,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.cancellationTable.headings.recipient).toBe(
-        'Producer or compliance scheme'
-      )
-      expect(result.cancellationTable.headings.createdAt).toBe('Date created')
-      expect(result.cancellationTable.headings.tonnage).toBe('Tonnage')
-      expect(result.cancellationTable.headings.decemberWaste).toBe(
-        'December waste?'
-      )
-      expect(result.cancellationTable.headings.status).toBe('Status')
-    })
-
     it('should return cancellation table rows with status tags', () => {
       const result = buildListViewData(createMockRequest(), {
         yearOpen: true,
@@ -788,9 +409,9 @@ describe('#buildListViewData', () => {
       expect(result.cancellationTable.rows[0][2]).toStrictEqual({
         text: 5
       })
-      expect(result.cancellationTable.rows[0][4]).toStrictEqual({
-        html: '<strong class="govuk-tag govuk-tag--yellow epr-tag--no-max-width">Awaiting cancellation</strong>'
-      })
+      expect(htmlOf(result.cancellationTable.rows[0][4])).toContain(
+        'govuk-tag govuk-tag--yellow epr-tag--no-max-width'
+      )
     })
 
     it('should return cancellation table with total row', () => {
@@ -805,7 +426,6 @@ describe('#buildListViewData', () => {
       })
 
       const totalRow = result.cancellationTable.rows[2]
-      expect(totalRow[0].text).toBe('Total')
       expect(totalRow[0].classes).toBe(cssClasses.fontWeight.bold)
       expect(totalRow[2].text).toBe(30) // 5 + 25
       expect(totalRow[2].classes).toBe(cssClasses.fontWeight.bold)
@@ -823,8 +443,10 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.cancellationTable.rows[0][5].html).toContain('govuk-link')
-      expect(result.cancellationTable.rows[0][5].html).toContain(
+      expect(htmlOf(result.cancellationTable.rows[0][5])).toContain(
+        'govuk-link'
+      )
+      expect(htmlOf(result.cancellationTable.rows[0][5])).toContain(
         '/organisations/500001/registrations/R26ER1/accreditations/2026/packaging-recycling-notes/prn-cancel-001'
       )
     })
@@ -896,44 +518,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.cancelledTable.rows[0][5].html).toContain('Cancelled')
       expect(result.cancelledTable.rows[0][5].html).toContain('govuk-tag--red')
-    })
-
-    it('should return cancelled table headings for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        cancelledPrns: stubCancelledPrns,
-        hasCreatedPrns: true,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.cancelledTable.headings).toStrictEqual({
-        prnNumber: 'PRN number',
-        recipient: 'Producer or compliance scheme',
-        dateIssued: 'Date issued',
-        tonnage: 'Tonnage',
-        decemberWaste: 'December waste?',
-        status: 'Status',
-        action: 'View in new tab'
-      })
-    })
-
-    it('should return cancelled table headings for PERNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: exporterRegistration,
-        prns: stubPrns,
-        cancelledPrns: stubCancelledPrns,
-        hasCreatedPrns: true,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.cancelledTable.headings.prnNumber).toBe('PERN number')
     })
 
     it('should return view links for each cancelled PRN with target="_blank"', () => {
@@ -980,58 +565,6 @@ describe('#buildListViewData', () => {
 
       expect(result.cancelledTable.rows).toHaveLength(0)
     })
-
-    it('should return cancelled heading for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        cancelledPrns: stubCancelledPrns,
-        hasCreatedPrns: true,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.cancelledHeading).toBe('Cancelled PRNs')
-    })
-
-    it('should return cancelled heading for PERNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: exporterKeys,
-        registration: exporterRegistration,
-        prns: stubPrns,
-        cancelledPrns: stubCancelledPrns,
-        hasCreatedPrns: true,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.cancelledHeading).toBe('Cancelled PERNs')
-    })
-
-    it('should return no cancelled text for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.noCancelledText).toBe('You have not cancelled any PRNs.')
-    })
-
-    it('should return cancelled tab label', () => {
-      const result = buildListViewData(createMockRequest(), {
-        yearOpen: true,
-        keys: reprocessorKeys,
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.tabs.cancelled).toBe('Cancelled')
-    })
   })
 
   describe('edge cases', () => {
@@ -1059,7 +592,6 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.table.rows).toHaveLength(0)
-      expect(result.noPrnsText).toBe('No PRNs or PERNs have been created yet.')
     })
 
     it('should format awaiting_acceptance status correctly', () => {
@@ -1081,8 +613,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][4].html).toContain('govuk-tag--purple')
-      expect(result.table.rows[0][4].html).toContain('Awaiting acceptance')
+      expect(htmlOf(result.table.rows[0][4])).toContain('govuk-tag--purple')
     })
 
     it('should return unknown status as-is in tag', () => {
@@ -1104,53 +635,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][4].html).toContain('unknown_status')
+      expect(htmlOf(result.table.rows[0][4])).toContain('unknown_status')
     })
-  })
-
-  describe('December waste column', () => {
-    const decemberWasteColumnIndex = {
-      table: 3,
-      cancellationTable: 3,
-      issuedTable: 4,
-      cancelledTable: 4
-    }
-
-    it.each([
-      ['awaiting-action table', 'table', { prns: stubPrns }],
-      [
-        'awaiting-cancellation table',
-        'cancellationTable',
-        { prns: stubPrns, cancellationPrns: stubCancellationPrns }
-      ],
-      [
-        'issued table',
-        'issuedTable',
-        { prns: stubPrns, issuedPrns: stubIssuedPrns }
-      ],
-      [
-        'cancelled table',
-        'cancelledTable',
-        { prns: stubPrns, cancelledPrns: stubCancelledPrns }
-      ]
-    ])(
-      'lets an operator tell a December Waste note apart from a general one at a glance in the %s',
-      (_name, tableKey, listArgs) => {
-        const result = buildListViewData(createMockRequest(), {
-          yearOpen: true,
-          keys: reprocessorKeys,
-          registration: reprocessorRegistration,
-          wasteBalance: mockWasteBalance,
-          ...listArgs
-        })
-
-        const table = result[tableKey]
-        const columnIndex = decemberWasteColumnIndex[tableKey]
-
-        expect(table.headings.decemberWaste).toBe('December waste?')
-        expect(table.rows[0][columnIndex]).toStrictEqual({ text: 'Yes' })
-        expect(table.rows[1][columnIndex]).toStrictEqual({ text: 'No' })
-      }
-    )
   })
 })
