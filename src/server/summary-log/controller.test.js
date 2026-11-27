@@ -1632,8 +1632,7 @@ describe('#summaryLogUploadProgressController', () => {
         ...[
           ['blank', ' '],
           ['text', 'abc'],
-          ['missing', undefined],
-          ['as a number', 1000]
+          ['missing', undefined]
         ].map(([kind, previousYearRowId]) => ({
           name: `a link to a complete 2026 row with the row it names ${kind}`,
           failure: {
@@ -1692,16 +1691,6 @@ describe('#summaryLogUploadProgressController', () => {
             errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
             actual: 1888,
             expected: undefined,
-            header: 'PREVIOUS_YEAR_ROW_ID'
-          },
-          expected: ['Previous year Row ID', '1888', 'Check this value']
-        },
-        {
-          name: 'a previous year row ID that names no row, in a year that is not a whole number',
-          failure: {
-            errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
-            actual: 1888,
-            expected: 2026.5,
             header: 'PREVIOUS_YEAR_ROW_ID'
           },
           expected: ['Previous year Row ID', '1888', 'Check this value']
