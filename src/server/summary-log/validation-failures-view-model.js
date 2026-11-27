@@ -3,6 +3,7 @@ import {
   TECHNICAL_ERROR_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
 import { VALIDATION_CODE } from '#server/common/enums/validation.js'
+import { utcCalendarDate } from '#server/common/helpers/calendar-date.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
 import { rowIdSchema } from '#domain/summary-logs/loads-schema.js'
@@ -205,9 +206,7 @@ const isCalendarDate = (value) => {
     return false
   }
   const date = new Date(value)
-  return (
-    !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
-  )
+  return !Number.isNaN(date.getTime()) && utcCalendarDate(date) === value
 }
 
 /**
