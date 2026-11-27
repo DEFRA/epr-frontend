@@ -1,5 +1,6 @@
 /**
  * @import { Brand } from './brand.js'
+ * @import { CalendarDate } from './calendar-date.js'
  */
 
 /**
@@ -21,6 +22,13 @@ export const toYear = (value) => /** @type {Year} */ (value)
  * @returns {Year}
  */
 export const currentYear = () => toYear(new Date().getUTCFullYear())
+
+/**
+ * A bare date names no instant, so its year needs no time zone.
+ * @param {CalendarDate} date
+ * @returns {Year}
+ */
+export const yearOf = (date) => toYear(Number(date.slice(0, 4)))
 
 /**
  * @param {Year[]} years

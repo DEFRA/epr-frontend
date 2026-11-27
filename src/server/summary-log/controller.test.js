@@ -47,7 +47,7 @@ import { summaryLogStatuses } from '../common/constants/statuses.js'
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
- * @import { LedgerAccreditation, LoadRow, PeriodStatusByChange, SummaryLogStatusResponse } from './types.js'
+ * @import { LedgerAccreditation, LoadRow, PeriodStatusByChange, SummaryLogStatusResponse, ValidationFailure } from './types.js'
  */
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
@@ -1341,9 +1341,9 @@ describe('#summaryLogUploadProgressController', () => {
       )
 
       const generic = (year, loadYear) =>
-        `Year cannot be later than ${year}. If it’s a ${loadYear} load, record it in your ${loadYear} summary log instead.`
+        `Year cannot be later than ${year}. If it's a ${loadYear} load, record it in your ${loadYear} summary log instead.`
       const exported = (year, loadYear) =>
-        `${generic(year, loadYear)} If it was received for export in ${year}, use the ‘Previous year Row ID’ to link your 2 summary logs.`
+        `${generic(year, loadYear)} If it was received for export in ${year}, use the 'Previous year Row ID' to link your 2 summary logs.`
 
       it.for([
         [
@@ -1469,10 +1469,10 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       const REPATRIATED_LOAD_PROBLEM =
-        'Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation date in ‘Date received for export’.'
+        "Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation date in 'Date received for export'."
 
       const REGISTERED_ONLY_REPATRIATED_LOAD_PROBLEM =
-        'Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation month in ‘Month received for export’ on the Received (section 1) tab.'
+        "Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation month in 'Month received for export' on the Received (section 1) tab."
 
       const REGISTERED_ONLY_LOCATION = {
         sheet: 'Exported (sections 2 and 3)',
@@ -1481,6 +1481,19 @@ describe('#summaryLogUploadProgressController', () => {
 
       const COMPLETE_ROW_PROBLEM =
         'Row 1000 in your 2026 summary log is complete, so cannot be linked to your 2027 log'
+
+      /** @param {string} deadline */
+      const missingDataProblem = (deadline) =>
+        `Row 1000 in your 2026 summary log is missing data. You'll need to add it in your 2026 log by ${deadline}.`
+
+      /** @type {[kind: string, link: Pick<ValidationFailure, 'previousYearRowId' | 'deadline'>][]} */
+      const unshowableMissingDataLinks = [
+        ['without the deadline', { previousYearRowId: '1000' }],
+        [
+          'with the row it names as text',
+          { previousYearRowId: 'abc', deadline: '2027-02-27' }
+        ]
+      ]
 
       /**
        * @type {Array<{
@@ -1631,6 +1644,48 @@ describe('#summaryLogUploadProgressController', () => {
           expected: ['Date received by OSR', '(empty)', 'Check this value']
         })),
         {
+          name: 'a link to a 2026 row missing data',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            actual: 1000,
+            previousYearRowId: '1000',
+            deadline: '2027-02-27',
+            header: 'PREVIOUS_YEAR_ROW_ID'
+          },
+          expected: [
+            'Previous year Row ID',
+            '1000',
+            missingDataProblem('27 February 2027')
+          ]
+        },
+        {
+          name: 'a registered-only link to a 2026 row missing data',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            actual: 1000,
+            previousYearRowId: '1000',
+            deadline: '2027-03-20',
+            header: 'PREVIOUS_YEAR_ROW_ID'
+          },
+          ledgerAccreditation: registeredOnlyLedger,
+          location: REGISTERED_ONLY_LOCATION,
+          expected: [
+            'Previous year Row ID',
+            '1000',
+            missingDataProblem('20 March 2027')
+          ]
+        },
+        ...unshowableMissingDataLinks.map(([kind, link]) => ({
+          name: `a link to a 2026 row missing data, ${kind}`,
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_MISSING_DATA',
+            actual: 1000,
+            header: 'PREVIOUS_YEAR_ROW_ID',
+            ...link
+          },
+          expected: ['Previous year Row ID', '1000', 'Check this value']
+        })),
+        {
           name: 'a linked row value that differs from its 2026 row, with the correction deadline',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
@@ -1642,7 +1697,7 @@ describe('#summaryLogUploadProgressController', () => {
           expected: [
             'Container number',
             'CONT-2027',
-            'This data does not match your 2026 summary log entry. You’ll need to change your 2026 entry by 27 February 2027.'
+            "This data does not match your 2026 summary log entry. You'll need to change your 2026 entry by 27 February 2027."
           ]
         },
         {
@@ -1657,7 +1712,7 @@ describe('#summaryLogUploadProgressController', () => {
           expected: [
             'OSR site name',
             'Global Recycling SA',
-            'This data does not match your 2026 summary log entry. You’ll need to change your 2026 entry by 27 February 2027.'
+            "This data does not match your 2026 summary log entry. You'll need to change your 2026 entry by 27 February 2027."
           ]
         },
         {
@@ -1674,7 +1729,7 @@ describe('#summaryLogUploadProgressController', () => {
           expected: [
             'Container number',
             'CONT-2027',
-            'This data does not match your 2026 summary log entry. You’ll need to change your 2026 entry by 20 March 2027.'
+            "This data does not match your 2026 summary log entry. You'll need to change your 2026 entry by 20 March 2027."
           ]
         },
         ...[
@@ -1766,7 +1821,7 @@ describe('#summaryLogUploadProgressController', () => {
       )
 
       const earlierYear = (deadline) =>
-        `Year cannot be earlier than 2027. You’ll need to add it in your 2026 summary log by ${deadline}.`
+        `Year cannot be earlier than 2027. You'll need to add it in your 2026 summary log by ${deadline}.`
 
       it.for([
         [
