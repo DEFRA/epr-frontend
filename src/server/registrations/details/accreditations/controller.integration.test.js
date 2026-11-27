@@ -164,6 +164,7 @@ const accreditationDetails = {
     }
   },
   wasteBalance: { amount: 1234.5, availableAmount: 987.25 },
+  showsDecember: false,
   reportingPeriods: [
     /** @type {AccreditationDetails['reportingPeriods'][number]} */ (
       /** @type {unknown} */ ({
@@ -323,6 +324,31 @@ describe('the accreditation details page', () => {
     ])
   })
 
+  it('splits the balance into December and non-December within the December waste window', async ({
+    server
+  }) => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+      ...accreditationDetails,
+      wasteBalance: {
+        amount: 1234.5,
+        availableAmount: 987.25,
+        decemberAvailableAmount: 120.25,
+        nonDecemberAvailableAmount: 867
+      },
+      showsDecember: true
+    })
+
+    const { body } = await visit(server, regulator)
+
+    expect(summaryOf(documentOf(body))).toStrictEqual([
+      ['Accreditation status', 'Approved'],
+      ['Accreditation number', 'A26ER5001180114PL'],
+      ['December waste balance (tonnes)', '120.25'],
+      ['Non-December waste balance (tonnes)', '867.00'],
+      ['Latest summary log', 'Download']
+    ])
+  })
+
   it('leaves the latest summary log blank where none has been submitted', async ({
     server
   }) => {
@@ -363,7 +389,7 @@ describe('the accreditation details page', () => {
     expect(body).not.toContain('1,234.50')
   })
 
-  it('leaves the balance blank where it could not be read', async ({
+  it('shows the balance as zero where it could not be read', async ({
     server
   }) => {
     vi.mocked(fetchAccreditationDetails).mockResolvedValue({
@@ -381,7 +407,7 @@ describe('the accreditation details page', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(
       row?.querySelector('.govuk-summary-list__value')?.textContent?.trim()
-    ).toBe('')
+    ).toBe('0.00')
   })
 
   it('is not found for a number or year that names no accreditation', async ({
