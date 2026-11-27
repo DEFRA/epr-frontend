@@ -1631,6 +1631,77 @@ describe('#summaryLogUploadProgressController', () => {
           expected: ['Date received by OSR', '(empty)', 'Check this value']
         })),
         {
+          name: 'a linked row value that differs from its 2026 row, with the correction deadline',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
+            actual: 'CONT-2027',
+            previousYearRowId: '1000',
+            deadline: '2027-02-27',
+            header: 'CONTAINER_NUMBER'
+          },
+          expected: [
+            'Container number',
+            'CONT-2027',
+            'This data does not match your 2026 summary log entry. You’ll need to change your 2026 entry by 27 February 2027.'
+          ]
+        },
+        {
+          name: 'a linked row value that differs from its 2026 row, in a column with no value rule',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
+            actual: 'Global Recycling SA',
+            previousYearRowId: '1000',
+            deadline: '2027-02-27',
+            header: 'OSR_NAME'
+          },
+          expected: [
+            'OSR site name',
+            'Global Recycling SA',
+            'This data does not match your 2026 summary log entry. You’ll need to change your 2026 entry by 27 February 2027.'
+          ]
+        },
+        {
+          name: 'a registered-only linked row value that differs from its 2026 row, with the correction deadline it is given',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
+            actual: 'CONT-2027',
+            previousYearRowId: '1000',
+            deadline: '2027-03-20',
+            header: 'CONTAINER_NUMBER'
+          },
+          ledgerAccreditation: registeredOnlyLedger,
+          location: REGISTERED_ONLY_LOCATION,
+          expected: [
+            'Container number',
+            'CONT-2027',
+            'This data does not match your 2026 summary log entry. You’ll need to change your 2026 entry by 20 March 2027.'
+          ]
+        },
+        ...[
+          {
+            kind: 'without the correction deadline',
+            overrides: { deadline: undefined }
+          },
+          {
+            kind: 'with a correction deadline that is not a calendar date',
+            overrides: { deadline: '2027-02-27T00:00:00.000Z' }
+          },
+          {
+            kind: 'without the year',
+            overrides: { deadline: '2027-02-27', expected: undefined }
+          }
+        ].map(({ kind, overrides }) => ({
+          name: `a linked row value that differs from its 2026 row, ${kind}`,
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
+            actual: 'CONT-2027',
+            previousYearRowId: '1000',
+            header: 'CONTAINER_NUMBER',
+            ...overrides
+          },
+          expected: ['Container number', 'CONT-2027', 'Check this value']
+        })),
+        {
           name: 'a previous year row ID that names no row, without the year',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
