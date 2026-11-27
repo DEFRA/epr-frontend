@@ -1341,9 +1341,9 @@ describe('#summaryLogUploadProgressController', () => {
       )
 
       const generic = (year, loadYear) =>
-        `Year cannot be later than ${year}. If it’s a ${loadYear} load, record it in your ${loadYear} summary log instead.`
+        `Year cannot be later than ${year}. If it's a ${loadYear} load, record it in your ${loadYear} summary log instead.`
       const exported = (year, loadYear) =>
-        `${generic(year, loadYear)} If it was received for export in ${year}, use the ‘Previous year Row ID’ to link your 2 summary logs.`
+        `${generic(year, loadYear)} If it was received for export in ${year}, use the 'Previous year Row ID' to link your 2 summary logs.`
 
       it.for([
         [
@@ -1469,10 +1469,10 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       const REPATRIATED_LOAD_PROBLEM =
-        'Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation date in ‘Date received for export’.'
+        "Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation date in 'Date received for export'."
 
       const REGISTERED_ONLY_REPATRIATED_LOAD_PROBLEM =
-        'Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation month in ‘Month received for export’ on the Received (section 1) tab.'
+        "Row 1000 in your 2026 summary log shows a repatriated load, so cannot be linked to your 2027 log. If you export this load again, add it as a new row in your 2027 log and enter the repatriation month in 'Month received for export' on the Received (section 1) tab."
 
       const REGISTERED_ONLY_LOCATION = {
         sheet: 'Exported (sections 2 and 3)',
@@ -1484,7 +1484,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       /** @param {string} deadline */
       const missingDataProblem = (deadline) =>
-        `Row 1000 in your 2026 summary log is missing data. You’ll need to add it in your 2026 log by ${deadline}.`
+        `Row 1000 in your 2026 summary log is missing data. You'll need to add it in your 2026 log by ${deadline}.`
 
       /** @type {Array<[kind: string, link: Pick<ValidationFailure, 'previousYearRowId' | 'deadline'>]>} */
       const unshowableMissingDataLinks = [
@@ -1750,7 +1750,7 @@ describe('#summaryLogUploadProgressController', () => {
       )
 
       const earlierYear = (deadline) =>
-        `Year cannot be earlier than 2027. You’ll need to add it in your 2026 summary log by ${deadline}.`
+        `Year cannot be earlier than 2027. You'll need to add it in your 2026 summary log by ${deadline}.`
 
       it.for([
         [
