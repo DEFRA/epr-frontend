@@ -1646,6 +1646,21 @@ describe('#summaryLogUploadProgressController', () => {
           ]
         },
         {
+          name: 'a linked row value that differs from its 2026 row, in a column with no value rule',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
+            actual: 'Global Recycling SA',
+            previousYearRowId: '1000',
+            deadline: '2027-02-27',
+            header: 'OSR_NAME'
+          },
+          expected: [
+            'OSR site name',
+            'Global Recycling SA',
+            'This data does not match your 2026 summary log entry. You’ll need to change your 2026 entry by 27 February 2027.'
+          ]
+        },
+        {
           name: 'a registered-only linked row value that differs from its 2026 row, with the correction deadline it is given',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_VALUE_DIFFERS',
