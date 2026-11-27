@@ -164,6 +164,7 @@ const accreditationDetails = {
     }
   },
   wasteBalance: { amount: 1234.5, availableAmount: 987.25 },
+  showsDecember: false,
   reportingPeriods: [
     /** @type {AccreditationDetails['reportingPeriods'][number]} */ (
       /** @type {unknown} */ ({
@@ -319,6 +320,31 @@ describe('the accreditation details page', () => {
       ['Accreditation status', 'Approved'],
       ['Accreditation number', 'A26ER5001180114PL'],
       ['Waste balance available (tonnes)', '987.25'],
+      ['Latest summary log', 'Download']
+    ])
+  })
+
+  it('splits the balance into December and non-December within the December waste window', async ({
+    server
+  }) => {
+    vi.mocked(fetchAccreditationDetails).mockResolvedValue({
+      ...accreditationDetails,
+      wasteBalance: {
+        amount: 1234.5,
+        availableAmount: 987.25,
+        decemberAvailableAmount: 120.25,
+        nonDecemberAvailableAmount: 867
+      },
+      showsDecember: true
+    })
+
+    const { body } = await visit(server, regulator)
+
+    expect(summaryOf(documentOf(body))).toStrictEqual([
+      ['Accreditation status', 'Approved'],
+      ['Accreditation number', 'A26ER5001180114PL'],
+      ['December waste balance (tonnes)', '120.25'],
+      ['Non-December waste balance (tonnes)', '867.00'],
       ['Latest summary log', 'Download']
     ])
   })

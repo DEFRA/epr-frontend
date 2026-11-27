@@ -44,6 +44,10 @@ const localise = createMockLocalise({
   'registrations:details:accreditation:summary:status': 'Accreditation status',
   'registrations:details:accreditation:summary:wasteBalanceAvailable':
     'Waste balance available (tonnes)',
+  'registrations:details:accreditation:summary:decemberWasteBalance':
+    'December waste balance (tonnes)',
+  'registrations:details:accreditation:summary:nonDecemberWasteBalance':
+    'Non-December waste balance (tonnes)',
   'registrations:details:accreditation:summary:wasteRecords':
     'Latest waste record CSV',
   'registrations:details:accreditation:summary:download': 'Download',
@@ -197,6 +201,7 @@ const build = (
     registration: aRegistration(registrationOverrides),
     accreditation: anAccreditation(accreditationOverrides),
     wasteBalance,
+    showsDecember: false,
     reportingPeriods,
     ledgerEvents,
     packagingRecyclingNotes,
@@ -204,6 +209,26 @@ const build = (
     localise,
     localiseUrl
   })
+
+/**
+ * The summary rows within the December waste window.
+ * @param {WasteBalance | null} wasteBalance
+ */
+const decemberSummaryRows = (wasteBalance) =>
+  buildViewModel({
+    keys,
+    organisation,
+    registration: aRegistration(),
+    accreditation: anAccreditation(),
+    wasteBalance,
+    showsDecember: true,
+    reportingPeriods: noPeriods,
+    ledgerEvents: null,
+    packagingRecyclingNotes: [],
+    wasteRecordYears: [],
+    localise,
+    localiseUrl
+  }).summaryRows
 
 /**
  * @param {Partial<PackagingRecyclingNote> & { status: string }} note
@@ -257,6 +282,7 @@ describe('the accreditation details view model', () => {
       registration: aRegistration(),
       accreditation: anAccreditation(),
       wasteBalance: aWasteBalance,
+      showsDecember: false,
       reportingPeriods: [],
       ledgerEvents: null,
       packagingRecyclingNotes: [],
@@ -367,6 +393,40 @@ describe('the accreditation details view model', () => {
     expect(build(undefined, undefined, null).summaryRows[2]).toStrictEqual({
       key: 'Waste balance available (tonnes)',
       value: ''
+    })
+  })
+
+  describe('within the December waste window', () => {
+    it('splits the available balance into December and non-December balances', () => {
+      expect(
+        decemberSummaryRows({
+          amount: 600,
+          availableAmount: 500.5,
+          decemberAvailableAmount: 120.25,
+          nonDecemberAvailableAmount: 380.25
+        }).slice(2, 4)
+      ).toStrictEqual([
+        { key: 'December waste balance (tonnes)', value: '120.25' },
+        { key: 'Non-December waste balance (tonnes)', value: '380.25' }
+      ])
+    })
+
+    it('shows the whole balance as non-December before any December waste accrues', () => {
+      expect(
+        decemberSummaryRows({ amount: 600, availableAmount: 500.5 }).slice(2, 4)
+      ).toStrictEqual([
+        { key: 'December waste balance (tonnes)', value: '0.00' },
+        { key: 'Non-December waste balance (tonnes)', value: '500.50' }
+      ])
+    })
+
+    it('keeps the single blank balance when it could not be read', () => {
+      expect(decemberSummaryRows(null).map((row) => row.key)).toStrictEqual([
+        'Accreditation status',
+        'Accreditation number',
+        'Waste balance available (tonnes)',
+        'Latest summary log'
+      ])
     })
   })
 
@@ -536,6 +596,7 @@ describe('the reports table on the accreditation details view model', () => {
       registration: aRegistration(),
       accreditation: anAccreditation(),
       wasteBalance: aWasteBalance,
+      showsDecember: false,
       reportingPeriods: [],
       ledgerEvents: null,
       packagingRecyclingNotes: [],
@@ -608,6 +669,7 @@ describe('the waste balance ledger on the accreditation details view model', () 
       registration: aRegistration(),
       accreditation: anAccreditation(),
       wasteBalance: aWasteBalance,
+      showsDecember: false,
       reportingPeriods: [],
       ledgerEvents: [],
       packagingRecyclingNotes: [],

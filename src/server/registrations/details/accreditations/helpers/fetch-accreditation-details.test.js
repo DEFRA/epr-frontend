@@ -43,6 +43,7 @@ describe(fetchAccreditationDetails, () => {
   const calendarUrl = `${registrationUrl}/reports/2026/calendar`
   const ledgerUrl = `${registrationUrl}/accreditations/2026/ledger`
   const notesUrl = `${registrationUrl}/accreditations/2026/packaging-recycling-notes`
+  const decemberEligibilityUrl = `${notesUrl}/december-prn-eligibility`
   const wasteRecordYearsUrl = `${backendUrl}/waste-records/years`
 
   const accreditation = {
@@ -173,6 +174,10 @@ describe(fetchAccreditationDetails, () => {
       ),
       http.get(wasteRecordYearsUrl, () =>
         HttpResponse.json({ years: [{ year: 2026 }] })
+      ),
+      http.get(
+        `${organisationUrl}/registrations/:registrationNumber/accreditations/:year/packaging-recycling-notes/december-prn-eligibility`,
+        () => HttpResponse.json({ mode: 'pool', windowOpen: true })
       )
     )
 
@@ -216,7 +221,7 @@ describe(fetchAccreditationDetails, () => {
     expect(requested).toBe(organisationUrl)
   })
 
-  test('combines the records, the balance, the calendar, the ledger, the notes and the waste record years', async ({
+  test('combines the records, the balance, the December split, the calendar, the ledger, the notes and the waste record years', async ({
     msw
   }) => {
     backendHolds(msw)
@@ -228,6 +233,7 @@ describe(fetchAccreditationDetails, () => {
       registration,
       accreditation,
       wasteBalance,
+      showsDecember: true,
       reportingPeriods,
       ledgerEvents,
       packagingRecyclingNotes,
@@ -290,6 +296,32 @@ describe(fetchAccreditationDetails, () => {
 
     expect(result.wasteBalance).toBeNull()
     expect(result.accreditation).toStrictEqual(accreditation)
+  })
+
+  test('does not split the balance outside the December waste window', async ({
+    msw
+  }) => {
+    backendHolds(
+      msw,
+      http.get(decemberEligibilityUrl, () =>
+        HttpResponse.json({ mode: 'pool', windowOpen: false })
+      )
+    )
+
+    const result = await fetchDetails()
+
+    expect(result.showsDecember).toBe(false)
+  })
+
+  test('does not split the balance when December eligibility could not be read', async ({
+    msw
+  }) => {
+    backendHolds(msw, failing(decemberEligibilityUrl))
+
+    const result = await fetchDetails()
+
+    expect(result.showsDecember).toBe(false)
+    expect(result.wasteBalance).toStrictEqual(wasteBalance)
   })
 
   test("reads the page year's accredited periods by number", async ({

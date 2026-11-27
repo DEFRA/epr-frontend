@@ -5,6 +5,7 @@ import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildLedgerRows } from '#server/common/helpers/waste-balance-ledger/build-ledger-rows.js'
+import { toDecemberBalanceBreakdown } from '#server/common/helpers/waste-balance/december-balance.js'
 import { toStatusTag } from '#server/organisations/helpers/status-helpers.js'
 import { CADENCE } from '#server/reports/constants.js'
 import { buildActionLinkHtml } from '#server/reports/helpers/build-action-link-html.js'
@@ -101,6 +102,46 @@ const toTonnage = (amount) =>
   amount === undefined ? '' : formatTonnage(amount)
 
 /**
+ * Split into December and non-December balances within the December waste
+ * window. An unread balance keeps the single blank row.
+ * @param {{
+ *   localise: Localise,
+ *   showsDecember: boolean,
+ *   wasteBalance: WasteBalance | null
+ * }} params
+ * @returns {SummaryRow[]}
+ */
+const toBalanceRows = ({ localise, showsDecember, wasteBalance }) => {
+  if (showsDecember && wasteBalance) {
+    const { december, nonDecember } = toDecemberBalanceBreakdown(wasteBalance)
+
+    return [
+      {
+        key: localise(
+          'registrations:details:accreditation:summary:decemberWasteBalance'
+        ),
+        value: formatTonnage(december)
+      },
+      {
+        key: localise(
+          'registrations:details:accreditation:summary:nonDecemberWasteBalance'
+        ),
+        value: formatTonnage(nonDecember)
+      }
+    ]
+  }
+
+  return [
+    {
+      key: localise(
+        'registrations:details:accreditation:summary:wasteBalanceAvailable'
+      ),
+      value: toTonnage(wasteBalance?.availableAmount)
+    }
+  ]
+}
+
+/**
  * The registration's waste records for the page's year, offered as a file
  * rather than stated, for a year the backend exports. The records belong to
  * the registration, not to the accreditation the page names.
@@ -172,6 +213,7 @@ const toLatestSummaryLogRow = ({
  *   localise: Localise,
  *   localiseUrl: (path: string) => string,
  *   registrationPath: string,
+ *   showsDecember: boolean,
  *   wasteBalance: WasteBalance | null,
  *   wasteRecordYears: Year[],
  *   year: Year
@@ -184,6 +226,7 @@ const toSummaryRows = ({
   localise,
   localiseUrl,
   registrationPath,
+  showsDecember,
   wasteBalance,
   wasteRecordYears,
   year
@@ -196,12 +239,7 @@ const toSummaryRows = ({
     key: localise('registrations:details:accreditation:summary:number'),
     value: accreditation.accreditationNumber
   },
-  {
-    key: localise(
-      'registrations:details:accreditation:summary:wasteBalanceAvailable'
-    ),
-    value: toTonnage(wasteBalance?.availableAmount)
-  },
+  ...toBalanceRows({ localise, showsDecember, wasteBalance }),
   toLatestSummaryLogRow({
     ledgerEvents,
     localise,
@@ -385,6 +423,7 @@ const toLedger = ({
  *   registration: RegistrationView,
  *   accreditation: Accreditation,
  *   wasteBalance: WasteBalance | null,
+ *   showsDecember: boolean,
  *   reportingPeriods: ReportingPeriod[],
  *   ledgerEvents: LedgerEvent[] | null,
  *   packagingRecyclingNotes: PackagingRecyclingNote[],
@@ -400,6 +439,7 @@ export const buildViewModel = ({
   registration,
   accreditation,
   wasteBalance,
+  showsDecember,
   reportingPeriods,
   ledgerEvents,
   packagingRecyclingNotes,
@@ -460,6 +500,7 @@ export const buildViewModel = ({
       localise,
       localiseUrl,
       registrationPath: paths.registration,
+      showsDecember,
       wasteBalance,
       wasteRecordYears,
       year: keys.year

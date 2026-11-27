@@ -6,6 +6,7 @@ import { fetchPackagingRecyclingNotes } from '#server/prns/helpers/fetch-packagi
 import { fetchYearCalendar } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { fetchWasteRecordYears } from '#server/common/helpers/waste-records/fetch-waste-record-years.js'
 import { offersWasteRecordsDownloads } from '#server/auth/waste-records-downloads.js'
+import { showsDecemberBalance } from '#server/common/helpers/waste-balance/december-balance.js'
 
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
@@ -30,6 +31,7 @@ import { offersWasteRecordsDownloads } from '#server/auth/waste-records-download
  *   registration: RegistrationView,
  *   accreditation: Accreditation,
  *   wasteBalance: WasteBalance | null,
+ *   showsDecember: boolean,
  *   reportingPeriods: ReportingPeriod[],
  *   ledgerEvents: LedgerEvent[] | null,
  *   packagingRecyclingNotes: PackagingRecyclingNote[],
@@ -158,7 +160,8 @@ export const fetchAccreditationDetails = async ({
     calendar,
     ledgerEvents,
     packagingRecyclingNotes,
-    wasteRecordYears
+    wasteRecordYears,
+    showsDecember
   ] = await Promise.all([
     fetchAccreditation({ keys, backendToken, logger }),
     fetchReportingCalendar({
@@ -172,11 +175,13 @@ export const fetchAccreditationDetails = async ({
     }),
     fetchLedger({ keys, backendToken, canReadLedger }),
     fetchNotes({ keys, backendToken, logger }),
-    fetchWasteRecordYearsOrNone({ backendToken, logger })
+    fetchWasteRecordYearsOrNone({ backendToken, logger }),
+    showsDecemberBalance({ keys, backendToken, logger })
   ])
 
   return {
     ...accreditation,
+    showsDecember,
     reportingPeriods: calendar.reportingPeriods,
     ledgerEvents,
     packagingRecyclingNotes,
