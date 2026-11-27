@@ -92,18 +92,8 @@ const MOST_RECENT = 3
  * it: a regulator asks what is left, and two tonnages invite the wrong one to
  * be read.
  *
- * A tonnage the page could not read is left blank rather than shown as zero,
- * which would read as a balance spent down to nothing. The row itself stays,
- * so the list holds the same keys either way.
- * @param {number | undefined} amount
- * @returns {string}
- */
-const toTonnage = (amount) =>
-  amount === undefined ? '' : formatTonnage(amount)
-
-/**
  * Split into December and non-December balances within the December waste
- * window. An unread balance keeps the single blank row.
+ * window. An unread balance shows as zero, as on the operator's pages.
  * @param {{
  *   localise: Localise,
  *   showsDecember: boolean,
@@ -112,8 +102,10 @@ const toTonnage = (amount) =>
  * @returns {SummaryRow[]}
  */
 const toBalanceRows = ({ localise, showsDecember, wasteBalance }) => {
-  if (showsDecember && wasteBalance) {
-    const { december, nonDecember } = toDecemberBalanceBreakdown(wasteBalance)
+  const breakdown = toDecemberBalanceBreakdown({ showsDecember, wasteBalance })
+
+  if (breakdown) {
+    const { december, nonDecember } = breakdown
 
     return [
       {
@@ -136,7 +128,7 @@ const toBalanceRows = ({ localise, showsDecember, wasteBalance }) => {
       key: localise(
         'registrations:details:accreditation:summary:wasteBalanceAvailable'
       ),
-      value: toTonnage(wasteBalance?.availableAmount)
+      value: formatTonnage(wasteBalance?.availableAmount)
     }
   ]
 }

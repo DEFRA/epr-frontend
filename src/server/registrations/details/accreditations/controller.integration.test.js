@@ -389,7 +389,7 @@ describe('the accreditation details page', () => {
     expect(body).not.toContain('1,234.50')
   })
 
-  it('leaves the balance blank where it could not be read', async ({
+  it('shows the balance as zero where it could not be read', async ({
     server
   }) => {
     vi.mocked(fetchAccreditationDetails).mockResolvedValue({
@@ -407,7 +407,7 @@ describe('the accreditation details page', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(
       row?.querySelector('.govuk-summary-list__value')?.textContent?.trim()
-    ).toBe('')
+    ).toBe('0.00')
   })
 
   it('is not found for a number or year that names no accreditation', async ({

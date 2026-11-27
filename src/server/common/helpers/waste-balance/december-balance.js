@@ -47,10 +47,18 @@ async function showsDecemberBalance({ keys, backendToken, logger }) {
  * the December fields entirely: there is no December portion, so December reads
  * as zero and the whole available amount is non-December (the eligible-but-
  * empty zero state, which still shows the breakdown rather than dropping it).
- * @param {Partial<WasteBalance> | null | undefined} wasteBalance
- * @returns {DecemberBalanceBreakdown}
+ * An unread balance splits into zeros. No breakdown outside the window.
+ * @param {{
+ *   showsDecember: boolean,
+ *   wasteBalance: Partial<WasteBalance> | null | undefined
+ * }} params
+ * @returns {DecemberBalanceBreakdown | null}
  */
-function toDecemberBalanceBreakdown(wasteBalance) {
+function toDecemberBalanceBreakdown({ showsDecember, wasteBalance }) {
+  if (!showsDecember) {
+    return null
+  }
+
   const total = wasteBalance?.availableAmount ?? 0
   const december = wasteBalance?.decemberAvailableAmount ?? 0
   const nonDecember = wasteBalance?.nonDecemberAvailableAmount ?? total

@@ -389,10 +389,10 @@ describe('the accreditation details view model', () => {
     })
   })
 
-  it('leaves the balance blank when it could not be read', () => {
+  it('shows the balance as zero when it could not be read', () => {
     expect(build(undefined, undefined, null).summaryRows[2]).toStrictEqual({
       key: 'Waste balance available (tonnes)',
-      value: ''
+      value: '0.00'
     })
   })
 
@@ -420,12 +420,10 @@ describe('the accreditation details view model', () => {
       ])
     })
 
-    it('keeps the single blank balance when it could not be read', () => {
-      expect(decemberSummaryRows(null).map((row) => row.key)).toStrictEqual([
-        'Accreditation status',
-        'Accreditation number',
-        'Waste balance available (tonnes)',
-        'Latest summary log'
+    it('splits a balance that could not be read into zeros', () => {
+      expect(decemberSummaryRows(null).slice(2, 4)).toStrictEqual([
+        { key: 'December waste balance (tonnes)', value: '0.00' },
+        { key: 'Non-December waste balance (tonnes)', value: '0.00' }
       ])
     })
   })
