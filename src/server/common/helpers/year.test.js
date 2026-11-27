@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { currentYear, toYear } from './year.js'
+import { toCalendarDate } from './calendar-date.js'
+import { currentYear, toYear, yearOf } from './year.js'
 
 describe(toYear, () => {
   it('should keep the value it is given', () => {
@@ -20,5 +21,11 @@ describe(currentYear, () => {
     })
 
     expect(currentYear()).toBe(2027)
+  })
+})
+
+describe(yearOf, () => {
+  it('should name the year of the last day of a year', () => {
+    expect(yearOf(toCalendarDate('2026-12-31'))).toBe(2026)
   })
 })

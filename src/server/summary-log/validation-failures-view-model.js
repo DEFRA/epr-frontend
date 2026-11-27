@@ -5,6 +5,7 @@ import {
 import { VALIDATION_CODE } from '#server/common/enums/validation.js'
 import { utcCalendarDate } from '#server/common/helpers/calendar-date.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
+import { yearOf } from '#server/common/helpers/year.js'
 import { LEDGER_KINDS } from '#domain/ledger-kinds.js'
 import { rowIdSchema } from '#domain/summary-logs/loads-schema.js'
 import partition from 'lodash-es/partition.js'
@@ -316,7 +317,7 @@ const laterYearKey = ({ errorCode, location }) =>
 const laterYearProblem = (failure, localise) =>
   isDateFailure(failure)
     ? localise(`summary-log:cellReason.${laterYearKey(failure)}`, {
-        loadYear: failure.actual.slice(0, 4),
+        loadYear: yearOf(failure.actual),
         year: failure.expected
       })
     : undefined
@@ -326,7 +327,7 @@ const earlierYearProblem = (failure, localise) =>
   isEarlierDateFailure(failure)
     ? localise(`summary-log:cellReason.${failure.errorCode}`, {
         deadline: formatDate(failure.deadline),
-        loadYear: failure.actual.slice(0, 4),
+        loadYear: yearOf(failure.actual),
         year: failure.expected
       })
     : undefined
