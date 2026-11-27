@@ -14,10 +14,12 @@ import partition from 'lodash-es/partition.js'
  *   CellErrorRecord,
  *   Localise,
  *   LocatedCellFailure,
+ *   RowId,
  *   ValidationFailure,
  *   ValidationResponse
  * } from './types.js'
  * @import { LedgerKind } from '#domain/ledger-kinds.js'
+ * @import { CalendarDate } from '#server/common/helpers/calendar-date.js'
  * @import { Year } from '#server/common/helpers/year.js'
  */
 
@@ -195,18 +197,31 @@ const MONTH_HEADERS = new Set([
 const CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 /**
- * @param {LocatedCellFailure['actual']} actual
- * @returns {actual is string}
+ * @param {unknown} value
+ * @returns {value is CalendarDate}
  */
-const isCalendarDate = (actual) => {
-  if (typeof actual !== 'string' || !CALENDAR_DATE.test(actual)) {
+const isCalendarDate = (value) => {
+  if (typeof value !== 'string' || !CALENDAR_DATE.test(value)) {
     return false
   }
-  const date = new Date(actual)
+  const date = new Date(value)
   return (
-    !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === actual
+    !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
   )
 }
+
+/**
+ * @param {unknown} value
+ * @returns {value is Year}
+ */
+const isYear = (value) => Number.isInteger(value)
+
+/**
+ * @param {unknown} value
+ * @returns {value is RowId}
+ */
+const isRowId = (value) =>
+  typeof value === 'string' && rowIdSchema.validate(value).error === undefined
 
 /**
  * Matches the template's mmm-yy month cells. en-US, because en-GB abbreviates
@@ -249,53 +264,82 @@ const EXPORTED_TAB_TABLES = new Set([
   'LOADS_EXPORTED'
 ])
 
-/** @type {CellProblem} */
-const laterYearProblem = (
-  { errorCode, expected, actual, location },
-  localise
-) => {
-  if (typeof expected !== 'number' || !isCalendarDate(actual)) {
-    return undefined
-  }
-  const key = EXPORTED_TAB_TABLES.has(location.table)
-    ? `${errorCode}_EXPORTED`
-    : errorCode
-  return localise(`summary-log:cellReason.${key}`, {
-    year: expected,
-    loadYear: actual.slice(0, 4)
-  })
-}
+/**
+ * @typedef {LocatedCellFailure & { actual: CalendarDate, expected: Year }} DateFailure
+ * @typedef {DateFailure & { deadline: CalendarDate }} EarlierDateFailure
+ * @typedef {LocatedCellFailure & { expected: Year }} PreviousYearLinkFailure
+ * @typedef {PreviousYearLinkFailure & { previousYearRowId: RowId }} LinkedRowFailure
+ * @typedef {LinkedRowFailure & { deadline: CalendarDate }} MissingDataFailure
+ */
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @returns {failure is DateFailure}
+ */
+const isDateFailure = (failure) =>
+  isYear(failure.expected) && isCalendarDate(failure.actual)
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @returns {failure is EarlierDateFailure}
+ */
+const isEarlierDateFailure = (failure) =>
+  isDateFailure(failure) && isCalendarDate(failure.deadline)
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @returns {failure is PreviousYearLinkFailure}
+ */
+const isPreviousYearLinkFailure = (failure) => isYear(failure.expected)
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @returns {failure is LinkedRowFailure}
+ */
+const isLinkedRowFailure = (failure) =>
+  isPreviousYearLinkFailure(failure) && isRowId(failure.previousYearRowId)
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @returns {failure is MissingDataFailure}
+ */
+const isMissingDataFailure = (failure) =>
+  isLinkedRowFailure(failure) && isCalendarDate(failure.deadline)
+
+/**
+ * @param {DateFailure} failure
+ * @returns {string}
+ */
+const laterYearKey = ({ errorCode, location }) =>
+  EXPORTED_TAB_TABLES.has(location.table) ? `${errorCode}_EXPORTED` : errorCode
 
 /** @type {CellProblem} */
-const earlierYearProblem = (
-  { errorCode, expected, actual, deadline },
-  localise
-) => {
-  if (
-    typeof expected !== 'number' ||
-    !isCalendarDate(actual) ||
-    !isCalendarDate(deadline)
-  ) {
-    return undefined
-  }
-  return localise(`summary-log:cellReason.${errorCode}`, {
-    year: expected,
-    loadYear: actual.slice(0, 4),
-    deadline: formatDate(deadline)
-  })
-}
+const laterYearProblem = (failure, localise) =>
+  isDateFailure(failure)
+    ? localise(`summary-log:cellReason.${laterYearKey(failure)}`, {
+        loadYear: failure.actual.slice(0, 4),
+        year: failure.expected
+      })
+    : undefined
+
+/** @type {CellProblem} */
+const earlierYearProblem = (failure, localise) =>
+  isEarlierDateFailure(failure)
+    ? localise(`summary-log:cellReason.${failure.errorCode}`, {
+        deadline: formatDate(failure.deadline),
+        loadYear: failure.actual.slice(0, 4),
+        year: failure.expected
+      })
+    : undefined
 
 /**
  * A Row ID cell can arrive as a number, as Excel stores it.
  * @param {unknown} value
- * @returns {string | undefined}
+ * @returns {RowId | undefined}
  */
 const asRowId = (value) => {
   const rowId = typeof value === 'number' ? String(value) : value
-  return typeof rowId === 'string' &&
-    rowIdSchema.validate(rowId).error === undefined
-    ? rowId
-    : undefined
+  return isRowId(rowId) ? rowId : undefined
 }
 
 /**
@@ -309,48 +353,38 @@ const finishedProblemKey = (errorCode, kind) =>
     : errorCode
 
 /** @type {CellProblem} */
-const previousYearRowNotFoundProblem = (
-  { errorCode, expected, actual },
-  localise
-) => {
-  const previousYearRowId = asRowId(actual)
-  return typeof expected === 'number' && previousYearRowId
-    ? localise(`summary-log:cellReason.${errorCode}`, {
-        previousYearRowId,
-        previousYear: expected
+const previousYearRowNotFoundProblem = (failure, localise) => {
+  const previousYearRowId = asRowId(failure.actual)
+  return isPreviousYearLinkFailure(failure) && previousYearRowId
+    ? localise(`summary-log:cellReason.${failure.errorCode}`, {
+        previousYear: failure.expected,
+        previousYearRowId
       })
     : undefined
 }
 
 /** @type {CellProblem} */
-const previousYearRowFinishedProblem = (
-  { errorCode, expected, previousYearRowId },
-  localise,
-  { year, kind }
-) => {
-  const rowId = asRowId(previousYearRowId)
-  return typeof expected === 'number' && rowId
+const previousYearRowFinishedProblem = (failure, localise, { kind, year }) =>
+  isLinkedRowFailure(failure)
     ? localise(
-        `summary-log:cellReason.${finishedProblemKey(errorCode, kind)}`,
-        { previousYearRowId: rowId, previousYear: expected, year }
+        `summary-log:cellReason.${finishedProblemKey(failure.errorCode, kind)}`,
+        {
+          previousYear: failure.expected,
+          previousYearRowId: failure.previousYearRowId,
+          year
+        }
       )
     : undefined
-}
 
 /** @type {CellProblem} */
-const previousYearRowMissingDataProblem = (
-  { errorCode, expected, previousYearRowId, deadline },
-  localise
-) => {
-  const rowId = asRowId(previousYearRowId)
-  return typeof expected === 'number' && rowId && isCalendarDate(deadline)
-    ? localise(`summary-log:cellReason.${errorCode}`, {
-        previousYearRowId: rowId,
-        previousYear: expected,
-        deadline: formatDate(deadline)
+const previousYearRowMissingDataProblem = (failure, localise) =>
+  isMissingDataFailure(failure)
+    ? localise(`summary-log:cellReason.${failure.errorCode}`, {
+        deadline: formatDate(failure.deadline),
+        previousYear: failure.expected,
+        previousYearRowId: failure.previousYearRowId
       })
     : undefined
-}
 
 /**
  * Every cell error whose message has values to fill in; the rest show their
