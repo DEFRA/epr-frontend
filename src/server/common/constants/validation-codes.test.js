@@ -255,6 +255,12 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('DATA_ENTRY_INVALID')
   })
 
+  test('returns DATA_ENTRY_INVALID for FUTURE_DATE on a date header', () => {
+    expect(getDisplayCodeFromErrorCode('FUTURE_DATE', 'DATE_OF_EXPORT')).toBe(
+      'DATA_ENTRY_INVALID'
+    )
+  })
+
   test('returns DATA_ENTRY_INVALID for DATE_BEFORE_SUMMARY_LOG_YEAR on a date header', () => {
     expect(
       getDisplayCodeFromErrorCode(

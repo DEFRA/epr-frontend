@@ -1858,6 +1858,47 @@ describe('#summaryLogUploadProgressController', () => {
         }
       )
 
+      it('should show a future date with the date entered and the future date message', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          failedStatus({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  code: 'INVALID_DATE',
+                  errorCode: 'FUTURE_DATE',
+                  actual: '2026-11-28',
+                  location: {
+                    sheet: 'Exported (sections 1, 2 and 3)',
+                    table: 'RECEIVED_LOADS_FOR_EXPORT',
+                    row: 8,
+                    rowId: '1001',
+                    column: 'U',
+                    header: 'DATE_OF_EXPORT'
+                  }
+                }
+              ]
+            }
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const table = getByRole(pageBody(result), 'table')
+        const [, , , , value, problem] = rowCells(dataRows(table)[0])
+
+        expect(value).toBe('28/11/2026')
+        expect(problem).toBe(
+          'Date cannot be in the future. Correct it or remove it until that date is no longer in the future.'
+        )
+      })
+
       it.for([
         [
           'DATE_RECEIVED_BY_OSR',

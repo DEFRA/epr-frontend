@@ -10,6 +10,7 @@
     "DATE_FORMAT_INVALID": "Must be a valid date in the format dd/mm/yyyy",
     "DROPDOWN_FORMAT_INVALID": "Select a value from the drop-down list",
     "FREE_TEXT_INVALID": "Contains characters that are not allowed",
+    "FUTURE_DATE": "Date cannot be in the future. Correct it or remove it until that date is no longer in the future.",
     "ID_FORMAT_INVALID": "Must be a 3-digit number",
     "MUST_BE_AT_LEAST_ZERO": "Must be 0 or more",
     "MUST_BE_AT_MOST_1": "Must be 1 or less",
