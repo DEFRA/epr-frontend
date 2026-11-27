@@ -1486,7 +1486,7 @@ describe('#summaryLogUploadProgressController', () => {
       const missingDataProblem = (deadline) =>
         `Row 1000 in your 2026 summary log is missing data. You'll need to add it in your 2026 log by ${deadline}.`
 
-      /** @type {Array<[kind: string, link: Pick<ValidationFailure, 'previousYearRowId' | 'deadline'>]>} */
+      /** @type {[kind: string, link: Pick<ValidationFailure, 'previousYearRowId' | 'deadline'>][]} */
       const unshowableMissingDataLinks = [
         ['without the deadline', { previousYearRowId: '1000' }],
         [
@@ -1632,7 +1632,8 @@ describe('#summaryLogUploadProgressController', () => {
         ...[
           ['blank', ' '],
           ['text', 'abc'],
-          ['missing', undefined]
+          ['missing', undefined],
+          ['as a number', 1000]
         ].map(([kind, previousYearRowId]) => ({
           name: `a link to a complete 2026 row with the row it names ${kind}`,
           failure: {
@@ -1691,6 +1692,16 @@ describe('#summaryLogUploadProgressController', () => {
             errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
             actual: 1888,
             expected: undefined,
+            header: 'PREVIOUS_YEAR_ROW_ID'
+          },
+          expected: ['Previous year Row ID', '1888', 'Check this value']
+        },
+        {
+          name: 'a previous year row ID that names no row, in a year that is not a whole number',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',
+            actual: 1888,
+            expected: 2026.5,
             header: 'PREVIOUS_YEAR_ROW_ID'
           },
           expected: ['Previous year Row ID', '1888', 'Check this value']
