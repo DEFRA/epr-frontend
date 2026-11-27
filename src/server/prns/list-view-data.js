@@ -80,7 +80,7 @@ export function buildListViewData(
       label: localise('prns:list:availableWasteBalance'),
       hint: localise('prns:list:balanceHint', { noteTypePlural }),
       noteTypePlural,
-      breakdown: showsDecember ? toDecemberBalanceBreakdown(wasteBalance) : null
+      breakdown: toDecemberBalanceBreakdown({ showsDecember, wasteBalance })
     },
     hasCreatedPrns,
     table: buildAwaiting(prns),

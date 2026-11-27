@@ -287,7 +287,7 @@ const buildViewModel = ({
     wasteBalance: {
       availableAmount: wasteBalance?.availableAmount ?? null,
       noteTypePlural,
-      breakdown: showsDecember ? toDecemberBalanceBreakdown(wasteBalance) : null
+      breakdown: toDecemberBalanceBreakdown({ showsDecember, wasteBalance })
     }
   }
 }
