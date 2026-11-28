@@ -49,9 +49,9 @@ vi.mock(
         const service =
           createInMemoryWasteOrganisationsService(initialOrganisations)
         return {
-          getOrganisations: (registrationYear) => {
-            requestedRegistrationYears(registrationYear)
-            return service.getOrganisations(registrationYear)
+          getOrganisations: (registrationYears) => {
+            requestedRegistrationYears(registrationYears)
+            return service.getOrganisations(registrationYears)
           }
         }
       }
@@ -290,9 +290,21 @@ describe('#createPrnController', () => {
           auth: mockAuth
         })
 
-        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith(
+        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith([
           toYear(2026)
-        )
+        ])
+      })
+
+      it('leaves out recipients registered only for the following year when it does not ask about December waste', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(result).not.toContain('Next Year Packaging Ltd')
       })
 
       it('should render help text details component with bullet list', async ({
@@ -703,6 +715,37 @@ describe('#createPrnController', () => {
           ['Yes', 'true']
         ])
         expect(main.querySelector('.govuk-inset-text')).toBeNull()
+      })
+
+      it('also lists recipients registered for the following year', async ({
+        server
+      }) => {
+        vi.mocked(fetchRequiredAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'manual',
+          windowOpen: true
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+        const recipientSelect = getByRole(main, 'combobox', {
+          name: /Who will this PRN be issued to\?/i
+        })
+
+        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith([
+          toYear(2026),
+          toYear(2027)
+        ])
+        expect(
+          [...recipientSelect.options].map((option) => option.text)
+        ).toContain('Next Year Packaging Ltd, 5 Future Way, Leeds, LS1 4AP')
       })
     })
 

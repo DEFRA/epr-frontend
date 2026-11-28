@@ -84,6 +84,9 @@ describe('a write the backend refuses because the year has closed', () => {
       http.get(`${backendUrl}/organisations/500123/years`, () =>
         HttpResponse.json({ years: [2026] })
       ),
+      http.get(/\/december-prn-eligibility$/, () =>
+        HttpResponse.json({ mode: 'none', windowOpen: false })
+      ),
       http.post(writeUrl, () => {
         writes()
         return HttpResponse.json(closedYearRefusal, { status: 409 })

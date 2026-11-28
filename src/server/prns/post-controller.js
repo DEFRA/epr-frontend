@@ -3,6 +3,7 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
+import { followingYear } from '#server/common/helpers/year.js'
 import {
   badImplementation,
   classifierTail
@@ -18,6 +19,7 @@ import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligib
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
 import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
 import { prnsPath } from './helpers/prn-resource.js'
+import { recipientRegistrationYears } from './helpers/recipient-registration-years.js'
 import { resolveDecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
 import { resolveInsufficientBalanceMessageKey } from './helpers/insufficient-balance-error.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
@@ -37,13 +39,18 @@ const ERROR_SUMMARY_TITLE_KEY = 'prns:errorSummaryTitle'
 // existing confirm-time check.
 const INSUFFICIENT_BALANCE_CODE = 'INSUFFICIENT_AVAILABLE_BALANCE'
 
-const ERROR_KEYS = Object.freeze({
-  notesTooLong: 'notesTooLong',
-  recipientInvalid: 'recipientInvalid',
-  recipientRequired: 'recipientRequired',
-  tonnageGreaterThanZero: 'tonnageGreaterThanZero',
-  tonnageWholeNumber: 'tonnageWholeNumber'
-})
+const ERROR_KEYS = Object.freeze(
+  /** @type {const} */ ({
+    notesTooLong: 'notesTooLong',
+    recipientInvalid: 'recipientInvalid',
+    recipientNotRegisteredForYear: 'recipientNotRegisteredForYear',
+    recipientRequired: 'recipientRequired',
+    tonnageGreaterThanZero: 'tonnageGreaterThanZero',
+    tonnageWholeNumber: 'tonnageWholeNumber'
+  })
+)
+
+/** @typedef {(typeof ERROR_KEYS)[keyof typeof ERROR_KEYS]} ErrorKey */
 
 const payloadSchema = Joi.object({
   tonnage: Joi.number().integer().min(MIN_TONNAGE).required().messages({
@@ -147,16 +154,20 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
  * make.
  * @param {HapiRequest} request
  * @param {AccreditationKeys} keys
+ * @param {DecemberPrnEligibility} decemberPrnEligibility
  * @returns {Promise<{ registration: RegistrationView, wasteBalance: WasteBalance | null, decemberWasteControl: DecemberWasteControl }>}
  */
-async function fetchCreatePrnViewDataInputs(request, keys) {
+async function fetchCreatePrnViewDataInputs(
+  request,
+  keys,
+  decemberPrnEligibility
+) {
   const { backendToken } = request.auth.credentials
 
-  const [{ registration, accreditation }, decemberPrnEligibility] =
-    await Promise.all([
-      fetchRequiredAccreditation(keys, backendToken),
-      fetchDecemberPrnEligibility(keys, backendToken)
-    ])
+  const { registration, accreditation } = await fetchRequiredAccreditation(
+    keys,
+    backendToken
+  )
 
   const wasteBalance = await fetchPrnWasteBalance({
     keys,
@@ -180,6 +191,20 @@ async function fetchCreatePrnViewDataInputs(request, keys) {
 }
 
 /**
+ * The organisations a note can be issued to: those registered for the
+ * accreditation year, and for the following year when the page asks about
+ * December waste.
+ * @param {HapiRequest} request
+ * @param {AccreditationKeys} keys
+ * @param {DecemberPrnEligibility} decemberPrnEligibility
+ * @returns {Promise<{ organisations: WasteOrganisation[] }>}
+ */
+const fetchRecipientOrganisations = (request, keys, decemberPrnEligibility) =>
+  request.wasteOrganisationsService.getOrganisations(
+    recipientRegistrationYears(keys.year, decemberPrnEligibility)
+  )
+
+/**
  * Re-render the create form when the backend rejects draft creation because
  * the entered tonnage exceeds the available waste balance. The rejection
  * decision is the backend's; the frontend picks the message wording from
@@ -188,13 +213,19 @@ async function fetchCreatePrnViewDataInputs(request, keys) {
  * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
  * @param {ResponseToolkit} h
  * @param {Array<WasteOrganisation>} organisations
+ * @param {DecemberPrnEligibility} decemberPrnEligibility
  */
-async function handleInsufficientBalance(request, h, organisations) {
+async function handleInsufficientBalance(
+  request,
+  h,
+  organisations,
+  decemberPrnEligibility
+) {
   const keys = toAccreditationKeys(request.params)
   const { t: localise } = request
 
   const { registration, wasteBalance, decemberWasteControl } =
-    await fetchCreatePrnViewDataInputs(request, keys)
+    await fetchCreatePrnViewDataInputs(request, keys, decemberPrnEligibility)
 
   const messageKey = resolveInsufficientBalanceMessageKey(
     decemberWasteControl.mode,
@@ -260,19 +291,29 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
 }
 
 /**
- * Re-render the create form when the selected recipient is not
- * found in the organisations list.
+ * Re-render the create form with an error on the recipient: one not in the
+ * organisations list, or one that cannot take this note.
  * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
  * @param {ResponseToolkit} h
  * @param {Array<WasteOrganisation>} organisations
+ * @param {DecemberPrnEligibility} decemberPrnEligibility
+ * @param {ErrorKey} errorKey
  */
-async function handleInvalidRecipient(request, h, organisations) {
+async function handleRecipientError(
+  request,
+  h,
+  organisations,
+  decemberPrnEligibility,
+  errorKey
+) {
   const keys = toAccreditationKeys(request.params)
   const { t: localise } = request
 
   const noteType = getNoteType(request.payload.wasteProcessingType)
-  const message = localise(`prns:errors:${ERROR_KEYS.recipientInvalid}`, {
-    noteType
+  const message = localise(`prns:errors:${errorKey}`, {
+    noteType,
+    year: keys.year,
+    followingYear: followingYear(keys.year)
   })
 
   const errors = { recipient: { text: message } }
@@ -282,7 +323,7 @@ async function handleInvalidRecipient(request, h, organisations) {
   }
 
   const { registration, wasteBalance, decemberWasteControl } =
-    await fetchCreatePrnViewDataInputs(request, keys)
+    await fetchCreatePrnViewDataInputs(request, keys, decemberPrnEligibility)
 
   const viewData = buildCreatePrnViewData(request, {
     keys,
@@ -320,12 +361,16 @@ export const postController = {
           request.payload.wasteProcessingType
         )
 
+        const decemberPrnEligibility = await fetchDecemberPrnEligibility(
+          keys,
+          request.auth.credentials.backendToken
+        )
         const [
           { organisations },
           { registration, wasteBalance, decemberWasteControl }
         ] = await Promise.all([
-          request.wasteOrganisationsService.getOrganisations(keys.year),
-          fetchCreatePrnViewDataInputs(request, keys)
+          fetchRecipientOrganisations(request, keys, decemberPrnEligibility),
+          fetchCreatePrnViewDataInputs(request, keys, decemberPrnEligibility)
         ])
 
         const viewData = buildCreatePrnViewData(request, {
@@ -356,13 +401,39 @@ export const postController = {
     const { backendToken } = request.auth.credentials
     const { tonnage, recipient, notes, isDecemberWaste } = request.payload
 
-    const { organisations } =
-      await request.wasteOrganisationsService.getOrganisations(keys.year)
+    const decemberPrnEligibility = await fetchDecemberPrnEligibility(
+      keys,
+      backendToken
+    )
+    const { organisations } = await fetchRecipientOrganisations(
+      request,
+      keys,
+      decemberPrnEligibility
+    )
 
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      return handleInvalidRecipient(request, h, organisations)
+      return handleRecipientError(
+        request,
+        h,
+        organisations,
+        decemberPrnEligibility,
+        ERROR_KEYS.recipientInvalid
+      )
+    }
+
+    if (
+      !isDecemberWaste &&
+      !organisation.registrationYears.includes(keys.year)
+    ) {
+      return handleRecipientError(
+        request,
+        h,
+        organisations,
+        decemberPrnEligibility,
+        ERROR_KEYS.recipientNotRegisteredForYear
+      )
     }
 
     const issuedToOrganisation = {
@@ -397,7 +468,12 @@ export const postController = {
       return h.redirect(`${prnsPath(keys)}/${result.id}/view`)
     } catch (error) {
       if (error.output?.payload?.code === INSUFFICIENT_BALANCE_CODE) {
-        return handleInsufficientBalance(request, h, organisations)
+        return handleInsufficientBalance(
+          request,
+          h,
+          organisations,
+          decemberPrnEligibility
+        )
       }
 
       if (isClosedYearRefusal(error)) {
@@ -432,4 +508,5 @@ export const postController = {
  * @import { PackagingRecyclingNote } from './helpers/prn-resource.js'
  * @import { PrnListParams } from './helpers/session-types.js'
  * @import { DecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
+ * @import { DecemberPrnEligibility } from './helpers/fetch-december-prn-eligibility.js'
  */

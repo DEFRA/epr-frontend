@@ -7,6 +7,7 @@ import { fetchDecemberPrnEligibility } from './helpers/fetch-december-prn-eligib
 import { toAccreditationKeys } from './helpers/fetch-prn-context.js'
 import { fetchPrnWasteBalance } from './helpers/fetch-prn-waste-balance.js'
 import { prnsPath } from './helpers/prn-resource.js'
+import { recipientRegistrationYears } from './helpers/recipient-registration-years.js'
 import { resolveDecemberWasteControl } from './helpers/resolve-december-waste-choice.js'
 import { resolveInsufficientBalanceMessageKey } from './helpers/insufficient-balance-error.js'
 import { buildCreatePrnViewData } from './view-data.js'
@@ -55,16 +56,22 @@ export const controller = {
       backendToken
     )
 
+    const eligibilityRequest = fetchDecemberPrnEligibility(keys, backendToken)
+
     const [{ organisations }, wasteBalance, decemberPrnEligibility] =
       await Promise.all([
-        request.wasteOrganisationsService.getOrganisations(keys.year),
+        eligibilityRequest.then((eligibility) =>
+          request.wasteOrganisationsService.getOrganisations(
+            recipientRegistrationYears(keys.year, eligibility)
+          )
+        ),
         fetchPrnWasteBalance({
           keys,
           accreditationNumber: accreditation.accreditationNumber,
           backendToken,
           logger: request.logger
         }),
-        fetchDecemberPrnEligibility(keys, backendToken)
+        eligibilityRequest
       ])
 
     const { noteTypePlural } = getNoteTypeDisplayNames(registration)

@@ -1,5 +1,5 @@
 /** @import {Plugin} from '@hapi/hapi' */
-/** @import {WasteOrganisation} from './types.js' */
+/** @import {InMemoryWasteOrganisation} from './inmemory-adapter.js' */
 
 import { config } from '#config/config.js'
 import { registerService } from '#server/plugins/register-service.js'
@@ -9,7 +9,7 @@ import { createInMemoryWasteOrganisationsService } from './inmemory-adapter.js'
 
 /**
  * @typedef {{
- *   initialOrganisations?: WasteOrganisation[]
+ *   initialOrganisations?: InMemoryWasteOrganisation[]
  * }} WasteOrganisationsPluginOptions
  */
 

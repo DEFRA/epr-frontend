@@ -7,7 +7,7 @@
 
 /**
  * @typedef {{
- *   getOrganisations: (registrationYear: Year) => Promise<WasteOrganisationsResponse>
+ *   getOrganisations: (registrationYears: Year[]) => Promise<WasteOrganisationsResponse>
  * }} WasteOrganisationsService
  */
 

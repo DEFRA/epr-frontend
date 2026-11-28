@@ -8,7 +8,7 @@ import organisationsFixture from '#fixtures/waste-organisations/organisations.js
  * @import { SetupServer } from 'msw/node'
  * @import { Mock, TestAPI } from 'vitest'
  * @import { HapiServer } from '#server/common/hapi-types.js'
- * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
+ * @import { InMemoryWasteOrganisation } from '#server/common/helpers/waste-organisations/inmemory-adapter.js'
  * @import { LogMethod } from '#server/common/helpers/logging/logger.js'
  */
 
@@ -170,7 +170,7 @@ const createServerTest = (serverScope) =>
         async ({}, use) => {
           const { createServer } = await import('#server/index.js')
           const server = await createServer({
-            wasteOrganisations: /** @type {WasteOrganisation[]} */ (
+            wasteOrganisations: /** @type {InMemoryWasteOrganisation[]} */ (
               organisationsFixture.organisations
             )
           })

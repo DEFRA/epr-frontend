@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { currentYear, toYear } from './year.js'
+import { currentYear, followingYear, toYear } from './year.js'
 
 describe(toYear, () => {
   it('should keep the value it is given', () => {
@@ -20,5 +20,11 @@ describe(currentYear, () => {
     })
 
     expect(currentYear()).toBe(2027)
+  })
+})
+
+describe(followingYear, () => {
+  it('should give the year after the one it is given', () => {
+    expect(followingYear(toYear(2026))).toBe(2027)
   })
 })

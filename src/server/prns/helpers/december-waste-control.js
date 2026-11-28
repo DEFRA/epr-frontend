@@ -22,5 +22,14 @@ export const showsDecemberPool = ({ mode, windowOpen }) =>
   windowOpen && mode === DECEMBER_WASTE_CONTROL.selectPool
 
 /**
+ * Whether the create page asks if the note is for December waste, by either
+ * control.
+ * @param {DecemberPrnEligibility} eligibility
+ * @returns {boolean}
+ */
+export const asksDecemberWaste = ({ mode, windowOpen }) =>
+  windowOpen && mode !== DECEMBER_WASTE_CONTROL.none
+
+/**
  * @import { DecemberPrnEligibility } from './fetch-december-prn-eligibility.js'
  */

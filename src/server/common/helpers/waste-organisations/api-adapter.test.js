@@ -8,6 +8,10 @@ import { afterAll, afterEach, beforeAll, describe, expect, vi } from 'vitest'
 import { createApiWasteOrganisationsService } from './api-adapter.js'
 import { testWasteOrganisationsServiceContract } from './port.contract.js'
 
+/**
+ * @import { SetupServer } from 'msw/node'
+ */
+
 const mockApiOrganisations = [
   {
     id: 'org-1',
@@ -94,7 +98,7 @@ describe('#createApiWasteOrganisationsService', () => {
   describe('registrationType extraction', () => {
     it('extracts registrationType from registrations array', async () => {
       const service = createApiWasteOrganisationsService(mockLogger)
-      const { organisations } = await service.getOrganisations(toYear(2026))
+      const { organisations } = await service.getOrganisations([toYear(2026)])
 
       expect(organisations[0].registrationType).toBe('LARGE_PRODUCER')
       expect(organisations[1].registrationType).toBe('COMPLIANCE_SCHEME')
@@ -102,7 +106,7 @@ describe('#createApiWasteOrganisationsService', () => {
 
     it('removes raw registrations array from returned organisations', async () => {
       const service = createApiWasteOrganisationsService(mockLogger)
-      const { organisations } = await service.getOrganisations(toYear(2026))
+      const { organisations } = await service.getOrganisations([toYear(2026)])
 
       expect(organisations[0]).not.toHaveProperty('registrations')
       expect(organisations[1]).not.toHaveProperty('registrations')
@@ -110,7 +114,7 @@ describe('#createApiWasteOrganisationsService', () => {
 
     it('preserves other organisation fields', async () => {
       const service = createApiWasteOrganisationsService(mockLogger)
-      const { organisations } = await service.getOrganisations(toYear(2026))
+      const { organisations } = await service.getOrganisations([toYear(2026)])
 
       expect(organisations[0]).toMatchObject({
         id: 'org-1',
@@ -138,14 +142,14 @@ describe('#createApiWasteOrganisationsService', () => {
       )
 
       const service = createApiWasteOrganisationsService(mockLogger)
-      await service.getOrganisations(toYear(2026))
+      await service.getOrganisations([toYear(2026)])
 
       expect(mockLogger.warn).toHaveBeenCalledWith({
         message: expect.stringContaining('no producer registration'),
         event: {
           action: 'extract_registration_types',
           reason:
-            'organisationId=org-no-regs organisationName=No Regs Ltd registrationYear=2026'
+            'organisationId=org-no-regs organisationName=No Regs Ltd registrationYears=2026'
         }
       })
     })
@@ -169,7 +173,7 @@ describe('#createApiWasteOrganisationsService', () => {
       )
 
       const service = createApiWasteOrganisationsService(mockLogger)
-      await service.getOrganisations(toYear(2026))
+      await service.getOrganisations([toYear(2026)])
 
       expect(mockLogger.warn).toHaveBeenCalledTimes(1)
     })
@@ -185,7 +189,13 @@ describe('#createApiWasteOrganisationsService', () => {
                 id: 'org-reprocessor',
                 name: 'Reprocessor Only',
                 address: {},
-                registrations: [{ type: 'REPROCESSOR', registrationYear: 2026 }]
+                registrations: [
+                  {
+                    type: 'REPROCESSOR',
+                    registrationYear: 2026,
+                    status: 'REGISTERED'
+                  }
+                ]
               }
             ]
           })
@@ -193,7 +203,7 @@ describe('#createApiWasteOrganisationsService', () => {
       )
 
       const service = createApiWasteOrganisationsService(mockLogger)
-      await service.getOrganisations(toYear(2026))
+      await service.getOrganisations([toYear(2026)])
 
       expect(mockLogger.warn).toHaveBeenCalledTimes(1)
     })
@@ -210,8 +220,16 @@ describe('#createApiWasteOrganisationsService', () => {
                 name: 'Dual Type',
                 address: {},
                 registrations: [
-                  { type: 'LARGE_PRODUCER', registrationYear: 2026 },
-                  { type: 'COMPLIANCE_SCHEME', registrationYear: 2026 }
+                  {
+                    type: 'LARGE_PRODUCER',
+                    registrationYear: 2026,
+                    status: 'REGISTERED'
+                  },
+                  {
+                    type: 'COMPLIANCE_SCHEME',
+                    registrationYear: 2026,
+                    status: 'REGISTERED'
+                  }
                 ]
               }
             ]
@@ -220,7 +238,7 @@ describe('#createApiWasteOrganisationsService', () => {
       )
 
       const service = createApiWasteOrganisationsService(mockLogger)
-      await service.getOrganisations(toYear(2026))
+      await service.getOrganisations([toYear(2026)])
 
       expect(mockLogger.warn).toHaveBeenCalledWith({
         message: expect.stringContaining(
@@ -236,7 +254,7 @@ describe('#createApiWasteOrganisationsService', () => {
 
     it('does not warn when organisations have valid producer registrations', async () => {
       const service = createApiWasteOrganisationsService(mockLogger)
-      await service.getOrganisations(toYear(2026))
+      await service.getOrganisations([toYear(2026)])
 
       expect(mockLogger.warn).not.toHaveBeenCalled()
     })
@@ -265,7 +283,7 @@ describe('#createApiWasteOrganisationsService', () => {
       )
 
       const service = createApiWasteOrganisationsService(mockLogger)
-      await service.getOrganisations(toYear(2026))
+      await service.getOrganisations([toYear(2026)])
 
       expect(Object.fromEntries(requestedUrl.searchParams)).toStrictEqual({
         registrations: 'LARGE_PRODUCER,COMPLIANCE_SCHEME',
@@ -286,8 +304,16 @@ describe('#createApiWasteOrganisationsService', () => {
                 name: 'Switched Ltd',
                 address: {},
                 registrations: [
-                  { type: 'LARGE_PRODUCER', registrationYear: 2026 },
-                  { type: 'COMPLIANCE_SCHEME', registrationYear: 2027 }
+                  {
+                    type: 'LARGE_PRODUCER',
+                    registrationYear: 2026,
+                    status: 'REGISTERED'
+                  },
+                  {
+                    type: 'COMPLIANCE_SCHEME',
+                    registrationYear: 2027,
+                    status: 'REGISTERED'
+                  }
                 ]
               }
             ]
@@ -296,13 +322,13 @@ describe('#createApiWasteOrganisationsService', () => {
       )
 
       const service = createApiWasteOrganisationsService(mockLogger)
-      const { organisations } = await service.getOrganisations(toYear(2026))
+      const { organisations } = await service.getOrganisations([toYear(2026)])
 
       expect(organisations[0].registrationType).toBe('LARGE_PRODUCER')
       expect(mockLogger.warn).not.toHaveBeenCalled()
     })
 
-    it('leaves the registration type unset when the only producer registration is for another year', async ({
+    it('leaves out an organisation whose only producer registration is for another year', async ({
       msw
     }) => {
       msw.use(
@@ -314,7 +340,11 @@ describe('#createApiWasteOrganisationsService', () => {
                 name: 'Next Year Ltd',
                 address: {},
                 registrations: [
-                  { type: 'LARGE_PRODUCER', registrationYear: 2027 }
+                  {
+                    type: 'LARGE_PRODUCER',
+                    registrationYear: 2027,
+                    status: 'REGISTERED'
+                  }
                 ]
               }
             ]
@@ -323,17 +353,162 @@ describe('#createApiWasteOrganisationsService', () => {
       )
 
       const service = createApiWasteOrganisationsService(mockLogger)
-      const { organisations } = await service.getOrganisations(toYear(2026))
+      const { organisations } = await service.getOrganisations([toYear(2026)])
 
-      expect(organisations[0]).not.toHaveProperty('registrationType')
+      expect(organisations).toStrictEqual([])
       expect(mockLogger.warn).toHaveBeenCalledWith({
         message: expect.stringContaining(
-          'no producer registration for the registration year'
+          'no producer registration for the registration years'
         ),
         event: {
           action: 'extract_registration_types',
           reason:
-            'organisationId=org-next-year organisationName=Next Year Ltd registrationYear=2026'
+            'organisationId=org-next-year organisationName=Next Year Ltd registrationYears=2026'
+        }
+      })
+    })
+  })
+
+  describe('several registration years, for December waste', () => {
+    /**
+     * @param {SetupServer} msw
+     * @param {object[]} registrations
+     */
+    const respondWith = (msw, registrations) =>
+      msw.use(
+        http.get(apiUrl, () =>
+          HttpResponse.json({
+            organisations: [
+              {
+                id: 'org-1',
+                name: 'Producer Ltd',
+                address: {},
+                registrations
+              }
+            ]
+          })
+        )
+      )
+
+    it('requests organisations registered for any of the given years', async ({
+      msw
+    }) => {
+      let requestedUrl = new URL(apiUrl)
+
+      msw.use(
+        http.get(apiUrl, ({ request }) => {
+          requestedUrl = new URL(request.url)
+          return HttpResponse.json({ organisations: mockApiOrganisations })
+        })
+      )
+
+      const service = createApiWasteOrganisationsService(mockLogger)
+      await service.getOrganisations([toYear(2026), toYear(2027)])
+
+      expect(requestedUrl.searchParams.get('registrationYears')).toBe(
+        '2026,2027'
+      )
+    })
+
+    it('gives the years the organisation is registered for, in the order asked', async ({
+      msw
+    }) => {
+      respondWith(msw, [
+        {
+          type: 'LARGE_PRODUCER',
+          registrationYear: 2027,
+          status: 'REGISTERED'
+        },
+        { type: 'LARGE_PRODUCER', registrationYear: 2026, status: 'REGISTERED' }
+      ])
+
+      const service = createApiWasteOrganisationsService(mockLogger)
+      const { organisations } = await service.getOrganisations([
+        toYear(2026),
+        toYear(2027)
+      ])
+
+      expect(organisations[0].registrationYears).toStrictEqual([2026, 2027])
+    })
+
+    it('gives only the following year when the organisation is registered for that year alone', async ({
+      msw
+    }) => {
+      respondWith(msw, [
+        {
+          type: 'COMPLIANCE_SCHEME',
+          registrationYear: 2027,
+          status: 'REGISTERED'
+        }
+      ])
+
+      const service = createApiWasteOrganisationsService(mockLogger)
+      const { organisations } = await service.getOrganisations([
+        toYear(2026),
+        toYear(2027)
+      ])
+
+      expect(organisations[0]).toMatchObject({
+        registrationType: 'COMPLIANCE_SCHEME',
+        registrationYears: [2027]
+      })
+      expect(mockLogger.warn).not.toHaveBeenCalled()
+    })
+
+    it('takes the registration type from the first given year when the years differ', async ({
+      msw
+    }) => {
+      respondWith(msw, [
+        {
+          type: 'COMPLIANCE_SCHEME',
+          registrationYear: 2027,
+          status: 'REGISTERED'
+        },
+        { type: 'LARGE_PRODUCER', registrationYear: 2026, status: 'REGISTERED' }
+      ])
+
+      const service = createApiWasteOrganisationsService(mockLogger)
+      const { organisations } = await service.getOrganisations([
+        toYear(2026),
+        toYear(2027)
+      ])
+
+      expect(organisations[0].registrationType).toBe('LARGE_PRODUCER')
+    })
+
+    it('leaves out a year whose registration is cancelled', async ({ msw }) => {
+      respondWith(msw, [
+        { type: 'LARGE_PRODUCER', registrationYear: 2026, status: 'CANCELLED' },
+        { type: 'LARGE_PRODUCER', registrationYear: 2027, status: 'REGISTERED' }
+      ])
+
+      const service = createApiWasteOrganisationsService(mockLogger)
+      const { organisations } = await service.getOrganisations([
+        toYear(2026),
+        toYear(2027)
+      ])
+
+      expect(organisations[0].registrationYears).toStrictEqual([2027])
+    })
+
+    it('leaves out an organisation registered for none of the given years, naming them in the warning', async ({
+      msw
+    }) => {
+      respondWith(msw, [])
+
+      const service = createApiWasteOrganisationsService(mockLogger)
+      const { organisations } = await service.getOrganisations([
+        toYear(2026),
+        toYear(2027)
+      ])
+
+      expect(organisations).toStrictEqual([])
+      expect(mockLogger.warn).toHaveBeenCalledWith({
+        message: expect.stringContaining('no producer registration'),
+        event: {
+          action: 'extract_registration_types',
+          reason:
+            'organisationId=org-1 organisationName=Producer Ltd registrationYears=2026,2027'
         }
       })
     })
@@ -351,7 +526,7 @@ describe('#createApiWasteOrganisationsService', () => {
       )
 
       const service = createApiWasteOrganisationsService(mockLogger)
-      await service.getOrganisations(toYear(2026))
+      await service.getOrganisations([toYear(2026)])
 
       const expectedAuth = Buffer.from('testuser:testpass').toString('base64')
       expect(capturedHeaders.authorization).toBe(`Basic ${expectedAuth}`)
@@ -370,7 +545,7 @@ describe('#createApiWasteOrganisationsService', () => {
       )
 
       const service = createApiWasteOrganisationsService(mockLogger)
-      await service.getOrganisations(toYear(2026))
+      await service.getOrganisations([toYear(2026)])
 
       expect(capturedHeaders['x-api-key']).toBeUndefined()
 

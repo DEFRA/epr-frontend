@@ -42,9 +42,9 @@ vi.mock(
         const service =
           createInMemoryWasteOrganisationsService(initialOrganisations)
         return {
-          getOrganisations: (registrationYear) => {
-            requestedRegistrationYears(registrationYear)
-            return service.getOrganisations(registrationYear)
+          getOrganisations: (registrationYears) => {
+            requestedRegistrationYears(registrationYears)
+            return service.getOrganisations(registrationYears)
           }
         }
       }
@@ -222,9 +222,9 @@ describe('#postCreatePrnController', () => {
           payload: { ...validPayload, crumb }
         })
 
-        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith(
+        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith([
           toYear(2026)
-        )
+        ])
       })
 
       it('omits notes when notes is empty', async ({ server }) => {
@@ -323,6 +323,167 @@ describe('#postCreatePrnController', () => {
       expect(createPrn).not.toHaveBeenCalled()
     })
 
+    describe('to a recipient registered only for the following year', () => {
+      const nextYearRecipient = 'f3a1c2d4-2027-4b8e-9c1a-5e6f7a8b9c0d'
+
+      beforeEach(() => {
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'manual',
+          windowOpen: true
+        })
+        vi.mocked(createPrn).mockResolvedValue(
+          /** @type {PackagingRecyclingNote} */ (
+            /** @type {unknown} */ ({
+              id: 'prn-789',
+              tonnage: 100,
+              material: 'plastic',
+              status: 'draft',
+              wasteProcessingType: 'reprocessor',
+              processToBeUsed: 'R3',
+              isDecemberWaste: true
+            })
+          )
+        )
+      })
+
+      it('rejects a note that is not December waste', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: {
+            ...validPayload,
+            recipient: nextYearRecipient,
+            isDecemberWaste: 'false',
+            crumb
+          }
+        })
+
+        const main = getByRole(new JSDOM(result).window.document.body, 'main')
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(
+          main.querySelector('#recipient-error')?.textContent?.trim()
+        ).toBe(
+          'Error: This packaging producer or compliance scheme is only registered for 2027. You can only issue them a PRN from December waste'
+        )
+        expect(createPrn).not.toHaveBeenCalled()
+      })
+
+      it('asks the backend about December waste once when rejecting the recipient', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+        vi.mocked(fetchDecemberPrnEligibility).mockClear()
+
+        await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: {
+            ...validPayload,
+            recipient: nextYearRecipient,
+            isDecemberWaste: 'false',
+            crumb
+          }
+        })
+
+        expect(fetchDecemberPrnEligibility).toHaveBeenCalledExactlyOnceWith(
+          keys,
+          'mock-backend-token'
+        )
+      })
+
+      it('creates a December waste note', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: {
+            ...validPayload,
+            recipient: nextYearRecipient,
+            isDecemberWaste: 'true',
+            crumb
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(createPrn).toHaveBeenCalledWith(
+          keys,
+          expect.objectContaining({
+            issuedToOrganisation: {
+              id: nextYearRecipient,
+              name: 'Next Year Packaging Ltd',
+              tradingName: null,
+              registrationType: 'LARGE_PRODUCER'
+            },
+            isDecemberWaste: true
+          }),
+          'mock-backend-token'
+        )
+      })
+
+      it('treats them as not a valid recipient when the page does not ask about December waste', async ({
+        server
+      }) => {
+        vi.mocked(fetchDecemberPrnEligibility).mockResolvedValue({
+          mode: 'manual',
+          windowOpen: false
+        })
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, recipient: nextYearRecipient, crumb }
+        })
+
+        expect(result).toContain(
+          'Select a valid packaging producer or compliance scheme'
+        )
+        expect(createPrn).not.toHaveBeenCalled()
+      })
+
+      it('lists recipients registered for the following year too when the form is re-shown', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+        requestedRegistrationYears.mockClear()
+
+        await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '', crumb }
+        })
+
+        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith([
+          toYear(2026),
+          toYear(2027)
+        ])
+      })
+    })
+
     describe('with invalid payload', () => {
       it('lists recipients registered for the accreditation year in the route when the form is re-shown', async ({
         server
@@ -340,9 +501,9 @@ describe('#postCreatePrnController', () => {
           payload: { ...validPayload, tonnage: '', crumb }
         })
 
-        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith(
+        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith([
           toYear(2026)
-        )
+        ])
       })
 
       it('shows "Enter PRN tonnage as a whole number" when tonnage is empty', async ({
