@@ -127,6 +127,23 @@
         "country": null
       },
       "registrationType": "COMPLIANCE_SCHEME"
+    },
+    {
+      "id": "f3a1c2d4-2027-4b8e-9c1a-5e6f7a8b9c0d",
+      "name": "Next Year Packaging Ltd",
+      "tradingName": null,
+      "businessCountry": null,
+      "companiesHouseNumber": null,
+      "address": {
+        "addressLine1": "5 Future Way",
+        "addressLine2": null,
+        "town": "Leeds",
+        "county": null,
+        "postcode": "LS1 4AP",
+        "country": null
+      },
+      "registrationType": "LARGE_PRODUCER",
+      "registrationYears": [2027]
     }
   ]
 }

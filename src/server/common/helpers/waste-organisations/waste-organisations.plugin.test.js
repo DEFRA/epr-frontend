@@ -11,7 +11,7 @@ import fixture from '#fixtures/waste-organisations/organisations.json' with { ty
 import { createWasteOrganisationsPlugin } from './waste-organisations.plugin.js'
 
 /**
- * @import { WasteOrganisation } from './types.js'
+ * @import { InMemoryWasteOrganisation } from './inmemory-adapter.js'
  */
 
 /**
@@ -52,7 +52,7 @@ describe('#createWasteOrganisationsPlugin', () => {
     it('should return fixture organisations', async () => {
       await server.register(
         createWasteOrganisationsPlugin({
-          initialOrganisations: /** @type {WasteOrganisation[]} */ (
+          initialOrganisations: /** @type {InMemoryWasteOrganisation[]} */ (
             fixture.organisations
           )
         })
@@ -62,9 +62,9 @@ describe('#createWasteOrganisationsPlugin', () => {
         path: '/test',
         handler: async (request) => {
           const { organisations } =
-            await request.wasteOrganisationsService.getOrganisations(
+            await request.wasteOrganisationsService.getOrganisations([
               toYear(2026)
-            )
+            ])
           return { count: organisations.length }
         },
         options: { auth: false }
@@ -103,9 +103,9 @@ describe('#createWasteOrganisationsPlugin', () => {
         path: '/test',
         handler: async (request) => {
           const { organisations } =
-            await request.wasteOrganisationsService.getOrganisations(
+            await request.wasteOrganisationsService.getOrganisations([
               toYear(2026)
-            )
+            ])
           return { organisations }
         },
         options: { auth: false }
@@ -115,7 +115,9 @@ describe('#createWasteOrganisationsPlugin', () => {
       const response = await server.inject({ method: 'GET', url: '/test' })
       const result = JSON.parse(response.payload)
 
-      expect(result.organisations).toStrictEqual(customOrgs)
+      expect(result.organisations).toStrictEqual(
+        customOrgs.map((org) => ({ ...org, registrationYears: [2026] }))
+      )
     })
   })
 
@@ -125,7 +127,13 @@ describe('#createWasteOrganisationsPlugin', () => {
       {
         id: 'api-org',
         name: 'API Org',
-        registrations: [{ type: 'LARGE_PRODUCER', registrationYear: 2026 }]
+        registrations: [
+          {
+            type: 'LARGE_PRODUCER',
+            registrationYear: 2026,
+            status: 'REGISTERED'
+          }
+        ]
       }
     ]
 
@@ -160,9 +168,9 @@ describe('#createWasteOrganisationsPlugin', () => {
         path: '/test',
         handler: async (request) => {
           const { organisations } =
-            await request.wasteOrganisationsService.getOrganisations(
+            await request.wasteOrganisationsService.getOrganisations([
               toYear(2026)
-            )
+            ])
           return { organisations }
         },
         options: { auth: false }
@@ -173,7 +181,12 @@ describe('#createWasteOrganisationsPlugin', () => {
       const result = JSON.parse(response.payload)
 
       expect(result.organisations).toStrictEqual([
-        { id: 'api-org', name: 'API Org', registrationType: 'LARGE_PRODUCER' }
+        {
+          id: 'api-org',
+          name: 'API Org',
+          registrationType: 'LARGE_PRODUCER',
+          registrationYears: [2026]
+        }
       ])
     })
   })

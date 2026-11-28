@@ -17,6 +17,12 @@
 export const toYear = (value) => /** @type {Year} */ (value)
 
 /**
+ * @param {Year} year
+ * @returns {Year}
+ */
+export const followingYear = (year) => toYear(year + 1)
+
+/**
  * The year it is now, in UTC.
  * @returns {Year}
  */

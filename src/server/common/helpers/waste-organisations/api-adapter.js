@@ -1,68 +1,89 @@
 import { config } from '#config/config.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { fetchJson } from '../fetch-json.js'
+import { WASTE_ORGANISATION_STATUS } from './types.js'
 
 /**
  * @import {TypedLogger} from '#server/common/helpers/logging/logger.js'
  * @import {WasteOrganisationsService} from './port.js'
  * @import {Year} from '#server/common/helpers/year.js'
- * @import {WasteOrganisation, WasteOrganisationType} from './types.js'
+ * @import {WasteOrganisation, WasteOrganisationStatus, WasteOrganisationType} from './types.js'
  */
 
 /**
  * Raw upstream shape before registrationType extraction — has the wider
- * registrations array that we collapse into a single registrationType.
- * @typedef {Omit<WasteOrganisation, 'registrationType'> & {
- *   registrations?: Array<{ type: WasteOrganisationType, registrationYear: number | string }>
+ * registrations array that we collapse into registrationType and
+ * registrationYears.
+ * @typedef {Omit<WasteOrganisation, 'registrationType' | 'registrationYears'> & {
+ *   registrations?: Array<{
+ *     type: WasteOrganisationType,
+ *     registrationYear: number | string,
+ *     status: WasteOrganisationStatus
+ *   }>
  * }} RawWasteOrganisation
  */
 
 const PRODUCER_TYPES = new Set(['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'])
 
 /**
- * Extracts registrationType from the raw registrations array and warns
- * on missing or ambiguous producer registrations.
- * @param {RawWasteOrganisation[]} organisations
- * @param {Year} registrationYear
+ * Collapses the raw registrations into the requested years the organisation
+ * is registered as a producer for, taking registrationType from the first of
+ * them. An organisation registered for none of them cannot be a recipient, so
+ * it is left out with a warning.
+ * @param {RawWasteOrganisation} organisation
+ * @param {Year[]} registrationYears
  * @param {TypedLogger} logger
  * @returns {WasteOrganisation[]}
  */
-function extractRegistrationTypes(organisations, registrationYear, logger) {
-  return organisations.map((org) => {
-    const { registrations, ...rest } = org
+const toWasteOrganisation = (organisation, registrationYears, logger) => {
+  const { registrations = [], ...rest } = organisation
 
-    const producerRegs = registrations?.filter(
-      (r) =>
-        PRODUCER_TYPES.has(r.type) &&
-        Number(r.registrationYear) === registrationYear
+  /** @param {Year} year */
+  const producerRegistrationsFor = (year) =>
+    registrations.filter(
+      (registration) =>
+        PRODUCER_TYPES.has(registration.type) &&
+        registration.status === WASTE_ORGANISATION_STATUS.registered &&
+        Number(registration.registrationYear) === year
     )
 
-    if (!producerRegs?.length) {
-      logger.warn({
-        message:
-          'Waste organisation has no producer registration for the registration year — display name will fall back to tradingName preference',
-        event: {
-          action: loggingEventActions.extractRegistrationTypes,
-          reason: `organisationId=${org.id} organisationName=${org.name} registrationYear=${registrationYear}`
-        }
-      })
-      return rest
-    }
+  const heldYears = registrationYears.filter(
+    (year) => producerRegistrationsFor(year).length > 0
+  )
+  const [firstHeldYear] = heldYears
 
-    const types = new Set(producerRegs.map((r) => r.type))
-    if (types.size > 1) {
-      logger.warn({
-        message:
-          'Waste organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME registrations for the registration year — likely bad data from RPD',
-        event: {
-          action: loggingEventActions.extractRegistrationTypes,
-          reason: `organisationId=${org.id} organisationName=${org.name} registrationYear=${registrationYear}`
-        }
-      })
-    }
+  if (firstHeldYear === undefined) {
+    logger.warn({
+      message:
+        'Waste organisation has no producer registration for the registration years — leaving it out of the recipients',
+      event: {
+        action: loggingEventActions.extractRegistrationTypes,
+        reason: `organisationId=${organisation.id} organisationName=${organisation.name} registrationYears=${registrationYears.join(',')}`
+      }
+    })
+    return []
+  }
 
-    return { ...rest, registrationType: producerRegs[0].type }
-  })
+  const producerRegistrations = producerRegistrationsFor(firstHeldYear)
+  const types = new Set(producerRegistrations.map(({ type }) => type))
+  if (types.size > 1) {
+    logger.warn({
+      message:
+        'Waste organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME registrations for the registration year — likely bad data from RPD',
+      event: {
+        action: loggingEventActions.extractRegistrationTypes,
+        reason: `organisationId=${organisation.id} organisationName=${organisation.name} registrationYear=${firstHeldYear}`
+      }
+    })
+  }
+
+  return [
+    {
+      ...rest,
+      registrationType: producerRegistrations[0].type,
+      registrationYears: heldYears
+    }
+  ]
 }
 
 /**
@@ -72,7 +93,7 @@ function extractRegistrationTypes(organisations, registrationYear, logger) {
  */
 export function createApiWasteOrganisationsService(logger) {
   return {
-    async getOrganisations(registrationYear) {
+    async getOrganisations(registrationYears) {
       const { url, username, password, key } = config.get(
         'wasteOrganisationsApi'
       )
@@ -80,8 +101,8 @@ export function createApiWasteOrganisationsService(logger) {
 
       const params = new URLSearchParams({
         registrations: ['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'].join(','),
-        registrationYears: String(registrationYear),
-        statuses: 'REGISTERED'
+        registrationYears: registrationYears.join(','),
+        statuses: WASTE_ORGANISATION_STATUS.registered
       })
 
       const auth = Buffer.from(`${username}:${password}`).toString('base64')
@@ -94,10 +115,9 @@ export function createApiWasteOrganisationsService(logger) {
       })
 
       return {
-        organisations: extractRegistrationTypes(
-          response.organisations,
-          registrationYear,
-          logger
+        organisations: response.organisations.flatMap(
+          (/** @type {RawWasteOrganisation} */ organisation) =>
+            toWasteOrganisation(organisation, registrationYears, logger)
         )
       }
     }

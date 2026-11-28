@@ -1,3 +1,5 @@
+/** @import {Year} from '#server/common/helpers/year.js' */
+
 /**
  * @typedef {'GB-ENG' | 'GB-NIR' | 'GB-SCT' | 'GB-WLS'} BusinessCountry
  */
@@ -13,8 +15,12 @@
  * }} WasteOrganisationAddress
  */
 
+export const WASTE_ORGANISATION_STATUS = Object.freeze(
+  /** @type {const} */ ({ registered: 'REGISTERED', cancelled: 'CANCELLED' })
+)
+
 /**
- * @typedef {'REGISTERED' | 'CANCELLED'} WasteOrganisationStatus
+ * @typedef {(typeof WASTE_ORGANISATION_STATUS)[keyof typeof WASTE_ORGANISATION_STATUS]} WasteOrganisationStatus
  */
 
 /**
@@ -24,8 +30,9 @@
 /**
  * Simplified waste organisation with extracted registrationType.
  * The API adapter extracts registrationType from the raw registrations
- * array and removes it. registrationType is absent when the organisation
- * has no producer registration for the requested registration year.
+ * array and removes it. registrationYears are the requested years the
+ * organisation holds a producer registration for, and registrationType comes
+ * from the first of them; it is absent when there is none.
  * @typedef {{
  *  id: string
  *  name: string
@@ -34,7 +41,6 @@
  *  companiesHouseNumber: string | null
  *  address: WasteOrganisationAddress
  *  registrationType?: WasteOrganisationType
+ *  registrationYears: Year[]
  * }} WasteOrganisation
  */
-
-export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import

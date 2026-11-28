@@ -88,6 +88,7 @@
     "insufficientNonDecemberBalance": "The tonnage you entered exceeds your available non-December waste balance",
     "notesTooLong": "Enter a maximum of 200 characters",
     "recipientInvalid": "Select a valid packaging producer or compliance scheme",
+    "recipientNotRegisteredForYear": "This packaging producer or compliance scheme is only registered for {{followingYear}}. You can only issue them a {{noteType}} from December waste",
     "recipientRequired": "Enter a packaging producer or compliance scheme",
     "tonnageWholeNumber": "Enter {{noteType}} tonnage as a whole number",
     "tonnageGreaterThanZero": "Enter {{noteType}} tonnage as a whole number greater than zero"

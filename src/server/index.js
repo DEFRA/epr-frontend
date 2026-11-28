@@ -111,7 +111,7 @@ export async function createServer(options = {}) {
     createWasteOrganisationsPlugin({
       initialOrganisations:
         options.wasteOrganisations ??
-        /** @type {WasteOrganisation[]} */ (
+        /** @type {InMemoryWasteOrganisation[]} */ (
           wasteOrganisationsFixture.organisations
         )
     }),
@@ -187,10 +187,10 @@ export async function createServer(options = {}) {
  * @import {Engine} from '#server/common/helpers/session-cache/cache-engine.js'
  * @import {HapiServer} from '#server/common/hapi-types.js'
  * @import {AuthProviders} from '#server/auth/types/auth-provider.js'
- * @import {WasteOrganisation} from '#server/common/helpers/waste-organisations/types.js'
+ * @import {InMemoryWasteOrganisation} from '#server/common/helpers/waste-organisations/inmemory-adapter.js'
  */
 
 /**
  * @typedef {object} CreateServerOptions
- * @property {WasteOrganisation[]} [wasteOrganisations]
+ * @property {InMemoryWasteOrganisation[]} [wasteOrganisations]
  */

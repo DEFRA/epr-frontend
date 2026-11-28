@@ -20,14 +20,14 @@ export const testGetOrganisationsBehaviour = (it) => {
     )
 
     it('should return organisations array', async () => {
-      const result = await service.getOrganisations(currentYear())
+      const result = await service.getOrganisations([currentYear()])
 
       expect(result).toHaveProperty('organisations')
       expect(Array.isArray(result.organisations)).toBe(true)
     })
 
     it('should return organisations with required fields', async () => {
-      const { organisations } = await service.getOrganisations(currentYear())
+      const { organisations } = await service.getOrganisations([currentYear()])
 
       expect(organisations.length).toBeGreaterThan(0)
       expect(organisations[0]).toHaveProperty('id')
@@ -35,10 +35,12 @@ export const testGetOrganisationsBehaviour = (it) => {
     })
 
     it('should return cloned data to prevent mutation', async () => {
-      const { organisations: first } =
-        await service.getOrganisations(currentYear())
-      const { organisations: second } =
-        await service.getOrganisations(currentYear())
+      const { organisations: first } = await service.getOrganisations([
+        currentYear()
+      ])
+      const { organisations: second } = await service.getOrganisations([
+        currentYear()
+      ])
 
       expect(first).not.toBe(second)
       expect(first).toStrictEqual(second)
