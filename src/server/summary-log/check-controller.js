@@ -6,6 +6,7 @@ import {
   isRegisteredOnlyProcessingType
 } from '#domain/summary-logs/meta-fields.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
+import { VALIDATION_CODE } from '#server/common/enums/validation.js'
 import { requiresResubmission } from './closed-period-changes.js'
 
 /**
@@ -24,7 +25,8 @@ import { requiresResubmission } from './closed-period-changes.js'
  *   Localise,
  *   PeriodStatus,
  *   PeriodStatusByChange,
- *   PeriodViewModel
+ *   PeriodViewModel,
+ *   ValidationResponse
  * } from './types.js'
  */
 
@@ -330,6 +332,25 @@ const buildPeriodViewModel = (period, ctx) => {
 }
 
 /**
+ * One warning per linked row that is uploaded but not added to the waste
+ * balance, as PERNs were issued on its previous year row.
+ * @param {ValidationResponse | undefined} validation
+ * @param {Localise} localise
+ * @returns {string[]}
+ */
+const linkedRowPernWarningsOf = (validation, localise) =>
+  Object.values(validation?.concerns ?? {})
+    .flatMap(({ rows }) => rows)
+    .filter(({ issues }) =>
+      issues.some(
+        ({ errorCode }) => errorCode === VALIDATION_CODE.LINKED_ROW_PRNS_ISSUED
+      )
+    )
+    .map(({ rowId }) =>
+      localise('summary-log:check.linkedRowPernsIssuedWarning', { rowId })
+    )
+
+/**
  * Renders the summary log check page. Accredited processing types show
  * waste balance language; registered-only types show totals only. When every
  * bucket is empty the template renders the four-section empty state.
@@ -346,6 +367,7 @@ const buildPeriodViewModel = (period, ctx) => {
  *   registrationPath: string,
  *   summaryLogId: string,
  *   uploadPath: string,
+ *   validation?: ValidationResponse,
  *   wasteBalance?: number,
  *   year: Year
  * }} context - View context
@@ -361,6 +383,7 @@ export const renderCheckView = (
     registrationPath,
     summaryLogId,
     uploadPath,
+    validation,
     wasteBalance,
     year
   }
@@ -392,6 +415,7 @@ export const renderCheckView = (
     periodSections: { open, closed },
     isEmpty: open === null && closed === null,
     showClosedPeriodImportant: requiresResubmission(loadsByReportingPeriod),
+    linkedRowPernWarnings: linkedRowPernWarningsOf(validation, localise),
     wasteBalanceProjection: buildWasteBalanceProjection(
       isAccredited,
       wasteBalance,

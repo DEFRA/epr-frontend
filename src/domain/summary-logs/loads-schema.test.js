@@ -167,6 +167,69 @@ describe('summaryLogStatusResponseSchema validation', () => {
     })
   })
 
+  describe('validation.concerns', () => {
+    const concernsOf = (rows) => ({
+      status: 'validated',
+      year: 2027,
+      validation: {
+        failures: [],
+        concerns: { RECEIVED_LOADS_FOR_EXPORT: { sheet: 'Received', rows } },
+        counts: { fatal: 0, error: 0, warning: 1, total: 1 }
+      }
+    })
+
+    it('keeps a warning on a row, with its row ID, when stripping unknown keys', () => {
+      const rows = [
+        {
+          row: 8,
+          rowId: '1001',
+          issues: [
+            {
+              type: 'warning',
+              code: 'PREVIOUS_YEAR_LINK',
+              errorCode: 'LINKED_ROW_PRNS_ISSUED',
+              header: 'WERE_PRN_OR_PERN_ISSUED_ON_THIS_WASTE',
+              column: 'J',
+              actual: 'No',
+              previousYearRowId: '1500'
+            }
+          ]
+        }
+      ]
+
+      const { error, value } = summaryLogStatusResponseSchema.validate(
+        concernsOf(rows),
+        { stripUnknown: true }
+      )
+
+      expect({
+        error,
+        rows: value.validation.concerns.RECEIVED_LOADS_FOR_EXPORT.rows
+      }).toStrictEqual({
+        error: undefined,
+        rows
+      })
+    })
+
+    it.for([
+      { description: 'without rows', table: { sheet: 'Received' } },
+      {
+        description: 'with a row without issues',
+        table: { sheet: 'Received', rows: [{ row: 8 }] }
+      }
+    ])('rejects a concerns table $description', ({ table }) => {
+      const { error } = summaryLogStatusResponseSchema.validate({
+        ...concernsOf([]),
+        validation: {
+          ...concernsOf([]).validation,
+          concerns: { RECEIVED_LOADS_FOR_EXPORT: table }
+        }
+      })
+
+      expect(error).toBeDefined()
+    })
+  })
+
   describe('loadsByReportingPeriod', () => {
     // Mirrors the backend loadsByReportingPeriod contract: both periods, both
     // change types, and both buckets, with a negative tonnageDelta to represent

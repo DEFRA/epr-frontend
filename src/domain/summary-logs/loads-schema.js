@@ -21,6 +21,29 @@ const validationFailureSchema = Joi.object({
   previousYearRowId: rowIdSchema
 }).unknown(true)
 
+const validationConcernsSchema = Joi.object().pattern(
+  Joi.string(),
+  Joi.object({
+    sheet: Joi.string().required(),
+    rows: Joi.array()
+      .items(
+        Joi.object({
+          row: Joi.number().integer().required(),
+          rowId: rowIdSchema,
+          issues: Joi.array()
+            .items(
+              Joi.object({
+                type: Joi.string().valid('error', 'warning').required(),
+                errorCode: Joi.string().required()
+              }).unknown(true)
+            )
+            .required()
+        })
+      )
+      .required()
+  })
+)
+
 export const loadValiditySchema = Joi.object({
   valid: loadCategorySchema.required(),
   invalid: loadCategorySchema.required(),
@@ -111,7 +134,7 @@ const storedSummaryLogSchema = Joi.object({
     .required(),
   validation: Joi.object({
     failures: Joi.array().items(validationFailureSchema).required(),
-    concerns: Joi.object().optional(),
+    concerns: validationConcernsSchema.optional(),
     counts: Joi.object({
       fatal: nonNegativeInteger,
       error: nonNegativeInteger,

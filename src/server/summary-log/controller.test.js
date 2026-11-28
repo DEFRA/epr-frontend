@@ -3584,6 +3584,98 @@ describe('summary log check view', () => {
     expect(result).not.toStrictEqual(enablesClientSidePolling())
   })
 
+  describe('a linked row whose previous year row had PERNs issued', () => {
+    /** @param {object} [validation] */
+    const givenValidatedCheckPageWith = (validation) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        year: 2027,
+        ledgerAccreditation: accreditedLedger,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: emptyPeriod()
+        },
+        validation
+      })
+    }
+
+    /**
+     * @param {string} rowId
+     * @param {string} errorCode
+     */
+    const concernRow = (rowId, errorCode) => ({
+      row: 8,
+      rowId,
+      issues: [
+        {
+          type: 'warning',
+          code: 'PREVIOUS_YEAR_LINK',
+          errorCode,
+          header: 'WERE_PRN_OR_PERN_ISSUED_ON_THIS_WASTE',
+          column: 'J'
+        }
+      ]
+    })
+
+    const warningsOn = (main) =>
+      [...main.querySelectorAll('.govuk-warning-text__text')].map((warning) =>
+        warning.textContent.replaceAll(/\s+/g, ' ').trim()
+      )
+
+    it('warns about each row that will not be added to the waste balance', async ({
+      server
+    }) => {
+      givenValidatedCheckPageWith({
+        failures: [],
+        concerns: {
+          RECEIVED_LOADS_FOR_EXPORT: {
+            sheet: 'Received',
+            rows: [
+              concernRow('1001', 'LINKED_ROW_PRNS_ISSUED'),
+              concernRow('1002', 'LINKED_ROW_PRNS_ISSUED')
+            ]
+          }
+        },
+        counts: { fatal: 0, error: 0, warning: 2, total: 2 }
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(warningsOn(main)).toStrictEqual([
+        'Warning Row 1001 has been uploaded but will not be added to your waste balance as PERNs were already issued on this waste.',
+        'Warning Row 1002 has been uploaded but will not be added to your waste balance as PERNs were already issued on this waste.'
+      ])
+    })
+
+    it('shows no warning for any other concern', async ({ server }) => {
+      givenValidatedCheckPageWith({
+        failures: [],
+        concerns: {
+          RECEIVED_LOADS_FOR_EXPORT: {
+            sheet: 'Received',
+            rows: [concernRow('1001', 'SOME_OTHER_WARNING')]
+          }
+        },
+        counts: { fatal: 0, error: 0, warning: 1, total: 1 }
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(warningsOn(main)).toStrictEqual([])
+    })
+
+    it('shows no warning when the summary log has no validation', async ({
+      server
+    }) => {
+      givenValidatedCheckPageWith()
+
+      const { main } = await renderMain(server)
+
+      expect(warningsOn(main)).toStrictEqual([])
+    })
+  })
+
   it("status: validated - should link to the home page for the summary log's year", async ({
     server
   }) => {

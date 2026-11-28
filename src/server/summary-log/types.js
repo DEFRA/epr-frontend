@@ -55,8 +55,29 @@
  */
 
 /**
+ * A row-level error or warning on a summary log with no fatal failure.
+ * @typedef {{
+ *   type: 'error' | 'warning',
+ *   code: string,
+ *   errorCode: string,
+ *   header?: string,
+ *   column?: string,
+ *   previousYearRowId?: string
+ * }} ValidationConcern
+ */
+
+/**
+ * Concerns by table; `rowId` is the operator-facing ROW_ID, when the row has one.
+ * @typedef {Record<string, {
+ *   sheet: string,
+ *   rows: Array<{ row: number, rowId?: string, issues: ValidationConcern[] }>
+ * }>} ValidationConcerns
+ */
+
+/**
  * @typedef {{
  *   failures: ValidationFailure[],
+ *   concerns?: ValidationConcerns,
  *   counts: ValidationIssueCounts
  * }} ValidationResponse
  */

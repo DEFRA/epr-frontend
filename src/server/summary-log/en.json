@@ -41,6 +41,7 @@
     "pageHeading": "Upload your summary log ({{year}})",
     "submitButton": "Upload summary log",
     "insetSaveWarning": "Your data will not be saved until you upload it.",
+    "linkedRowPernsIssuedWarning": "Row {{rowId}} has been uploaded but will not be added to your waste balance as PERNs were already issued on this waste.",
     "insetWrongLead": "If something looks wrong,",
     "insetEditAnd": "edit your summary log and",
     "insetChooseFileLink": "choose the file again",
