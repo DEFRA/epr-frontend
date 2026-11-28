@@ -40,7 +40,7 @@ function extractRegistrationTypes(organisations, registrationYear, logger) {
     if (!producerRegs?.length) {
       logger.warn({
         message:
-          'Waste organisation has no producer registration for the accreditation year — display name will fall back to tradingName preference',
+          'Waste organisation has no producer registration for the registration year — display name will fall back to tradingName preference',
         event: {
           action: loggingEventActions.extractRegistrationTypes,
           reason: `organisationId=${org.id} organisationName=${org.name} registrationYear=${registrationYear}`
@@ -53,7 +53,7 @@ function extractRegistrationTypes(organisations, registrationYear, logger) {
     if (types.size > 1) {
       logger.warn({
         message:
-          'Waste organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME registrations for the accreditation year — likely bad data from RPD',
+          'Waste organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME registrations for the registration year — likely bad data from RPD',
         event: {
           action: loggingEventActions.extractRegistrationTypes,
           reason: `organisationId=${org.id} organisationName=${org.name} registrationYear=${registrationYear}`

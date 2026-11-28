@@ -328,7 +328,7 @@ describe('#createApiWasteOrganisationsService', () => {
       expect(organisations[0]).not.toHaveProperty('registrationType')
       expect(mockLogger.warn).toHaveBeenCalledWith({
         message: expect.stringContaining(
-          'no producer registration for the accreditation year'
+          'no producer registration for the registration year'
         ),
         event: {
           action: 'extract_registration_types',
