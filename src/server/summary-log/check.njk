@@ -1,6 +1,7 @@
 {% extends 'layouts/page.njk' %}
 
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
 
 {# Section banding follows the design: the heading plus any inset and tonnage
    caption form an un-ruled intro, then a rule precedes every content block and a
@@ -172,6 +173,10 @@
         <a href="{{ organisationPath }}" class="govuk-link">{{ localise('summary-log:check.insetHomeLink') }}</a>).
       </p>
     </div>
+
+    {% for warning in linkedRowPernWarnings %}
+      {{ govukWarningText({ text: warning, iconFallbackText: "Warning" }) }}
+    {% endfor %}
 
     {# Each period group (open, closed) carries a larger leading margin than the
        sections within it, so the two groups read as distinct blocks. The first
