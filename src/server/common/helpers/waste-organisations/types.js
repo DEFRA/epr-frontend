@@ -25,7 +25,7 @@
  * Simplified waste organisation with extracted registrationType.
  * The API adapter extracts registrationType from the raw registrations
  * array and removes it. registrationType is absent when the organisation
- * has no current-year producer registration.
+ * has no producer registration for the requested registration year.
  * @typedef {{
  *  id: string
  *  name: string

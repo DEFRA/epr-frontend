@@ -57,7 +57,7 @@ export const controller = {
 
     const [{ organisations }, wasteBalance, decemberPrnEligibility] =
       await Promise.all([
-        request.wasteOrganisationsService.getOrganisations(),
+        request.wasteOrganisationsService.getOrganisations(keys.year),
         fetchPrnWasteBalance({
           keys,
           accreditationNumber: accreditation.accreditationNumber,

@@ -2,6 +2,8 @@ import { it as base, describe, expect } from 'vitest'
 
 import fixture from '#fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
+import { toYear } from '#server/common/helpers/year.js'
+
 import { createInMemoryWasteOrganisationsService } from './inmemory-adapter.js'
 import { testWasteOrganisationsServiceContract } from './port.contract.js'
 
@@ -32,7 +34,9 @@ describe('#createInMemoryWasteOrganisationsService', () => {
   it('should return organisations provided at construction', async ({
     wasteOrganisationsService
   }) => {
-    const { organisations } = await wasteOrganisationsService.getOrganisations()
+    const { organisations } = await wasteOrganisationsService.getOrganisations(
+      toYear(2026)
+    )
 
     expect(organisations).toHaveLength(8)
     expect(organisations[0].id).toBe('9eb099a7-bda0-456c-96ba-e0af3fdb9cde')
@@ -40,7 +44,7 @@ describe('#createInMemoryWasteOrganisationsService', () => {
 
   it('should default to empty array when no organisations provided', async () => {
     const service = createInMemoryWasteOrganisationsService()
-    const { organisations } = await service.getOrganisations()
+    const { organisations } = await service.getOrganisations(toYear(2026))
 
     expect(organisations).toHaveLength(0)
   })

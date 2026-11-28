@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { toYear } from '#server/common/helpers/year.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { afterEach, describe, expect } from 'vitest'
@@ -61,7 +62,9 @@ describe('#createWasteOrganisationsPlugin', () => {
         path: '/test',
         handler: async (request) => {
           const { organisations } =
-            await request.wasteOrganisationsService.getOrganisations()
+            await request.wasteOrganisationsService.getOrganisations(
+              toYear(2026)
+            )
           return { count: organisations.length }
         },
         options: { auth: false }
@@ -100,7 +103,9 @@ describe('#createWasteOrganisationsPlugin', () => {
         path: '/test',
         handler: async (request) => {
           const { organisations } =
-            await request.wasteOrganisationsService.getOrganisations()
+            await request.wasteOrganisationsService.getOrganisations(
+              toYear(2026)
+            )
           return { organisations }
         },
         options: { auth: false }
@@ -120,9 +125,7 @@ describe('#createWasteOrganisationsPlugin', () => {
       {
         id: 'api-org',
         name: 'API Org',
-        registrations: [
-          { type: 'LARGE_PRODUCER', registrationYear: new Date().getFullYear() }
-        ]
+        registrations: [{ type: 'LARGE_PRODUCER', registrationYear: 2026 }]
       }
     ]
 
@@ -157,7 +160,9 @@ describe('#createWasteOrganisationsPlugin', () => {
         path: '/test',
         handler: async (request) => {
           const { organisations } =
-            await request.wasteOrganisationsService.getOrganisations()
+            await request.wasteOrganisationsService.getOrganisations(
+              toYear(2026)
+            )
           return { organisations }
         },
         options: { auth: false }
