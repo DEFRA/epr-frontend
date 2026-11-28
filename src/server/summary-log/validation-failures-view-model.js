@@ -363,7 +363,11 @@ export const CELL_PROBLEMS = Object.freeze({
   [VALIDATION_CODE.PREVIOUS_YEAR_ROW_REPATRIATED]:
     previousYearRowFinishedProblem,
   [VALIDATION_CODE.PREVIOUS_YEAR_ROW_VALUE_DIFFERS]:
-    previousYearRowValueDiffersProblem
+    previousYearRowValueDiffersProblem,
+  [VALIDATION_CODE.PREVIOUS_YEAR_ROW_STOPPED_OR_REFUSED]:
+    previousYearRowFinishedProblem,
+  [VALIDATION_CODE.PREVIOUS_YEAR_ROW_STOPPED_OR_REFUSED_CLOSED]:
+    previousYearRowFinishedProblem
 })
 
 /**

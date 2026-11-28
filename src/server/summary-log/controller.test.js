@@ -1596,6 +1596,34 @@ describe('#summaryLogUploadProgressController', () => {
           ]
         },
         {
+          name: 'a received date on a link to a 2026 row stopped or refused, while 2026 can be corrected',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_STOPPED_OR_REFUSED',
+            actual: '2027-01-06',
+            previousYearRowId: '1000',
+            header: 'DATE_RECEIVED_BY_OSR'
+          },
+          expected: [
+            'Date received by OSR',
+            '06/01/2027',
+            'Row 1000 in your 2026 summary log shows waste as stopped, refused or repatriated. This is not possible if it’s been received. Correct the incorrect data and upload again.'
+          ]
+        },
+        {
+          name: 'a received date on a link to a 2026 row stopped or refused, once 2026 is closed',
+          failure: {
+            errorCode: 'PREVIOUS_YEAR_ROW_STOPPED_OR_REFUSED_CLOSED',
+            actual: '2027-01-06',
+            previousYearRowId: '1000',
+            header: 'DATE_RECEIVED_BY_OSR'
+          },
+          expected: [
+            'Date received by OSR',
+            '06/01/2027',
+            'Row 1000 in your 2026 summary log shows a load as stopped, refused or repatriated. This is not possible if it’s been received. As your 2026 log is now closed, if the waste was received, change your ‘stopped’ and ‘refused’ answers in this row to ‘no’ and upload again.'
+          ]
+        },
+        {
           name: 'a previous year row ID that names no row, without the row ID',
           failure: {
             errorCode: 'PREVIOUS_YEAR_ROW_NOT_FOUND',

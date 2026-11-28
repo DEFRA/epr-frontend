@@ -277,7 +277,9 @@ describe('#getDisplayCodeFromErrorCode', () => {
       'PREVIOUS_YEAR_ROW_REPATRIATED',
       'DATE_THE_REFUSED_STOPPED_WASTE_REPATRIATED'
     ],
-    ['PREVIOUS_YEAR_ROW_VALUE_DIFFERS', 'CONTAINER_NUMBER']
+    ['PREVIOUS_YEAR_ROW_VALUE_DIFFERS', 'CONTAINER_NUMBER'],
+    ['PREVIOUS_YEAR_ROW_STOPPED_OR_REFUSED', 'DATE_RECEIVED_BY_OSR'],
+    ['PREVIOUS_YEAR_ROW_STOPPED_OR_REFUSED_CLOSED', 'DATE_RECEIVED_BY_OSR']
   ])('returns DATA_ENTRY_INVALID for %s on %s', (errorCode, header) => {
     expect(getDisplayCodeFromErrorCode(errorCode, header)).toBe(
       'DATA_ENTRY_INVALID'
