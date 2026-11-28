@@ -36,6 +36,29 @@ vi.mock(
 vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
+const { requestedRegistrationYears } = vi.hoisted(() => ({
+  requestedRegistrationYears: vi.fn()
+}))
+
+vi.mock(
+  import('#server/common/helpers/waste-organisations/inmemory-adapter.js'),
+  async (importOriginal) => {
+    const { createInMemoryWasteOrganisationsService } = await importOriginal()
+    return {
+      createInMemoryWasteOrganisationsService: (initialOrganisations) => {
+        const service =
+          createInMemoryWasteOrganisationsService(initialOrganisations)
+        return {
+          getOrganisations: (registrationYear) => {
+            requestedRegistrationYears(registrationYear)
+            return service.getOrganisations(registrationYear)
+          }
+        }
+      }
+    }
+  }
+)
+
 vi.spyOn(metrics.journey, 'start').mockResolvedValue()
 vi.spyOn(metrics.journey, 'end').mockResolvedValue()
 
@@ -256,6 +279,20 @@ describe('#createPrnController', () => {
           value: placeholder.value
         }).toStrictEqual({ text: 'Select an option', value: '' })
         expect(recipients.length).toBeGreaterThan(0)
+      })
+
+      it('lists recipients registered for the accreditation year in the route', async ({
+        server
+      }) => {
+        await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith(
+          toYear(2026)
+        )
       })
 
       it('should render help text details component with bullet list', async ({

@@ -1,5 +1,3 @@
-import { getYear } from 'date-fns'
-
 import { config } from '#config/config.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { fetchJson } from '../fetch-json.js'
@@ -7,6 +5,7 @@ import { fetchJson } from '../fetch-json.js'
 /**
  * @import {TypedLogger} from '#server/common/helpers/logging/logger.js'
  * @import {WasteOrganisationsService} from './port.js'
+ * @import {Year} from '#server/common/helpers/year.js'
  * @import {WasteOrganisation, WasteOrganisationType} from './types.js'
  */
 
@@ -24,28 +23,27 @@ const PRODUCER_TYPES = new Set(['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'])
  * Extracts registrationType from the raw registrations array and warns
  * on missing or ambiguous producer registrations.
  * @param {RawWasteOrganisation[]} organisations
+ * @param {Year} registrationYear
  * @param {TypedLogger} logger
  * @returns {WasteOrganisation[]}
  */
-function extractRegistrationTypes(organisations, logger) {
-  // TODO: should this use the accreditation year instead of current year?
-  const currentYear = getYear(new Date())
-
+function extractRegistrationTypes(organisations, registrationYear, logger) {
   return organisations.map((org) => {
     const { registrations, ...rest } = org
 
     const producerRegs = registrations?.filter(
       (r) =>
-        PRODUCER_TYPES.has(r.type) && Number(r.registrationYear) === currentYear
+        PRODUCER_TYPES.has(r.type) &&
+        Number(r.registrationYear) === registrationYear
     )
 
     if (!producerRegs?.length) {
       logger.warn({
         message:
-          'Waste organisation has no producer registration for the current year — display name will fall back to tradingName preference',
+          'Waste organisation has no producer registration for the accreditation year — display name will fall back to tradingName preference',
         event: {
           action: loggingEventActions.extractRegistrationTypes,
-          reason: `organisationId=${org.id} organisationName=${org.name}`
+          reason: `organisationId=${org.id} organisationName=${org.name} registrationYear=${registrationYear}`
         }
       })
       return rest
@@ -55,10 +53,10 @@ function extractRegistrationTypes(organisations, logger) {
     if (types.size > 1) {
       logger.warn({
         message:
-          'Waste organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME registrations for the current year — likely bad data from RPD',
+          'Waste organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME registrations for the accreditation year — likely bad data from RPD',
         event: {
           action: loggingEventActions.extractRegistrationTypes,
-          reason: `organisationId=${org.id} organisationName=${org.name}`
+          reason: `organisationId=${org.id} organisationName=${org.name} registrationYear=${registrationYear}`
         }
       })
     }
@@ -74,19 +72,15 @@ function extractRegistrationTypes(organisations, logger) {
  */
 export function createApiWasteOrganisationsService(logger) {
   return {
-    async getOrganisations() {
+    async getOrganisations(registrationYear) {
       const { url, username, password, key } = config.get(
         'wasteOrganisationsApi'
       )
       const isDevelopment = config.get('isDevelopment')
 
-      // TODO: should this use the accreditation year instead of current year?
-      const now = new Date()
-      const thisYear = getYear(now)
-
       const params = new URLSearchParams({
         registrations: ['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'].join(','),
-        registrationYears: String(thisYear),
+        registrationYears: String(registrationYear),
         statuses: 'REGISTERED'
       })
 
@@ -100,7 +94,11 @@ export function createApiWasteOrganisationsService(logger) {
       })
 
       return {
-        organisations: extractRegistrationTypes(response.organisations, logger)
+        organisations: extractRegistrationTypes(
+          response.organisations,
+          registrationYear,
+          logger
+        )
       }
     }
   }

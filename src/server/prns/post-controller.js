@@ -324,7 +324,7 @@ export const postController = {
           { organisations },
           { registration, wasteBalance, decemberWasteControl }
         ] = await Promise.all([
-          request.wasteOrganisationsService.getOrganisations(),
+          request.wasteOrganisationsService.getOrganisations(keys.year),
           fetchCreatePrnViewDataInputs(request, keys)
         ])
 
@@ -357,7 +357,7 @@ export const postController = {
     const { tonnage, recipient, notes, isDecemberWaste } = request.payload
 
     const { organisations } =
-      await request.wasteOrganisationsService.getOrganisations()
+      await request.wasteOrganisationsService.getOrganisations(keys.year)
 
     const organisation = organisations.find((org) => org.id === recipient)
 

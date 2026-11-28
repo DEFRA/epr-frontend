@@ -1,3 +1,4 @@
+import { currentYear } from '#server/common/helpers/year.js'
 import { beforeEach, describe, expect } from 'vitest'
 
 /**
@@ -19,14 +20,14 @@ export const testGetOrganisationsBehaviour = (it) => {
     )
 
     it('should return organisations array', async () => {
-      const result = await service.getOrganisations()
+      const result = await service.getOrganisations(currentYear())
 
       expect(result).toHaveProperty('organisations')
       expect(Array.isArray(result.organisations)).toBe(true)
     })
 
     it('should return organisations with required fields', async () => {
-      const { organisations } = await service.getOrganisations()
+      const { organisations } = await service.getOrganisations(currentYear())
 
       expect(organisations.length).toBeGreaterThan(0)
       expect(organisations[0]).toHaveProperty('id')
@@ -34,8 +35,10 @@ export const testGetOrganisationsBehaviour = (it) => {
     })
 
     it('should return cloned data to prevent mutation', async () => {
-      const { organisations: first } = await service.getOrganisations()
-      const { organisations: second } = await service.getOrganisations()
+      const { organisations: first } =
+        await service.getOrganisations(currentYear())
+      const { organisations: second } =
+        await service.getOrganisations(currentYear())
 
       expect(first).not.toBe(second)
       expect(first).toStrictEqual(second)

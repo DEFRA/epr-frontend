@@ -29,6 +29,29 @@ vi.mock(import('./helpers/fetch-prn-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/fetch-december-prn-eligibility.js'))
 
+const { requestedRegistrationYears } = vi.hoisted(() => ({
+  requestedRegistrationYears: vi.fn()
+}))
+
+vi.mock(
+  import('#server/common/helpers/waste-organisations/inmemory-adapter.js'),
+  async (importOriginal) => {
+    const { createInMemoryWasteOrganisationsService } = await importOriginal()
+    return {
+      createInMemoryWasteOrganisationsService: (initialOrganisations) => {
+        const service =
+          createInMemoryWasteOrganisationsService(initialOrganisations)
+        return {
+          getOrganisations: (registrationYear) => {
+            requestedRegistrationYears(registrationYear)
+            return service.getOrganisations(registrationYear)
+          }
+        }
+      }
+    }
+  }
+)
+
 const { createPrn } = await import('./helpers/create-prn.js')
 const { fetchPrnWasteBalance } =
   await import('./helpers/fetch-prn-waste-balance.js')
@@ -178,6 +201,32 @@ describe('#postCreatePrnController', () => {
         )
       })
 
+      it('looks up the recipient among organisations registered for the accreditation year in the route', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(
+          /** @type {PackagingRecyclingNote} */ (
+            /** @type {unknown} */ ({ id: 'prn-789', isDecemberWaste: false })
+          )
+        )
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+        requestedRegistrationYears.mockClear()
+
+        await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith(
+          toYear(2026)
+        )
+      })
+
       it('omits notes when notes is empty', async ({ server }) => {
         vi.mocked(createPrn).mockResolvedValue(
           /** @type {PackagingRecyclingNote} */ (
@@ -275,6 +324,27 @@ describe('#postCreatePrnController', () => {
     })
 
     describe('with invalid payload', () => {
+      it('lists recipients registered for the accreditation year in the route when the form is re-shown', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+        requestedRegistrationYears.mockClear()
+
+        await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '', crumb }
+        })
+
+        expect(requestedRegistrationYears).toHaveBeenCalledExactlyOnceWith(
+          toYear(2026)
+        )
+      })
+
       it('shows "Enter PRN tonnage as a whole number" when tonnage is empty', async ({
         server
       }) => {

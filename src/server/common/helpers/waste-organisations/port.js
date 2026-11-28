@@ -1,3 +1,4 @@
+/** @import {Year} from '#server/common/helpers/year.js' */
 /** @import {WasteOrganisation} from './types.js' */
 
 /**
@@ -6,7 +7,7 @@
 
 /**
  * @typedef {{
- *   getOrganisations: () => Promise<WasteOrganisationsResponse>
+ *   getOrganisations: (registrationYear: Year) => Promise<WasteOrganisationsResponse>
  * }} WasteOrganisationsService
  */
 
