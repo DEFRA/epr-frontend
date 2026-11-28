@@ -50,9 +50,7 @@ const toWasteOrganisation = (organisation, registrationYears, logger) => {
   const heldYears = registrationYears.filter(
     (year) => producerRegistrationsFor(year).length > 0
   )
-  const [firstHeldYear] = heldYears
-
-  if (firstHeldYear === undefined) {
+  if (heldYears.length === 0) {
     logger.warn({
       message:
         'Waste organisation has no producer registration for the registration years — leaving it out of the recipients',
@@ -64,6 +62,7 @@ const toWasteOrganisation = (organisation, registrationYears, logger) => {
     return []
   }
 
+  const [firstHeldYear] = heldYears
   const producerRegistrations = producerRegistrationsFor(firstHeldYear)
   const types = new Set(producerRegistrations.map(({ type }) => type))
   if (types.size > 1) {
